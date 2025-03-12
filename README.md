@@ -1,4 +1,4 @@
-# My Community 
+# My Community (by @mengao in hive)
 
 > MyCommunity is a versatile React template designed for effortlessly deploying your Hive-based community website.
 
