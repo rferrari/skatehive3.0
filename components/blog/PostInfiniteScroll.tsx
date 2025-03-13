@@ -1,5 +1,5 @@
 'use client';
-import { Box, Skeleton, SimpleGrid, Flex } from '@chakra-ui/react';
+import { Box, Skeleton, SimpleGrid, Flex, Grid } from '@chakra-ui/react';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import PostGrid from '@/components/blog/PostGrid';
 import { Discussion } from '@hiveio/dhive';
@@ -19,7 +19,7 @@ export default function PostsInfiniteScroll({ allPosts, fetchPosts, viewMode }: 
             next={fetchPosts}
             hasMore={hasMore}
             loader={
-                <SimpleGrid columns={viewMode === 'grid' ? 3 : 1} spacing={4}>
+                <SimpleGrid columns={{ base: 1, md: viewMode === 'grid' ? 3 : 1 }} spacing={4}>
                     {Array(6).fill(0).map((_, i) => (
                         <Box key={i} borderWidth="1px" borderRadius="base" overflow="hidden" p={4} border="tb1">
                             {/* New skeleton header for profile pic and post author */}

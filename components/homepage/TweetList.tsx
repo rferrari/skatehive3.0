@@ -88,9 +88,9 @@ export default function TweetList(
             next={loadNextPage}
             hasMore={hasMore}
             loader={
-              (<Box textAlign="center" mt={-4}>
+              (<Box textAlign="center" mt={4}>
                 {/* Changed the spinner to LoadingComponent */}
-                <LoadingComponent />
+                <Spinner />
               </Box>)
             }
             scrollableTarget="scrollableDiv"
