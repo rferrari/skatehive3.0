@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { fetchNewNotifications } from '@/lib/hive/client-functions';
-import { Box, Text, Stack, Spinner, Button, HStack } from '@chakra-ui/react';
+import { Box, Text, Stack, Spinner, Button, HStack, Tabs, TabList, TabPanels, Tab, TabPanel } from '@chakra-ui/react';
 import { useAioha } from '@aioha/react-ui';
 import { KeyTypes } from '@aioha/aioha';
 import { Notifications } from '@hiveio/dhive';
@@ -47,6 +47,15 @@ export default function NotificationsComp({ username }: NotificationCompProps) {
     console.log("Mark as Read clicked", result);
   };
 
+  const groupedNotifications = notifications.reduce((acc, notification) => {
+    if (!acc[notification.type]) {
+      acc[notification.type] = [];
+    }
+    acc[notification.type].push(notification);
+    return acc;
+  }, {} as Record<string, Notifications[]>);
+
+  console.log("notifications", notifications)
   return (
     <Box p={4} w="full" maxH={"100vh"} overflowY="auto" sx={{
       '&::-webkit-scrollbar': {
@@ -67,11 +76,24 @@ export default function NotificationsComp({ username }: NotificationCompProps) {
       {isLoading ? (
         <Spinner size="lg" />
       ) : notifications.length > 0 ? (
-        <Stack spacing={4} w="full">
-          {notifications.map(notification => (
-            <NotificationItem key={notification.id} notification={notification} />
-          ))}
-        </Stack>
+        <Tabs>
+          <TabList>
+            {Object.keys(groupedNotifications).map(type => (
+              <Tab key={type}>{type}</Tab>
+            ))}
+          </TabList>
+          <TabPanels>
+            {Object.keys(groupedNotifications).map(type => (
+              <TabPanel key={type}>
+                <Stack spacing={4} w="full">
+                  {groupedNotifications[type].map(notification => (
+                    <NotificationItem key={notification.id} notification={notification} />
+                  ))}
+                </Stack>
+              </TabPanel>
+            ))}
+          </TabPanels>
+        </Tabs>
       ) : (
         <Text>No notifications</Text>
       )}
