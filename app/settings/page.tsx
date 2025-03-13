@@ -1,35 +1,60 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import { Box, Select, Button, Text } from '@chakra-ui/react';
-import { useTheme, ThemeName, themeMap } from '../themeProvider'; // Import the ThemeName type and themeMap
+import { Box, Select, Text, useToast, VStack, Heading } from '@chakra-ui/react';
+import { useTheme, ThemeName, themeMap } from '../themeProvider';
 
 const Settings = () => {
     const { themeName, setThemeName } = useTheme();
-    const [selectedTheme, setSelectedTheme] = useState<ThemeName>(themeName); // Use ThemeName type
+    const [selectedTheme, setSelectedTheme] = useState<ThemeName>(themeName);
+    const toast = useToast();
 
     useEffect(() => {
         setSelectedTheme(themeName);
     }, [themeName]);
 
     const handleThemeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-        const newTheme = event.target.value as ThemeName; // Cast to ThemeName type
+        const newTheme = event.target.value as ThemeName;
         setSelectedTheme(newTheme);
-        setThemeName(newTheme); // This updates the theme globally via context
+        setThemeName(newTheme);
+        toast({
+            title: 'Theme Updated!',
+            description: `Successfully switched to ${newTheme} theme`,
+            status: 'success',
+            duration: 3000,
+            isClosable: true,
+        });
+    };
+
+    // Format theme name for display
+    const formatThemeName = (name: string) => {
+        return name
+            .split(/(?=[A-Z])|[-_]/)
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+            .join(' ');
     };
 
     return (
-        <Box p={5}>
-            <Text fontSize="2xl" mb={4}>
-                Settings
-            </Text>
-            <Select value={selectedTheme} onChange={handleThemeChange} mb={4}>
-                {Object.keys(themeMap).map((theme) => (
-                    <option key={theme} value={theme}>
-                        {theme.charAt(0).toUpperCase() + theme.slice(1)}
-                    </option>
-                ))}
-            </Select>
-            <Button colorScheme="teal">Theme Updated!</Button>
+        <Box p={8} maxW="container.md" mx="auto">
+            <VStack spacing={6} align="stretch">
+                <Heading size="lg" mb={2}>
+                    Settings
+                </Heading>
+                
+                <Box>
+                    <Text mb={2} fontWeight="medium">Theme Selection</Text>
+                    <Select 
+                        value={selectedTheme} 
+                        onChange={handleThemeChange} 
+                        size="lg"
+                    >
+                        {Object.keys(themeMap).map((theme) => (
+                            <option key={theme} value={theme}>
+                                {formatThemeName(theme)}
+                            </option>
+                        ))}
+                    </Select>
+                </Box>
+            </VStack>
         </Box>
     );
 };
