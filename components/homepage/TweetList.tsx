@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
-import { Box, Spinner, VStack, Text } from '@chakra-ui/react';
+import { Box, Spinner, VStack } from '@chakra-ui/react';
 import Tweet from './Tweet';
-import { ExtendedComment, useComments } from '@/hooks/useComments';
+import { ExtendedComment } from '@/hooks/useComments';
 import TweetComposer from './TweetComposer';
 import { Comment } from '@hiveio/dhive'; // Add this import for consistency
 import LoadingComponent from './loadingComponent';
