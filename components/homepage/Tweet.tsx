@@ -60,14 +60,10 @@ const Tweet = ({ comment, onOpen, setReply, setConversation, level = 0 }: TweetP
     function handleConversation() {
         if (setConversation) setConversation(comment);
     }
-    console.log(`Current Voting Power: ${currentVotingPower}`); // Log the calculated voting power
     async function handleVote() {
         const votingValue = await calculateUserVoteValue(hiveAccount);
-        console.log(`Voting Value: ${votingValue}`);
-        console.log(`Slider Value: ${sliderValue}`);
         const newRewardAmount = parseFloat(rewardAmount) + (votingValue * (sliderValue / 100));
-        console.log(`Previous Reward Amount: ${rewardAmount}`);
-        console.log(`New Reward Amount: ${newRewardAmount}`);
+
 
         const vote = await aioha.vote(comment.author, comment.permlink, sliderValue * 100);
         if (vote.success) {

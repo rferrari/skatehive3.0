@@ -1,5 +1,5 @@
 'use client';
-import { Box, Spinner, Skeleton, SimpleGrid, Flex } from '@chakra-ui/react';
+import { Box, Skeleton, SimpleGrid, Flex } from '@chakra-ui/react';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import PostGrid from '@/components/blog/PostGrid';
 import { Discussion } from '@hiveio/dhive';
