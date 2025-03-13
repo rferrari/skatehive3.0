@@ -1,4 +1,4 @@
-import { Box, Text, Avatar, Flex, Icon, Button, Link, Slider, SliderTrack, SliderFilledTrack, SliderThumb, SliderMark } from '@chakra-ui/react';
+import { Box, Text, Avatar, Flex, Icon, Button, Link, Slider, SliderTrack, SliderFilledTrack, SliderThumb, SliderMark, Divider } from '@chakra-ui/react';
 import React, { useState, useEffect } from 'react';
 import { Discussion } from '@hiveio/dhive';
 import { FaHeart, FaComment, FaRegHeart } from 'react-icons/fa';
@@ -31,13 +31,10 @@ export default function PostDetails({ post }: PostDetailsProps) {
 
     return (
         <Box border="tb1" borderRadius="base" overflow="hidden" bg="muted" mb={3} p={4} w="100%">
-            <Text fontSize="2xl" fontWeight="bold" mb={4} textAlign="center">
-                {title}
-            </Text>
             <Flex justifyContent="space-between" alignItems="center" mb={4}>
-                <Flex alignItems="center">
+                <Flex alignItems="center" flexShrink={0}>
                     <Avatar size="sm" name={author} src={`https://images.hive.blog/u/${author}/avatar/sm`} />
-                    <Box ml={3}>
+                    <Box ml={3} whiteSpace="nowrap">
                         <Text fontWeight="medium" fontSize="sm">
                             <Link href={`/@${author}`}>@{author}</Link>
                         </Text>
@@ -46,7 +43,12 @@ export default function PostDetails({ post }: PostDetailsProps) {
                         </Text>
                     </Box>
                 </Flex>
+                <Divider orientation="vertical" h="34px" borderColor="color" mx={1} />
+                <Text fontSize={["md", "lg", "xl"]} fontWeight="bold" mb={4} textAlign="center">
+                    {title}
+                </Text>
             </Flex>
+            <Divider />
             <Box mt={4} dangerouslySetInnerHTML={{ __html: markdownRenderer(body) }} />
             {showSlider ? (
                 <Flex mt={4} alignItems="center">
@@ -76,7 +78,7 @@ export default function PostDetails({ post }: PostDetailsProps) {
                         ) : (
                             <Icon as={FaRegHeart} onClick={handleHeartClick} cursor="pointer" />
                         )}
-                        
+
                         <Text ml={2} fontSize="sm">{post.active_votes.length}</Text>
                         <Icon as={FaComment} ml={4} />
                         <Text ml={2} fontSize="sm">{post.children}</Text>

@@ -67,28 +67,28 @@ export default function PostPage({ author, permlink }: PostPageProps) {
 
   return (
     <Box bg="background" color="text" minH="100vh">
-      <Flex direction={{ base: 'column', md: 'row' }}>
-        <Box flex="1" p={4}>
-          <Container maxW="container.sm">
-            <PostDetails post={post} />
-            {!conversation ? (
-              <>
-                <TweetList
-                  author={author}
-                  permlink={permlink}
-                  setConversation={setConversation}
-                  onOpen={onOpen}
-                  setReply={setReply}
-                  newComment={newComment}
-                  setNewComment={setNewComment} // Add the missing prop
-                  post={true}
-                  data={commentsData}
-                />
-              </>
-            ) : (
-              <Conversation comment={conversation} setConversation={setConversation} onOpen={onOpen} setReply={setReply} />
-            )}
-          </Container>
+      <Flex direction={{ base: 'column', md: 'row' }} h={{ base: "auto", md: "100vh" }} gap={4}>
+        <Box flex={1} h={{ base: "auto", md: "100vh" }} overflowY="auto">
+          <PostDetails post={post} />
+        </Box>
+        <Box width={{ base: "100%", md: "300px" }} h={{ base: "auto", md: "100vh" }} overflowY="auto" sx={{ '&::-webkit-scrollbar': { display: 'none' } }}>
+          {!conversation ? (
+            <>
+              <TweetList
+                author={author}
+                permlink={permlink}
+                setConversation={setConversation}
+                onOpen={onOpen}
+                setReply={setReply}
+                newComment={newComment}
+                setNewComment={setNewComment}
+                post={true}
+                data={commentsData}
+              />
+            </>
+          ) : (
+            <Conversation comment={conversation} setConversation={setConversation} onOpen={onOpen} setReply={setReply} />
+          )}
         </Box>
       </Flex>
       {isOpen && <TweetReplyModal isOpen={isOpen} onClose={onClose} comment={reply} onNewReply={handleNewComment} />}
