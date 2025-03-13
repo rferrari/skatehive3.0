@@ -80,7 +80,7 @@ const Tweet = ({ comment, onOpen, setReply, setConversation, level = 0 }: TweetP
     return (
         <Box pl={level > 0 ? 1 : 0} ml={level > 0 ? 2 : 0}>
             <Box
-                bg="muted"
+                bgGradient="linear(to-b, muted, background)"
                 p={4}
                 mt={1}
                 mb={1}

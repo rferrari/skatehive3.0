@@ -73,16 +73,14 @@ export default function PostPage({ author, permlink }: PostPageProps) {
             <PostDetails post={post} />
             {!conversation ? (
               <>
-                <TweetComposer pa={author} pp={permlink} onNewComment={handleNewComment} post={true} onClose={function (): void {
-                  throw new Error('Function not implemented.');
-                }} />
                 <TweetList
                   author={author}
                   permlink={permlink}
                   setConversation={setConversation}
                   onOpen={onOpen}
                   setReply={setReply}
-                  newComment={newComment} // Pass the newComment to TweetList
+                  newComment={newComment}
+                  setNewComment={setNewComment} // Add the missing prop
                   post={true}
                   data={commentsData}
                 />

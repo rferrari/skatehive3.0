@@ -59,6 +59,7 @@ export default function Home() {
             onOpen={onOpen}
             setReply={setReply}
             newComment={newComment}
+            setNewComment={setNewComment} // Add the missing prop
             data={snaps}
           />
         ) : (
