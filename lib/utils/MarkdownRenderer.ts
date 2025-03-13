@@ -1,11 +1,9 @@
 import { DefaultRenderer } from "@hiveio/content-renderer";
 
 export default function markdownRenderer(markdown: string) {
-    // console.log("Original markdown:", markdown); // Debug log
 
     // Pre-process markdown to transform IPFS video links before rendering
     const preprocessedMarkdown = preProcessIpfsContent(markdown);
-    console.log("Pre-processed markdown:", preprocessedMarkdown); // Debug log
 
     const renderer = new DefaultRenderer({
         baseUrl: "https://hive.blog/",
@@ -25,11 +23,8 @@ export default function markdownRenderer(markdown: string) {
     });
 
     let safeHtmlStr = renderer.render(preprocessedMarkdown);
-    console.log("Rendered HTML:", safeHtmlStr); // Debug log
-
     // Post-process the rendered HTML to clean up any leftover IPFS video issues
     safeHtmlStr = transformIPFSContent(safeHtmlStr);
-    console.log("Transformed content:", safeHtmlStr); // Debug log
 
     return safeHtmlStr;
 }
@@ -40,14 +35,12 @@ function preProcessIpfsContent(markdown: string): string {
     return markdown.replace(
         /<iframe.*?src=["'](https:\/\/ipfs\.skatehive\.app\/ipfs\/[a-zA-Z0-9-_?=&]+)["'].*?<\/iframe>/gi,
         (_, videoUrl) => {
-            console.log("Replacing iframe with video tag for URL:", videoUrl); // Debug log
             return createSimpleVideoTag(videoUrl.replace("https://ipfs.skatehive.app/ipfs/", ""));
         }
     ).replace(
         /https:\/\/ipfs\.skatehive\.app\/ipfs\/([a-zA-Z0-9-_?=&]+)/gi,
         (_, videoID) => {
             if (isLikelyVideoID(videoID)) {
-                console.log("Replacing raw IPFS link with video tag for ID:", videoID); // Debug log
                 return createSimpleVideoTag(videoID);
             }
             return `https://ipfs.skatehive.app/ipfs/${videoID}`;
@@ -82,7 +75,6 @@ function isLikelyVideoID(id: string): boolean {
 
 // Generate a clean video tag for embedding
 function createSimpleVideoTag(videoID: string): string {
-    console.log("Creating video tag for ID:", videoID); // Debug log
     return `<video width="100%" height="auto" controls preload="none" autoplay muted>
   <source src="https://ipfs.skatehive.app/ipfs/${videoID}" type="video/mp4">
   <source src="https://ipfs.skatehive.app/ipfs/${videoID}" type="video/webm">

@@ -41,7 +41,6 @@ const Tweet = ({ comment, onOpen, setReply, setConversation, level = 0 }: TweetP
         const logVotingValue = async () => {
             if (hiveAccount) {
                 const votingValue = await calculateUserVoteValue(hiveAccount);
-                console.log(`Current Voting Value in HBD: ${votingValue}`);
             }
         };
         logVotingValue();

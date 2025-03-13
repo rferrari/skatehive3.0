@@ -9,7 +9,7 @@ import { getPostDate } from '@/lib/utils/GetPostDate';
 import { useAioha } from '@aioha/react-ui';
 import { useRouter } from 'next/navigation';
 import { getPayoutValue } from '@/lib/hive/client-functions';
-import { extractYoutubeLinks, LinkWithDomain } from '@/lib/utils/extractImageUrls'; // Import YouTube extraction function
+import { extractYoutubeLinks, LinkWithDomain, extractImageUrls } from '@/lib/utils/extractImageUrls'; // Import YouTube extraction function
 
 interface PostCardProps {
     post: Discussion;
@@ -37,14 +37,16 @@ export default function PostCard({ post }: PostCardProps) {
     const [voted, setVoted] = useState(post.active_votes?.some(item => item.voter === user));
     const router = useRouter();
     const default_thumbnail = 'https://images.hive.blog/u/' + author + '/avatar/large';
-    const placeholderImage = 'https://via.placeholder.com/200';
     const [visibleImages, setVisibleImages] = useState<number>(3);
 
     useEffect(() => {
-        let images = [];
+        let images: string[] = [];
         if (metadata.image) {
             images = Array.isArray(metadata.image) ? metadata.image : [metadata.image];
         }
+        // Extract additional images from markdown content
+        const markdownImages = extractImageUrls(body);
+        images = images.concat(markdownImages);
 
         if (images.length > 0) {
             setImageUrls(images);
@@ -54,10 +56,11 @@ export default function PostCard({ post }: PostCardProps) {
                 setYoutubeLinks(ytLinks);
                 setImageUrls([]);
             } else {
-                setImageUrls([placeholderImage]);
+                console.log(post.author, imageUrls, images, metadata);
+                setImageUrls([default_thumbnail]);
             }
         }
-    }, [body, metadata, placeholderImage]);
+    }, [body, metadata, default_thumbnail]);
 
     function handleHeartClick() {
         setShowSlider(!showSlider);
@@ -95,6 +98,11 @@ export default function PostCard({ post }: PostCardProps) {
     function handleSwiperClick(swiper: any, event: MouseEvent | TouchEvent | PointerEvent) {
         // Stop the event from bubbling up to the card
         event.stopPropagation();
+    }
+
+    // New function to log image load errors
+    function handleImageError(e: React.SyntheticEvent<HTMLImageElement, Event>) {
+        console.error("Failed to load image:", e.currentTarget.src, e);
     }
 
     return (
@@ -162,6 +170,7 @@ export default function PostCard({ post }: PostCardProps) {
                                         w="100%"
                                         h="100%"
                                         loading="lazy"
+                                        onError={handleImageError}
                                     />
                                 </Box>
                             </SwiperSlide>
@@ -203,6 +212,7 @@ export default function PostCard({ post }: PostCardProps) {
                             w="100%"
                             h="100%"
                             loading="lazy"
+                            onError={handleImageError}
                         />
                     </Box>
                 )}
