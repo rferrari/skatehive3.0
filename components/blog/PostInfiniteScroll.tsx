@@ -1,5 +1,5 @@
 'use client';
-import { Box, Spinner } from '@chakra-ui/react';
+import { Box, Spinner, Skeleton, SimpleGrid, Flex } from '@chakra-ui/react';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import PostGrid from '@/components/blog/PostGrid';
 import { Discussion } from '@hiveio/dhive';
@@ -19,10 +19,21 @@ export default function PostsInfiniteScroll({ allPosts, fetchPosts, viewMode }: 
             next={fetchPosts}
             hasMore={hasMore}
             loader={
-                (<Box display="flex" justifyContent="center" alignItems="center" py={5}>
-                    <Spinner size="xl" color="primary" />
-                </Box>
-                )}
+                <SimpleGrid columns={viewMode === 'grid' ? 3 : 1} spacing={4}>
+                    {Array(6).fill(0).map((_, i) => (
+                        <Box key={i} borderWidth="1px" borderRadius="base" overflow="hidden" p={4} border="tb1">
+                            {/* New skeleton header for profile pic and post author */}
+                            <Flex alignItems="center" mb={4}>
+                                <Skeleton startColor="background" endColor="muted" borderRadius="full" width="40px" height="40px" mr={3} />
+                                <Skeleton startColor="background" endColor="muted" height="20px" width="100px" />
+                            </Flex>
+                            <Skeleton startColor="background" endColor="muted" height="200px" mb={4} />
+                            <Skeleton startColor="background" endColor="muted" height="20px" mb={2} />
+                            <Skeleton startColor="background" endColor="muted" height="20px" width="60%" />
+                        </Box>
+                    ))}
+                </SimpleGrid>
+            }
             scrollableTarget="scrollableDiv"
         >
             {allPosts && (<PostGrid posts={allPosts ?? []} columns={viewMode === 'grid' ? 3 : 1} />)}
