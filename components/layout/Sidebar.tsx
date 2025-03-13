@@ -144,7 +144,7 @@ export default function Sidebar() {
                         leftIcon={<Icon as={FiBook} boxSize={4} />}
                         px={1}
                     >
-                        Blog
+                        Magazine
                     </Button>
                     {user && (
                         <>
@@ -159,7 +159,7 @@ export default function Sidebar() {
                                             animate={{ rotate: [0, 45, 0, -45, 0] }}
                                             transition={{ duration: 0.6, repeat: Infinity }}
                                         >
-                                            <Icon as={FiBell} boxSize={4} color="red" />
+                                            <Icon as={FiBell} boxSize={4} color="yellow" />
                                         </motion.div>
                                     ) : (
                                         <Icon as={FiBell} boxSize={4} />

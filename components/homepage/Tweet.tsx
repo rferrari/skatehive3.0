@@ -99,7 +99,26 @@ const Tweet = ({ comment, onOpen, setReply, setConversation, level = 0 }: TweetP
                         </Text>
                     </Box>
                 </HStack>
-                <Box dangerouslySetInnerHTML={{ __html: markdownRenderer(comment.body) }} />
+                <Box
+                    dangerouslySetInnerHTML={{ __html: markdownRenderer(comment.body) }}
+                    sx={{
+                        'img': {
+                            width: '100%',
+                            height: 'auto',
+                            objectFit: 'contain',
+                            marginTop: '0.5rem',
+                            marginBottom: '0.5rem',
+                        },
+                        '.gif, .giphy-embed': {
+                            width: '100%',
+                            height: 'auto',
+                        },
+                        'iframe': {
+                            width: '100%',
+                            maxWidth: '100%',
+                        }
+                    }}
+                />
                 {showSlider ? (
                     <Flex mt={4} alignItems="center">
                         <Box width="100%" mr={2}>
