@@ -1,6 +1,6 @@
 'use client';
 
-import { Container, Flex } from '@chakra-ui/react';
+import { Container, Flex, Box } from '@chakra-ui/react';
 import TweetList from '@/components/homepage/TweetList';
 import RightSidebar from '@/components/layout/RightSideBar';
 import { useState } from 'react';
@@ -34,7 +34,7 @@ export default function Home() {
         maxW={{ base: '100%', md: '720px' }}
         h="100vh"
         overflowY="auto"
-        pr={2}
+        p={0}
         pt={2}
         position={"sticky"}
         top={0}
@@ -66,7 +66,11 @@ export default function Home() {
           <Conversation comment={conversation} setConversation={setConversation} onOpen={onOpen} setReply={setReply} />
         )}
       </Container>
-      <RightSidebar />
+
+      {/* Changed: Wrap RightSidebar in a Box displayed only on mobile */}
+      <Box display={{ base: 'none', md: 'block', lg: 'block' }}>
+        <RightSidebar />
+      </Box>
       {isOpen && <TweetReplyModal isOpen={isOpen} onClose={onClose} comment={reply} onNewReply={handleNewComment} />}
     </Flex>
   );
