@@ -5,6 +5,14 @@ const hackerTheme = extendTheme({
     config: {
         usesHeader: true,
         usesSidebar: false,
+        initialColorMode: 'dark',
+        useSystemColorMode: false,
+    },
+    semanticTokens: {
+        colors: {
+            _colorScheme: { _light: 'green', _dark: 'green' },
+            _colorMode: 'dark',
+        },
     },
     initialColorMode: 'dark', // set 'light' or 'dark' as the default color mode
     useSystemColorMode: false,

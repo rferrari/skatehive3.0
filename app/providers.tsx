@@ -14,7 +14,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     aioha.registerLedger();
     aioha.registerPeakVault();
     aioha.registerHiveAuth({
-      name: process.env.NEXT_PUBLIC_COMMUNITY_NAME || 'MyCommunity',
+      name: process.env.NEXT_PUBLIC_COMMUNITY_NAME || 'skatehive',
       description: '',
     });
     aioha.loadAuth();
