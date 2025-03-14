@@ -31,7 +31,7 @@ export default function PostDetails({ post }: PostDetailsProps) {
 
     return (
         <Box border="tb1" borderRadius="base" overflow="hidden" bg="muted" mb={3} p={4} w="100%">
-            <Flex justifyContent="space-between" alignItems="center" mb={4}>
+            <Flex justifyContent="space-between" alignItems="center" mb={4} flexWrap="nowrap">
                 <Flex alignItems="center" flexShrink={0}>
                     <Avatar size="sm" name={author} src={`https://images.hive.blog/u/${author}/avatar/sm`} />
                     <Box ml={3} whiteSpace="nowrap">
@@ -43,10 +43,12 @@ export default function PostDetails({ post }: PostDetailsProps) {
                         </Text>
                     </Box>
                 </Flex>
-                <Divider orientation="vertical" h="34px" borderColor="color" mx={1} />
-                <Text fontSize={["md", "lg", "xl"]} fontWeight="bold" mb={4} textAlign="center">
-                    {title}
-                </Text>
+                <Divider orientation="vertical" h="34px" borderColor="color" mx={4} display={["none", "block"]} />
+                <Box flexGrow={1} ml={4} textAlign="start" minWidth={0}>
+                    <Text fontSize="lg" fontWeight="bold" >
+                        {title}
+                    </Text>
+                </Box>
             </Flex>
             <Divider />
             <Box mt={4} dangerouslySetInnerHTML={{ __html: markdownRenderer(body) }} />
