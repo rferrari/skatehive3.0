@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { fetchNewNotifications } from '@/lib/hive/client-functions';
+import { fetchNewNotifications, getLastReadNotificationDate } from '@/lib/hive/client-functions';
 import { Box, Text, Stack, Spinner, Button, HStack, Tabs, TabList, TabPanels, Tab, TabPanel } from '@chakra-ui/react';
 import { useAioha } from '@aioha/react-ui';
 import { KeyTypes } from '@aioha/aioha';
@@ -14,6 +14,7 @@ export default function NotificationsComp({ username }: NotificationCompProps) {
   const { user, aioha } = useAioha();
   const [notifications, setNotifications] = useState<Notifications[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true); // Add isLoading state
+  const [lastReadDate, setLastReadDate] = useState<string>('1970-01-01T00:00:00Z'); // Add lastReadDate state
 
   useEffect(() => {
     const loadNotifications = async () => {
@@ -21,7 +22,16 @@ export default function NotificationsComp({ username }: NotificationCompProps) {
         try {
           setIsLoading(true);
           const newNotifications = await fetchNewNotifications(username);
+          const lastRead = await getLastReadNotificationDate(username); // Fetch last read date
+
+          // DEBUG: log fetched notifications and last read date
+          console.log("NotificationsComp Debug:", {
+            newNotifications,
+            lastReadDate: lastRead
+          });
+
           setNotifications(newNotifications);
+          setLastReadDate(lastRead); // Set last read date
         } catch (error) {
           console.error("Failed to fetch notifications:", error);
         } finally {
@@ -87,7 +97,7 @@ export default function NotificationsComp({ username }: NotificationCompProps) {
               <TabPanel key={type}>
                 <Stack spacing={4} w="full">
                   {groupedNotifications[type].map(notification => (
-                    <NotificationItem key={notification.id} notification={notification} />
+                    <NotificationItem key={notification.id} notification={notification} lastReadDate={lastReadDate} /> // Pass lastReadDate to NotificationItem
                   ))}
                 </Stack>
               </TabPanel>
