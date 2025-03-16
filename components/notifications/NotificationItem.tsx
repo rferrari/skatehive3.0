@@ -1,14 +1,13 @@
 import { Box, Avatar, Text, HStack, IconButton, Link } from '@chakra-ui/react';
-import { ExternalLinkIcon } from '@chakra-ui/icons'; // Import the external link icon
+import { ExternalLinkIcon } from '@chakra-ui/icons';
 import { Notifications } from '@hiveio/dhive';
 
 interface NotificationItemProps {
   notification: Notifications;
-  lastReadDate: string; // Add lastReadDate prop
+  lastReadDate: string;
 }
 
 export default function NotificationItem({ notification, lastReadDate }: NotificationItemProps) {
-
   const author = notification.msg.trim().split(' ')[0].slice(1);
 
   const formattedDate = new Date(notification.date + 'Z').toLocaleString('en-US', {
@@ -18,7 +17,7 @@ export default function NotificationItem({ notification, lastReadDate }: Notific
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
-    hour12: false, // 24-hour format
+    hour12: false,
   });
 
   const notificationDateStr = notification.date.endsWith("Z") ? notification.date : `${notification.date}Z`;
@@ -26,29 +25,21 @@ export default function NotificationItem({ notification, lastReadDate }: Notific
   const lastRead = new Date(lastReadDate);
   const isNew = notificationDate > lastRead;
 
-  // DEBUG: log detailed date comparison info
-  console.log("NotificationItem Debug:", {
-    notificationDateStr,
-    notificationDate: notificationDate.toISOString(),
-    lastReadDate: lastRead.toISOString(),
-    isNew
-  });
-
   return (
     <HStack
       spacing={4}
       p={4}
-      border="tb1"
+      border={isNew ? 'tb2' : 'tb1'}
       borderRadius="base"
-      bg={isNew ? "yellow" : "white"} // Unread notifications get highlighted
+      bg="muted"
       w="full"
       align="stretch"
     >
       <Avatar src={`https://images.hive.blog/u/${author}/avatar/sm`} name='' />
       <Box flex="1">
-        <Text fontWeight="semibold">{author}</Text>
-        <Text>{notification.msg}</Text>
-        <Text fontSize="sm">
+        <Text fontWeight="semibold" color={isNew ? 'accent' : 'primary'}>{author}</Text>
+        <Text color={isNew ? 'accent' : 'primary'}>{notification.msg}</Text>
+        <Text fontSize="sm" color={isNew ? 'accent' : 'primary'}>
           {formattedDate}
         </Text>
       </Box>
@@ -60,7 +51,8 @@ export default function NotificationItem({ notification, lastReadDate }: Notific
             variant="ghost"
             size="lg"
             isRound
-            alignSelf="center" // Center the icon vertically
+            alignSelf="center"
+            color={isNew ? 'accent' : 'primary'}
           />
         </Link>
       )}

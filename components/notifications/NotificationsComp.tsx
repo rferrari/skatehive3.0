@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { fetchNewNotifications, getLastReadNotificationDate } from '@/lib/hive/client-functions';
-import { Box, Text, Stack, Spinner, Button, HStack, Tabs, TabList, TabPanels, Tab, TabPanel } from '@chakra-ui/react';
+import { Box, Text, Stack, Spinner, Button, HStack, Tabs, TabList, TabPanels, Tab, TabPanel, Center } from '@chakra-ui/react';
 import { useAioha } from '@aioha/react-ui';
 import { KeyTypes } from '@aioha/aioha';
 import { Notifications } from '@hiveio/dhive';
@@ -86,12 +86,14 @@ export default function NotificationsComp({ username }: NotificationCompProps) {
       {isLoading ? (
         <Spinner size="lg" />
       ) : notifications.length > 0 ? (
-        <Tabs>
-          <TabList>
-            {Object.keys(groupedNotifications).map(type => (
-              <Tab key={type}>{type}</Tab>
-            ))}
-          </TabList>
+        <Tabs colorScheme="accent">
+          <Center>
+            <TabList>
+              {Object.keys(groupedNotifications).map(type => (
+                <Tab key={type}>{type}</Tab>
+              ))}
+            </TabList>
+          </Center>
           <TabPanels>
             {Object.keys(groupedNotifications).map(type => (
               <TabPanel key={type}>
