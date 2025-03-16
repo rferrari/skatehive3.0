@@ -1,6 +1,8 @@
 import { DefaultRenderer } from "@hiveio/content-renderer";
 
 export default function markdownRenderer(markdown: string) {
+    // Return early if the markdown is empty
+    if (!markdown || markdown.trim() === "") return "";
 
     // Pre-process markdown to transform IPFS video links before rendering
     const preprocessedMarkdown = preProcessIpfsContent(markdown);
