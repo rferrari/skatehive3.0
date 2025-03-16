@@ -44,7 +44,7 @@ export default function NotificationItem({ notification, lastReadDate }: Notific
         </Text>
       </Box>
       {notification.url && (
-        <Link href={'/' + notification.url}>
+        <Link href={'/' + notification.url} isExternal>
           <IconButton
             aria-label="Open notification"
             icon={<ExternalLinkIcon />}
@@ -55,6 +55,7 @@ export default function NotificationItem({ notification, lastReadDate }: Notific
             color={isNew ? 'accent' : 'primary'}
           />
         </Link>
+
       )}
     </HStack>
   );
