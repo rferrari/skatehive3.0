@@ -1,7 +1,7 @@
 import { Box, Avatar, Text, HStack, IconButton, Link, Image, VStack, Divider, Button, Skeleton } from '@chakra-ui/react';
 import { ExternalLinkIcon } from '@chakra-ui/icons';
 import { Discussion, Notifications } from '@hiveio/dhive';
-import { FaComment, FaEye, FaReply } from 'react-icons/fa6';
+import { FaComment, FaEye, FaHeart, FaReply } from 'react-icons/fa6';
 import { useState, useEffect, useRef } from 'react';
 import { getPost, checkFollow, changeFollow } from '../../lib/hive/client-functions';
 import markdownRenderer from '@/lib/utils/MarkdownRenderer';
@@ -56,13 +56,20 @@ export default function NotificationItem({ notification, lastReadDate, currentUs
         postCache.current[replyKey] = post;
       }
       setReply(post);
+
+      // Set the post content regardless of type
+      setPostContent(post.body || 'No content available');
+
       if (
         notification.type === 'reply' ||
         notification.type === 'reply_comment' ||
         notification.type === 'mention' ||
-        notification.type === 'vote'
+        notification.type === 'vote' ||
+        notification.type === 'reblog'
       ) {
+        // Check if it's a comment (has parent_author) or a root post
         if (post.parent_author && post.parent_permlink) {
+          // It's a comment - fetch its parent
           const parentKey = `${post.parent_author}_${post.parent_permlink}`;
           let parentPostData: Discussion;
           if (postCache.current[parentKey]) {
@@ -72,20 +79,45 @@ export default function NotificationItem({ notification, lastReadDate, currentUs
             postCache.current[parentKey] = parentPostData;
           }
           setParentPost(parentPostData);
-          const post_metadata = parentPostData ? JSON.parse(parentPostData.json_metadata) : {};
-          if (post_metadata.image) {
-            setMagPostThumbnail(post_metadata.image[0]);
-          } else {
+          console.log("Fetched parent post:", parentPostData);
+
+          // Get metadata from parent post
+          try {
+            const post_metadata = parentPostData && parentPostData.json_metadata ?
+              JSON.parse(parentPostData.json_metadata) : {};
+            if (post_metadata && post_metadata.image && post_metadata.image.length > 0) {
+              setMagPostThumbnail(post_metadata.image[0]);
+              setOriginalApp(post_metadata.app || '');
+            } else {
+              setMagPostThumbnail('https://images.hive.blog/u/' + post.author + '/avatar');
+            }
+          } catch (err) {
+            console.error("Error parsing parent post metadata:", err);
             setMagPostThumbnail('https://images.hive.blog/u/' + post.author + '/avatar');
           }
-          if (post_metadata.app) {
-            setOriginalApp(post_metadata.app);
+        } else {
+          // It's a root post - use the post itself as "parent"
+          setParentPost(post);
+          console.log("Using root post as parent:", post);
+
+          // Get metadata from the post itself
+          try {
+            const post_metadata = post.json_metadata ? JSON.parse(post.json_metadata) : {};
+            if (post_metadata && post_metadata.image && post_metadata.image.length > 0) {
+              setMagPostThumbnail(post_metadata.image[0]);
+              setOriginalApp(post_metadata.app || '');
+            } else {
+              setMagPostThumbnail('https://images.hive.blog/u/' + post.author + '/avatar');
+            }
+          } catch (err) {
+            console.error("Error parsing post metadata:", err);
+            setMagPostThumbnail('https://images.hive.blog/u/' + post.author + '/avatar');
           }
         }
       }
-      setPostContent(post.body || 'No content available');
     } catch (error) {
       setPostContent('Error loading content');
+      console.error("Error in fetchCommentContent:", error);
     } finally {
       setIsLoading(false);
     }
@@ -121,7 +153,7 @@ export default function NotificationItem({ notification, lastReadDate, currentUs
 
   // Use IntersectionObserver to lazy load comment/parent content when visible
   useEffect(() => {
-    if (["reply", "reply_comment", "mention", "vote"].includes(notification.type) && containerRef.current) {
+    if (["reply", "reply_comment", "mention", "vote", "reblog"].includes(notification.type) && containerRef.current) {
       const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
           if (entry.isIntersecting) {
@@ -175,29 +207,35 @@ export default function NotificationItem({ notification, lastReadDate, currentUs
                 )}
               </HStack>
             ) : (
-              <Text color={isNew ? 'accent' : 'primary'} fontSize="sm">
-                {notification.msg.replace(/^@/, '')} - {parentPost?.title}
+              <Text color={isNew ? 'accent' : 'primary'} fontSize="sm" noOfLines={2} overflow="hidden" textOverflow="ellipsis">
+                {notification.msg.replace(/^@/, '')} - {parentPost?.title} {notification.type !== "vote" ? "using " + originalApp : ""}
               </Text>
             )}
           </HStack>
           {parentPost && (
             <>
               <Divider my={2} />
-              <VStack align="start" spacing={2}>
+              <VStack align="start" spacing={2} w="100%">
                 {isLoading ? (
                   <>
                     <Skeleton height="20px" width="100%" />
                     <Skeleton height="20px" width="100%" />
                   </>
                 ) : (
-                  <Text fontSize="sm" color="primary" ml={5}>
-                    {postContent}
-                  </Text>
+                  <>
+
+                    {/* Only show post content for non-reblog notifications */}
+                    {notification.type !== 'reblog' && (
+                      <Text fontSize="sm" color="primary" ml={5} noOfLines={3} overflow="hidden" textOverflow="ellipsis" w="90%" wordBreak="break-word">
+                        {postContent}
+                      </Text>
+                    )}
+                  </>
                 )}
               </VStack>
             </>
           )}
-          <HStack spacing={2} mt={2} justifyContent={'flex-end'}>
+          <HStack spacing={2} mt={2} justifyContent={'flex-start'}>
             <Text fontSize="xs" color={isNew ? 'accent' : 'primary'} mt={1}>
               {formattedDate}
             </Text>
@@ -213,14 +251,26 @@ export default function NotificationItem({ notification, lastReadDate, currentUs
               />
             </Link>
             {(notification.type === 'reply' || notification.type === 'reply_comment') && (
-              <Text
-                onClick={handleReplyClick}
-                fontSize="sm"
-                cursor="pointer"
-              >
-                Reply
-              </Text>
+              <HStack>
+                <Text
+                  onClick={handleReplyClick}
+                  fontSize="sm"
+                  cursor="pointer"
+                >
+                  Reply
+                </Text>
+                <IconButton
+                  aria-label="Like"
+                  icon={<FaHeart />}
+                  variant="ghost"
+                  size="sm"
+                  isRound
+                  alignSelf="center"
+                  color={isNew ? 'accent' : 'primary'}
+                />
+              </HStack>
             )}
+
           </HStack>
         </Box>
         {notification.type === 'reply' && magPostThumbnail && (

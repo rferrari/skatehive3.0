@@ -90,7 +90,7 @@ export default function TweetComposer({ pa, pp, onNewComment, post = false, onCl
                 const hashtags = extractHashtags(commentBody);
                 snapsTags = [...new Set([...snapsTags, ...hashtags])]; // Add hashtags without duplicates
 
-                const commentResponse = await aioha.comment(pa, pp, permlink, '', commentBody, { app: 'mycommunity', tags: snapsTags, images: validUrls });
+                const commentResponse = await aioha.comment(pa, pp, permlink, '', commentBody, { app: 'Skatehive App 3.0', tags: snapsTags, images: validUrls });
                 if (commentResponse.success) {
                     postBodyRef.current!.value = '';
                     setImages([]);

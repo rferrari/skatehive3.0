@@ -32,7 +32,7 @@ export default function Composer() {
 
   async function handleSubmit() {
     const permlink = title.replaceAll(" ", "-")
-    await aioha.comment(null, communityTag, permlink, title, markdown, { tags: hashtags, app: 'mycommunity' });
+    await aioha.comment(null, communityTag, permlink, title, markdown, { tags: hashtags, app: 'Skatehive App 3.0' });
   }
 
   return (
