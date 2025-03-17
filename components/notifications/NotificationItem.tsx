@@ -1,10 +1,9 @@
 import { Box, Avatar, Text, HStack, IconButton, Link, Image, VStack, Divider, Button, Skeleton } from '@chakra-ui/react';
 import { ExternalLinkIcon } from '@chakra-ui/icons';
 import { Discussion, Notifications } from '@hiveio/dhive';
-import { FaComment, FaEye, FaHeart, FaReply } from 'react-icons/fa6';
+import { FaHeart, FaRegHeart } from 'react-icons/fa';
 import { useState, useEffect, useRef } from 'react';
-import { getPost, checkFollow, changeFollow } from '../../lib/hive/client-functions';
-import markdownRenderer from '@/lib/utils/MarkdownRenderer';
+import { getPost, checkFollow, changeFollow, vote } from '../../lib/hive/client-functions';
 import TweetComposer from '../homepage/TweetComposer';
 
 interface NotificationItemProps {
@@ -18,6 +17,8 @@ export default function NotificationItem({ notification, lastReadDate, currentUs
   const [displayCommentPrompt, setDisplayCommentPrompt] = useState<boolean>(false);
   const [postContent, setPostContent] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [hasVoted, setHasVoted] = useState<boolean>(false);
+  const [isVoting, setIsVoting] = useState<boolean>(false);
   const formattedDate = new Date(notification.date + 'Z').toLocaleString('en-US', {
     year: 'numeric',
     month: '2-digit',
@@ -56,6 +57,9 @@ export default function NotificationItem({ notification, lastReadDate, currentUs
         postCache.current[replyKey] = post;
       }
       setReply(post);
+
+      // Check if user has voted on this post
+      setHasVoted(checkIfUserVoted(post));
 
       // Set the post content regardless of type
       setPostContent(post.body || 'No content available');
@@ -181,6 +185,43 @@ export default function NotificationItem({ notification, lastReadDate, currentUs
     setIsFollowingBack(true);
   }
 
+  // Add helper to check if user has voted on the reply
+  const checkIfUserVoted = (post: Discussion | null) => {
+    if (!post || !post.active_votes || !currentUser) return false;
+
+    return post.active_votes.some(
+      (vote) => vote.voter === currentUser
+    );
+  };
+
+  // Handle upvote function
+  const handleUpvote = async () => {
+    if (!reply || !currentUser || isVoting) return;
+
+    try {
+      setIsVoting(true);
+
+      const voteResult = await vote({
+        username: currentUser,
+        author: reply.author,
+        permlink: reply.permlink,
+        weight: hasVoted ? 0 : 10000 // Toggle between vote and unvote
+      });
+
+      if (voteResult && voteResult.success) {
+        setHasVoted(!hasVoted);
+
+        // Refresh the post to get updated vote data
+        const updatedPost = await getPost(reply.author, reply.permlink);
+        setReply(updatedPost);
+      }
+    } catch (error) {
+      console.error("Voting error:", error);
+    } finally {
+      setIsVoting(false);
+    }
+  };
+
   return (
     <div ref={containerRef}>
       <HStack
@@ -208,7 +249,8 @@ export default function NotificationItem({ notification, lastReadDate, currentUs
               </HStack>
             ) : (
               <Text color={isNew ? 'accent' : 'primary'} fontSize="sm" noOfLines={2} overflow="hidden" textOverflow="ellipsis">
-                {notification.msg.replace(/^@/, '')} - {parentPost?.title} {notification.type !== "vote" ? "using " + originalApp : ""}
+                {notification.msg.replace(/^@/, '')} - {parentPost?.title}
+                {(notification.type === "reply" || notification.type === "reply_comment") && ` using ${originalApp}`}
               </Text>
             )}
           </HStack>
@@ -260,13 +302,15 @@ export default function NotificationItem({ notification, lastReadDate, currentUs
                   Reply
                 </Text>
                 <IconButton
-                  aria-label="Like"
-                  icon={<FaHeart />}
+                  aria-label={hasVoted ? "Unlike" : "Like"}
+                  icon={hasVoted ? <FaHeart /> : <FaRegHeart />}
                   variant="ghost"
                   size="sm"
                   isRound
                   alignSelf="center"
-                  color={isNew ? 'accent' : 'primary'}
+                  color={hasVoted ? "red.500" : (isNew ? 'accent' : 'primary')}
+                  onClick={handleUpvote}
+                  isLoading={isVoting}
                 />
               </HStack>
             )}

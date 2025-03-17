@@ -59,14 +59,14 @@ export default function NotificationsComp({ username }: NotificationCompProps) {
   }, {} as Record<string, Notifications[]>);
 
   return (
-    <Box p={2} w="full" maxH={"100vh"} overflowY="auto" sx={{
+    <Box p={0} w="full" maxH={"100vh"} overflowY="auto" sx={{
       '&::-webkit-scrollbar': {
         display: 'none',
       },
       scrollbarWidth: 'none',
     }}>
       <HStack mb={4} spacing={4} align="center" justify="space-between">
-        <Text fontSize="2xl" fontWeight="bold">
+        <Text ml={1} fontSize="2xl" fontWeight="bold">
           Notifications
         </Text>
         {(user == username) && (
