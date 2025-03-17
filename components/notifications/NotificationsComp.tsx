@@ -24,12 +24,6 @@ export default function NotificationsComp({ username }: NotificationCompProps) {
           const newNotifications = await fetchNewNotifications(username);
           const lastRead = await getLastReadNotificationDate(username); // Fetch last read date
 
-          // DEBUG: log fetched notifications and last read date
-          console.log("NotificationsComp Debug:", {
-            newNotifications,
-            lastReadDate: lastRead
-          });
-
           setNotifications(newNotifications);
           setLastReadDate(lastRead); // Set last read date
         } catch (error) {
@@ -54,7 +48,6 @@ export default function NotificationsComp({ username }: NotificationCompProps) {
         json: json,
       }]
     ], KeyTypes.Posting)
-    console.log("Mark as Read clicked", result);
   };
 
   const groupedNotifications = notifications.reduce((acc, notification) => {
@@ -65,7 +58,6 @@ export default function NotificationsComp({ username }: NotificationCompProps) {
     return acc;
   }, {} as Record<string, Notifications[]>);
 
-  console.log("notifications", notifications)
   return (
     <Box p={4} w="full" maxH={"100vh"} overflowY="auto" sx={{
       '&::-webkit-scrollbar': {

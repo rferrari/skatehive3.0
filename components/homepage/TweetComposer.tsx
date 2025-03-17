@@ -18,7 +18,7 @@ interface TweetComposerProps {
     onClose: () => void;
 }
 
-export default function TweetComposer ({ pa, pp, onNewComment, post = false, onClose }: TweetComposerProps) {
+export default function TweetComposer({ pa, pp, onNewComment, post = false, onClose }: TweetComposerProps) {
     const { user, aioha } = useAioha();
     const postBodyRef = useRef<HTMLTextAreaElement>(null);
     const [images, setImages] = useState<File[]>([]);
@@ -52,7 +52,7 @@ export default function TweetComposer ({ pa, pp, onNewComment, post = false, onC
             .replace(/[^a-zA-Z0-9]/g, "")
             .toLowerCase();
 
-        let validUrls: string[] = [];    
+        let validUrls: string[] = [];
         if (images.length > 0) {
             const uploadedImages = await Promise.all(images.map(async (image, index) => {
                 const signature = await getFileSignature(image);
@@ -81,7 +81,7 @@ export default function TweetComposer ({ pa, pp, onNewComment, post = false, onC
             let snapsTags: string[] = [];
             try {
                 // Add existing `snaps` tag logic
-                if (pp === "snaps") { 
+                if (pp === "snaps") {
                     pp = (await getLastSnapsContainer()).permlink;
                     snapsTags = [process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || "", "snaps"];
                 }
@@ -97,14 +97,14 @@ export default function TweetComposer ({ pa, pp, onNewComment, post = false, onC
                     setSelectedGif(null);
 
                     const newComment: Partial<Comment> = {
-                        author: user, 
+                        author: user,
                         permlink: permlink,
                         body: commentBody,
                     };
 
-                    onNewComment(newComment); 
+                    onNewComment(newComment);
                     onClose();
-                    
+
                 }
             } finally {
                 setIsLoading(false);
@@ -123,7 +123,7 @@ export default function TweetComposer ({ pa, pp, onNewComment, post = false, onC
     return (
         <Box bg="muted" p={4} mb={1} borderRadius="base" border="tb1">
             <Textarea
-                placeholder="What's happening?"
+                placeholder="Write here"
                 bg="background"
                 border="tb1"
                 borderRadius={'base'}
