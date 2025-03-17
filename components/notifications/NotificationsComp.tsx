@@ -59,7 +59,7 @@ export default function NotificationsComp({ username }: NotificationCompProps) {
   }, {} as Record<string, Notifications[]>);
 
   return (
-    <Box p={4} w="full" maxH={"100vh"} overflowY="auto" sx={{
+    <Box p={2} w="full" maxH={"100vh"} overflowY="auto" sx={{
       '&::-webkit-scrollbar': {
         display: 'none',
       },
@@ -78,7 +78,7 @@ export default function NotificationsComp({ username }: NotificationCompProps) {
       {isLoading ? (
         <Spinner size="lg" />
       ) : notifications.length > 0 ? (
-        <Tabs colorScheme="accent">
+        <Tabs colorScheme="accent" isLazy lazyBehavior="keepMounted">
           <Center>
             <TabList>
               {Object.keys(groupedNotifications).map(type => (
@@ -91,7 +91,12 @@ export default function NotificationsComp({ username }: NotificationCompProps) {
               <TabPanel key={type}>
                 <Stack spacing={4} w="full">
                   {groupedNotifications[type].map(notification => (
-                    <NotificationItem key={notification.id} notification={notification} lastReadDate={lastReadDate} /> // Pass lastReadDate to NotificationItem
+                    <NotificationItem
+                      key={notification.id}
+                      notification={notification}
+                      lastReadDate={lastReadDate}
+                      currentUser={username} // added missing prop
+                    />
                   ))}
                 </Stack>
               </TabPanel>
