@@ -71,8 +71,8 @@ export default function FooterNavigation() {
                                 _hover={{ bg: "muted" }}
                             />
                             <MenuList bg="secondary" borderColor="tb1">
-                                <MenuItem onClick={() => handleNavigation("/@" + user)} _hover={{ bg: "muted" }} icon={<Icon as={FiUser} boxSize={4} />}>Go to Profile</MenuItem>
-                                <MenuItem onClick={() => setModalDisplayed(true)} _hover={{ bg: "muted" }} icon={<Icon as={FiUser} boxSize={4} />}>Log out</MenuItem>
+                                <MenuItem bg="secondary" onClick={() => handleNavigation("/@" + user)} _hover={{ bg: "muted" }} icon={<Icon as={FiUser} boxSize={4} />}>Go to Profile</MenuItem>
+                                <MenuItem bg="secondary" onClick={() => setModalDisplayed(true)} _hover={{ bg: "muted" }} icon={<Icon as={FiUser} boxSize={4} />}>Log out</MenuItem>
                             </MenuList>
                         </Menu>
                     </Tooltip>
