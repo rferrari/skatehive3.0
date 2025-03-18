@@ -1,9 +1,7 @@
-'use client'
-import { Box, Container, Flex } from '@chakra-ui/react';
 import { VT323 } from 'next/font/google';
-import Sidebar from '@/components/layout/Sidebar';
-import FooterNavigation from '@/components/layout/FooterNavigation';
-import { Providers } from './providers';
+import { metadata } from './layoutMetadata';
+import RootLayoutClient from './RootLayoutClient';
+import './globals.css';
 
 // Initialize the VT323 font
 const vt323 = VT323({
@@ -13,22 +11,14 @@ const vt323 = VT323({
   variable: '--font-vt323',
 });
 
+// Export the metadata for Next.js to use
+export { metadata };
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${vt323.variable}`}>
       <body>
-        <Providers>
-          <Container maxW={{ base: '100%', md: 'container.xl' }} p={0}>
-            {/* <Header /> */}
-            <Flex direction={{ base: 'column', md: 'row' }} minH="100vh">
-              <Sidebar />
-              <Box flex="1">
-                {children}
-              </Box>
-            </Flex>
-            <FooterNavigation />
-          </Container>
-        </Providers>
+        <RootLayoutClient>{children}</RootLayoutClient>
       </body>
     </html>
   );
