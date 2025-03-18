@@ -85,7 +85,11 @@ export default function PostCard({ post }: PostCardProps) {
     }
 
     // Handle card click - simplified to just call viewPost
-    function handleCardClick() {
+    function handleCardClick(e: React.MouseEvent) {
+        // Check if the click event originated from the Swiper navigation arrows
+        if ((e.target as HTMLElement).closest('.swiper-button-next') || (e.target as HTMLElement).closest('.swiper-button-prev')) {
+            return; // Prevent navigation
+        }
         viewPost();
     }
 
@@ -106,182 +110,198 @@ export default function PostCard({ post }: PostCardProps) {
     }
 
     return (
-        <Box
-            boxShadow={'lg'}
-            border="tb1"
-            borderRadius="base"
-            overflow="hidden"
-            bg="muted"
-            p={4}
-            display="flex"
-            flexDirection="column"
-            justifyContent="space-between"
-            height="100%"
-            onClick={handleCardClick}
-            cursor="pointer"
-            _hover={{ boxShadow: 'xl' }}
-            position="relative" // Add position relative to help with event handling
-        >
-            {/* Remove onClick={stopPropagation} from the outer flex */}
-            <Flex justifyContent="space-between" alignItems="center">
-                <Flex alignItems="center">
-                    <Avatar size="sm" name={author} src={`https://images.hive.blog/u/${author}/avatar/sm`} />
-                    <Box ml={3}>
-                        <Text fontWeight="medium" fontSize="sm">
-                            <Link href={`/@${author}`} onClick={stopPropagation}>@{author}</Link>
-                        </Text>
-                        <Text fontSize="sm" color="primary">
-                            {postDate}
-                        </Text>
-                    </Box>
-                </Flex>
-            </Flex>
-            <Text
-                fontWeight="bold"
-                fontSize="lg"
-                textAlign="left"
-                mb={2}
-                isTruncated
+        <>
+            <style jsx global>{`
+                .custom-swiper {
+                    --swiper-navigation-color: var(--chakra-colors-primary);
+                    --swiper-pagination-color: var(--chakra-colors-primary);
+                }
+
+                .custom-swiper .swiper-button-next::after,
+                .custom-swiper .swiper-button-prev::after {
+                    font-size: 20px;
+                }
+
+                .custom-swiper .swiper-pagination-bullet {
+                    width: 6px;
+                    height: 6px;
+                    border-radius: 0; /* Make the dots squared */
+                }
+            `}</style>
+            <Box
+                boxShadow={'lg'}
+                border="tb1"
+                borderRadius="base"
+                overflow="hidden"
+                bg="muted"
+                p={4}
+                display="flex"
+                flexDirection="column"
+                justifyContent="space-between"
+                height="100%"
+                cursor="pointer"
+                _hover={{ boxShadow: 'xl' }}
+                position="relative" // Add position relative to help with event handling
             >
-                {title}
-            </Text>
-
-            {/* Only stop propagation on truly interactive elements, not the container */}
-            <Box flex="1" display="flex" alignItems="flex-end" justifyContent="center">
-                {imageUrls.length > 0 ? (
-                    <Swiper
-                        spaceBetween={10}
-                        slidesPerView={1}
-                        pagination={{ clickable: true }}
-                        navigation={true}
-                        modules={[Navigation, Pagination]}
-                        onSlideChange={handleSlideChange}
-                    // Remove the onClick={stopPropagation} prop as it causes type errors
-                    >
-                        {imageUrls.slice(0, visibleImages).map((url, index) => (
-                            // Add the stopPropagation to each SwiperSlide instead
-                            <SwiperSlide key={index} onClick={stopPropagation}>
-                                <Box h="200px" w="100%">
-                                    <Image
-                                        src={url}
-                                        alt={title}
-                                        borderRadius="base"
-                                        objectFit="cover"
-                                        w="100%"
-                                        h="100%"
-                                        loading="lazy"
-                                        onError={handleImageError}
-                                    />
-                                </Box>
-                            </SwiperSlide>
-                        ))}
-                    </Swiper>
-                ) : youtubeLinks.length > 0 ? (
-                    <Swiper
-                        spaceBetween={10}
-                        slidesPerView={1}
-                        pagination={{ clickable: true }}
-                        navigation={true}
-                        modules={[Navigation, Pagination]}
-                    // Remove the onClick={stopPropagation} prop as it causes type errors
-                    >
-                        {youtubeLinks.map((link, index) => (
-                            // Keep the stopPropagation on the SwiperSlide
-                            <SwiperSlide key={index} onClick={stopPropagation}>
-                                <Box h="200px" w="100%">
-                                    <iframe
-                                        src={link.url}
-                                        title={`YouTube video from ${link.domain}`}
-                                        width="100%"
-                                        height="100%"
-                                        frameBorder="0"
-                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                        allowFullScreen
-                                    ></iframe>
-                                </Box>
-                            </SwiperSlide>
-                        ))}
-                    </Swiper>
-                ) : (
-                    <Box h="200px" w="100%">
-                        <Image
-                            src={default_thumbnail}
-                            alt="default thumbnail"
-                            borderRadius="base"
-                            objectFit="cover"
-                            w="100%"
-                            h="100%"
-                            loading="lazy"
-                            onError={handleImageError}
-                        />
-                    </Box>
-                )}
-            </Box>
-
-            {/* Only stop propagation on the vote controls */}
-            <Box mt="auto">
-                {showSlider ? (
-                    <Flex mt={4} alignItems="center" onClick={stopPropagation}>
-                        <Box width="100%" mr={4}>
-                            <Slider
-                                aria-label="slider-ex-1"
-                                defaultValue={0}
-                                min={0}
-                                max={100}
-                                value={sliderValue}
-                                onChange={(val) => setSliderValue(val)}
-                            >
-                                <SliderTrack>
-                                    <SliderFilledTrack />
-                                </SliderTrack>
-                                <SliderThumb cursor="grab" _active={{ cursor: "grabbing" }} />
-                            </Slider>
-                        </Box>
-                        <Button size="xs" onClick={(e) => {
-                            e.stopPropagation();
-                            handleVote();
-                        }} pl={5} pr={5} cursor="pointer">Vote {sliderValue} %</Button>
-                        <Button size="xs" onClick={(e) => {
-                            e.stopPropagation();
-                            handleHeartClick();
-                        }} ml={1} cursor="pointer">X</Button>
-                    </Flex>
-                ) : (
-                    <Flex mt={4} justifyContent="space-between" alignItems="center" onClick={stopPropagation}>
-                        <Flex alignItems="center">
-                            {voted ? (
-                                <Icon
-                                    as={FaHeart}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleHeartClick();
-                                    }}
-                                    cursor="pointer"
-                                />
-                            ) : (
-                                <Icon
-                                    as={FaRegHeart}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleHeartClick();
-                                    }}
-                                    cursor="pointer"
-                                />
-                            )}
-                            <Text ml={2} fontSize="sm">
-                                {post.active_votes.length}
+                <Flex justifyContent="space-between" alignItems="center" onClick={viewPost}>
+                    <Flex alignItems="center">
+                        <Avatar size="sm" name={author} src={`https://images.hive.blog/u/${author}/avatar/sm`} />
+                        <Box ml={3}>
+                            <Text fontWeight="medium" fontSize="sm">
+                                <Link href={`/@${author}`} onClick={stopPropagation}>@{author}</Link>
                             </Text>
-                            <Icon as={FaComment} ml={4} cursor="pointer" />
-                            <Text ml={2} fontSize="sm">
-                                {post.children}
+                            <Text fontSize="sm" color="primary">
+                                {postDate}
+                            </Text>
+                        </Box>
+                    </Flex>
+                </Flex>
+                <Text
+                    fontWeight="bold"
+                    fontSize="lg"
+                    textAlign="left"
+                    mb={2}
+                    isTruncated
+                    onClick={viewPost}
+                >
+                    {title}
+                </Text>
+
+                <Box flex="1" display="flex" alignItems="flex-end" justifyContent="center" zIndex={999}>
+                    {imageUrls.length > 0 ? (
+                        <Swiper
+                            spaceBetween={10}
+                            slidesPerView={1}
+                            pagination={{ clickable: true }}
+                            navigation={true}
+                            modules={[Navigation, Pagination]}
+                            onSlideChange={handleSlideChange}
+                            onClick={handleSwiperClick} // Add this line to handle Swiper clicks
+                            className="custom-swiper"
+                        >
+                            {imageUrls.slice(0, visibleImages).map((url, index) => (
+                                // Add the stopPropagation to each SwiperSlide instead
+                                <SwiperSlide key={index} onClick={stopPropagation}>
+                                    <Box h="200px" w="100%">
+                                        <Image
+                                            src={url}
+                                            alt={title}
+                                            borderRadius="base"
+                                            objectFit="cover"
+                                            w="100%"
+                                            h="100%"
+                                            loading="lazy"
+                                            onError={handleImageError}
+                                        />
+                                    </Box>
+                                </SwiperSlide>
+                            ))}
+                        </Swiper>
+                    ) : youtubeLinks.length > 0 ? (
+                        <Swiper
+                            spaceBetween={10}
+                            slidesPerView={1}
+                            pagination={{ clickable: true }}
+                            navigation={true}
+                            modules={[Navigation, Pagination]}
+                            className="custom-swiper"
+                        >
+                            {youtubeLinks.map((link, index) => (
+                                <SwiperSlide key={index} onClick={stopPropagation}>
+                                    <Box h="200px" w="100%">
+                                        <iframe
+                                            src={link.url}
+                                            title={`YouTube video from ${link.domain}`}
+                                            width="100%"
+                                            height="100%"
+                                            frameBorder="0"
+                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                            allowFullScreen
+                                        ></iframe>
+                                    </Box>
+                                </SwiperSlide>
+                            ))}
+                        </Swiper>
+                    ) : (
+                        <Box h="200px" w="100%">
+                            <Image
+                                src={default_thumbnail}
+                                alt="default thumbnail"
+                                borderRadius="base"
+                                objectFit="cover"
+                                w="100%"
+                                h="100%"
+                                loading="lazy"
+                                onError={handleImageError}
+                            />
+                        </Box>
+                    )}
+                </Box>
+
+                <Box mt="auto">
+                    {showSlider ? (
+                        <Flex mt={4} alignItems="center" onClick={stopPropagation}>
+                            <Box width="100%" mr={4}>
+                                <Slider
+                                    aria-label="slider-ex-1"
+                                    defaultValue={0}
+                                    min={0}
+                                    max={100}
+                                    value={sliderValue}
+                                    onChange={(val) => setSliderValue(val)}
+                                >
+                                    <SliderTrack>
+                                        <SliderFilledTrack />
+                                    </SliderTrack>
+                                    <SliderThumb cursor="grab" _active={{ cursor: "grabbing" }} />
+                                </Slider>
+                            </Box>
+                            <Button size="xs" onClick={(e) => {
+                                e.stopPropagation();
+                                handleVote();
+                            }} pl={5} pr={5} cursor="pointer">Vote {sliderValue} %</Button>
+                            <Button size="xs" onClick={(e) => {
+                                e.stopPropagation();
+                                handleHeartClick();
+                            }} ml={1} cursor="pointer">X</Button>
+                        </Flex>
+                    ) : (
+                        <Flex mt={4} justifyContent="space-between" alignItems="center" onClick={stopPropagation}>
+                            <Flex alignItems="center">
+                                {voted ? (
+                                    <Icon
+                                        as={FaHeart}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleHeartClick();
+                                        }}
+                                        cursor="pointer"
+                                    />
+                                ) : (
+                                    <Icon
+                                        as={FaRegHeart}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleHeartClick();
+                                        }}
+                                        cursor="pointer"
+                                    />
+                                )}
+                                <Text ml={2} fontSize="sm">
+                                    {post.active_votes.length}
+                                </Text>
+                                <Icon as={FaComment} ml={4} cursor="pointer" />
+                                <Text ml={2} fontSize="sm">
+                                    {post.children}
+                                </Text>
+                            </Flex>
+                            <Text fontWeight="bold" fontSize="sm">
+                                ${getPayoutValue(post)}
                             </Text>
                         </Flex>
-                        <Text fontWeight="bold" fontSize="sm">
-                            ${getPayoutValue(post)}
-                        </Text>
-                    </Flex>
-                )}
+                    )}
+                </Box>
             </Box>
-        </Box>
+        </>
     );
 }
