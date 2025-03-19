@@ -51,7 +51,7 @@ export default function PostDetails({ post }: PostDetailsProps) {
                 </Box>
             </Flex>
             <Divider />
-            <Box mt={4} dangerouslySetInnerHTML={{ __html: markdownRenderer(body) }} />
+            <Box maxW={"container.sm"} mt={4} dangerouslySetInnerHTML={{ __html: markdownRenderer(body) }} />
             {showSlider ? (
                 <Flex mt={4} alignItems="center">
                     <Box width="100%" mr={2}>

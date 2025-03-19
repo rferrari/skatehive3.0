@@ -52,7 +52,7 @@ function preProcessIpfsContent(markdown: string): string {
 
 // Transform HTML after markdown rendering to clean up any remaining IPFS video references
 function transformIPFSContent(content: string): string {
-    return content.replace(
+    let transformedContent = content.replace(
         /<iframe.*?src=["'](https:\/\/ipfs\.skatehive\.app\/ipfs\/[a-zA-Z0-9-_?=&]+)["'].*?<\/iframe>/gi,
         (_, videoUrl) => {
             console.log("Transforming iframe to video tag for URL:", videoUrl); // Debug log
@@ -68,6 +68,14 @@ function transformIPFSContent(content: string): string {
             return `https://ipfs.skatehive.app/ipfs/${videoID}`;
         }
     );
+
+    // Center all images by wrapping them in a div with center alignment
+    transformedContent = transformedContent.replace(
+        /<img(.*?)>/gi,
+        '<div style="text-align: center; display: flex; justify-content: center; margin: 1rem 0;"><img$1></div>'
+    );
+
+    return transformedContent;
 }
 
 // Check if the ID references a video file based on its extension
