@@ -62,11 +62,16 @@ const Editor: FC<EditorProps> = ({ markdown, editorRef, setMarkdown }) => {
 
   return (
     <Box
-      className="w-full h-full bg-background"
+      className="w-full h-full bg-background min-h-screen" // Ensure full height
       sx={{
         color: 'primary',
         '& .mdx-editor-content': {
           color: 'primary',
+          backgroundColor: 'rgb(37, 37, 37)',
+          minHeight: '100vh', // Ensure content occupies the full viewport height
+          display: 'flex', // Flexbox for alignment
+          flexDirection: 'column',
+          justifyContent: 'flex-start', // Align content to the top
           '& h1': { fontSize: '4xl' },
           '& h2': { fontSize: '3xl' },
           '& h3': { fontSize: '2xl' },
@@ -86,10 +91,43 @@ const Editor: FC<EditorProps> = ({ markdown, editorRef, setMarkdown }) => {
             textDecoration: 'underline',
           },
         },
+        '& .mdxeditor-toolbar': {
+          backgroundColor: 'primary',
+          color: 'secondary',
+          borderRadius: 'md',
+          padding: 2,
+          '& button': {
+            color: 'background', // Inverted: Use hover color as normal
+            backgroundColor: 'primary', // Inverted: Use hover background as normal
+            border: '1px solid',
+            borderColor: 'secondary',
+            '&:hover': {
+              backgroundColor: 'accent', // Inverted: Use normal background as hover
+              color: 'accent', // Inverted: Use normal color as hover
+            },
+            '&[data-state="on"]': {
+              backgroundColor: 'accent',
+              color: 'background',
+            },
+            '& svg': {
+              fill: 'currentColor', // Ensure SVG icons use the button's text color
+            },
+          },
+          '& ._toolbarToggleItem_uazmk_206': {
+            borderRadius: 'md',
+          },
+          '& ._toolbarToggleSingleGroup_uazmk_222': {
+            display: 'flex',
+            gap: '0.5rem', // Add spacing between buttons
+            '& button': {
+              // Remove individual button styles to ensure uniformity
+            },
+          },
+        },
       }}
     >
       <MDXEditor
-        placeholder="Type your post here..."
+        placeholder="Create your own page of Skatehive Magazine here..."
         contentEditableClassName="mdx-editor-content"
         onChange={handleMarkdownChange}
         ref={editorRef}

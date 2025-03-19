@@ -38,7 +38,7 @@ export default function Composer() {
   return (
     <Flex
       width="100%"
-      height="90%"
+      height="100vh" // Ensure the entire screen height is used
       bgColor="background"
       justify="center"
       p="1"
@@ -56,15 +56,21 @@ export default function Composer() {
 
       {/* Editor */}
       <Flex
-        flex="1"
+        flex="1" // Take up remaining space
         border="1px solid"
         borderColor="black"
         borderRadius="base"
         justify="center"
         p="1"
-        overflow="hidden" // Prevent internal scrolling
+        overflow="hidden" // Prevent internal scrolling of the parent container
       >
-        <Editor markdown={markdown} setMarkdown={setMarkdown} />
+        <Flex
+          width="100%"
+          height="100%" // Ensure the editor fills the container
+          overflow="auto" // Enable scrolling inside the editor
+        >
+          <Editor markdown={markdown} setMarkdown={setMarkdown} />
+        </Flex>
       </Flex>
 
       {/* Hashtag Input */}
