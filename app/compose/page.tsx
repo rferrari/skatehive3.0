@@ -31,8 +31,19 @@ export default function Composer() {
   }
 
   async function handleSubmit() {
-    const permlink = title.replaceAll(" ", "-")
-    await aioha.comment(null, communityTag, permlink, title, markdown, { tags: hashtags, app: 'Skatehive App 3.0' });
+    console.log('Submit button clicked');
+    const permlink = title.replaceAll(" ", "-");
+    console.log('Generated permlink:', permlink);
+    console.log('Submitting post with title:', title);
+    console.log('Markdown content:', markdown);
+    console.log('Hashtags:', hashtags);
+
+    try {
+      await aioha.comment(null, communityTag, permlink, title, markdown, { tags: hashtags, app: 'Skatehive App 3.0' });
+      console.log('Post submitted successfully');
+    } catch (error) {
+      console.error('Failed to submit post:', error);
+    }
   }
 
   return (
