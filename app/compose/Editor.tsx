@@ -1,5 +1,5 @@
 'use client';
-import { FC } from "react";
+import React, { FC, useMemo, useRef, useState } from "react"; // Explicitly import React and useState
 import { getFileSignature, uploadImage } from '@/lib/hive/client-functions';
 import {
   headingsPlugin,
@@ -24,11 +24,11 @@ import {
   codeBlockPlugin,
   toolbarPlugin,
   UndoRedo,
-  BoldItalicUnderlineToggles
+  BoldItalicUnderlineToggles,
+  diffSourcePlugin
 } from '@mdxeditor/editor';
-import { Box, Button, Input } from '@chakra-ui/react';
+import { Box, Button, Input, Skeleton } from '@chakra-ui/react';
 import '@mdxeditor/editor/style.css';
-import { useRef } from 'react';
 
 interface EditorProps {
   markdown: string;
@@ -38,6 +38,7 @@ interface EditorProps {
 
 const Editor: FC<EditorProps> = ({ markdown, editorRef, setMarkdown }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [isLoading, setIsLoading] = useState(false); // Add loading state
 
   async function imageUploadHandler(image: File) {
     const signature = await getFileSignature(image);
@@ -75,31 +76,36 @@ const Editor: FC<EditorProps> = ({ markdown, editorRef, setMarkdown }) => {
     const file = event.target.files?.[0];
     if (file) {
       console.log('File selected for upload:', file.name);
+      setIsLoading(true); // Set loading to true
       try {
         const videoUrl = await videoUploadHandler(file);
         console.log('Video URL generated:', videoUrl);
 
-        // Create a direct video tag
-        const videoTag = `<video width="100%" height="auto" controls>
-  <source src="${videoUrl}" type="video/mp4">
-  Your browser does not support the video tag.
-</video>`;
+        // Insert the video as an iframe
+        const iframeTag = `<iframe src="${videoUrl}" width="100%" height="400" style="border:0;" allowFullScreen></iframe>`;
 
-        // Append the video tag to the markdown
-        setMarkdown((prevMarkdown) => `${prevMarkdown}\n\n${videoTag}`);
+        // Update the markdown with the iframe
+        setMarkdown(`${markdown}\n${iframeTag}`);
+        console.log('Markdown updated with video iframe');
 
-        // Reset the file input
-        if (fileInputRef.current) {
-          fileInputRef.current.value = '';
-        }
-
-        // Force the editor to refresh by toggling the markdown
+        // Force the editor to refresh by temporarily setting a different markdown
+        // and then setting it back to the updated version
         if (editorRef?.current) {
-          const currentMarkdown = `${markdown}\n\n${videoTag}`;
-          editorRef.current.setMarkdown(currentMarkdown);
+          // Store the current markdown
+          const currentMarkdown = `${markdown}\n${iframeTag}`;
+
+          // Set a slightly modified version to force a refresh
+          setMarkdown(currentMarkdown + " ");
+
+          // Set it back to the correct version after a small delay
+          setTimeout(() => {
+            setMarkdown(currentMarkdown);
+          }, 100);
         }
       } catch (error) {
         console.error('Error uploading video:', error);
+      } finally {
+        setIsLoading(false); // Set loading to false
       }
     } else {
       console.warn('No file selected for upload');
@@ -192,63 +198,73 @@ const Editor: FC<EditorProps> = ({ markdown, editorRef, setMarkdown }) => {
         },
       }}
     >
-      <MDXEditor
-        placeholder="Create your own page of Skatehive Magazine here..."
-        contentEditableClassName="mdx-editor-content"
-        onChange={handleMarkdownChange}
-        ref={editorRef}
-        markdown={markdown}
-        // Enable HTML rendering
-        suppressHtmlProcessing={false}
-        plugins={[
-          headingsPlugin(),
-          listsPlugin(),
-          quotePlugin(),
-          thematicBreakPlugin(),
-          markdownShortcutPlugin(),
-          tablePlugin(),
-          linkDialogPlugin(),
-          codeBlockPlugin(),
-          codeMirrorPlugin({ codeBlockLanguages: { js: 'JavaScript', css: 'CSS', txt: 'text', tsx: 'TypeScript' } }),
-          imagePlugin({ imageUploadHandler }),
-          toolbarPlugin({
-            toolbarContents: () => (
-              <>
-                <UndoRedo />
-                <BlockTypeSelect />
-                <BoldItalicUnderlineToggles />
-                <InsertTable />
-                <CodeToggle />
-                <ListsToggle />
-                <CreateLink />
-                <InsertThematicBreak />
-                <InsertImage />
-                <Button
-                  onClick={openFilePicker}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: '0.5rem',
-                  }}
-                  title="Insert Video"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                    <path d="M17 10.5V7c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2v-3.5l4 4v-11l-4 4z"></path>
-                  </svg>
-                </Button>
-                <Input
-                  type="file"
-                  accept="video/*"
-                  ref={fileInputRef}
-                  style={{ display: 'none' }}
-                  onChange={handleVideoUpload}
-                />
-              </>
-            ),
-          }),
-        ]}
-      />
+      {isLoading ? (
+        <Skeleton height="400px" width="100%" />
+      ) : (
+        <MDXEditor
+          placeholder="Create your own page of Skatehive Magazine here..."
+          contentEditableClassName="mdx-editor-content"
+          onChange={handleMarkdownChange}
+          ref={editorRef}
+          autoFocus
+          markdown={markdown}
+          plugins={[
+            headingsPlugin(),
+            listsPlugin(),
+            quotePlugin(),
+            thematicBreakPlugin(),
+            markdownShortcutPlugin(),
+            tablePlugin(),
+            linkDialogPlugin(),
+            codeBlockPlugin(),
+            codeMirrorPlugin({ codeBlockLanguages: { js: 'JavaScript', css: 'CSS', txt: 'text', tsx: 'TypeScript' } }),
+            imagePlugin({ imageUploadHandler }),
+            diffSourcePlugin({
+              diffMarkdown: markdown,
+              viewMode: 'rich-text',
+              readOnlyDiff: false,
+            }),
+            toolbarPlugin({
+              toolbarContents: () => (
+                <>
+                  <DiffSourceToggleWrapper>
+                    <UndoRedo />
+                    <BlockTypeSelect />
+                    <BoldItalicUnderlineToggles />
+                    <InsertTable />
+                    <CodeToggle />
+                    <ListsToggle />
+                    <CreateLink />
+                    <InsertThematicBreak />
+                    <InsertImage />
+                    <Button
+                      onClick={openFilePicker}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: '0.5rem',
+                      }}
+                      title="Insert Video"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                        <path d="M17 10.5V7c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2v-3.5l4 4v-11l-4 4z"></path>
+                      </svg>
+                    </Button>
+                    <Input
+                      type="file"
+                      accept="video/*"
+                      ref={fileInputRef}
+                      style={{ display: 'none' }}
+                      onChange={handleVideoUpload}
+                    />
+                  </DiffSourceToggleWrapper>
+                </>
+              ),
+            }),
+          ]}
+        />
+      )}
     </Box>
   );
 };
