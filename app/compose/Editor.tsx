@@ -81,8 +81,8 @@ const Editor: FC<EditorProps> = ({ markdown, editorRef, setMarkdown }) => {
         const videoUrl = await videoUploadHandler(file);
         console.log('Video URL generated:', videoUrl);
 
-        // Insert the video as an iframe
-        const iframeTag = `<iframe src="${videoUrl}" width="100%" height="400" style="border:0;" allowFullScreen></iframe>`;
+        // Insert the video as an iframe wrapped in a div with zero-width spaces
+        const iframeTag = `<div class="video-embed">&#8203;<iframe src="${videoUrl}" width="100%" height="400" style="border:0;" allowFullScreen></iframe>&#8203;</div>`;
 
         // Update the markdown with the iframe
         setMarkdown(`${markdown}\n${iframeTag}`);
@@ -131,7 +131,7 @@ const Editor: FC<EditorProps> = ({ markdown, editorRef, setMarkdown }) => {
   const handleMarkdownChange = (newMarkdown: string) => {
     const transformedMarkdown = newMarkdown.replace(
       /(https?:\/\/(?:www\.)?(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|[^/]+[?&]v=)|youtu\.be\/)([^"&?/ ]{11}))/g,
-      (match) => `<iframe width="560" height="315" src="${transformYoutubeLink(match)}" frameborder="0" allowfullscreen></iframe>`
+      (match) => `<div class="video-embed">&#8203;<iframe width="560" height="315" src="${transformYoutubeLink(match)}" frameborder="0" allowfullscreen></iframe>&#8203;</div>`
     );
     setMarkdown(transformedMarkdown);
   }
@@ -199,7 +199,7 @@ const Editor: FC<EditorProps> = ({ markdown, editorRef, setMarkdown }) => {
       }}
     >
       {isLoading ? (
-        <Skeleton height="400px" width="100%" />
+        <Skeleton height="100vh" width="100%" />
       ) : (
         <MDXEditor
           placeholder="Create your own page of Skatehive Magazine here..."
