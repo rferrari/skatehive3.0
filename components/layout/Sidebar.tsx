@@ -30,52 +30,52 @@ const communityTag = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG;
 export default function Sidebar() {
     const { user } = useAioha();
     const router = useRouter();
-    const [notifications, setNotifications] = useState<Notifications[]>([]);
-    const [communityInfo, setCommunityInfo] = useState<CommunityInfo | null>(null); // State to hold community info
-    const [profileInfo, setProfileInfo] = useState<ProfileInfo | null>(null); // State to hold profile info
-    const [loading, setLoading] = useState(true); // Loading state
+    // const [notifications, setNotifications] = useState<Notifications[]>([]);
+    // const [communityInfo, setCommunityInfo] = useState<CommunityInfo | null>(null); 
+    // const [profileInfo, setProfileInfo] = useState<ProfileInfo | null>(null); // State to hold profile info
+    // const [loading, setLoading] = useState(true); // Loading state
     const { colorMode } = useColorMode();
     const [modalDisplayed, setModalDisplayed] = useState(false);
 
-    useEffect(() => {
-        const loadNotifications = async () => {
-            if (user) {
-                try {
-                    const newNotifications = await fetchNewNotifications(user);
-                    setNotifications(newNotifications);
-                } catch (error) {
-                    console.error("Failed to fetch notifications:", error);
-                }
-            }
-        };
+    // useEffect(() => {
+    //     const loadNotifications = async () => {
+    //         if (user) {
+    //             try {
+    //                 const newNotifications = await fetchNewNotifications(user);
+    //                 setNotifications(newNotifications);
+    //             } catch (error) {
+    //                 console.error("Failed to fetch notifications:", error);
+    //             }
+    //         }
+    //     };
 
-        loadNotifications();
-    }, [user]);
+    //     loadNotifications();
+    // }, [user]);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            setLoading(true);
-            if (communityTag) {
-                try {
-                    // Fetching community data
-                    const communityData = await getCommunityInfo(communityTag);
-                    sessionStorage.setItem('communityData', JSON.stringify(communityData));
-                    setCommunityInfo(communityData);
+    // useEffect(() => {
+    //     const fetchData = async () => {
+    //         setLoading(true);
+    //         if (communityTag) {
+    //             try {
+    //                 // Fetching community data
+    //                 const communityData = await getCommunityInfo(communityTag);
+    //                 sessionStorage.setItem('communityData', JSON.stringify(communityData));
+    //                 setCommunityInfo(communityData);
 
-                    // Fetching profile data
-                    const profileData = await getProfile(communityTag);
-                    sessionStorage.setItem('profileData', JSON.stringify(profileData));
-                    setProfileInfo(profileData);
-                } catch (error) {
-                    console.error('Failed to fetch data', error);
-                } finally {
-                    setLoading(false);
-                }
-            }
-        };
+    //                 // Fetching profile data
+    //                 const profileData = await getProfile(communityTag);
+    //                 sessionStorage.setItem('profileData', JSON.stringify(profileData));
+    //                 setProfileInfo(profileData);
+    //             } catch (error) {
+    //                 console.error('Failed to fetch data', error);
+    //             } finally {
+    //                 setLoading(false);
+    //             }
+    //         }
+    //     };
 
-        fetchData();
-    }, [communityTag]);
+    //     fetchData();
+    // }, [communityTag]);
 
     const handleNavigation = (path: string) => {
         try {
@@ -91,7 +91,7 @@ export default function Sidebar() {
             as="nav"
             bg="background"
             p={1}
-            w={{ base: 'full', md: '20%' }}
+            w={{ base: 'full', md: '17%' }}
             h={"100vh"}
             display={{ base: 'none', md: 'block' }}
             sx={{
@@ -105,26 +105,15 @@ export default function Sidebar() {
         >
             <Flex direction="column" justify="space-between" height="100%">
                 <VStack spacing={4} align="start" ml={4}>
-                    {loading ? (
-                        <Spinner size="sm" />
-                    ) : (
-                        <>
-                            <Flex align="center" mb={4}>
-                                {profileInfo?.metadata?.profile?.profile_image && (
-                                    <Image
-                                        src={profileInfo.metadata.profile.profile_image}
-                                        alt="Profile Image"
-                                        boxSize="50px"
-                                        borderRadius="full"
-                                        mr={2}
-                                    />
-                                )}
-                                <Text fontSize="lg" fontWeight="bold">{communityInfo?.title}</Text>
-                            </Flex>
-                            {/* <Text fontSize="sm" color="gray.500">{communityInfo?.about}</Text> */}
-                        </>
-                    )}
 
+                    <Image
+                        src="https://www.skatehive.app/SKATE_HIVE_VECTOR_FIN.svg"
+                        alt="Skatehive Logo"
+                        boxSize={12}
+                        mt={1}
+                        w={"80%"}
+                        h={"auto"}
+                    />
                     <Button
                         onClick={() => handleNavigation("/")}
                         variant="ghost"
@@ -154,16 +143,13 @@ export default function Sidebar() {
                                 w="full"
                                 justifyContent="flex-start"
                                 leftIcon={
-                                    notifications.length > 0 ? (
-                                        <motion.div
-                                            animate={{ rotate: [0, 45, 0, -45, 0] }}
-                                            transition={{ duration: 0.6, repeat: Infinity }}
-                                        >
-                                            <Icon as={FiBell} boxSize={4} color="yellow" />
-                                        </motion.div>
-                                    ) : (
-                                        <Icon as={FiBell} boxSize={4} />
-                                    )
+                                    <motion.div
+                                        animate={{ rotate: [0, 45, 0, -45, 0] }}
+                                        transition={{ duration: 0.6, repeat: Infinity }}
+                                    >
+                                        <Icon as={FiBell} boxSize={4} color="yellow" />
+                                    </motion.div>
+
                                 }
                                 px={1}
                             >
