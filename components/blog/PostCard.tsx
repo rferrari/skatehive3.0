@@ -120,18 +120,15 @@ export default function PostCard({ post }: PostCardProps) {
                 }
             `}</style>
             <Box
-                boxShadow={'sm'}
-                border="tb1"
+                border="1px solid rgb(46, 46, 46)"
                 borderRadius="base"
                 overflow="hidden"
-                bg="muted"
                 p={4}
                 display="flex"
                 flexDirection="column"
                 justifyContent="space-between"
                 height="100%"
                 cursor="pointer"
-                _hover={{ boxShadow: 'xl' }}
                 position="relative"
             >
                 <Flex justifyContent="space-between" alignItems="center" onClick={viewPost}>
