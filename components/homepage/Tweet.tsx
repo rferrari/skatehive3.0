@@ -1,4 +1,4 @@
-import { Box, Text, HStack, Button, Avatar, Link, VStack, Flex, Slider, SliderTrack, SliderFilledTrack, SliderThumb } from '@chakra-ui/react';
+import { Box, Text, HStack, Button, Avatar, Link, VStack, Flex, Slider, SliderTrack, SliderFilledTrack, SliderThumb, Menu, MenuButton, MenuList, MenuItem } from '@chakra-ui/react';
 import { Comment } from '@hiveio/dhive';
 import { ExtendedComment } from '@/hooks/useComments';
 import { FaRegComment, FaRegHeart, FaShare, FaHeart } from "react-icons/fa";
@@ -8,6 +8,9 @@ import { getPayoutValue, calculateUserVoteValue } from '@/lib/hive/client-functi
 import markdownRenderer from '@/lib/utils/MarkdownRenderer';
 import { getPostDate } from '@/lib/utils/GetPostDate';
 import useHiveAccount from '@/hooks/useHiveAccount';
+import VideoRenderer from '../layout/VideoRenderer'; // Import VideoRenderer
+import { BiDotsHorizontal } from "react-icons/bi";
+import SocialMediaShareModal from './SocialMediaShareModal';
 
 interface TweetProps {
     comment: ExtendedComment;
@@ -25,6 +28,7 @@ const Tweet = ({ comment, onOpen, setReply, setConversation, level = 0 }: TweetP
     const [sliderValue, setSliderValue] = useState(5);
     const [showSlider, setShowSlider] = useState(false);
     const [rewardAmount, setRewardAmount] = useState(getPayoutValue(comment));
+    const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
     const calculateVotingPower = () => {
         if (!hiveAccount || !hiveAccount.voting_manabar) return 0;
@@ -91,6 +95,56 @@ const Tweet = ({ comment, onOpen, setReply, setConversation, level = 0 }: TweetP
 
     const { text, media } = separateContent(comment.body);
 
+    const renderMedia = (mediaContent: string) => {
+        const videoRegex = /(https:\/\/ipfs\.skatehive\.app\/ipfs\/[a-zA-Z0-9-_?=&]+)/g;
+        const iframes = /<iframe.*?src=["'](https:\/\/ipfs\.skatehive\.app\/ipfs\/[a-zA-Z0-9-_?=&]+)["'].*?<\/iframe>/gi;
+        const mediaArray = mediaContent.split('\n');
+        return mediaArray.map((item, index) => {
+            if (item.match(videoRegex) || item.match(iframes)) {
+                const videoUrl = item.match(videoRegex) ? item.match(videoRegex)![0] : item.match(iframes)![1];
+                return <VideoRenderer key={index} src={videoUrl} />;
+            } else if (item.trim() !== '') {
+                return (
+                    <Box
+                        key={index}
+                        dangerouslySetInnerHTML={{ __html: markdownRenderer(item) }}
+                        sx={{
+                            'img': {
+                                width: '100%',
+                                height: 'auto',
+                                objectFit: 'contain',
+                                marginTop: '0.5rem',
+                                marginBottom: '0.5rem',
+                            },
+                            '.gif, .giphy-embed': {
+                                width: '100%',
+                                height: 'auto',
+                            },
+                            'iframe': {
+                                width: '100%',
+                            },
+                        }}
+                    />
+                );
+            }
+            return null;
+        });
+    };
+
+    const handleSharePost = async () => {
+        const postLink = `@${window.location.origin}/${comment.author}/${comment.permlink}`;
+        await navigator.clipboard.writeText(postLink);
+        console.log('Post link copied to clipboard:', postLink);
+    };
+
+    const openShareModal = () => setIsShareModalOpen(true);
+    const closeShareModal = () => setIsShareModalOpen(false);
+
+    const openTippingModal = () => {
+        // Placeholder for tipping modal logic
+        console.log('Tipping modal opened');
+    };
+
     return (
         <Box pl={level > 0 ? 1 : 0} ml={level > 0 ? 2 : 0}>
             <Box
@@ -121,25 +175,9 @@ const Tweet = ({ comment, onOpen, setReply, setConversation, level = 0 }: TweetP
                             },
                         }}
                     />
-                    <Box
-                        dangerouslySetInnerHTML={{ __html: markdownRenderer(media) }}
-                        sx={{
-                            'img': {
-                                width: '100%',
-                                height: 'auto',
-                                objectFit: 'contain',
-                                marginTop: '0.5rem',
-                                marginBottom: '0.5rem',
-                            },
-                            '.gif, .giphy-embed': {
-                                width: '100%',
-                                height: 'auto',
-                            },
-                            'iframe': {
-                                width: '100%',
-                            },
-                        }}
-                    />
+                    <Box>
+                        {renderMedia(media)}
+                    </Box>
                 </Box>
                 {showSlider ? (
                     <Flex mt={4} alignItems="center">
@@ -176,9 +214,22 @@ const Tweet = ({ comment, onOpen, setReply, setConversation, level = 0 }: TweetP
                         <Text fontWeight="bold" fontSize="sm">
                             ${rewardAmount}
                         </Text>
+                        <Menu>
+                            <MenuButton as={Button} variant="ghost">
+                                <BiDotsHorizontal />
+                            </MenuButton>
+                            <MenuList bg={'background'} color={'text'}>
+                                <MenuItem onClick={openShareModal} bg={'background'} color={'text'}>Share Post</MenuItem>
+                                <MenuItem disabled onClick={openTippingModal} bg={'background'} color={'text'}>Tip (soon)</MenuItem>
+                            </MenuList>
+                        </Menu>
                     </HStack>
                 )}
             </Box>
+            {/* Render Social Media Share Modal */}
+            {isShareModalOpen && (
+                <SocialMediaShareModal isOpen={isShareModalOpen} onClose={closeShareModal} comment={comment} />
+            )}
             {/* Render replies recursively */}
             {replies && replies.length > 0 && (
                 <VStack spacing={2} align="stretch" mt={2}>

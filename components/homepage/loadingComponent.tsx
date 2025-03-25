@@ -23,7 +23,8 @@ const randomSentences = [
   "Stop using youtube",
   "If it takes to long, your connection sucks",
   "Macba Lives",
-  "Skate till you tired, then skate more"
+  "Skate till you tired, then skate more",
+  "You need to be brave, to skate with Nogenta crew"
 ];
 
 function getRandomChar() {

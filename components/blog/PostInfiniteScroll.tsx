@@ -21,7 +21,7 @@ export default function PostsInfiniteScroll({ allPosts, fetchPosts, viewMode }: 
             loader={
                 <SimpleGrid columns={{ base: 1, md: viewMode === 'grid' ? 3 : 1 }} spacing={4}>
                     {Array(6).fill(0).map((_, i) => (
-                        <Box key={i} borderWidth="1px" borderRadius="base" overflow="hidden" p={4} border="tb1">
+                        <Box key={i} borderWidth="1px" borderRadius="base" overflow="hidden" p={4}>
                             {/* New skeleton header for profile pic and post author */}
                             <Flex alignItems="center" mb={4}>
                                 <Skeleton startColor="background" endColor="muted" borderRadius="full" width="40px" height="40px" mr={3} />
