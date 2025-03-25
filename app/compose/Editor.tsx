@@ -81,8 +81,8 @@ const Editor: FC<EditorProps> = ({ markdown, editorRef, setMarkdown }) => {
         const videoUrl = await videoUploadHandler(file);
         console.log('Video URL generated:', videoUrl);
 
-        // Insert the video as an iframe wrapped in a div with zero-width spaces
-        const iframeTag = `<div class="video-embed">&#8203;<iframe src="${videoUrl}" width="100%" height="400" style="border:0;" allowFullScreen></iframe>&#8203;</div>`;
+        // Insert the video as an iframe wrapped in a div with zero-width spaces and mobile-friendly attributes
+        const iframeTag = `<div class="video-embed">&#8203;<iframe src="${videoUrl}" width="100%" height="400" style="border:0;max-width:100vw;" playsinline webkit-playsinline allowfullscreen="true" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>&#8203;</div>`;
 
         // Update the markdown with the iframe
         setMarkdown(`${markdown}\n${iframeTag}`);

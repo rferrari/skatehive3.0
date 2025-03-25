@@ -233,8 +233,9 @@ export default function TweetComposer({ pa, pp, onNewComment, post = false, onCl
                             src={videoUrl}
                             title="Uploaded Video"
                             frameBorder="0"
+                            style={{ width: '100%', minHeight: '435px', borderRadius: '8px', maxWidth: '100vw' }}
+                            allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             allowFullScreen
-                            style={{ width: '100%', minHeight: '435px', borderRadius: '8px' }}
                         />
                         <IconButton
                             aria-label="Remove video"

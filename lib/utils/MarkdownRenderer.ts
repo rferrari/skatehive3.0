@@ -85,7 +85,7 @@ function isLikelyVideoID(id: string): boolean {
 
 // Generate a clean video tag for embedding
 function createSimpleVideoTag(videoID: string): string {
-    return `<video width="100%" height="auto" controls preload="none" autoplay muted>
+    return `<video width="100%" height="auto" controls preload="none" playsinline webkit-playsinline>
   <source src="https://ipfs.skatehive.app/ipfs/${videoID}" type="video/mp4">
   <source src="https://ipfs.skatehive.app/ipfs/${videoID}" type="video/webm">
   Your browser doesn't support HTML5 video. <a href="https://ipfs.skatehive.app/ipfs/${videoID}" target="_blank">Click here to view the video</a>.
