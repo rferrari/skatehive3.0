@@ -3,12 +3,14 @@ import { Box, Textarea, HStack, Button, Image, IconButton, Wrap, Spinner, Progre
 import { useAioha } from '@aioha/react-ui';
 import GiphySelector from './GiphySelector';
 import ImageUploader from './ImageUploader';
+import VideoUploader from './VideoUploader';
 import { IGif } from '@giphy/js-types';
 import { CloseIcon } from '@chakra-ui/icons';
 import { FaImage } from 'react-icons/fa';
 import { MdGif } from 'react-icons/md';
 import { Comment } from '@hiveio/dhive';
 import { getFileSignature, getLastSnapsContainer, uploadImage } from '@/lib/hive/client-functions';
+import { FaVideo } from 'react-icons/fa6';
 
 interface TweetComposerProps {
     pa: string;
@@ -26,6 +28,7 @@ export default function TweetComposer({ pa, pp, onNewComment, post = false, onCl
     const [isGiphyModalOpen, setGiphyModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState<number[]>([]);
+    const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
     const buttonText = post ? "Reply" : "Post";
 
@@ -39,8 +42,8 @@ export default function TweetComposer({ pa, pp, onNewComment, post = false, onCl
     async function handleComment() {
         let commentBody = postBodyRef.current?.value || '';
 
-        if (!commentBody.trim() && images.length === 0 && !selectedGif) {
-            alert('Please enter some text, upload an image, or select a gif before posting.');
+        if (!commentBody.trim() && images.length === 0 && !selectedGif && !videoUrl) {
+            alert('Please enter some text, upload an image, select a gif, or upload a video before posting.');
             return; // Do not proceed
         }
 
@@ -77,6 +80,10 @@ export default function TweetComposer({ pa, pp, onNewComment, post = false, onCl
             commentBody += `\n\n![gif](${selectedGif.images.downsized_medium.url})`;
         }
 
+        if (videoUrl) {
+            commentBody += `\n\n<iframe src="${videoUrl}" frameborder="0" allowfullscreen></iframe>`;
+        }
+
         if (commentBody) {
             let snapsTags: string[] = [];
             try {
@@ -95,6 +102,7 @@ export default function TweetComposer({ pa, pp, onNewComment, post = false, onCl
                     postBodyRef.current!.value = '';
                     setImages([]);
                     setSelectedGif(null);
+                    setVideoUrl(null);
 
                     const newComment: Partial<Comment> = {
                         author: user,
@@ -137,10 +145,18 @@ export default function TweetComposer({ pa, pp, onNewComment, post = false, onCl
                 <HStack>
                     <Button _hover={{ border: 'tb1' }} _active={{ border: 'tb1' }} as="label" variant="ghost" isDisabled={isLoading}>
                         <FaImage size={22} />
-                        <ImageUploader images={images} onUpload={setImages} onRemove={(index) => setImages(prevImages => prevImages.filter((_, i) => i !== index))} />
+                        <ImageUploader
+                            images={images}
+                            onUpload={setImages}
+                            onRemove={(index) => setImages(prevImages => prevImages.filter((_, i) => i !== index))}
+                        />
                     </Button>
                     <Button _hover={{ border: 'tb1' }} _active={{ border: 'tb1' }} variant="ghost" onClick={() => setGiphyModalOpen(!isGiphyModalOpen)} isDisabled={isLoading}>
                         <MdGif size={48} />
+                    </Button>
+                    <Button _hover={{ border: 'tb1' }} _active={{ border: 'tb1' }} as="label" variant="ghost" isDisabled={isLoading}>
+                        <FaVideo size={22} />
+                        <VideoUploader onUpload={setVideoUrl} />
                     </Button>
                 </HStack>
                 <Button variant="solid" colorScheme="primary" onClick={handleComment} isDisabled={isLoading}>
@@ -175,6 +191,27 @@ export default function TweetComposer({ pa, pp, onNewComment, post = false, onCl
                             top="0"
                             right="0"
                             onClick={() => setSelectedGif(null)}
+                            isDisabled={isLoading}
+                        />
+                    </Box>
+                )}
+                {videoUrl && (
+                    <Box position="relative" width="100%">
+                        <iframe
+                            src={videoUrl}
+                            title="Uploaded Video"
+                            frameBorder="0"
+                            allowFullScreen
+                            style={{ width: '100%', minHeight: '435px', borderRadius: '8px' }}
+                        />
+                        <IconButton
+                            aria-label="Remove video"
+                            icon={<CloseIcon />}
+                            size="xs"
+                            position="absolute"
+                            top="0"
+                            right="0"
+                            onClick={() => setVideoUrl(null)}
                             isDisabled={isLoading}
                         />
                     </Box>
