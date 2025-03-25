@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Box, Textarea, HStack, Button, Image, IconButton, Wrap, Spinner, Progress } from '@chakra-ui/react';
+import { Box, Textarea, HStack, Button, Image, IconButton, Wrap, Spinner, Progress, Menu, MenuButton, MenuList, MenuItem, Input } from '@chakra-ui/react';
 import { useAioha } from '@aioha/react-ui';
 import GiphySelector from './GiphySelector';
 import ImageUploader from './ImageUploader';
@@ -29,6 +29,7 @@ export default function TweetComposer({ pa, pp, onNewComment, post = false, onCl
     const [isLoading, setIsLoading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState<number[]>([]);
     const [videoUrl, setVideoUrl] = useState<string | null>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
 
     const buttonText = post ? "Reply" : "Post";
 
@@ -128,32 +129,63 @@ export default function TweetComposer({ pa, pp, onNewComment, post = false, onCl
         }
     }
 
+    const triggerFileInput = () => {
+        if (inputRef.current) {
+            inputRef.current.click();
+        }
+    };
+
     return (
         <Box p={4} mb={1} borderRadius="base" borderBottom={'1px'} borderColor="muted">
             <Textarea
                 placeholder="Write here"
                 bg="background"
-                border="tb1"
                 borderRadius={'base'}
                 mb={3}
                 ref={postBodyRef}
                 _placeholder={{ color: 'text' }}
                 isDisabled={isLoading}
-                onKeyDown={handleKeyDown} // Attach the keydown handler
+                onKeyDown={handleKeyDown} // Attach the keydown handler 
+                _focusVisible={{ border: 'tb1' }}
             />
             <HStack justify="space-between" mb={3}>
                 <HStack>
-                    <Button _hover={{ border: 'tb1' }} _active={{ border: 'tb1' }} as="label" variant="ghost" isDisabled={isLoading}>
-                        <FaImage size={22} />
-                        <ImageUploader
-                            images={images}
-                            onUpload={setImages}
-                            onRemove={(index) => setImages(prevImages => prevImages.filter((_, i) => i !== index))}
-                        />
-                    </Button>
-                    <Button _hover={{ border: 'tb1' }} _active={{ border: 'tb1' }} variant="ghost" onClick={() => setGiphyModalOpen(!isGiphyModalOpen)} isDisabled={isLoading}>
-                        <MdGif size={48} />
-                    </Button>
+                    <Menu>
+                        <MenuButton as={Button} variant="ghost" isDisabled={isLoading} _hover={{ border: 'tb1' }} _active={{ border: 'tb1' }}>
+                            <FaImage size={22} />
+                        </MenuButton>
+                        <MenuList bg="background" border="tb1" borderRadius="base">
+                            <MenuItem
+                                icon={<FaImage size={22} />}
+                                bg={'background'}
+                                _hover={{ bg: 'tb1' }}
+                                _active={{ bg: 'tb1' }}
+                                onClick={triggerFileInput} // Trigger file input on click
+                            >
+                                Upload Image
+                            </MenuItem>
+                            <MenuItem
+                                icon={<MdGif size={22} />}
+                                onClick={() => setGiphyModalOpen(true)} // Only open the modal
+                                bg={'background'}
+                                _hover={{ bg: 'tb1' }}
+                                _active={{ bg: 'tb1' }}
+                            >
+                                Select GIF
+                            </MenuItem>
+                        </MenuList>
+                    </Menu>
+                    <Input
+                        ref={inputRef}
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        onChange={(event) => {
+                            const files = Array.from(event.target.files || []);
+                            setImages((prev) => [...prev, ...files]);
+                        }}
+                        hidden
+                    />
                     <Button _hover={{ border: 'tb1' }} _active={{ border: 'tb1' }} as="label" variant="ghost" isDisabled={isLoading}>
                         <FaVideo size={22} />
                         <VideoUploader onUpload={setVideoUrl} />
@@ -218,14 +250,16 @@ export default function TweetComposer({ pa, pp, onNewComment, post = false, onCl
                 )}
             </Wrap>
             {isGiphyModalOpen && (
-                <GiphySelector
-                    apiKey={process.env.GIPHY_API_KEY || 'qXGQXTPKyNJByTFZpW7Kb0tEFeB90faV'}
-                    onSelect={(gif, e) => {
-                        e.preventDefault();
-                        setSelectedGif(gif);
-                        setGiphyModalOpen(false);
-                    }}
-                />
+                <Box position="relative">
+                    <GiphySelector
+                        apiKey={process.env.GIPHY_API_KEY || 'qXGQXTPKyNJByTFZpW7Kb0tEFeB90faV'}
+                        onSelect={(gif, e) => {
+                            e.preventDefault();
+                            setSelectedGif(gif);
+                            setGiphyModalOpen(false); // Close modal after selecting a GIF
+                        }}
+                    />
+                </Box>
             )}
         </Box>
     );
