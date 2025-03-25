@@ -84,15 +84,6 @@ export default function PostCard({ post }: PostCardProps) {
         }
     }
 
-    // Handle card click - simplified to just call viewPost
-    function handleCardClick(e: React.MouseEvent) {
-        // Check if the click event originated from the Swiper navigation arrows
-        if ((e.target as HTMLElement).closest('.swiper-button-next') || (e.target as HTMLElement).closest('.swiper-button-prev')) {
-            return; // Prevent navigation
-        }
-        viewPost();
-    }
-
     // Modified to only stop propagation
     function stopPropagation(e: React.MouseEvent) {
         e.stopPropagation();
@@ -129,7 +120,7 @@ export default function PostCard({ post }: PostCardProps) {
                 }
             `}</style>
             <Box
-                boxShadow={'lg'}
+                boxShadow={'sm'}
                 border="tb1"
                 borderRadius="base"
                 overflow="hidden"
@@ -141,7 +132,7 @@ export default function PostCard({ post }: PostCardProps) {
                 height="100%"
                 cursor="pointer"
                 _hover={{ boxShadow: 'xl' }}
-                position="relative" // Add position relative to help with event handling
+                position="relative"
             >
                 <Flex justifyContent="space-between" alignItems="center" onClick={viewPost}>
                     <Flex alignItems="center">

@@ -29,9 +29,14 @@ export default function Home() {
   const snaps = useSnaps();
 
   return (
-    <Flex direction={{ base: 'column', md: 'row' }}>
+    <Flex
+      direction={{ base: 'column', md: 'row' }}
+    >
       <Container
-        maxW={{ base: '100%', md: '720px' }}
+        maxW={{ base: '100%', md: '666px' }}
+        borderLeft="1px"
+        borderRight="1px"
+        borderColor="muted"
         h="100vh"
         overflowY="auto"
         p={0}

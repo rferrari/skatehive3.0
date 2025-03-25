@@ -129,7 +129,7 @@ export default function TweetComposer({ pa, pp, onNewComment, post = false, onCl
     }
 
     return (
-        <Box bg="muted" p={4} mb={1} borderRadius="base" border="tb1">
+        <Box p={4} mb={1} borderRadius="base" borderBottom={'1px'} borderColor="muted">
             <Textarea
                 placeholder="Write here"
                 bg="background"

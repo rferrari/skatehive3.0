@@ -72,48 +72,75 @@ const Tweet = ({ comment, onOpen, setReply, setConversation, level = 0 }: TweetP
         }
         handleHeartClick();
     }
+
+    const separateContent = (body: string) => {
+        const textParts: string[] = [];
+        const mediaParts: string[] = [];
+        const lines = body.split('\n');
+
+        lines.forEach(line => {
+            if (line.match(/!\[.*\]\(.*\)|<iframe.*<\/iframe>/)) {
+                mediaParts.push(line);
+            } else {
+                textParts.push(line);
+            }
+        });
+
+        return { text: textParts.join('\n'), media: mediaParts.join('\n') };
+    };
+
+    const { text, media } = separateContent(comment.body);
+
     return (
         <Box pl={level > 0 ? 1 : 0} ml={level > 0 ? 2 : 0}>
             <Box
-                bgGradient="linear(to-b, muted, background)"
-                p={4}
                 mt={1}
                 mb={1}
-                border="tb1"
                 borderRadius="base"  // This will apply the borderRadius from your theme
                 width="100%"
             >
                 <HStack mb={2}>
-                    <Avatar size="sm" name={comment.author} src={`https://images.hive.blog/u/${comment.author}/avatar/sm`} />
-                    <Box ml={3}>
+                    <Avatar size="sm" name={comment.author} src={`https://images.hive.blog/u/${comment.author}/avatar/sm`} ml={2} />
+                    <HStack ml={0} justifyContent={'space-between'} width="100%">
                         <Text fontWeight="medium" fontSize="sm">
-                            <Link href={`/@${comment.author}`}>@{comment.author}</Link>
+                            <Link href={`/@${comment.author}`}>{comment.author}</Link>
                         </Text>
-                        <Text fontWeight="medium" fontSize="sm" color="primary">
+                        <Text fontWeight="medium" fontSize="sm" color="gray" mr={2}>
                             {commentDate}
                         </Text>
-                    </Box>
+                    </HStack>
                 </HStack>
-                <Box
-                    dangerouslySetInnerHTML={{ __html: markdownRenderer(comment.body) }}
-                    sx={{
-                        'img': {
-                            width: '100%',
-                            height: 'auto',
-                            objectFit: 'contain',
-                            marginTop: '0.5rem',
-                            marginBottom: '0.5rem',
-                        },
-                        '.gif, .giphy-embed': {
-                            width: '100%',
-                            height: 'auto',
-                        },
-                        'iframe': {
-                            width: '100%',
-                            maxWidth: '100%',
-                        }
-                    }}
-                />
+                <Box>
+                    <Box
+                        dangerouslySetInnerHTML={{ __html: markdownRenderer(text) }}
+                        sx={{
+                            'p': {
+                                marginBottom: '1rem',
+                                lineHeight: '1.6',
+                                marginLeft: '4',
+                            },
+                        }}
+                    />
+                    <Box
+                        dangerouslySetInnerHTML={{ __html: markdownRenderer(media) }}
+                        sx={{
+                            'img': {
+                                width: '100%',
+                                height: 'auto',
+                                objectFit: 'contain',
+                                marginTop: '0.5rem',
+                                marginBottom: '0.5rem',
+                            },
+                            '.gif, .giphy-embed': {
+                                width: '100%',
+                                height: 'auto',
+                            },
+                            'iframe': {
+                                width: '100%',
+                            },
+                        }}
+                    />
+                </Box>
                 {showSlider ? (
                     <Flex mt={4} alignItems="center">
                         <Box width="100%" mr={2}>
