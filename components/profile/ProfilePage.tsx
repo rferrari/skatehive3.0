@@ -24,10 +24,10 @@ export default function ProfilePage({ username }: ProfilePageProps) {
 
   const tag = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG;
   const params = useRef([
-      username,
-      '',
-      new Date().toISOString().split('.')[0],
-      12
+    username,
+    '',
+    new Date().toISOString().split('.')[0],
+    12
   ]);
 
   async function fetchPosts() {
@@ -125,61 +125,61 @@ export default function ProfilePage({ username }: ProfilePageProps) {
         </Container>
       </Box>
       <Flex position="relative" mt={-16} p={4} alignItems="center" boxShadow="lg">
-  <Box
-    position="absolute"
-    top={0}
-    left={0}
-    right={0}
-    bottom={0}
-    bg="muted"
-    opacity={0.85}
-    zIndex={1}  // Lower z-index to place the background below content
-  />
+        <Box
+          position="absolute"
+          top={0}
+          left={0}
+          right={0}
+          bottom={0}
+          bg="muted"
+          opacity={0.85}
+          zIndex={1}  // Lower z-index to place the background below content
+        />
 
-  <Flex alignItems="center" zIndex={2} position="relative">
+        <Flex alignItems="center" zIndex={2} position="relative">
 
-    <Avatar
-      src={profileMetadata.profileImage}
-      name={hiveAccount?.name}
-      borderRadius="full"
-      boxSize="100px"
-      mr={4}
-    />
+          <Avatar
+            src={profileMetadata.profileImage}
+            name={hiveAccount?.name}
+            borderRadius="full"
+            boxSize="100px"
+            mr={4}
+          />
 
-    <Box>
-      <Flex alignItems="center">
-        {/* Username */}
-        <Heading as="h2" size="lg" color="primary" mr={2}>
-          {profileInfo?.metadata.profile.name || username}
-        </Heading>
+          <Box>
+            <Flex alignItems="center">
+              {/* Username */}
+              <Heading as="h2" size="lg" color="primary" mr={2}>
+                {profileInfo?.metadata.profile.name || username}
+              </Heading>
 
-        {/* Reputation */}
-        <Box display="flex" alignItems="center" justifyContent="center" width="15px" height="15px" bg="gray.200" fontWeight="bold" fontSize="xs">
-          {profileInfo?.reputation ? Math.round(profileInfo.reputation) : 0}
-        </Box>
+              {/* Reputation */}
+              <Box display="flex" alignItems="center" justifyContent="center" width="15px" height="15px" fontWeight="bold" fontSize="xs">
+                {profileInfo?.reputation ? Math.round(profileInfo.reputation) : 0}
+              </Box>
+            </Flex>
+
+            {/* Description */}
+            <Text fontSize="xs" color="text">
+              Following: {following} | Followers: {followers} | Location: {location}
+              <br />
+              {about}
+            </Text>
+
+            {/* Website Link */}
+            {profileMetadata.website && (
+              <Flex alignItems="center">
+                <Icon as={FaGlobe} w={2} h={2} onClick={() => window.open(profileMetadata.website, '_blank')} style={{ cursor: 'pointer' }} />
+                <Text ml={2} fontSize="xs" color="primary">
+                  {profileMetadata.website}
+                </Text>
+              </Flex>
+            )}
+          </Box>
+        </Flex>
       </Flex>
 
-      {/* Description */}
-      <Text fontSize="xs" color="text">
-        Following: {following} | Followers: {followers} | Location: {location}
-        <br />
-        {about}
-      </Text>
-
-      {/* Website Link */}
-      {profileMetadata.website && (
-        <Flex alignItems="center">
-          <Icon as={FaGlobe} w={2} h={2} onClick={() => window.open(profileMetadata.website, '_blank')} style={{ cursor: 'pointer' }} />
-          <Text ml={2} fontSize="xs" color="primary">
-            {profileMetadata.website}
-          </Text>
-        </Flex>
-      )}
-    </Box>
-  </Flex>
-</Flex>
-
-      <Container maxW="container.lg" mt={8}>
+      <Container maxW="container.lg" mt={6}>
         <InfiniteScroll
           dataLength={posts.length}
           next={fetchPosts}
