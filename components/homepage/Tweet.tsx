@@ -14,7 +14,8 @@ import {
 } from "@chakra-ui/react";
 import { Comment } from "@hiveio/dhive";
 import { ExtendedComment } from "@/hooks/useComments";
-import { FaRegComment, FaRegHeart, FaHeart } from "react-icons/fa";
+import { FaRegComment } from "react-icons/fa";
+import { HiArrowUpRight } from "react-icons/hi2";
 import { useAioha } from "@aioha/react-ui";
 import { useState, useEffect } from "react";
 import {
@@ -308,16 +309,26 @@ const Tweet = ({
             </Button>
           </Flex>
         ) : (
-          <HStack justify="space-between" mt={3}>
-            <Button
-              leftIcon={voted ? <FaHeart /> : <FaRegHeart />}
-              variant="ghost"
-              onClick={handleHeartClick}
-            >
-              {comment.active_votes?.length}
-            </Button>
+          <HStack justify="center" spacing={8} mt={3}>
             <HStack>
-              <FaRegComment onClick={handleReplyModal} cursor="pointer" />
+              <Button
+                leftIcon={voted ? <HiArrowUpRight color="#00b894" /> : <HiArrowUpRight />}
+                variant="ghost"
+                onClick={handleHeartClick}
+                size="sm"
+              >
+                {comment.active_votes?.length}
+              </Button>
+              <Text fontWeight="bold" fontSize="sm">
+                ${rewardAmount}
+              </Text>
+            </HStack>
+            <HStack>
+              <FaRegComment 
+                onClick={handleReplyModal} 
+                cursor="pointer"
+                size={20}
+              />
               {setConversation && (
                 <Text
                   onClick={handleConversation}
@@ -328,9 +339,6 @@ const Tweet = ({
                 </Text>
               )}
             </HStack>
-            <Text fontWeight="bold" fontSize="sm">
-              ${rewardAmount}
-            </Text>
           </HStack>
         )}
       </Box>
