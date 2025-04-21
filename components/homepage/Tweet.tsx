@@ -168,19 +168,29 @@ const Tweet = ({
           const url = srcMatch[1];
           console.log(`  - Extracted iframe URL: ${url}`);
 
-          // Only use VideoRenderer for skatehive IPFS URLs
-          if (url.includes("ipfs.skatehive.app/ipfs/")) {
+          // Handle both Pinata and skatehive IPFS URLs
+          if (url.includes("gateway.pinata.cloud/ipfs/")) {
+            const ipfsHash = url.match(/\/ipfs\/([\w-]+)/)?.[1];
+            if (ipfsHash) {
+              const skatehiveUrl = `https://ipfs.skatehive.app/ipfs/${ipfsHash}`;
+              console.log(`  - Converting Pinata URL to Skatehive URL: ${skatehiveUrl}`);
+              return <VideoRenderer key={index} src={skatehiveUrl} />;
+            }
+          } else if (url.includes("ipfs.skatehive.app/ipfs/")) {
             console.log(`  - RENDERING AS VIDEO`);
             return <VideoRenderer key={index} src={url} />;
           }
         }
 
-        // For other iframes, render as HTML
+        // For other iframes, render as HTML but ensure no autoplay
         console.log(`  - RENDERING IFRAME AS HTML`);
+        const safeIframe = item.replace(/autoplay=1/g, 'autoplay=0')
+                             .replace(/autoplay/g, 'autoplay="false"')
+                             .replace(/preload="auto"/g, 'preload="none"');
         return (
           <Box
             key={index}
-            dangerouslySetInnerHTML={{ __html: item }}
+            dangerouslySetInnerHTML={{ __html: safeIframe }}
             sx={{
               iframe: {
                 width: "100%",

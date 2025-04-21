@@ -137,8 +137,8 @@ const VideoRenderer = ({ src, onCommentIconClick = () => { }, ...props }: Render
                     muted={volume === 0}
                     controls={false}
                     playsInline={props.loop ? false : true}
-                    autoPlay={true}
-                    preload="metadata"
+                    autoPlay={false}
+                    preload="none"
                     onLoadedData={handleLoadedData}
                     onClick={(e) => e.stopPropagation()}
                     style={{

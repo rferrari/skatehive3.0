@@ -46,69 +46,84 @@ const Editor: FC<EditorProps> = ({ markdown, editorRef, setMarkdown }) => {
     return uploadUrl;
   }
 
-  async function videoUploadHandler(video: File) {
-    console.log('Starting video upload handler...');
-    const formData = new FormData();
-    formData.append('file', video);
+  const handleVideoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('Video upload input triggered');
+    const file = event.target.files?.[0];
+    if (!file) {
+      console.warn('No file selected for upload');
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('video/')) {
+      console.error('Invalid file type. Please upload a video file.');
+      return;
+    }
+
+    console.log('File selected for upload:', file.name);
+    setIsLoading(true);
 
     try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
       console.log('Sending video to Pinata API...');
       const response = await fetch('/api/pinata', {
         method: 'POST',
         body: formData,
       });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const result = await response.json();
-      if (result.error) {
-        console.error('Error from Pinata API:', result.error);
-        throw new Error(result.error);
+      if (result.error || !result.IpfsHash) {
+        throw new Error(result.error || 'No IPFS hash returned');
       }
+
       console.log('Video uploaded successfully. CID:', result.IpfsHash);
-      // Use skatehive's IPFS gateway instead of Pinata's gateway
-      return `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`;
-    } catch (error) {
-      console.error('Failed to upload video to Pinata:', error);
-      throw error;
-    }
-  }
+      
+      // Use skatehive's IPFS gateway with proper content type handling
+      const videoUrl = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`;
+      
+      // Insert the video using our custom VideoRenderer component
+      const videoTag = `<div class="video-embed" data-ipfs-hash="${result.IpfsHash}">
+        <video 
+          width="100%" 
+          height="400" 
+          controls 
+          preload="none" 
+          playsinline 
+          webkit-playsinline 
+          muted
+          poster="https://ipfs.skatehive.app/ipfs/${result.IpfsHash}?format=preview">
+          <source src="${videoUrl}" type="video/mp4">
+          <source src="${videoUrl}" type="video/webm">
+          Your browser doesn't support HTML5 video.
+        </video>
+      </div>`;
 
-  const handleVideoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('Video upload input triggered');
-    const file = event.target.files?.[0];
-    if (file) {
-      console.log('File selected for upload:', file.name);
-      setIsLoading(true); // Set loading to true
-      try {
-        const videoUrl = await videoUploadHandler(file);
-        console.log('Video URL generated:', videoUrl);
+      // Update the markdown with the video tag
+      const updatedMarkdown = `${markdown}\n${videoTag}`;
+      setMarkdown(updatedMarkdown);
+      console.log('Markdown updated with video tag');
 
-        // Insert the video as an iframe wrapped in a div with zero-width spaces and mobile-friendly attributes
-        const iframeTag = `<div class="video-embed">&#8203;<iframe src="${videoUrl}" width="100%" height="400" style="border:0;max-width:100vw;" playsinline webkit-playsinline allowfullscreen="true" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>&#8203;</div>`;
-
-        // Update the markdown with the iframe
-        setMarkdown(`${markdown}\n${iframeTag}`);
-        console.log('Markdown updated with video iframe');
-
-        // Force the editor to refresh by temporarily setting a different markdown
-        // and then setting it back to the updated version
-        if (editorRef?.current) {
-          // Store the current markdown
-          const currentMarkdown = `${markdown}\n${iframeTag}`;
-
-          // Set a slightly modified version to force a refresh
-          setMarkdown(currentMarkdown + " ");
-
-          // Set it back to the correct version after a small delay
-          setTimeout(() => {
-            setMarkdown(currentMarkdown);
-          }, 100);
-        }
-      } catch (error) {
-        console.error('Error uploading video:', error);
-      } finally {
-        setIsLoading(false); // Set loading to false
+      // Force the editor to refresh
+      if (editorRef?.current) {
+        setTimeout(() => {
+          setMarkdown(updatedMarkdown);
+        }, 100);
       }
-    } else {
-      console.warn('No file selected for upload');
+    } catch (error) {
+      console.error('Error uploading video:', error);
+      // Here you could add a toast notification or other user feedback
+    } finally {
+      setIsLoading(false);
+      // Clear the file input for future uploads
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
