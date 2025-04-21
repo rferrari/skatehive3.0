@@ -11,11 +11,12 @@ import {
   SliderTrack,
   SliderFilledTrack,
   SliderThumb,
+  Tooltip,
 } from "@chakra-ui/react";
 import { Comment } from "@hiveio/dhive";
 import { ExtendedComment } from "@/hooks/useComments";
 import { FaRegComment } from "react-icons/fa";
-import { HiArrowUpRight } from "react-icons/hi2";
+import { LuArrowUpRight } from "react-icons/lu";
 import { useAioha } from "@aioha/react-ui";
 import { useState, useEffect } from "react";
 import {
@@ -311,17 +312,21 @@ const Tweet = ({
         ) : (
           <HStack justify="center" spacing={8} mt={3}>
             <HStack>
-              <Button
-                leftIcon={voted ? <HiArrowUpRight color="#00b894" /> : <HiArrowUpRight />}
-                variant="ghost"
-                onClick={handleHeartClick}
-                size="sm"
-              >
-                {comment.active_votes?.length}
-              </Button>
-              <Text fontWeight="bold" fontSize="sm">
-                ${rewardAmount}
-              </Text>
+              <Tooltip label="upvote" hasArrow openDelay={1000}>
+                <Button
+                  leftIcon={voted ? <LuArrowUpRight size={24} color="#00b894" /> : <LuArrowUpRight size={24} />}
+                  variant="ghost"
+                  onClick={handleHeartClick}
+                  size="sm"
+                >
+                  {comment.active_votes?.length}
+                </Button>
+              </Tooltip>
+              <Tooltip label="reward amount" hasArrow openDelay={1000}>
+                <Text fontWeight="bold" fontSize="sm">
+                  ${rewardAmount}
+                </Text>
+              </Tooltip>
             </HStack>
             <HStack>
               <FaRegComment 
