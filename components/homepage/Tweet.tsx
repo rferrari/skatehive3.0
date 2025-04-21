@@ -11,14 +11,10 @@ import {
   SliderTrack,
   SliderFilledTrack,
   SliderThumb,
-  Menu,
-  MenuButton,
-  MenuList,
-  MenuItem,
 } from "@chakra-ui/react";
 import { Comment } from "@hiveio/dhive";
 import { ExtendedComment } from "@/hooks/useComments";
-import { FaRegComment, FaRegHeart, FaShare, FaHeart } from "react-icons/fa";
+import { FaRegComment, FaRegHeart, FaHeart } from "react-icons/fa";
 import { useAioha } from "@aioha/react-ui";
 import { useState, useEffect } from "react";
 import {
@@ -28,8 +24,7 @@ import {
 import markdownRenderer from "@/lib/utils/MarkdownRenderer";
 import { getPostDate } from "@/lib/utils/GetPostDate";
 import useHiveAccount from "@/hooks/useHiveAccount";
-import VideoRenderer from "../layout/VideoRenderer"; // Import VideoRenderer
-import { BiDotsHorizontal } from "react-icons/bi";
+import VideoRenderer from "../layout/VideoRenderer";
 import SocialMediaShareModal from "./SocialMediaShareModal";
 
 interface TweetProps {
@@ -49,7 +44,7 @@ const Tweet = ({
 }: TweetProps) => {
   const commentDate = getPostDate(comment.created);
   const { aioha, user } = useAioha();
-  const { hiveAccount } = useHiveAccount(user || ""); // Ensure user is defined
+  const { hiveAccount } = useHiveAccount(user || "");
   const [voted, setVoted] = useState(
     comment.active_votes?.some((item) => item.voter === user)
   );
@@ -62,11 +57,11 @@ const Tweet = ({
     if (!hiveAccount || !hiveAccount.voting_manabar) return 0;
     const { voting_manabar, voting_power } = hiveAccount;
     const elapsedTime = Date.now() / 1000 - voting_manabar.last_update_time;
-    const regeneratedMana = (elapsedTime * 10000) / 432000; // 432000 seconds in 5 days
+    const regeneratedMana = (elapsedTime * 10000) / 432000;
     const currentMana = Math.min(
       Number(voting_manabar.current_mana) + regeneratedMana,
       10000
-    ); // Ensure current_mana is a number
+    );
     return (currentMana / 10000) * voting_power;
   };
 
@@ -95,6 +90,7 @@ const Tweet = ({
   function handleConversation() {
     if (setConversation) setConversation(comment);
   }
+
   async function handleVote() {
     const votingValue = await calculateUserVoteValue(hiveAccount);
     const newRewardAmount =
@@ -107,7 +103,7 @@ const Tweet = ({
     );
     if (vote.success) {
       setVoted(true);
-      setRewardAmount(newRewardAmount.toFixed(3)); // Update reward amount optimistically
+      setRewardAmount(newRewardAmount.toFixed(3));
     }
     handleHeartClick();
   }
@@ -335,28 +331,6 @@ const Tweet = ({
             <Text fontWeight="bold" fontSize="sm">
               ${rewardAmount}
             </Text>
-            <Menu>
-              <MenuButton as={Button} variant="ghost">
-                <BiDotsHorizontal />
-              </MenuButton>
-              <MenuList bg={"background"} color={"text"}>
-                <MenuItem
-                  onClick={openShareModal}
-                  bg={"background"}
-                  color={"text"}
-                >
-                  Share Post
-                </MenuItem>
-                <MenuItem
-                  disabled
-                  onClick={openTippingModal}
-                  bg={"background"}
-                  color={"text"}
-                >
-                  Tip (soon)
-                </MenuItem>
-              </MenuList>
-            </Menu>
           </HStack>
         )}
       </Box>
