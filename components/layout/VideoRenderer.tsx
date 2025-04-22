@@ -210,7 +210,7 @@ const VideoControls = React.memo(
               -webkit-appearance: none;
               height: 24px;
               width: 24px;
-              background: url("/skateboardloader.webp") no-repeat center;
+              background: url("/images/skateboardloader.webp") no-repeat center;
               background-size: contain;
               border: none;
               border-radius: 0%;

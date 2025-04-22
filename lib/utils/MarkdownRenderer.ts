@@ -1,7 +1,5 @@
 import { DefaultRenderer } from "@hiveio/content-renderer";
-import React from 'react';
-import ReactDOMServer from 'react-dom/server';
-import VideoRenderer from '../../components/layout/VideoRenderer';
+
 
 export default function markdownRenderer(markdown: string) {
     // Return early if the markdown is empty
@@ -34,16 +32,22 @@ export default function markdownRenderer(markdown: string) {
     return safeHtmlStr;
 }
 
-// Pre-process markdown to replace IPFS links with video tags
+// Pre-process markdown to replace IPFS links with appropriate tags
 function preProcessIpfsContent(markdown: string): string {
-    // Convert direct IPFS video links to video tags
+    // Convert direct IPFS links to appropriate tags based on content type
     return markdown.replace(
         /!\[.*?\]\((https:\/\/(?:gateway\.pinata\.cloud|ipfs\.skatehive\.app)\/ipfs\/([a-zA-Z0-9]+)).*?\)/g,
-        (_, url, hash) => createSimpleVideoTag(hash)
+        (_, url, hash) => {
+            if (isLikelyVideoID(url)) {
+                return createSimpleVideoTag(hash);
+            } else {
+                return createImageTag(hash);
+            }
+        }
     );
 }
 
-// Transform HTML after markdown rendering to clean up any remaining IPFS video references
+// Transform HTML after markdown rendering to clean up any remaining IPFS references
 function transformIPFSContent(content: string): string {
     // First handle images
     let transformedContent = content.replace(
@@ -65,7 +69,7 @@ function transformIPFSContent(content: string): string {
             if (!url) return match;
 
             const ipfsHash = url.match(/\/ipfs\/([\w-]+)/)?.[1];
-            if (ipfsHash) {
+            if (ipfsHash && isLikelyVideoID(url)) {
                 return `<div class="video-embed" data-ipfs-hash="${ipfsHash}">
                     <video 
                         width="100%" 
@@ -89,9 +93,9 @@ function transformIPFSContent(content: string): string {
     return transformedContent;
 }
 
-// Check if the ID references a video file based on its extension
-function isLikelyVideoID(id: string): boolean {
-    return /\.(mp4|webm|mov|avi|wmv|flv|mkv)$/i.test(id);
+// Check if the URL references a video file based on its extension
+function isLikelyVideoID(url: string): boolean {
+    return /\.(mp4|webm|mov|avi|wmv|flv|mkv)$/i.test(url);
 }
 
 // Generate a clean video tag for embedding
@@ -110,5 +114,12 @@ function createSimpleVideoTag(videoID: string): string {
             <source src="https://ipfs.skatehive.app/ipfs/${videoID}" type="video/webm">
             Your browser doesn't support HTML5 video.
         </video>
+    </div>`;
+}
+
+// Generate a clean image tag for embedding
+function createImageTag(imageID: string): string {
+    return `<div style="text-align: center; display: flex; justify-content: center; margin: 1rem 0;">
+        <img src="https://ipfs.skatehive.app/ipfs/${imageID}" alt="IPFS Image" style="max-width: 100%; height: auto;">
     </div>`;
 }

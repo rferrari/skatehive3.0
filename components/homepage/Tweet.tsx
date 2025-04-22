@@ -128,15 +128,9 @@ const Tweet = ({
 
   const { text, media } = separateContent(comment.body);
   const renderMedia = (mediaContent: string) => {
-    console.log("--- Media Content Processing Debug ---");
-    console.log("Full media content:", mediaContent);
-
     const mediaArray = mediaContent.split("\n");
-    console.log("Media items count:", mediaArray.length);
 
     return mediaArray.map((item, index) => {
-      console.log(`\n[Item ${index}]: "${item}"`);
-
       // Check if this is a markdown image with IPFS URL from skatehive
       if (item.includes("![") && item.includes("ipfs.skatehive.app/ipfs/")) {
         // Use markdown renderer for all markdown images
@@ -171,7 +165,9 @@ const Tweet = ({
             const ipfsHash = url.match(/\/ipfs\/([\w-]+)/)?.[1];
             if (ipfsHash) {
               const skatehiveUrl = `https://ipfs.skatehive.app/ipfs/${ipfsHash}`;
-              console.log(`  - Converting Pinata URL to Skatehive URL: ${skatehiveUrl}`);
+              console.log(
+                `  - Converting Pinata URL to Skatehive URL: ${skatehiveUrl}`
+              );
               return <VideoRenderer key={index} src={skatehiveUrl} />;
             }
           } else if (url.includes("ipfs.skatehive.app/ipfs/")) {
@@ -182,9 +178,10 @@ const Tweet = ({
 
         // For other iframes, render as HTML but ensure no autoplay
         console.log(`  - RENDERING IFRAME AS HTML`);
-        const safeIframe = item.replace(/autoplay=1/g, 'autoplay=0')
-                             .replace(/autoplay/g, 'autoplay="false"')
-                             .replace(/preload="auto"/g, 'preload="none"');
+        const safeIframe = item
+          .replace(/autoplay=1/g, "autoplay=0")
+          .replace(/autoplay/g, 'autoplay="false"')
+          .replace(/preload="auto"/g, 'preload="none"');
         return (
           <Box
             key={index}
@@ -314,7 +311,13 @@ const Tweet = ({
             <HStack>
               <Tooltip label="upvote" hasArrow openDelay={1000}>
                 <Button
-                  leftIcon={voted ? <LuArrowUpRight size={24} color="#00b894" /> : <LuArrowUpRight size={24} />}
+                  leftIcon={
+                    voted ? (
+                      <LuArrowUpRight size={24} color="#00b894" />
+                    ) : (
+                      <LuArrowUpRight size={24} />
+                    )
+                  }
                   variant="ghost"
                   onClick={handleHeartClick}
                   size="sm"
@@ -329,8 +332,8 @@ const Tweet = ({
               </Tooltip>
             </HStack>
             <HStack>
-              <FaRegComment 
-                onClick={handleReplyModal} 
+              <FaRegComment
+                onClick={handleReplyModal}
                 cursor="pointer"
                 size={20}
               />
