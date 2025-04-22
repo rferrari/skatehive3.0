@@ -18,7 +18,7 @@ import { ExtendedComment } from "@/hooks/useComments";
 import { FaRegComment } from "react-icons/fa";
 import { LuArrowUpRight } from "react-icons/lu";
 import { useAioha } from "@aioha/react-ui";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   getPayoutValue,
   calculateUserVoteValue,
@@ -26,8 +26,8 @@ import {
 import markdownRenderer from "@/lib/utils/MarkdownRenderer";
 import { getPostDate } from "@/lib/utils/GetPostDate";
 import useHiveAccount from "@/hooks/useHiveAccount";
-import VideoRenderer from "../layout/VideoRenderer";
 import SocialMediaShareModal from "./SocialMediaShareModal";
+import VideoRenderer from "../layout/VideoRenderer";
 
 interface TweetProps {
   comment: ExtendedComment;
@@ -36,6 +36,91 @@ interface TweetProps {
   setConversation?: (conversation: Comment) => void;
   level?: number; // Added level for indentation
 }
+
+const separateContent = (body: string) => {
+  const textParts: string[] = [];
+  const mediaParts: string[] = [];
+  const lines = body.split("\n");
+  lines.forEach((line) => {
+    if (line.match(/!\[.*?\]\(.*\)/) || line.match(/<iframe.*<\/iframe>/)) {
+      mediaParts.push(line);
+    } else {
+      textParts.push(line);
+    }
+  });
+  return { text: textParts.join("\n"), media: mediaParts.join("\n") };
+};
+
+const renderMedia = (mediaContent: string) => {
+  return mediaContent.split("\n").map((item, index) => {
+    if (!item.trim()) return null;
+    // Handle markdown images with IPFS link: render using markdownRenderer to preserve styling.
+    if (item.includes("![") && item.includes("ipfs.skatehive.app/ipfs/")) {
+      return (
+        <Box
+          key={index}
+          dangerouslySetInnerHTML={{ __html: markdownRenderer(item) }}
+          sx={{
+            img: {
+              width: "100%",
+              height: "auto",
+              objectFit: "contain",
+              marginTop: "0.5rem",
+              marginBottom: "0.5rem",
+            },
+          }}
+        />
+      );
+    }
+    // Handle iframes with IPFS video links using VideoRenderer.
+    if (item.includes("<iframe") && item.includes("</iframe>")) {
+      const srcMatch = item.match(/src=["']([^"']+)["']/i);
+      if (srcMatch && srcMatch[1]) {
+        const url = srcMatch[1];
+        // If it's a Pinata URL, convert it to skatehive domain.
+        if (url.includes("gateway.pinata.cloud/ipfs/")) {
+          const ipfsHash = url.match(/\/ipfs\/([\w-]+)/)?.[1];
+          if (ipfsHash) {
+            const skatehiveUrl = `https://ipfs.skatehive.app/ipfs/${ipfsHash}`;
+            return <VideoRenderer key={index} src={skatehiveUrl} />;
+          }
+        } else if (url.includes("ipfs.skatehive.app/ipfs/")) {
+          return <VideoRenderer key={index} src={url} />;
+        }
+      }
+      // Fallback: render the iframe as HTML if no proper match found.
+      return (
+        <Box
+          key={index}
+          dangerouslySetInnerHTML={{ __html: item }}
+          sx={{
+            iframe: {
+              width: "100%",
+              height: "auto",
+              minHeight: "300px",
+            },
+          }}
+        />
+      );
+    }
+    // Fallback: render using markdownRenderer (could be plain text content)
+    return (
+      <Box
+        key={index}
+        dangerouslySetInnerHTML={{ __html: markdownRenderer(item) }}
+        sx={{
+          img: {
+            width: "100%",
+            height: "auto",
+            objectFit: "contain",
+            marginTop: "0.5rem",
+            marginBottom: "0.5rem",
+          },
+        }}
+      />
+    );
+  });
+};
 
 const Tweet = ({
   comment,
@@ -110,128 +195,6 @@ const Tweet = ({
     handleHeartClick();
   }
 
-  const separateContent = (body: string) => {
-    const textParts: string[] = [];
-    const mediaParts: string[] = [];
-    const lines = body.split("\n");
-
-    lines.forEach((line) => {
-      if (line.match(/!\[.*\]\(.*\)|<iframe.*<\/iframe>/)) {
-        mediaParts.push(line);
-      } else {
-        textParts.push(line);
-      }
-    });
-
-    return { text: textParts.join("\n"), media: mediaParts.join("\n") };
-  };
-
-  const { text, media } = separateContent(comment.body);
-  const renderMedia = (mediaContent: string) => {
-    const mediaArray = mediaContent.split("\n");
-
-    return mediaArray.map((item, index) => {
-      // Check if this is a markdown image with IPFS URL from skatehive
-      if (item.includes("![") && item.includes("ipfs.skatehive.app/ipfs/")) {
-        // Use markdown renderer for all markdown images
-        console.log(`  - RENDERING AS MARKDOWN IMAGE`);
-        return (
-          <Box
-            key={index}
-            dangerouslySetInnerHTML={{ __html: markdownRenderer(item) }}
-            sx={{
-              img: {
-                width: "100%",
-                height: "auto",
-                objectFit: "contain",
-                marginTop: "0.5rem",
-                marginBottom: "0.5rem",
-              },
-            }}
-          />
-        );
-      }
-      // Check for iframes specifically
-      else if (item.includes("<iframe") && item.includes("</iframe>")) {
-        console.log(`  - IS IFRAME`);
-        // Extract src URL from iframe
-        const srcMatch = item.match(/src=["']([^"']+)["']/i);
-        if (srcMatch && srcMatch[1]) {
-          const url = srcMatch[1];
-          console.log(`  - Extracted iframe URL: ${url}`);
-
-          // Handle both Pinata and skatehive IPFS URLs
-          if (url.includes("gateway.pinata.cloud/ipfs/")) {
-            const ipfsHash = url.match(/\/ipfs\/([\w-]+)/)?.[1];
-            if (ipfsHash) {
-              const skatehiveUrl = `https://ipfs.skatehive.app/ipfs/${ipfsHash}`;
-              console.log(
-                `  - Converting Pinata URL to Skatehive URL: ${skatehiveUrl}`
-              );
-              return <VideoRenderer key={index} src={skatehiveUrl} />;
-            }
-          } else if (url.includes("ipfs.skatehive.app/ipfs/")) {
-            console.log(`  - RENDERING AS VIDEO`);
-            return <VideoRenderer key={index} src={url} />;
-          }
-        }
-
-        // For other iframes, render as HTML but ensure no autoplay
-        console.log(`  - RENDERING IFRAME AS HTML`);
-        const safeIframe = item
-          .replace(/autoplay=1/g, "autoplay=0")
-          .replace(/autoplay/g, 'autoplay="false"')
-          .replace(/preload="auto"/g, 'preload="none"');
-        return (
-          <Box
-            key={index}
-            dangerouslySetInnerHTML={{ __html: safeIframe }}
-            sx={{
-              iframe: {
-                width: "100%",
-                height: "auto",
-                minHeight: "300px",
-              },
-            }}
-          />
-        );
-      }
-      // For all other content, use markdown renderer
-      else if (item.trim() !== "") {
-        console.log(`  - RENDERING AS MARKDOWN`);
-        const renderedMarkdown = markdownRenderer(item);
-        console.log(
-          `  - Rendered markdown: ${renderedMarkdown.substring(0, 100)}...`
-        );
-
-        return (
-          <Box
-            key={index}
-            dangerouslySetInnerHTML={{ __html: renderedMarkdown }}
-            sx={{
-              img: {
-                width: "100%",
-                height: "auto",
-                objectFit: "contain",
-                marginTop: "0.5rem",
-                marginBottom: "0.5rem",
-              },
-              ".gif, .giphy-embed": {
-                width: "100%",
-                height: "auto",
-              },
-              iframe: {
-                width: "100%",
-              },
-            }}
-          />
-        );
-      }
-      console.log(`  - SKIPPING (empty item)`);
-      return null;
-    });
-  };
-
   const handleSharePost = async () => {
     const postLink = `@${window.location.origin}/${comment.author}/${comment.permlink}`;
     await navigator.clipboard.writeText(postLink);
@@ -245,6 +208,15 @@ const Tweet = ({
     // Placeholder for tipping modal logic
     console.log("Tipping modal opened");
   };
+
+  // Memoize splitting the comment body into text and media parts
+  const { text, media } = useMemo(
+    () => separateContent(comment.body),
+    [comment.body]
+  );
+
+  // Memoize the rendered media portion
+  const renderedMedia = useMemo(() => renderMedia(media), [media]);
 
   return (
     <Box pl={level > 0 ? 1 : 0} ml={level > 0 ? 2 : 0}>
@@ -271,6 +243,7 @@ const Tweet = ({
           </HStack>
         </HStack>
         <Box>
+          {/* Render text portion with unified markdownRenderer */}
           <Box
             dangerouslySetInnerHTML={{ __html: markdownRenderer(text) }}
             sx={{
@@ -281,7 +254,8 @@ const Tweet = ({
               },
             }}
           />
-          <Box>{renderMedia(media)}</Box>
+          {/* Render memoized media portion */}
+          <Box>{renderedMedia}</Box>
         </Box>
         {showSlider ? (
           <Flex mt={4} alignItems="center">
