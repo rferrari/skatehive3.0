@@ -264,12 +264,12 @@ const Tweet = ({
             src={`https://images.hive.blog/u/${comment.author}/avatar/sm`}
             ml={2}
           />
-          <HStack ml={0} justifyContent={"space-between"} width="100%">
+          <HStack ml={0} width="100%">
             <Text fontWeight="medium" fontSize="sm">
               <Link href={`/@${comment.author}`}>{comment.author}</Link>
             </Text>
-            <Text fontWeight="medium" fontSize="sm" color="gray" mr={2}>
-              {commentDate}
+            <Text fontWeight="medium" fontSize="sm" color="gray">
+              · {commentDate}
             </Text>
           </HStack>
         </HStack>
