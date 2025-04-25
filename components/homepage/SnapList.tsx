@@ -1,22 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import InfiniteScroll from 'react-infinite-scroll-component';
-import { Box, Spinner, VStack } from '@chakra-ui/react';
-import Tweet from './Tweet';
-import { ExtendedComment } from '@/hooks/useComments';
-import TweetComposer from './TweetComposer';
-import { Comment } from '@hiveio/dhive'; // Add this import for consistency
-import LoadingComponent from './loadingComponent';
+import React, { useState, useEffect } from "react";
+import InfiniteScroll from "react-infinite-scroll-component";
+import { Box, Spinner, VStack } from "@chakra-ui/react";
+import Snap from "./Snap";
+import { ExtendedComment } from "@/hooks/useComments";
+import SnapComposer from "./SnapComposer";
+import { Comment } from "@hiveio/dhive"; // Add this import for consistency
+import LoadingComponent from "./loadingComponent";
 
-interface TweetListProps {
-  author: string
-  permlink: string
+interface SnapListProps {
+  author: string;
+  permlink: string;
   setConversation: (conversation: ExtendedComment) => void;
   onOpen: () => void;
   setReply: (reply: ExtendedComment) => void;
   newComment: ExtendedComment | null;
   setNewComment: (comment: ExtendedComment | null) => void;
   post?: boolean;
-  data: InfiniteScrollData
+  data: InfiniteScrollData;
 }
 
 interface InfiniteScrollData {
@@ -26,15 +26,27 @@ interface InfiniteScrollData {
   hasMore: boolean; // Default can be `false` in usage
 }
 
-export default function TweetList(
-  { author, permlink, setConversation, onOpen, setReply, newComment, setNewComment, post = false, data }
-    : TweetListProps) {
+export default function SnapList({
+  author,
+  permlink,
+  setConversation,
+  onOpen,
+  setReply,
+  newComment,
+  setNewComment,
+  post = false,
+  data,
+}: SnapListProps) {
   const { comments, loadNextPage, isLoading, hasMore } = data;
-  const [displayedComments, setDisplayedComments] = useState<ExtendedComment[]>([]);
+  const [displayedComments, setDisplayedComments] = useState<ExtendedComment[]>(
+    []
+  );
 
   // Mounted state
   const [hasMounted, setHasMounted] = useState(false);
-  useEffect(() => { setHasMounted(true); }, []);
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   // Update displayed comments when data.comments changes or newComment is added
   useEffect(() => {
@@ -45,8 +57,10 @@ export default function TweetList(
 
   useEffect(() => {
     if (newComment) {
-      setDisplayedComments(prevComments => {
-        const exists = prevComments.some(c => c.permlink === (newComment as any).permlink);
+      setDisplayedComments((prevComments) => {
+        const exists = prevComments.some(
+          (c) => c.permlink === (newComment as any).permlink
+        );
         if (!exists) {
           return [newComment as unknown as ExtendedComment, ...prevComments];
         }
@@ -56,48 +70,57 @@ export default function TweetList(
   }, [newComment]);
 
   const handleNewComment = (newComment: Partial<Comment>) => {
-    if (typeof setNewComment === 'function') {
+    if (typeof setNewComment === "function") {
       setNewComment(newComment as unknown as ExtendedComment);
     } else {
-      console.warn('setNewComment is not a function');
-      setDisplayedComments(prev => [newComment as unknown as ExtendedComment, ...prev]);
+      console.warn("setNewComment is not a function");
+      setDisplayedComments((prev) => [
+        newComment as unknown as ExtendedComment,
+        ...prev,
+      ]);
     }
   };
 
   // Sort comments by creation date (newest first)
-  const sortedComments = [...displayedComments].sort((a: ExtendedComment, b: ExtendedComment) => {
-    return new Date(b.created).getTime() - new Date(a.created).getTime();
-  });
+  const sortedComments = [...displayedComments].sort(
+    (a: ExtendedComment, b: ExtendedComment) => {
+      return new Date(b.created).getTime() - new Date(a.created).getTime();
+    }
+  );
 
   // Conditionally render after all hooks have run
   if (!hasMounted) return null;
 
   return (
     <VStack spacing={1} align="stretch" mx="auto">
-
       {isLoading && sortedComments.length === 0 ? (
         <Box textAlign="center" mt={-1}>
           <LoadingComponent />
         </Box>
       ) : (
         <>
-          <TweetComposer pa={author} pp={permlink} onNewComment={handleNewComment} onClose={() => null} />
+          <SnapComposer
+            pa={author}
+            pp={permlink}
+            onNewComment={handleNewComment}
+            onClose={() => null}
+          />
 
           <InfiniteScroll
             dataLength={sortedComments.length}
             next={loadNextPage}
             hasMore={hasMore}
             loader={
-              (<Box textAlign="center" mt={4}>
+              <Box textAlign="center" mt={4}>
                 {/* Changed the spinner to LoadingComponent */}
                 <Spinner />
-              </Box>)
+              </Box>
             }
             scrollableTarget="scrollableDiv"
           >
             <VStack spacing={1} align="stretch">
               {sortedComments.map((comment: ExtendedComment) => (
-                <Tweet
+                <Snap
                   key={comment.permlink}
                   comment={comment}
                   onOpen={onOpen}
@@ -108,7 +131,6 @@ export default function TweetList(
             </VStack>
           </InfiniteScroll>
         </>
-
       )}
     </VStack>
   );

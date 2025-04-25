@@ -29,7 +29,7 @@ import useHiveAccount from "@/hooks/useHiveAccount";
 import SocialMediaShareModal from "./SocialMediaShareModal";
 import VideoRenderer from "../layout/VideoRenderer";
 
-interface TweetProps {
+interface SnapProps {
   comment: ExtendedComment;
   onOpen: () => void;
   setReply: (comment: Comment) => void;
@@ -122,13 +122,13 @@ const renderMedia = (mediaContent: string) => {
   });
 };
 
-const Tweet = ({
+const Snap = ({
   comment,
   onOpen,
   setReply,
   setConversation,
   level = 0,
-}: TweetProps) => {
+}: SnapProps) => {
   const commentDate = getPostDate(comment.created);
   const { aioha, user } = useAioha();
   const { hiveAccount } = useHiveAccount(user || "");
@@ -336,7 +336,7 @@ const Tweet = ({
       {replies && replies.length > 0 && (
         <VStack spacing={2} align="stretch" mt={2}>
           {replies.map((reply: Comment) => (
-            <Tweet
+            <Snap
               key={reply.permlink}
               comment={reply}
               onOpen={onOpen}
@@ -351,4 +351,4 @@ const Tweet = ({
   );
 };
 
-export default Tweet;
+export default Snap;

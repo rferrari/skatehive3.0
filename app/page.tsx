@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import { Container, Flex, Box } from '@chakra-ui/react';
-import TweetList from '@/components/homepage/TweetList';
-import RightSidebar from '@/components/layout/RightSideBar';
-import { useState } from 'react';
-import { Comment } from '@hiveio/dhive'; // Ensure this import is consistent
-import Conversation from '@/components/homepage/Conversation';
-import TweetReplyModal from '@/components/homepage/TweetReplyModal';
-import { useSnaps } from '@/hooks/useSnaps';
+import { Container, Flex, Box } from "@chakra-ui/react";
+import SnapList from "@/components/homepage/SnapList";
+import RightSidebar from "@/components/layout/RightSideBar";
+import { useState } from "react";
+import { Comment } from "@hiveio/dhive"; // Ensure this import is consistent
+import Conversation from "@/components/homepage/Conversation";
+import SnapReplyModal from "@/components/homepage/SnapReplyModal";
+import { useSnaps } from "@/hooks/useSnaps";
 
 export default function Home() {
   //console.log('author', process.env.NEXT_PUBLIC_THREAD_AUTHOR);
-  const thread_author = 'peak.snaps';
-  const thread_permlink = 'snaps';
+  const thread_author = "peak.snaps";
+  const thread_permlink = "snaps";
 
   const [conversation, setConversation] = useState<Comment | undefined>();
   const [reply, setReply] = useState<Comment>();
@@ -29,11 +29,9 @@ export default function Home() {
   const snaps = useSnaps();
 
   return (
-    <Flex
-      direction={{ base: 'column', md: 'row' }}
-    >
+    <Flex direction={{ base: "column", md: "row" }}>
       <Container
-        maxW={{ base: '100%', md: '666px' }}
+        maxW={{ base: "100%", md: "666px" }}
         borderLeft="1px"
         borderRight="1px"
         borderColor="muted"
@@ -45,19 +43,16 @@ export default function Home() {
         top={0}
         justifyContent="center"
         flex="1"
-        sx={
-          {
-            '&::-webkit-scrollbar': {
-              display: 'none',
-            },
-            scrollbarWidth: 'none',
-          }
-        }
-        id='scrollableDiv'>
+        sx={{
+          "&::-webkit-scrollbar": {
+            display: "none",
+          },
+          scrollbarWidth: "none",
+        }}
+        id="scrollableDiv"
+      >
         {!conversation ? (
-
-
-          <TweetList
+          <SnapList
             author={thread_author}
             permlink={thread_permlink}
             setConversation={setConversation}
@@ -68,15 +63,27 @@ export default function Home() {
             data={snaps}
           />
         ) : (
-          <Conversation comment={conversation} setConversation={setConversation} onOpen={onOpen} setReply={setReply} />
+          <Conversation
+            comment={conversation}
+            setConversation={setConversation}
+            onOpen={onOpen}
+            setReply={setReply}
+          />
         )}
       </Container>
 
       {/* Changed: Wrap RightSidebar in a Box displayed only on mobile */}
-      <Box display={{ base: 'none', md: 'block', lg: 'block' }}>
+      <Box display={{ base: "none", md: "block", lg: "block" }}>
         <RightSidebar />
       </Box>
-      {isOpen && <TweetReplyModal isOpen={isOpen} onClose={onClose} comment={reply} onNewReply={handleNewComment} />}
+      {isOpen && (
+        <SnapReplyModal
+          isOpen={isOpen}
+          onClose={onClose}
+          comment={reply}
+          onNewReply={handleNewComment}
+        />
+      )}
     </Flex>
   );
 }
