@@ -130,6 +130,7 @@ export default function PostCard({ post }: PostCardProps) {
                 <Box
                     py={4}
                     pr={4}
+                    pl={8}
                     display="flex"
                     flexDirection="column"
                     justifyContent="space-between"

@@ -73,11 +73,10 @@ export default function RightSideBar() {
   return (
     <Box
       as="aside"
-      w={{ base: '100%', md: '350px' }}
+      w={{ base: '100%', md: '400px' }}
       h="100vh"
       overflowY="auto"
       pr={4}
-      pl={2}
       pt={2}
       position={"sticky"}
       top={0}
