@@ -2,25 +2,24 @@ import React, { useState, useEffect } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { Box, Spinner, VStack } from "@chakra-ui/react";
 import Snap from "./Snap";
-import { ExtendedComment } from "@/hooks/useComments";
 import SnapComposer from "./SnapComposer";
-import { Comment } from "@hiveio/dhive"; // Add this import for consistency
+import { Discussion } from "@hiveio/dhive"; // Add this import for consistency
 import LoadingComponent from "./loadingComponent";
 
 interface SnapListProps {
   author: string;
   permlink: string;
-  setConversation: (conversation: ExtendedComment) => void;
+  setConversation: (conversation: Discussion) => void;
   onOpen: () => void;
-  setReply: (reply: ExtendedComment) => void;
-  newComment: ExtendedComment | null;
-  setNewComment: (comment: ExtendedComment | null) => void;
+  setReply: (reply: Discussion) => void;
+  newComment: Discussion | null;
+  setNewComment: (Discussion: Discussion | null) => void;
   post?: boolean;
   data: InfiniteScrollData;
 }
 
 interface InfiniteScrollData {
-  comments: ExtendedComment[];
+  comments: Discussion[];
   loadNextPage: () => void; // Default can be an empty function in usage
   isLoading: boolean;
   hasMore: boolean; // Default can be `false` in usage
@@ -38,9 +37,7 @@ export default function SnapList({
   data,
 }: SnapListProps) {
   const { comments, loadNextPage, isLoading, hasMore } = data;
-  const [displayedComments, setDisplayedComments] = useState<ExtendedComment[]>(
-    []
-  );
+  const [displayedComments, setDisplayedComments] = useState<Discussion[]>([]);
 
   // Mounted state
   const [hasMounted, setHasMounted] = useState(false);
@@ -62,20 +59,20 @@ export default function SnapList({
           (c) => c.permlink === (newComment as any).permlink
         );
         if (!exists) {
-          return [newComment as unknown as ExtendedComment, ...prevComments];
+          return [newComment as unknown as Discussion, ...prevComments];
         }
         return prevComments;
       });
     }
   }, [newComment]);
 
-  const handleNewComment = (newComment: Partial<Comment>) => {
+  const handleNewComment = (newComment: Partial<Discussion>) => {
     if (typeof setNewComment === "function") {
-      setNewComment(newComment as unknown as ExtendedComment);
+      setNewComment(newComment as unknown as Discussion);
     } else {
       console.warn("setNewComment is not a function");
       setDisplayedComments((prev) => [
-        newComment as unknown as ExtendedComment,
+        newComment as unknown as Discussion,
         ...prev,
       ]);
     }
@@ -83,7 +80,7 @@ export default function SnapList({
 
   // Sort comments by creation date (newest first)
   const sortedComments = [...displayedComments].sort(
-    (a: ExtendedComment, b: ExtendedComment) => {
+    (a: Discussion, b: Discussion) => {
       return new Date(b.created).getTime() - new Date(a.created).getTime();
     }
   );
@@ -102,7 +99,9 @@ export default function SnapList({
           <SnapComposer
             pa={author}
             pp={permlink}
-            onNewComment={handleNewComment}
+            onNewComment={
+              handleNewComment as (newComment: Partial<Discussion>) => void
+            } // Cast handler to expected type
             onClose={() => null}
           />
 
@@ -119,10 +118,10 @@ export default function SnapList({
             scrollableTarget="scrollableDiv"
           >
             <VStack spacing={1} align="stretch">
-              {sortedComments.map((comment: ExtendedComment) => (
+              {sortedComments.map((Discussion: Discussion) => (
                 <Snap
-                  key={comment.permlink}
-                  comment={comment}
+                  key={Discussion.permlink}
+                  Discussion={Discussion}
                   onOpen={onOpen}
                   setReply={setReply}
                   {...(!post ? { setConversation } : {})}

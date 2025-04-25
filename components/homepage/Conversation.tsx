@@ -8,42 +8,42 @@ import {
   VStack,
   Spinner,
 } from "@chakra-ui/react";
-import { Comment } from "@hiveio/dhive";
+import { Discussion } from "@hiveio/dhive";
 import { useComments } from "@/hooks/useComments";
 import { ArrowBackIcon } from "@chakra-ui/icons";
 import Snap from "./Snap";
 import SnapComposer from "./SnapComposer";
 
 interface ConversationProps {
-  comment: Comment;
-  setConversation: (conversation: Comment | undefined) => void;
+  Discussion: Discussion;
+  setConversation: (conversation: Discussion | undefined) => void;
   onOpen: () => void;
-  setReply: (reply: Comment) => void;
+  setReply: (reply: Discussion) => void;
 }
 
 const Conversation = ({
-  comment,
+  Discussion,
   setConversation,
   onOpen,
   setReply,
 }: ConversationProps) => {
   const { comments, isLoading, error } = useComments(
-    comment.author,
-    comment.permlink,
+    Discussion.author,
+    Discussion.permlink,
     true
   );
   const replies = comments;
 
   // New state for inline reply and optimistic update
-  const [optimisticReplies, setOptimisticReplies] = useState<Comment[]>([]);
+  const [optimisticReplies, setOptimisticReplies] = useState<Discussion[]>([]);
 
   function onBackClick() {
     setConversation(undefined);
   }
 
   // New onNewComment handler for SnapComposer with optimistic update
-  function handleNewReply(newComment: Partial<Comment>) {
-    const newReply = newComment as Comment;
+  function handleNewReply(newComment: Partial<Discussion>) {
+    const newReply = newComment as Discussion;
     setOptimisticReplies((prev) => [...prev, newReply]);
     setReply(newReply);
   }
@@ -78,7 +78,7 @@ const Conversation = ({
         </Text>
       </HStack>
       <Snap
-        comment={{ ...comment, level: 0 }} // Explicitly add level to the root comment
+        Discussion={{ ...Discussion, depth: 0 } as any} // Use the built‑in depth for root
         onOpen={onOpen}
         setReply={setReply}
         setConversation={setConversation}
@@ -87,9 +87,11 @@ const Conversation = ({
       <Box mt={2}>
         {/* Inline snap composer replacing the generic Textarea */}
         <SnapComposer
-          pa={comment.author}
-          pp={comment.permlink}
-          onNewComment={handleNewReply}
+          pa={Discussion.author}
+          pp={Discussion.permlink}
+          onNewComment={
+            handleNewReply as (newComment: Partial<Discussion>) => void
+          } // changed cast type
           onClose={() => console.log("Composer closed")}
           post
         />
@@ -101,7 +103,7 @@ const Conversation = ({
           [...optimisticReplies, ...replies].map((reply: any) => (
             <Snap
               key={reply.permlink}
-              comment={reply}
+              Discussion={reply}
               onOpen={onOpen}
               setReply={setReply}
             />

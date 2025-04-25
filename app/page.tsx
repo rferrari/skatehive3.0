@@ -4,7 +4,7 @@ import { Container, Flex, Box } from "@chakra-ui/react";
 import SnapList from "@/components/homepage/SnapList";
 import RightSidebar from "@/components/layout/RightSideBar";
 import { useState } from "react";
-import { Comment } from "@hiveio/dhive"; // Ensure this import is consistent
+import { Discussion } from "@hiveio/dhive"; // Ensure this import is consistent
 import Conversation from "@/components/homepage/Conversation";
 import SnapReplyModal from "@/components/homepage/SnapReplyModal";
 import { useSnaps } from "@/hooks/useSnaps";
@@ -14,16 +14,18 @@ export default function Home() {
   const thread_author = "peak.snaps";
   const thread_permlink = "snaps";
 
-  const [conversation, setConversation] = useState<Comment | undefined>();
-  const [reply, setReply] = useState<Comment>();
+  const [conversation, setConversation] = useState<Discussion | undefined>();
+  const [reply, setReply] = useState<Discussion>();
   const [isOpen, setIsOpen] = useState(false);
-  const [newComment, setNewComment] = useState<Comment | null>(null); // Define the state
+  const [newComment, setNewComment] = useState<Discussion | null>(null); // Define the state
 
   const onOpen = () => setIsOpen(true);
   const onClose = () => setIsOpen(false);
 
-  const handleNewComment = (newComment: Partial<Comment> | CharacterData) => {
-    setNewComment(newComment as Comment);
+  const handleNewComment = (
+    newComment: Partial<Discussion> | CharacterData
+  ) => {
+    setNewComment(newComment as Discussion);
   };
 
   const snaps = useSnaps();
@@ -64,7 +66,7 @@ export default function Home() {
           />
         ) : (
           <Conversation
-            comment={conversation}
+            Discussion={conversation}
             setConversation={setConversation}
             onOpen={onOpen}
             setReply={setReply}
@@ -80,7 +82,7 @@ export default function Home() {
         <SnapReplyModal
           isOpen={isOpen}
           onClose={onClose}
-          comment={reply}
+          Discussion={reply}
           onNewReply={handleNewComment}
         />
       )}

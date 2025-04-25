@@ -1,29 +1,8 @@
 'use client'
 import HiveClient from "@/lib/hive/hiveclient"
 import { useCallback, useEffect, useState } from "react"
-import { Comment } from "@hiveio/dhive"
+import { Discussion } from "@hiveio/dhive"
 
-interface ActiveVote {
-    percent: number;
-    reputation: number;
-    rshares: number;
-    time: string;
-    voter: string;
-    weight: number;
-}
-export interface ExtendedComment extends Comment {
-    active_votes?: ActiveVote[]
-    replies?: ExtendedComment[]
-}
-
-interface ActiveVote {
-    percent: number
-    reputation: number
-    rshares: number
-    time: string
-    voter: string
-    weight: number
-}
 
 export interface ListCommentsParams {
     start: []
@@ -35,7 +14,7 @@ async function fetchComments(
     author: string,
     permlink: string,
     recursive: boolean = false
-): Promise<Comment[]> {
+): Promise<Discussion[]> {
     try {
         /*
         const params = {
@@ -52,14 +31,14 @@ async function fetchComments(
         const comments = (await HiveClient.database.call("get_content_replies", [
             author,
             permlink,
-        ])) as Comment[];
+        ])) as Discussion[];
 
         if (recursive) {
-            const fetchReplies = async (comment: ExtendedComment): Promise<ExtendedComment> => {
-                if (comment.children && comment.children > 0) {
-                    comment.replies = await fetchComments(comment.author, comment.permlink, true);
+            const fetchReplies = async (Discussion: Discussion): Promise<Discussion> => {
+                if (Discussion.children && Discussion.children > 0) {
+                    Discussion.replies = await fetchComments(Discussion.author, Discussion.permlink, true) as any;
                 }
-                return comment;
+                return Discussion;
             };
             const commentsWithReplies = await Promise.all(comments.map(fetchReplies));
             return commentsWithReplies;
@@ -77,7 +56,7 @@ export function useComments(
     permlink: string,
     recursive: boolean = false
 ) {
-    const [comments, setComments] = useState<Comment[]>([])
+    const [comments, setComments] = useState<Discussion[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
@@ -98,7 +77,7 @@ export function useComments(
         fetchAndUpdateComments();
     }, [fetchAndUpdateComments]);
 
-    const addComment = useCallback((newComment: Comment) => {
+    const addComment = useCallback((newComment: Discussion) => {
         setComments((existingComments) => [...existingComments, newComment]);
     }, []);
 

@@ -13,7 +13,7 @@ import {
   SliderThumb,
   Tooltip,
 } from "@chakra-ui/react";
-import { Comment } from "@hiveio/dhive";
+import { Discussion } from "@hiveio/dhive";
 import { FaRegComment } from "react-icons/fa";
 import { LuArrowUpRight } from "react-icons/lu";
 import { useAioha } from "@aioha/react-ui";
@@ -28,21 +28,6 @@ import useHiveAccount from "@/hooks/useHiveAccount";
 import SocialMediaShareModal from "./SocialMediaShareModal";
 import VideoRenderer from "../layout/VideoRenderer";
 import SnapComposer from "./SnapComposer"; // <-- add import for inline composer
-
-// Extend the Comment type to include the level property and missing properties
-interface ExtendedComment extends Comment {
-  level?: number;
-  replies?: ExtendedComment[];
-  active_votes?: { voter: string }[];
-}
-
-interface SnapProps {
-  comment: ExtendedComment;
-  onOpen: () => void;
-  setReply: (comment: Comment) => void;
-  setConversation?: (conversation: ExtendedComment) => void;
-  level?: number;
-}
 
 const separateContent = (body: string) => {
   const textParts: string[] = [];
@@ -129,43 +114,39 @@ const renderMedia = (mediaContent: string) => {
   });
 };
 
-const Snap = ({
-  comment,
-  onOpen,
-  setReply,
-  setConversation,
-  level = 0,
-}: SnapProps) => {
+interface SnapProps {
+  Discussion: Discussion;
+  onOpen: () => void;
+  setReply: (Discussion: Discussion) => void;
+  setConversation?: (conversation: Discussion) => void;
+}
+
+const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
   const { aioha, user } = useAioha();
   const { hiveAccount } = useHiveAccount(user || "");
-  const commentDate = getPostDate(comment.created);
+  const commentDate = getPostDate(Discussion.created);
 
   // State declarations
   const [sliderValue, setSliderValue] = useState(5);
   const [showSlider, setShowSlider] = useState(false);
-  const [rewardAmount, setRewardAmount] = useState(getPayoutValue(comment));
+  const [rewardAmount, setRewardAmount] = useState(getPayoutValue(Discussion));
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const [inlineReplies, setInlineReplies] = useState<Comment[]>([]);
+  const [inlineReplies, setInlineReplies] = useState<Discussion[]>([]);
   const [inlineComposerStates, setInlineComposerStates] = useState<
     Record<string, boolean>
   >({});
 
-  // Force level 1 if parent's permlink contains "snaps" when current level is 0
-  const effectiveLevel =
-    level === 0 &&
-    comment.parent_permlink &&
-    comment.parent_permlink.includes("snaps")
-      ? 1
-      : level; // Fix me: I am just a clanky way of setting level so the snapcomposer opens on click
+  // Use native depth; default to 0 if no depth property exists
+  const effectiveDepth = Discussion.depth || 0;
 
   const { text, media } = useMemo(
-    () => separateContent(comment.body),
-    [comment.body]
+    () => separateContent(Discussion.body),
+    [Discussion.body]
   );
   const renderedMedia = useMemo(() => renderMedia(media), [media]);
 
   const [voted, setVoted] = useState(
-    comment.active_votes?.some(
+    Discussion.active_votes?.some(
       (item: { voter: string }) => item.voter === user
     ) || false
   );
@@ -176,7 +157,8 @@ const Snap = ({
 
   function handleConversation() {
     if (setConversation) {
-      setConversation({ ...comment, level: effectiveLevel });
+      // No additional property added; rely on the Discussion object as is
+      setConversation(Discussion);
     }
   }
 
@@ -185,8 +167,8 @@ const Snap = ({
     const newRewardAmount =
       parseFloat(rewardAmount) + votingValue * (sliderValue / 100);
     const vote = await aioha.vote(
-      comment.author,
-      comment.permlink,
+      Discussion.author,
+      Discussion.permlink,
       sliderValue * 100
     );
     if (vote.success) {
@@ -197,7 +179,7 @@ const Snap = ({
   }
 
   const handleSharePost = async () => {
-    const postLink = `@${window.location.origin}/${comment.author}/${comment.permlink}`;
+    const postLink = `@${window.location.origin}/${Discussion.author}/${Discussion.permlink}`;
     await navigator.clipboard.writeText(postLink);
     console.log("Post link copied to clipboard:", postLink);
   };
@@ -208,9 +190,9 @@ const Snap = ({
     console.log("Tipping modal opened");
   };
 
-  function handleInlineNewReply(newComment: Partial<Comment>) {
-    const newReply = newComment as Comment;
-    setInlineReplies((prev: Comment[]) => [...prev, newReply]);
+  function handleInlineNewReply(newComment: Partial<Discussion>) {
+    const newReply = newComment as Discussion;
+    setInlineReplies((prev: Discussion[]) => [...prev, newReply]);
   }
 
   function handleReplyButtonClick(permlink: string) {
@@ -221,21 +203,21 @@ const Snap = ({
   }
 
   // Ensure replies is always an array
-  const replies = comment.replies || [];
+  const replies = Discussion.replies || [];
 
   return (
-    <Box pl={effectiveLevel > 0 ? 1 : 0} ml={effectiveLevel > 0 ? 2 : 0}>
+    <Box pl={effectiveDepth > 0 ? 1 : 0} ml={effectiveDepth > 0 ? 2 : 0}>
       <Box mt={1} mb={1} borderRadius="base" width="100%">
         <HStack mb={2}>
           <Avatar
             size="sm"
-            name={comment.author}
-            src={`https://images.hive.blog/u/${comment.author}/avatar/sm`}
+            name={Discussion.author}
+            src={`https://images.hive.blog/u/${Discussion.author}/avatar/sm`}
             ml={2}
           />
           <HStack ml={0} width="100%">
             <Text fontWeight="medium" fontSize="sm">
-              <Link href={`/@${comment.author}`}>{comment.author}</Link>
+              <Link href={`/@${Discussion.author}`}>{Discussion.author}</Link>
             </Text>
             <Text fontWeight="medium" fontSize="sm" color="gray">
               · {commentDate}
@@ -255,16 +237,16 @@ const Snap = ({
         </Box>
 
         <Box mt={2}>
-          {inlineComposerStates[comment.permlink] && (
+          {inlineComposerStates[Discussion.permlink] && (
             <Box mt={2}>
               <SnapComposer
-                pa={comment.author}
-                pp={comment.permlink}
+                pa={Discussion.author}
+                pp={Discussion.permlink}
                 onNewComment={handleInlineNewReply}
                 onClose={() =>
                   setInlineComposerStates((prev: Record<string, boolean>) => ({
                     ...prev,
-                    [comment.permlink]: false,
+                    [Discussion.permlink]: false,
                   }))
                 }
                 post
@@ -313,7 +295,7 @@ const Snap = ({
                   onClick={handleHeartClick}
                   size="sm"
                 >
-                  {comment.active_votes?.length}
+                  {Discussion.active_votes?.length}
                 </Button>
               </Tooltip>
               <Tooltip label="reward amount" hasArrow openDelay={1000}>
@@ -324,15 +306,16 @@ const Snap = ({
             </HStack>
             <HStack
               onClick={() => {
-                effectiveLevel > 0
-                  ? handleReplyButtonClick(comment.permlink)
+                console.log(Discussion.depth);
+                effectiveDepth > 1
+                  ? handleReplyButtonClick(Discussion.permlink)
                   : handleConversation();
               }}
             >
               <FaRegComment cursor="pointer" size={20} />
               {setConversation && (
                 <Text cursor="pointer" fontWeight="bold">
-                  {comment.children}
+                  {Discussion.children}
                 </Text>
               )}
             </HStack>
@@ -343,19 +326,21 @@ const Snap = ({
       {/* Render replies recursively, merging inline replies */}
       {(replies.length > 0 || inlineReplies.length > 0) && (
         <VStack spacing={2} align="stretch" mt={2}>
-          {[...inlineReplies, ...replies].map((reply: ExtendedComment) => {
-            const nextLevel = effectiveLevel + 1;
-            return (
-              <Snap
-                key={reply.permlink}
-                comment={reply}
-                onOpen={onOpen}
-                setReply={setReply}
-                setConversation={setConversation}
-                level={nextLevel}
-              />
-            );
-          })}
+          {[...inlineReplies, ...replies]
+            .filter((reply): reply is Discussion => typeof reply !== "string")
+            .map((reply: Discussion) => {
+              // Use the native depth if available; otherwise calculate next depth.
+              const nextDepth = effectiveDepth + 1;
+              return (
+                <Snap
+                  key={reply.permlink}
+                  Discussion={{ ...reply, depth: nextDepth } as any} // Fix: cast to any so depth is allowed
+                  onOpen={onOpen}
+                  setReply={setReply}
+                  setConversation={setConversation}
+                />
+              );
+            })}
         </VStack>
       )}
     </Box>

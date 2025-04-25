@@ -3,9 +3,8 @@
 
 import { Box, Container, Flex, Spinner } from "@chakra-ui/react";
 import SnapList from "../homepage/SnapList";
-import SnapComposer from "../homepage/SnapComposer";
 import { useEffect, useState } from "react";
-import { Comment, Discussion } from "@hiveio/dhive"; // Ensure this import is consistent
+import { Discussion } from "@hiveio/dhive"; // Ensure this import is consistent
 import Conversation from "../homepage/Conversation";
 import SnapReplyModal from "../homepage/SnapReplyModal";
 import { getPost } from "@/lib/hive/client-functions";
@@ -21,10 +20,10 @@ export default function PostPage({ author, permlink }: PostPageProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [post, setPost] = useState<Discussion | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [conversation, setConversation] = useState<Comment | undefined>();
-  const [reply, setReply] = useState<Comment>();
+  const [conversation, setConversation] = useState<Discussion | undefined>();
+  const [reply, setReply] = useState<Discussion>();
   const [isOpen, setIsOpen] = useState(false);
-  const [newComment, setNewComment] = useState<Comment | null>(null); // Define the state
+  const [newComment, setNewComment] = useState<Discussion | null>(null); // Define the state
 
   const data = useComments(author, permlink, true);
   const commentsData = {
@@ -52,8 +51,10 @@ export default function PostPage({ author, permlink }: PostPageProps) {
   const onOpen = () => setIsOpen(true);
   const onClose = () => setIsOpen(false);
 
-  const handleNewComment = (newComment: Partial<Comment> | CharacterData) => {
-    setNewComment(newComment as Comment); // Type assertion
+  const handleNewComment = (
+    newComment: Partial<Discussion> | CharacterData
+  ) => {
+    setNewComment(newComment as Discussion); // Type assertion
   };
 
   if (isLoading || !post || !author || !permlink) {
@@ -101,7 +102,7 @@ export default function PostPage({ author, permlink }: PostPageProps) {
             </>
           ) : (
             <Conversation
-              comment={conversation}
+              Discussion={conversation}
               setConversation={setConversation}
               onOpen={onOpen}
               setReply={setReply}
@@ -113,7 +114,7 @@ export default function PostPage({ author, permlink }: PostPageProps) {
         <SnapReplyModal
           isOpen={isOpen}
           onClose={onClose}
-          comment={reply}
+          Discussion={reply}
           onNewReply={handleNewComment}
         />
       )}
