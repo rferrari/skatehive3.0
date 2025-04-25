@@ -83,7 +83,6 @@ const Conversation = ({
         setReply={setReply}
         setConversation={setConversation}
       />
-      console.debug("Root Snap initialized with level 0");
       <Divider my={4} />
       <Box mt={2}>
         {/* Inline snap composer replacing the generic Textarea */}
