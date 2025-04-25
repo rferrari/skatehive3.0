@@ -35,8 +35,8 @@ export default function Composer() {
     "Enter post title...",
     "What's on your mind?",
     "Share your story...",
-    "Write something awesome...",
-    "Got a cool trick to share?",
+    "Write a banging title here...",
+    "Got any new tricks to share?",
     "What did you skate today?",
   ];
 
