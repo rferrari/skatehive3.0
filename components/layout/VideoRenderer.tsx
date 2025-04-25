@@ -240,6 +240,7 @@ const VideoControls = React.memo(
     );
   }
 );
+VideoControls.displayName = "VideoControls";
 
 // Memoize common styles outside the component
 const VIDEO_STYLE = {
@@ -368,10 +369,11 @@ const VideoRenderer = ({ src, ...props }: RendererProps) => {
   }, [isInView]);
 
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.addEventListener("timeupdate", handleTimeUpdate);
+    const currentVideo = videoRef.current;
+    if (currentVideo) {
+      currentVideo.addEventListener("timeupdate", handleTimeUpdate);
       return () => {
-        videoRef.current?.removeEventListener("timeupdate", handleTimeUpdate);
+        currentVideo.removeEventListener("timeupdate", handleTimeUpdate);
       };
     }
   }, [handleTimeUpdate]);
