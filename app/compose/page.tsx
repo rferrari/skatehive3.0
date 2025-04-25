@@ -13,7 +13,7 @@ import {
   Center,
   Spinner,
 } from "@chakra-ui/react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import MDEditor, { commands } from "@uiw/react-md-editor";
 import { useDropzone } from "react-dropzone";
 import { FaImage } from "react-icons/fa";
@@ -25,9 +25,46 @@ export default function Composer() {
   const [title, setTitle] = useState("");
   const [hashtagInput, setHashtagInput] = useState("");
   const [hashtags, setHashtags] = useState<string[]>([]);
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const { aioha } = useAioha();
   const communityTag = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || "blog";
   const [isUploading, setIsUploading] = useState(false);
+  const editorRef = useRef<any>(null);
+
+  const placeholders = [
+    "Enter post title...",
+    "What's on your mind?",
+    "Share your story...",
+    "Write something awesome...",
+    "Got a cool trick to share?",
+    "What did you skate today?",
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPlaceholderIndex((current) => (current + 1) % placeholders.length);
+    }, 3000); // Change every 3 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const insertAtCursor = (content: string) => {
+    const textarea = document.querySelector('.w-md-editor-text-input') as HTMLTextAreaElement;
+    if (textarea) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const text = markdown;
+      const before = text.substring(0, start);
+      const after = text.substring(end);
+      setMarkdown(`${before}${content}${after}`);
+      // Reset cursor position after React re-render
+      setTimeout(() => {
+        textarea.focus();
+        const newPosition = start + content.length;
+        textarea.setSelectionRange(newPosition, newPosition);
+      }, 0);
+    }
+  };
 
   const handleHashtagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (
@@ -76,12 +113,9 @@ export default function Composer() {
           const result = await response.json();
           const url = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`;
           if (file.type.startsWith("image/")) {
-            setMarkdown((prev) => `${prev}\n![${file.name}](${url})`);
+            insertAtCursor(`\n![${file.name}](${url})\n`);
           } else if (file.type.startsWith("video/")) {
-            setMarkdown(
-              (prev) =>
-                `${prev}\n<iframe src="${url}" frameborder="0" allowfullscreen></iframe>`
-            );
+            insertAtCursor(`\n<iframe src="${url}" frameborder="0" allowfullscreen></iframe>\n`);
           }
         } catch (error) {
           console.error("Error uploading file:", error);
@@ -140,12 +174,25 @@ export default function Composer() {
       overflow="hidden"
     >
       <Input
-        placeholder="Enter post title"
+        placeholder={placeholders[placeholderIndex]}
         mb="4"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         size="lg"
         borderRadius="base"
+        fontSize="3xl"
+        fontWeight="bold"
+        _placeholder={{ fontSize: "3xl" }}
+        maxLength={123}
+        sx={{
+          '&::placeholder': {
+            transition: 'opacity 0.3s ease-in-out',
+            opacity: 0.7,
+          },
+          '&:focus::placeholder': {
+            opacity: 0.3,
+          }
+        }}
       />
       {isUploading && (
         <Center>
