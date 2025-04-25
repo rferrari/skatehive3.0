@@ -14,7 +14,6 @@ import {
   Tooltip,
 } from "@chakra-ui/react";
 import { Comment } from "@hiveio/dhive";
-import { ExtendedComment } from "@/hooks/useComments";
 import { FaRegComment } from "react-icons/fa";
 import { LuArrowUpRight } from "react-icons/lu";
 import { useAioha } from "@aioha/react-ui";
@@ -30,19 +29,26 @@ import SocialMediaShareModal from "./SocialMediaShareModal";
 import VideoRenderer from "../layout/VideoRenderer";
 import SnapComposer from "./SnapComposer"; // <-- add import for inline composer
 
+// Extend the Comment type to include the level property and missing properties
+interface ExtendedComment extends Comment {
+  level?: number;
+  replies?: ExtendedComment[];
+  active_votes?: { voter: string }[];
+}
+
 interface SnapProps {
   comment: ExtendedComment;
   onOpen: () => void;
   setReply: (comment: Comment) => void;
-  setConversation?: (conversation: Comment) => void;
-  level?: number; // Added level for indentation
+  setConversation?: (conversation: ExtendedComment) => void;
+  level?: number;
 }
 
 const separateContent = (body: string) => {
   const textParts: string[] = [];
   const mediaParts: string[] = [];
   const lines = body.split("\n");
-  lines.forEach((line) => {
+  lines.forEach((line: string) => {
     if (line.match(/!\[.*?\]\(.*\)/) || line.match(/<iframe.*<\/iframe>/)) {
       mediaParts.push(line);
     } else {
@@ -53,7 +59,7 @@ const separateContent = (body: string) => {
 };
 
 const renderMedia = (mediaContent: string) => {
-  return mediaContent.split("\n").map((item, index) => {
+  return mediaContent.split("\n").map((item: string, index: number) => {
     if (!item.trim()) return null;
     // Handle markdown images with IPFS link: render using markdownRenderer to preserve styling.
     if (item.includes("![") && item.includes("ipfs.skatehive.app/ipfs/")) {
@@ -130,63 +136,54 @@ const Snap = ({
   setConversation,
   level = 0,
 }: SnapProps) => {
-  const commentDate = getPostDate(comment.created);
   const { aioha, user } = useAioha();
   const { hiveAccount } = useHiveAccount(user || "");
-  const [voted, setVoted] = useState(
-    comment.active_votes?.some((item) => item.voter === user)
-  );
+  const commentDate = getPostDate(comment.created);
+
+  // State declarations
   const [sliderValue, setSliderValue] = useState(5);
   const [showSlider, setShowSlider] = useState(false);
   const [rewardAmount, setRewardAmount] = useState(getPayoutValue(comment));
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const [showInlineComposer, setShowInlineComposer] = useState(false);
   const [inlineReplies, setInlineReplies] = useState<Comment[]>([]);
+  const [inlineComposerStates, setInlineComposerStates] = useState<
+    Record<string, boolean>
+  >({});
 
-  const calculateVotingPower = () => {
-    if (!hiveAccount || !hiveAccount.voting_manabar) return 0;
-    const { voting_manabar, voting_power } = hiveAccount;
-    const elapsedTime = Date.now() / 1000 - voting_manabar.last_update_time;
-    const regeneratedMana = (elapsedTime * 10000) / 432000;
-    const currentMana = Math.min(
-      Number(voting_manabar.current_mana) + regeneratedMana,
-      10000
-    );
-    return (currentMana / 10000) * voting_power;
-  };
+  // Force level 1 if parent's permlink contains "snaps" when current level is 0
+  const effectiveLevel =
+    level === 0 &&
+    comment.parent_permlink &&
+    comment.parent_permlink.includes("snaps")
+      ? 1
+      : level; // Fix me: I am just a clanky way of setting level so the snapcomposer opens on click
 
-  const currentVotingPower = calculateVotingPower();
+  const { text, media } = useMemo(
+    () => separateContent(comment.body),
+    [comment.body]
+  );
+  const renderedMedia = useMemo(() => renderMedia(media), [media]);
 
-  useEffect(() => {
-    const logVotingValue = async () => {
-      if (hiveAccount) {
-        const votingValue = await calculateUserVoteValue(hiveAccount);
-      }
-    };
-    logVotingValue();
-  }, [hiveAccount]);
-
-  const replies = comment.replies;
+  const [voted, setVoted] = useState(
+    comment.active_votes?.some(
+      (item: { voter: string }) => item.voter === user
+    ) || false
+  );
 
   function handleHeartClick() {
     setShowSlider(!showSlider);
   }
 
-  function handleReplyModal() {
-    setReply(comment);
-    onOpen();
-  }
-
   function handleConversation() {
-    console.debug("Comment icon clicked for reply:", comment);
-    if (setConversation) setConversation(comment);
+    if (setConversation) {
+      setConversation({ ...comment, level: effectiveLevel });
+    }
   }
 
   async function handleVote() {
     const votingValue = await calculateUserVoteValue(hiveAccount);
     const newRewardAmount =
       parseFloat(rewardAmount) + votingValue * (sliderValue / 100);
-
     const vote = await aioha.vote(
       comment.author,
       comment.permlink,
@@ -207,46 +204,28 @@ const Snap = ({
 
   const openShareModal = () => setIsShareModalOpen(true);
   const closeShareModal = () => setIsShareModalOpen(false);
-
   const openTippingModal = () => {
-    // Placeholder for tipping modal logic
     console.log("Tipping modal opened");
   };
 
-  // Memoize splitting the comment body into text and media parts
-  const { text, media } = useMemo(
-    () => separateContent(comment.body),
-    [comment.body]
-  );
-
-  // Memoize the rendered media portion
-  const renderedMedia = useMemo(() => renderMedia(media), [media]);
-
-  // Handler for inline new reply (reply of a reply)
   function handleInlineNewReply(newComment: Partial<Comment>) {
     const newReply = newComment as Comment;
-    setInlineReplies((prev) => [...prev, newReply]);
+    setInlineReplies((prev: Comment[]) => [...prev, newReply]);
   }
 
-  function handleReplyButtonClick() {
-    console.debug("Reply button clicked for comment:", comment);
-    setShowInlineComposer((prev) => !prev);
-    console.log(showInlineComposer, "showInlineComposer");
-    if (showInlineComposer) {
-      setShowInlineComposer(false);
-    } else {
-      setShowInlineComposer(true);
-    }
+  function handleReplyButtonClick(permlink: string) {
+    setInlineComposerStates((prev: Record<string, boolean>) => ({
+      ...prev,
+      [permlink]: !prev[permlink],
+    }));
   }
+
+  // Ensure replies is always an array
+  const replies = comment.replies || [];
 
   return (
-    <Box pl={level > 0 ? 1 : 0} ml={level > 0 ? 2 : 0}>
-      <Box
-        mt={1}
-        mb={1}
-        borderRadius="base" // This will apply the borderRadius from your theme
-        width="100%"
-      >
+    <Box pl={effectiveLevel > 0 ? 1 : 0} ml={effectiveLevel > 0 ? 2 : 0}>
+      <Box mt={1} mb={1} borderRadius="base" width="100%">
         <HStack mb={2}>
           <Avatar
             size="sm"
@@ -268,11 +247,7 @@ const Snap = ({
           <Box
             dangerouslySetInnerHTML={{ __html: markdownRenderer(text) }}
             sx={{
-              p: {
-                marginBottom: "1rem",
-                lineHeight: "1.6",
-                marginLeft: "4",
-              },
+              p: { marginBottom: "1rem", lineHeight: "1.6", marginLeft: "4" },
             }}
           />
           {/* Render memoized media portion */}
@@ -280,20 +255,18 @@ const Snap = ({
         </Box>
 
         <Box mt={2}>
-          {/* <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleReplyButtonClick} // Updated to use the new handler
-          >
-            Reply
-          </Button> */}
-          {showInlineComposer && (
+          {inlineComposerStates[comment.permlink] && (
             <Box mt={2}>
               <SnapComposer
                 pa={comment.author}
                 pp={comment.permlink}
                 onNewComment={handleInlineNewReply}
-                onClose={() => setShowInlineComposer(false)}
+                onClose={() =>
+                  setInlineComposerStates((prev: Record<string, boolean>) => ({
+                    ...prev,
+                    [comment.permlink]: false,
+                  }))
+                }
                 post
               />
             </Box>
@@ -350,9 +323,11 @@ const Snap = ({
               </Tooltip>
             </HStack>
             <HStack
-              onClick={() =>
-                level > 0 ? handleReplyButtonClick() : handleConversation()
-              }
+              onClick={() => {
+                effectiveLevel > 0
+                  ? handleReplyButtonClick(comment.permlink)
+                  : handleConversation();
+              }}
             >
               <FaRegComment cursor="pointer" size={20} />
               {setConversation && (
@@ -366,21 +341,21 @@ const Snap = ({
       </Box>
 
       {/* Render replies recursively, merging inline replies */}
-      {((comment.replies && comment.replies.length > 0) ||
-        inlineReplies.length > 0) && (
+      {(replies.length > 0 || inlineReplies.length > 0) && (
         <VStack spacing={2} align="stretch" mt={2}>
-          {[...inlineReplies, ...(comment.replies || [])].map(
-            (reply: Comment) => (
+          {[...inlineReplies, ...replies].map((reply: ExtendedComment) => {
+            const nextLevel = effectiveLevel + 1;
+            return (
               <Snap
                 key={reply.permlink}
                 comment={reply}
                 onOpen={onOpen}
                 setReply={setReply}
                 setConversation={setConversation}
-                level={level + 1}
+                level={nextLevel}
               />
-            )
-          )}
+            );
+          })}
         </VStack>
       )}
     </Box>

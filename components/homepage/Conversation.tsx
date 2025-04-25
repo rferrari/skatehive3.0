@@ -4,7 +4,6 @@ import {
   Text,
   HStack,
   Button,
-  Avatar,
   Divider,
   VStack,
   Spinner,
@@ -36,13 +35,7 @@ const Conversation = ({
   const replies = comments;
 
   // New state for inline reply and optimistic update
-  const [showReplyInput, setShowReplyInput] = useState(false);
   const [optimisticReplies, setOptimisticReplies] = useState<Comment[]>([]);
-
-  // Updated reply handler to toggle inline reply composer
-  function handleReplyModal() {
-    setShowReplyInput(!showReplyInput);
-  }
 
   function onBackClick() {
     setConversation(undefined);
@@ -84,20 +77,24 @@ const Conversation = ({
           Conversation
         </Text>
       </HStack>
-      <Snap comment={comment} onOpen={onOpen} setReply={setReply} />
+      <Snap
+        comment={{ ...comment, level: 0 }} // Explicitly add level to the root comment
+        onOpen={onOpen}
+        setReply={setReply}
+        setConversation={setConversation}
+      />
+      console.debug("Root Snap initialized with level 0");
       <Divider my={4} />
-      {showReplyInput && (
-        <Box mt={2}>
-          {/* Inline snap composer replacing the generic Textarea */}
-          <SnapComposer
-            pa={comment.author}
-            pp={comment.permlink}
-            onNewComment={handleNewReply}
-            onClose={() => setShowReplyInput(false)}
-            post
-          />
-        </Box>
-      )}
+      <Box mt={2}>
+        {/* Inline snap composer replacing the generic Textarea */}
+        <SnapComposer
+          pa={comment.author}
+          pp={comment.permlink}
+          onNewComment={handleNewReply}
+          onClose={() => console.log("Composer closed")}
+          post
+        />
+      </Box>
       <Divider my={4} />
       <VStack spacing={2} align="stretch">
         {
