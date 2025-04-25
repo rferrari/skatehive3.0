@@ -30,7 +30,10 @@ export default function Composer() {
   const [isUploading, setIsUploading] = useState(false);
 
   const handleHashtagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === " " && hashtagInput.trim()) {
+    if (
+      (e.key === " " || e.key === "Enter" || e.key === ",") &&
+      hashtagInput.trim()
+    ) {
       setHashtags((prev) => [...prev, hashtagInput.trim()]);
       setHashtagInput("");
     } else if (e.key === "Backspace" && !hashtagInput && hashtags.length) {
@@ -99,7 +102,7 @@ export default function Composer() {
       keyCommand: "uploadImage",
       buttonProps: { "aria-label": "Upload image" },
       icon: (
-        <Tooltip label="Upload Image or Video">
+        <Tooltip label="Upload Image or Video" placement="left">
           <span>
             <FaImage color="primary" />
           </span>
@@ -223,7 +226,10 @@ export default function Composer() {
           </WrapItem>
         ))}
       </Wrap>
-      <Flex mt="1" justify="flex-end">
+      <Flex mt="1" justify="space-between">
+        <Button size="sm" colorScheme="blue">
+          Advanced
+        </Button>
         <Button size="sm" colorScheme="blue" onClick={handleSubmit}>
           Submit
         </Button>
