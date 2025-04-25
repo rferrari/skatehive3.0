@@ -62,7 +62,7 @@ const LoadingComponent = () => {
       <VStack
         bg="transparent"
         blur={5}
-        overflowY="hidden"
+        overflow="hidden"
         css={{ "&::-webkit-scrollbar": { display: "none" } }}
         width="100%"
         height="100vh"
