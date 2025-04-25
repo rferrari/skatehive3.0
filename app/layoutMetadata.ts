@@ -7,13 +7,13 @@ export const metadata: Metadata = {
     },
     description: 'The infinity skateboarding magazine',
     keywords: ['Skateboarding', 'Web3', 'Decentralization', 'Community', 'Skatehive', 'hive', "bitcoin"],
-    metadataBase: new URL('https://skatehive.app'),
+    metadataBase: new URL('https://my.skatehive.app'),
     authors: [{ name: 'Skatehive' }],
     robots: { index: true, follow: true },
     openGraph: {
         title: 'Skatehive - The Future of underground Skateboarding',
         description: 'Join the decentralized skateboarding community and start earning for your content.',
-        url: 'https://skatehive.app',
+        url: 'https://my.skatehive.app',
         siteName: 'Skatehive',
         images: [
             {
