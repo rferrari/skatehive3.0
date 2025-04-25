@@ -1,55 +1,135 @@
-'use client'
-import { useAioha } from '@aioha/react-ui'
-import { Flex, Input, Tag, TagCloseButton, TagLabel, Wrap, WrapItem, Button } from '@chakra-ui/react'
-import dynamic from 'next/dynamic'
-import { useState } from 'react'
-
-const Editor = dynamic(() => import('./Editor'), { ssr: false })
+"use client";
+import { useAioha } from "@aioha/react-ui";
+import {
+  Flex,
+  Input,
+  Tag,
+  TagCloseButton,
+  TagLabel,
+  Wrap,
+  WrapItem,
+  Button,
+  Tooltip,
+  Center,
+  Spinner,
+} from "@chakra-ui/react";
+import { useState, useMemo } from "react";
+import MDEditor, { commands } from "@uiw/react-md-editor";
+import { useDropzone } from "react-dropzone";
+import { FaImage } from "react-icons/fa";
+import VideoRenderer from "../../components/layout/VideoRenderer";
+import { Components } from "@uiw/react-markdown-preview";
 
 export default function Composer() {
-  const [markdown, setMarkdown] = useState("")
-  const [title, setTitle] = useState("")
-  const [hashtagInput, setHashtagInput] = useState("")
-  const [hashtags, setHashtags] = useState<string[]>([])
-
-  const { aioha } = useAioha()
-  const communityTag = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || 'blog'
+  const [markdown, setMarkdown] = useState("");
+  const [title, setTitle] = useState("");
+  const [hashtagInput, setHashtagInput] = useState("");
+  const [hashtags, setHashtags] = useState<string[]>([]);
+  const { aioha } = useAioha();
+  const communityTag = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || "blog";
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleHashtagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    const { key } = e
-    if (key === " " && hashtagInput.trim()) { // If space is pressed and input is not empty
-      setHashtags([...hashtags, hashtagInput.trim()])
-      setHashtagInput("") // Clear input field
-    } else if (key === "Backspace" && !hashtagInput && hashtags.length) {
-      // Remove the last tag if backspace is hit and input is empty
-      setHashtags(hashtags.slice(0, -1))
+    if (e.key === " " && hashtagInput.trim()) {
+      setHashtags((prev) => [...prev, hashtagInput.trim()]);
+      setHashtagInput("");
+    } else if (e.key === "Backspace" && !hashtagInput && hashtags.length) {
+      setHashtags((prev) => prev.slice(0, -1));
     }
-  }
+  };
 
   const removeHashtag = (index: number) => {
-    setHashtags(hashtags.filter((_, i) => i !== index))
-  }
+    setHashtags((prev) => prev.filter((_, i) => i !== index));
+  };
 
-  async function handleSubmit() {
-    console.log('Submit button clicked');
+  const handleSubmit = async () => {
     const permlink = title.replaceAll(" ", "-");
-    console.log('Generated permlink:', permlink);
-    console.log('Submitting post with title:', title);
-    console.log('Markdown content:', markdown);
-    console.log('Hashtags:', hashtags);
-
     try {
-      await aioha.comment(null, communityTag, permlink, title, markdown, { tags: hashtags, app: 'Skatehive App 3.0' });
-      console.log('Post submitted successfully');
+      await aioha.comment(null, communityTag, permlink, title, markdown, {
+        tags: hashtags,
+        app: "Skatehive App 3.0",
+      });
+      console.log("Post submitted successfully");
     } catch (error) {
-      console.error('Failed to submit post:', error);
+      console.error("Failed to submit post:", error);
     }
-  }
+  };
+  const { getRootProps, getInputProps } = useDropzone({
+    noClick: true,
+    noKeyboard: true,
+    onDrop: async (acceptedFiles) => {
+      setIsUploading(true);
+      for (const file of acceptedFiles) {
+        const formData = new FormData();
+        formData.append("file", file);
+        try {
+          const response = await fetch("/api/pinata", {
+            method: "POST",
+            body: formData,
+          });
+          if (!response.ok) {
+            throw new Error("Failed to upload file");
+          }
+          const result = await response.json();
+          const url = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`;
+          if (file.type.startsWith("image/")) {
+            setMarkdown((prev) => `${prev}\n![${file.name}](${url})`);
+          } else if (file.type.startsWith("video/")) {
+            setMarkdown(
+              (prev) =>
+                `${prev}\n<iframe src="${url}" frameborder="0" allowfullscreen></iframe>`
+            );
+          }
+        } catch (error) {
+          console.error("Error uploading file:", error);
+        }
+      }
+      setIsUploading(false);
+    },
+    accept: {
+      "image/*": [".png", ".gif", ".jpeg", ".jpg"],
+      "video/*": [".mp4", ".mov"],
+    },
+    multiple: false,
+  });
+
+  const extraCommands = [
+    {
+      name: "uploadImage",
+      keyCommand: "uploadImage",
+      buttonProps: { "aria-label": "Upload image" },
+      icon: (
+        <Tooltip label="Upload Image or Video">
+          <span>
+            <FaImage color="primary" />
+          </span>
+        </Tooltip>
+      ),
+      execute: (state: any, api: any) => {
+        const element = document.getElementById("md-image-upload");
+        if (element) {
+          element.click();
+        }
+      },
+    },
+  ];
+
+  const memoizedComponents: Components = useMemo(
+    () => ({
+      iframe: ({
+        node,
+        ...props
+      }: React.IframeHTMLAttributes<HTMLIFrameElement> & {
+        node?: unknown;
+      }) => <VideoRenderer src={props.src} {...props} />,
+    }),
+    []
+  );
 
   return (
     <Flex
       width="100%"
-      height="100vh" // Ensure the entire screen height is used
+      height="92vh"
       bgColor="background"
       justify="center"
       p="1"
@@ -64,27 +144,62 @@ export default function Composer() {
         size="lg"
         borderRadius="base"
       />
-
-      {/* Editor */}
+      {isUploading && (
+        <Center>
+          <Spinner />
+        </Center>
+      )}
       <Flex
-        flex="1" // Take up remaining space
+        flex="1"
         border="1px solid"
         borderColor="black"
         borderRadius="base"
         justify="center"
-        p="1"
-        overflow="hidden" // Prevent internal scrolling of the parent container
+        overflow="hidden"
+        width="100%"
+        {...getRootProps()}
       >
-        <Flex
-          width="100%"
-          height="100%" // Ensure the editor fills the container
-          overflow="auto" // Enable scrolling inside the editor
-        >
-          <Editor markdown={markdown} setMarkdown={setMarkdown} />
-        </Flex>
+        <input
+          {...getInputProps()}
+          id="md-image-upload"
+          style={{ display: "none" }}
+        />
+        <MDEditor
+          value={markdown}
+          onChange={(value) => setMarkdown(value || "")}
+          height="100%"
+          style={{
+            border: "2px solid limegreen",
+            padding: "10px",
+            backgroundColor: "background",
+            color: "white",
+            width: "100%",
+          }}
+          extraCommands={extraCommands}
+          previewOptions={{
+            components: memoizedComponents,
+            style: {
+              backgroundColor: "background",
+              color: "white",
+            },
+          }}
+          commands={[
+            commands.bold,
+            commands.italic,
+            commands.strikethrough,
+            commands.hr,
+            commands.code,
+            commands.table,
+            commands.link,
+            commands.quote,
+            commands.unorderedListCommand,
+            commands.orderedListCommand,
+            commands.fullscreen,
+            commands.codeEdit,
+            commands.codeLive,
+          ]}
+        />
       </Flex>
-
-      {/* Hashtag Input */}
       <Input
         placeholder="Enter hashtags"
         mt="4"
@@ -93,7 +208,6 @@ export default function Composer() {
         onKeyDown={handleHashtagKeyDown}
         borderRadius="base"
       />
-      {/* Display Hashtags as Tags */}
       <Wrap mt="2">
         {hashtags.map((tag, index) => (
           <WrapItem key={index}>
@@ -110,14 +224,10 @@ export default function Composer() {
         ))}
       </Wrap>
       <Flex mt="1" justify="flex-end">
-        <Button
-          size="sm" // Make button smaller
-          colorScheme="blue"
-          onClick={handleSubmit}
-        >
+        <Button size="sm" colorScheme="blue" onClick={handleSubmit}>
           Submit
         </Button>
       </Flex>
     </Flex>
-  )
+  );
 }
