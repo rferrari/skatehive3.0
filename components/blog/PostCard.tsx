@@ -121,186 +121,190 @@ export default function PostCard({ post }: PostCardProps) {
                 }
             `}</style>
             <Box
-                border="1px solid rgb(46, 46, 46)"
-                borderRadius="base"
-                overflow="hidden"
-                p={4}
-                display="flex"
-                flexDirection="column"
-                justifyContent="space-between"
-                height="100%"
                 position="relative"
+                borderBottom="1px solid rgb(46, 46, 46)"
+                overflow="hidden"
+                height="100%"
             >
-                <Flex justifyContent="space-between" alignItems="center">
-                    <Flex alignItems="center" width="100%">
-                        <Link 
-                            href={`/@${author}`} 
-                            onClick={stopPropagation}
-                            display="flex"
-                            alignItems="center"
-                            _hover={{ 
-                                textDecoration: 'underline'
-                            }}
-                        >
-                            <Avatar size="sm" name={author} src={`https://images.hive.blog/u/${author}/avatar/sm`} />
-                            <Text 
-                                fontWeight="bold" 
-                                fontSize="2xl" 
-                                lineHeight="1"
+                <Box
+                    py={4}
+                    pr={4}
+                    display="flex"
+                    flexDirection="column"
+                    justifyContent="space-between"
+                    height="100%"
+                >
+                    <Flex justifyContent="space-between" alignItems="center">
+                        <Flex alignItems="center" width="100%">
+                            <Link 
+                                href={`/@${author}`} 
+                                onClick={stopPropagation}
                                 display="flex"
                                 alignItems="center"
-                                ml={3}
+                                _hover={{ 
+                                    textDecoration: 'underline'
+                                }}
                             >
-                                @{author}
-                            </Text>
-                        </Link>
-                        <Text fontSize="sm" color="gray.500" ml="auto">
-                            {postDate}
-                        </Text>
-                    </Flex>
-                </Flex>
-                <Link
-                    href={`/@${author}/${post.permlink}`}
-                    onClick={stopPropagation}
-                    _hover={{ textDecoration: 'underline' }}
-                >
-                    <Text
-                        fontWeight="bold"
-                        fontSize="lg"
-                        textAlign="center"
-                        mb={2}
-                        isTruncated
-                    >
-                        {title}
-                    </Text>
-                </Link>
-
-                <Box flex="1" display="flex" alignItems="flex-end" justifyContent="center" zIndex={999}>
-                    {imageUrls.length > 0 ? (
-                        <Swiper
-                            spaceBetween={10}
-                            slidesPerView={1}
-                            pagination={{ clickable: true }}
-                            navigation={true}
-                            modules={[Navigation, Pagination]}
-                            onSlideChange={handleSlideChange}
-                            onClick={handleSwiperClick} // Add this line to handle Swiper clicks
-                            className="custom-swiper"
-                        >
-                            {imageUrls.slice(0, visibleImages).map((url, index) => (
-                                // Add the stopPropagation to each SwiperSlide instead
-                                <SwiperSlide key={index} onClick={stopPropagation}>
-                                    <Box h="200px" w="100%">
-                                        <Image
-                                            src={url}
-                                            alt={title}
-                                            borderRadius="base"
-                                            objectFit="cover"
-                                            w="100%"
-                                            h="100%"
-                                            loading="lazy"
-                                            onError={handleImageError}
-                                        />
-                                    </Box>
-                                </SwiperSlide>
-                            ))}
-                        </Swiper>
-                    ) : youtubeLinks.length > 0 ? (
-                        <Swiper
-                            spaceBetween={10}
-                            slidesPerView={1}
-                            pagination={{ clickable: true }}
-                            navigation={true}
-                            modules={[Navigation, Pagination]}
-                            className="custom-swiper"
-                        >
-                            {youtubeLinks.map((link, index) => (
-                                <SwiperSlide key={index} onClick={stopPropagation}>
-                                    <Box h="200px" w="100%">
-                                        <iframe
-                                            src={link.url}
-                                            title={`YouTube video from ${link.domain}`}
-                                            width="100%"
-                                            height="100%"
-                                            frameBorder="0"
-                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                            allowFullScreen
-                                        ></iframe>
-                                    </Box>
-                                </SwiperSlide>
-                            ))}
-                        </Swiper>
-                    ) : (
-                        <Box h="200px" w="100%">
-                            <Image
-                                src={default_thumbnail}
-                                alt="default thumbnail"
-                                borderRadius="base"
-                                objectFit="cover"
-                                w="100%"
-                                h="100%"
-                                loading="lazy"
-                                onError={handleImageError}
-                            />
-                        </Box>
-                    )}
-                </Box>
-
-                <Box mt="auto">
-                    {showSlider ? (
-                        <Flex mt={4} alignItems="center" onClick={stopPropagation}>
-                            <Box width="100%" mr={4}>
-                                <Slider
-                                    aria-label="slider-ex-1"
-                                    defaultValue={0}
-                                    min={0}
-                                    max={100}
-                                    value={sliderValue}
-                                    onChange={(val) => setSliderValue(val)}
+                                <Avatar size="sm" name={author} src={`https://images.hive.blog/u/${author}/avatar/sm`} />
+                                <Text 
+                                    fontWeight="bold" 
+                                    fontSize="2xl" 
+                                    lineHeight="1"
+                                    display="flex"
+                                    alignItems="center"
+                                    ml={3}
                                 >
-                                    <SliderTrack>
-                                        <SliderFilledTrack />
-                                    </SliderTrack>
-                                    <SliderThumb cursor="grab" _active={{ cursor: "grabbing" }} />
-                                </Slider>
-                            </Box>
-                            <Button size="xs" onClick={(e) => {
-                                e.stopPropagation();
-                                handleVote();
-                            }} pl={5} pr={5} cursor="pointer">Vote {sliderValue} %</Button>
-                            <Button size="xs" onClick={(e) => {
-                                e.stopPropagation();
-                                handleHeartClick();
-                            }} ml={1} cursor="pointer">X</Button>
-                        </Flex>
-                    ) : (
-                        <Flex mt={4} justifyContent="center" alignItems="center" onClick={stopPropagation} gap={6}>
-                            <Flex alignItems="center">
-                                <Icon
-                                    as={LuArrowUpRight}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleHeartClick();
-                                    }}
-                                    cursor="pointer"
-                                    color={voted ? "#00b894" : undefined}
-                                    boxSize={6}
-                                />
-                                <Text ml={2} fontSize="sm">
-                                    {post.active_votes.length}
+                                    @{author}
                                 </Text>
-                            </Flex>
-                            <Text fontWeight="bold" fontSize="sm">
-                                ${getPayoutValue(post)}
+                            </Link>
+                            <Text fontSize="sm" color="gray.500" ml="auto">
+                                {postDate}
                             </Text>
-                            <Flex alignItems="center">
-                                <Icon as={FaComment} />
-                                <Text ml={2} fontSize="sm">
-                                    {post.children}
-                                </Text>
-                            </Flex>
                         </Flex>
-                    )}
+                    </Flex>
+                    <Link
+                        href={`/@${author}/${post.permlink}`}
+                        onClick={stopPropagation}
+                        _hover={{ textDecoration: 'underline' }}
+                    >
+                        <Text
+                            fontWeight="bold"
+                            fontSize="lg"
+                            textAlign="center"
+                            mb={2}
+                            isTruncated
+                        >
+                            {title}
+                        </Text>
+                    </Link>
+
+                    <Box flex="1" display="flex" alignItems="flex-end" justifyContent="center" zIndex={999}>
+                        {imageUrls.length > 0 ? (
+                            <Swiper
+                                spaceBetween={10}
+                                slidesPerView={1}
+                                pagination={{ clickable: true }}
+                                navigation={true}
+                                modules={[Navigation, Pagination]}
+                                onSlideChange={handleSlideChange}
+                                onClick={handleSwiperClick} // Add this line to handle Swiper clicks
+                                className="custom-swiper"
+                            >
+                                {imageUrls.slice(0, visibleImages).map((url, index) => (
+                                    // Add the stopPropagation to each SwiperSlide instead
+                                    <SwiperSlide key={index} onClick={stopPropagation}>
+                                        <Box h="200px" w="100%">
+                                            <Image
+                                                src={url}
+                                                alt={title}
+                                                borderRadius="base"
+                                                objectFit="cover"
+                                                w="100%"
+                                                h="100%"
+                                                loading="lazy"
+                                                onError={handleImageError}
+                                            />
+                                        </Box>
+                                    </SwiperSlide>
+                                ))}
+                            </Swiper>
+                        ) : youtubeLinks.length > 0 ? (
+                            <Swiper
+                                spaceBetween={10}
+                                slidesPerView={1}
+                                pagination={{ clickable: true }}
+                                navigation={true}
+                                modules={[Navigation, Pagination]}
+                                className="custom-swiper"
+                            >
+                                {youtubeLinks.map((link, index) => (
+                                    <SwiperSlide key={index} onClick={stopPropagation}>
+                                        <Box h="200px" w="100%">
+                                            <iframe
+                                                src={link.url}
+                                                title={`YouTube video from ${link.domain}`}
+                                                width="100%"
+                                                height="100%"
+                                                frameBorder="0"
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                allowFullScreen
+                                            ></iframe>
+                                        </Box>
+                                    </SwiperSlide>
+                                ))}
+                            </Swiper>
+                        ) : (
+                            <Box h="200px" w="100%">
+                                <Image
+                                    src={default_thumbnail}
+                                    alt="default thumbnail"
+                                    borderRadius="base"
+                                    objectFit="cover"
+                                    w="100%"
+                                    h="100%"
+                                    loading="lazy"
+                                    onError={handleImageError}
+                                />
+                            </Box>
+                        )}
+                    </Box>
+
+                    <Box mt="auto">
+                        {showSlider ? (
+                            <Flex mt={4} alignItems="center" onClick={stopPropagation}>
+                                <Box width="100%" mr={4}>
+                                    <Slider
+                                        aria-label="slider-ex-1"
+                                        defaultValue={0}
+                                        min={0}
+                                        max={100}
+                                        value={sliderValue}
+                                        onChange={(val) => setSliderValue(val)}
+                                    >
+                                        <SliderTrack>
+                                            <SliderFilledTrack />
+                                        </SliderTrack>
+                                        <SliderThumb cursor="grab" _active={{ cursor: "grabbing" }} />
+                                    </Slider>
+                                </Box>
+                                <Button size="xs" onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleVote();
+                                }} pl={5} pr={5} cursor="pointer">Vote {sliderValue} %</Button>
+                                <Button size="xs" onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleHeartClick();
+                                }} ml={1} cursor="pointer">X</Button>
+                            </Flex>
+                        ) : (
+                            <Flex mt={4} justifyContent="center" alignItems="center" onClick={stopPropagation} gap={6}>
+                                <Flex alignItems="center">
+                                    <Icon
+                                        as={LuArrowUpRight}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleHeartClick();
+                                        }}
+                                        cursor="pointer"
+                                        color={voted ? "#00b894" : undefined}
+                                        boxSize={6}
+                                    />
+                                    <Text ml={2} fontSize="sm">
+                                        {post.active_votes.length}
+                                    </Text>
+                                </Flex>
+                                <Text fontWeight="bold" fontSize="sm">
+                                    ${getPayoutValue(post)}
+                                </Text>
+                                <Flex alignItems="center">
+                                    <Icon as={FaComment} />
+                                    <Text ml={2} fontSize="sm">
+                                        {post.children}
+                                    </Text>
+                                </Flex>
+                            </Flex>
+                        )}
+                    </Box>
                 </Box>
             </Box>
         </>
