@@ -305,18 +305,10 @@ const Snap = ({
                 </Text>
               </Tooltip>
             </HStack>
-            <HStack>
-              <FaRegComment
-                onClick={handleReplyModal}
-                cursor="pointer"
-                size={20}
-              />
+            <HStack onClick={handleConversation}>
+              <FaRegComment cursor="pointer" size={20} />
               {setConversation && (
-                <Text
-                  onClick={handleConversation}
-                  cursor="pointer"
-                  fontWeight="bold"
-                >
+                <Text cursor="pointer" fontWeight="bold">
                   {comment.children}
                 </Text>
               )}
