@@ -86,19 +86,6 @@ const Conversation = ({
       </HStack>
       <Snap comment={comment} onOpen={onOpen} setReply={setReply} />
       <Divider my={4} />
-      <HStack justify="space-between" mt={3} onClick={handleReplyModal}>
-        <HStack>
-          <Avatar size="sm" name="Your Name" />
-          <Text>Snap your reply</Text>
-        </HStack>
-        <Button
-          variant="solid"
-          colorScheme="primary"
-          onClick={handleReplyModal}
-        >
-          Reply
-        </Button>
-      </HStack>
       {showReplyInput && (
         <Box mt={2}>
           {/* Inline snap composer replacing the generic Textarea */}

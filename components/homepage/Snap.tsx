@@ -178,6 +178,7 @@ const Snap = ({
   }
 
   function handleConversation() {
+    console.debug("Comment icon clicked for reply:", comment);
     if (setConversation) setConversation(comment);
   }
 
@@ -227,6 +228,17 @@ const Snap = ({
     setInlineReplies((prev) => [...prev, newReply]);
   }
 
+  function handleReplyButtonClick() {
+    console.debug("Reply button clicked for comment:", comment);
+    setShowInlineComposer((prev) => !prev);
+    console.log(showInlineComposer, "showInlineComposer");
+    if (showInlineComposer) {
+      setShowInlineComposer(false);
+    } else {
+      setShowInlineComposer(true);
+    }
+  }
+
   return (
     <Box pl={level > 0 ? 1 : 0} ml={level > 0 ? 2 : 0}>
       <Box
@@ -267,28 +279,26 @@ const Snap = ({
           <Box>{renderedMedia}</Box>
         </Box>
 
-        {level > 0 && (
-          <Box mt={2}>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowInlineComposer(!showInlineComposer)}
-            >
-              Reply
-            </Button>
-            {showInlineComposer && (
-              <Box mt={2}>
-                <SnapComposer
-                  pa={comment.author}
-                  pp={comment.permlink}
-                  onNewComment={handleInlineNewReply}
-                  onClose={() => setShowInlineComposer(false)}
-                  post
-                />
-              </Box>
-            )}
-          </Box>
-        )}
+        <Box mt={2}>
+          {/* <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleReplyButtonClick} // Updated to use the new handler
+          >
+            Reply
+          </Button> */}
+          {showInlineComposer && (
+            <Box mt={2}>
+              <SnapComposer
+                pa={comment.author}
+                pp={comment.permlink}
+                onNewComment={handleInlineNewReply}
+                onClose={() => setShowInlineComposer(false)}
+                post
+              />
+            </Box>
+          )}
+        </Box>
 
         {/* Existing slider/vote or other buttons */}
         {showSlider ? (
@@ -339,7 +349,11 @@ const Snap = ({
                 </Text>
               </Tooltip>
             </HStack>
-            <HStack onClick={handleConversation}>
+            <HStack
+              onClick={() =>
+                level > 0 ? handleReplyButtonClick() : handleConversation()
+              }
+            >
               <FaRegComment cursor="pointer" size={20} />
               {setConversation && (
                 <Text cursor="pointer" fontWeight="bold">
@@ -350,14 +364,6 @@ const Snap = ({
           </HStack>
         )}
       </Box>
-      {/* Render Social Media Share Modal */}
-      {isShareModalOpen && (
-        <SocialMediaShareModal
-          isOpen={isShareModalOpen}
-          onClose={closeShareModal}
-          comment={comment}
-        />
-      )}
 
       {/* Render replies recursively, merging inline replies */}
       {((comment.replies && comment.replies.length > 0) ||
