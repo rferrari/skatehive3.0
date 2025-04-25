@@ -28,7 +28,7 @@ const randomSentences = [
   "Skate till you tired, then skate more",
   "Power up (stake) your HIVE into HIVE POWER (HP) to increase your vote strength",
   "climb the ranks in the skatehive leaderboard - defeat web-gnar",
-  "HBD is a stablecoin- it is always worth 1 USD worth of HIVE",
+  "HBD is a stablecoin- it is always worth $1 worth of HIVE",
   "stake your HBD in savings to earn 15% APY",
   "your vote mana depleates over time, give it a day or two to recharge",
   "try to get 1000 HIVE Power",
