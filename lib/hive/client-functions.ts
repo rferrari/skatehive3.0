@@ -3,11 +3,9 @@ import { Broadcast, Custom, KeychainKeyTypes, KeychainRequestResponse, KeychainS
 import HiveClient from "./hiveclient";
 import crypto from 'crypto';
 import { signImageHash } from "./server-functions";
-import { Account, Discussion, Notifications, PublicKey, PrivateKey, KeyRole } from "@hiveio/dhive";
+import { Discussion, Notifications } from "@hiveio/dhive";
 import { extractNumber } from "../utils/extractNumber";
-import { profileEnd } from "console";
-import { convertSelectionToNode$ } from "@mdxeditor/editor";
-import { ExtendedComment } from "@/hooks/useComments";
+
 
 interface HiveKeychainResponse {
   success: boolean

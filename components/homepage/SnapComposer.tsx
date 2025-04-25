@@ -17,13 +17,12 @@ import {
 } from "@chakra-ui/react";
 import { useAioha } from "@aioha/react-ui";
 import GiphySelector from "./GiphySelector";
-import ImageUploader from "./ImageUploader";
 import VideoUploader from "./VideoUploader";
 import { IGif } from "@giphy/js-types";
 import { CloseIcon } from "@chakra-ui/icons";
 import { FaImage } from "react-icons/fa";
 import { MdGif } from "react-icons/md";
-import { Comment, Discussion } from "@hiveio/dhive";
+import { Discussion } from "@hiveio/dhive";
 import {
   getFileSignature,
   getLastSnapsContainer,
@@ -34,7 +33,7 @@ import { FaVideo } from "react-icons/fa6";
 interface SnapComposerProps {
   pa: string;
   pp: string;
-  onNewComment: (newComment: Partial<Comment>) => void;
+  onNewComment: (newComment: Partial<Discussion>) => void;
   post?: boolean;
   onClose: () => void;
 }

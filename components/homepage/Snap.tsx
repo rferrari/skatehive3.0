@@ -13,8 +13,7 @@ import {
   SliderThumb,
   Tooltip,
 } from "@chakra-ui/react";
-import { Comment } from "@hiveio/dhive";
-import { ExtendedComment } from "@/hooks/useComments";
+import { Discussion } from "@hiveio/dhive";
 import { FaRegComment } from "react-icons/fa";
 import { LuArrowUpRight } from "react-icons/lu";
 import { useAioha } from "@aioha/react-ui";
@@ -30,19 +29,11 @@ import SocialMediaShareModal from "./SocialMediaShareModal";
 import VideoRenderer from "../layout/VideoRenderer";
 import SnapComposer from "./SnapComposer"; // <-- add import for inline composer
 
-interface SnapProps {
-  comment: ExtendedComment;
-  onOpen: () => void;
-  setReply: (comment: Comment) => void;
-  setConversation?: (conversation: Comment) => void;
-  level?: number; // Added level for indentation
-}
-
 const separateContent = (body: string) => {
   const textParts: string[] = [];
   const mediaParts: string[] = [];
   const lines = body.split("\n");
-  lines.forEach((line) => {
+  lines.forEach((line: string) => {
     if (line.match(/!\[.*?\]\(.*\)/) || line.match(/<iframe.*<\/iframe>/)) {
       mediaParts.push(line);
     } else {
@@ -53,7 +44,7 @@ const separateContent = (body: string) => {
 };
 
 const renderMedia = (mediaContent: string) => {
-  return mediaContent.split("\n").map((item, index) => {
+  return mediaContent.split("\n").map((item: string, index: number) => {
     if (!item.trim()) return null;
     // Handle markdown images with IPFS link: render using markdownRenderer to preserve styling.
     if (item.includes("![") && item.includes("ipfs.skatehive.app/ipfs/")) {
@@ -123,73 +114,61 @@ const renderMedia = (mediaContent: string) => {
   });
 };
 
-const Snap = ({
-  comment,
-  onOpen,
-  setReply,
-  setConversation,
-  level = 0,
-}: SnapProps) => {
-  const commentDate = getPostDate(comment.created);
+interface SnapProps {
+  Discussion: Discussion;
+  onOpen: () => void;
+  setReply: (Discussion: Discussion) => void;
+  setConversation?: (conversation: Discussion) => void;
+}
+
+const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
   const { aioha, user } = useAioha();
   const { hiveAccount } = useHiveAccount(user || "");
-  const [voted, setVoted] = useState(
-    comment.active_votes?.some((item) => item.voter === user)
-  );
+  const commentDate = getPostDate(Discussion.created);
+
+  // State declarations
   const [sliderValue, setSliderValue] = useState(5);
   const [showSlider, setShowSlider] = useState(false);
-  const [rewardAmount, setRewardAmount] = useState(getPayoutValue(comment));
+  const [rewardAmount, setRewardAmount] = useState(getPayoutValue(Discussion));
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const [showInlineComposer, setShowInlineComposer] = useState(false);
-  const [inlineReplies, setInlineReplies] = useState<Comment[]>([]);
+  const [inlineReplies, setInlineReplies] = useState<Discussion[]>([]);
+  const [inlineComposerStates, setInlineComposerStates] = useState<
+    Record<string, boolean>
+  >({});
 
-  const calculateVotingPower = () => {
-    if (!hiveAccount || !hiveAccount.voting_manabar) return 0;
-    const { voting_manabar, voting_power } = hiveAccount;
-    const elapsedTime = Date.now() / 1000 - voting_manabar.last_update_time;
-    const regeneratedMana = (elapsedTime * 10000) / 432000;
-    const currentMana = Math.min(
-      Number(voting_manabar.current_mana) + regeneratedMana,
-      10000
-    );
-    return (currentMana / 10000) * voting_power;
-  };
+  // Use native depth; default to 0 if no depth property exists
+  const effectiveDepth = Discussion.depth || 0;
 
-  const currentVotingPower = calculateVotingPower();
+  const { text, media } = useMemo(
+    () => separateContent(Discussion.body),
+    [Discussion.body]
+  );
+  const renderedMedia = useMemo(() => renderMedia(media), [media]);
 
-  useEffect(() => {
-    const logVotingValue = async () => {
-      if (hiveAccount) {
-        const votingValue = await calculateUserVoteValue(hiveAccount);
-      }
-    };
-    logVotingValue();
-  }, [hiveAccount]);
-
-  const replies = comment.replies;
+  const [voted, setVoted] = useState(
+    Discussion.active_votes?.some(
+      (item: { voter: string }) => item.voter === user
+    ) || false
+  );
 
   function handleHeartClick() {
     setShowSlider(!showSlider);
   }
 
-  function handleReplyModal() {
-    setReply(comment);
-    onOpen();
-  }
-
   function handleConversation() {
-    console.debug("Comment icon clicked for reply:", comment);
-    if (setConversation) setConversation(comment);
+    if (setConversation) {
+      // No additional property added; rely on the Discussion object as is
+      setConversation(Discussion);
+    }
   }
 
   async function handleVote() {
     const votingValue = await calculateUserVoteValue(hiveAccount);
     const newRewardAmount =
       parseFloat(rewardAmount) + votingValue * (sliderValue / 100);
-
     const vote = await aioha.vote(
-      comment.author,
-      comment.permlink,
+      Discussion.author,
+      Discussion.permlink,
       sliderValue * 100
     );
     if (vote.success) {
@@ -200,63 +179,45 @@ const Snap = ({
   }
 
   const handleSharePost = async () => {
-    const postLink = `@${window.location.origin}/${comment.author}/${comment.permlink}`;
+    const postLink = `@${window.location.origin}/${Discussion.author}/${Discussion.permlink}`;
     await navigator.clipboard.writeText(postLink);
     console.log("Post link copied to clipboard:", postLink);
   };
 
   const openShareModal = () => setIsShareModalOpen(true);
   const closeShareModal = () => setIsShareModalOpen(false);
-
   const openTippingModal = () => {
-    // Placeholder for tipping modal logic
     console.log("Tipping modal opened");
   };
 
-  // Memoize splitting the comment body into text and media parts
-  const { text, media } = useMemo(
-    () => separateContent(comment.body),
-    [comment.body]
-  );
-
-  // Memoize the rendered media portion
-  const renderedMedia = useMemo(() => renderMedia(media), [media]);
-
-  // Handler for inline new reply (reply of a reply)
-  function handleInlineNewReply(newComment: Partial<Comment>) {
-    const newReply = newComment as Comment;
-    setInlineReplies((prev) => [...prev, newReply]);
+  function handleInlineNewReply(newComment: Partial<Discussion>) {
+    const newReply = newComment as Discussion;
+    setInlineReplies((prev: Discussion[]) => [...prev, newReply]);
   }
 
-  function handleReplyButtonClick() {
-    console.debug("Reply button clicked for comment:", comment);
-    setShowInlineComposer((prev) => !prev);
-    console.log(showInlineComposer, "showInlineComposer");
-    if (showInlineComposer) {
-      setShowInlineComposer(false);
-    } else {
-      setShowInlineComposer(true);
-    }
+  function handleReplyButtonClick(permlink: string) {
+    setInlineComposerStates((prev: Record<string, boolean>) => ({
+      ...prev,
+      [permlink]: !prev[permlink],
+    }));
   }
+
+  // Ensure replies is always an array
+  const replies = Discussion.replies || [];
 
   return (
-    <Box pl={level > 0 ? 1 : 0} ml={level > 0 ? 2 : 0}>
-      <Box
-        mt={1}
-        mb={1}
-        borderRadius="base" // This will apply the borderRadius from your theme
-        width="100%"
-      >
+    <Box pl={effectiveDepth > 0 ? 1 : 0} ml={effectiveDepth > 0 ? 2 : 0}>
+      <Box mt={1} mb={1} borderRadius="base" width="100%">
         <HStack mb={2}>
           <Avatar
             size="sm"
-            name={comment.author}
-            src={`https://images.hive.blog/u/${comment.author}/avatar/sm`}
+            name={Discussion.author}
+            src={`https://images.hive.blog/u/${Discussion.author}/avatar/sm`}
             ml={2}
           />
           <HStack ml={0} width="100%">
             <Text fontWeight="medium" fontSize="sm">
-              <Link href={`/@${comment.author}`}>{comment.author}</Link>
+              <Link href={`/@${Discussion.author}`}>{Discussion.author}</Link>
             </Text>
             <Text fontWeight="medium" fontSize="sm" color="gray">
               · {commentDate}
@@ -268,11 +229,7 @@ const Snap = ({
           <Box
             dangerouslySetInnerHTML={{ __html: markdownRenderer(text) }}
             sx={{
-              p: {
-                marginBottom: "1rem",
-                lineHeight: "1.6",
-                marginLeft: "4",
-              },
+              p: { marginBottom: "1rem", lineHeight: "1.6", marginLeft: "4" },
             }}
           />
           {/* Render memoized media portion */}
@@ -280,20 +237,18 @@ const Snap = ({
         </Box>
 
         <Box mt={2}>
-          {/* <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleReplyButtonClick} // Updated to use the new handler
-          >
-            Reply
-          </Button> */}
-          {showInlineComposer && (
+          {inlineComposerStates[Discussion.permlink] && (
             <Box mt={2}>
               <SnapComposer
-                pa={comment.author}
-                pp={comment.permlink}
+                pa={Discussion.author}
+                pp={Discussion.permlink}
                 onNewComment={handleInlineNewReply}
-                onClose={() => setShowInlineComposer(false)}
+                onClose={() =>
+                  setInlineComposerStates((prev: Record<string, boolean>) => ({
+                    ...prev,
+                    [Discussion.permlink]: false,
+                  }))
+                }
                 post
               />
             </Box>
@@ -340,7 +295,7 @@ const Snap = ({
                   onClick={handleHeartClick}
                   size="sm"
                 >
-                  {comment.active_votes?.length}
+                  {Discussion.active_votes?.length}
                 </Button>
               </Tooltip>
               <Tooltip label="reward amount" hasArrow openDelay={1000}>
@@ -350,14 +305,17 @@ const Snap = ({
               </Tooltip>
             </HStack>
             <HStack
-              onClick={() =>
-                level > 0 ? handleReplyButtonClick() : handleConversation()
-              }
+              onClick={() => {
+                console.log(Discussion.depth);
+                effectiveDepth > 1
+                  ? handleReplyButtonClick(Discussion.permlink)
+                  : handleConversation();
+              }}
             >
               <FaRegComment cursor="pointer" size={20} />
               {setConversation && (
                 <Text cursor="pointer" fontWeight="bold">
-                  {comment.children}
+                  {Discussion.children}
                 </Text>
               )}
             </HStack>
@@ -366,21 +324,23 @@ const Snap = ({
       </Box>
 
       {/* Render replies recursively, merging inline replies */}
-      {((comment.replies && comment.replies.length > 0) ||
-        inlineReplies.length > 0) && (
+      {(replies.length > 0 || inlineReplies.length > 0) && (
         <VStack spacing={2} align="stretch" mt={2}>
-          {[...inlineReplies, ...(comment.replies || [])].map(
-            (reply: Comment) => (
-              <Snap
-                key={reply.permlink}
-                comment={reply}
-                onOpen={onOpen}
-                setReply={setReply}
-                setConversation={setConversation}
-                level={level + 1}
-              />
-            )
-          )}
+          {[...inlineReplies, ...replies]
+            .filter((reply): reply is Discussion => typeof reply !== "string")
+            .map((reply: Discussion) => {
+              // Use the native depth if available; otherwise calculate next depth.
+              const nextDepth = effectiveDepth + 1;
+              return (
+                <Snap
+                  key={reply.permlink}
+                  Discussion={{ ...reply, depth: nextDepth } as any} // Fix: cast to any so depth is allowed
+                  onOpen={onOpen}
+                  setReply={setReply}
+                  setConversation={setConversation}
+                />
+              );
+            })}
         </VStack>
       )}
     </Box>

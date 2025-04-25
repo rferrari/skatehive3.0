@@ -13,7 +13,7 @@ import {
 } from "@chakra-ui/react";
 import React from "react";
 import SnapComposer from "./SnapComposer";
-import { Comment } from "@hiveio/dhive";
+import { Discussion } from "@hiveio/dhive";
 import { CloseIcon } from "@chakra-ui/icons";
 import markdownRenderer from "@/lib/utils/MarkdownRenderer";
 import { getPostDate } from "@/lib/utils/GetPostDate";
@@ -21,21 +21,21 @@ import { getPostDate } from "@/lib/utils/GetPostDate";
 interface SnapReplyModalProps {
   isOpen: boolean;
   onClose: () => void;
-  comment?: Comment;
-  onNewReply: (newComment: Partial<Comment>) => void;
+  Discussion?: Discussion;
+  onNewReply: (newComment: Partial<Discussion>) => void;
 }
 
 export default function SnapReplyModal({
   isOpen,
   onClose,
-  comment,
+  Discussion,
   onNewReply,
 }: SnapReplyModalProps) {
-  if (!comment) {
+  if (!Discussion) {
     return <div></div>;
   }
 
-  const commentDate = getPostDate(comment.created);
+  const commentDate = getPostDate(Discussion.created);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="2xl">
@@ -55,12 +55,14 @@ export default function SnapReplyModal({
           <HStack mb={2}>
             <Avatar
               size="sm"
-              name={comment.author}
-              src={`https://images.hive.blog/u/${comment.author}/avatar/sm`}
+              name={Discussion.author}
+              src={`https://images.hive.blog/u/${Discussion.author}/avatar/sm`}
             />
             <Box ml={3}>
               <Text fontWeight="medium" fontSize="sm">
-                <Link href={`/@${comment.author}`}>@{comment.author}</Link>
+                <Link href={`/@${Discussion.author}`}>
+                  @{Discussion.author}
+                </Link>
               </Text>
               <Text fontWeight="medium" fontSize="sm" color="primary">
                 {commentDate}
@@ -70,12 +72,14 @@ export default function SnapReplyModal({
         </ModalHeader>
         <ModalBody>
           <Box
-            dangerouslySetInnerHTML={{ __html: markdownRenderer(comment.body) }}
+            dangerouslySetInnerHTML={{
+              __html: markdownRenderer(Discussion.body),
+            }}
             pb={6}
           />
           <SnapComposer
-            pa={comment.author}
-            pp={comment.permlink}
+            pa={Discussion.author}
+            pp={Discussion.permlink}
             onNewComment={onNewReply}
             post={true}
             onClose={onClose}

@@ -1,6 +1,6 @@
 import HiveClient from '@/lib/hive/hiveclient';
+import { Discussion } from '@hiveio/dhive';
 import { useState, useEffect, useRef } from 'react';
-import { ExtendedComment } from './useComments';
 
 interface lastContainerInfo {
   permlink: string;
@@ -12,7 +12,7 @@ export const useSnaps = () => {
   const fetchedPermlinksRef = useRef<Set<string>>(new Set()); // Track fetched permlinks
 
   const [currentPage, setCurrentPage] = useState(1);
-  const [comments, setComments] = useState<ExtendedComment[]>([]);
+  const [comments, setComments] = useState<Discussion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
@@ -20,7 +20,7 @@ export const useSnaps = () => {
   
 
   // Filter comments by the target tag
-  function filterCommentsByTag(comments: ExtendedComment[], targetTag: string): ExtendedComment[] {
+  function filterCommentsByTag(comments: Discussion[], targetTag: string): Discussion[] {
     return comments.filter((commentItem) => {
       try {
         if (!commentItem.json_metadata) {
@@ -36,11 +36,11 @@ export const useSnaps = () => {
     });
   }
   // Fetch comments with a minimum size
-  async function getMoreSnaps(): Promise<ExtendedComment[]> {
+  async function getMoreSnaps(): Promise<Discussion[]> {
     const tag = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || ''
     const author = "peak.snaps";
     const limit = 3;
-    const allFilteredComments: ExtendedComment[] = [];
+    const allFilteredComments: Discussion[] = [];
 
     let hasMoreData = true; // To track if there are more containers to fetch
     let permlink = lastContainerRef.current?.permlink || "";
@@ -64,7 +64,7 @@ export const useSnaps = () => {
         const comments = (await HiveClient.database.call("get_content_replies", [
           author,
           resultItem.permlink,
-        ])) as ExtendedComment[];
+        ])) as Discussion[];
 
         const filteredComments = filterCommentsByTag(comments, tag);
         allFilteredComments.push(...filteredComments);
