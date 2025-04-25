@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import "../../lib/utils/fonts.css";
 
 const matrixCharacters =
-  "FUCKアイウエオカキクケコサシスセソタチツテトナニFUCKヌネノ";
+  "FUCKアイウエオカキクケコサシスセソタチツテトナニFUCKヌネノSK8GRINDOLLIEΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ180360KICKFLIPNOSENDBOARD";
 const randomSentences = [
   "skate or don't",
   "F-u-c-k instagram lets build something skater-made",
@@ -56,21 +56,28 @@ const LoadingComponent = () => {
   const [columns, setColumns] = useState<string[]>([]);
 
   useEffect(() => {
-    // Generate consistent random content on the client
     const newSentence =
       randomSentences[Math.floor(Math.random() * randomSentences.length)];
-    const newColumns = Array.from({ length: 20 }, () =>
+    const newColumns = Array.from({ length: 25 }, () =>
       generateColumnLines(50)
     );
     setRandomSentence(newSentence);
     setColumns(newColumns);
+
+    // Periodically flip characters in columns
+    const interval = setInterval(() => {
+      setColumns((prev) =>
+        prev.map(() => generateColumnLines(50))
+      );
+    }, 5000);
+
+    return () => clearInterval(interval);
   }, []);
 
   return (
     <div lang="en">
       <VStack
-        bg="transparent"
-        blur={5}
+        bg="black"
         overflow="hidden"
         css={{ "&::-webkit-scrollbar": { display: "none" } }}
         width="100%"
@@ -78,37 +85,74 @@ const LoadingComponent = () => {
         justify="center"
         align="center"
         position="relative"
+        _before={{
+          content: '""',
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: "radial-gradient(circle, rgba(0,255,0,0.1) 0%, rgba(0,0,0,1) 80%)",
+          zIndex: 0,
+        }}
       >
-        {columns.map((columnText, i) => (
-          <Box
-            key={i}
-            position="absolute"
-            top="-100%"
-            left={`${(100 / 20) * i}%`}
-            w="5%"
-            color="limegreen"
-            fontFamily="monospace"
-            fontSize="14px"
-            lineHeight="1.2"
-            whiteSpace="pre"
-            style={{
-              animation: `matrixFall ${5 + Math.random() * 2}s linear ${
-                -Math.random() * 2
-              }s infinite`,
-            }}
-          >
-            {columnText}
-          </Box>
-        ))}
+        {columns.map((columnText, i) => {
+          const duration = 6 + Math.random() * 6; // 6-12 seconds
+          const fontSize = 10 + Math.random() * 12; // 10-22px
+          const delay = -Math.random() * 5;
+
+          return (
+            <Box
+              key={i}
+              position="absolute"
+              top="-150vh"
+              left={`${(100 / 25) * i}%`}
+              w="4%"
+              fontFamily="monospace"
+              fontSize={`${fontSize}px`}
+              lineHeight="1.2"
+              whiteSpace="pre"
+              style={{
+                animation: `matrixFall ${duration}s linear ${delay}s infinite`,
+                background: "linear-gradient(to bottom, #00FF00 0%, #00FFFF 50%, #FF00FF 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                filter: "drop-shadow(0 0 5px rgba(0, 255, 0, 0.5))",
+              }}
+            >
+              {columnText}
+            </Box>
+          );
+        })}
         <Text
           position="relative"
-          zIndex={1}
-          color="#00FF00"
-          fontSize="40px"
+          zIndex={2}
+          fontSize={{ base: "24px", md: "40px" }}
           textAlign="center"
           fontFamily="Joystix"
           p={4}
           borderRadius="md"
+          color="#00FF00"
+          _before={{
+            content: `"${randomSentence}"`,
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: "100%",
+            height: "100%",
+            background: "linear-gradient(to right, #00FF00, #00FFFF)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            animation: "ghost-glitch 1.5s infinite, ghost-flicker 2s infinite, ghost-stretch 2.5s infinite",
+            clipPath: "inset(2px 0)",
+            opacity: 0.2,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1,
+            transformOrigin: "center center"
+          }}
         >
           {randomSentence}
         </Text>
@@ -116,9 +160,101 @@ const LoadingComponent = () => {
           @keyframes matrixFall {
             0% {
               transform: translateY(0);
+              opacity: 1;
+            }
+            80% {
+              opacity: 1;
             }
             100% {
-              transform: translateY(200%);
+              transform: translateY(350vh);
+              opacity: 0;
+            }
+          }
+          @keyframes ghost-glitch {
+            0%, 100% {
+              transform: translate(-50%, -50%) skew(0deg);
+            }
+            10%, 90% {
+              transform: translate(-50%, -50%) skew(0deg);
+            }
+            15% {
+              transform: translate(-53%, -48%) skew(25deg);
+            }
+            25% {
+              transform: translate(-47%, -51%) skew(-15deg);
+            }
+            35% {
+              transform: translate(-52%, -53%) skew(5deg);
+            }
+            45% {
+              transform: translate(-48%, -47%) skew(-25deg);
+            }
+            55% {
+              transform: translate(-51%, -52%) skew(15deg);
+            }
+            65% {
+              transform: translate(-47%, -48%) skew(-5deg);
+            }
+            75% {
+              transform: translate(-53%, -51%) skew(20deg);
+            }
+          }
+          @keyframes ghost-flicker {
+            0%, 100% {
+              opacity: 0.2;
+            }
+            5% {
+              opacity: 0.15;
+            }
+            10% {
+              opacity: 0.2;
+            }
+            15% {
+              opacity: 0.17;
+            }
+            25% {
+              opacity: 0.08;
+            }
+            30% {
+              opacity: 0.2;
+            }
+            65% {
+              opacity: 0.2;
+            }
+            70% {
+              opacity: 0.12;
+            }
+            75% {
+              opacity: 0.2;
+            }
+            80% {
+              opacity: 0.15;
+            }
+            85% {
+              opacity: 0.2;
+            }
+          }
+          @keyframes ghost-stretch {
+            0%, 100% {
+              transform: translate(-50%, -50%) scaleY(1);
+            }
+            25% {
+              transform: translate(-50%, -50%) scaleY(1.4);
+            }
+            35% {
+              transform: translate(-50%, -50%) scaleY(0.8);
+            }
+            45% {
+              transform: translate(-50%, -50%) scaleY(1.2);
+            }
+            55% {
+              transform: translate(-50%, -50%) scaleY(0.9);
+            }
+            65% {
+              transform: translate(-50%, -50%) scaleY(1.1);
+            }
+            75% {
+              transform: translate(-50%, -50%) scaleY(1);
             }
           }
         `}</style>
