@@ -23,7 +23,7 @@ import { IGif } from "@giphy/js-types";
 import { CloseIcon } from "@chakra-ui/icons";
 import { FaImage } from "react-icons/fa";
 import { MdGif } from "react-icons/md";
-import { Comment } from "@hiveio/dhive";
+import { Comment, Discussion } from "@hiveio/dhive";
 import {
   getFileSignature,
   getLastSnapsContainer,
@@ -156,10 +156,13 @@ export default function SnapComposer({
           setSelectedGif(null);
           setVideoUrl(null);
 
-          const newComment: Partial<Comment> = {
+          // Set created to "just now" for optimistic update
+          const newComment: Partial<Discussion> = {
             author: user,
             permlink: permlink,
             body: commentBody,
+            created: "just now", // use "just now" as the created value for new replies
+            pending_payout_value: "0.000 HBD",
           };
 
           onNewComment(newComment);

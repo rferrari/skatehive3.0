@@ -28,6 +28,7 @@ import { getPostDate } from "@/lib/utils/GetPostDate";
 import useHiveAccount from "@/hooks/useHiveAccount";
 import SocialMediaShareModal from "./SocialMediaShareModal";
 import VideoRenderer from "../layout/VideoRenderer";
+import SnapComposer from "./SnapComposer"; // <-- add import for inline composer
 
 interface SnapProps {
   comment: ExtendedComment;
@@ -139,6 +140,8 @@ const Snap = ({
   const [showSlider, setShowSlider] = useState(false);
   const [rewardAmount, setRewardAmount] = useState(getPayoutValue(comment));
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [showInlineComposer, setShowInlineComposer] = useState(false);
+  const [inlineReplies, setInlineReplies] = useState<Comment[]>([]);
 
   const calculateVotingPower = () => {
     if (!hiveAccount || !hiveAccount.voting_manabar) return 0;
@@ -218,6 +221,12 @@ const Snap = ({
   // Memoize the rendered media portion
   const renderedMedia = useMemo(() => renderMedia(media), [media]);
 
+  // Handler for inline new reply (reply of a reply)
+  function handleInlineNewReply(newComment: Partial<Comment>) {
+    const newReply = newComment as Comment;
+    setInlineReplies((prev) => [...prev, newReply]);
+  }
+
   return (
     <Box pl={level > 0 ? 1 : 0} ml={level > 0 ? 2 : 0}>
       <Box
@@ -257,6 +266,31 @@ const Snap = ({
           {/* Render memoized media portion */}
           <Box>{renderedMedia}</Box>
         </Box>
+
+        {level > 0 && (
+          <Box mt={2}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowInlineComposer(!showInlineComposer)}
+            >
+              Reply
+            </Button>
+            {showInlineComposer && (
+              <Box mt={2}>
+                <SnapComposer
+                  pa={comment.author}
+                  pp={comment.permlink}
+                  onNewComment={handleInlineNewReply}
+                  onClose={() => setShowInlineComposer(false)}
+                  post
+                />
+              </Box>
+            )}
+          </Box>
+        )}
+
+        {/* Existing slider/vote or other buttons */}
         {showSlider ? (
           <Flex mt={4} alignItems="center">
             <Box width="100%" mr={2}>
@@ -324,19 +358,23 @@ const Snap = ({
           comment={comment}
         />
       )}
-      {/* Render replies recursively */}
-      {replies && replies.length > 0 && (
+
+      {/* Render replies recursively, merging inline replies */}
+      {((comment.replies && comment.replies.length > 0) ||
+        inlineReplies.length > 0) && (
         <VStack spacing={2} align="stretch" mt={2}>
-          {replies.map((reply: Comment) => (
-            <Snap
-              key={reply.permlink}
-              comment={reply}
-              onOpen={onOpen}
-              setReply={setReply}
-              setConversation={setConversation}
-              level={level + 1} // Increment level for indentation
-            />
-          ))}
+          {[...inlineReplies, ...(comment.replies || [])].map(
+            (reply: Comment) => (
+              <Snap
+                key={reply.permlink}
+                comment={reply}
+                onOpen={onOpen}
+                setReply={setReply}
+                setConversation={setConversation}
+                level={level + 1}
+              />
+            )
+          )}
         </VStack>
       )}
     </Box>

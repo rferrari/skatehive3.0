@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import {
   Box,
   Text,
@@ -12,6 +13,7 @@ import { Comment } from "@hiveio/dhive";
 import { useComments } from "@/hooks/useComments";
 import { ArrowBackIcon } from "@chakra-ui/icons";
 import Snap from "./Snap";
+import SnapComposer from "./SnapComposer";
 
 interface ConversationProps {
   comment: Comment;
@@ -33,13 +35,24 @@ const Conversation = ({
   );
   const replies = comments;
 
+  // New state for inline reply and optimistic update
+  const [showReplyInput, setShowReplyInput] = useState(false);
+  const [optimisticReplies, setOptimisticReplies] = useState<Comment[]>([]);
+
+  // Updated reply handler to toggle inline reply composer
   function handleReplyModal() {
-    setReply(comment);
-    onOpen();
+    setShowReplyInput(!showReplyInput);
   }
 
   function onBackClick() {
     setConversation(undefined);
+  }
+
+  // New onNewComment handler for SnapComposer with optimistic update
+  function handleNewReply(newComment: Partial<Comment>) {
+    const newReply = newComment as Comment;
+    setOptimisticReplies((prev) => [...prev, newReply]);
+    setReply(newReply);
   }
 
   if (isLoading) {
@@ -66,7 +79,7 @@ const Conversation = ({
           onClick={onBackClick}
           variant="ghost"
           leftIcon={<ArrowBackIcon />}
-        ></Button>
+        />
         <Text fontSize="lg" fontWeight="bold">
           Conversation
         </Text>
@@ -86,16 +99,31 @@ const Conversation = ({
           Reply
         </Button>
       </HStack>
+      {showReplyInput && (
+        <Box mt={2}>
+          {/* Inline snap composer replacing the generic Textarea */}
+          <SnapComposer
+            pa={comment.author}
+            pp={comment.permlink}
+            onNewComment={handleNewReply}
+            onClose={() => setShowReplyInput(false)}
+            post
+          />
+        </Box>
+      )}
       <Divider my={4} />
       <VStack spacing={2} align="stretch">
-        {replies.map((reply: any) => (
-          <Snap
-            key={reply.permlink}
-            comment={reply}
-            onOpen={onOpen}
-            setReply={setReply}
-          />
-        ))}
+        {
+          // Display optimistic replies first then replies from hook
+          [...optimisticReplies, ...replies].map((reply: any) => (
+            <Snap
+              key={reply.permlink}
+              comment={reply}
+              onOpen={onOpen}
+              setReply={setReply}
+            />
+          ))
+        }
       </VStack>
     </Box>
   );

@@ -1,10 +1,13 @@
 export function getPostDate(date: string | Date): string {
+    // Added check for "just now"
+    if (date === "just now") {
+        return "just now";
+    }
     const today = new Date();
     const created = new Date(date);
 
     const offset = today.getTimezoneOffset();
     const adjustedToday = new Date(today.getTime() + offset * 60000);
-
     const diffMs = adjustedToday.getTime() - created.getTime(); // milliseconds between now & then
     const diffDays = Math.floor(diffMs / 86400000); // days
     const diffHrs = Math.floor(diffMs / 3600000); // hours
