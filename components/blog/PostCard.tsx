@@ -4,7 +4,8 @@ import { Discussion } from '@hiveio/dhive';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/swiper-bundle.css';
-import { FaHeart, FaComment, FaRegHeart } from 'react-icons/fa';
+import { FaComment } from 'react-icons/fa';
+import { LuArrowUpRight } from 'react-icons/lu';
 import { getPostDate } from '@/lib/utils/GetPostDate';
 import { useAioha } from '@aioha/react-ui';
 import { useRouter } from 'next/navigation';
@@ -128,32 +129,51 @@ export default function PostCard({ post }: PostCardProps) {
                 flexDirection="column"
                 justifyContent="space-between"
                 height="100%"
-                cursor="pointer"
                 position="relative"
             >
-                <Flex justifyContent="space-between" alignItems="center" onClick={viewPost}>
-                    <Flex alignItems="center">
-                        <Avatar size="sm" name={author} src={`https://images.hive.blog/u/${author}/avatar/sm`} />
-                        <Box ml={3}>
-                            <Text fontWeight="medium" fontSize="sm">
-                                <Link href={`/@${author}`} onClick={stopPropagation}>@{author}</Link>
+                <Flex justifyContent="space-between" alignItems="center">
+                    <Flex alignItems="center" width="100%">
+                        <Link 
+                            href={`/@${author}`} 
+                            onClick={stopPropagation}
+                            display="flex"
+                            alignItems="center"
+                            _hover={{ 
+                                textDecoration: 'underline'
+                            }}
+                        >
+                            <Avatar size="sm" name={author} src={`https://images.hive.blog/u/${author}/avatar/sm`} />
+                            <Text 
+                                fontWeight="bold" 
+                                fontSize="2xl" 
+                                lineHeight="1"
+                                display="flex"
+                                alignItems="center"
+                                ml={3}
+                            >
+                                @{author}
                             </Text>
-                            <Text fontSize="sm" color="primary">
-                                {postDate}
-                            </Text>
-                        </Box>
+                        </Link>
+                        <Text fontSize="sm" color="gray.500" ml="auto">
+                            {postDate}
+                        </Text>
                     </Flex>
                 </Flex>
-                <Text
-                    fontWeight="bold"
-                    fontSize="lg"
-                    textAlign="left"
-                    mb={2}
-                    isTruncated
-                    onClick={viewPost}
+                <Link
+                    href={`/@${author}/${post.permlink}`}
+                    onClick={stopPropagation}
+                    _hover={{ textDecoration: 'underline' }}
                 >
-                    {title}
-                </Text>
+                    <Text
+                        fontWeight="bold"
+                        fontSize="lg"
+                        textAlign="center"
+                        mb={2}
+                        isTruncated
+                    >
+                        {title}
+                    </Text>
+                </Link>
 
                 <Box flex="1" display="flex" alignItems="flex-end" justifyContent="center" zIndex={999}>
                     {imageUrls.length > 0 ? (
@@ -254,38 +274,31 @@ export default function PostCard({ post }: PostCardProps) {
                             }} ml={1} cursor="pointer">X</Button>
                         </Flex>
                     ) : (
-                        <Flex mt={4} justifyContent="space-between" alignItems="center" onClick={stopPropagation}>
+                        <Flex mt={4} justifyContent="center" alignItems="center" onClick={stopPropagation} gap={6}>
                             <Flex alignItems="center">
-                                {voted ? (
-                                    <Icon
-                                        as={FaHeart}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleHeartClick();
-                                        }}
-                                        cursor="pointer"
-                                    />
-                                ) : (
-                                    <Icon
-                                        as={FaRegHeart}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleHeartClick();
-                                        }}
-                                        cursor="pointer"
-                                    />
-                                )}
+                                <Icon
+                                    as={LuArrowUpRight}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleHeartClick();
+                                    }}
+                                    cursor="pointer"
+                                    color={voted ? "#00b894" : undefined}
+                                    boxSize={6}
+                                />
                                 <Text ml={2} fontSize="sm">
                                     {post.active_votes.length}
-                                </Text>
-                                <Icon as={FaComment} ml={4} cursor="pointer" />
-                                <Text ml={2} fontSize="sm">
-                                    {post.children}
                                 </Text>
                             </Flex>
                             <Text fontWeight="bold" fontSize="sm">
                                 ${getPayoutValue(post)}
                             </Text>
+                            <Flex alignItems="center">
+                                <Icon as={FaComment} />
+                                <Text ml={2} fontSize="sm">
+                                    {post.children}
+                                </Text>
+                            </Flex>
                         </Flex>
                     )}
                 </Box>
