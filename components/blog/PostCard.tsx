@@ -6,6 +6,7 @@ import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/swiper-bundle.css';
 import { FaComment } from 'react-icons/fa';
 import { LuArrowUpRight } from 'react-icons/lu';
+import { FiBook } from 'react-icons/fi';
 import { getPostDate } from '@/lib/utils/GetPostDate';
 import { useAioha } from '@aioha/react-ui';
 import { useRouter } from 'next/navigation';
@@ -134,7 +135,7 @@ export default function PostCard({ post }: PostCardProps) {
                     justifyContent="space-between"
                     height="100%"
                 >
-                    <Flex justifyContent="space-between" alignItems="center">
+                    <Flex justifyContent="space-between" alignItems="center" mb={4}>
                         <Flex alignItems="center" width="100%">
                             <Link 
                                 href={`/@${author}`} 
@@ -148,8 +149,8 @@ export default function PostCard({ post }: PostCardProps) {
                                 <Avatar size="sm" name={author} src={`https://images.hive.blog/u/${author}/avatar/sm`} />
                                 <Text 
                                     fontWeight="bold" 
-                                    fontSize="2xl" 
-                                    lineHeight="1"
+                                    fontSize="3xl" 
+                                    lineHeight="0.8"
                                     display="flex"
                                     alignItems="center"
                                     ml={3}
@@ -170,10 +171,13 @@ export default function PostCard({ post }: PostCardProps) {
                         <Text
                             fontWeight="bold"
                             fontSize="lg"
-                            textAlign="center"
+                            textAlign="left"
                             mb={2}
                             isTruncated
+                            display="flex"
+                            alignItems="center"
                         >
+                            <Icon as={FiBook} boxSize={5} mr={2} />
                             {title}
                         </Text>
                     </Link>
