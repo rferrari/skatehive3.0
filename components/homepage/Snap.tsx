@@ -12,6 +12,7 @@ import {
   SliderFilledTrack,
   SliderThumb,
   Tooltip,
+  useToast, // <-- added useToast
 } from "@chakra-ui/react";
 import { Discussion } from "@hiveio/dhive";
 import { FaRegComment } from "react-icons/fa";
@@ -25,9 +26,9 @@ import {
 import markdownRenderer from "@/lib/utils/MarkdownRenderer";
 import { getPostDate } from "@/lib/utils/GetPostDate";
 import useHiveAccount from "@/hooks/useHiveAccount";
-import SocialMediaShareModal from "./SocialMediaShareModal";
 import VideoRenderer from "../layout/VideoRenderer";
 import SnapComposer from "./SnapComposer"; // <-- add import for inline composer
+import { FaLink } from "react-icons/fa6";
 
 const separateContent = (body: string) => {
   const textParts: string[] = [];
@@ -124,6 +125,7 @@ interface SnapProps {
 const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
   const { aioha, user } = useAioha();
   const { hiveAccount } = useHiveAccount(user || "");
+  const toast = useToast(); // <-- instantiate toast
   const commentDate = getPostDate(Discussion.created);
 
   // State declarations
@@ -181,7 +183,12 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
   const handleSharePost = async () => {
     const postLink = `@${window.location.origin}/${Discussion.author}/${Discussion.permlink}`;
     await navigator.clipboard.writeText(postLink);
-    console.log("Post link copied to clipboard:", postLink);
+    toast({
+      title: "Post link copied to clipboard.",
+      status: "success",
+      duration: 3000,
+      isClosable: true,
+    }); // <-- replaced console.log with green toast notification
   };
 
   const openShareModal = () => setIsShareModalOpen(true);
@@ -223,6 +230,13 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
               · {commentDate}
             </Text>
           </HStack>
+          <FaLink
+            size={16}
+            color="gray"
+            cursor="pointer"
+            onClick={handleSharePost}
+            style={{ marginRight: "2px" }}
+          />
         </HStack>
         <Box>
           {/* Render text portion with unified markdownRenderer */}
