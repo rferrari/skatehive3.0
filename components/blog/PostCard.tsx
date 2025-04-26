@@ -174,9 +174,10 @@ export default function PostCard({ post }: PostCardProps) {
                             fontSize="lg"
                             textAlign="left"
                             mb={2}
-                            isTruncated
                             display="flex"
                             alignItems="center"
+                            whiteSpace="normal"
+                            wordBreak="break-word"
                         >
                             <Icon as={FiBook} boxSize={5} mr={2} />
                             {title}

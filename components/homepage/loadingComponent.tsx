@@ -14,29 +14,29 @@ const randomSentences = [
   "Loading Stokenomics",
   "Initiating Proof of Stoke",
   "We will load as fast as Daryl Rolls",
-  "gnartoshi shredamoto is approving your request",
+  "who was gnartoshi shredamoto?",
   "take back the internet",
   "Never lose your bros clips",
   "support your local skateshops",
   "The Peoples Thrasher",
-  "Stack HP when HIVE is low! buy with HBD ;)",
-  "follow the steemskate curation trail if you want to automatically upvote stuff for rewards",
-  "why let zuckerburg get rich off your skating? everyone shares the profit on hive...",
+  "when hive is low convert HBD to hive",
+  "do you follow the steemskate curation trail?",
+  "on instagram zuckerburg wins",
   "Connecting with Uganda Nodes",
   "If it takes to long, your connection sucks",
   "Macba Lives",
   "Skate till you tired, then skate more",
-  "Power up (stake) your HIVE into HIVE POWER (HP) to increase your vote strength",
-  "climb the ranks in the skatehive leaderboard - defeat web-gnar",
-  "HBD is a stablecoin- it is always worth $1 worth of HIVE",
-  "stake your HBD in savings to earn 15% APY",
-  "your vote mana depleates over time, give it a day or two to recharge",
+  "Power up hive power to increase your vote strength",
+  "where are you on the leaderboard?",
+  "HBD is a stablecoin- always worth ~$1 of HIVE",
+  "stake your HBD in savings to earn 15% APY monthly",
+  "your voting mana depleates over time- give it a day or two to recharge",
   "try to get 1000 HIVE Power",
-  "dont cash out your HIVE, forget about it and HODL, you will thank us later",
+  "dont cash out your HIVE- forget about it and HODL- thank us later",
   "registering skatespots on the map can earn you rewards",
-  "half of the rewards a post makes goes back to the people who voted for it",
-  "when you vote on stuff, you are not giving your HIVE away, you are telling HIVE.io to reward the content",
-  "HIVE is a public blockchain with lots of different people using it, not just skateboarders",
+  "half of the rewards of a post goes back to the people who voted for it",
+  "did you know? when you upvote stuff you earn HIVE",
+  "HIVE ecosystem is not just skateboarders",
 ];
 
 function getRandomChar() {
@@ -77,7 +77,7 @@ const LoadingComponent = () => {
   return (
     <div lang="en">
       <VStack
-        bg="black"
+        bg="transparent"
         overflow="hidden"
         css={{ "&::-webkit-scrollbar": { display: "none" } }}
         width="100%"
@@ -92,7 +92,7 @@ const LoadingComponent = () => {
           left: 0,
           right: 0,
           bottom: 0,
-          background: "radial-gradient(circle, rgba(0,255,0,0.1) 0%, rgba(0,0,0,1) 80%)",
+          background: "radial-gradient(circle, rgba(0,255,0,0.07) 0%, rgba(0,255,0,0) 80%)",
           zIndex: 0,
         }}
       >
@@ -144,7 +144,7 @@ const LoadingComponent = () => {
             background: "linear-gradient(to right, #00FF00, #00FFFF)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
-            animation: "ghost-glitch 1.5s infinite, ghost-flicker 2s infinite, ghost-stretch 2.5s infinite",
+            animation: "ghost-glitch 1.5s infinite, ghost-flicker 1.1s infinite, ghost-stretch 2.5s infinite",
             clipPath: "inset(2px 0)",
             opacity: 0.2,
             display: "flex",
@@ -200,39 +200,20 @@ const LoadingComponent = () => {
             }
           }
           @keyframes ghost-flicker {
-            0%, 100% {
-              opacity: 0.2;
-            }
-            5% {
-              opacity: 0.15;
-            }
-            10% {
-              opacity: 0.2;
-            }
-            15% {
-              opacity: 0.17;
-            }
-            25% {
-              opacity: 0.08;
-            }
-            30% {
-              opacity: 0.2;
-            }
-            65% {
-              opacity: 0.2;
-            }
-            70% {
-              opacity: 0.12;
-            }
-            75% {
-              opacity: 0.2;
-            }
-            80% {
-              opacity: 0.15;
-            }
-            85% {
-              opacity: 0.2;
-            }
+            0% { opacity: 0.2; }
+            7% { opacity: 0; }
+            13% { opacity: 0.3; }
+            19% { opacity: 0.1; }
+            27% { opacity: 0.4; }
+            33% { opacity: 0; }
+            41% { opacity: 0.2; }
+            52% { opacity: 0.05; }
+            60% { opacity: 0.3; }
+            68% { opacity: 0; }
+            75% { opacity: 0.25; }
+            82% { opacity: 0.1; }
+            90% { opacity: 0.3; }
+            100% { opacity: 0.2; }
           }
           @keyframes ghost-stretch {
             0%, 100% {
