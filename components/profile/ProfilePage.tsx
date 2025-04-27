@@ -12,12 +12,14 @@ import {
   Flex,
   Icon,
   Avatar,
+  IconButton,
 } from "@chakra-ui/react";
 import useHiveAccount from "@/hooks/useHiveAccount";
-import { FaGlobe } from "react-icons/fa";
+import { FaGlobe, FaTh, FaBars } from "react-icons/fa";
 import { getProfile, findPosts } from "@/lib/hive/client-functions";
 import PostGrid from "../blog/PostGrid";
 import InfiniteScroll from "react-infinite-scroll-component";
+import PostCard from "../blog/PostCard";
 
 interface ProfilePageProps {
   username: string;
@@ -48,6 +50,7 @@ export default function ProfilePage({ username }: ProfilePageProps) {
   });
   const [posts, setPosts] = useState<any[]>([]);
   const isFetching = useRef(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const params = useRef([
     username,
@@ -55,6 +58,22 @@ export default function ProfilePage({ username }: ProfilePageProps) {
     new Date().toISOString().split(".")[0],
     12,
   ]);
+
+  // Load saved view mode from localStorage on mount
+  useEffect(() => {
+    const savedView = typeof window !== 'undefined' ? localStorage.getItem('profileViewMode') : null;
+    if (savedView === 'grid' || savedView === 'list') {
+      setViewMode(savedView);
+    }
+  }, []);
+
+  // Handler to change and persist view mode
+  const handleViewModeChange = (mode: 'grid' | 'list') => {
+    setViewMode(mode);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('profileViewMode', mode);
+    }
+  };
 
   async function fetchPosts() {
     if (isFetching.current) return; // Prevent multiple fetches
@@ -168,7 +187,6 @@ export default function ProfilePage({ username }: ProfilePageProps) {
           overflow="hidden"
           position="relative"
           height="100%"
-          border={"1px solid limegreen"}
           borderRadius={"md"}
           mt={{ base: 0, md: 2 }}
         >
@@ -231,21 +249,37 @@ export default function ProfilePage({ username }: ProfilePageProps) {
         </Flex>
       </Flex>
 
+      {/* Toggle for grid/list view */}
+      <Flex justifyContent="flex-end" alignItems="center" mb={2} gap={2}>
+        <IconButton
+          aria-label="Grid view"
+          icon={<FaTh />}
+          variant={viewMode === 'grid' ? 'solid' : 'ghost'}
+          onClick={() => handleViewModeChange('grid')}
+          isActive={viewMode === 'grid'}
+          mr={1}
+        />
+        <IconButton
+          aria-label="List view"
+          icon={<FaBars />}
+          variant={viewMode === 'list' ? 'solid' : 'ghost'}
+          onClick={() => handleViewModeChange('list')}
+          isActive={viewMode === 'list'}
+        />
+      </Flex>
+
       {/* Posts */}
-      <Box mt={6} overflow="auto" maxH="calc(100vh - 300px)">
-        <InfiniteScroll
-          dataLength={posts.length}
-          next={fetchPosts}
-          hasMore={true}
-          loader={
-            <Box textAlign="center" py={4}>
-              <Spinner size="md" color="primary" />
+      {viewMode === 'grid' ? (
+        <PostGrid posts={posts} columns={3} />
+      ) : (
+        <Box>
+          {posts.map((post) => (
+            <Box key={post.permlink} w="100%" maxW="container.lg" mx="auto" mb={1} h="200px">
+              <PostCard post={post} listView />
             </Box>
-          }
-        >
-          {posts && <PostGrid posts={posts} columns={3} />}
-        </InfiniteScroll>
-      </Box>
+          ))}
+        </Box>
+      )}
     </Box>
   );
 }

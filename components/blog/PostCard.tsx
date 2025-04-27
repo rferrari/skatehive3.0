@@ -32,9 +32,10 @@ import {
 
 interface PostCardProps {
   post: Discussion;
+  listView?: boolean;
 }
 
-export default function PostCard({ post }: PostCardProps) {
+export default function PostCard({ post, listView = false }: PostCardProps) {
   const { title, author, body, json_metadata, created } = post;
   const postDate = getPostDate(created);
 
@@ -133,6 +134,92 @@ export default function PostCard({ post }: PostCardProps) {
     console.error("Failed to load image:", e.currentTarget.src, e);
   }
 
+  // Extract summary for listView: remove image markdown, allow up to 3 lines, no char limit
+  let summarySource = body;
+  if (listView) {
+    summarySource = summarySource.replace(/!\[[^\]]*\]\([^\)]*\)/g, ''); // Remove ![alt](url)
+    summarySource = summarySource.replace(/!\[\]\([^\)]*\)/g, ''); // Remove ![](url)
+  }
+  // For listView, do not slice to a char limit; let noOfLines handle truncation
+  const summary = summarySource.replace(/[#*_`>\[\]\(\)!\-]/g, '').replace(/\n+/g, ' ');
+
+  if (listView) {
+    return (
+      <Box
+        borderBottom="1px solid rgb(46, 46, 46)"
+        overflow="hidden"
+        height="200px"
+        display="flex"
+        flexDirection="row"
+        bg="background"
+        borderRadius="md"
+        boxShadow="sm"
+      >
+        {/* Thumbnail and icons */}
+        <Flex direction="column" w="160px" h="100%" flexShrink={0} alignItems="center" justifyContent="flex-start" bg="muted" py={2}>
+          <Box w="160px" h="160px" display="flex" alignItems="center" justifyContent="center">
+            {imageUrls.length > 0 ? (
+              <Image
+                src={imageUrls[0]}
+                alt={title}
+                borderRadius="base"
+                objectFit="cover"
+                w="100%"
+                h="100%"
+                loading="lazy"
+                onError={handleImageError}
+              />
+            ) : (
+              <Image
+                src={default_thumbnail}
+                alt="default thumbnail"
+                borderRadius="base"
+                objectFit="cover"
+                w="100%"
+                h="100%"
+                loading="lazy"
+                onError={handleImageError}
+              />
+            )}
+          </Box>
+          {/* Icons below thumbnail */}
+          <Flex alignItems="center" gap={4} mt={2}>
+            <Flex alignItems="center">
+              <Icon
+                as={LuArrowUpRight}
+                onClick={handleHeartClick}
+                cursor="pointer"
+                color={voted ? "#00b894" : undefined}
+                boxSize={5}
+              />
+              <Text ml={1} fontSize="sm">
+                {post.active_votes.length}
+              </Text>
+            </Flex>
+            <Text fontWeight="bold" fontSize="sm">
+              ${getPayoutValue(post)}
+            </Text>
+            <Flex alignItems="center">
+              <Icon as={FaComment} />
+              <Text ml={1} fontSize="sm">
+                {post.children}
+              </Text>
+            </Flex>
+          </Flex>
+        </Flex>
+        {/* Content */}
+        <Flex direction="column" flex={1} p={4} justify="center" minW={0}>
+          <Text fontWeight="bold" fontSize="xl" mb={1} isTruncated={false} whiteSpace="normal" wordBreak="break-word">
+            {title}
+          </Text>
+          <Text fontSize="sm" color="gray.400" mb={2} noOfLines={listView ? 3 : 5}>
+            {summary}
+          </Text>
+        </Flex>
+      </Box>
+    );
+  }
+
   return (
     <>
       <style jsx global>{`
@@ -214,7 +301,6 @@ export default function PostCard({ post }: PostCardProps) {
               whiteSpace="normal"
               wordBreak="break-word"
             >
-              <Icon as={FiBook} boxSize={5} mr={2} />
               {title}
             </Text>
           </Link>
