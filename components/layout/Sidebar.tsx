@@ -237,6 +237,7 @@ export default function Sidebar() {
           colorScheme="teal"
           w="full"
           mt="auto"
+          mb={8}
         >
           {user ? "Logout" : "Login"}
         </Button>
