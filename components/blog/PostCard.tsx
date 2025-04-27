@@ -33,9 +33,10 @@ import {
 interface PostCardProps {
   post: Discussion;
   listView?: boolean;
+  hideAuthorInfo?: boolean;
 }
 
-export default function PostCard({ post, listView = false }: PostCardProps) {
+export default function PostCard({ post, listView = false, hideAuthorInfo = false }: PostCardProps) {
   const { title, author, body, json_metadata, created } = post;
   const postDate = getPostDate(created);
 
@@ -213,6 +214,8 @@ export default function PostCard({ post, listView = false }: PostCardProps) {
         </Flex>
         {/* Content */}
         <Flex direction="column" flex={1} p={4} justify="center" minW={0}>
+          {/* Always show post date above title */}
+          <Text fontSize="xs" color="gray.500" mb={1}>{postDate}</Text>
           <Text fontWeight="bold" fontSize="xl" mb={1} isTruncated={false} whiteSpace="normal" wordBreak="break-word">
             {title}
           </Text>
@@ -258,38 +261,45 @@ export default function PostCard({ post, listView = false }: PostCardProps) {
           justifyContent="space-between"
           height="100%"
         >
-          <Flex justifyContent="space-between" alignItems="center" mb={4}>
-            <Flex alignItems="center" width="100%">
-              <Link
-                href={`/@${author}`}
-                onClick={stopPropagation}
-                display="flex"
-                alignItems="center"
-                _hover={{
-                  textDecoration: "underline",
-                }}
-              >
-                <Avatar
-                  size="sm"
-                  name={author}
-                  src={`https://images.hive.blog/u/${author}/avatar/sm`}
-                />
-                <Text
-                  fontWeight="bold"
-                  fontSize="3xl"
-                  lineHeight="0.8"
+          {/* Only show author info if not hidden */}
+          {!hideAuthorInfo && (
+            <Flex justifyContent="space-between" alignItems="center" mb={4}>
+              <Flex alignItems="center" width="100%">
+                <Link
+                  href={`/@${author}`}
+                  onClick={stopPropagation}
                   display="flex"
                   alignItems="center"
-                  ml={3}
+                  _hover={{
+                    textDecoration: "underline",
+                  }}
                 >
-                  {author}
+                  <Avatar
+                    size="sm"
+                    name={author}
+                    src={`https://images.hive.blog/u/${author}/avatar/sm`}
+                  />
+                  <Text
+                    fontWeight="bold"
+                    fontSize="3xl"
+                    lineHeight="0.8"
+                    display="flex"
+                    alignItems="center"
+                    ml={3}
+                  >
+                    {author}
+                  </Text>
+                </Link>
+                <Text fontSize="sm" color="gray.500" ml="auto">
+                  {postDate}
                 </Text>
-              </Link>
-              <Text fontSize="sm" color="gray.500" ml="auto">
-                {postDate}
-              </Text>
+              </Flex>
             </Flex>
-          </Flex>
+          )}
+          {/* If author info is hidden, show post date above title */}
+          {hideAuthorInfo && (
+            <Text fontSize="xs" color="gray.500" mb={1}>{postDate}</Text>
+          )}
           <Link
             href={`/@${author}/${post.permlink}`}
             onClick={stopPropagation}
