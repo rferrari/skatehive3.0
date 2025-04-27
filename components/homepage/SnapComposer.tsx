@@ -213,8 +213,9 @@ export default function SnapComposer({
               as={Button}
               variant="ghost"
               isDisabled={isLoading}
-              _hover={{ border: "tb1" }}
-              _active={{ border: "tb1" }}
+              border="2px solid transparent"
+              _hover={{ borderColor: "var(--chakra-colors-tb1, #00FF00)" }}
+              _active={{ borderColor: "var(--chakra-colors-tb1, #00FF00)" }}
             >
               <FaImage size={22} />
             </MenuButton>
@@ -251,11 +252,12 @@ export default function SnapComposer({
             hidden
           />
           <Button
-            _hover={{ border: "tb1" }}
-            _active={{ border: "tb1" }}
             as="label"
             variant="ghost"
             isDisabled={isLoading}
+            border="2px solid transparent"
+            _hover={{ borderColor: "var(--chakra-colors-tb1, #00FF00)" }}
+            _active={{ borderColor: "var(--chakra-colors-tb1, #00FF00)" }}
           >
             <FaVideo size={22} />
             <VideoUploader onUpload={setVideoUrl} />
