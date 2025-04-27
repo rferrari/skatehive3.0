@@ -36,7 +36,7 @@ export default function PostsInfiniteScroll({ allPosts, fetchPosts, viewMode }: 
             }
             scrollableTarget="scrollableDiv"
         >
-            {allPosts && (<PostGrid posts={allPosts ?? []} columns={viewMode === 'grid' ? 3 : 1} />)}
+            {allPosts && (<PostGrid posts={allPosts ?? []} columns={viewMode === 'grid' ? 3 : 1} listView={viewMode === 'list'} />)}
         </InfiniteScroll>
     );
 }
