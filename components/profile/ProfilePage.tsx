@@ -13,6 +13,7 @@ import {
   Icon,
   Avatar,
   IconButton,
+  Link,
 } from "@chakra-ui/react";
 import useHiveAccount from "@/hooks/useHiveAccount";
 import { FaGlobe, FaTh, FaBars } from "react-icons/fa";
@@ -51,6 +52,7 @@ export default function ProfilePage({ username }: ProfilePageProps) {
   const [posts, setPosts] = useState<any[]>([]);
   const isFetching = useRef(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [isMobile, setIsMobile] = useState(false);
 
   const params = useRef([
     username,
@@ -65,6 +67,16 @@ export default function ProfilePage({ username }: ProfilePageProps) {
     if (savedView === 'grid' || savedView === 'list') {
       setViewMode(savedView);
     }
+  }, []);
+
+  // Detect mobile view
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   // Handler to change and persist view mode
@@ -178,101 +190,127 @@ export default function ProfilePage({ username }: ProfilePageProps) {
   }
 
   return (
-    <Box color="text" maxW="container.lg" mx="auto">
+    <Box color="text" maxW="container.lg" mx="auto" p={0} m={0}>
       {/* Cover Image */}
-      <Box position="relative" height="200px">
-        <Container
-          maxW="container.lg"
-          p={0}
-          overflow="hidden"
-          position="relative"
-          height="100%"
-          borderRadius={"md"}
-          mt={{ base: 0, md: 2 }}
-        >
-          <Image
-            src={profileData.coverImage}
-            alt={`${username} cover`}
-            width="100%"
-            height="100%"
-            objectFit="cover"
-            fallback={<Box height="100%" />}
-          />
-        </Container>
+      <Box position="relative" w="100vw" left="50%" style={{ transform: 'translateX(-50%)' }} overflow="hidden" height={{ base: '120px', md: '200px' }} p={0} m={0}>
+        <Image
+          src={profileData.coverImage}
+          alt={`${username} cover`}
+          w="100vw"
+          h={{ base: '120px', md: '200px' }}
+          objectFit="cover"
+          fallback={<Box height="100%" />}
+        />
       </Box>
 
-      {/* Profile Info */}
-      <Flex
-        position="relative"
-        mt={-20}
-        alignItems="center"
-        p={{ base: 2, md: 8 }}
-      >
-        <Flex alignItems="center" zIndex={2} position="relative">
+      {/* Profile Info Layout: PFP/speech bubble overlap banner, info below banner */}
+      <Box position="relative" w="100%" p={0} m={0}>
+        {/* Absolutely positioned avatar and speech bubble on the left, overlapping banner */}
+        <Box
+          position={{ base: 'static', md: 'absolute' }}
+          left={{ base: 'auto', md: 0 }}
+          top={{ base: 'auto', md: '-60px' }}
+          transform={{ base: 'none', md: 'none' }}
+          display="flex"
+          flexDirection="row"
+          alignItems="center"
+          zIndex={2}
+          ml={{ base: 0, md: 8 }}
+          p={0}
+          m={0}
+          w={{ base: '100%', md: 'auto' }}
+          mt={{ base: '-32px', md: 0 }}
+        >
           <Avatar
             src={profileData.profileImage}
             name={username}
             borderRadius="md"
             boxSize="100px"
-            mr={4}
+            mr={{ base: 0, md: 4 }}
+            mb={{ base: 2, md: 0 }}
           />
+          {profileData.about && (
+            <Box position="relative" ml={{ base: 0, md: 2 }} p={0} m={0}>
+              <Box
+                bg="gray.700"
+                color="white"
+                px={4}
+                py={3}
+                borderRadius="lg"
+                boxShadow="md"
+                maxW={{ base: '90vw', md: '900px' }}
+                fontSize="md"
+                fontStyle="italic"
+                wordBreak="break-word"
+                overflowWrap="anywhere"
+                _after={{
+                  content: '""',
+                  position: 'absolute',
+                  left: '-16px',
+                  top: '24px',
+                  borderWidth: '8px',
+                  borderStyle: 'solid',
+                  borderColor: 'transparent',
+                  borderRightColor: 'var(--chakra-colors-gray-700, #2D3748)',
+                }}
+              >
+                {profileData.about}
+              </Box>
+            </Box>
+          )}
+        </Box>
 
-          <Box mt={5}>
-            <Heading as="h2" size="lg" color="primary" mr={2}>
-              {profileData.name}
-            </Heading>
-
-            <Text fontSize="xs" color="text">
-              Following: {profileData.following} | Followers:{" "}
-              {profileData.followers} | Location: {profileData.location}
-              <br />
-              {profileData.about.length > 140
-                ? `${profileData.about.substring(0, 140)}...`
-                : profileData.about}
-            </Text>
-
-            {profileData.website && (
-              <Flex alignItems="center">
-                <Icon
-                  as={FaGlobe}
-                  w={2}
-                  h={2}
-                  onClick={() => window.open(profileData.website, "_blank")}
-                  style={{ cursor: "pointer" }}
-                />
-                <Text ml={2} fontSize="xs" color="primary">
-                  {profileData.website}
-                </Text>
-              </Flex>
-            )}
-          </Box>
+        {/* Centered profile info, not affected by avatar/speech bubble, directly under banner */}
+        <Flex direction="column" alignItems="center" justifyContent="center" w="100%" px={2} mt={{ base: 2, md: 0 }} mb={0} pt={0} pb={0}>
+          <Heading as="h2" size="lg" color="primary" mb={1} textAlign="center">
+            {profileData.name}
+          </Heading>
+          <Text fontSize="xs" color="text" mb={0} textAlign="center">
+            Following: {profileData.following} | Followers: {profileData.followers} | Location: {profileData.location}
+          </Text>
+          {profileData.website && (
+            <Flex alignItems="center" justifyContent="center" mb={0} mt={0} pt={0} pb={0}>
+              <Link href={profileData.website.startsWith('http') ? profileData.website : `https://${profileData.website}`} isExternal ml={2} fontSize="xs" color="primary" display="flex" alignItems="center">
+                <Icon as={FaGlobe} w={2} h={2} mr={1} />
+                {profileData.website}
+              </Link>
+            </Flex>
+          )}
         </Flex>
-      </Flex>
+      </Box>
 
       {/* Toggle for grid/list view */}
-      <Flex justifyContent="flex-end" alignItems="center" mb={2} gap={2}>
-        <IconButton
-          aria-label="Grid view"
-          icon={<FaTh />}
-          variant={viewMode === 'grid' ? 'solid' : 'ghost'}
-          onClick={() => handleViewModeChange('grid')}
-          isActive={viewMode === 'grid'}
-          mr={1}
-        />
-        <IconButton
-          aria-label="List view"
-          icon={<FaBars />}
-          variant={viewMode === 'list' ? 'solid' : 'ghost'}
-          onClick={() => handleViewModeChange('list')}
-          isActive={viewMode === 'list'}
-        />
-      </Flex>
+      {!isMobile && (
+        <Flex justifyContent="flex-end" alignItems="center" mb={0} mt={0} pt={0} pb={0} gap={2} p={0}>
+          <IconButton
+            aria-label="Grid view"
+            icon={<FaTh />}
+            variant={viewMode === 'grid' ? 'solid' : 'ghost'}
+            onClick={() => handleViewModeChange('grid')}
+            isActive={viewMode === 'grid'}
+            mr={1}
+          />
+          <IconButton
+            aria-label="List view"
+            icon={<FaBars />}
+            variant={viewMode === 'list' ? 'solid' : 'ghost'}
+            onClick={() => handleViewModeChange('list')}
+            isActive={viewMode === 'list'}
+          />
+        </Flex>
+      )}
 
       {/* Posts */}
-      {viewMode === 'grid' ? (
-        <PostGrid posts={posts} columns={3} />
+      {(viewMode === 'grid' || isMobile) ? (
+        <Box mt={0} pt={0} mb={0} pb={0}>
+          <Box as={"div"} display="grid" gridTemplateColumns={{ base: '1fr', sm: 'repeat(3, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(3, 1fr)', xl: 'repeat(3, 1fr)' }} gap={4}>
+            {posts.map((post) => (
+              <PostCard key={post.permlink} post={post} hideAuthorInfo />
+            ))}
+          </Box>
+        </Box>
       ) : (
-        <Box>
+        <Box mt={0} pt={0} mb={0} pb={0}>
           {posts.map((post) => (
             <Box key={post.permlink} w="100%" maxW="container.lg" mx="auto" mb={1} h="200px">
               <PostCard post={post} listView />
