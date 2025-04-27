@@ -8,6 +8,7 @@ import WalletModal from '@/components/wallet/WalletModal';
 import { useRouter } from 'next/navigation';
 import { useAioha } from '@aioha/react-ui';
 import { Asset, KeyTypes } from '@aioha/aioha';
+import { CustomHiveIcon } from './CustomHiveIcon';
 
 interface MainWalletProps {
     username: string;
@@ -195,7 +196,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                     {/* HIVE Section */}
                     <Box mb={8}>
                         <HStack align="flex-start" mb={1}>
-                            <Icon as={FaDollarSign} color="red.400" mt={1} />
+                            <CustomHiveIcon color="rgb(233, 66, 95)" style={{ marginTop: 4 }} />
                             <Text fontSize="2xl" fontWeight="bold">HIVE</Text>
                             <Box flex={1} />
                             <Text fontSize="2xl" fontWeight="bold">{balance}</Text>
@@ -234,7 +235,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                     {/* HBD Section */}
                     <Box mb={8}>
                         <HStack align="flex-start" mb={1}>
-                            <Icon as={FaDollarSign} color="green.400" mt={1} />
+                            <CustomHiveIcon color="lime" style={{ marginTop: 4 }} />
                             <Text fontSize="2xl" fontWeight="bold">HBD (Hive Backed Dollars)</Text>
                             <Box flex={1} />
                             <Text fontSize="2xl" fontWeight="bold">{hbdBalance}</Text>
@@ -287,26 +288,32 @@ export default function MainWallet({ username }: MainWalletProps) {
                     <Text fontWeight="extrabold" fontSize="2xl" mb={4} color="lime">Market Prices</Text>
                     {/* HIVE Market Stat */}
                     <Box mb={6}>
-                        <Text fontWeight="bold" fontSize="lg" color="gray.100" mb={1}>HIVE</Text>
+                        <HStack align="center" mb={1} spacing={2}>
+                            <CustomHiveIcon color="rgb(233, 66, 95)" />
+                            <Text fontWeight="bold" fontSize="lg" color="gray.100">HIVE</Text>
+                        </HStack>
                         <Box display="flex" flexDirection="column" alignItems="center">
                             <Text fontSize="4xl" fontWeight="extrabold" color="green.200">
                                 {isPriceLoading ? 'Loading...' : hivePrice !== null ? `${hivePrice.toFixed(3)} USD` : 'N/A'}
                             </Text>
                             <Text fontSize="sm" color="gray.400" textAlign="center">
-                                HIVE price by 
+                                HIVE price by
                                 <Text as="a" href="https://www.coingecko.com/en/coins/hive" target="_blank" rel="noopener noreferrer" color="blue.300" _hover={{ textDecoration: 'underline', color: 'blue.400' }} ml={1} display="inline">CoinGecko</Text>
                             </Text>
                         </Box>
                     </Box>
                     {/* HBD Market Stat */}
                     <Box mb={4}>
-                        <Text fontWeight="bold" fontSize="lg" color="gray.100" mb={1}>HBD</Text>
+                        <HStack align="center" mb={1} spacing={2}>
+                            <CustomHiveIcon color="lime" />
+                            <Text fontWeight="bold" fontSize="lg" color="gray.100">HBD</Text>
+                        </HStack>
                         <Box display="flex" flexDirection="column" alignItems="center">
                             <Text fontSize="4xl" fontWeight="extrabold" color="green.200">
                                 {isPriceLoading ? 'Loading...' : hbdPrice !== null ? `${hbdPrice.toFixed(3)} USD` : 'N/A'}
                             </Text>
                             <Text fontSize="sm" color="gray.400" textAlign="center">
-                                HBD price by 
+                                HBD price by
                                 <Text as="a" href="https://www.coingecko.com/en/coins/hive_dollar" target="_blank" rel="noopener noreferrer" color="blue.300" _hover={{ textDecoration: 'underline', color: 'blue.400' }} ml={1} display="inline">CoinGecko</Text>
                             </Text>
                         </Box>
