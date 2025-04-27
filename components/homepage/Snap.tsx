@@ -12,7 +12,8 @@ import {
   SliderFilledTrack,
   SliderThumb,
   Tooltip,
-  useToast, // <-- added useToast
+  useToast,
+  Image,
 } from "@chakra-ui/react";
 import { Discussion } from "@hiveio/dhive";
 import { FaRegComment } from "react-icons/fa";
@@ -27,7 +28,7 @@ import markdownRenderer from "@/lib/utils/MarkdownRenderer";
 import { getPostDate } from "@/lib/utils/GetPostDate";
 import useHiveAccount from "@/hooks/useHiveAccount";
 import VideoRenderer from "../layout/VideoRenderer";
-import SnapComposer from "./SnapComposer"; // <-- add import for inline composer
+import SnapComposer from "./SnapComposer";
 import { FaLink } from "react-icons/fa6";
 
 const separateContent = (body: string) => {
@@ -47,7 +48,6 @@ const separateContent = (body: string) => {
 const renderMedia = (mediaContent: string) => {
   return mediaContent.split("\n").map((item: string, index: number) => {
     if (!item.trim()) return null;
-    // Handle markdown images with IPFS link: render using markdownRenderer to preserve styling.
     if (item.includes("![") && item.includes("ipfs.skatehive.app/ipfs/")) {
       return (
         <Box
@@ -65,12 +65,10 @@ const renderMedia = (mediaContent: string) => {
         />
       );
     }
-    // Handle iframes with IPFS video links using VideoRenderer.
     if (item.includes("<iframe") && item.includes("</iframe>")) {
       const srcMatch = item.match(/src=["']([^"']+)["']/i);
       if (srcMatch && srcMatch[1]) {
         const url = srcMatch[1];
-        // If it's a Pinata URL, convert it to skatehive domain.
         if (url.includes("gateway.pinata.cloud/ipfs/")) {
           const ipfsHash = url.match(/\/ipfs\/([\w-]+)/)?.[1];
           if (ipfsHash) {
@@ -81,7 +79,6 @@ const renderMedia = (mediaContent: string) => {
           return <VideoRenderer key={index} src={url} />;
         }
       }
-      // Fallback: render the iframe as HTML if no proper match found.
       return (
         <Box
           key={index}
@@ -96,7 +93,6 @@ const renderMedia = (mediaContent: string) => {
         />
       );
     }
-    // Fallback: render using markdownRenderer (could be plain text content)
     return (
       <Box
         key={index}
@@ -125,10 +121,9 @@ interface SnapProps {
 const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
   const { aioha, user } = useAioha();
   const { hiveAccount } = useHiveAccount(user || "");
-  const toast = useToast(); // <-- instantiate toast
+  const toast = useToast();
   const commentDate = getPostDate(Discussion.created);
 
-  // State declarations
   const [sliderValue, setSliderValue] = useState(5);
   const [showSlider, setShowSlider] = useState(false);
   const [rewardAmount, setRewardAmount] = useState(getPayoutValue(Discussion));
@@ -138,7 +133,6 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
     Record<string, boolean>
   >({});
 
-  // Use native depth; default to 0 if no depth property exists
   const effectiveDepth = Discussion.depth || 0;
 
   const { text, media } = useMemo(
@@ -159,7 +153,6 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
 
   function handleConversation() {
     if (setConversation) {
-      // No additional property added; rely on the Discussion object as is
       setConversation(Discussion);
     }
   }
@@ -188,7 +181,7 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
       status: "success",
       duration: 3000,
       isClosable: true,
-    }); // <-- replaced console.log with green toast notification
+    });
   };
 
   const openShareModal = () => setIsShareModalOpen(true);
@@ -209,7 +202,6 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
     }));
   }
 
-  // Ensure replies is always an array
   const replies = Discussion.replies || [];
 
   return (
@@ -229,24 +221,22 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
             <Text fontWeight="medium" fontSize="sm" color="gray">
               · {commentDate}
             </Text>
+            <FaLink
+              size={16}
+              color="gray"
+              cursor="pointer"
+              onClick={handleSharePost}
+              style={{ marginRight: "2px" }}
+            />
           </HStack>
-          <FaLink
-            size={16}
-            color="gray"
-            cursor="pointer"
-            onClick={handleSharePost}
-            style={{ marginRight: "2px" }}
-          />
         </HStack>
         <Box>
-          {/* Render text portion with unified markdownRenderer */}
           <Box
             dangerouslySetInnerHTML={{ __html: markdownRenderer(text) }}
             sx={{
               p: { marginBottom: "1rem", lineHeight: "1.6", marginLeft: "4" },
             }}
           />
-          {/* Render memoized media portion */}
           <Box>{renderedMedia}</Box>
         </Box>
 
@@ -269,7 +259,6 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
           )}
         </Box>
 
-        {/* Existing slider/vote or other buttons */}
         {showSlider ? (
           <Flex mt={4} alignItems="center">
             <Box width="100%" mr={2}>
@@ -280,13 +269,33 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
                 value={sliderValue}
                 onChange={(val) => setSliderValue(val)}
               >
-                <SliderTrack>
-                  <SliderFilledTrack />
+                <SliderTrack
+                  bg="gray.700"
+                  height="8px"
+                  borderRadius="full"
+                  boxShadow="0 0 10px rgba(255, 255, 0, 0.8)"
+                >
+                  <SliderFilledTrack bgGradient="linear(to-r, green.400, limegreen, red.400)" />
                 </SliderTrack>
-                <SliderThumb />
+                <SliderThumb
+                  boxSize="80px"
+                  bg="transparent"
+                  boxShadow={"none"}
+                  _focus={{ boxShadow: "none" }}
+                  zIndex={1}
+                >
+                  <Image
+                    src="/images/spitfire.png"
+                    alt="thumb"
+                    w="40%"
+                    h="auto"
+                    mr={16}
+                    mb={2}
+                  />
+                </SliderThumb>
               </Slider>
             </Box>
-            <Button size="xs" onClick={handleVote}>
+            <Button size="xs" onClick={handleVote} ml={2}>
               &nbsp;&nbsp;&nbsp;Vote {sliderValue} %&nbsp;&nbsp;&nbsp;
             </Button>
             <Button size="xs" onClick={handleHeartClick} ml={2}>
@@ -337,18 +346,16 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
         )}
       </Box>
 
-      {/* Render replies recursively, merging inline replies */}
       {(replies.length > 0 || inlineReplies.length > 0) && (
         <VStack spacing={2} align="stretch" mt={2}>
           {[...inlineReplies, ...replies]
             .filter((reply): reply is Discussion => typeof reply !== "string")
             .map((reply: Discussion) => {
-              // Use the native depth if available; otherwise calculate next depth.
               const nextDepth = effectiveDepth + 1;
               return (
                 <Snap
                   key={reply.permlink}
-                  Discussion={{ ...reply, depth: nextDepth } as any} // Fix: cast to any so depth is allowed
+                  Discussion={{ ...reply, depth: nextDepth } as any}
                   onOpen={onOpen}
                   setReply={setReply}
                   setConversation={setConversation}
