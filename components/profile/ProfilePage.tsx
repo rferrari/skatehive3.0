@@ -21,6 +21,7 @@ import { getProfile, findPosts } from "@/lib/hive/client-functions";
 import PostGrid from "../blog/PostGrid";
 import InfiniteScroll from "react-infinite-scroll-component";
 import PostCard from "../blog/PostCard";
+import LoadingComponent from '../homepage/loadingComponent';
 
 interface ProfilePageProps {
   username: string;
@@ -178,7 +179,7 @@ export default function ProfilePage({ username }: ProfilePageProps) {
         alignItems="center"
         height="100vh"
       >
-        <Spinner size="xl" color="primary" />
+        <LoadingComponent />
       </Box>
     );
   }

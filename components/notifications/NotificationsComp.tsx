@@ -5,6 +5,7 @@ import { useAioha } from '@aioha/react-ui';
 import { KeyTypes } from '@aioha/aioha';
 import { Notifications } from '@hiveio/dhive';
 import NotificationItem from './NotificationItem';
+import LoadingComponent from '../homepage/loadingComponent';
 
 interface NotificationCompProps {
   username: string
@@ -76,7 +77,7 @@ export default function NotificationsComp({ username }: NotificationCompProps) {
         )}
       </HStack>
       {isLoading ? (
-        <Spinner size="lg" />
+        <LoadingComponent />
       ) : notifications.length > 0 ? (
         <Tabs colorScheme="accent" isLazy lazyBehavior="keepMounted">
           <Center>
