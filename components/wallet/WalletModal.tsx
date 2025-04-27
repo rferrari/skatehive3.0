@@ -12,12 +12,12 @@ interface WalletModalProps {
 }
 
 export default function WalletModal ({ isOpen, onClose, title, description, showMemoField = false, showUsernameField = false, onConfirm }: WalletModalProps) {
-    const [amount, setAmount] = useState<number>(0);
+    const [amount, setAmount] = useState<string>('');
     const [memo, setMemo] = useState<string>('');
     const [username, setUsername] = useState<string>(''); // State to hold username
 
     const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setAmount(parseFloat(e.target.value) || 0);
+        setAmount(e.target.value);
     };
 
     const handleMemoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -29,7 +29,8 @@ export default function WalletModal ({ isOpen, onClose, title, description, show
     };
 
     const handleConfirm = () => {
-        onConfirm(amount, showUsernameField ? username : undefined, showMemoField ? memo : undefined);
+        const parsedAmount = parseFloat(amount);
+        onConfirm(isNaN(parsedAmount) ? 0 : parsedAmount, showUsernameField ? username : undefined, showMemoField ? memo : undefined);
     };
 
     return (

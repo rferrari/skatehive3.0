@@ -164,6 +164,7 @@ export default function ProfilePage({ username }: ProfilePageProps) {
   const speakDescription = () => {
     if ('speechSynthesis' in window && profileData.about) {
       const utterance = new window.SpeechSynthesisUtterance(profileData.about);
+      utterance.rate = 0.3;
       window.speechSynthesis.cancel();
       window.speechSynthesis.speak(utterance);
     }
