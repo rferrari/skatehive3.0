@@ -55,6 +55,20 @@ export default function Blog() {
         fetchPosts();
     }, [query]);
 
+    // Detect mobile and force grid view
+    useEffect(() => {
+        function handleResize() {
+            if (typeof window !== 'undefined') {
+                if (window.innerWidth < 768) {
+                    setViewMode('grid');
+                }
+            }
+        }
+        handleResize();
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
     return (
         <Container
             id="scrollableDiv"
@@ -69,7 +83,13 @@ export default function Blog() {
                 scrollbarWidth: 'none',
             }}
         >
-            <TopBar viewMode={viewMode} setViewMode={setViewMode} setQuery={setQuery} />
+            <TopBar viewMode={viewMode} setViewMode={(mode) => {
+                if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                    setViewMode('grid');
+                } else {
+                    setViewMode(mode);
+                }
+            }} setQuery={setQuery} />
             <PostInfiniteScroll allPosts={allPosts} fetchPosts={fetchPosts} viewMode={viewMode} />
         </Container>
     );

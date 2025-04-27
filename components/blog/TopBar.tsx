@@ -21,21 +21,24 @@ export default function TopBar({ viewMode, setViewMode, setQuery }: TopBarProps)
                 variant="outline"  
             />
             <Flex justifyContent="flex-end">
-                <IconButton
-                    aria-label="Grid View"
-                    icon={<FaTh />} 
-                    onClick={() => setViewMode('grid')}
-                    isActive={viewMode === 'grid'}
-                    variant={viewMode === 'grid' ? 'solid' : 'outline'}  
-                />
-                <IconButton
-                    aria-label="List View"
-                    icon={<FaBars />}  
-                    onClick={() => setViewMode('list')}
-                    isActive={viewMode === 'list'}
-                    variant={viewMode === 'list' ? 'solid' : 'outline'}
-                    ml={4}
-                />
+                {/* Hide grid/list toggle on mobile */}
+                <Flex display={{ base: 'none', md: 'flex' }}>
+                    <IconButton
+                        aria-label="Grid View"
+                        icon={<FaTh />} 
+                        onClick={() => setViewMode('grid')}
+                        isActive={viewMode === 'grid'}
+                        variant={viewMode === 'grid' ? 'solid' : 'outline'}  
+                    />
+                    <IconButton
+                        aria-label="List View"
+                        icon={<FaBars />}  
+                        onClick={() => setViewMode('list')}
+                        isActive={viewMode === 'list'}
+                        variant={viewMode === 'list' ? 'solid' : 'outline'}
+                        ml={4}
+                    />
+                </Flex>
                 <Menu>
                     <MenuButton
                         as={Button}
