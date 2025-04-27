@@ -80,7 +80,6 @@ export default function PostCard({ post }: PostCardProps) {
         setYoutubeLinks(ytLinks);
         setImageUrls([]);
       } else {
-        console.log(post.author, imageUrls, images, metadata);
         setImageUrls([default_thumbnail]);
       }
     }
