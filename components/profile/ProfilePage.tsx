@@ -259,7 +259,7 @@ export default function ProfilePage({ username }: ProfilePageProps) {
                 py={3}
                 borderRadius="lg"
                 boxShadow="md"
-                maxW={{ base: '90vw', md: '900px' }}
+                maxW={{ base: '95vw', sm: '400px', md: '500px' }}
                 fontSize="md"
                 fontStyle="italic"
                 wordBreak="break-word"
