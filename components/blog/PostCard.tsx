@@ -139,9 +139,13 @@ export default function PostCard({ post, listView = false }: PostCardProps) {
   if (listView) {
     summarySource = summarySource.replace(/!\[[^\]]*\]\([^\)]*\)/g, ''); // Remove ![alt](url)
     summarySource = summarySource.replace(/!\[\]\([^\)]*\)/g, ''); // Remove ![](url)
+    // Remove markdown links [text](url)
+    summarySource = summarySource.replace(/\[[^\]]*\]\([^\)]*\)/g, '');
+    // Remove raw URLs (http/https/ftp)
+    summarySource = summarySource.replace(/https?:\/\/[\w\-._~:/?#[\]@!$&'()*+,;=%]+/g, '');
   }
   // For listView, do not slice to a char limit; let noOfLines handle truncation
-  const summary = summarySource.replace(/[#*_`>\[\]\(\)!\-]/g, '').replace(/\n+/g, ' ');
+  const summary = summarySource.replace(/[#*_`>\[\]()!\-]/g, '').replace(/\n+/g, ' ');
 
   if (listView) {
     return (
