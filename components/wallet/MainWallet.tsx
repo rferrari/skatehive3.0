@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import useHiveAccount from "@/hooks/useHiveAccount";
-import { Box, Grid, GridItem, Text, Icon, HStack, Divider, Spinner, useDisclosure, Tooltip } from "@chakra-ui/react";
+import { Box, Grid, GridItem, Text, Icon, HStack, Divider, Spinner, useDisclosure, Tooltip, Stack } from "@chakra-ui/react";
 import { FaExchangeAlt, FaPiggyBank, FaStore, FaShoppingCart, FaArrowDown, FaShareAlt, FaDollarSign, FaArrowUp, FaPaperPlane } from "react-icons/fa";
 import { convertVestToHive } from '@/lib/hive/client-functions';
 import { extractNumber } from '@/lib/utils/extractNumber';
@@ -189,42 +189,44 @@ export default function MainWallet({ username }: MainWalletProps) {
 
     return (
         <>
-            <Text fontSize="4xl" fontWeight="semibold" mb={4} textAlign="center">Your Assets</Text>
-            <Grid templateColumns={{ base: '1fr', md: '2fr 1fr' }} gap={6} alignItems="start" m={4}>
+            <Text fontSize={{ base: "2xl", md: "4xl" }} fontWeight="semibold" mb={4} textAlign="center">Your Assets</Text>
+            <Grid templateColumns={{ base: '1fr', md: '2fr 1fr' }} gap={{ base: 2, md: 6 }} alignItems="start" m={{ base: 1, md: 4 }}>
                 {/* Left: Wallet Balances and Actions */}
-                <Box p={4} border="tb1" borderRadius="base" bg="muted" boxShadow={'lg'}>
+                <Box p={{ base: 2, md: 4 }} border="tb1" borderRadius="base" bg="muted" boxShadow={'lg'}>
                     {/* HIVE Section */}
                     <Box mb={8}>
-                        <HStack align="flex-start" mb={1}>
-                            <CustomHiveIcon color="rgb(233, 66, 95)" style={{ marginTop: 4 }} />
-                            <Text fontSize="2xl" fontWeight="bold">HIVE</Text>
-                            <Box flex={1} />
-                            <Text fontSize="2xl" fontWeight="bold">{balance}</Text>
-                            <HStack spacing={2}>
-                                <Tooltip label="Send HIVE" hasArrow><Box as="button" px={3} py={2} bg="teal.500" color="white" borderRadius="md" fontWeight="bold" _hover={{ bg: 'teal.600' }} onClick={() => handleModalOpen('Send HIVE', 'Send Hive to another account', true, true)}><Icon as={FaPaperPlane} mr={1} /></Box></Tooltip>
-                                <Tooltip label="Power Up" hasArrow><Box as="button" px={3} py={2} bg="teal.500" color="white" borderRadius="md" fontWeight="bold" _hover={{ bg: 'teal.600' }} onClick={() => handleModalOpen('Power Up', 'Power Up your HIVE to HP')}><Icon as={FaArrowUp} mr={1} /><Icon as={FaPiggyBank} ml={1} /></Box></Tooltip>
-                                <Tooltip label="Convert HIVE" hasArrow><Box as="button" px={3} py={2} bg="teal.500" color="white" borderRadius="md" fontWeight="bold" _hover={{ bg: 'teal.600' }} onClick={() => handleModalOpen('Convert HIVE', 'Convert HIVE to HBD or vice versa')}><Icon as={FaExchangeAlt} mr={1} /></Box></Tooltip>
-                                <Tooltip label="Hive/HBD Market" hasArrow><Box as="button" px={3} py={2} bg="teal.500" color="white" borderRadius="md" fontWeight="bold" _hover={{ bg: 'teal.600' }} onClick={() => router.push('https://hivedex.io/')}><Icon as={FaStore} mr={1} /></Box></Tooltip>
-                                <Tooltip label="Buy Hive" hasArrow><Box as="button" px={3} py={2} bg="teal.500" color="white" borderRadius="md" fontWeight="bold" _hover={{ bg: 'teal.600' }} onClick={() => router.push(`https://global.transak.com/?apiKey=771c8ab6-b3ba-4450-b69d-ca35e4b25eb8&redirectURL=${window.location.href}&cryptoCurrencyCode=HIVE&defaultCryptoAmount=200&exchangeScreenTitle=Buy%20HIVE&isFeeCalculationHidden=false&defaultPaymentMethod=credit_debit_card&walletAddress=${user}`)}><Icon as={FaShoppingCart} mr={1} /></Box></Tooltip>
+                        <Stack direction={{ base: 'column', md: 'row' }} align="flex-start" mb={1} spacing={{ base: 2, md: 4 }}>
+                            <HStack align="center" mb={1} spacing={2} width="100%">
+                                <CustomHiveIcon color="rgb(233, 66, 95)" style={{ marginTop: 4 }} />
+                                <Text fontSize={{ base: "lg", md: "2xl" }} fontWeight="bold">HIVE</Text>
+                                <Box flex={1} />
+                                <Text fontSize={{ base: "lg", md: "2xl" }} fontWeight="bold">{balance}</Text>
                             </HStack>
-                        </HStack>
+                            <HStack spacing={1} wrap={{ base: 'wrap', md: 'nowrap' }} mb={2}>
+                                <Tooltip label="Send HIVE" hasArrow><Box as="button" px={2} py={1} fontSize="sm" bg="teal.500" color="white" borderRadius="md" fontWeight="bold" _hover={{ bg: 'teal.600' }} onClick={() => handleModalOpen('Send HIVE', 'Send Hive to another account', true, true)}><Icon as={FaPaperPlane} boxSize={4} mr={1} /></Box></Tooltip>
+                                <Tooltip label="Power Up" hasArrow><Box as="button" px={2} py={1} fontSize="sm" bg="teal.500" color="white" borderRadius="md" fontWeight="bold" _hover={{ bg: 'teal.600' }} onClick={() => handleModalOpen('Power Up', 'Power Up your HIVE to HP')}><Icon as={FaArrowUp} boxSize={4} mr={1} /><Icon as={FaPiggyBank} boxSize={4} ml={1} /></Box></Tooltip>
+                                <Tooltip label="Convert HIVE" hasArrow><Box as="button" px={2} py={1} fontSize="sm" bg="teal.500" color="white" borderRadius="md" fontWeight="bold" _hover={{ bg: 'teal.600' }} onClick={() => handleModalOpen('Convert HIVE', 'Convert HIVE to HBD or vice versa')}><Icon as={FaExchangeAlt} boxSize={4} mr={1} /></Box></Tooltip>
+                                <Tooltip label="Hive/HBD Market" hasArrow><Box as="button" px={2} py={1} fontSize="sm" bg="teal.500" color="white" borderRadius="md" fontWeight="bold" _hover={{ bg: 'teal.600' }} onClick={() => router.push('https://hivedex.io/')}><Icon as={FaStore} boxSize={4} mr={1} /></Box></Tooltip>
+                                <Tooltip label="Buy Hive" hasArrow><Box as="button" px={2} py={1} fontSize="sm" bg="teal.500" color="white" borderRadius="md" fontWeight="bold" _hover={{ bg: 'teal.600' }} onClick={() => router.push(`https://global.transak.com/?apiKey=771c8ab6-b3ba-4450-b69d-ca35e4b25eb8&redirectURL=${window.location.href}&cryptoCurrencyCode=HIVE&defaultCryptoAmount=200&exchangeScreenTitle=Buy%20HIVE&isFeeCalculationHidden=false&defaultPaymentMethod=credit_debit_card&walletAddress=${user}`)}><Icon as={FaShoppingCart} boxSize={4} mr={1} /></Box></Tooltip>
+                            </HStack>
+                        </Stack>
                         <Text color="gray.400" mb={4}>The primary token of the Hive Blockchain and often a reward on posts.</Text>
                         {/* Staked HIVE - Hive Power (HP) */}
-                        <Box pl={6} borderLeft="2px solid" borderColor="green.400" mb={4}>
-                            <HStack mb={1}>
+                        <Box pl={{ base: 2, md: 6 }} borderLeft="2px solid" borderColor="green.400" mb={4}>
+                            <Stack direction={{ base: 'column', md: 'row' }} mb={1} align="center">
                                 <Text fontWeight="bold">Staked HIVE - Hive Power (HP)</Text>
-                                <Box flex={1} />
-                                <Text fontSize="3xl" fontWeight="extrabold" color="lime">{hivePower !== undefined ? hivePower : "Loading..."}</Text>
-                                <HStack spacing={2}>
-                                    <Tooltip label="Power Down" hasArrow><Box as="button" px={3} py={2} bg="teal.500" color="white" borderRadius="md" fontWeight="bold" _hover={{ bg: 'teal.600' }} onClick={() => handleModalOpen('Power Down', 'Unstake Hive Power')}><Icon as={FaArrowDown} mr={1} /></Box></Tooltip>
-                                    <Tooltip label="Delegate HP" hasArrow><Box as="button" px={3} py={2} bg="teal.500" color="white" borderRadius="md" fontWeight="bold" _hover={{ bg: 'teal.600' }} onClick={() => handleModalOpen('Delegate', 'Delegate HP to another user', false, true)}><Icon as={FaShareAlt} mr={1} /></Box></Tooltip>
+                                <Box flex={1} display={{ base: 'none', md: 'block' }} />
+                                <Text fontSize={{ base: "xl", md: "3xl" }} fontWeight="extrabold" color="lime">{hivePower !== undefined ? hivePower : "Loading..."}</Text>
+                                <HStack spacing={1} wrap="wrap">
+                                    <Tooltip label="Power Down" hasArrow><Box as="button" px={2} py={1} fontSize="sm" bg="teal.500" color="white" borderRadius="md" fontWeight="bold" _hover={{ bg: 'teal.600' }} onClick={() => handleModalOpen('Power Down', 'Unstake Hive Power')}><Icon as={FaArrowDown} boxSize={4} mr={1} /></Box></Tooltip>
+                                    <Tooltip label="Delegate HP" hasArrow><Box as="button" px={2} py={1} fontSize="sm" bg="teal.500" color="white" borderRadius="md" fontWeight="bold" _hover={{ bg: 'teal.600' }} onClick={() => handleModalOpen('Delegate', 'Delegate HP to another user', false, true)}><Icon as={FaShareAlt} boxSize={4} mr={1} /></Box></Tooltip>
                                 </HStack>
-                            </HStack>
+                            </Stack>
                             <Text color="gray.400">your upvote (curation) power. Exchanging Hive for Hive Power is called "Powering Up" or "Staking".</Text>
                             <Text color="gray.400">Increases the more effectively you vote on posts</Text>
                         </Box>
                         {/* Delegated HIVE */}
-                        <Box pl={12}>
+                        <Box pl={{ base: 4, md: 12 }}>
                             <Box borderLeft="2px solid" borderColor="green.400" pl={4}>
                                 <Text fontWeight="bold">Delegated HIVE</Text>
                                 <Text color="gray.400">Under construction</Text>
@@ -234,33 +236,35 @@ export default function MainWallet({ username }: MainWalletProps) {
                     <Divider my={6} />
                     {/* HBD Section */}
                     <Box mb={8}>
-                        <HStack align="flex-start" mb={1}>
-                            <CustomHiveIcon color="lime" style={{ marginTop: 4 }} />
-                            <Text fontSize="2xl" fontWeight="bold">HBD (Hive Backed Dollars)</Text>
-                            <Box flex={1} />
-                            <Text fontSize="2xl" fontWeight="bold">{hbdBalance}</Text>
-                            <HStack spacing={2}>
-                                <Tooltip label="Send HBD" hasArrow><Box as="button" px={3} py={2} bg="teal.500" color="white" borderRadius="md" fontWeight="bold" _hover={{ bg: 'teal.600' }} onClick={() => handleModalOpen('Send HBD', 'Send HBD to another account', true, true)}><Icon as={FaPaperPlane} mr={1} /></Box></Tooltip>
-                                <Tooltip label="Convert HBD" hasArrow><Box as="button" px={3} py={2} bg="teal.500" color="white" borderRadius="md" fontWeight="bold" _hover={{ bg: 'teal.600' }} onClick={() => handleModalOpen('Convert HBD', 'Convert HBD to Hive')}><Icon as={FaExchangeAlt} mr={1} /></Box></Tooltip>
-                                <Tooltip label="Send HBD to Savings" hasArrow><Box as="button" px={3} py={2} bg="teal.500" color="white" borderRadius="md" fontWeight="bold" _hover={{ bg: 'teal.600' }} onClick={() => handleModalOpen('HBD Savings', 'Send HBD to Savings')}><Icon as={FaPiggyBank} mr={1} /></Box></Tooltip>
-                                <Tooltip label="Use HBD in Store" hasArrow><Box as="button" px={3} py={2} bg="teal.500" color="white" borderRadius="md" fontWeight="bold" _hover={{ bg: 'teal.600' }} onClick={() => handleModalOpen('HBD Store', 'Use HBD in the store')}><Icon as={FaStore} mr={1} /></Box></Tooltip>
+                        <Stack direction={{ base: 'column', md: 'row' }} align="flex-start" mb={1} spacing={{ base: 2, md: 4 }}>
+                            <HStack align="center" mb={1} spacing={2} width="100%">
+                                <CustomHiveIcon color="lime" style={{ marginTop: 4 }} />
+                                <Text fontSize={{ base: "lg", md: "2xl" }} fontWeight="bold">HBD</Text>
+                                <Box flex={1} />
+                                <Text fontSize={{ base: "lg", md: "2xl" }} fontWeight="bold">{hbdBalance}</Text>
                             </HStack>
-                        </HStack>
+                            <HStack spacing={1} wrap={{ base: 'wrap', md: 'nowrap' }} mb={2}>
+                                <Tooltip label="Send HBD" hasArrow><Box as="button" px={2} py={1} fontSize="sm" bg="teal.500" color="white" borderRadius="md" fontWeight="bold" _hover={{ bg: 'teal.600' }} onClick={() => handleModalOpen('Send HBD', 'Send HBD to another account', true, true)}><Icon as={FaPaperPlane} boxSize={4} mr={1} /></Box></Tooltip>
+                                <Tooltip label="Convert HBD" hasArrow><Box as="button" px={2} py={1} fontSize="sm" bg="teal.500" color="white" borderRadius="md" fontWeight="bold" _hover={{ bg: 'teal.600' }} onClick={() => handleModalOpen('Convert HBD', 'Convert HBD to Hive')}><Icon as={FaExchangeAlt} boxSize={4} mr={1} /></Box></Tooltip>
+                                <Tooltip label="Send HBD to Savings" hasArrow><Box as="button" px={2} py={1} fontSize="sm" bg="teal.500" color="white" borderRadius="md" fontWeight="bold" _hover={{ bg: 'teal.600' }} onClick={() => handleModalOpen('HBD Savings', 'Send HBD to Savings')}><Icon as={FaArrowUp} boxSize={4} mr={1} /><Icon as={FaPiggyBank} boxSize={4} ml={1} /></Box></Tooltip>
+                                <Tooltip label="Use HBD in Store" hasArrow><Box as="button" px={2} py={1} fontSize="sm" bg="teal.500" color="white" borderRadius="md" fontWeight="bold" _hover={{ bg: 'teal.600' }} onClick={() => handleModalOpen('HBD Store', 'Use HBD in the store')}><Icon as={FaStore} boxSize={4} mr={1} /></Box></Tooltip>
+                            </HStack>
+                        </Stack>
                         <Text color="gray.400" mb={4}>A token that is always worth ~1 dollar of hive. It is often rewarded on posts along with HIVE.</Text>
                         {/* Staked HBD */}
-                        <Box pl={6} borderLeft="2px solid" borderColor="green.400" mb={4}>
-                            <HStack mb={1}>
+                        <Box pl={{ base: 2, md: 6 }} borderLeft="2px solid" borderColor="green.400" mb={4}>
+                            <Stack direction={{ base: 'column', md: 'row' }} mb={1} align="center">
                                 <Text fontWeight="bold">Staked HBD</Text>
-                                <Box flex={1} />
-                                <Text fontSize="3xl" fontWeight="extrabold" color="lime">2990.454</Text>
-                                <HStack spacing={2}>
-                                    <Tooltip label="Unstake HBD" hasArrow><Box as="button" px={3} py={2} bg="teal.500" color="white" borderRadius="md" fontWeight="bold" _hover={{ bg: 'teal.600' }}><Icon as={FaArrowDown} mr={1} /></Box></Tooltip>
+                                <Box flex={1} display={{ base: 'none', md: 'block' }} />
+                                <Text fontSize={{ base: "xl", md: "3xl" }} fontWeight="extrabold" color="lime">2990.454</Text>
+                                <HStack spacing={1} wrap="wrap">
+                                    <Tooltip label="Unstake HBD" hasArrow><Box as="button" px={2} py={1} fontSize="sm" bg="teal.500" color="white" borderRadius="md" fontWeight="bold" _hover={{ bg: 'teal.600' }}><Icon as={FaArrowDown} boxSize={4} mr={1} /></Box></Tooltip>
                                 </HStack>
-                            </HStack>
+                            </Stack>
                             <Text color="gray.400">Staked HBD generates 15.00% APR (defined by the <Text as="a" href="https://peakd.com/me/witnesses" target="_blank" rel="noopener noreferrer" color="blue.300" _hover={{ textDecoration: 'underline', color: 'blue.400' }} display="inline">witnesses</Text>) that is paid out monthly</Text>
                         </Box>
                         {/* Staked HBD - Claimable */}
-                        <Box pl={12}>
+                        <Box pl={{ base: 4, md: 12 }}>
                             <Box borderLeft="2px solid" borderColor="green.400" pl={4}>
                                 <Text fontWeight="bold">Staked HBD - Claimable</Text>
                                 <Text color="gray.400">Under construction</Text>
@@ -270,7 +274,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                     <Divider my={6} />
                     {/* Estimated Account Value */}
                     <Box>
-                        <Text fontWeight="bold" fontSize="lg" mb={1}>Estimated Account Value</Text>
+                        <Text fontWeight="bold" fontSize={{ base: "md", md: "lg" }} mb={1}>Estimated Account Value</Text>
                         <Text color="gray.400">Under construction</Text>
                     </Box>
                     <WalletModal
@@ -284,16 +288,16 @@ export default function MainWallet({ username }: MainWalletProps) {
                     />
                 </Box>
                 {/* Right: Market Stats */}
-                <Box p={4} border="tb1" borderRadius="base" bg="muted" boxShadow={'lg'} minW={undefined} width="100%" maxW="340px" mx="auto">
-                    <Text fontWeight="extrabold" fontSize="2xl" mb={4} color="lime">Market Prices</Text>
+                <Box p={{ base: 2, md: 4 }} border="tb1" borderRadius="base" bg="muted" boxShadow={'lg'} minW={undefined} width="100%" maxW={{ base: '100%', md: '340px' }} mx="auto" mb={{ base: 24, md: 0 }}>
+                    <Text fontWeight="extrabold" fontSize={{ base: "xl", md: "2xl" }} mb={4} color="lime">Market Prices</Text>
                     {/* HIVE Market Stat */}
                     <Box mb={6}>
-                        <HStack align="center" mb={1} spacing={2}>
+                        <HStack align="center" justify="center" mb={1} spacing={2}>
                             <CustomHiveIcon color="rgb(233, 66, 95)" />
-                            <Text fontWeight="bold" fontSize="lg" color="gray.100">HIVE</Text>
+                            <Text fontWeight="bold" fontSize={{ base: "md", md: "lg" }} color="gray.100">HIVE</Text>
                         </HStack>
                         <Box display="flex" flexDirection="column" alignItems="center">
-                            <Text fontSize="4xl" fontWeight="extrabold" color="green.200">
+                            <Text fontSize={{ base: "2xl", md: "4xl" }} fontWeight="extrabold" color="green.200">
                                 {isPriceLoading ? 'Loading...' : hivePrice !== null ? `${hivePrice.toFixed(3)} USD` : 'N/A'}
                             </Text>
                             <Text fontSize="sm" color="gray.400" textAlign="center">
@@ -304,12 +308,12 @@ export default function MainWallet({ username }: MainWalletProps) {
                     </Box>
                     {/* HBD Market Stat */}
                     <Box mb={4}>
-                        <HStack align="center" mb={1} spacing={2}>
+                        <HStack align="center" justify="center" mb={1} spacing={2}>
                             <CustomHiveIcon color="lime" />
-                            <Text fontWeight="bold" fontSize="lg" color="gray.100">HBD</Text>
+                            <Text fontWeight="bold" fontSize={{ base: "md", md: "lg" }} color="gray.100">HBD</Text>
                         </HStack>
                         <Box display="flex" flexDirection="column" alignItems="center">
-                            <Text fontSize="4xl" fontWeight="extrabold" color="green.200">
+                            <Text fontSize={{ base: "2xl", md: "4xl" }} fontWeight="extrabold" color="green.200">
                                 {isPriceLoading ? 'Loading...' : hbdPrice !== null ? `${hbdPrice.toFixed(3)} USD` : 'N/A'}
                             </Text>
                             <Text fontSize="sm" color="gray.400" textAlign="center">
