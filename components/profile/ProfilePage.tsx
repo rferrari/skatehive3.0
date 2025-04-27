@@ -160,6 +160,15 @@ export default function ProfilePage({ username }: ProfilePageProps) {
     }
   }, [username, hiveAccount]);
 
+  // Click-to-speak handler for speech bubble
+  const speakDescription = () => {
+    if ('speechSynthesis' in window && profileData.about) {
+      const utterance = new window.SpeechSynthesisUtterance(profileData.about);
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+
   if (isLoading || !hiveAccount) {
     return (
       <Box
@@ -192,11 +201,21 @@ export default function ProfilePage({ username }: ProfilePageProps) {
   return (
     <Box color="text" maxW="container.lg" mx="auto" p={0} m={0}>
       {/* Cover Image */}
-      <Box position="relative" w="100vw" left="50%" style={{ transform: 'translateX(-50%)' }} overflow="hidden" height={{ base: '120px', md: '200px' }} p={0} m={0}>
+      <Box
+        position="relative"
+        w={{ base: '100vw', md: '100%' }}
+        maxW={{ base: '100vw', md: 'container.lg' }}
+        mx={{ base: 'unset', md: 'auto' }}
+        overflow="hidden"
+        height={{ base: '120px', md: '200px' }}
+        p={0}
+        m={0}
+        mt={4}
+      >
         <Image
           src={profileData.coverImage}
           alt={`${username} cover`}
-          w="100vw"
+          w={{ base: '100vw', md: '100%' }}
           h={{ base: '120px', md: '200px' }}
           objectFit="cover"
           fallback={<Box height="100%" />}
@@ -232,7 +251,7 @@ export default function ProfilePage({ username }: ProfilePageProps) {
           {profileData.about && (
             <Box position="relative" ml={{ base: 0, md: 2 }} p={0} m={0}>
               <Box
-                bg="gray.700"
+                bg="gray.800"
                 color="white"
                 px={4}
                 py={3}
@@ -243,6 +262,8 @@ export default function ProfilePage({ username }: ProfilePageProps) {
                 fontStyle="italic"
                 wordBreak="break-word"
                 overflowWrap="anywhere"
+                cursor="pointer"
+                onClick={speakDescription}
                 _after={{
                   content: '""',
                   position: 'absolute',
@@ -251,7 +272,7 @@ export default function ProfilePage({ username }: ProfilePageProps) {
                   borderWidth: '8px',
                   borderStyle: 'solid',
                   borderColor: 'transparent',
-                  borderRightColor: 'var(--chakra-colors-gray-700, #2D3748)',
+                  borderRightColor: 'var(--chakra-colors-gray-800, #2D3748)',
                 }}
               >
                 {profileData.about}
