@@ -220,21 +220,25 @@ const VideoControls = React.memo(
             }
           `}</style>
 
-          {hoverTime !== null && videoDuration && (
-            <Box
-              position="absolute"
-              top="-25px"
-              left={`${(hoverTime / videoDuration) * 100}%`}
-              transform="translateX(-50%)"
-              bg="black"
-              color="white"
-              p={1}
-              rounded="md"
-              fontSize="xs"
-            >
-              {new Date(hoverTime * 1000).toISOString().substr(11, 8)}
-            </Box>
-          )}
+          {hoverTime !== null &&
+            videoDuration &&
+            Number.isFinite(videoDuration) && (
+              <Box
+                position="absolute"
+                top="-25px"
+                left={`${(hoverTime / videoDuration) * 100}%`}
+                transform="translateX(-50%)"
+                bg="black"
+                color="white"
+                p={1}
+                rounded="md"
+                fontSize="xs"
+              >
+                {Number.isFinite(hoverTime)
+                  ? new Date(hoverTime * 1000).toISOString().substr(11, 8)
+                  : "00:00:00"}
+              </Box>
+            )}
         </Box>
       </Box>
     );
@@ -317,20 +321,28 @@ const VideoRenderer = ({ src, ...props }: RendererProps) => {
   const handleProgressChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       if (videoRef.current) {
-        // Make sure the duration is a valid finite number before calculating newTime
         const duration = videoRef.current.duration;
         if (Number.isFinite(duration) && duration > 0) {
           try {
-            const newTime = (duration * parseFloat(e.target.value)) / 100;
-            if (Number.isFinite(newTime)) {
-              videoRef.current.currentTime = newTime;
+            const newValue = parseFloat(e.target.value);
+            if (Number.isFinite(newValue)) {
+              const newTime = (duration * newValue) / 100;
+              if (Number.isFinite(newTime)) {
+                videoRef.current.currentTime = newTime;
+              }
+              setProgress(newValue);
+            } else {
+              setProgress(0);
             }
           } catch (error) {
             console.error("Error setting video time:", error);
+            setProgress(0);
           }
+        } else {
+          // If duration is invalid, just update the UI without changing video time
+          const newValue = parseFloat(e.target.value);
+          setProgress(Number.isFinite(newValue) ? newValue : 0);
         }
-        // Still update the progress state even if we couldn't set the currentTime
-        setProgress(parseFloat(e.target.value));
       }
     },
     []
@@ -338,19 +350,29 @@ const VideoRenderer = ({ src, ...props }: RendererProps) => {
 
   const handleTimeUpdate = useCallback(() => {
     if (videoRef.current) {
-      const newProgress =
-        (videoRef.current.currentTime / videoRef.current.duration) * 100;
-      setProgress(newProgress);
+      const duration = videoRef.current.duration;
+      // Add validation to prevent NaN
+      if (Number.isFinite(duration) && duration > 0) {
+        const newProgress = (videoRef.current.currentTime / duration) * 100;
+        setProgress(Number.isFinite(newProgress) ? newProgress : 0);
+      } else {
+        setProgress(0);
+      }
     }
   }, []);
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
       if (videoRef.current) {
-        const rect = e.currentTarget.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const newHoverTime = (x / rect.width) * videoRef.current.duration;
-        setHoverTime(newHoverTime);
+        const duration = videoRef.current.duration;
+        if (Number.isFinite(duration) && duration > 0) {
+          const rect = e.currentTarget.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const newHoverTime = (x / rect.width) * duration;
+          setHoverTime(Number.isFinite(newHoverTime) ? newHoverTime : null);
+        } else {
+          setHoverTime(null);
+        }
       }
     },
     []
