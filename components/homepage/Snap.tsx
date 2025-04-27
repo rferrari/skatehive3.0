@@ -272,13 +272,12 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
                 <SliderTrack
                   bg="gray.700"
                   height="8px"
-                  borderRadius="full"
                   boxShadow="0 0 10px rgba(255, 255, 0, 0.8)"
                 >
                   <SliderFilledTrack bgGradient="linear(to-r, green.400, limegreen, red.400)" />
                 </SliderTrack>
                 <SliderThumb
-                  boxSize="80px"
+                  boxSize="30px"
                   bg="transparent"
                   boxShadow={"none"}
                   _focus={{ boxShadow: "none" }}
@@ -287,10 +286,10 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
                   <Image
                     src="/images/spitfire.png"
                     alt="thumb"
-                    w="40%"
+                    w="100%"
                     h="auto"
-                    mr={16}
-                    mb={2}
+                    mr={2}
+                    mb={1}
                   />
                 </SliderThumb>
               </Slider>
@@ -309,9 +308,9 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
                 <Button
                   leftIcon={
                     voted ? (
-                      <LuArrowUpRight size={24} color="#00b894" />
-                    ) : (
                       <LuArrowUpRight size={24} />
+                    ) : (
+                      <LuArrowUpRight size={24} color="rgb(75, 72, 72)" />
                     )
                   }
                   variant="ghost"
@@ -321,27 +320,29 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
                   {Discussion.active_votes?.length}
                 </Button>
               </Tooltip>
-              <Tooltip label="reward amount" hasArrow openDelay={1000}>
-                <Text fontWeight="bold" fontSize="sm">
-                  ${rewardAmount}
-                </Text>
+            </HStack>
+            <HStack>
+              <Tooltip label="comments" hasArrow openDelay={1000}>
+                <Button
+                  leftIcon={<FaRegComment size={18} />}
+                  variant="ghost"
+                  onClick={() => {
+                    console.log(Discussion.depth);
+                    effectiveDepth > 1
+                      ? handleReplyButtonClick(Discussion.permlink)
+                      : handleConversation();
+                  }}
+                  size="sm"
+                >
+                  {setConversation && Discussion.children}
+                </Button>
               </Tooltip>
             </HStack>
-            <HStack
-              onClick={() => {
-                console.log(Discussion.depth);
-                effectiveDepth > 1
-                  ? handleReplyButtonClick(Discussion.permlink)
-                  : handleConversation();
-              }}
-            >
-              <FaRegComment cursor="pointer" size={20} />
-              {setConversation && (
-                <Text cursor="pointer" fontWeight="bold">
-                  {Discussion.children}
-                </Text>
-              )}
-            </HStack>
+            <Tooltip label="reward amount" hasArrow openDelay={1000}>
+              <Text fontWeight="bold" fontSize="xl">
+                ${rewardAmount}
+              </Text>
+            </Tooltip>
           </HStack>
         )}
       </Box>
