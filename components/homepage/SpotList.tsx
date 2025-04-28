@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Box, VStack, Text, Spinner, Image, Divider, Button } from "@chakra-ui/react";
+import { Box, VStack, Text, Spinner, Image, Divider, Button, Modal, ModalOverlay, ModalContent } from "@chakra-ui/react";
 import { useComments } from "@/hooks/useComments";
 import { Discussion } from "@hiveio/dhive";
+import Snap from "@/components/homepage/Snap";
+import Conversation from "@/components/homepage/Conversation";
 
 interface SpotListProps {
   newSpot?: Discussion | null;
@@ -15,6 +17,8 @@ export default function SpotList({ newSpot }: SpotListProps) {
   );
   const [displayedSpots, setDisplayedSpots] = useState<Discussion[]>([]);
   const [visibleCount, setVisibleCount] = useState(10);
+  const [conversation, setConversation] = useState<Discussion | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Update displayed spots when comments or newSpot changes
   useEffect(() => {
@@ -33,6 +37,16 @@ export default function SpotList({ newSpot }: SpotListProps) {
 
   const handleLoadMore = () => {
     setVisibleCount((prev) => prev + 10);
+  };
+
+  const handleOpenConversation = (spot: Discussion) => {
+    setConversation(spot);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setConversation(null);
   };
 
   if (isLoading) {
@@ -61,26 +75,36 @@ export default function SpotList({ newSpot }: SpotListProps) {
   }
 
   return (
-    <VStack spacing={6} align="stretch" my={8}>
-      {displayedSpots.slice(0, visibleCount).map((spot) => (
-        <Box key={spot.permlink} p={4} borderRadius="md" boxShadow="md" bg="gray.900">
-          <Text fontWeight="bold" fontSize="lg" mb={2}>{spot.body.split("\n")[0]}</Text>
-          <Text color="gray.300" mb={2}>{spot.body.split("\n")[1]}</Text>
-          <Text color="gray.100" mb={2}>{spot.body.split("\n").slice(2).join("\n")}</Text>
-          {/* Render images if present in body */}
-          {spot.body.match(/!\[image\]\((.*?)\)/g)?.map((img, idx) => {
-            const url = img.match(/!\[image\]\((.*?)\)/)?.[1];
-            return url ? (
-              <Image key={idx} src={url} alt="spot" maxH="200px" my={2} borderRadius="md" />
-            ) : null;
-          })}
-        </Box>
-      ))}
-      {visibleCount < displayedSpots.length && (
-        <Button onClick={handleLoadMore} alignSelf="center" colorScheme="primary" variant="outline">
-          Load More
-        </Button>
-      )}
-    </VStack>
+    <>
+      <VStack spacing={6} align="stretch" my={8}>
+        {displayedSpots.slice(0, visibleCount).map((spot) => (
+          <Snap
+            key={spot.permlink}
+            Discussion={spot}
+            onOpen={() => handleOpenConversation(spot)}
+            setReply={() => {}}
+            setConversation={handleOpenConversation}
+          />
+        ))}
+        {visibleCount < displayedSpots.length && (
+          <Button onClick={handleLoadMore} alignSelf="center" colorScheme="primary" variant="outline">
+            Load More
+          </Button>
+        )}
+      </VStack>
+      <Modal isOpen={isModalOpen} onClose={handleCloseModal} size="2xl">
+        <ModalOverlay />
+        <ModalContent bg="background" color="text">
+          {conversation && (
+            <Conversation
+              Discussion={conversation}
+              setConversation={() => setIsModalOpen(false)}
+              onOpen={() => {}}
+              setReply={() => {}}
+            />
+          )}
+        </ModalContent>
+      </Modal>
+    </>
   );
 } 
