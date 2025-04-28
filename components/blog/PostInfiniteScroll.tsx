@@ -8,10 +8,13 @@ interface PostsInfiniteScrollProps {
     allPosts: Discussion[];
     fetchPosts: () => Promise<void>;
     viewMode: 'grid' | 'list';
+    context?: 'blog' | 'profile' | 'rightsidebar';
 }
 
-export default function PostsInfiniteScroll({ allPosts, fetchPosts, viewMode }: PostsInfiniteScrollProps) {
+export default function PostsInfiniteScroll({ allPosts, fetchPosts, viewMode, context = 'blog' }: PostsInfiniteScrollProps) {
     const hasMore = allPosts.length % 12 === 0; // Adjust this logic based on your pagination
+    // Determine columns based on context and viewMode
+    const columns = viewMode === 'grid' ? (context === 'rightsidebar' ? 1 : 3) : 1;
 
     return (
         <InfiniteScroll
@@ -19,7 +22,7 @@ export default function PostsInfiniteScroll({ allPosts, fetchPosts, viewMode }: 
             next={fetchPosts}
             hasMore={hasMore}
             loader={
-                <SimpleGrid columns={{ base: 1, md: viewMode === 'grid' ? 3 : 1 }} spacing={4}>
+                <SimpleGrid columns={{ base: 1, md: columns }} spacing={4}>
                     {Array(6).fill(0).map((_, i) => (
                         <Box key={i} borderWidth="1px" borderRadius="base" overflow="hidden" p={4}>
                             {/* New skeleton header for profile pic and post author */}
@@ -36,7 +39,7 @@ export default function PostsInfiniteScroll({ allPosts, fetchPosts, viewMode }: 
             }
             scrollableTarget="scrollableDiv"
         >
-            {allPosts && (<PostGrid posts={allPosts ?? []} columns={viewMode === 'grid' ? 3 : 1} listView={viewMode === 'list'} />)}
+            {allPosts && (<PostGrid posts={allPosts ?? []} columns={columns} listView={viewMode === 'list'} />)}
         </InfiniteScroll>
     );
 }
