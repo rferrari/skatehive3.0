@@ -184,12 +184,6 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
     });
   };
 
-  const openShareModal = () => setIsShareModalOpen(true);
-  const closeShareModal = () => setIsShareModalOpen(false);
-  const openTippingModal = () => {
-    console.log("Tipping modal opened");
-  };
-
   function handleInlineNewReply(newComment: Partial<Discussion>) {
     const newReply = newComment as Discussion;
     setInlineReplies((prev: Discussion[]) => [...prev, newReply]);
@@ -205,7 +199,7 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
   const replies = Discussion.replies || [];
 
   return (
-    <Box pl={effectiveDepth > 0 ? 1 : 0} ml={effectiveDepth > 0 ? 2 : 0}>
+    <Box pl={effectiveDepth > 1 ? 1 : 0} ml={effectiveDepth > 1 ? 2 : 0}>
       <Box mt={1} mb={1} borderRadius="base" width="100%">
         <HStack mb={2}>
           <Avatar
