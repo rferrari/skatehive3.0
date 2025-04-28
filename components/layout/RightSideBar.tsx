@@ -90,7 +90,7 @@ export default function RightSideBar() {
         }
       }
     >
-      <PostInfiniteScroll allPosts={allPosts} fetchPosts={fetchPosts} viewMode="list" />
+      <PostInfiniteScroll allPosts={allPosts} fetchPosts={fetchPosts} viewMode="grid" context="rightsidebar" />
     </Box>
   );
 }

@@ -90,7 +90,7 @@ export default function Blog() {
                     setViewMode(mode);
                 }
             }} setQuery={setQuery} />
-            <PostInfiniteScroll allPosts={allPosts} fetchPosts={fetchPosts} viewMode={viewMode} />
+            <PostInfiniteScroll allPosts={allPosts} fetchPosts={fetchPosts} viewMode={viewMode} context="blog" />
         </Container>
     );
 }
