@@ -12,6 +12,8 @@ import {
 } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
 import { FiBell, FiBook, FiCreditCard, FiHome, FiUser } from "react-icons/fi";
+import { FaPen } from "react-icons/fa";
+import { FiMap } from "react-icons/fi";
 import { useState } from "react";
 import { KeyTypes } from "@aioha/aioha";
 
@@ -77,6 +79,15 @@ export default function FooterNavigation() {
                 onClick={() => handleNavigation("/@" + user + "/notifications")}
                 variant="ghost"
                 leftIcon={<Icon as={FiBell} boxSize={4} />}
+                color="primary"
+                _hover={{ bg: "gray.800" }}
+              />
+            </Tooltip>
+            <Tooltip label="Skatespots" aria-label="Skatespots tooltip">
+              <Button
+                onClick={() => handleNavigation("/skatespots")}
+                variant="ghost"
+                leftIcon={<Icon as={FiMap} boxSize={4} />}
                 color="primary"
                 _hover={{ bg: "gray.800" }}
               />
