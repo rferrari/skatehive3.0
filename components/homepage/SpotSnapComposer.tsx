@@ -28,7 +28,7 @@ interface SpotSnapComposerProps {
 export default function SpotSnapComposer({ onNewComment, onClose }: SpotSnapComposerProps) {
   const { user, aioha } = useAioha();
   const postBodyRef = useRef<HTMLTextAreaElement>(null);
-  const [images, setImages] = useState<File[]>([]);
+  const [images, setImages] = useState<{ file: File, caption: string }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -55,10 +55,10 @@ export default function SpotSnapComposer({ onNewComment, onClose }: SpotSnapComp
     if (images.length > 0) {
       const uploadedImages = await Promise.all(
         images.map(async (image, index) => {
-          const signature = await getFileSignature(image);
+          const signature = await getFileSignature(image.file);
           try {
             const uploadUrl = await uploadImage(
-              image,
+              image.file,
               signature,
               index,
               setUploadProgress
@@ -77,7 +77,7 @@ export default function SpotSnapComposer({ onNewComment, onClose }: SpotSnapComp
     if (description) commentBody += `\n${description}`;
     if (validUrls.length > 0) {
       const imageMarkup = validUrls
-        .map((url: string | null) => `![image](${url?.toString() || ""})`)
+        .map((url: string | null, idx: number) => `![${images[idx]?.caption || spotName}](${url?.toString() || ""})`)
         .join("\n");
       commentBody += `\n\n${imageMarkup}`;
     }
@@ -189,19 +189,33 @@ export default function SpotSnapComposer({ onNewComment, onClose }: SpotSnapComp
             accept="image/*"
             onChange={event => {
               const files = Array.from(event.target.files || []);
-              setImages(prev => [...prev, ...files]);
+              setImages(prev => [
+                ...prev,
+                ...files.map(file => ({ file, caption: "" }))
+              ]);
             }}
             hidden
           />
         </HStack>
         <Wrap spacing={4}>
-          {images.map((image, index) => (
-            <Box key={index} position="relative">
+          {images.map((imgObj, index) => (
+            <Box key={index} position="relative" mb={4}>
               <Image
                 alt=""
-                src={URL.createObjectURL(image)}
+                src={URL.createObjectURL(imgObj.file)}
                 boxSize="100px"
                 borderRadius="base"
+              />
+              <Input
+                mt={2}
+                placeholder="Enter caption"
+                value={imgObj.caption}
+                onChange={e => {
+                  const newImages = [...images];
+                  newImages[index].caption = e.target.value;
+                  setImages(newImages);
+                }}
+                size="sm"
               />
               <IconButton
                 aria-label="Remove image"
