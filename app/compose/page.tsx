@@ -32,7 +32,7 @@ export default function Composer() {
   const editorRef = useRef<any>(null);
 
   const placeholders = [
-    "Enter post title...",
+    "Don't forget to Title your post...",
     "What's on your mind?",
     "Share your story...",
     "Write a banging title here...",

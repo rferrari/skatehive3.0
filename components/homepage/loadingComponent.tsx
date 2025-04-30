@@ -9,7 +9,7 @@ const matrixCharacters =
 const randomSentences = [
   "skate or don't",
   "F-u-c-k instagram lets build something skater-made",
-  "when doing something off-the-chain is actually on-chain",
+  "off the wall is on chain",
   "Praise skatevideosite",
   "Loading Stokenomics",
   "Initiating Proof of Stoke",
