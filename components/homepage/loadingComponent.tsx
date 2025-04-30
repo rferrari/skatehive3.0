@@ -30,7 +30,6 @@ const randomSentences = [
   "where are you on the leaderboard?",
   "HBD is a stablecoin- always worth ~$1 of HIVE",
   "stake your HBD in savings to earn 15% APY monthly",
-  "your voting mana depleates over time- give it a day or two to recharge",
   "try to get 1000 HIVE Power",
   "dont cash out your HIVE- forget about it and HODL- thank us later",
   "registering skatespots on the map can earn you rewards",
