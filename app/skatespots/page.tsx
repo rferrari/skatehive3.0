@@ -196,7 +196,12 @@ export default function SkatespotsPage() {
                 Add A Spot
               </button>
             </Box>
-            <Box mb={4} textAlign="center" width="100%" style={{ aspectRatio: '3 / 2' }}>
+            <Box
+              mb={4}
+              textAlign="center"
+              width="100%"
+              sx={{ aspectRatio: { base: '3 / 4', md: '3 / 2' } }}
+            >
               <iframe
                 src={mapSrc}
                 style={{
@@ -207,7 +212,7 @@ export default function SkatespotsPage() {
                   margin: "auto",
                   boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.5)",
                   display: 'block',
-                  aspectRatio: '3 / 2',
+                  aspectRatio: window.innerWidth < 768 ? '3 / 4' : '3 / 2',
                 }}
                 allowFullScreen
               ></iframe>

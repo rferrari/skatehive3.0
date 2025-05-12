@@ -51,6 +51,7 @@ function generateColumnLines(lines = 30) {
 const LoadingComponent = () => {
   const [randomSentence, setRandomSentence] = useState(randomSentences[0]);
   const [columns, setColumns] = useState<string[]>([]);
+  const [messageVisible, setMessageVisible] = useState(true);
 
   useEffect(() => {
     const newSentence =
@@ -69,6 +70,24 @@ const LoadingComponent = () => {
     }, 5000);
 
     return () => clearInterval(interval);
+  }, []);
+
+  // Switch the random message every 4 seconds with fade in/out
+  useEffect(() => {
+    const switchMessage = setInterval(() => {
+      setMessageVisible(false);
+      setTimeout(() => {
+        setRandomSentence(prev => {
+          let next;
+          do {
+            next = randomSentences[Math.floor(Math.random() * randomSentences.length)];
+          } while (next === prev && randomSentences.length > 1);
+          return next;
+        });
+        setMessageVisible(true);
+      }, 400); // fade out for 400ms, then switch and fade in
+    }, 4000);
+    return () => clearInterval(switchMessage);
   }, []);
 
   return (
@@ -130,6 +149,8 @@ const LoadingComponent = () => {
           p={4}
           borderRadius="md"
           color="#00FF00"
+          opacity={messageVisible ? 1 : 0}
+          transition="opacity 0.4s"
           _before={{
             content: `"${randomSentence}"`,
             position: "absolute",
