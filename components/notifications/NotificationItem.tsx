@@ -300,23 +300,6 @@ export default function NotificationItem({
         align="stretch"
         position="relative"
       >
-        {/* Timestamp and expand button at top right */}
-        <Box position="absolute" top={2} right={4} zIndex={1} display="flex" alignItems="center" gap={2}>
-          <Text fontSize="xs" color={isNew ? "accent" : "primary"}>
-            {formattedDate}
-          </Text>
-          <Link href={"/" + notification.url} isExternal>
-            <IconButton
-              aria-label="Open notification"
-              icon={<ExternalLinkIcon />}
-              variant="ghost"
-              size="sm"
-              isRound
-              alignSelf="center"
-              color={isNew ? "accent" : "primary"}
-            />
-          </Link>
-        </Box>
         <Box flex="1">
           <HStack>
             <Avatar
@@ -341,16 +324,23 @@ export default function NotificationItem({
               </HStack>
             ) : notification.type === "vote" ? (
               <Box>
-                <Text color={isNew ? "accent" : "primary"} fontSize="sm" noOfLines={1}>
+                <Text color={isNew ? "accent" : "primary"} fontSize="sm" display="flex" alignItems="center" flexWrap="wrap">
                   <Link href={`/@${author}`} color={isNew ? "accent" : "primary"} fontWeight="bold" _hover={{ textDecoration: 'underline' }}>
                     {notification.msg.replace(/^@/, "").split(' ')[0]}
                   </Link>
-                  {` upvoted your post `}
-                  <Text as="span" color="green.300" fontWeight="bold">
+                  <Text as="span" ml={1}>upvoted your</Text>
+                  <Link href={`/${notification.url}`} color={isNew ? "accent" : "primary"} fontWeight="bold" _hover={{ textDecoration: 'underline' }} ml={1}>
+                    post
+                  </Link>
+                  {':'}
+                  <Text as="span" color="green.300" fontWeight="bold" ml={1}>
                     {(() => {
                       const match = notification.msg.match(/\(([^)]+)\)/);
                       return match && match[1] ? `(${match[1]})` : "";
                     })()}
+                  </Text>
+                  <Text as="span" fontSize="xs" color="gray.400" ml={2}>
+                    {formattedDate}
                   </Text>
                 </Text>
                 {reply && (
@@ -361,13 +351,20 @@ export default function NotificationItem({
               </Box>
             ) : notification.type === "reply_comment" ? (
               <Box>
-                <Text color={isNew ? "accent" : "primary"} fontSize="sm" noOfLines={1}>
+                <Text color={isNew ? "accent" : "primary"} fontSize="sm" display="flex" alignItems="center" flexWrap="wrap">
                   <Link href={`/@${author}`} color={isNew ? "accent" : "primary"} fontWeight="bold" _hover={{ textDecoration: 'underline' }}>
                     {notification.msg.replace(/^@/, "").split(' ')[0]}
                   </Link>
-                  {` replied to your comment`}
+                  <Text as="span" ml={1}>replied to your</Text>
+                  <Link href={`/${notification.url}`} color={isNew ? "accent" : "primary"} fontWeight="bold" _hover={{ textDecoration: 'underline' }} ml={1}>
+                    comment
+                  </Link>
+                  {':'}
                   {parentPost?.body &&
-                    ` - ${parentPost.body.replace(/\n/g, ' ').slice(0, 100)}${parentPost.body.length > 100 ? '…' : ''}`}
+                    ` "${parentPost.body.replace(/\n/g, ' ').slice(0, 100)}${parentPost.body.length > 100 ? '…' : ''}"`}
+                  <Text as="span" fontSize="xs" color="gray.400" ml={2}>
+                    {formattedDate}
+                  </Text>
                 </Text>
                 {reply && (
                   <Text fontSize="lg" color="green.300" mt={1}>
@@ -377,25 +374,38 @@ export default function NotificationItem({
               </Box>
             ) : notification.type === "mention" ? (
               <Box>
-                <Text color={isNew ? "accent" : "primary"} fontSize="sm" noOfLines={1}>
-                  {notification.msg.replace(/^@/, "")}
+                <Text color={isNew ? "accent" : "primary"} fontSize="sm" display="flex" alignItems="center" flexWrap="wrap">
+                  <Link href={`/@${author}`} color={isNew ? "accent" : "primary"} fontWeight="bold" _hover={{ textDecoration: 'underline' }}>
+                    {notification.msg.replace(/^@/, "").split(' ')[0]}
+                  </Link>
+                  <Text as="span" ml={1}>mentioned you in</Text>
                   {parentPost?.title && (
-                    <>
-                      {" in "}
-                      <Link href={"/" + notification.url} color="blue.400" isExternal>
-                        {parentPost.title}
-                      </Link>
-                    </>
+                    <Link href={`/${notification.url}`} color={isNew ? "accent" : "primary"} fontWeight="bold" _hover={{ textDecoration: 'underline' }} ml={1}>
+                      {parentPost.title}
+                    </Link>
                   )}
+                  {':'}
+                  <Text as="span" fontSize="xs" color="gray.400" ml={2}>
+                    {formattedDate}
+                  </Text>
                 </Text>
               </Box>
             ) : notification.type === "reply" ? (
               <Box>
-                <Text color={isNew ? "accent" : "primary"} fontSize="sm" noOfLines={1}>
+                <Text color={isNew ? "accent" : "primary"} fontSize="sm" display="flex" alignItems="center" flexWrap="wrap">
                   <Link href={`/@${author}`} color={isNew ? "accent" : "primary"} fontWeight="bold" _hover={{ textDecoration: 'underline' }}>
                     {notification.msg.replace(/^@/, "").split(' ')[0]}
                   </Link>
-                  {` replied to your post`}
+                  <Text as="span" ml={1}>replied to your</Text>
+                  <Link href={`/${notification.url}`} color={isNew ? "accent" : "primary"} fontWeight="bold" _hover={{ textDecoration: 'underline' }} ml={1}>
+                    post
+                  </Link>
+                  {':'}
+                  {parentPost?.title &&
+                    ` "${parentPost.title.slice(0, 100)}${parentPost.title.length > 100 ? '…' : ''}"`}
+                  <Text as="span" fontSize="xs" color="gray.400" ml={2}>
+                    {formattedDate}
+                  </Text>
                 </Text>
                 {reply && (
                   <Text fontSize="lg" color="green.300" mt={1}>
