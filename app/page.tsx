@@ -37,12 +37,8 @@ export default function Home() {
         borderLeft="1px"
         borderRight="1px"
         borderColor="muted"
-        h="100vh"
-        overflowY="auto"
         p={0}
         pt={2}
-        position={"sticky"}
-        top={0}
         justifyContent="center"
         flex="1"
         sx={{

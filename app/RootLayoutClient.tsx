@@ -33,7 +33,9 @@ function InnerLayout({ children }: { children: React.ReactNode }) {
     <Container maxW={{ base: "100%", md: "container.xl" }} p={0}>
       <Flex direction={{ base: "column", md: "row" }} minH="100vh">
         <Sidebar />
-        <Box flex="1">{children}</Box>
+        <Box flex="1" overflowY="auto" height="100vh">
+          {children}
+        </Box>
       </Flex>
       {isMobile && <FooterNavigation />}
     </Container>
