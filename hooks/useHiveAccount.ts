@@ -7,6 +7,7 @@ interface HiveAccountMetadataProps {
 }
 export interface HiveAccount extends ExtendedAccount {
   metadata?: HiveAccountMetadataProps
+  pending_claimed_accounts?: string | number;
 }
 
 export default function useHiveAccount(username: string) {

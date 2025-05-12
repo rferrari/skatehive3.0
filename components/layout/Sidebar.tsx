@@ -31,6 +31,7 @@ import {
 } from "@/lib/hive/client-functions";
 import { animate, color, motion, px } from "framer-motion";
 import { FaGear } from "react-icons/fa6";
+import { FaMailBulk } from "react-icons/fa";
 import { KeyTypes } from "@aioha/aioha";
 import "@aioha/react-ui/dist/build.css";
 
@@ -228,6 +229,16 @@ export default function Sidebar() {
             px={1}
           >
             Settings
+          </Button>
+          <Button
+            onClick={() => handleNavigation("/invite")}
+            variant="ghost"
+            w="full"
+            justifyContent="flex-start"
+            leftIcon={<Icon as={FaMailBulk} boxSize={4} />}
+            px={1}
+          >
+            Invite
           </Button>
         </VStack>
         <div className={colorMode}>
