@@ -95,11 +95,34 @@ export default function ProfilePage({ username }: ProfilePageProps) {
     try {
       const newPosts = await findPosts("author_before_date", params.current);
       if (newPosts && newPosts.length > 0) {
-        setPosts((prevPosts) => [...prevPosts, ...newPosts]);
+        // TEMP: Log the first few posts for inspection
+        console.log('Sample posts:', newPosts.slice(0, 3));
+        // Robust cross-post filter for PeakD and similar
+        const filteredPosts = newPosts.filter((post: any) => {
+          let isCrossPost = false;
+          let body = post.body || '';
+          try {
+            const meta = typeof post.json_metadata === 'string'
+              ? JSON.parse(post.json_metadata)
+              : post.json_metadata || {};
+            // Check for cross-post tag
+            if (Array.isArray(meta.tags) && meta.tags.map((t: string) => t.toLowerCase()).includes('cross-post')) {
+              isCrossPost = true;
+            }
+            // Check for original_author and original_permlink
+            if (meta.original_author && meta.original_permlink) {
+              isCrossPost = true;
+            }
+          } catch (e) {}
+          // Check for typical cross-post body pattern
+          const bodyIsCrossPost = /^this is a cross post/i.test(body.trim());
+          return !(isCrossPost || bodyIsCrossPost);
+        });
+        setPosts((prevPosts) => [...prevPosts, ...filteredPosts]);
         params.current = [
           username,
-          newPosts[newPosts.length - 1].permlink,
-          newPosts[newPosts.length - 1].created,
+          filteredPosts[filteredPosts.length - 1].permlink,
+          filteredPosts[filteredPosts.length - 1].created,
           12,
         ];
       }
