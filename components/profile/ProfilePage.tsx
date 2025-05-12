@@ -202,7 +202,19 @@ export default function ProfilePage({ username }: ProfilePageProps) {
   }
 
   return (
-    <Box color="text" maxW="container.lg" mx="auto" p={0} m={0}>
+    <Box
+      color="text"
+      maxW="container.lg"
+      mx="auto"
+      p={0}
+      m={0}
+      maxH="100vh"
+      overflowY="auto"
+      sx={{
+        '&::-webkit-scrollbar': { display: 'none' },
+        scrollbarWidth: 'none',
+      }}
+    >
       {/* Cover Image */}
       <Box
         position="relative"

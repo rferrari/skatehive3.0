@@ -32,15 +32,16 @@ export default function Home() {
 
   return (
     <Flex direction={{ base: "column", md: "row" }}>
-      <Container
-        maxW={{ base: "100%", md: "666px" }}
+      <Box
+        maxH="100vh"
+        overflowY="auto"
+        flex="1"
         borderLeft="1px"
         borderRight="1px"
         borderColor="muted"
         p={0}
         pt={2}
         justifyContent="center"
-        flex="1"
         sx={{
           "&::-webkit-scrollbar": {
             display: "none",
@@ -57,7 +58,7 @@ export default function Home() {
             onOpen={onOpen}
             setReply={setReply}
             newComment={newComment}
-            setNewComment={setNewComment} // Add the missing prop
+            setNewComment={setNewComment}
             data={snaps}
           />
         ) : (
@@ -68,7 +69,7 @@ export default function Home() {
             setReply={setReply}
           />
         )}
-      </Container>
+      </Box>
 
       {/* Changed: Wrap RightSidebar in a Box displayed only on mobile */}
       <Box display={{ base: "none", md: "block", lg: "block" }}>

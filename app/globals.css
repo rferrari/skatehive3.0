@@ -31,3 +31,10 @@ body {
     text-wrap: balance;
   }
 }
+
+@media (min-width: 768px) {
+  html, body {
+    overflow: hidden !important;
+    height: 100vh;
+  }
+}

@@ -102,6 +102,14 @@ export default function SkatespotsPage() {
           }
         `}
       />
+      <Box
+        maxH="100vh"
+        overflowY="auto"
+        sx={{
+          '&::-webkit-scrollbar': { display: 'none' },
+          scrollbarWidth: 'none',
+        }}
+      >
       <Flex
         flexDirection={{ base: "column", md: "row" }}
         align="flex-start"
@@ -265,6 +273,7 @@ export default function SkatespotsPage() {
           <SpotList newSpot={newSpot} />
         </Box>
       </Flex>
+      </Box>
     </>
   );
 } 

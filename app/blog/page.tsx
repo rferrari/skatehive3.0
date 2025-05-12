@@ -1,5 +1,5 @@
 'use client';
-import { Container } from '@chakra-ui/react';
+import { Container, Box } from '@chakra-ui/react';
 import { useState, useRef, useEffect } from 'react';
 import { Discussion } from '@hiveio/dhive';
 import { findPosts } from '@/lib/hive/client-functions';
@@ -70,16 +70,15 @@ export default function Blog() {
     }, []);
 
     return (
-        <Container
+        <Box
             id="scrollableDiv"
             maxW="container.lg"
-            mt="3"
-            h="100vh"
+            mx="auto"
+            maxH="100vh"
             overflowY="auto"
+            p={0}
             sx={{
-                '&::-webkit-scrollbar': {
-                    display: 'none',
-                },
+                '&::-webkit-scrollbar': { display: 'none' },
                 scrollbarWidth: 'none',
             }}
         >
@@ -91,6 +90,6 @@ export default function Blog() {
                 }
             }} setQuery={setQuery} />
             <PostInfiniteScroll allPosts={allPosts} fetchPosts={fetchPosts} viewMode={viewMode} context="blog" />
-        </Container>
+        </Box>
     );
 }
