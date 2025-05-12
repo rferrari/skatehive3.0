@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { fetchNewNotifications, getLastReadNotificationDate } from '@/lib/hive/client-functions';
-import { Box, Text, Stack, Spinner, Button, HStack, Tabs, TabList, TabPanels, Tab, TabPanel, Center } from '@chakra-ui/react';
+import { Box, Text, Stack, Spinner, Button, HStack, Tabs, TabList, TabPanels, Tab, TabPanel, Center, Flex, Select } from '@chakra-ui/react';
 import { useAioha } from '@aioha/react-ui';
 import { KeyTypes } from '@aioha/aioha';
 import { Notifications } from '@hiveio/dhive';
@@ -14,8 +14,9 @@ interface NotificationCompProps {
 export default function NotificationsComp({ username }: NotificationCompProps) {
   const { user, aioha } = useAioha();
   const [notifications, setNotifications] = useState<Notifications[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true); // Add isLoading state
-  const [lastReadDate, setLastReadDate] = useState<string>('1970-01-01T00:00:00Z'); // Add lastReadDate state
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [lastReadDate, setLastReadDate] = useState<string>('1970-01-01T00:00:00Z');
+  const [filter, setFilter] = useState<string>('all');
 
   useEffect(() => {
     const loadNotifications = async () => {
@@ -23,10 +24,10 @@ export default function NotificationsComp({ username }: NotificationCompProps) {
         try {
           setIsLoading(true);
           const newNotifications = await fetchNewNotifications(username);
-          const lastRead = await getLastReadNotificationDate(username); // Fetch last read date
+          const lastRead = await getLastReadNotificationDate(username);
 
           setNotifications(newNotifications);
-          setLastReadDate(lastRead); // Set last read date
+          setLastReadDate(lastRead);
         } catch (error) {
           console.error("Failed to fetch notifications:", error);
         } finally {
@@ -41,7 +42,7 @@ export default function NotificationsComp({ username }: NotificationCompProps) {
   async function handleMarkAsRead() {
     const now = new Date().toISOString();
     const json = JSON.stringify(["setLastRead", { date: now }]);
-    const result = await aioha.signAndBroadcastTx([
+    await aioha.signAndBroadcastTx([
       ['custom_json', {
         required_auths: [],
         required_posting_auths: [user],
@@ -51,22 +52,39 @@ export default function NotificationsComp({ username }: NotificationCompProps) {
     ], KeyTypes.Posting)
   };
 
-  const groupedNotifications = notifications.reduce((acc, notification) => {
-    if (!acc[notification.type]) {
-      acc[notification.type] = [];
-    }
-    acc[notification.type].push(notification);
-    return acc;
-  }, {} as Record<string, Notifications[]>);
+  // Sort notifications by date descending
+  const sortedNotifications = [...notifications].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  // Filter notifications by type
+  const filteredNotifications = filter === 'all'
+    ? sortedNotifications
+    : sortedNotifications.filter(n => n.type === filter);
+
+  // Get all unique types for dropdown
+  const notificationTypes = Array.from(new Set(notifications.map(n => n.type)));
+
+  // Add type label mapping and order
+  const notificationTypeLabels: Record<string, string> = {
+    reply: "Reply",
+    reply_comment: "Reply to Comment",
+    mention: "Mentions",
+    vote: "Votes",
+    follow: "Follows",
+  };
+  const notificationTypeOrder = [
+    "reply",
+    "reply_comment",
+    "mention",
+    "vote",
+    "follow",
+  ];
 
   return (
     <Box p={0} w="full" maxH={"100vh"} overflowY="auto" sx={{
-      '&::-webkit-scrollbar': {
-        display: 'none',
-      },
+      '&::-webkit-scrollbar': { display: 'none' },
       scrollbarWidth: 'none',
     }}>
-      <HStack mb={4} spacing={4} align="center" justify="space-between">
+      <Flex justify="space-between" align="center" mb={4}>
         <Text ml={1} fontSize="2xl" fontWeight="bold">
           Notifications
         </Text>
@@ -75,35 +93,28 @@ export default function NotificationsComp({ username }: NotificationCompProps) {
             Mark as Read
           </Button>
         )}
-      </HStack>
+      </Flex>
+      <Select value={filter} onChange={e => setFilter(e.target.value)} maxW="200px" mb={4}>
+        <option value="all">All</option>
+        {notificationTypeOrder
+          .filter(type => notifications.some(n => n.type === type))
+          .map(type => (
+            <option key={type} value={type}>{notificationTypeLabels[type]}</option>
+          ))}
+      </Select>
       {isLoading ? (
         <LoadingComponent />
-      ) : notifications.length > 0 ? (
-        <Tabs colorScheme="accent" isLazy lazyBehavior="keepMounted">
-          <Center>
-            <TabList>
-              {Object.keys(groupedNotifications).map(type => (
-                <Tab key={type}>{type}</Tab>
-              ))}
-            </TabList>
-          </Center>
-          <TabPanels>
-            {Object.keys(groupedNotifications).map(type => (
-              <TabPanel key={type}>
-                <Stack spacing={4} w="full">
-                  {groupedNotifications[type].map(notification => (
-                    <NotificationItem
-                      key={notification.id}
-                      notification={notification}
-                      lastReadDate={lastReadDate}
-                      currentUser={username} // added missing prop
-                    />
-                  ))}
-                </Stack>
-              </TabPanel>
-            ))}
-          </TabPanels>
-        </Tabs>
+      ) : filteredNotifications.length > 0 ? (
+        <Stack spacing={4} w="full">
+          {filteredNotifications.map(notification => (
+            <NotificationItem
+              key={notification.id}
+              notification={notification}
+              lastReadDate={lastReadDate}
+              currentUser={username}
+            />
+          ))}
+        </Stack>
       ) : (
         <Text>No notifications</Text>
       )}

@@ -298,7 +298,25 @@ export default function NotificationItem({
         bg="muted"
         w="full"
         align="stretch"
+        position="relative"
       >
+        {/* Timestamp and expand button at top right */}
+        <Box position="absolute" top={2} right={4} zIndex={1} display="flex" alignItems="center" gap={2}>
+          <Text fontSize="xs" color={isNew ? "accent" : "primary"}>
+            {formattedDate}
+          </Text>
+          <Link href={"/" + notification.url} isExternal>
+            <IconButton
+              aria-label="Open notification"
+              icon={<ExternalLinkIcon />}
+              variant="ghost"
+              size="sm"
+              isRound
+              alignSelf="center"
+              color={isNew ? "accent" : "primary"}
+            />
+          </Link>
+        </Box>
         <Box flex="1">
           <HStack>
             <Avatar
@@ -321,6 +339,70 @@ export default function NotificationItem({
                   </Button>
                 )}
               </HStack>
+            ) : notification.type === "vote" ? (
+              <Box>
+                <Text color={isNew ? "accent" : "primary"} fontSize="sm" noOfLines={1}>
+                  <Link href={`/@${author}`} color={isNew ? "accent" : "primary"} fontWeight="bold" _hover={{ textDecoration: 'underline' }}>
+                    {notification.msg.replace(/^@/, "").split(' ')[0]}
+                  </Link>
+                  {` upvoted your post `}
+                  <Text as="span" color="green.300" fontWeight="bold">
+                    {(() => {
+                      const match = notification.msg.match(/\(([^)]+)\)/);
+                      return match && match[1] ? `(${match[1]})` : "";
+                    })()}
+                  </Text>
+                </Text>
+                {reply && (
+                  <Text fontSize="sm" color="primary">
+                    {reply.title}
+                  </Text>
+                )}
+              </Box>
+            ) : notification.type === "reply_comment" ? (
+              <Box>
+                <Text color={isNew ? "accent" : "primary"} fontSize="sm" noOfLines={1}>
+                  <Link href={`/@${author}`} color={isNew ? "accent" : "primary"} fontWeight="bold" _hover={{ textDecoration: 'underline' }}>
+                    {notification.msg.replace(/^@/, "").split(' ')[0]}
+                  </Link>
+                  {` replied to your comment`}
+                  {parentPost?.body &&
+                    ` - ${parentPost.body.replace(/\n/g, ' ').slice(0, 100)}${parentPost.body.length > 100 ? '…' : ''}`}
+                </Text>
+                {reply && (
+                  <Text fontSize="lg" color="green.300" mt={1}>
+                    {postContent}
+                  </Text>
+                )}
+              </Box>
+            ) : notification.type === "mention" ? (
+              <Box>
+                <Text color={isNew ? "accent" : "primary"} fontSize="sm" noOfLines={1}>
+                  {notification.msg.replace(/^@/, "")}
+                  {parentPost?.title && (
+                    <>
+                      {" in "}
+                      <Link href={"/" + notification.url} color="blue.400" isExternal>
+                        {parentPost.title}
+                      </Link>
+                    </>
+                  )}
+                </Text>
+              </Box>
+            ) : notification.type === "reply" ? (
+              <Box>
+                <Text color={isNew ? "accent" : "primary"} fontSize="sm" noOfLines={1}>
+                  <Link href={`/@${author}`} color={isNew ? "accent" : "primary"} fontWeight="bold" _hover={{ textDecoration: 'underline' }}>
+                    {notification.msg.replace(/^@/, "").split(' ')[0]}
+                  </Link>
+                  {` replied to your post`}
+                </Text>
+                {reply && (
+                  <Text fontSize="lg" color="green.300" mt={1}>
+                    {postContent}
+                  </Text>
+                )}
+              </Box>
             ) : (
               <Text
                 color={isNew ? "accent" : "primary"}
@@ -336,7 +418,8 @@ export default function NotificationItem({
               </Text>
             )}
           </HStack>
-          {parentPost && (
+          {/* Only show post summary for non-vote, non-reblog, non-reply, non-reply_comment, non-mention notifications */}
+          {parentPost && !["vote", "reblog", "reply", "reply_comment", "mention"].includes(notification.type) && (
             <>
               <Divider my={2} />
               <VStack align="start" spacing={2} w="100%">
@@ -347,41 +430,24 @@ export default function NotificationItem({
                   </>
                 ) : (
                   <>
-                    {/* Only show post content for non-reblog notifications */}
-                    {notification.type !== "reblog" && (
-                      <Text
-                        fontSize="sm"
-                        color="primary"
-                        ml={5}
-                        noOfLines={3}
-                        overflow="hidden"
-                        textOverflow="ellipsis"
-                        w="90%"
-                        wordBreak="break-word"
-                      >
-                        {postContent}
-                      </Text>
-                    )}
+                    <Text
+                      fontSize="sm"
+                      color="primary"
+                      ml={5}
+                      noOfLines={3}
+                      overflow="hidden"
+                      textOverflow="ellipsis"
+                      w="90%"
+                      wordBreak="break-word"
+                    >
+                      {postContent}
+                    </Text>
                   </>
                 )}
               </VStack>
             </>
           )}
           <HStack spacing={2} mt={2} justifyContent={"flex-start"}>
-            <Text fontSize="xs" color={isNew ? "accent" : "primary"} mt={1}>
-              {formattedDate}
-            </Text>
-            <Link href={"/" + notification.url} isExternal>
-              <IconButton
-                aria-label="Open notification"
-                icon={<ExternalLinkIcon />}
-                variant="ghost"
-                size="sm"
-                isRound
-                alignSelf="center"
-                color={isNew ? "accent" : "primary"}
-              />
-            </Link>
             {(notification.type === "reply" ||
               notification.type === "reply_comment") && (
               <HStack>
@@ -403,17 +469,7 @@ export default function NotificationItem({
             )}
           </HStack>
         </Box>
-        {notification.type === "reply" && magPostThumbnail && (
-          <Image
-            src={magPostThumbnail}
-            alt="Post thumbnail"
-            h="100%"
-            w="20%"
-            objectFit="cover"
-            borderRadius="md"
-            flexShrink={0}
-          />
-        )}
+        {/* No thumbnail for reply notifications */}
       </HStack>
       {displayCommentPrompt && (
         <SnapComposer
