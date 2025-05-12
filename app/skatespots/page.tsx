@@ -150,80 +150,85 @@ export default function SkatespotsPage() {
           >
             A Global Skatespot Database
           </Text>
-          <Box mb={4} textAlign="center" width="100%">
+          <Box textAlign="center" mb={4}>
+            <button
+              style={{
+                background: '#00FFAA',
+                color: '#222',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '10px 24px',
+                fontWeight: 'bold',
+                fontSize: '1.1rem',
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                transition: 'background 0.2s',
+              }}
+              onClick={() => {
+                const el = document.getElementById('spot-name-field');
+                if (el) {
+                  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  el.focus();
+                }
+              }}
+            >
+              Add A Spot
+            </button>
+          </Box>
+          <Box mb={4} textAlign="center" width="100%" style={{ aspectRatio: '3 / 2' }}>
             <iframe
               src={mapSrc}
               style={{
                 border: "5px solid black",
-                height: isMobile ? "50vh" : "500px",
                 width: "100%",
+                height: "100%",
                 padding: 0,
                 margin: "auto",
                 boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.5)",
                 display: 'block',
+                aspectRatio: '3 / 2',
               }}
               allowFullScreen
             ></iframe>
           </Box>
-          <Flex flexDirection={{ base: "column", md: "row" }} align="center" width="100%">
-            <Box
-              flex="1"
-              display={{ base: "none", md: "block" }}
-              mx="auto"
-              minW={0}
-            >
-              <Image
-                src="https://www.skatehive.app/pepe_map.png"
-                alt="Map thumbnail"
-                width="100%"
-                height="auto"
-                boxShadow="md"
-                border="5px solid lightblue"
-                style={{ maxWidth: '350px', height: 'auto', display: 'block', margin: '0 auto' }}
-                className="pepe-pulse"
-              />
-            </Box>
-            <Box
-              flex="2"
-              p={paddingX}
-              bg="black"
-              borderRadius="md"
-              id="animatedBox2"
-              marginLeft={{ base: "0", md: "50px" }}
-              marginTop={{ base: "20px", md: "0" }}
+          <Box
+            p={paddingX}
+            bg="black"
+            borderRadius="md"
+            id="animatedBox2"
+            marginTop={{ base: "20px", md: "0" }}
+            textAlign="center"
+            width="100%"
+            minW={0}
+            style={{
+              backgroundImage: 'url(/images/sidewalk.png)',
+              backgroundSize: 'auto',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'repeat',
+            }}
+          >
+            <Flex
+              flexDirection="column"
+              align="center"
+              justifyContent="center"
+              p={4}
               textAlign="center"
-              width="100%"
-              minW={0}
-              style={{
-                backgroundImage: 'url(/images/sidewalk.png)',
-                backgroundSize: 'auto',
-                backgroundPosition: 'center',
-                backgroundRepeat: 'repeat',
-              }}
+              maxW="800px"
+              mx="auto"
             >
-              <Flex
-                flexDirection="column"
-                align="center"
-                justifyContent="center"
-                p={4}
-                textAlign="center"
-                maxW="800px"
-                mx="auto"
-              >
-                <Text fontSize={{ base: "md", md: "lg" }} color="white" mb={3} style={{ textShadow: '8px 8px 24px #000, 0 0 10px #000' }}>
-                  This skatespot database started in 2012. The <Box as="span" color="blue.600" style={{ background: '#061a40', padding: '2px 6px', borderRadius: '4px', boxDecorationBreak: 'clone', WebkitBoxDecorationBreak: 'clone' }}>dark blue</Box> pins are street spots. The <Box as="span" color="teal.300" style={{ background: '#061a40', padding: '2px 6px', borderRadius: '4px', boxDecorationBreak: 'clone', WebkitBoxDecorationBreak: 'clone' }}>light blue</Box> pins are skateparks.
-                </Text>
-                <Text fontSize={{ base: "md", md: "lg" }} color="white" mb={3} style={{ textShadow: '8px 8px 24px #000, 0 0 10px #000' }}>
-                  If you would like to add a spot, upload a photo of the spot below. When a mod approves your photo, it will be added to the spotbook. Some tips on submitting a spot:
-                </Text>
-                <Text fontSize={{ base: "md", md: "lg" }} color="white" mb={3} style={{ textShadow: '8px 8px 24px #000, 0 0 10px #000' }}>
-                  Take a photo of the spot. Try not to include people in the photo.
-                  Find the coordinates of the spot. Latitude, then Longitude. Bake the GPS coordinates into the photo by turning location services on with Photos on your phone.
-                  Login and submit the spot.
-                </Text>
-              </Flex>
-            </Box>
-          </Flex>
+              <Text fontSize={{ base: "md", md: "lg" }} color="white" mb={3} style={{ textShadow: '8px 8px 24px #000, 0 0 10px #000' }}>
+                This skatespot database started in 2012. The <Box as="span" color="blue.600" style={{ background: '#061a40', padding: '2px 6px', borderRadius: '4px', boxDecorationBreak: 'clone', WebkitBoxDecorationBreak: 'clone' }}>dark blue</Box> pins are street spots. The <Box as="span" color="teal.300" style={{ background: '#061a40', padding: '2px 6px', borderRadius: '4px', boxDecorationBreak: 'clone', WebkitBoxDecorationBreak: 'clone' }}>light blue</Box> pins are skateparks.
+              </Text>
+              <Text fontSize={{ base: "md", md: "lg" }} color="white" mb={3} style={{ textShadow: '8px 8px 24px #000, 0 0 10px #000' }}>
+                If you would like to add a spot, upload a photo of the spot below. When a mod approves your photo, it will be added to the spotbook. Some tips on submitting a spot:
+              </Text>
+              <Text fontSize={{ base: "md", md: "lg" }} color="white" mb={3} style={{ textShadow: '8px 8px 24px #000, 0 0 10px #000' }}>
+                Take a photo of the spot. Try not to include people in the photo.
+                Find the coordinates of the spot. Latitude, then Longitude. Bake the GPS coordinates into the photo by turning location services on with Photos on your phone.
+                Login and submit the spot.
+              </Text>
+            </Flex>
+          </Box>
         </Box>
       </Flex>
       {/* Spot upload form below all existing content */}

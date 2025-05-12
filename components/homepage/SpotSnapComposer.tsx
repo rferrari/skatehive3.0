@@ -132,6 +132,7 @@ export default function SpotSnapComposer({ onNewComment, onClose }: SpotSnapComp
         <FormControl isRequired>
           <FormLabel>Spot Name</FormLabel>
           <Input
+            id="spot-name-field"
             placeholder="Enter spot name"
             value={spotName}
             onChange={e => setSpotName(e.target.value)}
