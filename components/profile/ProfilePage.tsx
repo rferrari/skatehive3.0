@@ -94,37 +94,16 @@ export default function ProfilePage({ username }: ProfilePageProps) {
     isFetching.current = true;
     try {
       const newPosts = await findPosts("author_before_date", params.current);
+      console.log("Fetched posts:", newPosts, "Params:", params.current);
       if (newPosts && newPosts.length > 0) {
-        // TEMP: Log the first few posts for inspection
-        console.log('Sample posts:', newPosts.slice(0, 3));
-        // Robust cross-post filter for PeakD and similar
-        const filteredPosts = newPosts.filter((post: any) => {
-          let isCrossPost = false;
-          let body = post.body || '';
-          try {
-            const meta = typeof post.json_metadata === 'string'
-              ? JSON.parse(post.json_metadata)
-              : post.json_metadata || {};
-            // Check for cross-post tag
-            if (Array.isArray(meta.tags) && meta.tags.map((t: string) => t.toLowerCase()).includes('cross-post')) {
-              isCrossPost = true;
-            }
-            // Check for original_author and original_permlink
-            if (meta.original_author && meta.original_permlink) {
-              isCrossPost = true;
-            }
-          } catch (e) {}
-          // Check for typical cross-post body pattern
-          const bodyIsCrossPost = /^this is a cross post/i.test(body.trim());
-          return !(isCrossPost || bodyIsCrossPost);
-        });
-        setPosts((prevPosts) => [...prevPosts, ...filteredPosts]);
+        setPosts((prevPosts) => [...prevPosts, ...newPosts]);
         params.current = [
           username,
-          filteredPosts[filteredPosts.length - 1].permlink,
-          filteredPosts[filteredPosts.length - 1].created,
+          newPosts[newPosts.length - 1].permlink,
+          newPosts[newPosts.length - 1].created,
           12,
         ];
+        console.log("Updated params for next fetch:", params.current);
       }
       isFetching.current = false;
     } catch (err) {
@@ -226,6 +205,7 @@ export default function ProfilePage({ username }: ProfilePageProps) {
 
   return (
     <Box
+      id="scrollableDiv"
       color="text"
       maxW="container.lg"
       mx="auto"

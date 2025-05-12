@@ -17,6 +17,7 @@ export default function PostsInfiniteScroll({ allPosts, fetchPosts, viewMode, co
     // Determine columns based on context and viewMode
     const columns = viewMode === 'grid' ? (context === 'rightsidebar' ? 1 : 3) : 1;
 
+    console.log('allPosts.length:', allPosts.length, 'hasMore:', hasMore);
     return (
         <InfiniteScroll
             dataLength={allPosts.length}
