@@ -112,7 +112,17 @@ export default function SkatespotsPage() {
         gap={{ base: 0, md: 8 }}
       >
         {/* Main content: Map and instructions */}
-        <Box flex="2" minW={0} w={{ base: '100%', md: '65%' }}>
+        <Box
+          flex="2"
+          minW={0}
+          w={{ base: '100%', md: '65%' }}
+          height={{ base: 'auto', md: '100vh' }}
+          overflowY={{ base: 'visible', md: 'auto' }}
+          sx={{
+            '&::-webkit-scrollbar': { display: 'none' },
+            scrollbarWidth: 'none',
+          }}
+        >
           <Box
             id="animatedBox"
             borderRadius="10px"
@@ -244,6 +254,12 @@ export default function SkatespotsPage() {
           mb={8}
           mx={{ base: 'auto', md: 0 }}
           display={{ base: 'block', md: 'block' }}
+          height={{ base: 'auto', md: '100vh' }}
+          overflowY={{ base: 'visible', md: 'auto' }}
+          sx={{
+            '&::-webkit-scrollbar': { display: 'none' },
+            scrollbarWidth: 'none',
+          }}
         >
           <SpotSnapComposer key={composerKey} onNewComment={handleNewComment} onClose={handleClose} />
           <SpotList newSpot={newSpot} />
