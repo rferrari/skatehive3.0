@@ -22,6 +22,7 @@ import PostGrid from "../blog/PostGrid";
 import InfiniteScroll from "react-infinite-scroll-component";
 import PostCard from "../blog/PostCard";
 import LoadingComponent from '../homepage/loadingComponent';
+import PostInfiniteScroll from "../blog/PostInfiniteScroll";
 
 interface ProfilePageProps {
   username: string;
@@ -324,23 +325,7 @@ export default function ProfilePage({ username }: ProfilePageProps) {
       )}
 
       {/* Posts */}
-      {(viewMode === 'grid' || isMobile) ? (
-        <Box mt={0} pt={0} mb={0} pb={0}>
-          <Box as={"div"} display="grid" gridTemplateColumns={{ base: '1fr', sm: 'repeat(3, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(3, 1fr)', xl: 'repeat(3, 1fr)' }} gap={4}>
-            {posts.map((post) => (
-              <PostCard key={post.permlink} post={post} hideAuthorInfo />
-            ))}
-          </Box>
-        </Box>
-      ) : (
-        <Box mt={0} pt={0} mb={0} pb={0}>
-          {posts.map((post) => (
-            <Box key={post.permlink} w="100%" maxW="container.lg" mx="auto" mb={1} h="200px">
-              <PostCard post={post} listView />
-            </Box>
-          ))}
-        </Box>
-      )}
+      <PostInfiniteScroll allPosts={posts} fetchPosts={fetchPosts} viewMode={viewMode} context="profile" />
     </Box>
   );
 }
