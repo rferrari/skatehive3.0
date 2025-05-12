@@ -337,7 +337,7 @@ export default function ProfilePage({ username }: ProfilePageProps) {
       )}
 
       {/* Posts */}
-      <PostInfiniteScroll allPosts={posts} fetchPosts={fetchPosts} viewMode={viewMode} context="profile" />
+      <PostInfiniteScroll allPosts={posts} fetchPosts={fetchPosts} viewMode={viewMode} context="profile" hideAuthorInfo={true} />
     </Box>
   );
 }

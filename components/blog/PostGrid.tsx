@@ -11,9 +11,10 @@ interface PostGridProps {
     posts: Discussion[];
     columns: 1 | 2 | 3 | 4;
     listView?: boolean;
+    hideAuthorInfo?: boolean;
 }
 
-export default function PostGrid({ posts, columns, listView = false }: PostGridProps) {
+export default function PostGrid({ posts, columns, listView = false, hideAuthorInfo = false }: PostGridProps) {
 
     return (
         <SimpleGrid
@@ -21,7 +22,7 @@ export default function PostGrid({ posts, columns, listView = false }: PostGridP
             spacing={4}
         >
             {posts.map((post) => (
-                <PostCard key={post.permlink} post={post} listView={listView} />
+                <PostCard key={post.permlink} post={post} listView={listView} hideAuthorInfo={hideAuthorInfo} />
             ))}
         </SimpleGrid>
     );

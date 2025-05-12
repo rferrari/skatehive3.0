@@ -9,9 +9,10 @@ interface PostsInfiniteScrollProps {
     fetchPosts: () => Promise<void>;
     viewMode: 'grid' | 'list';
     context?: 'blog' | 'profile' | 'rightsidebar';
+    hideAuthorInfo?: boolean;
 }
 
-export default function PostsInfiniteScroll({ allPosts, fetchPosts, viewMode, context = 'blog' }: PostsInfiniteScrollProps) {
+export default function PostsInfiniteScroll({ allPosts, fetchPosts, viewMode, context = 'blog', hideAuthorInfo = false }: PostsInfiniteScrollProps) {
     const hasMore = allPosts.length % 12 === 0; // Adjust this logic based on your pagination
     // Determine columns based on context and viewMode
     const columns = viewMode === 'grid' ? (context === 'rightsidebar' ? 1 : 3) : 1;
@@ -39,7 +40,7 @@ export default function PostsInfiniteScroll({ allPosts, fetchPosts, viewMode, co
             }
             scrollableTarget="scrollableDiv"
         >
-            {allPosts && (<PostGrid posts={allPosts ?? []} columns={columns} listView={viewMode === 'list'} />)}
+            {allPosts && (<PostGrid posts={allPosts ?? []} columns={columns} listView={viewMode === 'list'} hideAuthorInfo={hideAuthorInfo} />)}
         </InfiniteScroll>
     );
 }
