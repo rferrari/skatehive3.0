@@ -592,7 +592,7 @@ export default function MainWallet({ username }: MainWalletProps) {
               A token that is always worth ~1 dollar of hive. It is often
               rewarded on posts along with HIVE.
             </Text>
-            {/* Staked HBD */}
+            {/* Staked HBD (Savings) */}
             <Box
               pl={{ base: 2, md: 6 }}
               borderLeft="2px solid"
@@ -604,14 +604,14 @@ export default function MainWallet({ username }: MainWalletProps) {
                 mb={1}
                 align="center"
               >
-                <Text fontWeight="bold">Staked HBD</Text>
+                <Text fontWeight="bold">Staked HBD (Savings)</Text>
                 <Box flex={1} display={{ base: "none", md: "block" }} />
                 <Text
                   fontSize={{ base: "xl", md: "3xl" }}
                   fontWeight="extrabold"
                   color="lime"
                 >
-                  2990.454
+                  {hbdSavingsBalance}
                 </Text>
                 <HStack spacing={1} wrap="wrap">
                   <Tooltip label="Unstake HBD" hasArrow>
