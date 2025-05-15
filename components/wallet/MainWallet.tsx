@@ -12,6 +12,7 @@ import {
   useDisclosure,
   Tooltip,
   Stack,
+  Heading,
 } from "@chakra-ui/react";
 import {
   FaExchangeAlt,
@@ -258,14 +259,9 @@ export default function MainWallet({ username }: MainWalletProps) {
 
   return (
     <>
-      <Text
-        fontSize={{ base: "2xl", md: "4xl" }}
-        fontWeight="semibold"
-        mb={4}
-        textAlign="center"
-      >
-        Your Assets
-      </Text>
+      <Heading as="h2" size="lg" mb={4} fontFamily="Joystix" color="primary">
+        Your Hive Wallet
+      </Heading>
       <Grid
         templateColumns={{ base: "1fr", md: "2fr 1fr" }}
         gap={{ base: 2, md: 6 }}

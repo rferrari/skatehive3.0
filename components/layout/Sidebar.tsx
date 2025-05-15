@@ -20,9 +20,9 @@ import {
   FiUser,
   FiShoppingCart,
   FiBook,
-  FiCreditCard,
   FiMap,
 } from "react-icons/fi";
+import { FaPiggyBank } from "react-icons/fa";
 import { Notifications } from "@hiveio/dhive";
 import {
   fetchNewNotifications,
@@ -213,7 +213,7 @@ export default function Sidebar() {
                 variant="ghost"
                 w="full"
                 justifyContent="flex-start"
-                leftIcon={<Icon as={FiCreditCard} boxSize={4} />}
+                leftIcon={<Icon as={FaPiggyBank} boxSize={4} />}
                 px={1}
               >
                 Wallet

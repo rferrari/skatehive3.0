@@ -9,10 +9,11 @@ import {
   MenuButton,
   MenuList,
   MenuItem,
+  Image,
 } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
-import { FiBell, FiBook, FiCreditCard, FiHome, FiUser } from "react-icons/fi";
-import { FaPen } from "react-icons/fa";
+import { FiBell, FiBook, FiHome, FiUser } from "react-icons/fi";
+import { FaPen, FaPiggyBank } from "react-icons/fa";
 import { FiMap } from "react-icons/fi";
 import { useState } from "react";
 import { KeyTypes } from "@aioha/aioha";
@@ -60,7 +61,7 @@ export default function FooterNavigation() {
               <Button
                 onClick={() => handleNavigation("/@" + user + "/wallet")}
                 variant="ghost"
-                leftIcon={<Icon as={FiCreditCard} boxSize={5} />}
+                leftIcon={<Icon as={FaPiggyBank} boxSize={5} />}
                 color="primary"
                 _hover={{ bg: "gray.800" }}
               />
@@ -98,7 +99,18 @@ export default function FooterNavigation() {
                   <MenuButton
                     as={Button}
                     variant="ghost"
-                    leftIcon={<Icon as={FiUser} boxSize={5} />}
+                    leftIcon={
+                      user ? (
+                        <Image
+                          src={`https://images.hive.blog/u/${user}/avatar`}
+                          alt="Profile Image"
+                          boxSize={5}
+                          borderRadius="full"
+                        />
+                      ) : (
+                        <Icon as={FiUser} boxSize={5} />
+                      )
+                    }
                     color="primary"
                     bg="transparent"
                     _hover={{ bg: "gray.800" }}
@@ -112,7 +124,18 @@ export default function FooterNavigation() {
                   >
                     <MenuItem
                       onClick={() => handleNavigation("/@" + user)}
-                      icon={<Icon as={FiUser} boxSize={4} />}
+                      icon={
+                        user ? (
+                          <Image
+                            src={`https://images.hive.blog/u/${user}/avatar`}
+                            alt="Profile Image"
+                            boxSize={4}
+                            borderRadius="full"
+                          />
+                        ) : (
+                          <Icon as={FiUser} boxSize={4} />
+                        )
+                      }
                       color="primary" // Terminal green text
                       bg="black" // Consistent background
                       _hover={{ bg: "gray.800", color: "green.300" }} // Hover effect
@@ -121,7 +144,18 @@ export default function FooterNavigation() {
                     </MenuItem>
                     <MenuItem
                       onClick={() => setModalDisplayed(true)}
-                      icon={<Icon as={FiUser} boxSize={4} />}
+                      icon={
+                        user ? (
+                          <Image
+                            src={`https://images.hive.blog/u/${user}/avatar`}
+                            alt="Profile Image"
+                            boxSize={4}
+                            borderRadius="full"
+                          />
+                        ) : (
+                          <Icon as={FiUser} boxSize={4} />
+                        )
+                      }
                       color="primary"
                       bg="black" // Consistent background
                       _hover={{ bg: "gray.800", color: "green.300" }} // Hover effect
