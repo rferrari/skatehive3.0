@@ -49,7 +49,8 @@ export default function NotificationsComp({ username }: NotificationCompProps) {
         id: 'notify',
         json: json,
       }]
-    ], KeyTypes.Posting)
+    ], KeyTypes.Posting);
+    setLastReadDate(now);
   };
 
   // Sort notifications by date descending

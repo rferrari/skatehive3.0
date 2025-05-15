@@ -51,7 +51,7 @@ interface CommunityInfo {
 
 const communityTag = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG;
 
-export default function Sidebar() {
+export default function Sidebar({ newNotificationCount = 0 }) {
   const { user } = useAioha();
   const router = useRouter();
   // const [notifications, setNotifications] = useState<Notifications[]>([]);
@@ -60,6 +60,7 @@ export default function Sidebar() {
   // const [loading, setLoading] = useState(true); // Loading state
   const { colorMode } = useColorMode();
   const [modalDisplayed, setModalDisplayed] = useState(false);
+  const [bellAnimating, setBellAnimating] = useState(false);
 
   // useEffect(() => {
   //     const loadNotifications = async () => {
@@ -100,6 +101,10 @@ export default function Sidebar() {
 
   //     fetchData();
   // }, [communityTag]);
+
+  useEffect(() => {
+    setBellAnimating(newNotificationCount > 0);
+  }, [newNotificationCount]);
 
   const handleNavigation = (path: string) => {
     try {
@@ -176,12 +181,16 @@ export default function Sidebar() {
                 w="full"
                 justifyContent="flex-start"
                 leftIcon={
-                  <motion.div
-                    animate={{ rotate: [0, 45, 0, -45, 0] }}
-                    transition={{ duration: 0.6, repeat: Infinity }}
-                  >
+                  bellAnimating ? (
+                    <motion.div
+                      animate={{ rotate: [0, 45, 0, -45, 0] }}
+                      transition={{ duration: 0.6, repeat: Infinity }}
+                    >
+                      <Icon as={FiBell} boxSize={4} color="primary" />
+                    </motion.div>
+                  ) : (
                     <Icon as={FiBell} boxSize={4} color="primary" />
-                  </motion.div>
+                  )
                 }
                 px={1}
               >

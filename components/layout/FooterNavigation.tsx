@@ -1,4 +1,5 @@
 import { useAioha, AiohaModal } from "@aioha/react-ui";
+import { motion } from "framer-motion";
 import {
   Box,
   Button,
@@ -18,7 +19,7 @@ import { FiMap } from "react-icons/fi";
 import { useState } from "react";
 import { KeyTypes } from "@aioha/aioha";
 
-export default function FooterNavigation() {
+export default function FooterNavigation({ newNotificationCount = 0 }) {
   const { user } = useAioha();
   const router = useRouter();
   const [modalDisplayed, setModalDisplayed] = useState(false);
@@ -79,7 +80,18 @@ export default function FooterNavigation() {
               <Button
                 onClick={() => handleNavigation("/@" + user + "/notifications")}
                 variant="ghost"
-                leftIcon={<Icon as={FiBell} boxSize={4} />}
+                leftIcon={
+                  newNotificationCount > 0 ? (
+                    <motion.div
+                      animate={{ rotate: [0, 45, 0, -45, 0] }}
+                      transition={{ duration: 0.6, repeat: Infinity }}
+                    >
+                      <Icon as={FiBell} boxSize={4} color="primary" />
+                    </motion.div>
+                  ) : (
+                    <Icon as={FiBell} boxSize={4} color="primary" />
+                  )
+                }
                 color="primary"
                 _hover={{ bg: "gray.800" }}
               />
