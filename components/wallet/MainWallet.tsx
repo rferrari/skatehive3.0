@@ -477,16 +477,31 @@ export default function MainWallet({ username }: MainWalletProps) {
                 sx={{
                   transition: 'transform 0.3s',
                   transform: convertDirection === 'HIVE_TO_HBD' ? 'rotate(90deg)' : 'rotate(-90deg)',
-                  border: '2px dashed #00FF00',
-                  borderRadius: 'full',
+                  borderLeft: '6px solid #39ff14',
+                  borderRight: '6px solid #39ff14',
+                  borderTop: 'none',
+                  borderBottom: 'none',
+                  borderRadius: '12px',
                   color: '#00FF00',
+                  background: 'transparent',
+                  minW: '48px',
+                  minH: '48px',
                   _hover: {
-                    bg: '#00FF00',
-                    border: '2px dashed black',
-                    color: 'black',
+                    borderLeft: '6px solid #39ff14',
+                    borderRight: '6px solid #39ff14',
+                    borderTop: 'none',
+                    borderBottom: 'none',
+                    borderRadius: '12px',
                   },
                   _active: {
                     transform: `${convertDirection === 'HIVE_TO_HBD' ? 'rotate(90deg)' : 'rotate(-90deg)'} scale(1.15)`,
+                    bg: 'rgba(0,255,0,0.08)',
+                    color: 'black',
+                    borderLeft: '6px solid #39ff14',
+                    borderRight: '6px solid #39ff14',
+                    borderTop: 'none',
+                    borderBottom: 'none',
+                    borderRadius: '12px',
                   },
                 }}
               />
@@ -504,7 +519,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                 onClick={() => handleConfirm(Number(convertAmount), convertDirection)}
                 isDisabled={!convertAmount || isNaN(Number(convertAmount)) || Number(convertAmount) <= 0}
               >
-                Confirm
+                Convert
               </Button>
             </Box>
             <Divider flex={1} borderColor="lime" />
