@@ -235,6 +235,15 @@ export default function PostCard({ post, listView = false, hideAuthorInfo = fals
           --swiper-pagination-color: var(--chakra-colors-primary);
         }
 
+        .custom-swiper .swiper-button-next,
+        .custom-swiper .swiper-button-prev {
+          transition: transform 0.18s cubic-bezier(0.4, 0.2, 0.2, 1);
+        }
+        .custom-swiper .swiper-button-next:active,
+        .custom-swiper .swiper-button-prev:active {
+          transform: scale(1.18);
+        }
+
         .custom-swiper .swiper-button-next::after,
         .custom-swiper .swiper-button-prev::after {
           font-size: 20px;
@@ -359,7 +368,7 @@ export default function PostCard({ post, listView = false, hideAuthorInfo = fals
                 {imageUrls.slice(0, visibleImages).map((url, index) => (
                   // Add the stopPropagation to each SwiperSlide instead
                   <SwiperSlide key={index} onClick={stopPropagation}>
-                    <Box h="200px" w="100%">
+                    <Box h="200px" w="100%" sx={{ userSelect: 'none' }}>
                       <Image
                         src={url}
                         alt={title}
