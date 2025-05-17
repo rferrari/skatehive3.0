@@ -195,8 +195,7 @@ export default function PostDetails({ post }: PostDetailsProps) {
         }}
       />
 
-      <style jsx global>{`
-        .pulse-green {
+      <style jsx global>{`        .pulse-green {
           animation: pulse-green 1.5s infinite;
           background: linear-gradient(90deg, #38ff8e 0%, #00e676 100%);
           color: black;
@@ -218,3 +217,4 @@ export default function PostDetails({ post }: PostDetailsProps) {
     </Box>
   );
 }
+
