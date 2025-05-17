@@ -12,6 +12,7 @@ import {
   SliderThumb,
   SliderMark,
   Divider,
+  Image,
 } from "@chakra-ui/react";
 import React, { useState, useEffect } from "react";
 import { Discussion } from "@hiveio/dhive";
@@ -111,13 +112,32 @@ export default function PostDetails({ post }: PostDetailsProps) {
                 value={sliderValue}
                 onChange={(val) => setSliderValue(val)}
               >
-                <SliderTrack>
-                  <SliderFilledTrack />
+                <SliderTrack
+                  bg="gray.700"
+                  height="8px"
+                  boxShadow="0 0 10px rgba(255, 255, 0, 0.8)"
+                >
+                  <SliderFilledTrack bgGradient="linear(to-r, green.400, limegreen, red.400)" />
                 </SliderTrack>
-                <SliderThumb />
+                <SliderThumb
+                  boxSize="30px"
+                  bg="transparent"
+                  boxShadow={"none"}
+                  _focus={{ boxShadow: "none" }}
+                  zIndex={1}
+                >
+                  <Image
+                    src="/images/spitfire.png"
+                    alt="thumb"
+                    w="100%"
+                    h="auto"
+                    mr={2}
+                    mb={1}
+                  />
+                </SliderThumb>
               </Slider>
             </Box>
-            <Button size="xs" onClick={handleVote}>
+            <Button size="xs" onClick={handleVote} className="pulse-green">
               &nbsp;&nbsp;&nbsp;Vote {sliderValue} %&nbsp;&nbsp;&nbsp;
             </Button>
             <Button size="xs" onClick={handleHeartClick} ml={2}>
@@ -174,6 +194,27 @@ export default function PostDetails({ post }: PostDetailsProps) {
           },
         }}
       />
+
+      <style jsx global>{`
+        .pulse-green {
+          animation: pulse-green 1.5s infinite;
+          background: linear-gradient(90deg, #38ff8e 0%, #00e676 100%);
+          color: black;
+          font-weight: bold;
+          border: none;
+        }
+        @keyframes pulse-green {
+          0% {
+            box-shadow: 0 0 0 0 rgba(72, 255, 128, 0.7);
+          }
+          70% {
+            box-shadow: 0 0 0 10px rgba(72, 255, 128, 0);
+          }
+          100% {
+            box-shadow: 0 0 0 0 rgba(72, 255, 128, 0);
+          }
+        }
+      `}</style>
     </Box>
   );
 }

@@ -1,5 +1,5 @@
 'use client';
-import { Box, Skeleton, SimpleGrid, Flex, Grid } from '@chakra-ui/react';
+import { Box, Skeleton, SimpleGrid, Flex, Grid, SkeletonCircle, SkeletonText } from '@chakra-ui/react';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import PostGrid from '@/components/blog/PostGrid';
 import { Discussion } from '@hiveio/dhive';
@@ -26,15 +26,24 @@ export default function PostsInfiniteScroll({ allPosts, fetchPosts, viewMode, co
             loader={
                 <SimpleGrid columns={{ base: 1, md: columns }} spacing={4}>
                     {Array(6).fill(0).map((_, i) => (
-                        <Box key={i} borderWidth="1px" borderRadius="base" overflow="hidden" p={4}>
-                            {/* New skeleton header for profile pic and post author */}
+                        <Box
+                            key={i}
+                            borderRadius="base"
+                            overflow="hidden"
+                            p={4}
+                            bg="muted"
+                        >
+                            {/* Header: avatar + author */}
                             <Flex alignItems="center" mb={4}>
-                                <Skeleton startColor="background" endColor="muted" borderRadius="full" width="40px" height="40px" mr={3} />
-                                <Skeleton startColor="background" endColor="muted" height="20px" width="100px" />
+                                <SkeletonCircle size="10" mr={3} />
+                                <Skeleton height="20px" width="100px" />
                             </Flex>
-                            <Skeleton startColor="background" endColor="muted" height="200px" mb={4} />
-                            <Skeleton startColor="background" endColor="muted" height="20px" mb={2} />
-                            <Skeleton startColor="background" endColor="muted" height="20px" width="60%" />
+                            {/* Main image/media */}
+                            <Skeleton height="200px" width="100%" mb={4} />
+                            {/* Title */}
+                            <Skeleton height="20px" width="80%" mb={2} />
+                            {/* Summary */}
+                            <Skeleton height="20px" width="60%" />
                         </Box>
                     ))}
                 </SimpleGrid>

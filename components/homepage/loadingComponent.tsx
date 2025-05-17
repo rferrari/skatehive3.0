@@ -7,9 +7,9 @@ import "../../lib/utils/fonts.css";
 const matrixCharacters =
   "FUCKアイウエオカキクケコサシスセソタチツテトナニFUCKヌネノSK8GRINDOLLIEΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ180360KICKFLIPNOSENDBOARD";
 const randomSentences = [
-  "skate or don't",
-  "F-u-c-k instagram lets build something skater-made",
-  "off the wall is on-chain",
+  "skate or dont",
+  "F-u-c-k instagram",
+  "off the wall is on chain?",
   "Praise skatevideosite",
   "Loading Stokenomics",
   "Initiating Proof of Stoke",
@@ -19,21 +19,16 @@ const randomSentences = [
   "Never lose your bros clips",
   "support your local skateshops",
   "The Peoples Thrasher",
-  "when hive is low buy more with HBD ;)",
-  "do you follow the steemskate curation trail?",
+  "when hive is low buy with HBD",
+  "follow the steemskate curation trail?",
   "on instagram, zuckerburg wins",
   "Connecting with Uganda Nodes",
   "If it takes to long, your connection sucks",
   "Macba Lives",
   "Skate till you tired, then skate more",
-  "hive power = vote strength",
-  "where are you on the leaderboard?",
-  "HBD is a stablecoin- always worth ~$1 of HIVE",
-  "stake your HBD in savings to earn 15% APY monthly",
+  "hive power = vote power",
   "try to get 1000 HIVE Power",
-  "dont cash out your HIVE- forget about it and HODL- thank us later",
-  "registering skatespots on the map can earn you rewards",
-  "half of the post rewards go to the people who upvoted it",
+  "lipslide to the moon",
 ];
 
 function getRandomChar() {

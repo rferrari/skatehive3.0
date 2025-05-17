@@ -227,7 +227,7 @@ export default function SnapComposer({
                 _active={{ bg: "tb1" }}
                 onClick={triggerFileInput} // Trigger file input on click
               >
-                Upload Image
+                Upload Image (GIF, PNG, JPG...)
               </MenuItem>
               <MenuItem
                 icon={<MdGif size={22} />}
@@ -236,7 +236,7 @@ export default function SnapComposer({
                 _hover={{ bg: "tb1" }}
                 _active={{ bg: "tb1" }}
               >
-                Select GIF
+                Use GIFY
               </MenuItem>
             </MenuList>
           </Menu>

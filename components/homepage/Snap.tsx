@@ -288,7 +288,7 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
                 </SliderThumb>
               </Slider>
             </Box>
-            <Button size="xs" onClick={handleVote} ml={2}>
+            <Button size="xs" onClick={handleVote} ml={2} className="pulse-green">
               &nbsp;&nbsp;&nbsp;Vote {sliderValue} %&nbsp;&nbsp;&nbsp;
             </Button>
             <Button size="xs" onClick={handleHeartClick} ml={2}>
@@ -364,3 +364,24 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
 };
 
 export default Snap;
+
+<style jsx global>{`
+  .pulse-green {
+    animation: pulse-green 1.5s infinite;
+    background: linear-gradient(90deg, #38ff8e 0%, #00e676 100%);
+    color: black;
+    font-weight: bold;
+    border: none;
+  }
+  @keyframes pulse-green {
+    0% {
+      box-shadow: 0 0 0 0 rgba(72, 255, 128, 0.7);
+    }
+    70% {
+      box-shadow: 0 0 0 10px rgba(72, 255, 128, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(72, 255, 128, 0);
+    }
+  }
+`}</style>

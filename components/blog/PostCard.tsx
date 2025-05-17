@@ -245,6 +245,25 @@ export default function PostCard({ post, listView = false, hideAuthorInfo = fals
           height: 6px;
           border-radius: 0; /* Make the dots squared */
         }
+
+        .pulse-green {
+          animation: pulse-green 1.5s infinite;
+          background: linear-gradient(90deg, #38ff8e 0%, #00e676 100%);
+          color: black;
+          font-weight: bold;
+          border: none;
+        }
+        @keyframes pulse-green {
+          0% {
+            box-shadow: 0 0 0 0 rgba(72, 255, 128, 0.7);
+          }
+          70% {
+            box-shadow: 0 0 0 10px rgba(72, 255, 128, 0);
+          }
+          100% {
+            box-shadow: 0 0 0 0 rgba(72, 255, 128, 0);
+          }
+        }
       `}</style>
       <Box
         position="relative"
@@ -408,13 +427,29 @@ export default function PostCard({ post, listView = false, hideAuthorInfo = fals
                     value={sliderValue}
                     onChange={(val) => setSliderValue(val)}
                   >
-                    <SliderTrack>
-                      <SliderFilledTrack />
+                    <SliderTrack
+                      bg="gray.700"
+                      height="8px"
+                      boxShadow="0 0 10px rgba(255, 255, 0, 0.8)"
+                    >
+                      <SliderFilledTrack bgGradient="linear(to-r, green.400, limegreen, red.400)" />
                     </SliderTrack>
                     <SliderThumb
-                      cursor="grab"
-                      _active={{ cursor: "grabbing" }}
-                    />
+                      boxSize="30px"
+                      bg="transparent"
+                      boxShadow={"none"}
+                      _focus={{ boxShadow: "none" }}
+                      zIndex={1}
+                    >
+                      <Image
+                        src="/images/spitfire.png"
+                        alt="thumb"
+                        w="100%"
+                        h="auto"
+                        mr={2}
+                        mb={1}
+                      />
+                    </SliderThumb>
                   </Slider>
                 </Box>
                 <Button
@@ -426,6 +461,7 @@ export default function PostCard({ post, listView = false, hideAuthorInfo = fals
                   pl={5}
                   pr={5}
                   cursor="pointer"
+                  className="pulse-green"
                 >
                   Vote {sliderValue} %
                 </Button>

@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
 import { fetchNewNotifications, getLastReadNotificationDate } from '@/lib/hive/client-functions';
-import { Box, Text, Stack, Spinner, Button, HStack, Tabs, TabList, TabPanels, Tab, TabPanel, Center, Flex, Select } from '@chakra-ui/react';
+import { Box, Text, Stack, Spinner, Button, HStack, Tabs, TabList, TabPanels, Tab, TabPanel, Center, Flex, Select, Skeleton, SkeletonText, SkeletonCircle } from '@chakra-ui/react';
 import { useAioha } from '@aioha/react-ui';
 import { KeyTypes } from '@aioha/aioha';
 import { Notifications } from '@hiveio/dhive';
 import NotificationItem from './NotificationItem';
-import LoadingComponent from '../homepage/loadingComponent';
 
 interface NotificationCompProps {
   username: string
@@ -104,7 +103,17 @@ export default function NotificationsComp({ username }: NotificationCompProps) {
           ))}
       </Select>
       {isLoading ? (
-        <LoadingComponent />
+        <Stack spacing={4} w="full">
+          {[...Array(5)].map((_, i) => (
+            <Box key={i} p={3} borderRadius="base" bg="muted" w="full" minH="80px" display="flex" alignItems="center">
+              <SkeletonCircle size="8" mr={4} />
+              <Box flex="1">
+                <Skeleton height="16px" width="40%" mb={2} />
+                <SkeletonText noOfLines={2} spacing={2} width="80%" />
+              </Box>
+            </Box>
+          ))}
+        </Stack>
       ) : filteredNotifications.length > 0 ? (
         <Stack spacing={4} w="full">
           {filteredNotifications.map(notification => (
