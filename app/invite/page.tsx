@@ -213,7 +213,7 @@ export default function InvitePage() {
               <AccordionIcon />
             </AccordionButton>
             <AccordionPanel pb={2} color="gray.300" fontSize="sm">
-              <b>Rule of thumb:</b> You need at least 500 HP to start generating ACTs, and each ACT requires 100 billion Resource Credits (RC). The more HP you have, the faster you'll earn ACTs.
+              <b>Rule of thumb:</b> You need at least 5000 HP to start generating ACTs, and each ACT requires 100 billion Resource Credits (RC). The more HP you have, the faster you'll earn ACTs.
             </AccordionPanel>
           </AccordionItem>
         </Accordion>
@@ -233,10 +233,10 @@ export default function InvitePage() {
       )}
       <VStack spacing={4} align="stretch">
         <FormControl>
-          <Text fontWeight="bold">Friend's desired Hive Nickname</Text>
+          <Text fontWeight="bold">Friend's desired Hive Wallet Name</Text>
           <Input
             type="text"
-            placeholder="Friend's desired Hive Nickname"
+            placeholder="Friend's desired Hive Wallet Name"
             value={desiredUsername}
             onChange={(e) => setDesiredUsername(e.target.value)}
             maxW="375px"

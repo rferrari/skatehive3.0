@@ -10,6 +10,7 @@ import {
   Divider,
   Button,
   Skeleton,
+  Flex,
 } from "@chakra-ui/react";
 import { ExternalLinkIcon } from "@chakra-ui/icons";
 import { Discussion, Notifications } from "@hiveio/dhive";
@@ -293,13 +294,32 @@ export default function NotificationItem({
       <HStack
         spacing={3}
         p={3}
-        border={isNew ? "tb1" : "gray"}
-        borderRadius="base"
         bg="muted"
         w="full"
         align="stretch"
         position="relative"
+        sx={isNew ? {
+          boxShadow: '0 -1px 4px 0 #39ff14, 0 1px 4px 0 #39ff14',
+          animation: 'pulseGlowTB 1.5s infinite',
+        } : {}}
+        _before={isNew ? {
+          content: '""',
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: '6px',
+          background: 'linear-gradient(180deg, #39ff14 0%, #00ff99 100%)',
+          boxShadow: '0 0 8px 2px #39ff14',
+        } : {}}
       >
+        <style>{`
+          @keyframes pulseGlowTB {
+            0% { box-shadow: 0 -1px 4px 0 #39ff14, 0 1px 4px 0 #39ff14; }
+            50% { box-shadow: 0 -2px 8px 0 #39ff14, 0 2px 8px 0 #39ff14; }
+            100% { box-shadow: 0 -1px 4px 0 #39ff14, 0 1px 4px 0 #39ff14; }
+          }
+        `}</style>
         <Box flex="1">
           <HStack>
             <Avatar
@@ -457,27 +477,25 @@ export default function NotificationItem({
               </VStack>
             </>
           )}
-          <HStack spacing={2} mt={2} justifyContent={"flex-start"}>
-            {(notification.type === "reply" ||
-              notification.type === "reply_comment") && (
-              <HStack>
-                <Text onClick={handleReplyClick} fontSize="sm" cursor="pointer">
-                  Reply
-                </Text>
-                <IconButton
-                  aria-label={hasVoted ? "Unlike" : "Like"}
-                  icon={hasVoted ? <FaHeart /> : <FaRegHeart />}
-                  variant="ghost"
-                  size="sm"
-                  isRound
-                  alignSelf="center"
-                  color={hasVoted ? "red.500" : isNew ? "accent" : "primary"}
-                  onClick={handleUpvote}
-                  isLoading={isVoting}
-                />
-              </HStack>
-            )}
-          </HStack>
+          {/* Indent Reply and heart to align with main text, not all the way right */}
+          {(notification.type === "reply" || notification.type === "reply_comment") && (
+            <Flex mt={2} alignItems="center" w="100%" ml={8}>
+              <Text onClick={handleReplyClick} fontSize="sm" cursor="pointer" mr={2}>
+                Reply
+              </Text>
+              <IconButton
+                aria-label={hasVoted ? "Unlike" : "Like"}
+                icon={hasVoted ? <FaHeart /> : <FaRegHeart />}
+                variant="ghost"
+                size="sm"
+                isRound
+                alignSelf="center"
+                color={hasVoted ? "red.500" : isNew ? "accent" : "primary"}
+                onClick={handleUpvote}
+                isLoading={isVoting}
+              />
+            </Flex>
+          )}
         </Box>
         {/* No thumbnail for reply notifications */}
       </HStack>

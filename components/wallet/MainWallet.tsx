@@ -13,6 +13,9 @@ import {
   Tooltip,
   Stack,
   Heading,
+  IconButton,
+  Input,
+  Button,
 } from "@chakra-ui/react";
 import {
   FaExchangeAlt,
@@ -32,6 +35,7 @@ import { useRouter } from "next/navigation";
 import { useAioha } from "@aioha/react-ui";
 import { Asset, KeyTypes } from "@aioha/aioha";
 import { CustomHiveIcon } from "./CustomHiveIcon";
+import { ArrowForwardIcon } from "@chakra-ui/icons";
 
 interface MainWalletProps {
   username: string;
@@ -55,6 +59,8 @@ export default function MainWallet({ username }: MainWalletProps) {
   const [hivePrice, setHivePrice] = useState<number | null>(null);
   const [hbdPrice, setHbdPrice] = useState<number | null>(null);
   const [isPriceLoading, setIsPriceLoading] = useState(true);
+  const [convertDirection, setConvertDirection] = useState<'HIVE_TO_HBD' | 'HBD_TO_HIVE'>('HIVE_TO_HBD');
+  const [convertAmount, setConvertAmount] = useState('');
 
   useEffect(() => {
     const fetchHivePower = async () => {
@@ -107,6 +113,7 @@ export default function MainWallet({ username }: MainWalletProps) {
 
   async function handleConfirm(
     amount: number,
+    direction?: 'HIVE_TO_HBD' | 'HBD_TO_HIVE',
     username?: string,
     memo?: string
   ) {
@@ -122,24 +129,46 @@ export default function MainWallet({ username }: MainWalletProps) {
       case "Power Up":
         await aioha.stakeHive(amount);
         break;
-      case "Convert to HBD":
-        aioha.signAndBroadcastTx(
-          [
+      case "Convert HIVE":
+        if (direction === 'HIVE_TO_HBD') {
+          // HIVE to HBD
+          aioha.signAndBroadcastTx(
             [
-              "convert",
-              {
-                owner: user,
-                requestid: Math.floor(1000000000 + Math.random() * 9000000000),
-                amount: {
-                  amount: amount.toFixed(3),
-                  precision: 3,
-                  nai: "@@000000013",
+              [
+                "convert",
+                {
+                  owner: user,
+                  requestid: Math.floor(1000000000 + Math.random() * 9000000000),
+                  amount: {
+                    amount: amount.toFixed(3),
+                    precision: 3,
+                    nai: "@@000000013", // HIVE NAI
+                  },
                 },
-              },
+              ],
             ],
-          ],
-          KeyTypes.Active
-        );
+            KeyTypes.Active
+          );
+        } else if (direction === 'HBD_TO_HIVE') {
+          // HBD to HIVE
+          aioha.signAndBroadcastTx(
+            [
+              [
+                "convert",
+                {
+                  owner: user,
+                  requestid: Math.floor(1000000000 + Math.random() * 9000000000),
+                  amount: {
+                    amount: amount.toFixed(3),
+                    precision: 3,
+                    nai: "@@000000013", // HBD NAI (should be @@000000013 for HIVE, @@000000014 for HBD)
+                  },
+                },
+              ],
+            ],
+            KeyTypes.Active
+          );
+        }
         break;
       case "HIVE Savings":
         await aioha.signAndBroadcastTx(
@@ -260,7 +289,7 @@ export default function MainWallet({ username }: MainWalletProps) {
   return (
     <>
       <Heading as="h2" size="lg" mb={4} fontFamily="Joystix" color="primary">
-        Your Hive Wallet
+        Hive Wallet
       </Heading>
       <Grid
         templateColumns={{ base: "1fr", md: "2fr 1fr" }}
@@ -271,11 +300,63 @@ export default function MainWallet({ username }: MainWalletProps) {
         {/* Left: Wallet Balances and Actions */}
         <Box
           p={{ base: 2, md: 4 }}
-          border="tb1"
+          border="none"
           borderRadius="base"
           bg="muted"
-          boxShadow={"lg"}
+          boxShadow="none"
         >
+          {/* Staked HIVE - Hive Power (HP) */}
+          <Box mb={8}>
+            <Box
+              pl={{ base: 2, md: 6 }}
+              borderLeft="none"
+              borderColor="none"
+              mb={4}
+            >
+              <Stack
+                direction={{ base: "column", md: "row" }}
+                mb={1}
+                align="center"
+              >
+                <Text fontWeight="bold">Staked HIVE - Hive Power (HP)</Text>
+                <Box flex={1} display={{ base: "none", md: "block" }} />
+                <Text
+                  fontSize={{ base: "xl", md: "3xl" }}
+                  fontWeight="extrabold"
+                  color="lime"
+                >
+                  {hivePower !== undefined ? hivePower : "Loading..."}
+                </Text>
+                <HStack spacing={1} wrap="wrap">
+                  <Tooltip label="Power Down" hasArrow>
+                    <Box
+                      as="button"
+                      px={2}
+                      py={1}
+                      fontSize="sm"
+                      bg="teal.500"
+                      color="white"
+                      borderRadius="md"
+                      fontWeight="bold"
+                      _hover={{ bg: "teal.600" }}
+                      onClick={() =>
+                        handleModalOpen("Power Down", "Unstake Hive Power")
+                      }
+                    >
+                      <Icon as={FaArrowDown} boxSize={4} mr={1} />
+                    </Box>
+                  </Tooltip>
+                </HStack>
+              </Stack>
+              <Text color="gray.400">
+                your upvote (curation) power. Exchanging Hive for Hive Power is
+                called &quot;Powering Up&quot; or &quot;Staking&quot;.
+              </Text>
+              <Text color="gray.400">
+                Increases the more effectively you vote on posts
+              </Text>
+            </Box>
+          </Box>
           {/* HIVE Section */}
           <Box mb={8}>
             <Stack
@@ -340,27 +421,6 @@ export default function MainWallet({ username }: MainWalletProps) {
                     <Icon as={FaPiggyBank} boxSize={4} ml={1} />
                   </Box>
                 </Tooltip>
-                <Tooltip label="Convert HIVE" hasArrow>
-                  <Box
-                    as="button"
-                    px={2}
-                    py={1}
-                    fontSize="sm"
-                    bg="teal.500"
-                    color="white"
-                    borderRadius="md"
-                    fontWeight="bold"
-                    _hover={{ bg: "teal.600" }}
-                    onClick={() =>
-                      handleModalOpen(
-                        "Convert HIVE",
-                        "Convert HIVE to HBD or vice versa"
-                      )
-                    }
-                  >
-                    <Icon as={FaExchangeAlt} boxSize={4} mr={1} />
-                  </Box>
-                </Tooltip>
                 <Tooltip label="Hive/HBD Market" hasArrow>
                   <Box
                     as="button"
@@ -403,88 +463,52 @@ export default function MainWallet({ username }: MainWalletProps) {
               The primary token of the Hive Blockchain and often a reward on
               posts.
             </Text>
-            {/* Staked HIVE - Hive Power (HP) */}
-            <Box
-              pl={{ base: 2, md: 6 }}
-              borderLeft="2px solid"
-              borderColor="green.400"
-              mb={4}
-            >
-              <Stack
-                direction={{ base: "column", md: "row" }}
-                mb={1}
-                align="center"
-              >
-                <Text fontWeight="bold">Staked HIVE - Hive Power (HP)</Text>
-                <Box flex={1} display={{ base: "none", md: "block" }} />
-                <Text
-                  fontSize={{ base: "xl", md: "3xl" }}
-                  fontWeight="extrabold"
-                  color="lime"
-                >
-                  {hivePower !== undefined ? hivePower : "Loading..."}
-                </Text>
-                <HStack spacing={1} wrap="wrap">
-                  <Tooltip label="Power Down" hasArrow>
-                    <Box
-                      as="button"
-                      px={2}
-                      py={1}
-                      fontSize="sm"
-                      bg="teal.500"
-                      color="white"
-                      borderRadius="md"
-                      fontWeight="bold"
-                      _hover={{ bg: "teal.600" }}
-                      onClick={() =>
-                        handleModalOpen("Power Down", "Unstake Hive Power")
-                      }
-                    >
-                      <Icon as={FaArrowDown} boxSize={4} mr={1} />
-                    </Box>
-                  </Tooltip>
-                  <Tooltip label="Delegate HP" hasArrow>
-                    <Box
-                      as="button"
-                      px={2}
-                      py={1}
-                      fontSize="sm"
-                      bg="teal.500"
-                      color="white"
-                      borderRadius="md"
-                      fontWeight="bold"
-                      _hover={{ bg: "teal.600" }}
-                      onClick={() =>
-                        handleModalOpen(
-                          "Delegate",
-                          "Delegate HP to another user",
-                          false,
-                          true
-                        )
-                      }
-                    >
-                      <Icon as={FaShareAlt} boxSize={4} mr={1} />
-                    </Box>
-                  </Tooltip>
-                </HStack>
-              </Stack>
-              <Text color="gray.400">
-                your upvote (curation) power. Exchanging Hive for Hive Power is
-                called &quot;Powering Up&quot; or &quot;Staking&quot;.
-              </Text>
-              <Text color="gray.400">
-                Increases the more effectively you vote on posts
-              </Text>
-            </Box>
-            {/* Delegated HIVE */}
-            <Box pl={{ base: 4, md: 12 }}>
-              <Box borderLeft="2px solid" borderColor="green.400" pl={4}>
-                <Text fontWeight="bold">Delegated HIVE</Text>
-                <Text color="gray.400">Under construction</Text>
-              </Box>
-            </Box>
           </Box>
-          <Divider my={6} />
+          {/* Inserted Convert button centered on the divider between HIVE and HBD sections */}
+          <Box display="flex" alignItems="center" my={6}>
+            <Divider flex={1} borderColor="lime" />
+            <Box mx={4} display="flex" alignItems="center" gap={4}>
+              <IconButton
+                aria-label="Flip direction"
+                icon={<ArrowForwardIcon />}
+                onClick={() => setConvertDirection(convertDirection === 'HIVE_TO_HBD' ? 'HBD_TO_HIVE' : 'HIVE_TO_HBD')}
+                variant="ghost"
+                fontSize="2xl"
+                sx={{
+                  transition: 'transform 0.3s',
+                  transform: convertDirection === 'HIVE_TO_HBD' ? 'rotate(90deg)' : 'rotate(-90deg)',
+                  border: '2px dashed #00FF00',
+                  borderRadius: 'full',
+                  color: '#00FF00',
+                  _hover: {
+                    bg: '#00FF00',
+                    border: '2px dashed black',
+                    color: 'black',
+                  },
+                  _active: {
+                    transform: `${convertDirection === 'HIVE_TO_HBD' ? 'rotate(90deg)' : 'rotate(-90deg)'} scale(1.15)`,
+                  },
+                }}
+              />
+              <Input
+                type="number"
+                placeholder="Amount"
+                value={convertAmount}
+                onChange={e => setConvertAmount(e.target.value)}
+                min={0}
+                width="100px"
+                mx={2}
+              />
+              <Button
+                colorScheme="teal"
+                onClick={() => handleConfirm(Number(convertAmount), convertDirection)}
+                isDisabled={!convertAmount || isNaN(Number(convertAmount)) || Number(convertAmount) <= 0}
+              >
+                Confirm
+              </Button>
+            </Box>
+            <Divider flex={1} borderColor="lime" />
+          </Box>
           {/* HBD Section */}
           <Box mb={8}>
             <Stack
@@ -525,24 +549,6 @@ export default function MainWallet({ username }: MainWalletProps) {
                     }
                   >
                     <Icon as={FaPaperPlane} boxSize={4} mr={1} />
-                  </Box>
-                </Tooltip>
-                <Tooltip label="Convert HBD" hasArrow>
-                  <Box
-                    as="button"
-                    px={2}
-                    py={1}
-                    fontSize="sm"
-                    bg="teal.500"
-                    color="white"
-                    borderRadius="md"
-                    fontWeight="bold"
-                    _hover={{ bg: "teal.600" }}
-                    onClick={() =>
-                      handleModalOpen("Convert HBD", "Convert HBD to Hive")
-                    }
-                  >
-                    <Icon as={FaExchangeAlt} boxSize={4} mr={1} />
                   </Box>
                 </Tooltip>
                 <Tooltip label="Send HBD to Savings" hasArrow>
@@ -591,8 +597,8 @@ export default function MainWallet({ username }: MainWalletProps) {
             {/* Staked HBD (Savings) */}
             <Box
               pl={{ base: 2, md: 6 }}
-              borderLeft="2px solid"
-              borderColor="green.400"
+              borderLeft="none"
+              borderColor="none"
               mb={4}
             >
               <Stack
@@ -645,37 +651,20 @@ export default function MainWallet({ username }: MainWalletProps) {
             </Box>
             {/* Staked HBD - Claimable */}
             <Box pl={{ base: 4, md: 12 }}>
-              <Box borderLeft="2px solid" borderColor="green.400" pl={4}>
+              <Box borderLeft="none" borderColor="none" pl={4}>
                 <Text fontWeight="bold">Staked HBD - Claimable</Text>
                 <Text color="gray.400">Under construction</Text>
               </Box>
             </Box>
           </Box>
-          <Divider my={6} />
-          {/* Estimated Account Value */}
-          <Box>
-            <Text fontWeight="bold" fontSize={{ base: "md", md: "lg" }} mb={1}>
-              Estimated Account Value
-            </Text>
-            <Text color="gray.400">Under construction</Text>
-          </Box>
-          <WalletModal
-            isOpen={isOpen}
-            onClose={onClose}
-            title={modalContent?.title || ""}
-            description={modalContent?.description}
-            showMemoField={modalContent?.showMemoField}
-            showUsernameField={modalContent?.showUsernameField}
-            onConfirm={handleConfirm}
-          />
         </Box>
         {/* Right: Market Stats */}
         <Box
           p={{ base: 2, md: 4 }}
-          border="tb1"
+          border="none"
           borderRadius="base"
           bg="muted"
-          boxShadow={"lg"}
+          boxShadow="none"
           minW={undefined}
           width="100%"
           maxW={{ base: "100%", md: "340px" }}

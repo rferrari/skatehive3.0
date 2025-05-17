@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Box, Button, Input, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Text } from '@chakra-ui/react';
+import { Box, Button, Input, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Text, IconButton, Flex } from '@chakra-ui/react';
+import { ArrowForwardIcon, ArrowBackIcon } from '@chakra-ui/icons';
 
 interface WalletModalProps {
     isOpen: boolean;
@@ -8,13 +9,14 @@ interface WalletModalProps {
     description?: string;
     showMemoField?: boolean;
     showUsernameField?: boolean; // New prop to show the username field
-    onConfirm: (amount: number, username?: string, memo?: string) => void; // Include username in the onConfirm callback
+    onConfirm: (amount: number, direction: 'HIVE_TO_HBD' | 'HBD_TO_HIVE', username?: string, memo?: string) => void; // direction is now before optional params
 }
 
 export default function WalletModal ({ isOpen, onClose, title, description, showMemoField = false, showUsernameField = false, onConfirm }: WalletModalProps) {
     const [amount, setAmount] = useState<string>('');
     const [memo, setMemo] = useState<string>('');
     const [username, setUsername] = useState<string>(''); // State to hold username
+    const [direction, setDirection] = useState<'HIVE_TO_HBD' | 'HBD_TO_HIVE'>('HIVE_TO_HBD');
 
     const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setAmount(e.target.value);
@@ -30,7 +32,12 @@ export default function WalletModal ({ isOpen, onClose, title, description, show
 
     const handleConfirm = () => {
         const parsedAmount = parseFloat(amount);
-        onConfirm(isNaN(parsedAmount) ? 0 : parsedAmount, showUsernameField ? username : undefined, showMemoField ? memo : undefined);
+        onConfirm(
+            isNaN(parsedAmount) ? 0 : parsedAmount,
+            direction,
+            showUsernameField ? username : undefined,
+            showMemoField ? memo : undefined
+        );
     };
 
     return (
@@ -41,6 +48,23 @@ export default function WalletModal ({ isOpen, onClose, title, description, show
                 <ModalCloseButton />
                 <ModalBody>
                     {description && <Text fontSize={'small'} mb={4}>{description}</Text>}
+                    {title.toLowerCase().includes('convert') && (
+                        <Flex mb={4} align="center" justify="center" gap={4}>
+                            <Text fontWeight="bold" fontSize="lg">HIVE</Text>
+                            <IconButton
+                                aria-label="Flip direction"
+                                icon={<ArrowForwardIcon />}
+                                onClick={() => setDirection(direction === 'HIVE_TO_HBD' ? 'HBD_TO_HIVE' : 'HIVE_TO_HBD')}
+                                variant="ghost"
+                                fontSize="2xl"
+                                sx={{
+                                    transition: 'transform 0.3s',
+                                    transform: direction === 'HIVE_TO_HBD' ? 'rotate(0deg)' : 'rotate(180deg)',
+                                }}
+                            />
+                            <Text fontWeight="bold" fontSize="lg">HBD</Text>
+                        </Flex>
+                    )}
                     <Box mb={4}>
                         <Input
                             type="number"
