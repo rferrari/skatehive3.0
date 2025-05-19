@@ -202,7 +202,7 @@ export default function InvitePage() {
       <Box bg="gray.800" p={3} borderRadius="md" mb={2}>
         <Text fontSize="sm" color="gray.200">
           <b>What are Account Creation Tokens (ACTs)?</b><br />
-          ACTs let you create new Hive accounts for free. You earn ACTs automatically by holding Hive Power (staked HIVE). Each ACT can be used to create one new account. If you have no ACTs, you'll need to pay a 3 HIVE fee to create an account.
+          ACTs let you create new Hive accounts for free. You earn ACTs automatically by holding Hive Power (staked HIVE). Each ACT can be used to create one new account. If you have no ACTs, you&apos;ll need to pay a 3 HIVE fee to create an account.
         </Text>
         <Accordion allowToggle mt={2}>
           <AccordionItem border="none">
@@ -213,7 +213,7 @@ export default function InvitePage() {
               <AccordionIcon />
             </AccordionButton>
             <AccordionPanel pb={2} color="gray.300" fontSize="sm">
-              <b>Rule of thumb:</b> You need at least 5000 HP to start generating ACTs, and each ACT requires 100 billion Resource Credits (RC). The more HP you have, the faster you'll earn ACTs.
+              <b>Rule of thumb:</b> You need at least 5000 HP to start generating ACTs, and each ACT requires 100 billion Resource Credits (RC). The more HP you have, the faster you&apos;ll earn ACTs.
             </AccordionPanel>
           </AccordionItem>
         </Accordion>
@@ -233,10 +233,10 @@ export default function InvitePage() {
       )}
       <VStack spacing={4} align="stretch">
         <FormControl>
-          <Text fontWeight="bold">Friend's desired Hive Wallet Name</Text>
+          <Text fontWeight="bold">Friend&apos;s desired Hive Wallet Name</Text>
           <Input
             type="text"
-            placeholder="Friend's desired Hive Wallet Name"
+            placeholder="Friend&apos;s desired Hive Wallet Name"
             value={desiredUsername}
             onChange={(e) => setDesiredUsername(e.target.value)}
             maxW="375px"
@@ -246,10 +246,10 @@ export default function InvitePage() {
           />
         </FormControl>
         <FormControl>
-          <Text fontWeight="bold">Friend's Email</Text>
+          <Text fontWeight="bold">Friend&apos;s Email</Text>
           <Input
             type="email"
-            placeholder="Friend's email"
+            placeholder="Friend&apos;s email"
             value={desiredEmail}
             onChange={(e) => setDesiredEmail(e.target.value)}
             maxW="375px"
