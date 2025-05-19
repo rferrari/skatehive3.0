@@ -15,7 +15,7 @@ import {
 import { ExternalLinkIcon } from "@chakra-ui/icons";
 import { Discussion, Notifications } from "@hiveio/dhive";
 import { FaHeart, FaRegHeart } from "react-icons/fa";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   getPost,
   checkFollow,
@@ -73,7 +73,11 @@ export default function NotificationItem({
   const postCache = useRef<Record<string, Discussion>>({});
 
   // Add helper to fetch comment content
-  async function fetchCommentContent() {
+  const fetchCommentContent = useCallback(async () => {
+    const checkIfUserVoted = (post: Discussion | null) => {
+      if (!post || !post.active_votes || !currentUser) return false;
+      return post.active_votes.some((vote) => vote.voter === currentUser);
+    };
     try {
       setIsLoading(true);
       const replyKey = `${postAuthor}_${postId}`;
@@ -176,7 +180,7 @@ export default function NotificationItem({
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [postAuthor, postId, notification.type, postCache, currentUser]);
 
   // Replace the existing handleReplyClick with this version
   function handleReplyClick() {
@@ -238,7 +242,7 @@ export default function NotificationItem({
       observer.observe(containerRef.current);
       return () => observer.disconnect();
     }
-  }, [notification.type, notification.url]);
+  }, [notification.type, notification.url, fetchCommentContent]);
 
   // For follow notifications, check follow state on mount
   useEffect(() => {
@@ -253,13 +257,6 @@ export default function NotificationItem({
     await changeFollow(currentUser, author);
     setIsFollowingBack(true);
   }
-
-  // Add helper to check if user has voted on the reply
-  const checkIfUserVoted = (post: Discussion | null) => {
-    if (!post || !post.active_votes || !currentUser) return false;
-
-    return post.active_votes.some((vote) => vote.voter === currentUser);
-  };
 
   // Handle upvote function
   const handleUpvote = async () => {
@@ -359,15 +356,16 @@ export default function NotificationItem({
                       return match && match[1] ? `(${match[1]})` : "";
                     })()}
                   </Text>
+                  {/* Inline postContent preview for vote notifications */}
+                  {notification.type === "vote" && postContent && (
+                    <Text as="span" color="green.300" fontWeight="normal" ml={2} fontSize="sm">
+                      &quot;{postContent.replace(/\n/g, ' ').slice(0, 100)}{postContent.length > 100 ? '…' : ''}&quot;
+                    </Text>
+                  )}
                   <Text as="span" fontSize="xs" color="gray.400" ml={2}>
                     {formattedDate}
                   </Text>
                 </Text>
-                {reply && (
-                  <Text fontSize="sm" color="primary">
-                    {reply.title}
-                  </Text>
-                )}
               </Box>
             ) : notification.type === "reply_comment" ? (
               <Box>
@@ -481,21 +479,21 @@ export default function NotificationItem({
           {(notification.type === "reply" || notification.type === "reply_comment") && (
             <Flex mt={2} alignItems="center" w="100%" ml={8}>
               <Text onClick={handleReplyClick} fontSize="sm" cursor="pointer" mr={2}>
-                Reply
-              </Text>
-              <IconButton
-                aria-label={hasVoted ? "Unlike" : "Like"}
-                icon={hasVoted ? <FaHeart /> : <FaRegHeart />}
-                variant="ghost"
-                size="sm"
-                isRound
-                alignSelf="center"
-                color={hasVoted ? "red.500" : isNew ? "accent" : "primary"}
-                onClick={handleUpvote}
-                isLoading={isVoting}
-              />
+                  Reply
+                </Text>
+                <IconButton
+                  aria-label={hasVoted ? "Unlike" : "Like"}
+                  icon={hasVoted ? <FaHeart /> : <FaRegHeart />}
+                  variant="ghost"
+                  size="sm"
+                  isRound
+                  alignSelf="center"
+                  color={hasVoted ? "red.500" : isNew ? "accent" : "primary"}
+                  onClick={handleUpvote}
+                  isLoading={isVoting}
+                />
             </Flex>
-          )}
+            )}
         </Box>
         {/* No thumbnail for reply notifications */}
       </HStack>

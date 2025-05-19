@@ -321,7 +321,7 @@ export default function InvitePage() {
           isLoading={loading}
           isDisabled={!areKeysDownloaded}
         >
-          Looks Good, Let's Go For It!
+          Looks Good, Let&apos;s Go For It!
         </Button>
         {broadcastSuccess && (
           <Text

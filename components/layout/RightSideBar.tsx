@@ -1,6 +1,6 @@
 'use client';
 import { Box, Spinner } from '@chakra-ui/react';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Discussion } from '@hiveio/dhive';
 import { findPosts } from '@/lib/hive/client-functions';
 import PostInfiniteScroll from '@/components/blog/PostInfiniteScroll';
@@ -23,7 +23,7 @@ export default function RightSideBar() {
     },
   ]);
 
-  async function fetchPosts() {
+  const fetchPosts = useCallback(async () => {
     if (isFetching.current) return; // Prevent multiple fetches
     isFetching.current = true;
     setIsLoading(true); // Set loading state
@@ -44,14 +44,14 @@ export default function RightSideBar() {
       isFetching.current = false;
       setIsLoading(false); // Reset loading state
     }
-  }
+  }, [query, tag]);
 
   useEffect(() => {
     fetchPosts();
-  }, [query]);
+  }, [fetchPosts]);
 
   // Scroll event handler
-  const handleScroll = () => {
+  const handleScroll = useCallback(() => {
     const sidebar = sidebarRef.current;
     if (sidebar) {
       const { scrollTop, scrollHeight, clientHeight } = sidebar;
@@ -60,7 +60,7 @@ export default function RightSideBar() {
         fetchPosts();
       }
     }
-  };
+  }, [isLoading, fetchPosts]);
 
   useEffect(() => {
     const sidebar = sidebarRef.current;
@@ -68,7 +68,7 @@ export default function RightSideBar() {
       sidebar.addEventListener('scroll', handleScroll);
       return () => sidebar.removeEventListener('scroll', handleScroll);
     }
-  }, [isLoading]);
+  }, [handleScroll]);
 
   return (
     <Box

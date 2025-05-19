@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   Box,
   Heading,
@@ -89,7 +89,7 @@ export default function ProfilePage({ username }: ProfilePageProps) {
     }
   };
 
-  async function fetchPosts() {
+  const fetchPosts = useCallback(async () => {
     if (isFetching.current) return; // Prevent multiple fetches
     isFetching.current = true;
     try {
@@ -110,14 +110,14 @@ export default function ProfilePage({ username }: ProfilePageProps) {
       console.error("Failed to fetch posts", err);
       isFetching.current = false;
     }
-  }
+  }, [username]);
 
   useEffect(() => {
     // Reset posts and params when username changes
     setPosts([]);
     params.current = [username, "", new Date().toISOString().split(".")[0], 12];
     fetchPosts();
-  }, [username]);
+  }, [username, fetchPosts]);
 
   useEffect(() => {
     const fetchProfileInfo = async () => {
