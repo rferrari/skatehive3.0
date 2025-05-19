@@ -1,6 +1,6 @@
 'use client';
 import { Container, Box } from '@chakra-ui/react';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Discussion } from '@hiveio/dhive';
 import { findPosts } from '@/lib/hive/client-functions';
 import TopBar from '@/components/blog/TopBar';
@@ -23,7 +23,8 @@ export default function Blog() {
         }
     ]);
 
-    async function fetchPosts() {
+    // 1. Move fetchPosts outside and wrap in useCallback
+    const fetchPosts = useCallback(async () => {
         if (isFetching.current) return; // Prevent multiple fetches
         isFetching.current = true;
         try {
@@ -37,12 +38,12 @@ export default function Blog() {
                     start_permlink: posts[posts.length - 1].permlink,
                 }];
             }
-            isFetching.current = false;
         } catch (error) {
             console.log(error);
+        } finally {
             isFetching.current = false;
         }
-    }
+    }, [query, tag]);
 
     useEffect(() => {
         setAllPosts([]);
@@ -53,7 +54,7 @@ export default function Blog() {
             start_permlink: '',
         }];
         fetchPosts();
-    }, [query]);
+    }, [fetchPosts, tag]);
 
     // Detect mobile and force grid view
     useEffect(() => {

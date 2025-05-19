@@ -46,7 +46,7 @@ export default function Composer() {
     }, 3000); // Change every 3 seconds
 
     return () => clearInterval(interval);
-  }, []);
+  }, [placeholders.length]);
 
   const insertAtCursor = (content: string) => {
     const textarea = document.querySelector('.w-md-editor-text-input') as HTMLTextAreaElement;

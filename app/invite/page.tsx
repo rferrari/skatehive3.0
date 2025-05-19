@@ -311,7 +311,7 @@ export default function InvitePage() {
             <Text color={accountAvailable ? "yellow" : "white"} ml={2}>
               {accountAvailable
                 ? "Yeah!! Account available. Drop it!"
-                : "Please choose another nickname! " + accountInvalid}
+                : "Please choose another nickname! " + String(accountInvalid).replace(/'/g, "&apos;")}
             </Text>
           </Flex>
         )}
