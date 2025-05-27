@@ -6,13 +6,12 @@ import NotificationsComp from "@/components/notifications/NotificationsComp";
 import ProfilePage from "@/components/profile/ProfilePage";
 import MainWallet from "@/components/wallet/MainWallet";
 
-interface HomePageProps {
-  params: {
-    slug: string[];
-  };
-}
+export default function HomePage(props: any) {
+  const params = props.params || {};
 
-export default function HomePage({ params }: HomePageProps) {
+  if (!params.slug || !Array.isArray(params.slug)) {
+    return <></>;
+  }
 
     if (params.slug.length === 1 && decodeURIComponent(params.slug[0]).startsWith('@')) {
       return (
