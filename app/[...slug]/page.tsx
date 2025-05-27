@@ -1,15 +1,18 @@
 // app/page.tsx
 'use client';
 
+import React from "react";
 import PostPage from "@/components/blog/PostPage";
 import NotificationsComp from "@/components/notifications/NotificationsComp";
 import ProfilePage from "@/components/profile/ProfilePage";
 import MainWallet from "@/components/wallet/MainWallet";
 
-export default function HomePage(props: any) {
-  const params = props.params || {};
+type ParamsType = { slug?: string[] };
 
-  if (!params.slug || !Array.isArray(params.slug)) {
+export default function HomePage(props: any) {
+  const params = React.use(props.params) as ParamsType;
+
+  if (!params?.slug || !Array.isArray(params.slug)) {
     return <></>;
   }
 
