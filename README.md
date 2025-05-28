@@ -26,7 +26,7 @@ NEXT_PUBLIC_SITE_TYPE=business # leave it empty for hiding store section, type b
 > Available Themes: bluesky / cannabis / forest / hacker / hivebr / nounish / windows95
 
 ** TODO:[Explain how the Thread of posts work in the setup section]
-
+webgirlnawr
 ## Run locally 
 
 ```bash
