@@ -296,8 +296,8 @@ export default function NotificationItem({
         align="stretch"
         position="relative"
         sx={isNew ? {
-          boxShadow: '0 -1px 4px 0 #39ff14, 0 1px 4px 0 #39ff14',
-          animation: 'pulseGlowTB 1.5s infinite',
+          boxShadow: 'none',
+          animation: undefined,
         } : {}}
         _before={isNew ? {
           content: '""',
@@ -308,13 +308,14 @@ export default function NotificationItem({
           width: '6px',
           background: 'linear-gradient(180deg, #39ff14 0%, #00ff99 100%)',
           boxShadow: '0 0 8px 2px #39ff14',
+          animation: 'pulseGlowLeft 1.5s infinite',
         } : {}}
       >
         <style>{`
-          @keyframes pulseGlowTB {
-            0% { box-shadow: 0 -1px 4px 0 #39ff14, 0 1px 4px 0 #39ff14; }
-            50% { box-shadow: 0 -2px 8px 0 #39ff14, 0 2px 8px 0 #39ff14; }
-            100% { box-shadow: 0 -1px 4px 0 #39ff14, 0 1px 4px 0 #39ff14; }
+          @keyframes pulseGlowLeft {
+            0% { box-shadow: 0 0 8px 2px #39ff14; }
+            50% { box-shadow: 0 0 16px 4px #39ff14; }
+            100% { box-shadow: 0 0 8px 2px #39ff14; }
           }
         `}</style>
         <Box flex="1">
