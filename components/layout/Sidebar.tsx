@@ -6,105 +6,56 @@ import {
   Button,
   Icon,
   Image,
-  Spinner,
   Flex,
-  Text,
   useColorMode,
-  transition,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalCloseButton,
+  useDisclosure,
+  HStack,
+  Text,
+  Spinner,
+  ModalFooter,
 } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
 import { AiohaModal, useAioha } from "@aioha/react-ui";
-import {
-  FiHome,
-  FiBell,
-  FiUser,
-  FiShoppingCart,
-  FiBook,
-  FiMap,
-} from "react-icons/fi";
+import { FiHome, FiBell, FiUser, FiBook, FiMap } from "react-icons/fi";
 import { FaPiggyBank } from "react-icons/fa";
-import { Notifications } from "@hiveio/dhive";
-import {
-  fetchNewNotifications,
-  getCommunityInfo,
-  getProfile,
-} from "@/lib/hive/client-functions";
-import { animate, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { FaGear } from "react-icons/fa6";
 import { FaMailBulk } from "react-icons/fa";
 import { KeyTypes } from "@aioha/aioha";
 import "@aioha/react-ui/dist/build.css";
-
-interface ProfileInfo {
-  metadata: {
-    profile: {
-      profile_image: string; // Profile-specific image
-    };
-  };
-}
-
-interface CommunityInfo {
-  title: string;
-  about: string;
-  // No avatar_url since it's not used
-}
+import { useAccount, useConnect, useDisconnect } from "wagmi";
 
 const communityTag = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG;
 
 export default function Sidebar({ newNotificationCount = 0 }) {
   const { user } = useAioha();
   const router = useRouter();
-  // const [notifications, setNotifications] = useState<Notifications[]>([]);
-  // const [communityInfo, setCommunityInfo] = useState<CommunityInfo | null>(null);
-  // const [profileInfo, setProfileInfo] = useState<ProfileInfo | null>(null); // State to hold profile info
-  // const [loading, setLoading] = useState(true); // Loading state
   const { colorMode } = useColorMode();
   const [modalDisplayed, setModalDisplayed] = useState(false);
   const [bellAnimating, setBellAnimating] = useState(false);
-
-  // useEffect(() => {
-  //     const loadNotifications = async () => {
-  //         if (user) {
-  //             try {
-  //                 const newNotifications = await fetchNewNotifications(user);
-  //                 setNotifications(newNotifications);
-  //             } catch (error) {
-  //                 console.error("Failed to fetch notifications:", error);
-  //             }
-  //         }
-  //     };
-
-  //     loadNotifications();
-  // }, [user]);
-
-  // useEffect(() => {
-  //     const fetchData = async () => {
-  //         setLoading(true);
-  //         if (communityTag) {
-  //             try {
-  //                 // Fetching community data
-  //                 const communityData = await getCommunityInfo(communityTag);
-  //                 sessionStorage.setItem('communityData', JSON.stringify(communityData));
-  //                 setCommunityInfo(communityData);
-
-  //                 // Fetching profile data
-  //                 const profileData = await getProfile(communityTag);
-  //                 sessionStorage.setItem('profileData', JSON.stringify(profileData));
-  //                 setProfileInfo(profileData);
-  //             } catch (error) {
-  //                 console.error('Failed to fetch data', error);
-  //             } finally {
-  //                 setLoading(false);
-  //             }
-  //         }
-  //     };
-
-  //     fetchData();
-  // }, [communityTag]);
+  const { connect, connectors, status } = useConnect();
+  const { disconnect } = useDisconnect();
+  const { isConnected, connector: activeConnector } = useAccount();
+  const {
+    isOpen: isConnectModalOpen,
+    onOpen: openConnectModal,
+    onClose: closeConnectModal,
+  } = useDisclosure();
 
   useEffect(() => {
     setBellAnimating(newNotificationCount > 0);
   }, [newNotificationCount]);
+
+  // Debug: log connectors to console
+  useEffect(() => {
+    console.log("Wagmi connectors:", connectors);
+  }, [connectors]);
 
   const handleNavigation = (path: string) => {
     try {
@@ -274,6 +225,62 @@ export default function Sidebar({ newNotificationCount = 0 }) {
         >
           {user ? "Logout" : "Login"}
         </Button>
+        <div>
+          {isConnected ? (
+            <Button onClick={() => disconnect()} w="full" mb={4}>
+              Disconnect ({activeConnector?.name})
+            </Button>
+          ) : (
+            <>
+              <Button onClick={openConnectModal} w="full" mb={4}>
+                Connect Ethereum Wallet
+              </Button>
+              <Modal
+                isOpen={isConnectModalOpen}
+                onClose={closeConnectModal}
+                isCentered
+              >
+                <ModalOverlay />
+                <ModalContent bg={"background"} color="text">
+                  <ModalHeader>Select Wallet</ModalHeader>
+                  <ModalCloseButton />
+                  <ModalBody>
+                    <VStack spacing={3} align="stretch">
+                      {connectors.map((connector) => (
+                        <Button
+                          key={connector.id}
+                          onClick={() => connect({ connector })}
+                          color={"primary"}
+                          variant="outline"
+                          leftIcon={
+                            connector.icon ? (
+                              <Image
+                                src={connector.icon}
+                                alt={connector.name}
+                                boxSize={5}
+                              />
+                            ) : undefined
+                          }
+                          justifyContent="flex-start"
+                        >
+                          <HStack w="full" justify="space-between">
+                            <Text>{connector.name}</Text>
+                            {status === "pending" && <Spinner size="sm" />}
+                          </HStack>
+                        </Button>
+                      ))}
+                    </VStack>
+                  </ModalBody>
+                  <ModalFooter>
+                    <Button onClick={closeConnectModal} colorScheme="blue">
+                      Close
+                    </Button>
+                  </ModalFooter>
+                </ModalContent>
+              </Modal>
+            </>
+          )}
+        </div>
       </Flex>
     </Box>
   );
