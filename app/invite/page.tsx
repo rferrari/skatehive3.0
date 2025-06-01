@@ -19,6 +19,7 @@ import {
   AccordionButton,
   AccordionPanel,
   AccordionIcon,
+  useToast,
 } from "@chakra-ui/react";
 import { FaCheck, FaTimes } from "react-icons/fa";
 import {
@@ -41,6 +42,7 @@ const randomLanguages = [
 export default function InvitePage() {
   const { user } = useAioha();
   const { hiveAccount, isLoading: isAccountLoading } = useHiveAccount(user || "");
+  const toast = useToast();
   const [desiredUsername, setDesiredUsername] = useState("");
   const [desiredEmail, setDesiredEmail] = useState("");
   const [accountAvailable, setAccountAvailable] = useState(false);

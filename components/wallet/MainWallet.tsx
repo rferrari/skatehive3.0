@@ -27,6 +27,7 @@ import {
   FaDollarSign,
   FaArrowUp,
   FaPaperPlane,
+  FaArrowRight,
 } from "react-icons/fa";
 import { convertVestToHive } from "@/lib/hive/client-functions";
 import { extractNumber } from "@/lib/utils/extractNumber";
@@ -35,7 +36,7 @@ import { useRouter } from "next/navigation";
 import { useAioha } from "@aioha/react-ui";
 import { Asset, KeyTypes } from "@aioha/aioha";
 import { CustomHiveIcon } from "./CustomHiveIcon";
-import { ArrowForwardIcon } from "@chakra-ui/icons";
+import { useTheme } from "../../app/themeProvider";
 
 interface MainWalletProps {
   username: string;
@@ -48,6 +49,7 @@ export default function MainWallet({ username }: MainWalletProps) {
 
   const { hiveAccount, isLoading, error } = useHiveAccount(username);
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const { theme } = useTheme();
 
   const [modalContent, setModalContent] = useState<{
     title: string;
@@ -343,7 +345,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                         handleModalOpen("Power Down", "Unstake Hive Power")
                       }
                     >
-                      <Icon as={FaArrowDown} boxSize={4} mr={1} />
+                      <Icon as={FaArrowDown} boxSize={4} mr={1} color={theme.colors.primary} />
                     </Box>
                   </Tooltip>
                 </HStack>
@@ -399,7 +401,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                       )
                     }
                   >
-                    <Icon as={FaPaperPlane} boxSize={4} mr={1} />
+                    <Icon as={FaPaperPlane} boxSize={4} mr={1} color={theme.colors.primary} />
                   </Box>
                 </Tooltip>
                 <Tooltip label="Power Up" hasArrow>
@@ -417,44 +419,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                       handleModalOpen("Power Up", "Power Up your HIVE to HP")
                     }
                   >
-                    <Icon as={FaArrowUp} boxSize={4} mr={1} />
-                    <Icon as={FaPiggyBank} boxSize={4} ml={1} />
-                  </Box>
-                </Tooltip>
-                <Tooltip label="Hive/HBD Market" hasArrow>
-                  <Box
-                    as="button"
-                    px={2}
-                    py={1}
-                    fontSize="sm"
-                    bg="teal.500"
-                    color="white"
-                    borderRadius="md"
-                    fontWeight="bold"
-                    _hover={{ bg: "teal.600" }}
-                    onClick={() => router.push("https://hivedex.io/")}
-                  >
-                    <Icon as={FaStore} boxSize={4} mr={1} />
-                  </Box>
-                </Tooltip>
-                <Tooltip label="Buy Hive" hasArrow>
-                  <Box
-                    as="button"
-                    px={2}
-                    py={1}
-                    fontSize="sm"
-                    bg="teal.500"
-                    color="white"
-                    borderRadius="md"
-                    fontWeight="bold"
-                    _hover={{ bg: "teal.600" }}
-                    onClick={() =>
-                      router.push(
-                        `https://global.transak.com/?apiKey=771c8ab6-b3ba-4450-b69d-ca35e4b25eb8&redirectURL=${window.location.href}&cryptoCurrencyCode=HIVE&defaultCryptoAmount=200&exchangeScreenTitle=Buy%20HIVE&isFeeCalculationHidden=false&defaultPaymentMethod=credit_debit_card&walletAddress=${user}`
-                      )
-                    }
-                  >
-                    <Icon as={FaShoppingCart} boxSize={4} mr={1} />
+                    <Icon as={FaArrowUp} boxSize={4} mr={1} color={theme.colors.primary} />
                   </Box>
                 </Tooltip>
               </HStack>
@@ -470,7 +435,7 @@ export default function MainWallet({ username }: MainWalletProps) {
             <Box mx={4} display="flex" alignItems="center" gap={4}>
               <IconButton
                 aria-label="Flip direction"
-                icon={<ArrowForwardIcon />}
+                icon={<FaArrowRight />}
                 onClick={() => setConvertDirection(convertDirection === 'HIVE_TO_HBD' ? 'HBD_TO_HIVE' : 'HIVE_TO_HBD')}
                 variant="ghost"
                 fontSize="2xl"
@@ -563,7 +528,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                       )
                     }
                   >
-                    <Icon as={FaPaperPlane} boxSize={4} mr={1} />
+                    <Icon as={FaPaperPlane} boxSize={4} mr={1} color={theme.colors.primary} />
                   </Box>
                 </Tooltip>
                 <Tooltip label="Send HBD to Savings" hasArrow>
@@ -581,26 +546,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                       handleModalOpen("HBD Savings", "Send HBD to Savings")
                     }
                   >
-                    <Icon as={FaArrowUp} boxSize={4} mr={1} />
-                    <Icon as={FaPiggyBank} boxSize={4} ml={1} />
-                  </Box>
-                </Tooltip>
-                <Tooltip label="Use HBD in Store" hasArrow>
-                  <Box
-                    as="button"
-                    px={2}
-                    py={1}
-                    fontSize="sm"
-                    bg="teal.500"
-                    color="white"
-                    borderRadius="md"
-                    fontWeight="bold"
-                    _hover={{ bg: "teal.600" }}
-                    onClick={() =>
-                      handleModalOpen("HBD Store", "Use HBD in the store")
-                    }
-                  >
-                    <Icon as={FaStore} boxSize={4} mr={1} />
+                    <Icon as={FaArrowDown} boxSize={4} mr={1} color={theme.colors.primary} />
                   </Box>
                 </Tooltip>
               </HStack>
@@ -643,7 +589,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                       fontWeight="bold"
                       _hover={{ bg: "teal.600" }}
                     >
-                      <Icon as={FaArrowDown} boxSize={4} mr={1} />
+                      <Icon as={FaArrowUp} boxSize={4} mr={1} color={theme.colors.primary} />
                     </Box>
                   </Tooltip>
                 </HStack>
@@ -686,14 +632,33 @@ export default function MainWallet({ username }: MainWalletProps) {
           mx="auto"
           mb={{ base: 24, md: 0 }}
         >
-          <Text
-            fontWeight="extrabold"
-            fontSize={{ base: "xl", md: "2xl" }}
-            mb={4}
-            color="lime"
-          >
-            Market Prices
-          </Text>
+          <Box display="flex" alignItems="center" mb={4}>
+            <Text
+              fontWeight="extrabold"
+              fontSize={{ base: "xl", md: "2xl" }}
+              color="lime"
+              mr={2}
+            >
+              Market Prices
+            </Text>
+            <Tooltip label="Hive/HBD Market" hasArrow>
+              <Box
+                as="button"
+                px={2}
+                py={1}
+                fontSize="sm"
+                bg="teal.500"
+                color="white"
+                borderRadius="md"
+                fontWeight="bold"
+                _hover={{ bg: "teal.600" }}
+                onClick={() => router.push("https://hivedex.io/")}
+                ml={2}
+              >
+                <Icon as={FaStore} boxSize={4} mr={1} color={theme.colors.primary} />
+              </Box>
+            </Tooltip>
+          </Box>
           {/* HIVE Market Stat */}
           <Box mb={6}>
             <HStack align="center" justify="center" mb={1} spacing={2}>
