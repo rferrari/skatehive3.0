@@ -16,6 +16,7 @@ import {
   IconButton,
   Input,
   Button,
+  VStack,
 } from "@chakra-ui/react";
 import {
   FaExchangeAlt,
@@ -429,66 +430,6 @@ export default function MainWallet({ username }: MainWalletProps) {
               posts.
             </Text>
           </Box>
-          {/* Inserted Convert button centered on the divider between HIVE and HBD sections */}
-          <Box display="flex" alignItems="center" my={6}>
-            <Divider flex={1} borderColor="lime" />
-            <Box mx={4} display="flex" alignItems="center" gap={4}>
-              <IconButton
-                aria-label="Flip direction"
-                icon={<FaArrowRight />}
-                onClick={() => setConvertDirection(convertDirection === 'HIVE_TO_HBD' ? 'HBD_TO_HIVE' : 'HIVE_TO_HBD')}
-                variant="ghost"
-                fontSize="2xl"
-                sx={{
-                  transition: 'transform 0.3s',
-                  transform: convertDirection === 'HIVE_TO_HBD' ? 'rotate(90deg)' : 'rotate(-90deg)',
-                  borderLeft: '6px solid #39ff14',
-                  borderRight: '6px solid #39ff14',
-                  borderTop: 'none',
-                  borderBottom: 'none',
-                  borderRadius: '12px',
-                  color: '#00FF00',
-                  background: 'transparent',
-                  minW: '48px',
-                  minH: '48px',
-                  _hover: {
-                    borderLeft: '6px solid #39ff14',
-                    borderRight: '6px solid #39ff14',
-                    borderTop: 'none',
-                    borderBottom: 'none',
-                    borderRadius: '12px',
-                  },
-                  _active: {
-                    transform: `${convertDirection === 'HIVE_TO_HBD' ? 'rotate(90deg)' : 'rotate(-90deg)'} scale(1.15)`,
-                    bg: 'rgba(0,255,0,0.08)',
-                    color: 'black',
-                    borderLeft: '6px solid #39ff14',
-                    borderRight: '6px solid #39ff14',
-                    borderTop: 'none',
-                    borderBottom: 'none',
-                    borderRadius: '12px',
-                  },
-                }}
-              />
-              <Input
-                type="number"
-                placeholder="Amount"
-                value={convertAmount}
-                onChange={e => setConvertAmount(e.target.value)}
-                min={0}
-                width="100px"
-                mx={2}
-              />
-              <Button
-                colorScheme="teal"
-                onClick={() => handleConfirm(Number(convertAmount), convertDirection)}
-                isDisabled={!convertAmount || isNaN(Number(convertAmount)) || Number(convertAmount) <= 0}
-              >
-                Convert
-              </Button>
-            </Box>
-            <Divider flex={1} borderColor="lime" />
-          </Box>
           {/* HBD Section */}
           <Box mb={8}>
             <Stack
@@ -619,130 +560,200 @@ export default function MainWallet({ username }: MainWalletProps) {
             </Box>
           </Box>
         </Box>
-        {/* Right: Market Stats */}
-        <Box
-          p={{ base: 2, md: 4 }}
-          border="none"
-          borderRadius="base"
-          bg="muted"
-          boxShadow="none"
-          minW={undefined}
-          width="100%"
-          maxW={{ base: "100%", md: "340px" }}
-          mx="auto"
-          mb={{ base: 24, md: 0 }}
-        >
-          <Box display="flex" alignItems="center" mb={4}>
-            <Text
-              fontWeight="extrabold"
-              fontSize={{ base: "xl", md: "2xl" }}
-              color="lime"
-              mr={2}
-            >
-              Market Prices
-            </Text>
-            <Tooltip label="Hive/HBD Market" hasArrow>
-              <Box
-                as="button"
-                px={2}
-                py={1}
-                fontSize="sm"
-                bg="teal.500"
-                color="white"
-                borderRadius="md"
-                fontWeight="bold"
-                _hover={{ bg: "teal.600" }}
-                onClick={() => router.push("https://hivedex.io/")}
-                ml={2}
+        {/* Right: Market Stats and Swap */}
+        <VStack spacing={4} align="stretch" maxW={{ base: "100%", md: "340px" }} mx="auto" mb={{ base: 24, md: 0 }}>
+          <Box
+            p={{ base: 2, md: 4 }}
+            border="none"
+            borderRadius="base"
+            bg="muted"
+            boxShadow="none"
+            minW={undefined}
+            width="100%"
+            maxW={{ base: "100%", md: "340px" }}
+            mx="auto"
+            mb={0}
+          >
+            <Box display="flex" alignItems="center" mb={4}>
+              <Text
+                fontWeight="extrabold"
+                fontSize={{ base: "xl", md: "2xl" }}
+                color="lime"
+                mr={2}
               >
-                <Icon as={FaStore} boxSize={4} mr={1} color={theme.colors.primary} />
+                Market Prices
+              </Text>
+              <Tooltip label="Hive/HBD Market" hasArrow>
+                <Box
+                  as="button"
+                  px={2}
+                  py={1}
+                  fontSize="sm"
+                  bg="teal.500"
+                  color="white"
+                  borderRadius="md"
+                  fontWeight="bold"
+                  _hover={{ bg: "teal.600" }}
+                  onClick={() => router.push("https://hivedex.io/")}
+                  ml={2}
+                >
+                  <Icon as={FaStore} boxSize={4} mr={1} color={theme.colors.primary} />
+                </Box>
+              </Tooltip>
+            </Box>
+            {/* HIVE Market Stat */}
+            <Box mb={6}>
+              <HStack align="center" justify="center" mb={1} spacing={2}>
+                <CustomHiveIcon color="rgb(233, 66, 95)" />
+                <Text
+                  fontWeight="bold"
+                  fontSize={{ base: "md", md: "lg" }}
+                  color="gray.100"
+                >
+                  HIVE
+                </Text>
+              </HStack>
+              <Box display="flex" flexDirection="column" alignItems="center">
+                <Text
+                  fontSize={{ base: "2xl", md: "4xl" }}
+                  fontWeight="extrabold"
+                  color="green.200"
+                >
+                  {isPriceLoading
+                    ? "Loading..."
+                    : hivePrice !== null
+                    ? `${hivePrice.toFixed(3)} USD`
+                    : "N/A"}
+                </Text>
+                <Text fontSize="sm" color="gray.400" textAlign="center">
+                  HIVE price by
+                  <Text
+                    as="a"
+                    href="https://www.coingecko.com/en/coins/hive"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    color="blue.300"
+                    _hover={{ textDecoration: "underline", color: "blue.400" }}
+                    ml={1}
+                    display="inline"
+                  >
+                    CoinGecko
+                  </Text>
+                </Text>
               </Box>
-            </Tooltip>
-          </Box>
-          {/* HIVE Market Stat */}
-          <Box mb={6}>
-            <HStack align="center" justify="center" mb={1} spacing={2}>
-              <CustomHiveIcon color="rgb(233, 66, 95)" />
-              <Text
-                fontWeight="bold"
-                fontSize={{ base: "md", md: "lg" }}
-                color="gray.100"
-              >
-                HIVE
-              </Text>
-            </HStack>
-            <Box display="flex" flexDirection="column" alignItems="center">
-              <Text
-                fontSize={{ base: "2xl", md: "4xl" }}
-                fontWeight="extrabold"
-                color="green.200"
-              >
-                {isPriceLoading
-                  ? "Loading..."
-                  : hivePrice !== null
-                  ? `${hivePrice.toFixed(3)} USD`
-                  : "N/A"}
-              </Text>
-              <Text fontSize="sm" color="gray.400" textAlign="center">
-                HIVE price by
+            </Box>
+            {/* HBD Market Stat */}
+            <Box mb={4}>
+              <HStack align="center" justify="center" mb={1} spacing={2}>
+                <CustomHiveIcon color="lime" />
                 <Text
-                  as="a"
-                  href="https://www.coingecko.com/en/coins/hive"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  color="blue.300"
-                  _hover={{ textDecoration: "underline", color: "blue.400" }}
-                  ml={1}
-                  display="inline"
+                  fontWeight="bold"
+                  fontSize={{ base: "md", md: "lg" }}
+                  color="gray.100"
                 >
-                  CoinGecko
+                  HBD
                 </Text>
-              </Text>
+              </HStack>
+              <Box display="flex" flexDirection="column" alignItems="center">
+                <Text
+                  fontSize={{ base: "2xl", md: "4xl" }}
+                  fontWeight="extrabold"
+                  color="green.200"
+                >
+                  {isPriceLoading
+                    ? "Loading..."
+                    : hbdPrice !== null
+                    ? `${hbdPrice.toFixed(3)} USD`
+                    : "N/A"}
+                </Text>
+                <Text fontSize="sm" color="gray.400" textAlign="center">
+                  HBD price by
+                  <Text
+                    as="a"
+                    href="https://www.coingecko.com/en/coins/hive_dollar"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    color="blue.300"
+                    _hover={{ textDecoration: "underline", color: "blue.400" }}
+                    ml={1}
+                    display="inline"
+                  >
+                    CoinGecko
+                  </Text>
+                </Text>
+              </Box>
             </Box>
           </Box>
-          {/* HBD Market Stat */}
-          <Box mb={4}>
-            <HStack align="center" justify="center" mb={1} spacing={2}>
-              <CustomHiveIcon color="lime" />
-              <Text
-                fontWeight="bold"
-                fontSize={{ base: "md", md: "lg" }}
-                color="gray.100"
+          <Box
+            p={4}
+            borderRadius="md"
+            bg="gray.800"
+            boxShadow="md"
+            width="100%"
+            maxW={{ base: "100%", md: "340px" }}
+            mx="auto"
+          >
+            <Text fontWeight="bold" fontSize="xl" mb={2} color="lime">
+              Swap
+            </Text>
+            <Text fontSize="sm" mb={3}>
+              Need more options? <a href="https://hive-engine.com/?p=market&t=SWAP.HIVE" target="_blank" rel="noopener noreferrer" style={{ color: theme.colors.primary, textDecoration: 'underline' }}>Try Hive Engine Swap</a>
+            </Text>
+            <Stack direction="row" spacing={4} align="center" mb={3}>
+              <Text fontWeight="medium">Direction:</Text>
+              <Button
+                size="sm"
+                variant={convertDirection === 'HIVE_TO_HBD' ? 'solid' : 'outline'}
+                colorScheme="teal"
+                onClick={() => setConvertDirection('HIVE_TO_HBD')}
               >
-                HBD
-              </Text>
-            </HStack>
-            <Box display="flex" flexDirection="column" alignItems="center">
-              <Text
-                fontSize={{ base: "2xl", md: "4xl" }}
-                fontWeight="extrabold"
-                color="green.200"
+                HIVE → HBD
+              </Button>
+              <Button
+                size="sm"
+                variant={convertDirection === 'HBD_TO_HIVE' ? 'solid' : 'outline'}
+                colorScheme="teal"
+                onClick={() => setConvertDirection('HBD_TO_HIVE')}
               >
-                {isPriceLoading
-                  ? "Loading..."
-                  : hbdPrice !== null
-                  ? `${hbdPrice.toFixed(3)} USD`
-                  : "N/A"}
-              </Text>
-              <Text fontSize="sm" color="gray.400" textAlign="center">
-                HBD price by
-                <Text
-                  as="a"
-                  href="https://www.coingecko.com/en/coins/hive_dollar"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  color="blue.300"
-                  _hover={{ textDecoration: "underline", color: "blue.400" }}
-                  ml={1}
-                  display="inline"
-                >
-                  CoinGecko
-                </Text>
-              </Text>
-            </Box>
+                HBD → HIVE
+              </Button>
+            </Stack>
+            <Input
+              type="number"
+              placeholder="Amount"
+              value={convertAmount}
+              onChange={e => setConvertAmount(e.target.value)}
+              min={0}
+              width="100%"
+              mb={3}
+            />
+            <Button
+              colorScheme="teal"
+              width="100%"
+              onClick={() => handleModalOpen(
+                "Convert HIVE",
+                undefined,
+                false,
+                false
+              )}
+              isDisabled={!convertAmount || isNaN(Number(convertAmount)) || Number(convertAmount) <= 0}
+            >
+              Swap
+            </Button>
           </Box>
-        </Box>
+        </VStack>
       </Grid>
+      {modalContent && (
+        <WalletModal
+          isOpen={isOpen}
+          onClose={onClose}
+          title={modalContent.title}
+          description={modalContent.description}
+          showMemoField={modalContent.showMemoField}
+          showUsernameField={modalContent.showUsernameField}
+          onConfirm={handleConfirm}
+        />
+      )}
     </>
   );
 }
