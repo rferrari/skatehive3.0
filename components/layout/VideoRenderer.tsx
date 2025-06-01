@@ -515,7 +515,7 @@ const VideoRenderer = ({ src, ...props }: RendererProps) => {
           videoDuration={videoRef.current?.duration}
           progressSliderStyle={progressSliderStyle}
           volumeSliderStyle={volumeSliderStyle}
-          videoRef={videoRef}
+          videoRef={videoRef as React.RefObject<HTMLVideoElement>}
         />
       )}
     </Box>

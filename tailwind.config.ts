@@ -5,6 +5,7 @@ const config: Config = {
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./node_modules/@aioha/react-ui/dist/**/*.{js,ts,jsx,tsx,css}", // Add this line to include aioha styles
   ],
   theme: {
     extend: {
