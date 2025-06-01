@@ -11,7 +11,7 @@
   "dependencies": {
     "@aioha/aioha": "^1.6.0",
     "@aioha/react-ui": "^1.6.0",
-    "@chakra-ui/icons": "^2.0.17",
+    "@chakra-ui/icons": "^2.2.4",
     "@chakra-ui/react": "^2.10.9",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
@@ -24,7 +24,7 @@
     "@hiveio/dhive": "1.3.2",
     "@uiw/react-markdown-preview": "^5.1.4",
     "@uiw/react-md-editor": "^4.0.7",
-    "framer-motion": "^12.15.0",
+    "framer-motion": "^6.5.1",
     "keychain-sdk": "^0.9.4",
     "next": "15.3.2",
     "nextjs": "link:",
@@ -38,7 +38,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.8",
-    "@types/node": "^22.15.21",
+    "@types/node": "^22.15.29",
     "@types/nodemailer": "^6.4.17",
     "@types/react": "^19.1.6",
     "@types/react-dom": "^19.1.5",

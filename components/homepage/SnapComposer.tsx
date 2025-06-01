@@ -17,9 +17,8 @@ import {
 } from "@chakra-ui/react";
 import { useAioha } from "@aioha/react-ui";
 import GiphySelector from "./GiphySelector";
-import VideoUploader from "./VideoUploader";
+import VideoUploader, { VideoUploaderRef } from "./VideoUploader";
 import { IGif } from "@giphy/js-types";
-import { CloseIcon } from "@chakra-ui/icons";
 import { FaImage } from "react-icons/fa";
 import { MdGif } from "react-icons/md";
 import { Discussion } from "@hiveio/dhive";
@@ -29,6 +28,7 @@ import {
   uploadImage,
 } from "@/lib/hive/client-functions";
 import { FaVideo } from "react-icons/fa6";
+import { FaTimes } from "react-icons/fa";
 
 interface SnapComposerProps {
   pa: string;
@@ -54,6 +54,7 @@ export default function SnapComposer({
   const [uploadProgress, setUploadProgress] = useState<number[]>([]);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const videoUploaderRef = useRef<VideoUploaderRef>(null);
 
   const buttonText = post ? "Reply" : "Post";
 
@@ -252,16 +253,16 @@ export default function SnapComposer({
             hidden
           />
           <Button
-            as="label"
             variant="ghost"
             isDisabled={isLoading}
             border="2px solid transparent"
             _hover={{ borderColor: "var(--chakra-colors-tb1, #00FF00)" }}
             _active={{ borderColor: "var(--chakra-colors-tb1, #00FF00)" }}
+            onClick={() => videoUploaderRef.current?.trigger()}
           >
             <FaVideo size={22} />
-            <VideoUploader onUpload={setVideoUrl} />
           </Button>
+          <VideoUploader ref={videoUploaderRef} onUpload={setVideoUrl} isProcessing={isLoading} />
         </HStack>
         <Button
           variant="solid"
@@ -283,7 +284,7 @@ export default function SnapComposer({
             />
             <IconButton
               aria-label="Remove image"
-              icon={<CloseIcon />}
+              icon={<FaTimes />}
               size="xs"
               position="absolute"
               top="0"
@@ -313,7 +314,7 @@ export default function SnapComposer({
             />
             <IconButton
               aria-label="Remove GIF"
-              icon={<CloseIcon />}
+              icon={<FaTimes />}
               size="xs"
               position="absolute"
               top="0"
@@ -340,7 +341,7 @@ export default function SnapComposer({
             />
             <IconButton
               aria-label="Remove video"
-              icon={<CloseIcon />}
+              icon={<FaTimes />}
               size="xs"
               position="absolute"
               top="0"

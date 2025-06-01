@@ -29,7 +29,7 @@ import {
   getCommunityInfo,
   getProfile,
 } from "@/lib/hive/client-functions";
-import { animate, color, motion, px } from "framer-motion";
+import { animate, motion } from "framer-motion";
 import { FaGear } from "react-icons/fa6";
 import { FaMailBulk } from "react-icons/fa";
 import { KeyTypes } from "@aioha/aioha";
@@ -182,12 +182,14 @@ export default function Sidebar({ newNotificationCount = 0 }) {
                 justifyContent="flex-start"
                 leftIcon={
                   bellAnimating ? (
-                    <motion.div
+                    <Box
+                      as={motion.div}
                       animate={{ rotate: [0, 45, 0, -45, 0] }}
-                      transition={{ duration: 0.6, repeat: Infinity }}
+                      transition={{ duration: 0.6, repeat: Infinity } as any}
+                      display="inline-block"
                     >
                       <Icon as={FiBell} boxSize={4} color="primary" />
-                    </motion.div>
+                    </Box>
                   ) : (
                     <Icon as={FiBell} boxSize={4} color="primary" />
                   )

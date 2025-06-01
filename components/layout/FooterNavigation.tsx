@@ -82,12 +82,14 @@ export default function FooterNavigation({ newNotificationCount = 0 }) {
                 variant="ghost"
                 leftIcon={
                   newNotificationCount > 0 ? (
-                    <motion.div
+                    <Box
+                      as={motion.div}
                       animate={{ rotate: [0, 45, 0, -45, 0] }}
-                      transition={{ duration: 0.6, repeat: Infinity }}
+                      transition={{ duration: 0.6, repeat: Infinity } as any}
+                      display="inline-block"
                     >
                       <Icon as={FiBell} boxSize={4} color="primary" />
-                    </motion.div>
+                    </Box>
                   ) : (
                     <Icon as={FiBell} boxSize={4} color="primary" />
                   )

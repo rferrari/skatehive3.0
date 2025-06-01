@@ -1,99 +1,97 @@
-import React, { useRef, useState } from "react";
-import { IconButton, Spinner } from "@chakra-ui/react";
-import { FaVideo } from "react-icons/fa6";
+import React, { useRef, useImperativeHandle, forwardRef } from "react";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile } from "@ffmpeg/util";
 
 interface VideoUploaderProps {
   onUpload: (url: string | null) => void;
+  isProcessing?: boolean;
 }
 
-const VideoUploader: React.FC<VideoUploaderProps> = ({ onUpload }) => {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const ffmpegRef = useRef<any>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
+export interface VideoUploaderRef {
+  trigger: () => void;
+}
 
-  const compressVideo = async (file: File): Promise<Blob> => {
-    if (!ffmpegRef.current) {
-      ffmpegRef.current = new FFmpeg();
-      await ffmpegRef.current.load();
-    }
-    const ffmpeg = ffmpegRef.current;
-    await ffmpeg.writeFile(file.name, await fetchFile(file));
-    await ffmpeg.exec([
-      "-i", file.name,
-      "-vcodec", "libx264",
-      "-crf", "28",
-      "-preset", "veryfast",
-      "output.mp4"
-    ]);
-    const data = await ffmpeg.readFile("output.mp4");
-    return new Blob([data.buffer], { type: "video/mp4" });
-  };
+const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
+  ({ onUpload, isProcessing = false }, ref) => {
+    const inputRef = useRef<HTMLInputElement>(null);
+    const ffmpegRef = useRef<any>(null);
 
-  const handleVideoUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = event.target.files?.[0];
-    if (!file) {
-      console.log("No file selected.");
-      return;
-    }
-    setIsProcessing(true);
-    try {
-      // Compress video
-      const compressedBlob = await compressVideo(file);
-      const compressedFile = new File([compressedBlob], "compressed.mp4", {
-        type: "video/mp4",
-      });
-      const formData = new FormData();
-      formData.append("file", compressedFile);
-      // Upload to Pinata
-      const response = await fetch("/api/pinata", {
-        method: "POST",
-        body: formData,
-      });
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Failed to upload video. Response:", errorText);
-        onUpload(null);
-        setIsProcessing(false);
+    useImperativeHandle(ref, () => ({
+      trigger: () => {
+        if (inputRef.current && !isProcessing) {
+          inputRef.current.value = ""; // reset so same file can be selected again
+          inputRef.current.click();
+        }
+      },
+    }));
+
+    const compressVideo = async (file: File): Promise<Blob> => {
+      if (!ffmpegRef.current) {
+        ffmpegRef.current = new FFmpeg();
+        await ffmpegRef.current.load();
+      }
+      const ffmpeg = ffmpegRef.current;
+      await ffmpeg.writeFile(file.name, await fetchFile(file));
+      await ffmpeg.exec([
+        "-i", file.name,
+        "-vcodec", "libx264",
+        "-crf", "28",
+        "-preset", "veryfast",
+        "output.mp4"
+      ]);
+      const data = await ffmpeg.readFile("output.mp4");
+      return new Blob([data.buffer], { type: "video/mp4" });
+    };
+
+    const handleVideoUpload = async (
+      event: React.ChangeEvent<HTMLInputElement>
+    ) => {
+      const file = event.target.files?.[0];
+      if (!file) {
+        console.log("No file selected.");
         return;
       }
-      const result = await response.json();
-      const videoUrl = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`;
-      onUpload(videoUrl);
-    } catch (error) {
-      console.error("Error during file upload:", error);
-      onUpload(null);
-    }
-    setIsProcessing(false);
-  };
+      try {
+        // Compress video
+        const compressedBlob = await compressVideo(file);
+        const compressedFile = new File([compressedBlob], "compressed.mp4", {
+          type: "video/mp4",
+        });
+        const formData = new FormData();
+        formData.append("file", compressedFile);
+        // Upload to Pinata
+        const response = await fetch("/api/pinata", {
+          method: "POST",
+          body: formData,
+        });
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Failed to upload video. Response:", errorText);
+          onUpload(null);
+          return;
+        }
+        const result = await response.json();
+        const videoUrl = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`;
+        onUpload(videoUrl);
+      } catch (error) {
+        console.error("Error during file upload:", error);
+        onUpload(null);
+      }
+    };
 
-  const triggerFileInput = () => {
-    if (inputRef.current) {
-      inputRef.current.click();
-    }
-  };
-
-  return (
-    <>
+    return (
       <input
         type="file"
         accept="video/*"
         ref={inputRef}
         style={{ display: "none" }}
         onChange={handleVideoUpload}
+        disabled={isProcessing}
       />
-      <IconButton
-        icon={isProcessing ? <Spinner size="sm" /> : <FaVideo />}
-        aria-label="Upload Video"
-        onClick={triggerFileInput}
-        isDisabled={isProcessing}
-        variant="ghost"
-      />
-    </>
-  );
-};
+    );
+  }
+);
+
+VideoUploader.displayName = "VideoUploader";
 
 export default VideoUploader;
