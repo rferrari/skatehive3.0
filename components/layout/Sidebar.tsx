@@ -8,17 +8,6 @@ import {
   Image,
   Flex,
   useColorMode,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalCloseButton,
-  useDisclosure,
-  HStack,
-  Text,
-  Spinner,
-  ModalFooter,
 } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
 import { AiohaModal, useAioha } from "@aioha/react-ui";
@@ -29,7 +18,10 @@ import { FaGear } from "react-icons/fa6";
 import { FaMailBulk } from "react-icons/fa";
 import { KeyTypes } from "@aioha/aioha";
 import "@aioha/react-ui/dist/build.css";
-import { useAccount, useConnect, useDisconnect } from "wagmi";
+import { useAccount } from "wagmi";
+import ConnectButton from "../wallet/ConnectButton";
+import ConnectModal from "../wallet/ConnectModal";
+import { useDisclosure } from "@chakra-ui/react";
 
 const communityTag = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG;
 
@@ -39,8 +31,6 @@ export default function Sidebar({ newNotificationCount = 0 }) {
   const { colorMode } = useColorMode();
   const [modalDisplayed, setModalDisplayed] = useState(false);
   const [bellAnimating, setBellAnimating] = useState(false);
-  const { connect, connectors, status } = useConnect();
-  const { disconnect } = useDisconnect();
   const { isConnected, connector: activeConnector } = useAccount();
   const {
     isOpen: isConnectModalOpen,
@@ -52,17 +42,11 @@ export default function Sidebar({ newNotificationCount = 0 }) {
     setBellAnimating(newNotificationCount > 0);
   }, [newNotificationCount]);
 
-  // Debug: log connectors to console
-  useEffect(() => {
-    console.log("Wagmi connectors:", connectors);
-  }, [connectors]);
-
   const handleNavigation = (path: string) => {
     try {
-      console.log("Navigating to:", path);
       router.push(path);
     } catch (error) {
-      console.error("Navigation error:", error);
+      // Navigation error
     }
   };
 
@@ -79,8 +63,6 @@ export default function Sidebar({ newNotificationCount = 0 }) {
           display: "none",
         },
         scrollbarWidth: "none",
-        // boxShadow: '1px 0 3px rgba(0, 0, 0, 0.1)', // Reduced shadow
-        // backdropFilter: 'blur(5px)', // Added blur
       }}
     >
       <Flex direction="column" justify="space-between" height="100%">
@@ -211,7 +193,7 @@ export default function Sidebar({ newNotificationCount = 0 }) {
               keyType: KeyTypes.Posting,
               loginTitle: "Login",
             }}
-            onLogin={console.log}
+            onLogin={() => {}}
             onClose={() => setModalDisplayed(false)}
           />
         </div>
@@ -226,60 +208,8 @@ export default function Sidebar({ newNotificationCount = 0 }) {
           {user ? "Logout" : "Login"}
         </Button>
         <div>
-          {isConnected ? (
-            <Button onClick={() => disconnect()} w="full" mb={4}>
-              Disconnect ({activeConnector?.name})
-            </Button>
-          ) : (
-            <>
-              <Button onClick={openConnectModal} w="full" mb={4}>
-                Connect Ethereum Wallet
-              </Button>
-              <Modal
-                isOpen={isConnectModalOpen}
-                onClose={closeConnectModal}
-                isCentered
-              >
-                <ModalOverlay />
-                <ModalContent bg={"background"} color="text">
-                  <ModalHeader>Select Wallet</ModalHeader>
-                  <ModalCloseButton />
-                  <ModalBody>
-                    <VStack spacing={3} align="stretch">
-                      {connectors.map((connector) => (
-                        <Button
-                          key={connector.id}
-                          onClick={() => connect({ connector })}
-                          color={"primary"}
-                          variant="outline"
-                          leftIcon={
-                            connector.icon ? (
-                              <Image
-                                src={connector.icon}
-                                alt={connector.name}
-                                boxSize={5}
-                              />
-                            ) : undefined
-                          }
-                          justifyContent="flex-start"
-                        >
-                          <HStack w="full" justify="space-between">
-                            <Text>{connector.name}</Text>
-                            {status === "pending" && <Spinner size="sm" />}
-                          </HStack>
-                        </Button>
-                      ))}
-                    </VStack>
-                  </ModalBody>
-                  <ModalFooter>
-                    <Button onClick={closeConnectModal} colorScheme="blue">
-                      Close
-                    </Button>
-                  </ModalFooter>
-                </ModalContent>
-              </Modal>
-            </>
-          )}
+          <ConnectButton onOpen={openConnectModal} />
+          <ConnectModal isOpen={isConnectModalOpen} onClose={closeConnectModal} />
         </div>
       </Flex>
     </Box>
