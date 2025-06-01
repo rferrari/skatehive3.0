@@ -6,101 +6,37 @@ import {
   Button,
   Icon,
   Image,
-  Spinner,
   Flex,
-  Text,
   useColorMode,
-  transition,
 } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
 import { AiohaModal, useAioha } from "@aioha/react-ui";
-import {
-  FiHome,
-  FiBell,
-  FiUser,
-  FiShoppingCart,
-  FiBook,
-  FiMap,
-} from "react-icons/fi";
+import { FiHome, FiBell, FiUser, FiBook, FiMap } from "react-icons/fi";
 import { FaPiggyBank } from "react-icons/fa";
-import { Notifications } from "@hiveio/dhive";
-import {
-  fetchNewNotifications,
-  getCommunityInfo,
-  getProfile,
-} from "@/lib/hive/client-functions";
-import { animate, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { FaGear } from "react-icons/fa6";
 import { FaMailBulk } from "react-icons/fa";
 import { KeyTypes } from "@aioha/aioha";
 import "@aioha/react-ui/dist/build.css";
-
-interface ProfileInfo {
-  metadata: {
-    profile: {
-      profile_image: string; // Profile-specific image
-    };
-  };
-}
-
-interface CommunityInfo {
-  title: string;
-  about: string;
-  // No avatar_url since it's not used
-}
+import { useAccount } from "wagmi";
+import ConnectButton from "../wallet/ConnectButton";
+import ConnectModal from "../wallet/ConnectModal";
+import { useDisclosure } from "@chakra-ui/react";
 
 const communityTag = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG;
 
 export default function Sidebar({ newNotificationCount = 0 }) {
   const { user } = useAioha();
   const router = useRouter();
-  // const [notifications, setNotifications] = useState<Notifications[]>([]);
-  // const [communityInfo, setCommunityInfo] = useState<CommunityInfo | null>(null);
-  // const [profileInfo, setProfileInfo] = useState<ProfileInfo | null>(null); // State to hold profile info
-  // const [loading, setLoading] = useState(true); // Loading state
   const { colorMode } = useColorMode();
   const [modalDisplayed, setModalDisplayed] = useState(false);
   const [bellAnimating, setBellAnimating] = useState(false);
-
-  // useEffect(() => {
-  //     const loadNotifications = async () => {
-  //         if (user) {
-  //             try {
-  //                 const newNotifications = await fetchNewNotifications(user);
-  //                 setNotifications(newNotifications);
-  //             } catch (error) {
-  //                 console.error("Failed to fetch notifications:", error);
-  //             }
-  //         }
-  //     };
-
-  //     loadNotifications();
-  // }, [user]);
-
-  // useEffect(() => {
-  //     const fetchData = async () => {
-  //         setLoading(true);
-  //         if (communityTag) {
-  //             try {
-  //                 // Fetching community data
-  //                 const communityData = await getCommunityInfo(communityTag);
-  //                 sessionStorage.setItem('communityData', JSON.stringify(communityData));
-  //                 setCommunityInfo(communityData);
-
-  //                 // Fetching profile data
-  //                 const profileData = await getProfile(communityTag);
-  //                 sessionStorage.setItem('profileData', JSON.stringify(profileData));
-  //                 setProfileInfo(profileData);
-  //             } catch (error) {
-  //                 console.error('Failed to fetch data', error);
-  //             } finally {
-  //                 setLoading(false);
-  //             }
-  //         }
-  //     };
-
-  //     fetchData();
-  // }, [communityTag]);
+  const { isConnected, connector: activeConnector } = useAccount();
+  const {
+    isOpen: isConnectModalOpen,
+    onOpen: openConnectModal,
+    onClose: closeConnectModal,
+  } = useDisclosure();
 
   useEffect(() => {
     setBellAnimating(newNotificationCount > 0);
@@ -108,10 +44,9 @@ export default function Sidebar({ newNotificationCount = 0 }) {
 
   const handleNavigation = (path: string) => {
     try {
-      console.log("Navigating to:", path);
       router.push(path);
     } catch (error) {
-      console.error("Navigation error:", error);
+      // Navigation error
     }
   };
 
@@ -128,8 +63,6 @@ export default function Sidebar({ newNotificationCount = 0 }) {
           display: "none",
         },
         scrollbarWidth: "none",
-        // boxShadow: '1px 0 3px rgba(0, 0, 0, 0.1)', // Reduced shadow
-        // backdropFilter: 'blur(5px)', // Added blur
       }}
     >
       <Flex direction="column" justify="space-between" height="100%">
@@ -260,7 +193,7 @@ export default function Sidebar({ newNotificationCount = 0 }) {
               keyType: KeyTypes.Posting,
               loginTitle: "Login",
             }}
-            onLogin={console.log}
+            onLogin={() => {}}
             onClose={() => setModalDisplayed(false)}
           />
         </div>
@@ -274,6 +207,10 @@ export default function Sidebar({ newNotificationCount = 0 }) {
         >
           {user ? "Logout" : "Login"}
         </Button>
+        <div>
+          <ConnectButton onOpen={openConnectModal} />
+          <ConnectModal isOpen={isConnectModalOpen} onClose={closeConnectModal} />
+        </div>
       </Flex>
     </Box>
   );
