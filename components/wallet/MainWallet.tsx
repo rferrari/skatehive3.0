@@ -17,6 +17,8 @@ import {
   Input,
   Button,
   VStack,
+  Image,
+  Badge,
 } from "@chakra-ui/react";
 import {
   FaExchangeAlt,
@@ -62,8 +64,10 @@ export default function MainWallet({ username }: MainWalletProps) {
   const [hivePrice, setHivePrice] = useState<number | null>(null);
   const [hbdPrice, setHbdPrice] = useState<number | null>(null);
   const [isPriceLoading, setIsPriceLoading] = useState(true);
-  const [convertDirection, setConvertDirection] = useState<'HIVE_TO_HBD' | 'HBD_TO_HIVE'>('HIVE_TO_HBD');
-  const [convertAmount, setConvertAmount] = useState('');
+  const [convertDirection, setConvertDirection] = useState<
+    "HIVE_TO_HBD" | "HBD_TO_HIVE"
+  >("HIVE_TO_HBD");
+  const [convertAmount, setConvertAmount] = useState("");
 
   useEffect(() => {
     const fetchHivePower = async () => {
@@ -116,7 +120,7 @@ export default function MainWallet({ username }: MainWalletProps) {
 
   async function handleConfirm(
     amount: number,
-    direction?: 'HIVE_TO_HBD' | 'HBD_TO_HIVE',
+    direction?: "HIVE_TO_HBD" | "HBD_TO_HIVE",
     username?: string,
     memo?: string
   ) {
@@ -133,7 +137,7 @@ export default function MainWallet({ username }: MainWalletProps) {
         await aioha.stakeHive(amount);
         break;
       case "Convert HIVE":
-        if (direction === 'HIVE_TO_HBD') {
+        if (direction === "HIVE_TO_HBD") {
           // HIVE to HBD
           aioha.signAndBroadcastTx(
             [
@@ -141,7 +145,9 @@ export default function MainWallet({ username }: MainWalletProps) {
                 "convert",
                 {
                   owner: user,
-                  requestid: Math.floor(1000000000 + Math.random() * 9000000000),
+                  requestid: Math.floor(
+                    1000000000 + Math.random() * 9000000000
+                  ),
                   amount: {
                     amount: amount.toFixed(3),
                     precision: 3,
@@ -152,7 +158,7 @@ export default function MainWallet({ username }: MainWalletProps) {
             ],
             KeyTypes.Active
           );
-        } else if (direction === 'HBD_TO_HIVE') {
+        } else if (direction === "HBD_TO_HIVE") {
           // HBD to HIVE
           aioha.signAndBroadcastTx(
             [
@@ -160,7 +166,9 @@ export default function MainWallet({ username }: MainWalletProps) {
                 "convert",
                 {
                   owner: user,
-                  requestid: Math.floor(1000000000 + Math.random() * 9000000000),
+                  requestid: Math.floor(
+                    1000000000 + Math.random() * 9000000000
+                  ),
                   amount: {
                     amount: amount.toFixed(3),
                     precision: 3,
@@ -311,7 +319,7 @@ export default function MainWallet({ username }: MainWalletProps) {
           {/* Staked HIVE - Hive Power (HP) */}
           <Box mb={8}>
             <Box
-              pl={{ base: 2, md: 6 }}
+              pl={{ base: 0, md: 0 }}
               borderLeft="none"
               borderColor="none"
               mb={4}
@@ -321,7 +329,16 @@ export default function MainWallet({ username }: MainWalletProps) {
                 mb={1}
                 align="center"
               >
-                <Text fontWeight="bold">Staked HIVE - Hive Power (HP)</Text>
+                <Image
+                  src="/images/hp_logo.png"
+                  alt="Skatehive Logo"
+                  width="6"
+                  height="6"
+                  style={{ marginTop: 4 }}
+                />
+                <Text fontSize={{ base: "lg", md: "2xl" }} fontWeight="bold">
+                  HIVE POWER (HP)
+                </Text>
                 <Box flex={1} display={{ base: "none", md: "block" }} />
                 <Text
                   fontSize={{ base: "xl", md: "3xl" }}
@@ -346,7 +363,12 @@ export default function MainWallet({ username }: MainWalletProps) {
                         handleModalOpen("Power Down", "Unstake Hive Power")
                       }
                     >
-                      <Icon as={FaArrowDown} boxSize={4} mr={1} color={theme.colors.primary} />
+                      <Icon
+                        as={FaArrowDown}
+                        boxSize={4}
+                        mr={1}
+                        color={theme.colors.primary}
+                      />
                     </Box>
                   </Tooltip>
                 </HStack>
@@ -402,7 +424,12 @@ export default function MainWallet({ username }: MainWalletProps) {
                       )
                     }
                   >
-                    <Icon as={FaPaperPlane} boxSize={4} mr={1} color={theme.colors.primary} />
+                    <Icon
+                      as={FaPaperPlane}
+                      boxSize={4}
+                      mr={1}
+                      color={theme.colors.primary}
+                    />
                   </Box>
                 </Tooltip>
                 <Tooltip label="Power Up" hasArrow>
@@ -420,7 +447,12 @@ export default function MainWallet({ username }: MainWalletProps) {
                       handleModalOpen("Power Up", "Power Up your HIVE to HP")
                     }
                   >
-                    <Icon as={FaArrowUp} boxSize={4} mr={1} color={theme.colors.primary} />
+                    <Icon
+                      as={FaArrowUp}
+                      boxSize={4}
+                      mr={1}
+                      color={theme.colors.primary}
+                    />
                   </Box>
                 </Tooltip>
               </HStack>
@@ -469,7 +501,12 @@ export default function MainWallet({ username }: MainWalletProps) {
                       )
                     }
                   >
-                    <Icon as={FaPaperPlane} boxSize={4} mr={1} color={theme.colors.primary} />
+                    <Icon
+                      as={FaPaperPlane}
+                      boxSize={4}
+                      mr={1}
+                      color={theme.colors.primary}
+                    />
                   </Box>
                 </Tooltip>
                 <Tooltip label="Send HBD to Savings" hasArrow>
@@ -487,7 +524,12 @@ export default function MainWallet({ username }: MainWalletProps) {
                       handleModalOpen("HBD Savings", "Send HBD to Savings")
                     }
                   >
-                    <Icon as={FaArrowDown} boxSize={4} mr={1} color={theme.colors.primary} />
+                    <Icon
+                      as={FaArrowDown}
+                      boxSize={4}
+                      mr={1}
+                      color={theme.colors.primary}
+                    />
                   </Box>
                 </Tooltip>
               </HStack>
@@ -530,13 +572,22 @@ export default function MainWallet({ username }: MainWalletProps) {
                       fontWeight="bold"
                       _hover={{ bg: "teal.600" }}
                     >
-                      <Icon as={FaArrowUp} boxSize={4} mr={1} color={theme.colors.primary} />
+                      <Icon
+                        as={FaArrowUp}
+                        boxSize={4}
+                        mr={1}
+                        color={theme.colors.primary}
+                      />
                     </Box>
                   </Tooltip>
                 </HStack>
               </Stack>
               <Text color="gray.400">
-                Staked HBD generates 15.00% APR (defined by the{" "}
+                Staked HBD generates{" "}
+                <Badge colorScheme="green" fontSize="sm" px={1} py={0}>
+                  15.00% APR
+                </Badge>{" "}
+                (defined by the{" "}
                 <Text
                   as="a"
                   href="https://peakd.com/me/witnesses"
@@ -561,7 +612,13 @@ export default function MainWallet({ username }: MainWalletProps) {
           </Box>
         </Box>
         {/* Right: Market Stats and Swap */}
-        <VStack spacing={4} align="stretch" maxW={{ base: "100%", md: "340px" }} mx="auto" mb={{ base: 24, md: 0 }}>
+        <VStack
+          spacing={4}
+          align="stretch"
+          maxW={{ base: "100%", md: "340px" }}
+          mx="auto"
+          mb={{ base: 24, md: 0 }}
+        >
           <Box
             p={{ base: 2, md: 4 }}
             border="none"
@@ -597,7 +654,12 @@ export default function MainWallet({ username }: MainWalletProps) {
                   onClick={() => router.push("https://hivedex.io/")}
                   ml={2}
                 >
-                  <Icon as={FaStore} boxSize={4} mr={1} color={theme.colors.primary} />
+                  <Icon
+                    as={FaStore}
+                    boxSize={4}
+                    mr={1}
+                    color={theme.colors.primary}
+                  />
                 </Box>
               </Tooltip>
             </Box>
@@ -697,23 +759,38 @@ export default function MainWallet({ username }: MainWalletProps) {
               Swap
             </Text>
             <Text fontSize="sm" mb={3}>
-              Need more options? <a href="https://hive-engine.com/?p=market&t=SWAP.HIVE" target="_blank" rel="noopener noreferrer" style={{ color: theme.colors.primary, textDecoration: 'underline' }}>Try Hive Engine Swap</a>
+              Need more options?{" "}
+              <a
+                href="https://hive-engine.com/?p=market&t=SWAP.HIVE"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  color: theme.colors.primary,
+                  textDecoration: "underline",
+                }}
+              >
+                Try Hive Engine Swap
+              </a>
             </Text>
             <Stack direction="row" spacing={4} align="center" mb={3}>
               <Text fontWeight="medium">Direction:</Text>
               <Button
                 size="sm"
-                variant={convertDirection === 'HIVE_TO_HBD' ? 'solid' : 'outline'}
+                variant={
+                  convertDirection === "HIVE_TO_HBD" ? "solid" : "outline"
+                }
                 colorScheme="teal"
-                onClick={() => setConvertDirection('HIVE_TO_HBD')}
+                onClick={() => setConvertDirection("HIVE_TO_HBD")}
               >
                 HIVE → HBD
               </Button>
               <Button
                 size="sm"
-                variant={convertDirection === 'HBD_TO_HIVE' ? 'solid' : 'outline'}
+                variant={
+                  convertDirection === "HBD_TO_HIVE" ? "solid" : "outline"
+                }
                 colorScheme="teal"
-                onClick={() => setConvertDirection('HBD_TO_HIVE')}
+                onClick={() => setConvertDirection("HBD_TO_HIVE")}
               >
                 HBD → HIVE
               </Button>
@@ -722,7 +799,7 @@ export default function MainWallet({ username }: MainWalletProps) {
               type="number"
               placeholder="Amount"
               value={convertAmount}
-              onChange={e => setConvertAmount(e.target.value)}
+              onChange={(e) => setConvertAmount(e.target.value)}
               min={0}
               width="100%"
               mb={3}
@@ -730,13 +807,14 @@ export default function MainWallet({ username }: MainWalletProps) {
             <Button
               colorScheme="teal"
               width="100%"
-              onClick={() => handleModalOpen(
-                "Convert HIVE",
-                undefined,
-                false,
-                false
-              )}
-              isDisabled={!convertAmount || isNaN(Number(convertAmount)) || Number(convertAmount) <= 0}
+              onClick={() =>
+                handleModalOpen("Convert HIVE", undefined, false, false)
+              }
+              isDisabled={
+                !convertAmount ||
+                isNaN(Number(convertAmount)) ||
+                Number(convertAmount) <= 0
+              }
             >
               Swap
             </Button>
