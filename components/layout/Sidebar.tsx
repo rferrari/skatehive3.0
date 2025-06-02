@@ -8,6 +8,8 @@ import {
   Image,
   Flex,
   useColorMode,
+  useColorModeValue,
+  useToken,
 } from "@chakra-ui/react";
 import { useRouter, usePathname } from "next/navigation";
 import { AiohaModal, useAioha } from "@aioha/react-ui";
@@ -36,6 +38,9 @@ export default function Sidebar({ newNotificationCount = 0 }) {
     onOpen: openConnectModal,
     onClose: closeConnectModal,
   } = useDisclosure();
+
+  const [primaryBg] = useToken("colors", ["primary"]);
+  const hoverTextColor = "black";
 
   useEffect(() => {
     setBellAnimating(newNotificationCount > 0);
@@ -86,6 +91,10 @@ export default function Sidebar({ newNotificationCount = 0 }) {
             leftIcon={<Icon as={FiHome} boxSize={4} />}
             px={1}
             mt={4}
+            _hover={{
+              bg: primaryBg,
+              color: hoverTextColor,
+            }}
           >
             Home
           </Button>
@@ -96,6 +105,10 @@ export default function Sidebar({ newNotificationCount = 0 }) {
             justifyContent="flex-start"
             leftIcon={<Icon as={FiBook} boxSize={4} />}
             px={1}
+            _hover={{
+              bg: primaryBg,
+              color: hoverTextColor,
+            }}
           >
             Magazine
           </Button>
@@ -106,6 +119,10 @@ export default function Sidebar({ newNotificationCount = 0 }) {
             justifyContent="flex-start"
             leftIcon={<Icon as={FiMap} boxSize={4} />}
             px={1}
+            _hover={{
+              bg: primaryBg,
+              color: hoverTextColor,
+            }}
           >
             Skatespots
           </Button>
@@ -124,13 +141,17 @@ export default function Sidebar({ newNotificationCount = 0 }) {
                       transition={{ duration: 0.6, repeat: Infinity } as any}
                       display="inline-block"
                     >
-                      <Icon as={FiBell} boxSize={4} color="primary" />
+                      <Icon as={FiBell} boxSize={4} />
                     </Box>
                   ) : (
-                    <Icon as={FiBell} boxSize={4} color="primary" />
+                    <Icon as={FiBell} boxSize={4} />
                   )
                 }
                 px={1}
+                _hover={{
+                  bg: primaryBg,
+                  color: hoverTextColor,
+                }}
               >
                 Notifications
               </Button>
@@ -152,6 +173,10 @@ export default function Sidebar({ newNotificationCount = 0 }) {
                   )
                 }
                 px={1}
+                _hover={{
+                  bg: primaryBg,
+                  color: hoverTextColor,
+                }}
               >
                 Profile
               </Button>
@@ -162,6 +187,10 @@ export default function Sidebar({ newNotificationCount = 0 }) {
                 justifyContent="flex-start"
                 leftIcon={<Icon as={FaPiggyBank} boxSize={4} />}
                 px={1}
+                _hover={{
+                  bg: primaryBg,
+                  color: hoverTextColor,
+                }}
               >
                 Wallet
               </Button>
@@ -174,6 +203,10 @@ export default function Sidebar({ newNotificationCount = 0 }) {
             justifyContent="flex-start"
             leftIcon={<Icon as={FaGear} boxSize={4} />}
             px={1}
+            _hover={{
+              bg: primaryBg,
+              color: hoverTextColor,
+            }}
           >
             Settings
           </Button>
@@ -184,6 +217,10 @@ export default function Sidebar({ newNotificationCount = 0 }) {
             justifyContent="flex-start"
             leftIcon={<Icon as={FaMailBulk} boxSize={4} />}
             px={1}
+            _hover={{
+              bg: primaryBg,
+              color: hoverTextColor,
+            }}
           >
             Invite
           </Button>

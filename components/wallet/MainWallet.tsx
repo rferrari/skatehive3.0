@@ -44,6 +44,7 @@ import { useTheme } from "../../app/themeProvider";
 import ConnectButton from "../wallet/ConnectButton";
 import ConnectModal from "../wallet/ConnectModal";
 import { KeychainSDK } from "keychain-sdk";
+import { Asset } from "@hiveio/dhive";
 
 interface MainWalletProps {
   username: string;
@@ -77,6 +78,10 @@ export default function MainWallet({ username }: MainWalletProps) {
     "HIVE_TO_HBD" | "HBD_TO_HIVE"
   >("HIVE_TO_HBD");
   const [convertAmount, setConvertAmount] = useState("");
+
+  function assetToString(val: string | Asset): string {
+    return typeof val === "string" ? val : val.toString();
+  }
 
   useEffect(() => {
     const fetchHivePower = async () => {
@@ -284,7 +289,7 @@ export default function MainWallet({ username }: MainWalletProps) {
     return diff;
   }
 
-  const savingsHbdBalance = parseFloat(hiveAccount?.savings_hbd_balance || "0.000");
+  const savingsHbdBalance = parseFloat(String(hiveAccount?.savings_hbd_balance || "0.000"));
   const lastInterestPayment = hiveAccount?.savings_hbd_last_interest_payment;
   const APR = 0.15; // 15%
   let daysSinceLastPayment = 0;
@@ -340,16 +345,16 @@ export default function MainWallet({ username }: MainWalletProps) {
   }
 
   const balance = hiveAccount?.balance
-    ? extractNumber(String(hiveAccount.balance))
+    ? extractNumber(assetToString(hiveAccount.balance))
     : "N/A";
   const hbdBalance = hiveAccount?.hbd_balance
-    ? extractNumber(String(hiveAccount.hbd_balance))
+    ? extractNumber(assetToString(hiveAccount.hbd_balance))
     : "N/A";
   const savingsBalance = hiveAccount?.savings_balance
-    ? extractNumber(String(hiveAccount.savings_balance))
+    ? extractNumber(assetToString(hiveAccount.savings_balance))
     : "N/A";
   const hbdSavingsBalance = hiveAccount?.savings_hbd_balance
-    ? extractNumber(String(hiveAccount.savings_hbd_balance))
+    ? extractNumber(assetToString(hiveAccount.savings_hbd_balance))
     : "N/A";
 
   return (
