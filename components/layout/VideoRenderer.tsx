@@ -287,17 +287,29 @@ const VideoRenderer = ({ src, ...props }: RendererProps) => {
     }
   }, []);
 
-  const handlePlayPause = useCallback(() => {
+  const handlePlayPause = useCallback(async () => {
     if (videoRef.current) {
       if (progress >= 99.9) {
         // If video has ended, restart it
         videoRef.current.currentTime = 0;
-        videoRef.current.play();
-        setIsPlaying(true);
+        try {
+          await videoRef.current.play();
+          setIsPlaying(true);
+        } catch (err) {
+          // Optionally log: console.debug("Video play error:", err);
+        }
       } else {
-        // Normal play/pause toggle
-        isPlaying ? videoRef.current.pause() : videoRef.current.play();
-        setIsPlaying(!isPlaying);
+        if (isPlaying) {
+          videoRef.current.pause();
+          setIsPlaying(false);
+        } else {
+          try {
+            await videoRef.current.play();
+            setIsPlaying(true);
+          } catch (err) {
+            // Optionally log: console.debug("Video play error:", err);
+          }
+        }
       }
     }
   }, [isPlaying, progress]);
@@ -385,8 +397,12 @@ const VideoRenderer = ({ src, ...props }: RendererProps) => {
   const handleVideoEnded = useCallback(() => {
     if (isInView && videoRef.current) {
       videoRef.current.currentTime = 0;
-      videoRef.current.play();
-      setIsPlaying(true);
+      videoRef.current
+        .play()
+        .then(() => setIsPlaying(true))
+        .catch((err) => {
+          // Optionally log: console.debug("Video play error:", err);
+        });
     }
   }, [isInView]);
 
@@ -401,13 +417,28 @@ const VideoRenderer = ({ src, ...props }: RendererProps) => {
   }, [handleTimeUpdate]);
 
   useEffect(() => {
-    if (videoRef.current) {
+    const currentVideo = videoRef.current;
+    if (currentVideo) {
       if (isInView) {
-        videoRef.current.play();
-        setIsPlaying(true);
-        setShouldLoop(true);
+        if (currentVideo.paused) {
+          currentVideo
+            .play()
+            .then(() => {
+              setIsPlaying(true);
+              setShouldLoop(true);
+            })
+            .catch((err) => {
+              // Suppress play() errors (e.g., user gesture required)
+              // Optionally log: console.debug("Video play error:", err);
+            });
+        } else {
+          setIsPlaying(true);
+          setShouldLoop(true);
+        }
       } else {
-        videoRef.current.pause();
+        if (!currentVideo.paused) {
+          currentVideo.pause();
+        }
         setIsPlaying(false);
         setShouldLoop(false);
       }
