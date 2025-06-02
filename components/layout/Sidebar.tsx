@@ -9,7 +9,7 @@ import {
   Flex,
   useColorMode,
 } from "@chakra-ui/react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { AiohaModal, useAioha } from "@aioha/react-ui";
 import { FiHome, FiBell, FiUser, FiBook, FiMap } from "react-icons/fi";
 import { FaPiggyBank } from "react-icons/fa";
@@ -28,6 +28,7 @@ const communityTag = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG;
 export default function Sidebar({ newNotificationCount = 0 }) {
   const { user } = useAioha();
   const router = useRouter();
+  const pathname = usePathname();
   const { colorMode } = useColorMode();
   const [modalDisplayed, setModalDisplayed] = useState(false);
   const [bellAnimating, setBellAnimating] = useState(false);
@@ -44,6 +45,10 @@ export default function Sidebar({ newNotificationCount = 0 }) {
 
   const handleNavigation = (path: string) => {
     try {
+      if (path === "/" && pathname === "/") {
+        window.location.reload();
+        return;
+      }
       router.push(path);
     } catch (error) {
       // Navigation error
@@ -209,7 +214,10 @@ export default function Sidebar({ newNotificationCount = 0 }) {
         </Button>
         <div>
           <ConnectButton onOpen={openConnectModal} />
-          <ConnectModal isOpen={isConnectModalOpen} onClose={closeConnectModal} />
+          <ConnectModal
+            isOpen={isConnectModalOpen}
+            onClose={closeConnectModal}
+          />
         </div>
       </Flex>
     </Box>
