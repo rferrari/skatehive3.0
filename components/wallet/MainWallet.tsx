@@ -19,6 +19,7 @@ import {
   VStack,
   Image,
   Badge,
+  Flex,
 } from "@chakra-ui/react";
 import {
   FaExchangeAlt,
@@ -37,9 +38,12 @@ import { extractNumber } from "@/lib/utils/extractNumber";
 import WalletModal from "@/components/wallet/WalletModal";
 import { useRouter } from "next/navigation";
 import { useAioha } from "@aioha/react-ui";
-import { Asset, KeyTypes } from "@aioha/aioha";
+import { KeyTypes } from "@aioha/aioha";
 import { CustomHiveIcon } from "./CustomHiveIcon";
 import { useTheme } from "../../app/themeProvider";
+import ConnectButton from "../wallet/ConnectButton";
+import ConnectModal from "../wallet/ConnectModal";
+import { KeychainSDK } from "keychain-sdk";
 
 interface MainWalletProps {
   username: string;
@@ -53,6 +57,11 @@ export default function MainWallet({ username }: MainWalletProps) {
   const { hiveAccount, isLoading, error } = useHiveAccount(username);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { theme } = useTheme();
+  const {
+    isOpen: isConnectModalOpen,
+    onOpen: openConnectModal,
+    onClose: closeConnectModal,
+  } = useDisclosure();
 
   const [modalContent, setModalContent] = useState<{
     title: string;
@@ -130,7 +139,7 @@ export default function MainWallet({ username }: MainWalletProps) {
       case "Send HIVE":
         // Handle Send Hive logic here
         if (username) {
-          await aioha.transfer(username, amount, Asset.HIVE, memo);
+          await aioha.transfer(username, amount, 'HIVE', memo);
         }
         break;
       case "Power Up":
@@ -207,7 +216,7 @@ export default function MainWallet({ username }: MainWalletProps) {
         break;
       case "Send HBD":
         if (username) {
-          await aioha.transfer(username, amount, Asset.HBD, memo);
+          await aioha.transfer(username, amount, 'HBD', memo);
         }
         break;
       case "HBD Savings":
@@ -267,6 +276,52 @@ export default function MainWallet({ username }: MainWalletProps) {
     onClose();
   }
 
+  // Helper to format date difference
+  function daysAgo(dateString: string) {
+    const last = new Date(dateString);
+    const now = new Date();
+    const diff = Math.floor((now.getTime() - last.getTime()) / (1000 * 60 * 60 * 24));
+    return diff;
+  }
+
+  const savingsHbdBalance = parseFloat(hiveAccount?.savings_hbd_balance || "0.000");
+  const lastInterestPayment = hiveAccount?.savings_hbd_last_interest_payment;
+  const APR = 0.15; // 15%
+  let daysSinceLastPayment = 0;
+  if (lastInterestPayment) {
+    const last = new Date(lastInterestPayment);
+    const now = new Date();
+    daysSinceLastPayment = Math.floor((now.getTime() - last.getTime()) / (1000 * 60 * 60 * 24));
+  }
+  const estimatedClaimableInterest = savingsHbdBalance * APR * (daysSinceLastPayment / 365);
+  let nextClaimDate = null;
+  let daysUntilClaim = 0;
+  if (lastInterestPayment) {
+    const last = new Date(lastInterestPayment);
+    nextClaimDate = new Date(last.getTime() + 30 * 24 * 60 * 60 * 1000);
+    daysUntilClaim = Math.max(0, Math.ceil((nextClaimDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+  }
+
+  async function handleClaimInterest() {
+    if (!user) return;
+    try {
+      const keychain = new KeychainSDK(window);
+      await keychain.transfer({
+        username: String(user),
+        to: String(user),
+        amount: "0.001",
+        memo: "Claim HBD interest",
+        enforce: false,
+        currency: "HBD",
+        // savings: true // If your SDK supports savings transfer, add this flag
+      });
+      // Optionally, show a toast or reload account info
+    } catch (e) {
+      // Optionally, show error
+      console.error(e);
+    }
+  }
+
   if (isLoading) {
     return (
       <Box
@@ -298,15 +353,13 @@ export default function MainWallet({ username }: MainWalletProps) {
     : "N/A";
 
   return (
-    <>
-      <Heading as="h2" size="lg" mb={4} fontFamily="Joystix" color="primary">
-        Hive Wallet
-      </Heading>
+    <Box w="100%">
       <Grid
         templateColumns={{ base: "1fr", md: "2fr 1fr" }}
         gap={{ base: 2, md: 6 }}
-        alignItems="start"
+        alignItems="stretch"
         m={{ base: 1, md: 4 }}
+        height={{ md: "100%" }}
       >
         {/* Left: Wallet Balances and Actions */}
         <Box
@@ -315,40 +368,120 @@ export default function MainWallet({ username }: MainWalletProps) {
           borderRadius="base"
           bg="muted"
           boxShadow="none"
+          display="flex"
+          flexDirection="column"
+          justifyContent="space-between"
+          height="100%"
         >
-          {/* Staked HIVE - Hive Power (HP) */}
-          <Box mb={8}>
-            <Box
-              pl={{ base: 0, md: 0 }}
-              borderLeft="none"
-              borderColor="none"
-              mb={4}
-            >
+          <Flex align="center" justify="space-between" mb={6}>
+            <Heading as="h2" size="lg" fontFamily="Joystix" color="primary">
+              Skatehive Wallet
+            </Heading>
+            <Box>
+              <ConnectButton onOpen={openConnectModal} />
+              <ConnectModal isOpen={isConnectModalOpen} onClose={closeConnectModal} />
+            </Box>
+          </Flex>
+          {/* Container for Hive assets */}
+          <Box
+            w="100%"
+            display="flex"
+            flexDirection={{ base: "column", md: "column" }}
+            gap={3}
+            mb={0}
+          >
+            {/* Staked HIVE - Hive Power (HP) */}
+            <Box mb={3}>
+              <Box
+                pl={{ base: 0, md: 0 }}
+                borderLeft="none"
+                borderColor="none"
+                mb={4}
+              >
+                <Stack
+                  direction={{ base: "column", md: "row" }}
+                  mb={1}
+                  align="center"
+                >
+                  <Image
+                    src="/images/hp_logo.png"
+                    alt="Skatehive Logo"
+                    width="6"
+                    height="6"
+                    style={{ marginTop: 4 }}
+                  />
+                  <Text fontSize={{ base: "lg", md: "2xl" }} fontWeight="bold">
+                    HIVE POWER (HP)
+                  </Text>
+                  <Box flex={1} display={{ base: "none", md: "block" }} />
+                  <Text
+                    fontSize={{ base: "xl", md: "3xl" }}
+                    fontWeight="extrabold"
+                    color="lime"
+                  >
+                    {hivePower !== undefined ? hivePower : "Loading..."}
+                  </Text>
+                  <HStack spacing={1} wrap="wrap">
+                    <Tooltip label="Power Down" hasArrow>
+                      <Box
+                        as="button"
+                        px={2}
+                        py={1}
+                        fontSize="sm"
+                        bg="teal.500"
+                        color="white"
+                        borderRadius="md"
+                        fontWeight="bold"
+                        _hover={{ bg: "teal.600" }}
+                        onClick={() =>
+                          handleModalOpen(
+                            "Power Down",
+                            "Create a Hive Power unstake request. The request is fulfilled once a week over the next 13 weeks."
+                          )
+                        }
+                      >
+                        <Icon
+                          as={FaArrowDown}
+                          boxSize={4}
+                          mr={1}
+                          color={theme.colors.primary}
+                        />
+                      </Box>
+                    </Tooltip>
+                  </HStack>
+                </Stack>
+                <Text color="gray.400">
+                  your upvote (curation) power. Exchanging Hive for Hive Power is
+                  called &quot;Powering Up&quot; or &quot;Staking&quot;.
+                </Text>
+                <Text color="gray.400">
+                  Increases the more effectively you vote on posts
+                </Text>
+              </Box>
+            </Box>
+            {/* HIVE Section */}
+            <Box mb={3}>
               <Stack
                 direction={{ base: "column", md: "row" }}
+                align="flex-start"
                 mb={1}
-                align="center"
+                spacing={{ base: 2, md: 4 }}
               >
-                <Image
-                  src="/images/hp_logo.png"
-                  alt="Skatehive Logo"
-                  width="6"
-                  height="6"
-                  style={{ marginTop: 4 }}
-                />
-                <Text fontSize={{ base: "lg", md: "2xl" }} fontWeight="bold">
-                  HIVE POWER (HP)
-                </Text>
-                <Box flex={1} display={{ base: "none", md: "block" }} />
-                <Text
-                  fontSize={{ base: "xl", md: "3xl" }}
-                  fontWeight="extrabold"
-                  color="lime"
-                >
-                  {hivePower !== undefined ? hivePower : "Loading..."}
-                </Text>
-                <HStack spacing={1} wrap="wrap">
-                  <Tooltip label="Power Down" hasArrow>
+                <HStack align="center" mb={1} spacing={2} width="100%">
+                  <CustomHiveIcon
+                    color="rgb(233, 66, 95)"
+                    style={{ marginTop: 4 }}
+                  />
+                  <Text fontSize={{ base: "lg", md: "2xl" }} fontWeight="bold">
+                    HIVE
+                  </Text>
+                  <Box flex={1} />
+                  <Text fontSize={{ base: "lg", md: "2xl" }} fontWeight="bold">
+                    {balance}
+                  </Text>
+                </HStack>
+                <HStack spacing={1} wrap={{ base: "wrap", md: "nowrap" }} mb={2}>
+                  <Tooltip label="Send HIVE" hasArrow>
                     <Box
                       as="button"
                       px={2}
@@ -360,7 +493,112 @@ export default function MainWallet({ username }: MainWalletProps) {
                       fontWeight="bold"
                       _hover={{ bg: "teal.600" }}
                       onClick={() =>
-                        handleModalOpen("Power Down", "Unstake Hive Power")
+                        handleModalOpen(
+                          "Send HIVE",
+                          "Send Hive to another account",
+                          true,
+                          true
+                        )
+                      }
+                    >
+                      <Icon
+                        as={FaPaperPlane}
+                        boxSize={4}
+                        mr={1}
+                        color={theme.colors.primary}
+                      />
+                    </Box>
+                  </Tooltip>
+                  <Tooltip label="Power Up" hasArrow>
+                    <Box
+                      as="button"
+                      px={2}
+                      py={1}
+                      fontSize="sm"
+                      bg="teal.500"
+                      color="white"
+                      borderRadius="md"
+                      fontWeight="bold"
+                      _hover={{ bg: "teal.600" }}
+                      onClick={() =>
+                        handleModalOpen("Power Up", "Power Up your HIVE to HP")
+                      }
+                    >
+                      <Icon
+                        as={FaArrowUp}
+                        boxSize={4}
+                        mr={1}
+                        color={theme.colors.primary}
+                      />
+                    </Box>
+                  </Tooltip>
+                </HStack>
+              </Stack>
+              <Text color="gray.400" mb={4}>
+                The primary token of the Hive Blockchain and often a reward on
+                posts.
+              </Text>
+            </Box>
+            {/* HBD Section */}
+            <Box mb={3}>
+              <Stack
+                direction={{ base: "column", md: "row" }}
+                align="flex-start"
+                mb={1}
+                spacing={{ base: 2, md: 4 }}
+              >
+                <HStack align="center" mb={1} spacing={2} width="100%">
+                  <CustomHiveIcon color="lime" style={{ marginTop: 4 }} />
+                  <Text fontSize={{ base: "lg", md: "2xl" }} fontWeight="bold">
+                    HBD
+                  </Text>
+                  <Box flex={1} />
+                  <Text fontSize={{ base: "lg", md: "2xl" }} fontWeight="bold">
+                    {hbdBalance}
+                  </Text>
+                </HStack>
+                <HStack spacing={1} wrap={{ base: "wrap", md: "nowrap" }} mb={2}>
+                  <Tooltip label="Send HBD" hasArrow>
+                    <Box
+                      as="button"
+                      px={2}
+                      py={1}
+                      fontSize="sm"
+                      bg="teal.500"
+                      color="white"
+                      borderRadius="md"
+                      fontWeight="bold"
+                      _hover={{ bg: "teal.600" }}
+                      onClick={() =>
+                        handleModalOpen(
+                          "Send HBD",
+                          "Send HBD to another account",
+                          true,
+                          true
+                        )
+                      }
+                    >
+                      <Icon
+                        as={FaPaperPlane}
+                        boxSize={4}
+                        mr={1}
+                        color={theme.colors.primary}
+                      />
+                    </Box>
+                  </Tooltip>
+                  <Tooltip label="Send HBD to Savings" hasArrow>
+                    <Box
+                      as="button"
+                      px={2}
+                      py={1}
+                      fontSize="sm"
+                      bg="teal.500"
+                      color="white"
+                      borderRadius="md"
+                      fontWeight="bold"
+                      _hover={{ bg: "teal.600" }}
+                      onClick={() =>
+                        handleModalOpen("HBD Savings", "Send HBD to Savings")
                       }
                     >
                       <Icon
@@ -373,245 +611,111 @@ export default function MainWallet({ username }: MainWalletProps) {
                   </Tooltip>
                 </HStack>
               </Stack>
-              <Text color="gray.400">
-                your upvote (curation) power. Exchanging Hive for Hive Power is
-                called &quot;Powering Up&quot; or &quot;Staking&quot;.
+              <Text color="gray.400" mb={4}>
+                A token that is always worth ~1 dollar of hive. It is often
+                rewarded on posts along with HIVE.
               </Text>
-              <Text color="gray.400">
-                Increases the more effectively you vote on posts
-              </Text>
-            </Box>
-          </Box>
-          {/* HIVE Section */}
-          <Box mb={8}>
-            <Stack
-              direction={{ base: "column", md: "row" }}
-              align="flex-start"
-              mb={1}
-              spacing={{ base: 2, md: 4 }}
-            >
-              <HStack align="center" mb={1} spacing={2} width="100%">
-                <CustomHiveIcon
-                  color="rgb(233, 66, 95)"
-                  style={{ marginTop: 4 }}
-                />
-                <Text fontSize={{ base: "lg", md: "2xl" }} fontWeight="bold">
-                  HIVE
-                </Text>
-                <Box flex={1} />
-                <Text fontSize={{ base: "lg", md: "2xl" }} fontWeight="bold">
-                  {balance}
-                </Text>
-              </HStack>
-              <HStack spacing={1} wrap={{ base: "wrap", md: "nowrap" }} mb={2}>
-                <Tooltip label="Send HIVE" hasArrow>
-                  <Box
-                    as="button"
-                    px={2}
-                    py={1}
-                    fontSize="sm"
-                    bg="teal.500"
-                    color="white"
-                    borderRadius="md"
-                    fontWeight="bold"
-                    _hover={{ bg: "teal.600" }}
-                    onClick={() =>
-                      handleModalOpen(
-                        "Send HIVE",
-                        "Send Hive to another account",
-                        true,
-                        true
-                      )
-                    }
-                  >
-                    <Icon
-                      as={FaPaperPlane}
-                      boxSize={4}
-                      mr={1}
-                      color={theme.colors.primary}
-                    />
-                  </Box>
-                </Tooltip>
-                <Tooltip label="Power Up" hasArrow>
-                  <Box
-                    as="button"
-                    px={2}
-                    py={1}
-                    fontSize="sm"
-                    bg="teal.500"
-                    color="white"
-                    borderRadius="md"
-                    fontWeight="bold"
-                    _hover={{ bg: "teal.600" }}
-                    onClick={() =>
-                      handleModalOpen("Power Up", "Power Up your HIVE to HP")
-                    }
-                  >
-                    <Icon
-                      as={FaArrowUp}
-                      boxSize={4}
-                      mr={1}
-                      color={theme.colors.primary}
-                    />
-                  </Box>
-                </Tooltip>
-              </HStack>
-            </Stack>
-            <Text color="gray.400" mb={4}>
-              The primary token of the Hive Blockchain and often a reward on
-              posts.
-            </Text>
-          </Box>
-          {/* HBD Section */}
-          <Box mb={8}>
-            <Stack
-              direction={{ base: "column", md: "row" }}
-              align="flex-start"
-              mb={1}
-              spacing={{ base: 2, md: 4 }}
-            >
-              <HStack align="center" mb={1} spacing={2} width="100%">
-                <CustomHiveIcon color="lime" style={{ marginTop: 4 }} />
-                <Text fontSize={{ base: "lg", md: "2xl" }} fontWeight="bold">
-                  HBD
-                </Text>
-                <Box flex={1} />
-                <Text fontSize={{ base: "lg", md: "2xl" }} fontWeight="bold">
-                  {hbdBalance}
-                </Text>
-              </HStack>
-              <HStack spacing={1} wrap={{ base: "wrap", md: "nowrap" }} mb={2}>
-                <Tooltip label="Send HBD" hasArrow>
-                  <Box
-                    as="button"
-                    px={2}
-                    py={1}
-                    fontSize="sm"
-                    bg="teal.500"
-                    color="white"
-                    borderRadius="md"
-                    fontWeight="bold"
-                    _hover={{ bg: "teal.600" }}
-                    onClick={() =>
-                      handleModalOpen(
-                        "Send HBD",
-                        "Send HBD to another account",
-                        true,
-                        true
-                      )
-                    }
-                  >
-                    <Icon
-                      as={FaPaperPlane}
-                      boxSize={4}
-                      mr={1}
-                      color={theme.colors.primary}
-                    />
-                  </Box>
-                </Tooltip>
-                <Tooltip label="Send HBD to Savings" hasArrow>
-                  <Box
-                    as="button"
-                    px={2}
-                    py={1}
-                    fontSize="sm"
-                    bg="teal.500"
-                    color="white"
-                    borderRadius="md"
-                    fontWeight="bold"
-                    _hover={{ bg: "teal.600" }}
-                    onClick={() =>
-                      handleModalOpen("HBD Savings", "Send HBD to Savings")
-                    }
-                  >
-                    <Icon
-                      as={FaArrowDown}
-                      boxSize={4}
-                      mr={1}
-                      color={theme.colors.primary}
-                    />
-                  </Box>
-                </Tooltip>
-              </HStack>
-            </Stack>
-            <Text color="gray.400" mb={4}>
-              A token that is always worth ~1 dollar of hive. It is often
-              rewarded on posts along with HIVE.
-            </Text>
-            {/* Staked HBD (Savings) */}
-            <Box mb={4}>
-              <Stack
-                direction={{ base: "column", md: "row" }}
-                mb={1}
-                align="center"
-              >
-                <Image
-                  src="/images/hbd_savings.png"
-                  alt="HBD Savings Logo"
-                  width="6"
-                  height="6"
-                  style={{ marginTop: 4 }}
-                />
-                <Text fontSize={{ base: "lg", md: "2xl" }} fontWeight="bold">Staked HBD (Savings)</Text>
-                <Box flex={1} display={{ base: "none", md: "block" }} />
-                <Text
-                  fontSize={{ base: "xl", md: "3xl" }}
-                  fontWeight="extrabold"
-                  color="lime"
+              {/* HBD SAVINGS */}
+              <Box mb={0}>
+                <Stack
+                  direction={{ base: "column", md: "row" }}
+                  mb={1}
+                  align="center"
                 >
-                  {hbdSavingsBalance}
+                  <Image
+                    src="/images/hbd_savings.png"
+                    alt="HBD Savings Logo"
+                    width="6"
+                    height="6"
+                    style={{ marginTop: 4 }}
+                  />
+                  <Text fontSize={{ base: "lg", md: "2xl" }} fontWeight="bold">HBD SAVINGS</Text>
+                  <Box flex={1} display={{ base: "none", md: "block" }} />
+                  <Text
+                    fontSize={{ base: "xl", md: "3xl" }}
+                    fontWeight="extrabold"
+                    color="lime"
+                  >
+                    {hbdSavingsBalance}
+                  </Text>
+                  <HStack spacing={1} wrap="wrap">
+                    <Tooltip label="Unstake HBD" hasArrow>
+                      <Box
+                        as="button"
+                        px={2}
+                        py={1}
+                        fontSize="sm"
+                        bg="teal.500"
+                        color="white"
+                        borderRadius="md"
+                        fontWeight="bold"
+                        _hover={{ bg: "teal.600" }}
+                        onClick={() =>
+                          handleModalOpen(
+                            "Withdraw HBD Savings",
+                            "HBD savings balance is subject to a 3-day unstake (withdraw) waiting period.",
+                            true,
+                            false
+                          )
+                        }
+                      >
+                        <Icon
+                          as={FaArrowUp}
+                          boxSize={4}
+                          mr={1}
+                          color={theme.colors.primary}
+                        />
+                      </Box>
+                    </Tooltip>
+                  </HStack>
+                </Stack>
+                <Text color="gray.400">
+                  Staked HBD generates{" "}
+                  <Badge colorScheme="green" fontSize="sm" px={1} py={0}>
+                    15.00% APR
+                  </Badge>{" "}
+                  (defined by the{" "}
+                  <Text
+                    as="a"
+                    href="https://peakd.com/me/witnesses"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    color="blue.300"
+                    _hover={{ textDecoration: "underline", color: "blue.400" }}
+                    display="inline"
+                  >
+                    witnesses
+                  </Text>
+                  ) that is paid out monthly
                 </Text>
-                <HStack spacing={1} wrap="wrap">
-                  <Tooltip label="Unstake HBD" hasArrow>
-                    <Box
-                      as="button"
-                      px={2}
-                      py={1}
-                      fontSize="sm"
-                      bg="teal.500"
-                      color="white"
-                      borderRadius="md"
-                      fontWeight="bold"
-                      _hover={{ bg: "teal.600" }}
+              </Box>
+              {/* Staked HBD - Claimable */}
+              <Box pl={{ base: 4, md: 12 }} mb={4}>
+                <Box borderLeft="2px solid #4ade80" borderColor="green.400" pl={4} display="flex" alignItems="center" justifyContent="space-between">
+                  <Box>
+                    <Text fontWeight="bold">Staked HBD - Claimable</Text>
+                    <Text color="gray.400" fontSize="sm">Claimable balance for the HBD staking.</Text>
+                    {lastInterestPayment && (
+                      <Text color="gray.400" fontSize="sm">Last payment: {daysAgo(lastInterestPayment)} days ago</Text>
+                    )}
+                  </Box>
+                  <Box display="flex" alignItems="center" gap={2}>
+                    <Text fontWeight="bold" fontSize="xl">{estimatedClaimableInterest.toFixed(3)}</Text>
+                    <Button
+                      colorScheme="teal"
+                      size="sm"
+                      isDisabled={daysUntilClaim > 0}
+                      onClick={handleClaimInterest}
                     >
-                      <Icon
-                        as={FaArrowUp}
-                        boxSize={4}
-                        mr={1}
-                        color={theme.colors.primary}
-                      />
-                    </Box>
-                  </Tooltip>
-                </HStack>
-              </Stack>
-              <Text color="gray.400">
-                Staked HBD generates{" "}
-                <Badge colorScheme="green" fontSize="sm" px={1} py={0}>
-                  15.00% APR
-                </Badge>{" "}
-                (defined by the{" "}
-                <Text
-                  as="a"
-                  href="https://peakd.com/me/witnesses"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  color="blue.300"
-                  _hover={{ textDecoration: "underline", color: "blue.400" }}
-                  display="inline"
-                >
-                  witnesses
-                </Text>
-                ) that is paid out monthly
-              </Text>
-            </Box>
-            {/* Staked HBD - Claimable */}
-            <Box pl={{ base: 4, md: 12 }}>
-              <Box borderLeft="none" borderColor="none" pl={4}>
-                <Text fontWeight="bold">Staked HBD - Claimable</Text>
-                <Text color="gray.400">Under construction</Text>
+                      {daysUntilClaim > 0 ? `CLAIM IN ${daysUntilClaim} DAYS` : "CLAIM"}
+                    </Button>
+                  </Box>
+                </Box>
               </Box>
             </Box>
           </Box>
+          {/* Placeholder for Ethereum assets container below */}
+          {/* <Box>Ethereum assets will go here</Box> */}
         </Box>
         {/* Right: Market Stats and Swap */}
         <VStack
@@ -620,6 +724,8 @@ export default function MainWallet({ username }: MainWalletProps) {
           maxW={{ base: "100%", md: "340px" }}
           mx="auto"
           mb={{ base: 24, md: 0 }}
+          height="100%"
+          justifyContent="space-between"
         >
           <Box
             p={{ base: 2, md: 4 }}
@@ -823,6 +929,22 @@ export default function MainWallet({ username }: MainWalletProps) {
           </Box>
         </VStack>
       </Grid>
+      {/* Ethereum assets container goes here */}
+      <Box
+        mt={8}
+        p={6}
+        borderRadius="base"
+        bg="muted"
+        boxShadow="md"
+        w={{ base: "100%", md: "80%" }}
+        mx="auto"
+        textAlign="left"
+      >
+        <Text fontFamily="Joystix" fontSize="2xl" color="primary" mb={4}>
+          ETH Assets
+        </Text>
+        {/* Add Ethereum assets UI here */}
+      </Box>
       {modalContent && (
         <WalletModal
           isOpen={isOpen}
@@ -834,6 +956,6 @@ export default function MainWallet({ username }: MainWalletProps) {
           onConfirm={handleConfirm}
         />
       )}
-    </>
+    </Box>
   );
 }

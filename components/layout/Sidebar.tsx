@@ -19,8 +19,6 @@ import { FaMailBulk } from "react-icons/fa";
 import { KeyTypes } from "@aioha/aioha";
 import "@aioha/react-ui/dist/build.css";
 import { useAccount } from "wagmi";
-import ConnectButton from "../wallet/ConnectButton";
-import ConnectModal from "../wallet/ConnectModal";
 import { useDisclosure } from "@chakra-ui/react";
 
 const communityTag = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG;
@@ -212,13 +210,6 @@ export default function Sidebar({ newNotificationCount = 0 }) {
         >
           {user ? "Logout" : "Login"}
         </Button>
-        <div>
-          <ConnectButton onOpen={openConnectModal} />
-          <ConnectModal
-            isOpen={isConnectModalOpen}
-            onClose={closeConnectModal}
-          />
-        </div>
       </Flex>
     </Box>
   );
