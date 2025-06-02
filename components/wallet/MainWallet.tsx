@@ -539,18 +539,20 @@ export default function MainWallet({ username }: MainWalletProps) {
               rewarded on posts along with HIVE.
             </Text>
             {/* Staked HBD (Savings) */}
-            <Box
-              pl={{ base: 2, md: 6 }}
-              borderLeft="none"
-              borderColor="none"
-              mb={4}
-            >
+            <Box mb={4}>
               <Stack
                 direction={{ base: "column", md: "row" }}
                 mb={1}
                 align="center"
               >
-                <Text fontWeight="bold">Staked HBD (Savings)</Text>
+                <Image
+                  src="/images/hbd_savings.png"
+                  alt="HBD Savings Logo"
+                  width="6"
+                  height="6"
+                  style={{ marginTop: 4 }}
+                />
+                <Text fontSize={{ base: "lg", md: "2xl" }} fontWeight="bold">Staked HBD (Savings)</Text>
                 <Box flex={1} display={{ base: "none", md: "block" }} />
                 <Text
                   fontSize={{ base: "xl", md: "3xl" }}
