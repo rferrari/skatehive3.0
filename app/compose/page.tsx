@@ -12,13 +12,22 @@ import {
   Tooltip,
   Center,
   Spinner,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalCloseButton,
+  ModalBody,
 } from "@chakra-ui/react";
 import { useState, useMemo, useRef, useEffect } from "react";
 import MDEditor, { commands } from "@uiw/react-md-editor";
 import { useDropzone } from "react-dropzone";
-import { FaImage } from "react-icons/fa";
+import { FaImage, FaVideo, FaRegLaughBeam } from "react-icons/fa";
 import VideoRenderer from "../../components/layout/VideoRenderer";
 import { Components } from "@uiw/react-markdown-preview";
+import ImageCompressor, { ImageCompressorRef } from "../../src/components/ImageCompressor";
+import VideoUploader, { VideoUploaderRef } from "../../components/homepage/VideoUploader";
+import GIFMakerWithSelector, { GIFMakerRef as GIFMakerWithSelectorRef } from "../../components/homepage/GIFMakerWithSelector";
 
 export default function Composer() {
   const [markdown, setMarkdown] = useState("");
@@ -30,14 +39,21 @@ export default function Composer() {
   const communityTag = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || "blog";
   const [isUploading, setIsUploading] = useState(false);
   const editorRef = useRef<any>(null);
+  const imageCompressorRef = useRef<ImageCompressorRef>(null);
+  const [isCompressingImage, setIsCompressingImage] = useState(false);
+  const videoUploaderRef = useRef<VideoUploaderRef>(null);
+  const [isCompressingVideo, setIsCompressingVideo] = useState(false);
+  const [isGifModalOpen, setGifModalOpen] = useState(false);
+  const gifMakerWithSelectorRef = useRef<GIFMakerWithSelectorRef>(null);
+  const [gifUrl, setGifUrl] = useState<string | null>(null);
+  const [gifSize, setGifSize] = useState<number | null>(null);
+  const [isProcessingGif, setIsProcessingGif] = useState(false);
+  const [isUploadingGif, setIsUploadingGif] = useState(false);
 
   const placeholders = [
-    "Don't forget to Title your post...",
-    "What's on your mind?",
-    "Share your story...",
-    "Write a banging title here...",
-    "Got any new tricks to share?",
-    "What did you skate today?",
+    "Don't forget to title your post...",
+    "Where is your mind?",
+    "Write a bangin' title here...",
   ];
 
   useEffect(() => {
@@ -94,6 +110,47 @@ export default function Composer() {
       console.error("Failed to submit post:", error);
     }
   };
+
+  const handleImageUpload = async (url: string | null, fileName?: string) => {
+    setIsCompressingImage(false);
+    if (url) {
+      try {
+        const blob = await fetch(url).then(res => res.blob());
+        const formData = new FormData();
+        formData.append("file", blob, fileName || "compressed-image.jpg");
+        const response = await fetch("/api/pinata", {
+          method: "POST",
+          body: formData,
+        });
+        if (!response.ok) {
+          throw new Error("Failed to upload file to IPFS");
+        }
+        const result = await response.json();
+        const ipfsUrl = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`;
+        insertAtCursor(`\n![${fileName || 'image'}](${ipfsUrl})\n`);
+      } catch (error) {
+        console.error("Error uploading compressed image to IPFS:", error);
+      }
+    }
+  };
+
+  const handleImageTrigger = () => {
+    setIsCompressingImage(true);
+    imageCompressorRef.current?.trigger();
+  };
+
+  const handleVideoUpload = (url: string | null) => {
+    setIsCompressingVideo(false);
+    if (url) {
+      insertAtCursor(`\n<iframe src="${url}" frameborder="0" allowfullscreen></iframe>\n`);
+    }
+  };
+
+  const handleVideoTrigger = () => {
+    setIsCompressingVideo(true);
+    videoUploaderRef.current?.trigger();
+  };
+
   const { getRootProps, getInputProps } = useDropzone({
     noClick: true,
     noKeyboard: true,
@@ -132,21 +189,48 @@ export default function Composer() {
 
   const extraCommands = [
     {
-      name: "uploadImage",
-      keyCommand: "uploadImage",
-      buttonProps: { "aria-label": "Upload image" },
+      name: "uploadImageCompressor",
+      keyCommand: "uploadImageCompressor",
+      buttonProps: { "aria-label": "Upload and compress image" },
       icon: (
-        <Tooltip label="Upload Image or Video" placement="left">
-          <span>
-            <FaImage color="primary" />
+        <Tooltip label="Upload & Compress Image" placement="left">
+          <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 }}>
+            <FaImage color="primary" size={48} />
           </span>
         </Tooltip>
       ),
-      execute: (state: any, api: any) => {
-        const element = document.getElementById("md-image-upload");
-        if (element) {
-          element.click();
-        }
+      execute: () => {
+        handleImageTrigger();
+      },
+    },
+    {
+      name: "uploadVideoCompressor",
+      keyCommand: "uploadVideoCompressor",
+      buttonProps: { "aria-label": "Upload and compress video" },
+      icon: (
+        <Tooltip label="Upload & Compress Video" placement="left">
+          <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 }}>
+            <FaVideo color="primary" size={48} />
+          </span>
+        </Tooltip>
+      ),
+      execute: () => {
+        handleVideoTrigger();
+      },
+    },
+    {
+      name: "gifCreator",
+      keyCommand: "gifCreator",
+      buttonProps: { "aria-label": "Create GIF" },
+      icon: (
+        <Tooltip label="Create GIF" placement="left">
+          <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 }}>
+            <FaRegLaughBeam color="primary" size={48} />
+          </span>
+        </Tooltip>
+      ),
+      execute: () => {
+        setGifModalOpen(true);
       },
     },
   ];
@@ -162,6 +246,25 @@ export default function Composer() {
     }),
     []
   );
+
+  const handleGifTrigger = () => {
+    setGifUrl(null);
+    setGifSize(null);
+    gifMakerWithSelectorRef.current?.trigger();
+  };
+
+  const handleGifUpload = (url: string | null) => {
+    setIsProcessingGif(!!url);
+    setGifUrl(url);
+    if (url) {
+      fetch(url)
+        .then(res => res.blob())
+        .then(blob => setGifSize(blob.size))
+        .catch(() => setGifSize(null));
+    } else {
+      setGifSize(null);
+    }
+  };
 
   return (
     <Flex
@@ -207,13 +310,7 @@ export default function Composer() {
         justify="center"
         overflow="hidden"
         width="100%"
-        {...getRootProps()}
       >
-        <input
-          {...getInputProps()}
-          id="md-image-upload"
-          style={{ display: "none" }}
-        />
         <MDEditor
           value={markdown}
           onChange={(value) => setMarkdown(value || "")}
@@ -249,6 +346,87 @@ export default function Composer() {
             commands.codeLive,
           ]}
         />
+        <ImageCompressor ref={imageCompressorRef} onUpload={handleImageUpload} isProcessing={isCompressingImage} hideStatus={true} />
+        <VideoUploader ref={videoUploaderRef} onUpload={handleVideoUpload} isProcessing={isCompressingVideo} />
+        <Modal isOpen={isGifModalOpen} onClose={() => setGifModalOpen(false)} size="xl" isCentered>
+          <ModalOverlay />
+          <ModalContent bg="background" color="text">
+            <ModalHeader>GIF Maker With Selector</ModalHeader>
+            <ModalCloseButton />
+            <ModalBody>
+              <div style={{ maxWidth: 480, margin: "0 auto", padding: 12 }}>
+                <p style={{ marginBottom: 16, color: "#bbb" }}>
+                  Upload a video (3-30 seconds), select a 3-second segment, and convert it to a GIF!
+                </p>
+                <button
+                  onClick={handleGifTrigger}
+                  disabled={isProcessingGif}
+                  style={{
+                    padding: "10px 24px",
+                    fontSize: 16,
+                    borderRadius: 6,
+                    background: isProcessingGif ? "#ccc" : "#222",
+                    color: "#fff",
+                    border: "none",
+                    cursor: isProcessingGif ? "not-allowed" : "pointer",
+                    marginBottom: 24,
+                  }}
+                >
+                  {isProcessingGif ? "Processing..." : "Select Video (3-30s)"}
+                </button>
+                <GIFMakerWithSelector ref={gifMakerWithSelectorRef} onUpload={handleGifUpload} isProcessing={isProcessingGif} />
+                {gifUrl && (
+                  <div style={{ marginTop: 32, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12, textAlign: 'center' }}>GIF Preview (Selected Segment)</h2>
+                    <img src={gifUrl} alt="Generated GIF" style={{ maxWidth: 320, borderRadius: 8, border: "1px solid #eee", display: 'block', margin: '0 auto' }} />
+                    {gifSize !== null && (
+                      <div style={{ marginTop: 8, color: "#666", fontSize: 14, textAlign: 'center' }}>
+                        File size: {Math.round(gifSize / 1024)} KB
+                      </div>
+                    )}
+                    <a
+                      href="#"
+                      style={{
+                        marginTop: 18,
+                        color: '#3182ce',
+                        textDecoration: 'underline',
+                        fontWeight: 600,
+                        fontSize: 16,
+                        cursor: isUploadingGif ? 'not-allowed' : 'pointer',
+                        opacity: isUploadingGif ? 0.6 : 1,
+                      }}
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        if (isUploadingGif) return;
+                        setIsUploadingGif(true);
+                        try {
+                          const blob = await fetch(gifUrl).then(res => res.blob());
+                          const formData = new FormData();
+                          formData.append('file', blob, 'blog-gif.gif');
+                          const response = await fetch('/api/pinata', {
+                            method: 'POST',
+                            body: formData,
+                          });
+                          if (!response.ok) throw new Error('Failed to upload GIF to IPFS');
+                          const result = await response.json();
+                          const ipfsUrl = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`;
+                          insertAtCursor(`\n![skatehive](${ipfsUrl})\n`);
+                          setGifModalOpen(false);
+                        } catch (err) {
+                          alert('Failed to upload GIF to IPFS.');
+                        } finally {
+                          setIsUploadingGif(false);
+                        }
+                      }}
+                    >
+                      {isUploadingGif ? 'Uploading...' : 'Add to blog'}
+                    </a>
+                  </div>
+                )}
+              </div>
+            </ModalBody>
+          </ModalContent>
+        </Modal>
       </Flex>
       <Input
         placeholder="Enter hashtags"
