@@ -74,7 +74,7 @@ export default function HivePowerSection({
         </Stack>
         <Text color="gray.400">
           your upvote (curation) power. Exchanging Hive for Hive Power is called
-          "Powering Up" or "Staking".
+          &quot;Powering Up&quot; or &quot;Staking&quot;.
         </Text>
         <Text color="gray.400">
           Increases the more effectively you vote on posts
