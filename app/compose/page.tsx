@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 import { useAioha } from "@aioha/react-ui";
 import {
   Flex,
@@ -18,6 +19,8 @@ import {
   ModalHeader,
   ModalCloseButton,
   ModalBody,
+  Box,
+  useBreakpointValue,
 } from "@chakra-ui/react";
 import { useState, useMemo, useRef, useEffect } from "react";
 import MDEditor, { commands } from "@uiw/react-md-editor";
@@ -187,53 +190,7 @@ export default function Composer() {
     multiple: false,
   });
 
-  const extraCommands = [
-    {
-      name: "uploadImageCompressor",
-      keyCommand: "uploadImageCompressor",
-      buttonProps: { "aria-label": "Upload and compress image" },
-      icon: (
-        <Tooltip label="Upload & Compress Image" placement="left">
-          <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 }}>
-            <FaImage color="primary" size={48} />
-          </span>
-        </Tooltip>
-      ),
-      execute: () => {
-        handleImageTrigger();
-      },
-    },
-    {
-      name: "uploadVideoCompressor",
-      keyCommand: "uploadVideoCompressor",
-      buttonProps: { "aria-label": "Upload and compress video" },
-      icon: (
-        <Tooltip label="Upload & Compress Video" placement="left">
-          <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 }}>
-            <FaVideo color="primary" size={48} />
-          </span>
-        </Tooltip>
-      ),
-      execute: () => {
-        handleVideoTrigger();
-      },
-    },
-    {
-      name: "gifCreator",
-      keyCommand: "gifCreator",
-      buttonProps: { "aria-label": "Create GIF" },
-      icon: (
-        <Tooltip label="Create GIF" placement="left">
-          <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 }}>
-            <FaRegLaughBeam color="primary" size={48} />
-          </span>
-        </Tooltip>
-      ),
-      execute: () => {
-        setGifModalOpen(true);
-      },
-    },
-  ];
+  const extraCommands: never[] = [];
 
   const memoizedComponents: Components = useMemo(
     () => ({
@@ -266,6 +223,8 @@ export default function Composer() {
     }
   };
 
+  const isMobile = useBreakpointValue({ base: true, md: false });
+
   return (
     <Flex
       width="100%"
@@ -276,27 +235,84 @@ export default function Composer() {
       direction="column"
       overflow="hidden"
     >
-      <Input
-        placeholder={placeholders[placeholderIndex]}
-        mb="4"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        size="lg"
-        borderRadius="base"
-        fontSize="3xl"
-        fontWeight="bold"
-        _placeholder={{ fontSize: "3xl" }}
-        maxLength={123}
-        sx={{
-          '&::placeholder': {
-            transition: 'opacity 0.3s ease-in-out',
-            opacity: 0.7,
-          },
-          '&:focus::placeholder': {
-            opacity: 0.3,
-          }
-        }}
-      />
+      <Flex
+        direction={{ base: 'column', md: 'row' }}
+        align={{ base: 'stretch', md: 'center' }}
+        justify={{ base: 'flex-start', md: 'space-between' }}
+        mb={4}
+        gap={{ base: 2, md: 0 }}
+        width="100%"
+      >
+        <Input
+          placeholder={placeholders[placeholderIndex]}
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          size="lg"
+          borderRadius="base"
+          fontSize="3xl"
+          fontWeight="bold"
+          _placeholder={{ fontSize: "3xl" }}
+          maxLength={123}
+          flex={{ base: '1 1 100%', md: '0 1 60%' }}
+          minW={0}
+          sx={{
+            '&::placeholder': {
+              transition: 'opacity 0.3s ease-in-out',
+              opacity: 0.7,
+            },
+            '&:focus::placeholder': {
+              opacity: 0.3,
+            }
+          }}
+        />
+        <Flex
+          justify={{ base: 'center', md: 'flex-end' }}
+          gap={2}
+          mt={{ base: 2, md: 0 }}
+          mb={{ base: 2, md: 0 }}
+          flexShrink={0}
+        >
+          <Tooltip label="Upload & Compress Image" placement="bottom">
+            <Button
+              variant="unstyled"
+              size="lg"
+              borderRadius="full"
+              p={2}
+              _hover={{ color: 'blue.400', bg: 'transparent' }}
+              style={{ height: 64, width: 64, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              onClick={handleImageTrigger}
+            >
+              <FaImage color="primary" size={48} />
+            </Button>
+          </Tooltip>
+          <Tooltip label="Upload & Compress Video" placement="bottom">
+            <Button
+              variant="unstyled"
+              size="lg"
+              borderRadius="full"
+              p={2}
+              _hover={{ color: 'blue.400', bg: 'transparent' }}
+              style={{ height: 64, width: 64, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              onClick={handleVideoTrigger}
+            >
+              <FaVideo color="primary" size={48} />
+            </Button>
+          </Tooltip>
+          <Tooltip label="Create GIF" placement="bottom">
+            <Button
+              variant="unstyled"
+              size="lg"
+              borderRadius="full"
+              p={2}
+              _hover={{ color: 'blue.400', bg: 'transparent' }}
+              style={{ height: 64, width: 64, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              onClick={() => setGifModalOpen(true)}
+            >
+              <FaRegLaughBeam color="primary" size={48} />
+            </Button>
+          </Tooltip>
+        </Flex>
+      </Flex>
       {isUploading && (
         <Center>
           <Spinner />
@@ -311,41 +327,43 @@ export default function Composer() {
         overflow="hidden"
         width="100%"
       >
-        <MDEditor
-          value={markdown}
-          onChange={(value) => setMarkdown(value || "")}
-          height="100%"
-          style={{
-            border: "2px solid limegreen",
-            padding: "10px",
-            backgroundColor: "background",
-            color: "white",
-            width: "100%",
-          }}
-          extraCommands={extraCommands}
-          previewOptions={{
-            components: memoizedComponents,
-            style: {
+        <Box position="relative" width="100%" height="100%">
+          <MDEditor
+            value={markdown}
+            onChange={(value) => setMarkdown(value || "")}
+            height="100%"
+            style={{
+              border: "2px solid limegreen",
+              padding: "10px",
               backgroundColor: "background",
               color: "white",
-            },
-          }}
-          commands={[
-            commands.bold,
-            commands.italic,
-            commands.strikethrough,
-            commands.hr,
-            commands.code,
-            commands.table,
-            commands.link,
-            commands.quote,
-            commands.unorderedListCommand,
-            commands.orderedListCommand,
-            commands.fullscreen,
-            commands.codeEdit,
-            commands.codeLive,
-          ]}
-        />
+              width: "100%",
+            }}
+            extraCommands={extraCommands}
+            previewOptions={{
+              components: memoizedComponents,
+              style: {
+                backgroundColor: "background",
+                color: "white",
+              },
+            }}
+            commands={[
+              commands.bold,
+              commands.italic,
+              commands.strikethrough,
+              commands.hr,
+              commands.code,
+              commands.table,
+              commands.link,
+              commands.quote,
+              commands.unorderedListCommand,
+              commands.orderedListCommand,
+              commands.fullscreen,
+              commands.codeEdit,
+              commands.codeLive,
+            ]}
+          />
+        </Box>
         <ImageCompressor ref={imageCompressorRef} onUpload={handleImageUpload} isProcessing={isCompressingImage} hideStatus={true} />
         <VideoUploader ref={videoUploaderRef} onUpload={handleVideoUpload} isProcessing={isCompressingVideo} />
         <Modal isOpen={isGifModalOpen} onClose={() => setGifModalOpen(false)} size="xl" isCentered>
