@@ -202,16 +202,30 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
     <Box pl={effectiveDepth > 1 ? 1 : 0} ml={effectiveDepth > 1 ? 2 : 0}>
       <Box mt={1} mb={1} borderRadius="base" width="100%">
         <HStack mb={2}>
-          <Avatar
-            size="sm"
-            name={Discussion.author}
-            src={`https://images.hive.blog/u/${Discussion.author}/avatar/sm`}
-            ml={2}
-          />
-          <HStack ml={0} width="100%">
-            <Text fontWeight="medium" fontSize="sm">
-              <Link href={`/@${Discussion.author}`}>{Discussion.author}</Link>
+          <Link
+            href={`/@${Discussion.author}`}
+            _hover={{ textDecoration: 'none' }}
+            display="flex"
+            alignItems="center"
+            role="group"
+          >
+            <Avatar
+              size="sm"
+              name={Discussion.author}
+              src={`https://images.hive.blog/u/${Discussion.author}/avatar/sm`}
+              ml={2}
+            />
+            <Text
+              fontWeight="medium"
+              fontSize="sm"
+              ml={2}
+              whiteSpace="nowrap"
+              _groupHover={{ textDecoration: 'underline' }}
+            >
+              {Discussion.author}
             </Text>
+          </Link>
+          <HStack ml={0} width="100%">
             <Text fontWeight="medium" fontSize="sm" color="gray">
               · {commentDate}
             </Text>

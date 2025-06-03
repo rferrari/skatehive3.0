@@ -19,6 +19,7 @@ import { CloseIcon } from "@chakra-ui/icons";
 import { FaImage } from "react-icons/fa";
 import { Discussion } from "@hiveio/dhive";
 import { getFileSignature, uploadImage } from "@/lib/hive/client-functions";
+import ImageCompressor, { ImageCompressorRef } from "../../src/components/ImageCompressor";
 
 interface SpotSnapComposerProps {
   onNewComment: (newComment: Partial<Discussion>) => void;
@@ -28,15 +29,33 @@ interface SpotSnapComposerProps {
 export default function SpotSnapComposer({ onNewComment, onClose }: SpotSnapComposerProps) {
   const { user, aioha } = useAioha();
   const postBodyRef = useRef<HTMLTextAreaElement>(null);
-  const [images, setImages] = useState<{ file: File, caption: string }[]>([]);
+  const imageCompressorRef = useRef<ImageCompressorRef>(null);
+  const [compressedImages, setCompressedImages] = useState<{ url: string; fileName: string; caption: string }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number[]>([]);
-  const inputRef = useRef<HTMLInputElement>(null);
   const [spotName, setSpotName] = useState("");
   const [lat, setLat] = useState("");
   const [lon, setLon] = useState("");
 
   const buttonText = "Post Spot";
+
+  const handleCompressedImageUpload = async (url: string | null, fileName?: string) => {
+    if (!url) return;
+    setIsLoading(true);
+    try {
+      const blob = await fetch(url).then(res => res.blob());
+      const file = new File([blob], fileName || "compressed.jpg", { type: blob.type });
+      const signature = await getFileSignature(file);
+      const uploadUrl = await uploadImage(file, signature, compressedImages.length, setUploadProgress);
+      if (uploadUrl) {
+        setCompressedImages(prev => [...prev, { url: uploadUrl, fileName: file.name, caption: "" }]);
+      }
+    } catch (error) {
+      console.error("Error uploading compressed image:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   async function handleComment() {
     let description = postBodyRef.current?.value || "";
@@ -44,40 +63,20 @@ export default function SpotSnapComposer({ onNewComment, onClose }: SpotSnapComp
       alert("Please enter a spot name and location (lat/lon)." );
       return;
     }
-    if (!description.trim() && images.length === 0) {
+    if (!description.trim() && compressedImages.length === 0) {
       alert("Please enter a description or upload an image before posting.");
       return;
     }
     setIsLoading(true);
     setUploadProgress([]);
     const permlink = new Date().toISOString().replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
-    let validUrls: string[] = [];
-    if (images.length > 0) {
-      const uploadedImages = await Promise.all(
-        images.map(async (image, index) => {
-          const signature = await getFileSignature(image.file);
-          try {
-            const uploadUrl = await uploadImage(
-              image.file,
-              signature,
-              index,
-              setUploadProgress
-            );
-            return uploadUrl;
-          } catch (error) {
-            console.error("Error uploading image:", error);
-            return null;
-          }
-        })
-      );
-      validUrls = uploadedImages.filter((url): url is string => url !== null);
-    }
+    let validUrls: string[] = compressedImages.map(img => img.url);
     // Compose the post body
     let commentBody = `Spot Name: ${spotName}\nLocation: ${lat}, ${lon}\n`;
     if (description) commentBody += `\n${description}`;
     if (validUrls.length > 0) {
       const imageMarkup = validUrls
-        .map((url: string | null, idx: number) => `![${images[idx]?.caption || spotName}](${url?.toString() || ""})`)
+        .map((url: string | null, idx: number) => `![${compressedImages[idx]?.caption || spotName}](${url?.toString() || ""})`)
         .join("\n");
       commentBody += `\n\n${imageMarkup}`;
     }
@@ -92,7 +91,7 @@ export default function SpotSnapComposer({ onNewComment, onClose }: SpotSnapComp
       );
       if (commentResponse.success) {
         postBodyRef.current!.value = "";
-        setImages([]);
+        setCompressedImages([]);
         setSpotName("");
         setLat("");
         setLon("");
@@ -119,12 +118,6 @@ export default function SpotSnapComposer({ onNewComment, onClose }: SpotSnapComp
       handleComment();
     }
   }
-
-  const triggerFileInput = () => {
-    if (inputRef.current) {
-      inputRef.current.click();
-    }
-  };
 
   return (
     <Box p={4} mb={1} borderRadius="base" borderBottom={"1px"} borderColor="muted">
@@ -176,34 +169,26 @@ export default function SpotSnapComposer({ onNewComment, onClose }: SpotSnapComp
             leftIcon={<FaImage size={22} />}
             variant="ghost"
             isDisabled={isLoading}
-            onClick={triggerFileInput}
+            onClick={() => imageCompressorRef.current?.trigger()}
             border="2px solid transparent"
             _hover={{ borderColor: "var(--chakra-colors-tb1, #00FF00)" }}
             _active={{ borderColor: "var(--chakra-colors-tb1, #00FF00)" }}
           >
             Upload Image
           </Button>
-          <Input
-            ref={inputRef}
-            type="file"
-            multiple
-            accept="image/*"
-            onChange={event => {
-              const files = Array.from(event.target.files || []);
-              setImages(prev => [
-                ...prev,
-                ...files.map(file => ({ file, caption: "" }))
-              ]);
-            }}
-            hidden
+          <ImageCompressor
+            ref={imageCompressorRef}
+            onUpload={handleCompressedImageUpload}
+            isProcessing={isLoading}
+            hideStatus={true}
           />
         </HStack>
         <Wrap spacing={4}>
-          {images.map((imgObj, index) => (
+          {compressedImages.map((imgObj, index) => (
             <Box key={index} position="relative" mb={4}>
               <Image
-                alt=""
-                src={URL.createObjectURL(imgObj.file)}
+                alt={imgObj.fileName}
+                src={imgObj.url}
                 boxSize="100px"
                 borderRadius="base"
               />
@@ -212,9 +197,9 @@ export default function SpotSnapComposer({ onNewComment, onClose }: SpotSnapComp
                 placeholder="Enter caption"
                 value={imgObj.caption}
                 onChange={e => {
-                  const newImages = [...images];
+                  const newImages = [...compressedImages];
                   newImages[index].caption = e.target.value;
-                  setImages(newImages);
+                  setCompressedImages(newImages);
                 }}
                 size="sm"
               />
@@ -226,7 +211,7 @@ export default function SpotSnapComposer({ onNewComment, onClose }: SpotSnapComp
                 top="0"
                 right="0"
                 onClick={() =>
-                  setImages(prevImages =>
+                  setCompressedImages(prevImages =>
                     prevImages.filter((_, i) => i !== index)
                   )
                 }

@@ -29,6 +29,7 @@ import {
 } from "@/lib/hive/client-functions";
 import { FaVideo } from "react-icons/fa6";
 import { FaTimes } from "react-icons/fa";
+import ImageCompressor, { ImageCompressorRef } from "../../src/components/ImageCompressor";
 
 interface SnapComposerProps {
   pa: string;
@@ -47,14 +48,14 @@ export default function SnapComposer({
 }: SnapComposerProps) {
   const { user, aioha } = useAioha();
   const postBodyRef = useRef<HTMLTextAreaElement>(null);
-  const [images, setImages] = useState<File[]>([]);
   const [selectedGif, setSelectedGif] = useState<IGif | null>(null);
   const [isGiphyModalOpen, setGiphyModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number[]>([]);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
   const videoUploaderRef = useRef<VideoUploaderRef>(null);
+  const imageCompressorRef = useRef<ImageCompressorRef>(null);
+  const [compressedImages, setCompressedImages] = useState<{ url: string; fileName: string; caption: string }[]>([]);
 
   const buttonText = post ? "Reply" : "Post";
 
@@ -65,12 +66,31 @@ export default function SnapComposer({
     return matches.map((hashtag) => hashtag.slice(1)); // Remove the '#' symbol
   }
 
+  // Handler for compressed image upload
+  const handleCompressedImageUpload = async (url: string | null, fileName?: string) => {
+    if (!url) return;
+    setIsLoading(true);
+    try {
+      const blob = await fetch(url).then(res => res.blob());
+      const file = new File([blob], fileName || "compressed.jpg", { type: blob.type });
+      const signature = await getFileSignature(file);
+      const uploadUrl = await uploadImage(file, signature, compressedImages.length, setUploadProgress);
+      if (uploadUrl) {
+        setCompressedImages(prev => [...prev, { url: uploadUrl, fileName: file.name, caption: "" }]);
+      }
+    } catch (error) {
+      console.error("Error uploading compressed image:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   async function handleComment() {
     let commentBody = postBodyRef.current?.value || "";
 
     if (
       !commentBody.trim() &&
-      images.length === 0 &&
+      compressedImages.length === 0 &&
       !selectedGif &&
       !videoUrl
     ) {
@@ -88,34 +108,12 @@ export default function SnapComposer({
       .replace(/[^a-zA-Z0-9]/g, "")
       .toLowerCase();
 
-    let validUrls: string[] = [];
-    if (images.length > 0) {
-      const uploadedImages = await Promise.all(
-        images.map(async (image, index) => {
-          const signature = await getFileSignature(image);
-          try {
-            const uploadUrl = await uploadImage(
-              image,
-              signature,
-              index,
-              setUploadProgress
-            );
-            return uploadUrl;
-          } catch (error) {
-            console.error("Error uploading image:", error);
-            return null;
-          }
-        })
-      );
-
-      validUrls = uploadedImages.filter((url): url is string => url !== null);
-
-      if (validUrls.length > 0) {
-        const imageMarkup = validUrls
-          .map((url: string | null) => `![image](${url?.toString() || ""})`)
-          .join("\n");
-        commentBody += `\n\n${imageMarkup}`;
-      }
+    let validUrls: string[] = compressedImages.map(img => img.url);
+    if (validUrls.length > 0) {
+      const imageMarkup = compressedImages
+        .map((img) => `![${img.caption || "image"}](${img.url})`)
+        .join("\n");
+      commentBody += `\n\n${imageMarkup}`;
     }
 
     if (selectedGif) {
@@ -152,7 +150,7 @@ export default function SnapComposer({
         );
         if (commentResponse.success) {
           postBodyRef.current!.value = "";
-          setImages([]);
+          setCompressedImages([]);
           setSelectedGif(null);
           setVideoUrl(null);
 
@@ -181,12 +179,6 @@ export default function SnapComposer({
       handleComment();
     }
   }
-
-  const triggerFileInput = () => {
-    if (inputRef.current) {
-      inputRef.current.click();
-    }
-  };
 
   return (
     <Box
@@ -226,9 +218,9 @@ export default function SnapComposer({
                 bg={"background"}
                 _hover={{ bg: "tb1" }}
                 _active={{ bg: "tb1" }}
-                onClick={triggerFileInput} // Trigger file input on click
+                onClick={() => imageCompressorRef.current?.trigger()}
               >
-                Upload Image (GIF, PNG, JPG...)
+                Upload Image (JPEG, PNG, HEIC)
               </MenuItem>
               <MenuItem
                 icon={<MdGif size={22} />}
@@ -241,16 +233,11 @@ export default function SnapComposer({
               </MenuItem>
             </MenuList>
           </Menu>
-          <Input
-            ref={inputRef}
-            type="file"
-            multiple
-            accept="image/*"
-            onChange={(event) => {
-              const files = Array.from(event.target.files || []);
-              setImages((prev) => [...prev, ...files]);
-            }}
-            hidden
+          <ImageCompressor
+            ref={imageCompressorRef}
+            onUpload={handleCompressedImageUpload}
+            isProcessing={isLoading}
+            hideStatus={true}
           />
           <Button
             variant="ghost"
@@ -274,13 +261,25 @@ export default function SnapComposer({
         </Button>
       </HStack>
       <Wrap spacing={4}>
-        {images.map((image, index) => (
+        {compressedImages.map((img, index) => (
           <Box key={index} position="relative">
             <Image
-              alt=""
-              src={URL.createObjectURL(image)}
+              alt={img.fileName}
+              src={img.url}
               boxSize="100px"
               borderRadius="base"
+            />
+            <Input
+              mt={2}
+              placeholder="Enter caption"
+              value={img.caption}
+              onChange={e => {
+                const newImages = [...compressedImages];
+                newImages[index].caption = e.target.value;
+                setCompressedImages(newImages);
+              }}
+              size="sm"
+              isDisabled={isLoading}
             />
             <IconButton
               aria-label="Remove image"
@@ -290,7 +289,7 @@ export default function SnapComposer({
               top="0"
               right="0"
               onClick={() =>
-                setImages((prevImages) =>
+                setCompressedImages((prevImages) =>
                   prevImages.filter((_, i) => i !== index)
                 )
               }

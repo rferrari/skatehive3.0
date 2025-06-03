@@ -7,10 +7,12 @@ import {
   Divider,
   VStack,
   Spinner,
+  useToken,
+  useTheme,
 } from "@chakra-ui/react";
 import { Discussion } from "@hiveio/dhive";
 import { useComments } from "@/hooks/useComments";
-import { ArrowBackIcon } from "@chakra-ui/icons";
+import { ArrowBackIcon, CloseIcon } from "@chakra-ui/icons";
 import Snap from "./Snap";
 import SnapComposer from "./SnapComposer";
 
@@ -36,6 +38,9 @@ const Conversation = ({
 
   // New state for inline reply and optimistic update
   const [optimisticReplies, setOptimisticReplies] = useState<Discussion[]>([]);
+
+  const theme = useTheme();
+  const [primaryColor] = useToken('colors', ['primary']);
 
   function onBackClick() {
     setConversation(undefined);
@@ -64,18 +69,21 @@ const Conversation = ({
       mt={1}
       mb={1}
       borderRadius="base"
-      border="tb1"
       boxShadow="lg"
     >
       <HStack mb={4} spacing={2}>
+        <Text fontSize="2xl" fontWeight="extrabold">
+          Conversation
+        </Text>
         <Button
           onClick={onBackClick}
           variant="ghost"
-          leftIcon={<ArrowBackIcon />}
-        />
-        <Text fontSize="lg" fontWeight="bold">
-          Conversation
-        </Text>
+          ml="auto"
+          aria-label="Close"
+          _hover={{ bg: primaryColor + '20' }}
+        >
+          <CloseIcon color={primaryColor} />
+        </Button>
       </HStack>
       <Snap
         Discussion={{ ...Discussion, depth: 0 } as any} // Use the built‑in depth for root
