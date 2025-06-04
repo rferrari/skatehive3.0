@@ -253,7 +253,7 @@ export default function Composer() {
           fontWeight="bold"
           _placeholder={{ fontSize: "3xl" }}
           maxLength={123}
-          flex={{ base: '1 1 100%', md: '0 1 60%' }}
+          flex="1"
           minW={0}
           sx={{
             '&::placeholder': {
