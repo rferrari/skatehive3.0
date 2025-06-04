@@ -249,7 +249,6 @@ export default function SnapComposer({
           >
             <FaVideo size={22} />
           </Button>
-          <VideoUploader ref={videoUploaderRef} onUpload={setVideoUrl} isProcessing={isLoading} />
         </HStack>
         <Button
           variant="solid"
@@ -260,6 +259,9 @@ export default function SnapComposer({
           {isLoading ? <Spinner size="sm" /> : buttonText}
         </Button>
       </HStack>
+      <Box width="100%">
+        <VideoUploader ref={videoUploaderRef} onUpload={setVideoUrl} isProcessing={isLoading} />
+      </Box>
       <Wrap spacing={4}>
         {compressedImages.map((img, index) => (
           <Box key={index} position="relative">

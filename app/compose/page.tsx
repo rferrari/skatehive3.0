@@ -240,7 +240,7 @@ export default function Composer() {
         align={{ base: 'stretch', md: 'center' }}
         justify={{ base: 'flex-start', md: 'space-between' }}
         mb={4}
-        gap={{ base: 2, md: 0 }}
+        gap={2}
         width="100%"
       >
         <Input
@@ -318,6 +318,11 @@ export default function Composer() {
           <Spinner />
         </Center>
       )}
+      <Flex width="100%" justify="flex-end" mb={2}>
+        <Box minWidth="220px">
+          <VideoUploader ref={videoUploaderRef} onUpload={handleVideoUpload} isProcessing={isCompressingVideo} />
+        </Box>
+      </Flex>
       <Flex
         flex="1"
         border="1px solid"
@@ -365,7 +370,6 @@ export default function Composer() {
           />
         </Box>
         <ImageCompressor ref={imageCompressorRef} onUpload={handleImageUpload} isProcessing={isCompressingImage} hideStatus={true} />
-        <VideoUploader ref={videoUploaderRef} onUpload={handleVideoUpload} isProcessing={isCompressingVideo} />
         <Modal isOpen={isGifModalOpen} onClose={() => setGifModalOpen(false)} size="xl" isCentered>
           <ModalOverlay />
           <ModalContent bg="background" color="text">
