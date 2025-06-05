@@ -25,7 +25,8 @@ import {
 import { useState, useMemo, useRef, useEffect } from "react";
 import MDEditor, { commands } from "@uiw/react-md-editor";
 import { useDropzone } from "react-dropzone";
-import { FaImage, FaVideo, FaRegLaughBeam } from "react-icons/fa";
+import { FaImage, FaVideo } from "react-icons/fa";
+import { MdGif, MdMovieCreation } from "react-icons/md";
 import VideoRenderer from "../../components/layout/VideoRenderer";
 import { Components } from "@uiw/react-markdown-preview";
 import ImageCompressor, { ImageCompressorRef } from "../../src/components/ImageCompressor";
@@ -52,6 +53,7 @@ export default function Composer() {
   const [gifSize, setGifSize] = useState<number | null>(null);
   const [isProcessingGif, setIsProcessingGif] = useState(false);
   const [isUploadingGif, setIsUploadingGif] = useState(false);
+  const gifWebpInputRef = useRef<HTMLInputElement>(null);
 
   const placeholders = [
     "Don't forget to title your post...",
@@ -223,6 +225,42 @@ export default function Composer() {
     }
   };
 
+  const handleGifWebpUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // Check file type
+    if (!(file.type === "image/gif" || file.type === "image/webp")) {
+      alert("Only GIF and WEBP files are allowed.");
+      return;
+    }
+    // Check file size (limit to 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert("GIF or WEBP file size must be 5MB or less.");
+      return;
+    }
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const response = await fetch("/api/pinata", {
+        method: "POST",
+        body: formData,
+      });
+      if (!response.ok) {
+        throw new Error("Failed to upload GIF/WEBP to IPFS");
+      }
+      const result = await response.json();
+      const ipfsUrl = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`;
+      insertAtCursor(`\n![${file.name}](${ipfsUrl})\n`);
+    } catch (error) {
+      alert("Error uploading GIF/WEBP to IPFS.");
+      console.error("Error uploading GIF/WEBP:", error);
+    } finally {
+      setIsUploading(false);
+      e.target.value = ""; // Reset input
+    }
+  };
+
   const isMobile = useBreakpointValue({ base: true, md: false });
 
   return (
@@ -272,7 +310,7 @@ export default function Composer() {
           mb={{ base: 2, md: 0 }}
           flexShrink={0}
         >
-          <Tooltip label="Upload & Compress Image" placement="bottom">
+          <Tooltip label="Upload Image" placement="bottom">
             <Button
               variant="unstyled"
               size="lg"
@@ -285,7 +323,7 @@ export default function Composer() {
               <FaImage color="primary" size={48} />
             </Button>
           </Tooltip>
-          <Tooltip label="Upload & Compress Video" placement="bottom">
+          <Tooltip label="Upload Video" placement="bottom">
             <Button
               variant="unstyled"
               size="lg"
@@ -298,7 +336,28 @@ export default function Composer() {
               <FaVideo color="primary" size={48} />
             </Button>
           </Tooltip>
-          <Tooltip label="Create GIF" placement="bottom">
+          <Tooltip label="Upload GIF or WEBP (max 5MB)" placement="bottom">
+            <Button
+              variant="unstyled"
+              size="lg"
+              borderRadius="full"
+              p={2}
+              _hover={{ color: 'blue.400', bg: 'transparent' }}
+              style={{ height: 64, width: 64, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              onClick={() => gifWebpInputRef.current?.click()}
+              isDisabled={isUploading}
+            >
+              <MdGif color="primary" size={48} />
+              <input
+                type="file"
+                accept=".gif,.webp"
+                style={{ display: "none" }}
+                ref={gifWebpInputRef}
+                onChange={handleGifWebpUpload}
+              />
+            </Button>
+          </Tooltip>
+          <Tooltip label="Create GIF From Video" placement="bottom">
             <Button
               variant="unstyled"
               size="lg"
@@ -308,7 +367,7 @@ export default function Composer() {
               style={{ height: 64, width: 64, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               onClick={() => setGifModalOpen(true)}
             >
-              <FaRegLaughBeam color="primary" size={48} />
+              <MdMovieCreation color="primary" size={48} />
             </Button>
           </Tooltip>
         </Flex>
@@ -373,7 +432,7 @@ export default function Composer() {
         <Modal isOpen={isGifModalOpen} onClose={() => setGifModalOpen(false)} size="xl" isCentered>
           <ModalOverlay />
           <ModalContent bg="background" color="text">
-            <ModalHeader>GIF Maker With Selector</ModalHeader>
+            <ModalHeader>GIF Maker by web-gnar</ModalHeader>
             <ModalCloseButton />
             <ModalBody>
               <div style={{ maxWidth: 480, margin: "0 auto", padding: 12 }}>
