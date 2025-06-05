@@ -56,6 +56,7 @@ export default function SnapComposer({
   const videoUploaderRef = useRef<VideoUploaderRef>(null);
   const imageCompressorRef = useRef<ImageCompressorRef>(null);
   const [compressedImages, setCompressedImages] = useState<{ url: string; fileName: string; caption: string }[]>([]);
+  const gifWebpInputRef = useRef<HTMLInputElement>(null);
 
   const buttonText = post ? "Reply" : "Post";
 
@@ -82,6 +83,34 @@ export default function SnapComposer({
       console.error("Error uploading compressed image:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGifWebpUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // Check file type
+    if (!(file.type === "image/gif" || file.type === "image/webp")) {
+      alert("Only GIF and WEBP files are allowed.");
+      return;
+    }
+    // Check file size (limit to 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert("GIF or WEBP file size must be 5MB or less.");
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const signature = await getFileSignature(file);
+      const uploadUrl = await uploadImage(file, signature, compressedImages.length, setUploadProgress);
+      if (uploadUrl) {
+        setCompressedImages(prev => [...prev, { url: uploadUrl, fileName: file.name, caption: "" }]);
+      }
+    } catch (error) {
+      console.error("Error uploading GIF/WEBP:", error);
+    } finally {
+      setIsLoading(false);
+      e.target.value = ""; // Reset input
     }
   };
 
@@ -224,7 +253,23 @@ export default function SnapComposer({
               </MenuItem>
               <MenuItem
                 icon={<MdGif size={22} />}
-                onClick={() => setGiphyModalOpen(true)} // Only open the modal
+                bg={"background"}
+                _hover={{ bg: "tb1" }}
+                _active={{ bg: "tb1" }}
+                onClick={() => gifWebpInputRef.current?.click()}
+              >
+                Upload GIF or WEBP
+                <input
+                  type="file"
+                  accept=".gif,.webp"
+                  style={{ display: "none" }}
+                  ref={gifWebpInputRef}
+                  onChange={handleGifWebpUpload}
+                />
+              </MenuItem>
+              <MenuItem
+                icon={<MdGif size={22} />}
+                onClick={() => setGiphyModalOpen(true)}
                 bg={"background"}
                 _hover={{ bg: "tb1" }}
                 _active={{ bg: "tb1" }}
