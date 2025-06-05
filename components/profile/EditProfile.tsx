@@ -18,7 +18,6 @@ import {
   Box,
 } from "@chakra-ui/react";
 import { updateProfile } from "@/lib/hive/client-functions";
-import { updateProfileWithPrivateKey } from "@/lib/hive/server-functions";
 
 interface EditProfileProps {
   isOpen: boolean;
@@ -120,17 +119,8 @@ const EditProfile: React.FC<EditProfileProps> = ({ isOpen, onClose, profileData,
           website
         );
       } else if (loginMethod === "privateKey") {
-        const encryptedPrivateKey = localStorage.getItem("EncPrivateKey");
-        await updateProfileWithPrivateKey(
-          encryptedPrivateKey,
-          username,
-          "", // name is not used
-          about,
-          location,
-          finalCoverImage,
-          finalProfileImage,
-          website
-        );
+        setError("Profile updates with private key login are not supported yet.");
+        return;
       }
       onClose();
     } catch (err: any) {
