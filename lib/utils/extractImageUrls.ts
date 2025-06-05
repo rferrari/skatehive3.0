@@ -51,3 +51,20 @@ export function extractYoutubeLinks(content: string): LinkWithDomain[] {
     }
     return links;
 }
+
+// Extract video URLs from markdown (iframe and direct video links)
+export function extractVideoUrls(markdown: string): string[] {
+    const videoUrls: string[] = [];
+    // Match <iframe src="...">
+    const iframeRegex = /<iframe[^>]*src=["']([^"']+)["'][^>]*><\/iframe>/g;
+    let match;
+    while ((match = iframeRegex.exec(markdown)) !== null) {
+        videoUrls.push(match[1]);
+    }
+    // Match direct video links in markdown image syntax (e.g., ![desc](url.mp4))
+    const videoImageRegex = /!\[.*?\]\((.*?\.(mp4|webm|mov|avi|wmv|flv|mkv))\)/gi;
+    while ((match = videoImageRegex.exec(markdown)) !== null) {
+        videoUrls.push(match[1]);
+    }
+    return videoUrls;
+}

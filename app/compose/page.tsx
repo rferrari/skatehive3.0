@@ -32,6 +32,7 @@ import { Components } from "@uiw/react-markdown-preview";
 import ImageCompressor, { ImageCompressorRef } from "../../src/components/ImageCompressor";
 import VideoUploader, { VideoUploaderRef } from "../../components/homepage/VideoUploader";
 import GIFMakerWithSelector, { GIFMakerRef as GIFMakerWithSelectorRef } from "../../components/homepage/GIFMakerWithSelector";
+import { extractImageUrls, extractVideoUrls } from "../../lib/utils/extractImageUrls";
 
 export default function Composer() {
   const [markdown, setMarkdown] = useState("");
@@ -54,6 +55,8 @@ export default function Composer() {
   const [isProcessingGif, setIsProcessingGif] = useState(false);
   const [isUploadingGif, setIsUploadingGif] = useState(false);
   const gifWebpInputRef = useRef<HTMLInputElement>(null);
+  const [showThumbnailPicker, setShowThumbnailPicker] = useState(false);
+  const [selectedThumbnail, setSelectedThumbnail] = useState<string | null>(null);
 
   const placeholders = [
     "Don't forget to title your post...",
@@ -105,10 +108,18 @@ export default function Composer() {
 
   const handleSubmit = async () => {
     const permlink = title.replaceAll(" ", "-");
+    const allImages = extractImageUrls(markdown);
+    let imageArray: string[] = [];
+    if (selectedThumbnail) {
+      imageArray = [selectedThumbnail, ...allImages.filter(url => url !== selectedThumbnail)];
+    } else {
+      imageArray = allImages;
+    }
     try {
       await aioha.comment(null, communityTag, permlink, title, markdown, {
         tags: hashtags,
         app: "Skatehive App 3.0",
+        image: imageArray,
       });
       console.log("Post submitted successfully");
     } catch (error) {
@@ -117,6 +128,7 @@ export default function Composer() {
   };
 
   const handleImageUpload = async (url: string | null, fileName?: string) => {
+    setIsUploading(true);
     setIsCompressingImage(false);
     if (url) {
       try {
@@ -133,9 +145,13 @@ export default function Composer() {
         const result = await response.json();
         const ipfsUrl = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`;
         insertAtCursor(`\n![${fileName || 'image'}](${ipfsUrl})\n`);
+        setIsUploading(false);
       } catch (error) {
         console.error("Error uploading compressed image to IPFS:", error);
+        setIsUploading(false);
       }
+    } else {
+      setIsUploading(false);
     }
   };
 
@@ -533,13 +549,64 @@ export default function Composer() {
         ))}
       </Wrap>
       <Flex mt="1" justify="space-between">
-        <Button size="sm" colorScheme="blue">
-          Advanced
+        <Button size="sm" colorScheme="blue" onClick={() => setShowThumbnailPicker((v) => !v)}>
+          Thumbnail
         </Button>
         <Button size="sm" colorScheme="blue" onClick={handleSubmit}>
           Submit
         </Button>
       </Flex>
+      {showThumbnailPicker && (
+        <Box mt={4} p={3} border="1px solid #444" borderRadius="md" bg="#181818">
+          <Box mb={2} fontWeight="bold">Choose a thumbnail:</Box>
+          <Flex wrap="wrap" gap={3}>
+            {extractImageUrls(markdown).map((url, idx) => (
+              <Box
+                key={url + idx}
+                border={selectedThumbnail === url ? "2px solid limegreen" : "2px solid transparent"}
+                borderRadius="md"
+                overflow="hidden"
+                cursor="pointer"
+                onClick={() => setSelectedThumbnail(url)}
+                _hover={{ border: "2px solid #3182ce" }}
+                width="96px"
+                height="96px"
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+                bg="#222"
+              >
+                <img src={url} alt="thumbnail" style={{ maxWidth: 90, maxHeight: 90, objectFit: 'cover' }} />
+              </Box>
+            ))}
+            {extractVideoUrls(markdown).map((url, idx) => (
+              <Box
+                key={url + idx}
+                border={selectedThumbnail === url ? "2px solid limegreen" : "2px solid transparent"}
+                borderRadius="md"
+                overflow="hidden"
+                cursor="pointer"
+                onClick={() => setSelectedThumbnail(url)}
+                _hover={{ border: "2px solid #3182ce" }}
+                width="96px"
+                height="96px"
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+                bg="#222"
+              >
+                <video src={url} style={{ maxWidth: 90, maxHeight: 90, objectFit: 'cover' }} preload="metadata" muted />
+              </Box>
+            ))}
+            {extractImageUrls(markdown).length === 0 && extractVideoUrls(markdown).length === 0 && (
+              <Box color="#888">No media found in your post yet.</Box>
+            )}
+          </Flex>
+          {selectedThumbnail && (
+            <Box mt={2} color="#aaa" fontSize="sm">Selected thumbnail: <span style={{ wordBreak: 'break-all' }}>{selectedThumbnail}</span></Box>
+          )}
+        </Box>
+      )}
     </Flex>
   );
 }
