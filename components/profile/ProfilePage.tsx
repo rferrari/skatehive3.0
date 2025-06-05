@@ -16,13 +16,15 @@ import {
   Link,
 } from "@chakra-ui/react";
 import useHiveAccount from "@/hooks/useHiveAccount";
-import { FaGlobe, FaTh, FaBars } from "react-icons/fa";
+import { FaGlobe, FaTh, FaBars, FaEdit } from "react-icons/fa";
 import { getProfile, findPosts } from "@/lib/hive/client-functions";
 import PostGrid from "../blog/PostGrid";
 import InfiniteScroll from "react-infinite-scroll-component";
 import PostCard from "../blog/PostCard";
 import LoadingComponent from '../homepage/loadingComponent';
 import PostInfiniteScroll from "../blog/PostInfiniteScroll";
+import { useAioha } from '@aioha/react-ui';
+import EditProfile from "./EditProfile";
 
 interface ProfilePageProps {
   username: string;
@@ -55,6 +57,8 @@ export default function ProfilePage({ username }: ProfilePageProps) {
   const isFetching = useRef(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isMobile, setIsMobile] = useState(false);
+  const { user } = useAioha();
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const params = useRef([
     username,
@@ -313,6 +317,18 @@ export default function ProfilePage({ username }: ProfilePageProps) {
                 <Icon as={FaGlobe} w={2} h={2} mr={1} />
                 {profileData.website}
               </Link>
+              {/* Edit icon only for profile owner */}
+              {user === username && (
+                <IconButton
+                  aria-label="Edit Profile"
+                  icon={<FaEdit />}
+                  size="sm"
+                  ml={2}
+                  variant="ghost"
+                  colorScheme="primary"
+                  onClick={() => setIsEditModalOpen(true)}
+                />
+              )}
             </Flex>
           )}
         </Flex>
@@ -341,6 +357,15 @@ export default function ProfilePage({ username }: ProfilePageProps) {
 
       {/* Posts */}
       <PostInfiniteScroll allPosts={posts} fetchPosts={fetchPosts} viewMode={viewMode} context="profile" hideAuthorInfo={true} />
+
+      {/* Edit Profile Modal */}
+      <EditProfile
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        profileData={profileData}
+        setProfileData={setProfileData}
+        username={username}
+      />
     </Box>
   );
 }
