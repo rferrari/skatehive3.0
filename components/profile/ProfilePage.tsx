@@ -1,5 +1,11 @@
 "use client";
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import {
   Box,
   Heading,
@@ -20,12 +26,11 @@ import LoadingComponent from "../homepage/loadingComponent";
 import PostInfiniteScroll from "../blog/PostInfiniteScroll";
 import { useAioha } from "@aioha/react-ui";
 import EditProfile from "./EditProfile";
-
 interface ProfilePageProps {
   username: string;
 }
 
-interface ProfileData {
+export interface ProfileData {
   profileImage: string;
   coverImage: string;
   website: string;
@@ -34,6 +39,8 @@ interface ProfileData {
   following: number;
   location: string;
   about: string;
+  ethereum_address?: string;
+  video_parts?: string[];
 }
 
 export default function ProfilePage({ username }: ProfilePageProps) {
@@ -47,6 +54,8 @@ export default function ProfilePage({ username }: ProfilePageProps) {
     following: 0,
     location: "",
     about: "",
+    ethereum_address: "",
+    video_parts: [],
   });
   const [posts, setPosts] = useState<any[]>([]);
   const isFetching = useRef(false);
@@ -61,6 +70,39 @@ export default function ProfilePage({ username }: ProfilePageProps) {
     new Date().toISOString().split(".")[0],
     12,
   ]);
+
+  // Memoize derived values
+  const isOwner = useMemo(() => user === username, [user, username]);
+
+  // Memoized callbacks
+  const handleViewModeChange = useCallback((mode: "grid" | "list") => {
+    setViewMode(mode);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("profileViewMode", mode);
+    }
+  }, []);
+
+  const handleEditModalOpen = useCallback(() => {
+    setIsEditModalOpen(true);
+  }, []);
+
+  const handleEditModalClose = useCallback(() => {
+    setIsEditModalOpen(false);
+  }, []);
+
+  // Optimized profile data update callback
+  const updateProfileData = useCallback((newData: Partial<ProfileData>) => {
+    setProfileData((prev) => ({ ...prev, ...newData }));
+  }, []);
+
+  const speakDescription = useCallback(() => {
+    if ("speechSynthesis" in window && profileData.about) {
+      const utterance = new window.SpeechSynthesisUtterance(profileData.about);
+      utterance.rate = 0.3;
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utterance);
+    }
+  }, [profileData.about]);
 
   // Load saved view mode from localStorage on mount
   useEffect(() => {
@@ -83,20 +125,11 @@ export default function ProfilePage({ username }: ProfilePageProps) {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Handler to change and persist view mode
-  const handleViewModeChange = (mode: "grid" | "list") => {
-    setViewMode(mode);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("profileViewMode", mode);
-    }
-  };
-
   const fetchPosts = useCallback(async () => {
     if (isFetching.current) return; // Prevent multiple fetches
     isFetching.current = true;
     try {
       const newPosts = await findPosts("author_before_date", params.current);
-      console.log("Fetched posts:", newPosts, "Params:", params.current);
       if (newPosts && newPosts.length > 0) {
         setPosts((prevPosts) => [...prevPosts, ...newPosts]);
         params.current = [
@@ -114,23 +147,23 @@ export default function ProfilePage({ username }: ProfilePageProps) {
     }
   }, [username]);
 
+  // Reset posts when username changes
   useEffect(() => {
-    // Reset posts and params when username changes
     setPosts([]);
     params.current = [username, "", new Date().toISOString().split(".")[0], 12];
     fetchPosts();
   }, [username, fetchPosts]);
 
+  // Optimized profile info fetching
   useEffect(() => {
     const fetchProfileInfo = async () => {
       try {
-        // Get complete profile info
         const profileInfo = await getProfile(username);
-
-        // Extract metadata from hiveAccount if available
         let profileImage = "";
         let coverImage = "";
         let website = "";
+        let ethereum_address = "";
+        let video_parts: string[] = [];
 
         if (hiveAccount?.posting_json_metadata) {
           try {
@@ -146,6 +179,17 @@ export default function ProfilePage({ username }: ProfilePageProps) {
           }
         }
 
+        if (hiveAccount?.json_metadata) {
+          try {
+            const parsedMetadata = JSON.parse(hiveAccount.json_metadata);
+            ethereum_address = parsedMetadata?.extensions?.eth_address || "";
+            video_parts = parsedMetadata?.extensions?.video_parts || [];
+          } catch (err) {
+            console.error("Failed to parse json_metadata", err);
+          }
+        }
+
+        // Batch update to prevent multiple re-renders
         setProfileData({
           profileImage,
           coverImage,
@@ -155,6 +199,8 @@ export default function ProfilePage({ username }: ProfilePageProps) {
           following: profileInfo?.stats?.following || 0,
           location: profileInfo?.metadata?.profile?.location || "",
           about: profileInfo?.metadata?.profile?.about || "",
+          ethereum_address: ethereum_address,
+          video_parts: video_parts,
         });
       } catch (err) {
         console.error("Failed to fetch profile info", err);
@@ -166,15 +212,162 @@ export default function ProfilePage({ username }: ProfilePageProps) {
     }
   }, [username, hiveAccount]);
 
-  // Click-to-speak handler for speech bubble
-  const speakDescription = () => {
-    if ("speechSynthesis" in window && profileData.about) {
-      const utterance = new window.SpeechSynthesisUtterance(profileData.about);
-      utterance.rate = 0.3;
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(utterance);
-    }
-  };
+  // Memoized components
+  const ProfileHeader = useMemo(
+    () => (
+      <Box position="relative" w="100%" p={0} m={0}>
+        <Box
+          position={{ base: "static", md: "absolute" }}
+          left={{ base: "auto", md: 0 }}
+          top={{ base: "auto", md: "-60px" }}
+          transform={{ base: "none", md: "none" }}
+          display="flex"
+          flexDirection="row"
+          alignItems="center"
+          zIndex={2}
+          ml={{ base: 0, md: 8 }}
+          p={0}
+          m={0}
+          w={{ base: "100%", md: "auto" }}
+          mt={{ base: "-32px", md: 0 }}
+        >
+          <Avatar
+            src={profileData.profileImage}
+            name={username}
+            borderRadius="md"
+            boxSize="100px"
+            mr={{ base: 0, md: 4 }}
+            mb={{ base: 2, md: 0 }}
+          />
+          {profileData.about && (
+            <Box position="relative" ml={{ base: 0, md: 2 }} p={0} m={0}>
+              <Box
+                bg="gray.800"
+                color="white"
+                px={4}
+                py={3}
+                borderRadius="lg"
+                boxShadow="md"
+                maxW={{ base: "95vw", sm: "400px", md: "500px" }}
+                fontSize="md"
+                fontStyle="italic"
+                wordBreak="break-word"
+                overflowWrap="anywhere"
+                cursor="pointer"
+                onClick={speakDescription}
+                _after={{
+                  content: '""',
+                  position: "absolute",
+                  left: "-16px",
+                  top: "24px",
+                  borderWidth: "8px",
+                  borderStyle: "solid",
+                  borderColor: "transparent",
+                  borderRightColor: "var(--chakra-colors-gray-800, #2D3748)",
+                }}
+              >
+                {profileData.about}
+              </Box>
+            </Box>
+          )}
+        </Box>
+
+        <Flex
+          direction="column"
+          alignItems="center"
+          justifyContent="center"
+          w="100%"
+          px={2}
+          mt={{ base: 2, md: 0 }}
+          mb={0}
+          pt={0}
+          pb={0}
+        >
+          <Heading as="h2" size="lg" color="primary" mb={1} textAlign="center">
+            {profileData.name}
+          </Heading>
+          <Text fontSize="xs" color="text" mb={0} textAlign="center">
+            Following: {profileData.following} | Followers:{" "}
+            {profileData.followers} | Location: {profileData.location}
+          </Text>
+
+          <Flex
+            alignItems="center"
+            justifyContent="center"
+            mb={0}
+            mt={0}
+            pt={0}
+            pb={0}
+            gap={2}
+          >
+            {profileData.website && (
+              <Link
+                href={
+                  profileData.website.startsWith("http")
+                    ? profileData.website
+                    : `https://${profileData.website}`
+                }
+                isExternal
+                fontSize="xs"
+                color="primary"
+                display="flex"
+                alignItems="center"
+              >
+                <Icon as={FaGlobe} w={2} h={2} mr={1} />
+                {profileData.website}
+              </Link>
+            )}
+
+            {/* Edit icon for profile owner - now outside website conditional */}
+            {isOwner && (
+              <IconButton
+                aria-label="Edit Profile"
+                icon={<FaEdit />}
+                size="sm"
+                variant="ghost"
+                colorScheme="primary"
+                onClick={handleEditModalOpen}
+              />
+            )}
+          </Flex>
+        </Flex>
+      </Box>
+    ),
+    [profileData, username, speakDescription, isOwner, handleEditModalOpen]
+  );
+
+  const ViewToggle = useMemo(
+    () =>
+      !isMobile && (
+        <Flex
+          justifyContent="flex-end"
+          alignItems="center"
+          mb={0}
+          mt={0}
+          pt={0}
+          pb={0}
+          gap={2}
+          p={0}
+        >
+          <IconButton
+            aria-label="Grid view"
+            icon={<FaTh />}
+            variant={viewMode === "grid" ? "solid" : "ghost"}
+            onClick={() => handleViewModeChange("grid")}
+            isActive={viewMode === "grid"}
+            mr={1}
+          />
+          <IconButton
+            aria-label="List view"
+            icon={<FaBars />}
+            variant={viewMode === "list" ? "solid" : "ghost"}
+            onClick={() => handleViewModeChange("list")}
+            isActive={viewMode === "list"}
+          />
+        </Flex>
+      ),
+    [isMobile, viewMode, handleViewModeChange]
+  );
 
   if (isLoading || !hiveAccount) {
     return (
@@ -242,155 +435,8 @@ export default function ProfilePage({ username }: ProfilePageProps) {
         />
       </Box>
 
-      {/* Profile Info Layout: PFP/speech bubble overlap banner, info below banner */}
-      <Box position="relative" w="100%" p={0} m={0}>
-        {/* Absolutely positioned avatar and speech bubble on the left, overlapping banner */}
-        <Box
-          position={{ base: "static", md: "absolute" }}
-          left={{ base: "auto", md: 0 }}
-          top={{ base: "auto", md: "-60px" }}
-          transform={{ base: "none", md: "none" }}
-          display="flex"
-          flexDirection="row"
-          alignItems="center"
-          zIndex={2}
-          ml={{ base: 0, md: 8 }}
-          p={0}
-          m={0}
-          w={{ base: "100%", md: "auto" }}
-          mt={{ base: "-32px", md: 0 }}
-        >
-          <Avatar
-            src={profileData.profileImage}
-            name={username}
-            borderRadius="md"
-            boxSize="100px"
-            mr={{ base: 0, md: 4 }}
-            mb={{ base: 2, md: 0 }}
-          />
-          {profileData.about && (
-            <Box position="relative" ml={{ base: 0, md: 2 }} p={0} m={0}>
-              <Box
-                bg="gray.800"
-                color="white"
-                px={4}
-                py={3}
-                borderRadius="lg"
-                boxShadow="md"
-                maxW={{ base: "95vw", sm: "400px", md: "500px" }}
-                fontSize="md"
-                fontStyle="italic"
-                wordBreak="break-word"
-                overflowWrap="anywhere"
-                cursor="pointer"
-                onClick={speakDescription}
-                _after={{
-                  content: '""',
-                  position: "absolute",
-                  left: "-16px",
-                  top: "24px",
-                  borderWidth: "8px",
-                  borderStyle: "solid",
-                  borderColor: "transparent",
-                  borderRightColor: "var(--chakra-colors-gray-800, #2D3748)",
-                }}
-              >
-                {profileData.about}
-              </Box>
-            </Box>
-          )}
-        </Box>
-
-        {/* Centered profile info, not affected by avatar/speech bubble, directly under banner */}
-        <Flex
-          direction="column"
-          alignItems="center"
-          justifyContent="center"
-          w="100%"
-          px={2}
-          mt={{ base: 2, md: 0 }}
-          mb={0}
-          pt={0}
-          pb={0}
-        >
-          <Heading as="h2" size="lg" color="primary" mb={1} textAlign="center">
-            {profileData.name}
-          </Heading>
-          <Text fontSize="xs" color="text" mb={0} textAlign="center">
-            Following: {profileData.following} | Followers:{" "}
-            {profileData.followers} | Location: {profileData.location}
-          </Text>
-          {profileData.website && (
-            <Flex
-              alignItems="center"
-              justifyContent="center"
-              mb={0}
-              mt={0}
-              pt={0}
-              pb={0}
-            >
-              <Link
-                href={
-                  profileData.website.startsWith("http")
-                    ? profileData.website
-                    : `https://${profileData.website}`
-                }
-                isExternal
-                ml={2}
-                fontSize="xs"
-                color="primary"
-                display="flex"
-                alignItems="center"
-              >
-                <Icon as={FaGlobe} w={2} h={2} mr={1} />
-                {profileData.website}
-              </Link>
-              {/* Edit icon only for profile owner */}
-              {user === username && (
-                <IconButton
-                  aria-label="Edit Profile"
-                  icon={<FaEdit />}
-                  size="sm"
-                  ml={2}
-                  variant="ghost"
-                  colorScheme="primary"
-                  onClick={() => setIsEditModalOpen(true)}
-                />
-              )}
-            </Flex>
-          )}
-        </Flex>
-      </Box>
-
-      {/* Toggle for grid/list view */}
-      {!isMobile && (
-        <Flex
-          justifyContent="flex-end"
-          alignItems="center"
-          mb={0}
-          mt={0}
-          pt={0}
-          pb={0}
-          gap={2}
-          p={0}
-        >
-          <IconButton
-            aria-label="Grid view"
-            icon={<FaTh />}
-            variant={viewMode === "grid" ? "solid" : "ghost"}
-            onClick={() => handleViewModeChange("grid")}
-            isActive={viewMode === "grid"}
-            mr={1}
-          />
-          <IconButton
-            aria-label="List view"
-            icon={<FaBars />}
-            variant={viewMode === "list" ? "solid" : "ghost"}
-            onClick={() => handleViewModeChange("list")}
-            isActive={viewMode === "list"}
-          />
-        </Flex>
-      )}
+      {ProfileHeader}
+      {ViewToggle}
 
       {/* Posts */}
       <PostInfiniteScroll
@@ -404,9 +450,9 @@ export default function ProfilePage({ username }: ProfilePageProps) {
       {/* Edit Profile Modal */}
       <EditProfile
         isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
+        onClose={handleEditModalClose}
         profileData={profileData}
-        setProfileData={setProfileData}
+        onProfileUpdate={updateProfileData}
         username={username}
       />
     </Box>
