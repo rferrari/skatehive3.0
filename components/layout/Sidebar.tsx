@@ -18,6 +18,7 @@ import { FaPiggyBank } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { FaGear } from "react-icons/fa6";
 import { FaMailBulk } from "react-icons/fa";
+import { FaTrophy } from "react-icons/fa";
 import { KeyTypes } from "@aioha/aioha";
 import "@aioha/react-ui/dist/build.css";
 import { useAccount } from "wagmi";
@@ -97,6 +98,20 @@ export default function Sidebar({ newNotificationCount = 0 }) {
             }}
           >
             Home
+          </Button>
+          <Button
+            onClick={() => handleNavigation("/leaderboard")}
+            variant="ghost"
+            w="full"
+            justifyContent="flex-start"
+            leftIcon={<Icon as={FaTrophy} boxSize={4} color="yellow.400" />}
+            px={1}
+            _hover={{
+              bg: primaryBg,
+              color: hoverTextColor,
+            }}
+          >
+            Leaderboard
           </Button>
           <Button
             onClick={() => handleNavigation("/blog")}

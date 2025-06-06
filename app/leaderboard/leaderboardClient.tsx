@@ -1,6 +1,22 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import {
+  Box,
+  Flex,
+  Text,
+  Button,
+  Avatar,
+  VStack,
+  HStack,
+  Stack,
+  Badge,
+  useColorModeValue,
+  Tooltip,
+  SimpleGrid,
+  IconButton,
+} from "@chakra-ui/react";
+import { ArrowBackIcon } from "@chakra-ui/icons";
 
 interface SkaterData {
   id: number;
@@ -59,10 +75,14 @@ export default function LeaderboardClient({ skatersData }: Props) {
   }, [skatersData, sortBy]);
 
   const getRankIcon = (rank: number) => {
-    if (rank === 1) return <span className="text-2xl">🏆</span>;
-    if (rank === 2) return <span className="text-2xl">🥈</span>;
-    if (rank === 3) return <span className="text-2xl">🥉</span>;
-    return <span className="text-lg font-bold text-green-400">#{rank}</span>;
+    if (rank === 1) return <Text fontSize="2xl">🏆</Text>;
+    if (rank === 2) return <Text fontSize="2xl">🥈</Text>;
+    if (rank === 3) return <Text fontSize="2xl">🥉</Text>;
+    return (
+      <Badge colorScheme="green" fontSize="lg" fontWeight="bold" px={2}>
+        #{rank}
+      </Badge>
+    );
   };
 
   const formatNumber = (num: number) => {
@@ -84,205 +104,239 @@ export default function LeaderboardClient({ skatersData }: Props) {
     return `${Math.floor(diffInDays / 365)}y`;
   };
 
+  const bg = useColorModeValue("gray.900", "black");
+  const cardBg = useColorModeValue("gray.800", "gray.700");
+  const borderColor = useColorModeValue("green.400", "green.500");
+
   return (
-    <div className="min-h-screen bg-black text-green-400 font-mono">
+    <Box minH="100vh" bg={bg} color="green.300" fontFamily="mono">
       {/* Header */}
-      <div className="p-8 border-b border-green-500/30">
-        <div className="flex items-center gap-6 mb-6">
-          <span className="text-green-400 cursor-pointer hover:text-green-300 text-3xl">
-            ←
-          </span>
-          <h1 className="text-3xl font-bold text-green-400">
+      <Box
+        px={{ base: 4, md: 8 }}
+        py={8}
+        borderBottom="1px"
+        borderColor="green.500"
+        bgGradient="linear(to-r, green.900 60%, black)"
+      >
+        <Flex align="center" gap={6} mb={6}>
+          <IconButton
+            aria-label="Back"
+            icon={<ArrowBackIcon />}
+            variant="ghost"
+            colorScheme="green"
+            fontSize="2xl"
+            _hover={{ color: "green.200", bg: "green.900" }}
+          />
+          <Text
+            fontSize={{ base: "2xl", md: "3xl" }}
+            fontWeight="bold"
+            color="green.300"
+            letterSpacing="wider"
+          >
             Skatehive Leaderboard
-          </h1>
-        </div>
-
-        <div className="text-center mb-8">
-          <p className="text-green-400 text-xl">
+          </Text>
+        </Flex>
+        <Flex justify="center" mb={8}>
+          <Text color="green.300" fontSize="xl" textAlign="center">
             We are {skatersData.length} skaters supporting ourselves. 🛹
-          </p>
-        </div>
-
+          </Text>
+        </Flex>
         {/* Sort Options */}
-        <div className="flex justify-center gap-8 text-base">
-          <button
+        <Flex justify="center" gap={4} flexWrap="wrap">
+          <Button
             onClick={() => setSortBy("points")}
-            className={`flex items-center gap-2 px-4 py-2 rounded ${
-              sortBy === "points"
-                ? "bg-green-600 text-black font-bold"
-                : "text-gray-400 hover:text-green-400"
-            }`}
+            leftIcon={<span>🏆</span>}
+            colorScheme={sortBy === "points" ? "yellow" : "gray"}
+            variant={sortBy === "points" ? "solid" : "ghost"}
+            fontWeight={sortBy === "points" ? "bold" : "normal"}
+            size="sm"
           >
-            🏆 Points
-          </button>
-          <button
+            Points
+          </Button>
+          <Button
             onClick={() => setSortBy("power")}
-            className={`flex items-center gap-2 px-4 py-2 rounded ${
-              sortBy === "power"
-                ? "bg-green-600 text-black font-bold"
-                : "text-gray-400 hover:text-green-400"
-            }`}
+            leftIcon={<span>⚡</span>}
+            colorScheme={sortBy === "power" ? "green" : "gray"}
+            variant={sortBy === "power" ? "solid" : "ghost"}
+            fontWeight={sortBy === "power" ? "bold" : "normal"}
+            size="sm"
           >
-            ⚡ Power
-          </button>
-          <button
+            Power
+          </Button>
+          <Button
             onClick={() => setSortBy("posts")}
-            className={`flex items-center gap-2 px-4 py-2 rounded ${
-              sortBy === "posts"
-                ? "bg-green-600 text-black font-bold"
-                : "text-gray-400 hover:text-green-400"
-            }`}
+            leftIcon={<span>💬</span>}
+            colorScheme={sortBy === "posts" ? "blue" : "gray"}
+            variant={sortBy === "posts" ? "solid" : "ghost"}
+            fontWeight={sortBy === "posts" ? "bold" : "normal"}
+            size="sm"
           >
-            💬 Posts
-          </button>
-          <button
+            Posts
+          </Button>
+          <Button
             onClick={() => setSortBy("nfts")}
-            className={`flex items-center gap-2 px-4 py-2 rounded ${
-              sortBy === "nfts"
-                ? "bg-green-600 text-black font-bold"
-                : "text-gray-400 hover:text-green-400"
-            }`}
+            leftIcon={<span>🎨</span>}
+            colorScheme={sortBy === "nfts" ? "purple" : "gray"}
+            variant={sortBy === "nfts" ? "solid" : "ghost"}
+            fontWeight={sortBy === "nfts" ? "bold" : "normal"}
+            size="sm"
           >
-            🎨 NFTs
-          </button>
-          <button
+            NFTs
+          </Button>
+          <Button
             onClick={() => setSortBy("gnars")}
-            className={`flex items-center gap-2 px-4 py-2 rounded ${
-              sortBy === "gnars"
-                ? "bg-green-600 text-black font-bold"
-                : "text-gray-400 hover:text-green-400"
-            }`}
+            leftIcon={<span>🪙</span>}
+            colorScheme={sortBy === "gnars" ? "orange" : "gray"}
+            variant={sortBy === "gnars" ? "solid" : "ghost"}
+            fontWeight={sortBy === "gnars" ? "bold" : "normal"}
+            size="sm"
           >
-            🪙 Gnars
-          </button>
-          <button
+            Gnars
+          </Button>
+          <Button
             onClick={() => setSortBy("donations")}
-            className={`flex items-center gap-2 px-4 py-2 rounded ${
-              sortBy === "donations"
-                ? "bg-green-600 text-black font-bold"
-                : "text-gray-400 hover:text-green-400"
-            }`}
+            leftIcon={<span>❤️</span>}
+            colorScheme={sortBy === "donations" ? "red" : "gray"}
+            variant={sortBy === "donations" ? "solid" : "ghost"}
+            fontWeight={sortBy === "donations" ? "bold" : "normal"}
+            size="sm"
           >
-            ❤️ Donations
-          </button>
-        </div>
-      </div>
+            Donations
+          </Button>
+        </Flex>
+      </Box>
 
       {/* Leaderboard */}
-      <div className="p-8">
-        <div className="max-w-7xl mx-auto space-y-4">
+      <Box px={{ base: 2, md: 8 }} py={8}>
+        <VStack spacing={6} maxW="7xl" mx="auto" align="stretch">
           {sortedSkaters.map((skater, index) => {
             const rank = index + 1;
-
             return (
-              <div
+              <Flex
                 key={skater.id}
-                className="flex items-center justify-between p-6 border border-green-800/50 rounded-lg bg-gray-900/30 hover:bg-gray-800/50 hover:border-green-600/50 transition-all duration-200"
+                align="center"
+                justify="space-between"
+                p={6}
+                borderWidth={2}
+                borderColor={borderColor}
+                borderRadius="xl"
+                bg={cardBg}
+                boxShadow={rank <= 3 ? "0 0 24px 4px #38A16955" : "md"}
+                _hover={{
+                  borderColor: "green.300",
+                  bg: useColorModeValue("gray.700", "gray.800"),
+                  boxShadow: "0 0 32px 8px #38A16988",
+                  transform: "scale(1.01)",
+                }}
+                transition="all 0.2s"
+                gap={4}
+                flexWrap="wrap"
               >
-                <div className="flex items-center gap-8 flex-1">
-                  {/* Rank */}
-                  <div className="flex items-center justify-center w-12 h-12 text-xl font-bold">
-                    {rank === 1
-                      ? "🏆"
-                      : rank === 2
-                      ? "🥈"
-                      : rank === 3
-                      ? "🥉"
-                      : `${rank}`}
-                  </div>
-
-                  {/* Avatar & Name */}
-                  <div className="flex items-center gap-4">
-                    <img
-                      src={`https://images.hive.blog/u/${skater.hive_author}/avatar/small`}
-                      alt={`${skater.hive_author} avatar`}
-                      className="w-12 h-12 rounded-full border-2 border-green-400/50 object-cover"
-                      onError={(e) => {
-                        // Fallback to initial if image fails to load
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = "none";
-                        target.nextElementSibling?.classList.remove("hidden");
-                      }}
-                    />
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-black text-lg font-bold hidden">
-                      {skater.hive_author.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-green-400 font-bold text-lg">
-                        {skater.hive_author}
-                      </div>
-                      <div className="text-gray-400 text-sm">
-                        Last post: {getTimeSince(skater.last_post)}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Stats - Right side with much better spacing */}
-                <div className="flex items-center gap-16 text-center">
-                  <div className="min-w-20">
-                    <div className="text-yellow-400 text-xs font-semibold mb-1">
+                {/* Rank */}
+                <Box w="60px" textAlign="center">
+                  {getRankIcon(rank)}
+                </Box>
+                {/* Avatar & Name */}
+                <HStack spacing={4} minW="220px">
+                  <Avatar
+                    src={`https://images.hive.blog/u/${skater.hive_author}/avatar/small`}
+                    name={skater.hive_author}
+                    size="lg"
+                    border="2px solid"
+                    borderColor="green.400"
+                    bgGradient="linear(to-br, green.400, green.600)"
+                  />
+                  <Box minW={0}>
+                    <Text
+                      color="green.200"
+                      fontWeight="bold"
+                      fontSize="lg"
+                      isTruncated
+                    >
+                      {skater.hive_author}
+                    </Text>
+                    <Text color="gray.400" fontSize="sm">
+                      Last post: {getTimeSince(skater.last_post)}
+                    </Text>
+                  </Box>
+                </HStack>
+                {/* Stats */}
+                <SimpleGrid
+                  columns={{ base: 2, md: 6 }}
+                  spacing={4}
+                  flex="1"
+                  minW="320px"
+                >
+                  <VStack spacing={0}>
+                    <Text
+                      color="yellow.400"
+                      fontSize="xs"
+                      fontWeight="semibold"
+                    >
                       🏆 POINTS
-                    </div>
-                    <div className="text-yellow-400 font-bold text-lg">
+                    </Text>
+                    <Text color="yellow.300" fontWeight="bold" fontSize="lg">
                       {skater.points}
-                    </div>
-                  </div>
-
-                  <div className="min-w-20">
-                    <div className="text-green-400 text-xs font-semibold mb-1">
+                    </Text>
+                  </VStack>
+                  <VStack spacing={0}>
+                    <Text color="green.300" fontSize="xs" fontWeight="semibold">
                       ⚡ POWER
-                    </div>
-                    <div className="text-green-400 font-bold text-lg">
+                    </Text>
+                    <Text color="green.200" fontWeight="bold" fontSize="lg">
                       {formatNumber(
                         skater.hp_balance + skater.max_voting_power_usd
                       )}
-                    </div>
-                  </div>
-
-                  <div className="min-w-20">
-                    <div className="text-blue-400 text-xs font-semibold mb-1">
+                    </Text>
+                  </VStack>
+                  <VStack spacing={0}>
+                    <Text color="blue.300" fontSize="xs" fontWeight="semibold">
                       💬 POSTS
-                    </div>
-                    <div className="text-blue-400 font-bold text-lg">
+                    </Text>
+                    <Text color="blue.200" fontWeight="bold" fontSize="lg">
                       {skater.post_count}
-                    </div>
-                  </div>
-
-                  <div className="min-w-20">
-                    <div className="text-purple-400 text-xs font-semibold mb-1">
+                    </Text>
+                  </VStack>
+                  <VStack spacing={0}>
+                    <Text
+                      color="purple.300"
+                      fontSize="xs"
+                      fontWeight="semibold"
+                    >
                       🎨 NFTs
-                    </div>
-                    <div className="text-purple-400 font-bold text-lg">
+                    </Text>
+                    <Text color="purple.200" fontWeight="bold" fontSize="lg">
                       {skater.skatehive_nft_balance}
-                    </div>
-                  </div>
-
-                  <div className="min-w-20">
-                    <div className="text-orange-400 text-xs font-semibold mb-1">
+                    </Text>
+                  </VStack>
+                  <VStack spacing={0}>
+                    <Text
+                      color="orange.300"
+                      fontSize="xs"
+                      fontWeight="semibold"
+                    >
                       🪙 GNARS
-                    </div>
-                    <div className="text-orange-400 font-bold text-lg">
+                    </Text>
+                    <Text color="orange.200" fontWeight="bold" fontSize="lg">
                       {skater.gnars_votes}
-                    </div>
-                  </div>
-
-                  <div className="min-w-20">
-                    <div className="text-red-400 text-xs font-semibold mb-1">
+                    </Text>
+                  </VStack>
+                  <VStack spacing={0}>
+                    <Text color="red.300" fontSize="xs" fontWeight="semibold">
                       ❤️ HBD
-                    </div>
-                    <div className="text-red-400 font-bold text-lg">
+                    </Text>
+                    <Text color="red.200" fontWeight="bold" fontSize="lg">
                       {formatNumber(
                         skater.hbd_balance + skater.hbd_savings_balance
                       )}
-                    </div>
-                  </div>
-                </div>
-              </div>
+                    </Text>
+                  </VStack>
+                </SimpleGrid>
+              </Flex>
             );
           })}
-        </div>
-      </div>
-    </div>
+        </VStack>
+      </Box>
+    </Box>
   );
 }
