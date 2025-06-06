@@ -36,7 +36,11 @@ interface PostCardProps {
   hideAuthorInfo?: boolean;
 }
 
-export default function PostCard({ post, listView = false, hideAuthorInfo = false }: PostCardProps) {
+export default function PostCard({
+  post,
+  listView = false,
+  hideAuthorInfo = false,
+}: PostCardProps) {
   const { title, author, body, json_metadata, created } = post;
   const postDate = getPostDate(created);
 
@@ -138,15 +142,20 @@ export default function PostCard({ post, listView = false, hideAuthorInfo = fals
   // Extract summary for listView: remove image markdown, allow up to 3 lines, no char limit
   let summarySource = body;
   if (listView) {
-    summarySource = summarySource.replace(/!\[[^\]]*\]\([^\)]*\)/g, ''); // Remove ![alt](url)
-    summarySource = summarySource.replace(/!\[\]\([^\)]*\)/g, ''); // Remove ![](url)
+    summarySource = summarySource.replace(/!\[[^\]]*\]\([^\)]*\)/g, ""); // Remove ![alt](url)
+    summarySource = summarySource.replace(/!\[\]\([^\)]*\)/g, ""); // Remove ![](url)
     // Remove markdown links [text](url)
-    summarySource = summarySource.replace(/\[[^\]]*\]\([^\)]*\)/g, '');
+    summarySource = summarySource.replace(/\[[^\]]*\]\([^\)]*\)/g, "");
     // Remove raw URLs (http/https/ftp)
-    summarySource = summarySource.replace(/https?:\/\/[\w\-._~:/?#[\]@!$&'()*+,;=%]+/g, '');
+    summarySource = summarySource.replace(
+      /https?:\/\/[\w\-._~:/?#[\]@!$&'()*+,;=%]+/g,
+      ""
+    );
   }
   // For listView, do not slice to a char limit; let noOfLines handle truncation
-  const summary = summarySource.replace(/[#*_`>\[\]()!\-]/g, '').replace(/\n+/g, ' ');
+  const summary = summarySource
+    .replace(/[#*_`>\[\]()!\-]/g, "")
+    .replace(/\n+/g, " ");
 
   if (listView) {
     return (
@@ -161,8 +170,23 @@ export default function PostCard({ post, listView = false, hideAuthorInfo = fals
         boxShadow="sm"
       >
         {/* Thumbnail and icons */}
-        <Flex direction="column" w="160px" h="100%" flexShrink={0} alignItems="center" justifyContent="flex-start" bg="muted" py={2}>
-          <Box w="160px" h="160px" display="flex" alignItems="center" justifyContent="center">
+        <Flex
+          direction="column"
+          w="160px"
+          h="100%"
+          flexShrink={0}
+          alignItems="center"
+          justifyContent="flex-start"
+          bg="muted"
+          py={2}
+        >
+          <Box
+            w="160px"
+            h="160px"
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+          >
             {imageUrls.length > 0 ? (
               <Image
                 src={imageUrls[0]}
@@ -215,11 +239,25 @@ export default function PostCard({ post, listView = false, hideAuthorInfo = fals
         {/* Content */}
         <Flex direction="column" flex={1} p={4} justify="center" minW={0}>
           {/* Always show post date above title */}
-          <Text fontSize="xs" color="gray.500" mb={1}>{postDate}</Text>
-          <Text fontWeight="bold" fontSize="xl" mb={1} isTruncated={false} whiteSpace="normal" wordBreak="break-word">
+          <Text fontSize="xs" color="gray.500" mb={1}>
+            {postDate}
+          </Text>
+          <Text
+            fontWeight="bold"
+            fontSize="xl"
+            mb={1}
+            isTruncated={false}
+            whiteSpace="normal"
+            wordBreak="break-word"
+          >
             {title}
           </Text>
-          <Text fontSize="sm" color="gray.400" mb={2} noOfLines={listView ? 3 : 5}>
+          <Text
+            fontSize="sm"
+            color="gray.400"
+            mb={2}
+            noOfLines={listView ? 3 : 5}
+          >
             {summary}
           </Text>
         </Flex>
@@ -326,7 +364,9 @@ export default function PostCard({ post, listView = false, hideAuthorInfo = fals
           )}
           {/* If author info is hidden, show post date above title */}
           {hideAuthorInfo && (
-            <Text fontSize="xs" color="gray.500" mb={1}>{postDate}</Text>
+            <Text fontSize="xs" color="gray.500" mb={1}>
+              {postDate}
+            </Text>
           )}
           <Link
             href={`/@${author}/${post.permlink}`}
@@ -352,7 +392,7 @@ export default function PostCard({ post, listView = false, hideAuthorInfo = fals
             display="flex"
             alignItems="flex-end"
             justifyContent="center"
-            zIndex={999}
+            zIndex={2}
           >
             {imageUrls.length > 0 ? (
               <Swiper
@@ -368,7 +408,7 @@ export default function PostCard({ post, listView = false, hideAuthorInfo = fals
                 {imageUrls.slice(0, visibleImages).map((url, index) => (
                   // Add the stopPropagation to each SwiperSlide instead
                   <SwiperSlide key={index} onClick={stopPropagation}>
-                    <Box h="200px" w="100%" sx={{ userSelect: 'none' }}>
+                    <Box h="200px" w="100%" sx={{ userSelect: "none" }}>
                       <Image
                         src={url}
                         alt={title}
