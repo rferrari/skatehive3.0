@@ -118,7 +118,6 @@ export default function NotificationItem({
             postCache.current[parentKey] = parentPostData;
           }
           setParentPost(parentPostData);
-          console.log("Fetched parent post:", parentPostData);
 
           // Get metadata from parent post
           try {
@@ -147,7 +146,6 @@ export default function NotificationItem({
         } else {
           // It's a root post - use the post itself as "parent"
           setParentPost(post);
-          console.log("Using root post as parent:", post);
 
           // Get metadata from the post itself
           try {
@@ -295,21 +293,29 @@ export default function NotificationItem({
         w="full"
         align="stretch"
         position="relative"
-        sx={isNew ? {
-          boxShadow: 'none',
-          animation: undefined,
-        } : {}}
-        _before={isNew ? {
-          content: '""',
-          position: 'absolute',
-          left: 0,
-          top: 0,
-          bottom: 0,
-          width: '6px',
-          background: 'linear-gradient(180deg, #39ff14 0%, #00ff99 100%)',
-          boxShadow: '0 0 8px 2px #39ff14',
-          animation: 'pulseGlowLeft 1.5s infinite',
-        } : {}}
+        sx={
+          isNew
+            ? {
+                boxShadow: "none",
+                animation: undefined,
+              }
+            : {}
+        }
+        _before={
+          isNew
+            ? {
+                content: '""',
+                position: "absolute",
+                left: 0,
+                top: 0,
+                bottom: 0,
+                width: "6px",
+                background: "linear-gradient(180deg, #39ff14 0%, #00ff99 100%)",
+                boxShadow: "0 0 8px 2px #39ff14",
+                animation: "pulseGlowLeft 1.5s infinite",
+              }
+            : {}
+        }
       >
         <style>{`
           @keyframes pulseGlowLeft {
@@ -342,15 +348,34 @@ export default function NotificationItem({
               </HStack>
             ) : notification.type === "vote" ? (
               <Box>
-                <Text color={isNew ? "accent" : "primary"} fontSize="sm" display="flex" alignItems="center" flexWrap="wrap">
-                  <Link href={`/@${author}`} color={isNew ? "accent" : "primary"} fontWeight="bold" _hover={{ textDecoration: 'underline' }}>
-                    {notification.msg.replace(/^@/, "").split(' ')[0]}
+                <Text
+                  color={isNew ? "accent" : "primary"}
+                  fontSize="sm"
+                  display="flex"
+                  alignItems="center"
+                  flexWrap="wrap"
+                >
+                  <Link
+                    href={`/@${author}`}
+                    color={isNew ? "accent" : "primary"}
+                    fontWeight="bold"
+                    _hover={{ textDecoration: "underline" }}
+                  >
+                    {notification.msg.replace(/^@/, "").split(" ")[0]}
                   </Link>
-                  <Text as="span" ml={1}>upvoted your</Text>
-                  <Link href={`/${notification.url}`} color={isNew ? "accent" : "primary"} fontWeight="bold" _hover={{ textDecoration: 'underline' }} ml={1}>
+                  <Text as="span" ml={1}>
+                    upvoted your
+                  </Text>
+                  <Link
+                    href={`/${notification.url}`}
+                    color={isNew ? "accent" : "primary"}
+                    fontWeight="bold"
+                    _hover={{ textDecoration: "underline" }}
+                    ml={1}
+                  >
                     post
                   </Link>
-                  {':'}
+                  {":"}
                   <Text as="span" color="green.300" fontWeight="bold" ml={1}>
                     {(() => {
                       const match = notification.msg.match(/\(([^)]+)\)/);
@@ -359,8 +384,15 @@ export default function NotificationItem({
                   </Text>
                   {/* Inline postContent preview for vote notifications */}
                   {notification.type === "vote" && postContent && (
-                    <Text as="span" color="green.300" fontWeight="normal" ml={2} fontSize="sm">
-                      &quot;{postContent.replace(/\n/g, ' ').slice(0, 100)}{postContent.length > 100 ? '…' : ''}&quot;
+                    <Text
+                      as="span"
+                      color="green.300"
+                      fontWeight="normal"
+                      ml={2}
+                      fontSize="sm"
+                    >
+                      &quot;{postContent.replace(/\n/g, " ").slice(0, 100)}
+                      {postContent.length > 100 ? "…" : ""}&quot;
                     </Text>
                   )}
                   <Text as="span" fontSize="xs" color="gray.400" ml={2}>
@@ -370,17 +402,38 @@ export default function NotificationItem({
               </Box>
             ) : notification.type === "reply_comment" ? (
               <Box>
-                <Text color={isNew ? "accent" : "primary"} fontSize="sm" display="flex" alignItems="center" flexWrap="wrap">
-                  <Link href={`/@${author}`} color={isNew ? "accent" : "primary"} fontWeight="bold" _hover={{ textDecoration: 'underline' }}>
-                    {notification.msg.replace(/^@/, "").split(' ')[0]}
+                <Text
+                  color={isNew ? "accent" : "primary"}
+                  fontSize="sm"
+                  display="flex"
+                  alignItems="center"
+                  flexWrap="wrap"
+                >
+                  <Link
+                    href={`/@${author}`}
+                    color={isNew ? "accent" : "primary"}
+                    fontWeight="bold"
+                    _hover={{ textDecoration: "underline" }}
+                  >
+                    {notification.msg.replace(/^@/, "").split(" ")[0]}
                   </Link>
-                  <Text as="span" ml={1}>replied to your</Text>
-                  <Link href={`/${notification.url}`} color={isNew ? "accent" : "primary"} fontWeight="bold" _hover={{ textDecoration: 'underline' }} ml={1}>
+                  <Text as="span" ml={1}>
+                    replied to your
+                  </Text>
+                  <Link
+                    href={`/${notification.url}`}
+                    color={isNew ? "accent" : "primary"}
+                    fontWeight="bold"
+                    _hover={{ textDecoration: "underline" }}
+                    ml={1}
+                  >
                     comment
                   </Link>
-                  {':'}
+                  {":"}
                   {parentPost?.body &&
-                    ` "${parentPost.body.replace(/\n/g, ' ').slice(0, 100)}${parentPost.body.length > 100 ? '…' : ''}"`}
+                    ` "${parentPost.body.replace(/\n/g, " ").slice(0, 100)}${
+                      parentPost.body.length > 100 ? "…" : ""
+                    }"`}
                   <Text as="span" fontSize="xs" color="gray.400" ml={2}>
                     {formattedDate}
                   </Text>
@@ -393,17 +446,36 @@ export default function NotificationItem({
               </Box>
             ) : notification.type === "mention" ? (
               <Box>
-                <Text color={isNew ? "accent" : "primary"} fontSize="sm" display="flex" alignItems="center" flexWrap="wrap">
-                  <Link href={`/@${author}`} color={isNew ? "accent" : "primary"} fontWeight="bold" _hover={{ textDecoration: 'underline' }}>
-                    {notification.msg.replace(/^@/, "").split(' ')[0]}
+                <Text
+                  color={isNew ? "accent" : "primary"}
+                  fontSize="sm"
+                  display="flex"
+                  alignItems="center"
+                  flexWrap="wrap"
+                >
+                  <Link
+                    href={`/@${author}`}
+                    color={isNew ? "accent" : "primary"}
+                    fontWeight="bold"
+                    _hover={{ textDecoration: "underline" }}
+                  >
+                    {notification.msg.replace(/^@/, "").split(" ")[0]}
                   </Link>
-                  <Text as="span" ml={1}>mentioned you in</Text>
+                  <Text as="span" ml={1}>
+                    mentioned you in
+                  </Text>
                   {parentPost?.title && (
-                    <Link href={`/${notification.url}`} color={isNew ? "accent" : "primary"} fontWeight="bold" _hover={{ textDecoration: 'underline' }} ml={1}>
+                    <Link
+                      href={`/${notification.url}`}
+                      color={isNew ? "accent" : "primary"}
+                      fontWeight="bold"
+                      _hover={{ textDecoration: "underline" }}
+                      ml={1}
+                    >
                       {parentPost.title}
                     </Link>
                   )}
-                  {':'}
+                  {":"}
                   <Text as="span" fontSize="xs" color="gray.400" ml={2}>
                     {formattedDate}
                   </Text>
@@ -411,17 +483,38 @@ export default function NotificationItem({
               </Box>
             ) : notification.type === "reply" ? (
               <Box>
-                <Text color={isNew ? "accent" : "primary"} fontSize="sm" display="flex" alignItems="center" flexWrap="wrap">
-                  <Link href={`/@${author}`} color={isNew ? "accent" : "primary"} fontWeight="bold" _hover={{ textDecoration: 'underline' }}>
-                    {notification.msg.replace(/^@/, "").split(' ')[0]}
+                <Text
+                  color={isNew ? "accent" : "primary"}
+                  fontSize="sm"
+                  display="flex"
+                  alignItems="center"
+                  flexWrap="wrap"
+                >
+                  <Link
+                    href={`/@${author}`}
+                    color={isNew ? "accent" : "primary"}
+                    fontWeight="bold"
+                    _hover={{ textDecoration: "underline" }}
+                  >
+                    {notification.msg.replace(/^@/, "").split(" ")[0]}
                   </Link>
-                  <Text as="span" ml={1}>replied to your</Text>
-                  <Link href={`/${notification.url}`} color={isNew ? "accent" : "primary"} fontWeight="bold" _hover={{ textDecoration: 'underline' }} ml={1}>
+                  <Text as="span" ml={1}>
+                    replied to your
+                  </Text>
+                  <Link
+                    href={`/${notification.url}`}
+                    color={isNew ? "accent" : "primary"}
+                    fontWeight="bold"
+                    _hover={{ textDecoration: "underline" }}
+                    ml={1}
+                  >
                     post
                   </Link>
-                  {':'}
+                  {":"}
                   {parentPost?.title &&
-                    ` "${parentPost.title.slice(0, 100)}${parentPost.title.length > 100 ? '…' : ''}"`}
+                    ` "${parentPost.title.slice(0, 100)}${
+                      parentPost.title.length > 100 ? "…" : ""
+                    }"`}
                   <Text as="span" fontSize="xs" color="gray.400" ml={2}>
                     {formattedDate}
                   </Text>
@@ -448,53 +541,62 @@ export default function NotificationItem({
             )}
           </HStack>
           {/* Only show post summary for non-vote, non-reblog, non-reply, non-reply_comment, non-mention notifications */}
-          {parentPost && !["vote", "reblog", "reply", "reply_comment", "mention"].includes(notification.type) && (
-            <>
-              <Divider my={2} />
-              <VStack align="start" spacing={2} w="100%">
-                {isLoading ? (
-                  <>
-                    <Skeleton height="20px" width="100%" />
-                    <Skeleton height="20px" width="100%" />
-                  </>
-                ) : (
-                  <>
-                    <Text
-                      fontSize="sm"
-                      color="primary"
-                      ml={5}
-                      noOfLines={3}
-                      overflow="hidden"
-                      textOverflow="ellipsis"
-                      w="90%"
-                      wordBreak="break-word"
-                    >
-                      {postContent}
-                    </Text>
-                  </>
-                )}
-              </VStack>
-            </>
-          )}
-          {/* Indent Reply and heart to align with main text, not all the way right */}
-          {(notification.type === "reply" || notification.type === "reply_comment") && (
-            <Flex mt={2} alignItems="center" w="100%" ml={8}>
-              <Text onClick={handleReplyClick} fontSize="sm" cursor="pointer" mr={2}>
-                  Reply
-                </Text>
-                <IconButton
-                  aria-label={hasVoted ? "Unlike" : "Like"}
-                  icon={hasVoted ? <FaHeart /> : <FaRegHeart />}
-                  variant="ghost"
-                  size="sm"
-                  isRound
-                  alignSelf="center"
-                  color={hasVoted ? "red.500" : isNew ? "accent" : "primary"}
-                  onClick={handleUpvote}
-                  isLoading={isVoting}
-                />
-            </Flex>
+          {parentPost &&
+            !["vote", "reblog", "reply", "reply_comment", "mention"].includes(
+              notification.type
+            ) && (
+              <>
+                <Divider my={2} />
+                <VStack align="start" spacing={2} w="100%">
+                  {isLoading ? (
+                    <>
+                      <Skeleton height="20px" width="100%" />
+                      <Skeleton height="20px" width="100%" />
+                    </>
+                  ) : (
+                    <>
+                      <Text
+                        fontSize="sm"
+                        color="primary"
+                        ml={5}
+                        noOfLines={3}
+                        overflow="hidden"
+                        textOverflow="ellipsis"
+                        w="90%"
+                        wordBreak="break-word"
+                      >
+                        {postContent}
+                      </Text>
+                    </>
+                  )}
+                </VStack>
+              </>
             )}
+          {/* Indent Reply and heart to align with main text, not all the way right */}
+          {(notification.type === "reply" ||
+            notification.type === "reply_comment") && (
+            <Flex mt={2} alignItems="center" w="100%" ml={8}>
+              <Text
+                onClick={handleReplyClick}
+                fontSize="sm"
+                cursor="pointer"
+                mr={2}
+              >
+                Reply
+              </Text>
+              <IconButton
+                aria-label={hasVoted ? "Unlike" : "Like"}
+                icon={hasVoted ? <FaHeart /> : <FaRegHeart />}
+                variant="ghost"
+                size="sm"
+                isRound
+                alignSelf="center"
+                color={hasVoted ? "red.500" : isNew ? "accent" : "primary"}
+                onClick={handleUpvote}
+                isLoading={isVoting}
+              />
+            </Flex>
+          )}
         </Box>
         {/* No thumbnail for reply notifications */}
       </HStack>
