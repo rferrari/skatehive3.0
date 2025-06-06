@@ -2,6 +2,7 @@
 import { Flex, IconButton, Menu, MenuButton, MenuList, MenuItem, Button } from '@chakra-ui/react';
 import { FaTh, FaBars, FaPen, FaSort } from 'react-icons/fa'; 
 import { useRouter } from 'next/navigation';
+import { useAioha } from '@aioha/react-ui';
 
 interface TopBarProps {
     viewMode: 'grid' | 'list';
@@ -11,16 +12,21 @@ interface TopBarProps {
 
 export default function TopBar({ viewMode, setViewMode, setQuery }: TopBarProps) {
     const router = useRouter(); 
+    const { user } = useAioha();
 
     return (
-        <Flex justifyContent="space-between" mb={4}>
-            <IconButton
-                aria-label="Compose"
-                icon={<FaPen />}  
-                onClick={() => router.push('/compose')}  
-                variant="outline"  
-            />
-            <Flex justifyContent="flex-end">
+        <Flex justifyContent="space-between" mb={4} alignItems="center">
+            <Flex flex="1" alignItems="center">
+                {user && (
+                    <IconButton
+                        aria-label="Compose"
+                        icon={<FaPen />}  
+                        onClick={() => router.push('/compose')}  
+                        variant="outline"  
+                    />
+                )}
+            </Flex>
+            <Flex flex="1" justifyContent="flex-end" alignItems="center">
                 {/* Hide grid/list toggle on mobile */}
                 <Flex display={{ base: 'none', md: 'flex' }}>
                     <IconButton

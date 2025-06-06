@@ -30,6 +30,7 @@ import {
 import { FaVideo } from "react-icons/fa6";
 import { FaTimes } from "react-icons/fa";
 import ImageCompressor, { ImageCompressorRef } from "../../src/components/ImageCompressor";
+import MatrixOverlay from "../graphics/MatrixOverlay";
 
 interface SnapComposerProps {
   pa: string;
@@ -210,207 +211,239 @@ export default function SnapComposer({
   }
 
   return (
-    <Box
-      p={4}
-      mb={1}
-      borderRadius="base"
-      borderBottom={"1px"}
-      borderColor="muted"
-    >
-      <Textarea
-        placeholder="Write here"
-        bg="background"
-        borderRadius={"base"}
-        mb={3}
-        ref={postBodyRef}
-        _placeholder={{ color: "text" }}
-        isDisabled={isLoading}
-        onKeyDown={handleKeyDown} // Attach the keydown handler
-        _focusVisible={{ border: "tb1" }}
-      />
-      <HStack justify="space-between" mb={3}>
-        <HStack>
-          <Menu>
-            <MenuButton
-              as={Button}
-              variant="ghost"
-              isDisabled={isLoading}
-              border="2px solid transparent"
-              _hover={{ borderColor: "var(--chakra-colors-tb1, #00FF00)" }}
-              _active={{ borderColor: "var(--chakra-colors-tb1, #00FF00)" }}
-            >
-              <FaImage size={22} />
-            </MenuButton>
-            <MenuList bg="background" border="tb1" borderRadius="base">
-              <MenuItem
-                icon={<FaImage size={22} />}
-                bg={"background"}
-                _hover={{ bg: "tb1" }}
-                _active={{ bg: "tb1" }}
-                onClick={() => imageCompressorRef.current?.trigger()}
-              >
-                Upload Image (JPEG, PNG, HEIC)
-              </MenuItem>
-              <MenuItem
-                icon={<MdGif size={22} />}
-                bg={"background"}
-                _hover={{ bg: "tb1" }}
-                _active={{ bg: "tb1" }}
-                onClick={() => gifWebpInputRef.current?.click()}
-              >
-                Upload GIF or WEBP
-                <input
-                  type="file"
-                  accept=".gif,.webp"
-                  style={{ display: "none" }}
-                  ref={gifWebpInputRef}
-                  onChange={handleGifWebpUpload}
-                />
-              </MenuItem>
-              <MenuItem
-                icon={<MdGif size={22} />}
-                onClick={() => setGiphyModalOpen(true)}
-                bg={"background"}
-                _hover={{ bg: "tb1" }}
-                _active={{ bg: "tb1" }}
-              >
-                Use GIFY
-              </MenuItem>
-            </MenuList>
-          </Menu>
-          <ImageCompressor
-            ref={imageCompressorRef}
-            onUpload={handleCompressedImageUpload}
-            isProcessing={isLoading}
-            hideStatus={true}
-          />
-          <Button
-            variant="ghost"
-            isDisabled={isLoading}
-            border="2px solid transparent"
-            _hover={{ borderColor: "var(--chakra-colors-tb1, #00FF00)" }}
-            _active={{ borderColor: "var(--chakra-colors-tb1, #00FF00)" }}
-            onClick={() => videoUploaderRef.current?.trigger()}
-          >
-            <FaVideo size={22} />
-          </Button>
-        </HStack>
-        <Button
-          variant="solid"
-          colorScheme="primary"
-          onClick={handleComment}
-          isDisabled={isLoading}
+    <Box position="relative">
+      {/* Snap Composer UI, blurred and unclickable if not logged in */}
+      <Box
+        style={{
+          filter: !user ? "blur(2px)" : "none",
+          pointerEvents: !user ? "none" : "auto",
+        }}
+      >
+        <Box
+          p={4}
+          mb={1}
+          borderRadius="base"
+          borderBottom={"1px"}
+          borderColor="muted"
         >
-          {isLoading ? <Spinner size="sm" /> : buttonText}
-        </Button>
-      </HStack>
-      <Box width="100%">
-        <VideoUploader ref={videoUploaderRef} onUpload={setVideoUrl} isProcessing={isLoading} />
-      </Box>
-      <Wrap spacing={4}>
-        {compressedImages.map((img, index) => (
-          <Box key={index} position="relative">
-            <Image
-              alt={img.fileName}
-              src={img.url}
-              boxSize="100px"
-              borderRadius="base"
-            />
-            <Input
-              mt={2}
-              placeholder="Enter caption"
-              value={img.caption}
-              onChange={e => {
-                const newImages = [...compressedImages];
-                newImages[index].caption = e.target.value;
-                setCompressedImages(newImages);
-              }}
-              size="sm"
-              isDisabled={isLoading}
-            />
-            <IconButton
-              aria-label="Remove image"
-              icon={<FaTimes />}
-              size="xs"
-              position="absolute"
-              top="0"
-              right="0"
-              onClick={() =>
-                setCompressedImages((prevImages) =>
-                  prevImages.filter((_, i) => i !== index)
-                )
-              }
-              isDisabled={isLoading}
-            />
-            <Progress
-              value={uploadProgress[index]}
-              size="xs"
-              colorScheme="green"
-              mt={2}
-            />
-          </Box>
-        ))}
-        {selectedGif && (
-          <Box key={selectedGif.id} position="relative">
-            <Image
-              alt=""
-              src={selectedGif.images.downsized_medium.url}
-              boxSize="100px"
-              borderRadius="base"
-            />
-            <IconButton
-              aria-label="Remove GIF"
-              icon={<FaTimes />}
-              size="xs"
-              position="absolute"
-              top="0"
-              right="0"
-              onClick={() => setSelectedGif(null)}
-              isDisabled={isLoading}
-            />
-          </Box>
-        )}
-        {videoUrl && (
-          <Box position="relative" width="100%">
-            <iframe
-              src={videoUrl}
-              title="Uploaded Video"
-              frameBorder="0"
-              style={{
-                width: "100%",
-                minHeight: "435px",
-                borderRadius: "8px",
-                maxWidth: "100vw",
-              }}
-              allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-            <IconButton
-              aria-label="Remove video"
-              icon={<FaTimes />}
-              size="xs"
-              position="absolute"
-              top="0"
-              right="0"
-              onClick={() => setVideoUrl(null)}
-              isDisabled={isLoading}
-            />
-          </Box>
-        )}
-      </Wrap>
-      {isGiphyModalOpen && (
-        <Box position="relative">
-          <GiphySelector
-            apiKey={
-              process.env.GIPHY_API_KEY || "qXGQXTPKyNJByTFZpW7Kb0tEFeB90faV"
-            }
-            onSelect={(gif, e) => {
-              e.preventDefault();
-              setSelectedGif(gif);
-              setGiphyModalOpen(false); // Close modal after selecting a GIF
-            }}
+          <Textarea
+            placeholder="Write here"
+            bg="background"
+            borderRadius={"base"}
+            mb={3}
+            ref={postBodyRef}
+            _placeholder={{ color: "text" }}
+            isDisabled={isLoading}
+            onKeyDown={handleKeyDown} // Attach the keydown handler
+            _focusVisible={{ border: "tb1" }}
           />
+          <HStack justify="space-between" mb={3}>
+            <HStack>
+              <Menu>
+                <MenuButton
+                  as={Button}
+                  variant="ghost"
+                  isDisabled={isLoading}
+                  border="2px solid transparent"
+                  _hover={{ borderColor: "var(--chakra-colors-tb1, #00FF00)" }}
+                  _active={{ borderColor: "var(--chakra-colors-tb1, #00FF00)" }}
+                >
+                  <FaImage size={22} />
+                </MenuButton>
+                <MenuList bg="background" border="tb1" borderRadius="base">
+                  <MenuItem
+                    icon={<FaImage size={22} />}
+                    bg={"background"}
+                    _hover={{ bg: "tb1" }}
+                    _active={{ bg: "tb1" }}
+                    onClick={() => imageCompressorRef.current?.trigger()}
+                  >
+                    Upload Image (JPEG, PNG, HEIC)
+                  </MenuItem>
+                  <MenuItem
+                    icon={<MdGif size={22} />}
+                    bg={"background"}
+                    _hover={{ bg: "tb1" }}
+                    _active={{ bg: "tb1" }}
+                    onClick={() => gifWebpInputRef.current?.click()}
+                  >
+                    Upload GIF or WEBP
+                    <input
+                      type="file"
+                      accept=".gif,.webp"
+                      style={{ display: "none" }}
+                      ref={gifWebpInputRef}
+                      onChange={handleGifWebpUpload}
+                    />
+                  </MenuItem>
+                  <MenuItem
+                    icon={<MdGif size={22} />}
+                    onClick={() => setGiphyModalOpen(true)}
+                    bg={"background"}
+                    _hover={{ bg: "tb1" }}
+                    _active={{ bg: "tb1" }}
+                  >
+                    Use GIFY
+                  </MenuItem>
+                </MenuList>
+              </Menu>
+              <ImageCompressor
+                ref={imageCompressorRef}
+                onUpload={handleCompressedImageUpload}
+                isProcessing={isLoading}
+                hideStatus={true}
+              />
+              <Button
+                variant="ghost"
+                isDisabled={isLoading}
+                border="2px solid transparent"
+                _hover={{ borderColor: "var(--chakra-colors-tb1, #00FF00)" }}
+                _active={{ borderColor: "var(--chakra-colors-tb1, #00FF00)" }}
+                onClick={() => videoUploaderRef.current?.trigger()}
+              >
+                <FaVideo size={22} />
+              </Button>
+            </HStack>
+            <Button
+              variant="solid"
+              colorScheme="primary"
+              onClick={handleComment}
+              isDisabled={isLoading}
+            >
+              {isLoading ? <Spinner size="sm" /> : buttonText}
+            </Button>
+          </HStack>
+          <Box width="100%">
+            <VideoUploader ref={videoUploaderRef} onUpload={setVideoUrl} isProcessing={isLoading} />
+          </Box>
+          <Wrap spacing={4}>
+            {compressedImages.map((img, index) => (
+              <Box key={index} position="relative">
+                <Image
+                  alt={img.fileName}
+                  src={img.url}
+                  boxSize="100px"
+                  borderRadius="base"
+                />
+                <Input
+                  mt={2}
+                  placeholder="Enter caption"
+                  value={img.caption}
+                  onChange={e => {
+                    const newImages = [...compressedImages];
+                    newImages[index].caption = e.target.value;
+                    setCompressedImages(newImages);
+                  }}
+                  size="sm"
+                  isDisabled={isLoading}
+                />
+                <IconButton
+                  aria-label="Remove image"
+                  icon={<FaTimes />}
+                  size="xs"
+                  position="absolute"
+                  top="0"
+                  right="0"
+                  onClick={() =>
+                    setCompressedImages((prevImages) =>
+                      prevImages.filter((_, i) => i !== index)
+                    )
+                  }
+                  isDisabled={isLoading}
+                />
+                <Progress
+                  value={uploadProgress[index]}
+                  size="xs"
+                  colorScheme="green"
+                  mt={2}
+                />
+              </Box>
+            ))}
+            {selectedGif && (
+              <Box key={selectedGif.id} position="relative">
+                <Image
+                  alt=""
+                  src={selectedGif.images.downsized_medium.url}
+                  boxSize="100px"
+                  borderRadius="base"
+                />
+                <IconButton
+                  aria-label="Remove GIF"
+                  icon={<FaTimes />}
+                  size="xs"
+                  position="absolute"
+                  top="0"
+                  right="0"
+                  onClick={() => setSelectedGif(null)}
+                  isDisabled={isLoading}
+                />
+              </Box>
+            )}
+            {videoUrl && (
+              <Box position="relative" width="100%">
+                <iframe
+                  src={videoUrl}
+                  title="Uploaded Video"
+                  frameBorder="0"
+                  style={{
+                    width: "100%",
+                    minHeight: "435px",
+                    borderRadius: "8px",
+                    maxWidth: "100vw",
+                  }}
+                  allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+                <IconButton
+                  aria-label="Remove video"
+                  icon={<FaTimes />}
+                  size="xs"
+                  position="absolute"
+                  top="0"
+                  right="0"
+                  onClick={() => setVideoUrl(null)}
+                  isDisabled={isLoading}
+                />
+              </Box>
+            )}
+          </Wrap>
+          {isGiphyModalOpen && (
+            <Box position="relative">
+              <GiphySelector
+                apiKey={
+                  process.env.GIPHY_API_KEY || "qXGQXTPKyNJByTFZpW7Kb0tEFeB90faV"
+                }
+                onSelect={(gif, e) => {
+                  e.preventDefault();
+                  setSelectedGif(gif);
+                  setGiphyModalOpen(false); // Close modal after selecting a GIF
+                }}
+              />
+            </Box>
+          )}
         </Box>
+      </Box>
+      {/* Matrix Overlay and login prompt if not logged in */}
+      {!user && (
+        <>
+          <MatrixOverlay />
+          <Box
+            position="absolute"
+            top={0}
+            left={0}
+            w="100%"
+            h="100%"
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            zIndex={21}
+            pointerEvents="all"
+          >
+            <span style={{ color: "#00FF41", fontWeight: "bold", fontSize: 24, textShadow: "0 0 8px #00FF41" }}>
+              Please log in to post something
+            </span>
+          </Box>
+        </>
       )}
     </Box>
   );

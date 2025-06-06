@@ -33,6 +33,7 @@ import ImageCompressor, { ImageCompressorRef } from "../../src/components/ImageC
 import VideoUploader, { VideoUploaderRef } from "../../components/homepage/VideoUploader";
 import GIFMakerWithSelector, { GIFMakerRef as GIFMakerWithSelectorRef } from "../../components/homepage/GIFMakerWithSelector";
 import { extractImageUrls, extractVideoUrls } from "../../lib/utils/extractImageUrls";
+import MatrixOverlay from "../../components/graphics/MatrixOverlay";
 
 export default function Composer() {
   const [markdown, setMarkdown] = useState("");
@@ -40,7 +41,7 @@ export default function Composer() {
   const [hashtagInput, setHashtagInput] = useState("");
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
-  const { aioha } = useAioha();
+  const { aioha, user } = useAioha();
   const communityTag = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || "blog";
   const [isUploading, setIsUploading] = useState(false);
   const editorRef = useRef<any>(null);
@@ -296,6 +297,7 @@ export default function Composer() {
         mb={4}
         gap={2}
         width="100%"
+        position="relative"
       >
         <Input
           placeholder={placeholders[placeholderIndex]}
@@ -325,7 +327,22 @@ export default function Composer() {
           mt={{ base: 2, md: 0 }}
           mb={{ base: 2, md: 0 }}
           flexShrink={0}
+          position="relative"
         >
+          {/* Overlay for non-logged-in users */}
+          {!user && (
+            <>
+              <Box position="absolute" top={0} left={0} w="100%" h="100%" zIndex={21} pointerEvents="all" display="flex" alignItems="center" justifyContent="center">
+                <MatrixOverlay />
+                <Box position="absolute" top={0} left={0} w="100%" h="100%" display="flex" alignItems="center" justifyContent="center" zIndex={22} pointerEvents="all">
+                  <span style={{ color: "#00FF41", fontWeight: "bold", fontSize: 20, textShadow: "0 0 8px #00FF41", textAlign: 'center' }}>
+                    Please log in to upload media
+                  </span>
+                </Box>
+              </Box>
+            </>
+          )}
+          {/* Media upload buttons */}
           <Tooltip label="Upload Image" placement="bottom">
             <Button
               variant="unstyled"
