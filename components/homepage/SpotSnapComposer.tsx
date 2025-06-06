@@ -20,6 +20,7 @@ import { FaImage } from "react-icons/fa";
 import { Discussion } from "@hiveio/dhive";
 import { getFileSignature, uploadImage } from "@/lib/hive/client-functions";
 import ImageCompressor, { ImageCompressorRef } from "../../src/components/ImageCompressor";
+import MatrixOverlay from "../graphics/MatrixOverlay";
 
 interface SpotSnapComposerProps {
   onNewComment: (newComment: Partial<Discussion>) => void;
@@ -120,7 +121,7 @@ export default function SpotSnapComposer({ onNewComment, onClose }: SpotSnapComp
   }
 
   return (
-    <Box p={4} mb={1} borderRadius="base" borderBottom={"1px"} borderColor="muted">
+    <Box p={4} mb={1} borderRadius="base" borderBottom={"1px"} borderColor="muted" position="relative">
       <VStack spacing={3} align="stretch">
         <FormControl isRequired>
           <FormLabel>Spot Name</FormLabel>
@@ -235,6 +236,28 @@ export default function SpotSnapComposer({ onNewComment, onClose }: SpotSnapComp
           {isLoading ? <Spinner size="sm" /> : buttonText}
         </Button>
       </VStack>
+      {/* Matrix Overlay and login prompt if not logged in */}
+      {!user && (
+        <>
+          <MatrixOverlay />
+          <Box
+            position="absolute"
+            top={0}
+            left={0}
+            w="100%"
+            h="100%"
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            zIndex={21}
+            pointerEvents="all"
+          >
+            <span style={{ color: "#00FF41", fontWeight: "bold", fontSize: 24, textShadow: "0 0 8px #00FF41" }}>
+              Please log in to post a spot
+            </span>
+          </Box>
+        </>
+      )}
     </Box>
   );
 } 

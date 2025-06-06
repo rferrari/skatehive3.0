@@ -210,19 +210,35 @@ export default function Sidebar({ newNotificationCount = 0 }) {
           >
             Settings
           </Button>
+          {user && (
+            <Button
+              onClick={() => handleNavigation("/invite")}
+              variant="ghost"
+              w="full"
+              justifyContent="flex-start"
+              leftIcon={<Icon as={FaMailBulk} boxSize={4} />}
+              px={1}
+              _hover={{
+                bg: primaryBg,
+                color: hoverTextColor,
+              }}
+            >
+              Invite
+            </Button>
+          )}
           <Button
-            onClick={() => handleNavigation("/invite")}
+            onClick={() => handleNavigation("/join")}
             variant="ghost"
             w="full"
             justifyContent="flex-start"
-            leftIcon={<Icon as={FaMailBulk} boxSize={4} />}
+            leftIcon={<Icon as={FiUser} boxSize={4} />}
             px={1}
             _hover={{
               bg: primaryBg,
               color: hoverTextColor,
             }}
           >
-            Invite
+            Join
           </Button>
         </VStack>
         <div className={colorMode}>
