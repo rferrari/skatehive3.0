@@ -193,7 +193,18 @@ export default function LeaderboardClient({ skatersData }: Props) {
 
                   {/* Avatar & Name */}
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-black text-lg font-bold">
+                    <img
+                      src={`https://images.hive.blog/u/${skater.hive_author}/avatar/small`}
+                      alt={`${skater.hive_author} avatar`}
+                      className="w-12 h-12 rounded-full border-2 border-green-400/50 object-cover"
+                      onError={(e) => {
+                        // Fallback to initial if image fails to load
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = "none";
+                        target.nextElementSibling?.classList.remove("hidden");
+                      }}
+                    />
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-black text-lg font-bold hidden">
                       {skater.hive_author.charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0">
