@@ -4,11 +4,9 @@ import {
   Box,
   Heading,
   Text,
-  Spinner,
   Alert,
   AlertIcon,
   Image,
-  Container,
   Flex,
   Icon,
   Avatar,
@@ -18,12 +16,9 @@ import {
 import useHiveAccount from "@/hooks/useHiveAccount";
 import { FaGlobe, FaTh, FaBars, FaEdit } from "react-icons/fa";
 import { getProfile, findPosts } from "@/lib/hive/client-functions";
-import PostGrid from "../blog/PostGrid";
-import InfiniteScroll from "react-infinite-scroll-component";
-import PostCard from "../blog/PostCard";
-import LoadingComponent from '../homepage/loadingComponent';
+import LoadingComponent from "../homepage/loadingComponent";
 import PostInfiniteScroll from "../blog/PostInfiniteScroll";
-import { useAioha } from '@aioha/react-ui';
+import { useAioha } from "@aioha/react-ui";
 import EditProfile from "./EditProfile";
 
 interface ProfilePageProps {
@@ -55,7 +50,7 @@ export default function ProfilePage({ username }: ProfilePageProps) {
   });
   const [posts, setPosts] = useState<any[]>([]);
   const isFetching = useRef(false);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [isMobile, setIsMobile] = useState(false);
   const { user } = useAioha();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -69,8 +64,11 @@ export default function ProfilePage({ username }: ProfilePageProps) {
 
   // Load saved view mode from localStorage on mount
   useEffect(() => {
-    const savedView = typeof window !== 'undefined' ? localStorage.getItem('profileViewMode') : null;
-    if (savedView === 'grid' || savedView === 'list') {
+    const savedView =
+      typeof window !== "undefined"
+        ? localStorage.getItem("profileViewMode")
+        : null;
+    if (savedView === "grid" || savedView === "list") {
       setViewMode(savedView);
     }
   }, []);
@@ -81,15 +79,15 @@ export default function ProfilePage({ username }: ProfilePageProps) {
       setIsMobile(window.innerWidth < 768);
     };
     handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   // Handler to change and persist view mode
-  const handleViewModeChange = (mode: 'grid' | 'list') => {
+  const handleViewModeChange = (mode: "grid" | "list") => {
     setViewMode(mode);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('profileViewMode', mode);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("profileViewMode", mode);
     }
   };
 
@@ -170,7 +168,7 @@ export default function ProfilePage({ username }: ProfilePageProps) {
 
   // Click-to-speak handler for speech bubble
   const speakDescription = () => {
-    if ('speechSynthesis' in window && profileData.about) {
+    if ("speechSynthesis" in window && profileData.about) {
       const utterance = new window.SpeechSynthesisUtterance(profileData.about);
       utterance.rate = 0.3;
       window.speechSynthesis.cancel();
@@ -218,18 +216,18 @@ export default function ProfilePage({ username }: ProfilePageProps) {
       maxH="100vh"
       overflowY="auto"
       sx={{
-        '&::-webkit-scrollbar': { display: 'none' },
-        scrollbarWidth: 'none',
+        "&::-webkit-scrollbar": { display: "none" },
+        scrollbarWidth: "none",
       }}
     >
       {/* Cover Image */}
       <Box
         position="relative"
-        w={{ base: '100vw', md: '100%' }}
-        maxW={{ base: '100vw', md: 'container.lg' }}
-        mx={{ base: 'unset', md: 'auto' }}
+        w={{ base: "100vw", md: "100%" }}
+        maxW={{ base: "100vw", md: "container.lg" }}
+        mx={{ base: "unset", md: "auto" }}
         overflow="hidden"
-        height={{ base: '120px', md: '200px' }}
+        height={{ base: "120px", md: "200px" }}
         p={0}
         m={0}
         mt={4}
@@ -237,8 +235,8 @@ export default function ProfilePage({ username }: ProfilePageProps) {
         <Image
           src={profileData.coverImage}
           alt={`${username} cover`}
-          w={{ base: '100vw', md: '100%' }}
-          h={{ base: '120px', md: '200px' }}
+          w={{ base: "100vw", md: "100%" }}
+          h={{ base: "120px", md: "200px" }}
           objectFit="cover"
           fallback={<Box height="100%" />}
         />
@@ -248,10 +246,10 @@ export default function ProfilePage({ username }: ProfilePageProps) {
       <Box position="relative" w="100%" p={0} m={0}>
         {/* Absolutely positioned avatar and speech bubble on the left, overlapping banner */}
         <Box
-          position={{ base: 'static', md: 'absolute' }}
-          left={{ base: 'auto', md: 0 }}
-          top={{ base: 'auto', md: '-60px' }}
-          transform={{ base: 'none', md: 'none' }}
+          position={{ base: "static", md: "absolute" }}
+          left={{ base: "auto", md: 0 }}
+          top={{ base: "auto", md: "-60px" }}
+          transform={{ base: "none", md: "none" }}
           display="flex"
           flexDirection="row"
           alignItems="center"
@@ -259,8 +257,8 @@ export default function ProfilePage({ username }: ProfilePageProps) {
           ml={{ base: 0, md: 8 }}
           p={0}
           m={0}
-          w={{ base: '100%', md: 'auto' }}
-          mt={{ base: '-32px', md: 0 }}
+          w={{ base: "100%", md: "auto" }}
+          mt={{ base: "-32px", md: 0 }}
         >
           <Avatar
             src={profileData.profileImage}
@@ -279,7 +277,7 @@ export default function ProfilePage({ username }: ProfilePageProps) {
                 py={3}
                 borderRadius="lg"
                 boxShadow="md"
-                maxW={{ base: '95vw', sm: '400px', md: '500px' }}
+                maxW={{ base: "95vw", sm: "400px", md: "500px" }}
                 fontSize="md"
                 fontStyle="italic"
                 wordBreak="break-word"
@@ -288,13 +286,13 @@ export default function ProfilePage({ username }: ProfilePageProps) {
                 onClick={speakDescription}
                 _after={{
                   content: '""',
-                  position: 'absolute',
-                  left: '-16px',
-                  top: '24px',
-                  borderWidth: '8px',
-                  borderStyle: 'solid',
-                  borderColor: 'transparent',
-                  borderRightColor: 'var(--chakra-colors-gray-800, #2D3748)',
+                  position: "absolute",
+                  left: "-16px",
+                  top: "24px",
+                  borderWidth: "8px",
+                  borderStyle: "solid",
+                  borderColor: "transparent",
+                  borderRightColor: "var(--chakra-colors-gray-800, #2D3748)",
                 }}
               >
                 {profileData.about}
@@ -304,16 +302,46 @@ export default function ProfilePage({ username }: ProfilePageProps) {
         </Box>
 
         {/* Centered profile info, not affected by avatar/speech bubble, directly under banner */}
-        <Flex direction="column" alignItems="center" justifyContent="center" w="100%" px={2} mt={{ base: 2, md: 0 }} mb={0} pt={0} pb={0}>
+        <Flex
+          direction="column"
+          alignItems="center"
+          justifyContent="center"
+          w="100%"
+          px={2}
+          mt={{ base: 2, md: 0 }}
+          mb={0}
+          pt={0}
+          pb={0}
+        >
           <Heading as="h2" size="lg" color="primary" mb={1} textAlign="center">
             {profileData.name}
           </Heading>
           <Text fontSize="xs" color="text" mb={0} textAlign="center">
-            Following: {profileData.following} | Followers: {profileData.followers} | Location: {profileData.location}
+            Following: {profileData.following} | Followers:{" "}
+            {profileData.followers} | Location: {profileData.location}
           </Text>
           {profileData.website && (
-            <Flex alignItems="center" justifyContent="center" mb={0} mt={0} pt={0} pb={0}>
-              <Link href={profileData.website.startsWith('http') ? profileData.website : `https://${profileData.website}`} isExternal ml={2} fontSize="xs" color="primary" display="flex" alignItems="center">
+            <Flex
+              alignItems="center"
+              justifyContent="center"
+              mb={0}
+              mt={0}
+              pt={0}
+              pb={0}
+            >
+              <Link
+                href={
+                  profileData.website.startsWith("http")
+                    ? profileData.website
+                    : `https://${profileData.website}`
+                }
+                isExternal
+                ml={2}
+                fontSize="xs"
+                color="primary"
+                display="flex"
+                alignItems="center"
+              >
                 <Icon as={FaGlobe} w={2} h={2} mr={1} />
                 {profileData.website}
               </Link>
@@ -336,27 +364,42 @@ export default function ProfilePage({ username }: ProfilePageProps) {
 
       {/* Toggle for grid/list view */}
       {!isMobile && (
-        <Flex justifyContent="flex-end" alignItems="center" mb={0} mt={0} pt={0} pb={0} gap={2} p={0}>
+        <Flex
+          justifyContent="flex-end"
+          alignItems="center"
+          mb={0}
+          mt={0}
+          pt={0}
+          pb={0}
+          gap={2}
+          p={0}
+        >
           <IconButton
             aria-label="Grid view"
             icon={<FaTh />}
-            variant={viewMode === 'grid' ? 'solid' : 'ghost'}
-            onClick={() => handleViewModeChange('grid')}
-            isActive={viewMode === 'grid'}
+            variant={viewMode === "grid" ? "solid" : "ghost"}
+            onClick={() => handleViewModeChange("grid")}
+            isActive={viewMode === "grid"}
             mr={1}
           />
           <IconButton
             aria-label="List view"
             icon={<FaBars />}
-            variant={viewMode === 'list' ? 'solid' : 'ghost'}
-            onClick={() => handleViewModeChange('list')}
-            isActive={viewMode === 'list'}
+            variant={viewMode === "list" ? "solid" : "ghost"}
+            onClick={() => handleViewModeChange("list")}
+            isActive={viewMode === "list"}
           />
         </Flex>
       )}
 
       {/* Posts */}
-      <PostInfiniteScroll allPosts={posts} fetchPosts={fetchPosts} viewMode={viewMode} context="profile" hideAuthorInfo={true} />
+      <PostInfiniteScroll
+        allPosts={posts}
+        fetchPosts={fetchPosts}
+        viewMode={viewMode}
+        context="profile"
+        hideAuthorInfo={true}
+      />
 
       {/* Edit Profile Modal */}
       <EditProfile

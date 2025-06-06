@@ -14,10 +14,11 @@ import {
   FormLabel,
   Image,
   VStack,
-  HStack,
   Box,
+  Select,
 } from "@chakra-ui/react";
 import { updateProfile } from "@/lib/hive/client-functions";
+import countryList from "react-select-country-list";
 
 interface EditProfileProps {
   isOpen: boolean;
@@ -27,17 +28,27 @@ interface EditProfileProps {
   username: string;
 }
 
-const EditProfile: React.FC<EditProfileProps> = ({ isOpen, onClose, profileData, setProfileData, username }) => {
+const EditProfile: React.FC<EditProfileProps> = ({
+  isOpen,
+  onClose,
+  profileData,
+  setProfileData,
+  username,
+}) => {
   const [name, setName] = useState(profileData.name || "");
   const [about, setAbout] = useState(profileData.about || "");
   const [location, setLocation] = useState(profileData.location || "");
   const [website, setWebsite] = useState(profileData.website || "");
-  const [profileImage, setProfileImage] = useState(profileData.profileImage || "");
+  const [profileImage, setProfileImage] = useState(
+    profileData.profileImage || ""
+  );
   const [coverImage, setCoverImage] = useState(profileData.coverImage || "");
   const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const countryOptions = countryList().getData();
 
   useEffect(() => {
     setName(profileData.name || "");
@@ -76,7 +87,9 @@ const EditProfile: React.FC<EditProfileProps> = ({ isOpen, onClose, profileData,
       });
       if (!response.ok) throw new Error("Failed to upload file to IPFS");
       const result = await response.json();
-      return result.IpfsHash ? `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}` : null;
+      return result.IpfsHash
+        ? `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`
+        : null;
     } catch (err) {
       setError("Image upload failed");
       return null;
@@ -119,7 +132,9 @@ const EditProfile: React.FC<EditProfileProps> = ({ isOpen, onClose, profileData,
           website
         );
       } else if (loginMethod === "privateKey") {
-        setError("Profile updates with private key login are not supported yet.");
+        setError(
+          "Profile updates with private key login are not supported yet."
+        );
         return;
       }
       onClose();
@@ -131,30 +146,116 @@ const EditProfile: React.FC<EditProfileProps> = ({ isOpen, onClose, profileData,
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="md">
+    <Modal isOpen={isOpen} onClose={onClose} size="lg">
       <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>Edit Profile</ModalHeader>
-        <ModalCloseButton />
-        <ModalBody>
+      <ModalContent bg={"background"}>
+        <ModalHeader p={0} position="relative" minHeight="120px">
+          {/* Cover Image as Header Background */}
+          {coverImage ? (
+            <Image
+              src={coverImage}
+              alt="Cover Preview"
+              width="100%"
+              height="120px"
+              objectFit="cover"
+              borderTopRadius="md"
+            />
+          ) : (
+            <Box
+              width="100%"
+              height="120px"
+              bg="gray.200"
+              _dark={{ bg: "gray.600" }}
+              borderTopRadius="md"
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              color="gray.500"
+              fontSize="sm"
+            >
+              Cover Image Preview
+            </Box>
+          )}
+
+          {/* Profile Picture Overlay */}
+          <Box
+            position="absolute"
+            bottom="-30px"
+            left="50%"
+            transform="translateX(-50%)"
+            borderRadius="full"
+            border="4px solid white"
+            _dark={{ borderColor: "gray.800" }}
+            bg="white"
+          >
+            {profileImage ? (
+              <Image
+                src={profileImage}
+                alt="Profile Preview"
+                boxSize="60px"
+                borderRadius="full"
+                objectFit="cover"
+              />
+            ) : (
+              <Box
+                boxSize="60px"
+                borderRadius="full"
+                bg="gray.200"
+                _dark={{ bg: "gray.600" }}
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+                color="gray.500"
+                fontSize="xs"
+              >
+                Profile
+              </Box>
+            )}
+          </Box>
+
+          {/* Edit Profile Title */}
+          <Box
+            position="absolute"
+            top="4"
+            left="4"
+            bg="blackAlpha.700"
+            color="white"
+            px="3"
+            py="1"
+            borderRadius="md"
+            fontSize="sm"
+            fontWeight="semibold"
+          >
+            Edit Profile
+          </Box>
+        </ModalHeader>
+        <ModalCloseButton
+          color="white"
+          bg="blackAlpha.700"
+          _hover={{ bg: "blackAlpha.800" }}
+        />
+        <ModalBody mt="40px">
           <VStack spacing={4} align="stretch">
-            {/* Profile Picture */}
+            {/* Profile Picture Upload */}
             <FormControl>
-              <Box mb={2} display="flex" alignItems="center" justifyContent="space-between" gap={2}>
-                <FormLabel m={0}>Profile Picture</FormLabel>
+              <FormLabel>Profile Picture</FormLabel>
+              <VStack spacing={2} align="stretch">
                 <Input
-                  value={profileImageFile ? '' : profileImage}
-                  onChange={e => {
+                  value={profileImageFile ? "" : profileImage}
+                  onChange={(e) => {
                     setProfileImage(e.target.value);
                     setProfileImageFile(null);
                   }}
                   placeholder="Paste image URL here"
                   size="sm"
-                  flex={1}
-                  mr={2}
                 />
-                <Button size="sm" onClick={() => document.getElementById('profilePictureInput')?.click()}>
-                  Upload
+                <Button
+                  size="sm"
+                  onClick={() =>
+                    document.getElementById("profilePictureInput")?.click()
+                  }
+                >
+                  Upload from Device
                 </Button>
                 <Input
                   id="profilePictureInput"
@@ -163,30 +264,29 @@ const EditProfile: React.FC<EditProfileProps> = ({ isOpen, onClose, profileData,
                   onChange={handleProfileImageChange}
                   display="none"
                 />
-              </Box>
-              {profileImage && (
-                <Box display="flex" justifyContent="center" width="100%">
-                  <Image src={profileImage} alt="Profile Picture" boxSize="50px" borderRadius="md" mb={2} />
-                </Box>
-              )}
+              </VStack>
             </FormControl>
-            {/* Background Image */}
+
+            {/* Cover Image Upload */}
             <FormControl>
-              <Box mb={2} display="flex" alignItems="center" justifyContent="space-between" gap={2}>
-                <FormLabel m={0}>Background Image</FormLabel>
+              <FormLabel>Cover Image</FormLabel>
+              <VStack spacing={2} align="stretch">
                 <Input
-                  value={coverImageFile ? '' : coverImage}
-                  onChange={e => {
+                  value={coverImageFile ? "" : coverImage}
+                  onChange={(e) => {
                     setCoverImage(e.target.value);
                     setCoverImageFile(null);
                   }}
                   placeholder="Paste image URL here"
                   size="sm"
-                  flex={1}
-                  mr={2}
                 />
-                <Button size="sm" onClick={() => document.getElementById('backgroundImageInput')?.click()}>
-                  Upload
+                <Button
+                  size="sm"
+                  onClick={() =>
+                    document.getElementById("backgroundImageInput")?.click()
+                  }
+                >
+                  Upload from Device
                 </Button>
                 <Input
                   id="backgroundImageInput"
@@ -195,31 +295,57 @@ const EditProfile: React.FC<EditProfileProps> = ({ isOpen, onClose, profileData,
                   onChange={handleCoverImageChange}
                   display="none"
                 />
-              </Box>
-              {coverImage && (
-                <Image src={coverImage} alt="Background" width="100%" maxHeight="180px" objectFit="cover" borderRadius="md" mb={2} />
-              )}
+              </VStack>
             </FormControl>
+
             {/* Location */}
             <FormControl>
               <FormLabel>Location</FormLabel>
-              <Input value={location} onChange={e => setLocation(e.target.value)} placeholder="Type your location" />
+              <Select
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="Select your country"
+              >
+                {countryOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.value} - {option.label}
+                  </option>
+                ))}
+              </Select>
             </FormControl>
             {/* Website */}
             <FormControl>
-              <FormLabel>Website - a clickable link to your personal website</FormLabel>
-              <Input value={website} onChange={e => setWebsite(e.target.value)} />
+              <FormLabel>
+                Website - a clickable link to your personal website
+              </FormLabel>
+              <Input
+                value={website}
+                onChange={(e) => setWebsite(e.target.value)}
+              />
             </FormControl>
             {/* About */}
             <FormControl>
               <FormLabel>Words to live by? (optional)</FormLabel>
-              <Textarea value={about} onChange={e => setAbout(e.target.value)} />
+              <Textarea
+                value={about}
+                onChange={(e) => setAbout(e.target.value)}
+              />
             </FormControl>
           </VStack>
         </ModalBody>
         <ModalFooter>
-          {error && <Box color="red.400" mb={2}>{error}</Box>}
-          <Button colorScheme="green" mr={3} onClick={handleSave} w="100%" isLoading={isSaving}>
+          {error && (
+            <Box color="red.400" mb={2}>
+              {error}
+            </Box>
+          )}
+          <Button
+            colorScheme="green"
+            mr={3}
+            onClick={handleSave}
+            w="100%"
+            isLoading={isSaving}
+          >
             Save Changes
           </Button>
         </ModalFooter>
@@ -228,4 +354,4 @@ const EditProfile: React.FC<EditProfileProps> = ({ isOpen, onClose, profileData,
   );
 };
 
-export default EditProfile; 
+export default EditProfile;
