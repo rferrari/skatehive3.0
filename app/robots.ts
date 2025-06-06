@@ -17,6 +17,6 @@ export default function robots(): MetadataRoute.Robots {
                 ],
             }
         ],
-        sitemap: 'https://skatehive.app/sitemap.xml',
+        sitemap: 'https://my.skatehive.app/sitemap.xml',
     };
 }

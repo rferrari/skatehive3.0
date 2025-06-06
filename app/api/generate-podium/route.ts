@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
         
         <!-- Bottom text -->
         <text x="600" y="620" font-family="monospace" font-size="16" text-anchor="middle" fill="#00ff00" opacity="0.7">
-          skatehive.app/leaderboard
+          my.skatehive.app/leaderboard
         </text>
       </svg>
     `;
