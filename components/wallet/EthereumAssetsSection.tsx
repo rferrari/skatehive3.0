@@ -18,9 +18,12 @@ import {
   FormLabel,
   Badge,
   Button,
+  useDisclosure,
+  IconButton,
 } from "@chakra-ui/react";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useAccount } from "wagmi";
+import { FaPaperPlane } from "react-icons/fa";
 import {
   Name,
   Avatar,
@@ -44,6 +47,7 @@ import {
   subscribeToLogoUpdates,
   forceRefreshTokenData,
 } from "../../utils/portfolioUtils";
+import SendTokenModal from "./SendTokenModal";
 
 export default function EthereumAssetsSection() {
   const { isConnected, address } = useAccount();
@@ -53,6 +57,13 @@ export default function EthereumAssetsSection() {
   const [logoUpdateTrigger, setLogoUpdateTrigger] = useState(0);
   const [showTokenBalances, setShowTokenBalances] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [selectedToken, setSelectedToken] = useState<TokenDetail | null>(null);
+  const [selectedTokenLogo, setSelectedTokenLogo] = useState<string>("");
+  const {
+    isOpen: isSendModalOpen,
+    onOpen: onSendModalOpen,
+    onClose: onSendModalClose,
+  } = useDisclosure();
 
   const resolverOrder = [
     IdentityResolver.Farcaster,
@@ -133,6 +144,12 @@ export default function EthereumAssetsSection() {
       setIsRefreshing(false);
     }
   }, [portfolio?.tokens]);
+
+  const handleSendToken = (tokenDetail: TokenDetail, logoUrl?: string) => {
+    setSelectedToken(tokenDetail);
+    setSelectedTokenLogo(logoUrl || "");
+    onSendModalOpen();
+  };
 
   return (
     <Box
@@ -225,13 +242,23 @@ export default function EthereumAssetsSection() {
                     </Text>
                   </Box>
                 </HStack>
-                <VStack spacing={0} align="end">
+                <VStack spacing={2} align="end">
                   <Text fontSize="2xl" fontWeight="bold" color="primary">
                     {formatValue(higherToken.token.balanceUSD)}
                   </Text>
                   <Text fontSize="sm" color="primary">
                     {formatPrice(higherToken.token.price)}
                   </Text>
+                  <Button
+                    size="sm"
+                    colorScheme="blue"
+                    leftIcon={<FaPaperPlane />}
+                    onClick={() =>
+                      handleSendToken(higherToken, "/logos/higher.png")
+                    }
+                  >
+                    Send
+                  </Button>
                 </VStack>
               </HStack>
             </Box>
@@ -502,7 +529,7 @@ export default function EthereumAssetsSection() {
                                               </VStack>
                                             </HStack>
 
-                                            <VStack spacing={0} align="end">
+                                            <VStack spacing={1} align="end">
                                               <Text
                                                 fontWeight="bold"
                                                 color="white"
@@ -520,6 +547,23 @@ export default function EthereumAssetsSection() {
                                                   tokenDetail.token.price
                                                 )}
                                               </Text>
+                                              <IconButton
+                                                aria-label="Send token"
+                                                icon={<FaPaperPlane />}
+                                                size="sm"
+                                                colorScheme="blue"
+                                                variant="outline"
+                                                onClick={() =>
+                                                  handleSendToken(
+                                                    tokenDetail,
+                                                    getTokenLogoSync(
+                                                      tokenDetail.token,
+                                                      networkInfo,
+                                                      network
+                                                    ) || undefined
+                                                  )
+                                                }
+                                              />
                                             </VStack>
                                           </HStack>
                                         </Box>
@@ -543,6 +587,16 @@ export default function EthereumAssetsSection() {
             </>
           )}
         </Box>
+      )}
+
+      {/* Send Token Modal */}
+      {selectedToken && (
+        <SendTokenModal
+          isOpen={isSendModalOpen}
+          onClose={onSendModalClose}
+          token={selectedToken}
+          tokenLogo={selectedTokenLogo}
+        />
       )}
     </Box>
   );
