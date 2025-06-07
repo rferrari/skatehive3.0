@@ -104,7 +104,7 @@ export default function Sidebar({ newNotificationCount = 0 }) {
             variant="ghost"
             w="full"
             justifyContent="flex-start"
-            leftIcon={<Icon as={FaTrophy} boxSize={4} color="yellow.400" />}
+            leftIcon={<Icon as={FaTrophy} boxSize={4} />}
             px={1}
             _hover={{
               bg: primaryBg,
@@ -241,20 +241,22 @@ export default function Sidebar({ newNotificationCount = 0 }) {
               Invite
             </Button>
           )}
-          <Button
-            onClick={() => handleNavigation("/join")}
-            variant="ghost"
-            w="full"
-            justifyContent="flex-start"
-            leftIcon={<Icon as={FiUser} boxSize={4} />}
-            px={1}
-            _hover={{
-              bg: primaryBg,
-              color: hoverTextColor,
-            }}
-          >
-            Join
-          </Button>
+          {!user && (
+            <Button
+              onClick={() => handleNavigation("/join")}
+              variant="ghost"
+              w="full"
+              justifyContent="flex-start"
+              leftIcon={<Icon as={FiUser} boxSize={4} />}
+              px={1}
+              _hover={{
+                bg: primaryBg,
+                color: hoverTextColor,
+              }}
+            >
+              Join
+            </Button>
+          )}
         </VStack>
         <div className={colorMode}>
           <AiohaModal
