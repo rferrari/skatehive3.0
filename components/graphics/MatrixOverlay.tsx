@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from "react";
 
-const MatrixOverlay: React.FC = () => {
+const MatrixOverlay: React.FC<{ coverMode?: boolean }> = ({ coverMode = false }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -17,7 +17,14 @@ const MatrixOverlay: React.FC = () => {
       canvas.height = canvas.offsetHeight;
     };
     setCanvasSize();
-    window.addEventListener("resize", setCanvasSize);
+
+    // Use ResizeObserver for parent/container size changes
+    const resizeObserver = new window.ResizeObserver(() => {
+      setCanvasSize();
+    });
+    if (canvas.parentElement) {
+      resizeObserver.observe(canvas.parentElement);
+    }
 
     // Matrix characters
     const letters =
@@ -64,10 +71,10 @@ const MatrixOverlay: React.FC = () => {
 
     return () => {
       cancelAnimationFrame(animationFrameId);
-      window.removeEventListener("resize", setCanvasSize);
       window.removeEventListener("resize", handleResize);
+      resizeObserver.disconnect();
     };
-  }, []);
+  }, [coverMode]);
 
   return (
     <canvas
@@ -79,8 +86,8 @@ const MatrixOverlay: React.FC = () => {
         position: "absolute",
         top: 0,
         left: 0,
-        zIndex: 20,
-        pointerEvents: "all",
+        zIndex: 0,
+        pointerEvents: "none",
         opacity: 0.95,
       }}
     />

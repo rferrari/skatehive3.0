@@ -6,6 +6,8 @@ import { Discussion } from '@hiveio/dhive';
 import { getPayoutValue, findPosts } from '@/lib/hive/client-functions';
 import AuthorAvatar from '@/components/blog/PostCard'; // Update this import if you have a dedicated AuthorAvatar
 import markdownRenderer from '@/lib/utils/MarkdownRenderer';
+import LoadingComponent from '../homepage/loadingComponent';
+import MatrixOverlay from '@/components/graphics/MatrixOverlay';
 
 function useMagazinePosts(query: string, tag: { tag: string; limit: number }[]) {
   const [posts, setPosts] = useState<Discussion[]>([]);
@@ -40,8 +42,7 @@ function useMagazinePosts(query: string, tag: { tag: string; limit: number }[]) 
 
 const backgroundGradient = {
   minHeight: '100vh',
-  width: '100%',
-  height: '100vh',
+  width: '100vw',
   p: 0,
   m: 0,
   overflow: 'hidden',
@@ -76,13 +77,13 @@ const retroFont = {
   letterSpacing: '0.5px',
 };
 const neonGreen = '#39FF14';
-const neonShadow = '0 0 8px #39FF14, 0 0 16px #39FF14';
+const blackShadow = '0 4px 32px #000, 0 8px 48px #000, 0 0 8px #000, 0 0 2px #000';
 const retroBoxShadow = '0 0 0 2px #232526, 0 0 8px #39FF14';
 
 const coverStyles = {
   ...pageStyles,
   borderRadius: '0px 16px 0px 0px',
-  background: 'linear-gradient(120deg,rgba(56, 161, 105, 0.6),rgb(5, 5, 5) 100%)',
+  background: 'transparent',
   color: neonGreen,
   backgroundSize: 'cover',
   textAlign: 'center',
@@ -112,6 +113,12 @@ export default function Magazine({ tag, query }: MagazineProps) {
   const flipBookRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = 0.2; // Set to 20% volume
+    }
+  }, []);
+
   // Memoize filtered and sorted posts for performance
   const filteredPosts = useMemo(() => {
     if (!posts) return [];
@@ -127,11 +134,7 @@ export default function Magazine({ tag, query }: MagazineProps) {
   };
 
   if (isLoading) {
-    return (
-      <Flex justify="center" align="center" w="100vw" h="100vh" p={5}>
-        <Text color={"white"}>Use your mouse to flip pages and scroll the pages</Text>
-      </Flex>
-    );
+    return <LoadingComponent />;
   }
 
   if (error) {
@@ -151,11 +154,11 @@ export default function Magazine({ tag, query }: MagazineProps) {
   }
 
   return (
-    <VStack {...backgroundGradient} width="100%" height="100vh" alignItems="stretch" justifyContent="flex-start" spacing={0} p={0} m={0}>
+    <VStack {...backgroundGradient} width="100%" height="100vh" alignItems="flex-start" justifyContent="flex-start" spacing={0}>
       <audio ref={audioRef} src="/pageflip.mp3" preload="auto" />
       <HTMLFlipBook
-        width={window.innerWidth}
-        height={window.innerHeight}
+        width={1000}
+        height={1300}
         minWidth={0}
         maxWidth={10000}
         minHeight={0}
@@ -168,7 +171,7 @@ export default function Magazine({ tag, query }: MagazineProps) {
         startZIndex={0}
         autoSize={true}
         maxShadowOpacity={0.2}
-        showCover={true}
+        showCover={false}
         mobileScrollSupport
         swipeDistance={50}
         clickEventForward={false}
@@ -177,7 +180,7 @@ export default function Magazine({ tag, query }: MagazineProps) {
         showPageCorners={false}
         disableFlipByClick={true}
         className="flipbook"
-        style={{ width: '100%', height: '100vh', margin: 0, padding: 0, boxSizing: 'border-box' }}
+        style={{ width: '100%', height: '100vh' }}
         ref={flipBookRef}
         onInit={(instance) => {
           flipBookRef.current = instance;
@@ -186,18 +189,65 @@ export default function Magazine({ tag, query }: MagazineProps) {
           playSound();
         }}
       >
-        <Box sx={coverStyles} width="100%" height="100%" p={0} m={0}>
-          <Flex direction="column" alignItems="center" justifyContent="center" width="100%" height="100%">
-            <Image src="/cover.png" alt="SkateHive Logo" maxHeight="300px" maxWidth="80%" loading="lazy" borderRadius="lg" boxShadow="xl" mb={6} />
-            <Heading size="2xl" fontWeight="extrabold" letterSpacing="tight" mb={2} style={{ ...retroFont, textShadow: neonShadow, color: neonGreen }}>
-              SkateHive Magazine
-            </Heading>
-            <Text fontSize="xl" color={neonGreen} mb={4} style={{ ...retroFont, textShadow: neonShadow }}>
-              The Community Skateboarding Zine
-            </Text>
-            <Badge fontSize="lg" px={4} py={2} borderRadius="md" mb={4} bg={neonGreen} color="#181c1b" boxShadow={neonShadow} style={{ ...retroFont }}>
-              Issue ∞
-            </Badge>
+        <Box sx={coverStyles} width="100%" height="100%" position="relative" overflow="hidden">
+          {/* Matrix effect as background */}
+          <Box
+            position="absolute"
+            top={0}
+            left={0}
+            width="100%"
+            height="100%"
+            zIndex={0}
+            pointerEvents="none"
+          >
+            <MatrixOverlay coverMode />
+          </Box>
+          <Flex
+            direction="column"
+            alignItems="center"
+            justifyContent="center"
+            width="100%"
+            height="100%"
+            position="relative"
+            zIndex={1}
+          >
+            {/* Text content above image, overlapping bottom of image */}
+            <Box
+              zIndex={2}
+              position="relative"
+              mb={-16}
+              textAlign="center"
+            >
+              <Heading
+                size="2xl"
+                fontWeight="extrabold"
+                letterSpacing="tight"
+                mb={2}
+                style={{ ...retroFont, textShadow: blackShadow, color: neonGreen }}
+              >
+                SkateHive Magazine
+              </Heading>
+              <Text
+                fontSize="xl"
+                color={neonGreen}
+                mb={4}
+                style={{ ...retroFont, textShadow: blackShadow }}
+              >
+                The Community Skateboarding Zine
+              </Text>
+            </Box>
+            {/* Cover image */}
+            <Image
+              src="/images/covers/nogenta_cover.png"
+              alt="SkateHive Cover"
+              maxHeight="500px"
+              maxWidth="100%"
+              width="auto"
+              loading="lazy"
+              borderRadius="lg"
+              boxShadow="xl"
+              zIndex={1}
+            />
           </Flex>
         </Box>
         {filteredPosts.map((post: Discussion, index) => {
@@ -212,8 +262,9 @@ export default function Magazine({ tag, query }: MagazineProps) {
               position="relative"
               width="100%"
               height="100%"
-              p={0}
-              m={0}
+              overflow="hidden"
+              display="flex"
+              flexDirection="column"
             >
               <Flex align="center" mb={2} gap={2}>
                 <Image
@@ -237,15 +288,9 @@ export default function Magazine({ tag, query }: MagazineProps) {
                 {post.title}
               </Heading>
               <Divider mt={2} mb={2} />
-              <Box flex={1} overflowY="auto" maxH="60vh" sx={{ width: '100%' }}>
-                <div dangerouslySetInnerHTML={{ __html: markdownRenderer(post.body) }} />
+              <Box flex="1 1 0%" minHeight={0} overflowY="auto" overflowX="hidden" width="100%">
+                <div className="magazine-content" dangerouslySetInnerHTML={{ __html: markdownRenderer(post.body) }} />
               </Box>
-              <Divider mt={2} mb={2} />
-              <Flex justifyContent={'flex-end'} alignItems="center">
-                <Text fontSize="xs" color="gray.400">
-                  Payout: ${Number(getPayoutValue(post as any)).toFixed(2)}
-                </Text>
-              </Flex>
             </Box>
           );
         })}
