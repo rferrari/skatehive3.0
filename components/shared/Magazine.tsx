@@ -108,6 +108,21 @@ export interface MagazineProps {
   query: string;
 }
 
+// Add a function to ensure all YouTube iframes have enablejsapi=1 in their src
+function addEnableJsApiToYouTubeIframes(html: string) {
+  return html.replace(
+    /<iframe([^>]+src="https:\/\/www\.youtube\.com\/embed\/[^\"]+)([^>]*)>/g,
+    (match, beforeSrc, afterSrc) => {
+      if (beforeSrc.includes('enablejsapi=1')) return match;
+      if (beforeSrc.includes('?')) {
+        return `<iframe${beforeSrc}&enablejsapi=1${afterSrc}>`;
+      } else {
+        return `<iframe${beforeSrc}?enablejsapi=1${afterSrc}>`;
+      }
+    }
+  );
+}
+
 export default function Magazine({ tag, query }: MagazineProps) {
   const { posts, error, isLoading } = useMagazinePosts(query, tag);
   const flipBookRef = useRef<any>(null);
@@ -157,6 +172,7 @@ export default function Magazine({ tag, query }: MagazineProps) {
     <VStack {...backgroundGradient} width="100%" height="100vh" alignItems="flex-start" justifyContent="flex-start" spacing={0}>
       <audio ref={audioRef} src="/pageflip.mp3" preload="auto" />
       <HTMLFlipBook
+        className="flipbook hide-scrollbar"
         width={1000}
         height={1300}
         minWidth={0}
@@ -179,7 +195,6 @@ export default function Magazine({ tag, query }: MagazineProps) {
         renderOnlyPageLengthChange={true}
         showPageCorners={false}
         disableFlipByClick={true}
-        className="flipbook hide-scrollbar"
         style={{ width: '100%', height: '100vh' }}
         ref={flipBookRef}
         onInit={(instance) => {
@@ -187,6 +202,29 @@ export default function Magazine({ tag, query }: MagazineProps) {
         }}
         onFlip={(e) => {
           playSound();
+          // Pause all native videos
+          const videos = document.querySelectorAll('.flipbook video');
+          videos.forEach((video) => {
+            const vid = video as HTMLVideoElement;
+            if (!vid.paused) {
+              vid.pause();
+            }
+          });
+          // Pause all YouTube iframes
+          const iframes = document.querySelectorAll('.flipbook iframe');
+          iframes.forEach((iframe) => {
+            const ifr = iframe as HTMLIFrameElement;
+            if (ifr.src && ifr.src.includes('youtube.com/embed')) {
+              ifr.contentWindow?.postMessage(
+                JSON.stringify({
+                  event: 'command',
+                  func: 'pauseVideo',
+                  args: [],
+                }),
+                '*'
+              );
+            }
+          });
         }}
       >
         <Box sx={coverStyles} width="100%" height="100%" position="relative" overflow="hidden">
@@ -289,7 +327,7 @@ export default function Magazine({ tag, query }: MagazineProps) {
               </Heading>
               <Divider mt={2} mb={2} />
               <Box flex="1 1 0%" minHeight={0} overflowY="auto" overflowX="hidden" width="100%" className="hide-scrollbar">
-                <div className="magazine-content" dangerouslySetInnerHTML={{ __html: markdownRenderer(post.body) }} />
+                <div className="magazine-content" dangerouslySetInnerHTML={{ __html: addEnableJsApiToYouTubeIframes(markdownRenderer(post.body)) }} />
               </Box>
             </Box>
           );
@@ -302,6 +340,12 @@ export default function Magazine({ tag, query }: MagazineProps) {
       <style jsx global>{`
         .magazine-content {
           color: #fff;
+        }
+        .magazine-content iframe {
+          max-width: 100%;
+          width: 100%;
+          display: block;
+          margin: 0 auto;
         }
         /* Hide vertical scrollbar for the post body area */
         .hide-scrollbar::-webkit-scrollbar {
