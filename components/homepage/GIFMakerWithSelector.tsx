@@ -15,6 +15,7 @@ interface GIFMakerWithSelectorProps {
 
 export interface GIFMakerRef {
   trigger: () => void;
+  reset: () => void;
 }
 
 const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
@@ -26,10 +27,11 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
     const [videoUrl, setVideoUrl] = useState<string | null>(null);
     const [videoFile, setVideoFile] = useState<File | null>(null);
     const [videoDuration, setVideoDuration] = useState<number>(0);
-    const [scrubTime, setScrubTime] = useState<number>(0);
     const [startTime, setStartTime] = useState<number | null>(null);
     const [endTime, setEndTime] = useState<number | null>(null);
     const [canConvert, setCanConvert] = useState<boolean>(false);
+    // Ref to track if user is seeking
+    const isSeekingRef = useRef(false);
 
     useImperativeHandle(ref, () => ({
       trigger: () => {
@@ -37,6 +39,15 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
           inputRef.current.value = "";
           inputRef.current.click();
         }
+      },
+      reset: () => {
+        setStatus("");
+        setVideoUrl(null);
+        setVideoFile(null);
+        setVideoDuration(0);
+        setStartTime(null);
+        setEndTime(null);
+        setCanConvert(false);
       },
     }));
 
@@ -72,7 +83,6 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
         setVideoUrl(null);
         setVideoFile(null);
         setVideoDuration(0);
-        setScrubTime(0);
         setStartTime(null);
         setEndTime(null);
         setCanConvert(false);
@@ -85,7 +95,6 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
         setVideoUrl(null);
         setVideoFile(null);
         setVideoDuration(0);
-        setScrubTime(0);
         setStartTime(null);
         setEndTime(null);
         setCanConvert(false);
@@ -96,42 +105,48 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
       setVideoUrl(url);
       setVideoFile(file);
       setVideoDuration(duration);
-      setScrubTime(0);
       setStartTime(null);
       setEndTime(null);
       setCanConvert(false);
       setStatus("");
     };
 
-    const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = parseFloat(e.target.value);
-      setScrubTime(value);
-      if (videoRef.current) {
-        videoRef.current.currentTime = value;
-      }
-    };
-
     const handleSetStart = () => {
-      setStartTime(scrubTime);
-      // If endTime is set and now invalid, reset it
-      if (endTime !== null && (scrubTime >= endTime || endTime - scrubTime > 4)) {
-        setEndTime(null);
+      if (videoRef.current) {
+        const current = videoRef.current.currentTime;
+        setStartTime(current);
+        // If endTime is set, validate the segment
+        if (endTime !== null) {
+          if (current >= endTime) {
+            setStatus("Start time must be before end time.");
+          } else if (endTime - current > 6) {
+            setStatus("Segment cannot be longer than 6 seconds.");
+          } else {
+            setStatus("");
+          }
+        } else {
+          setStatus("");
+        }
       }
     };
 
     const handleSetEnd = () => {
-      // Only allow if startTime is set and end > start and <= 4s segment
-      if (startTime === null) return;
-      if (scrubTime <= startTime) {
-        setStatus("End time must be after start time.");
-        return;
+      if (videoRef.current) {
+        const current = videoRef.current.currentTime;
+        setEndTime(current);
+        // If startTime is set, validate the segment
+        if (startTime !== null) {
+          if (current <= startTime) {
+            setStatus("End time must be after start time.");
+          } else if (current - startTime > 6) {
+            setStatus("Segment cannot be longer than 6 seconds.");
+          } else {
+            setStatus("");
+          }
+        } else {
+          setStatus("");
+        }
       }
-      if (scrubTime - startTime > 4) {
-        setStatus("Segment cannot be longer than 4 seconds.");
-        return;
-      }
-      setEndTime(scrubTime);
-      setStatus("");
     };
 
     useEffect(() => {
@@ -140,7 +155,7 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
         startTime !== null &&
         endTime !== null &&
         endTime > startTime &&
-        endTime - startTime <= 4
+        endTime - startTime <= 6
       ) {
         setCanConvert(true);
       } else {
@@ -181,6 +196,50 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
       }
     };
 
+    // Estimate GIF size in MB for 320px wide, 10fps GIFs
+    const estimateGifSizeMB = (duration: number) => {
+      return (0.3 + 0.3 * duration).toFixed(2);
+    };
+
+    // Get color for estimated size
+    const getEstimateColor = (size: number) => {
+      if (size < 1.5) return '#d4f8e8'; // light green
+      if (size < 1.7) return '#fff9c4'; // light yellow
+      if (size < 2.0) return '#ffe0b2'; // light orange
+      return '#ffd6d6'; // light red
+    };
+
+    // Looping preview effect
+    useEffect(() => {
+      const video = videoRef.current;
+      if (!video) return;
+      if (startTime === null || endTime === null || endTime <= startTime) return;
+
+      const handleSeeking = () => {
+        isSeekingRef.current = true;
+      };
+      const handleSeeked = () => {
+        isSeekingRef.current = false;
+      };
+      const handleTimeUpdate = () => {
+        if (isSeekingRef.current) return; // Don't loop while seeking
+        if (video.currentTime >= endTime) {
+          video.currentTime = startTime;
+          if (!isSeekingRef.current) {
+            video.play(); // ensure it keeps looping only if not seeking
+          }
+        }
+      };
+      video.addEventListener('seeking', handleSeeking);
+      video.addEventListener('seeked', handleSeeked);
+      video.addEventListener('timeupdate', handleTimeUpdate);
+      return () => {
+        video.removeEventListener('seeking', handleSeeking);
+        video.removeEventListener('seeked', handleSeeked);
+        video.removeEventListener('timeupdate', handleTimeUpdate);
+      };
+    }, [startTime, endTime]);
+
     return (
       <div style={{ maxWidth: 400, margin: "0 auto", padding: 24, background: "#fff", borderRadius: 12, boxShadow: "0 2px 12px rgba(0,0,0,0.08)", textAlign: "center" }}>
         <input
@@ -198,71 +257,62 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
               src={videoUrl}
               controls
               style={{ maxWidth: "100%", borderRadius: 8, marginBottom: 16 }}
-              onLoadedMetadata={() => {
-                if (videoRef.current) videoRef.current.currentTime = scrubTime;
-              }}
             />
-            <div style={{ margin: "16px 0" }}>
-              <label style={{ display: "block", marginBottom: 8, fontWeight: 500 }}>
-                Scrub to select segment:
-              </label>
-              <input
-                type="range"
-                min={0}
-                max={videoDuration}
-                step={0.01}
-                value={scrubTime}
-                onChange={handleSliderChange}
-                style={{ width: "100%" }}
+            <div style={{ display: "flex", justifyContent: "center", gap: 12, margin: "16px 0" }}>
+              <button
+                onClick={handleSetStart}
                 disabled={isProcessing}
-              />
-              <div style={{ marginTop: 8, fontSize: 14, color: "#555" }}>
-                Current: {scrubTime.toFixed(2)}s / {videoDuration.toFixed(2)}s
-              </div>
-              <div style={{ display: "flex", justifyContent: "center", gap: 12, marginTop: 12 }}>
-                <button
-                  onClick={handleSetStart}
-                  disabled={isProcessing}
-                  style={{
-                    padding: "6px 16px",
-                    fontSize: 15,
-                    borderRadius: 6,
-                    background: isProcessing ? "#ccc" : "#0070f3",
-                    color: "#fff",
-                    border: "none",
-                    cursor: isProcessing ? "not-allowed" : "pointer",
-                  }}
-                >
-                  Set Start
-                </button>
-                <button
-                  onClick={handleSetEnd}
-                  disabled={isProcessing || startTime === null}
-                  style={{
-                    padding: "6px 16px",
-                    fontSize: 15,
-                    borderRadius: 6,
-                    background: isProcessing ? "#ccc" : "#222",
-                    color: "#fff",
-                    border: "none",
-                    cursor: isProcessing || startTime === null ? "not-allowed" : "pointer",
-                  }}
-                >
-                  Set End
-                </button>
-              </div>
-              <div style={{ marginTop: 12, fontSize: 14, color: "#555" }}>
-                {startTime !== null && endTime !== null ? (
-                  <>
-                    Segment: {startTime.toFixed(2)}s - {endTime.toFixed(2)}s ({(endTime - startTime).toFixed(2)}s)
-                  </>
-                ) : startTime !== null ? (
-                  <>Start: {startTime.toFixed(2)}s</>
-                ) : (
-                  <>No segment selected.</>
-                )}
-              </div>
+                style={{
+                  padding: "6px 16px",
+                  fontSize: 15,
+                  borderRadius: 6,
+                  background: isProcessing ? "#ccc" : "#0070f3",
+                  color: "#fff",
+                  border: "none",
+                  cursor: isProcessing ? "not-allowed" : "pointer",
+                }}
+              >
+                Set Start
+              </button>
+              <button
+                onClick={handleSetEnd}
+                disabled={isProcessing}
+                style={{
+                  padding: "6px 16px",
+                  fontSize: 15,
+                  borderRadius: 6,
+                  background: isProcessing ? "#ccc" : "#222",
+                  color: "#fff",
+                  border: "none",
+                  cursor: isProcessing ? "not-allowed" : "pointer",
+                }}
+              >
+                Set End
+              </button>
             </div>
+            <div style={{ marginTop: 12, fontSize: 14, color: "#555" }}>
+              {startTime !== null && endTime !== null ? (
+                <>
+                  Segment: {startTime.toFixed(2)}s - {endTime.toFixed(2)}s ({(endTime - startTime).toFixed(2)}s)
+                </>
+              ) : startTime !== null ? (
+                <>Start: {startTime.toFixed(2)}s</>
+              ) : endTime !== null ? (
+                <>End: {endTime.toFixed(2)}s</>
+              ) : (
+                <>No segment selected.</>
+              )}
+            </div>
+            {startTime !== null && endTime !== null && (
+              (() => {
+                const est = parseFloat(estimateGifSizeMB(endTime - startTime));
+                return (
+                  <div style={{ marginTop: 4, fontSize: 13, fontWeight: 500 }}>
+                    Estimated GIF size: <span style={{ background: getEstimateColor(est), color: '#222', borderRadius: 6, padding: '2px 8px', marginLeft: 4 }}>{est} MB</span>
+                  </div>
+                );
+              })()
+            )}
             <button
               onClick={handleConvert}
               disabled={isProcessing || !canConvert}

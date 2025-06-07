@@ -73,12 +73,9 @@ export default function HivePowerSection({
           </HStack>
         </Stack>
         <Text color="gray.400">
-          your upvote (curation) power. Exchanging Hive for Hive Power is called
-          &quot;Powering Up&quot; or &quot;Staking&quot;.
+          Staked Hive is the power you have to vote on posts. Earns you 3% interest. Actively voting on posts can earn up to 10% APR.
         </Text>
-        <Text color="gray.400">
-          Increases the more effectively you vote on posts
-        </Text>
+       
       </Box>
     </Box>
   );

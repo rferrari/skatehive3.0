@@ -75,6 +75,15 @@ export default function Composer() {
     return () => clearInterval(interval);
   }, [placeholders.length]);
 
+  useEffect(() => {
+    if (isGifModalOpen) {
+      gifMakerWithSelectorRef.current?.reset();
+      setGifUrl(null);
+      setGifSize(null);
+      setIsProcessingGif(false);
+    }
+  }, [isGifModalOpen]);
+
   const insertAtCursor = (content: string) => {
     const textarea = document.querySelector(
       ".w-md-editor-text-input"
@@ -520,26 +529,31 @@ export default function Composer() {
             <ModalCloseButton />
             <ModalBody>
               <div style={{ maxWidth: 480, margin: "0 auto", padding: 12 }}>
-                <p style={{ marginBottom: 16, color: "#bbb" }}>
-                  Upload a video (3-30 seconds), select a 3-second segment, and
-                  convert it to a GIF!
-                </p>
-                <button
-                  onClick={handleGifTrigger}
-                  disabled={isProcessingGif}
-                  style={{
-                    padding: "10px 24px",
-                    fontSize: 16,
-                    borderRadius: 6,
-                    background: isProcessingGif ? "#ccc" : "#222",
-                    color: "#fff",
-                    border: "none",
-                    cursor: isProcessingGif ? "not-allowed" : "pointer",
-                    marginBottom: 24,
-                  }}
-                >
-                  {isProcessingGif ? "Processing..." : "Select Video (3-30s)"}
-                </button>
+                {/* Hide instructions and select button after GIF is generated */}
+                {!gifUrl && (
+                  <>
+                    <p style={{ marginBottom: 16, color: "#bbb" }}>
+                      Upload a video (3-30 seconds), select a 3-second segment, and
+                      convert it to a GIF!
+                    </p>
+                    <button
+                      onClick={handleGifTrigger}
+                      disabled={isProcessingGif}
+                      style={{
+                        padding: "10px 24px",
+                        fontSize: 16,
+                        borderRadius: 6,
+                        background: isProcessingGif ? "#ccc" : "#222",
+                        color: "#fff",
+                        border: "none",
+                        cursor: isProcessingGif ? "not-allowed" : "pointer",
+                        marginBottom: 24,
+                      }}
+                    >
+                      {isProcessingGif ? "Processing..." : "Select Video (3-30s)"}
+                    </button>
+                  </>
+                )}
                 <GIFMakerWithSelector
                   ref={gifMakerWithSelectorRef}
                   onUpload={handleGifUpload}
@@ -617,6 +631,10 @@ export default function Composer() {
                           const result = await response.json();
                           const ipfsUrl = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`;
                           insertAtCursor(`\n![skatehive](${ipfsUrl})\n`);
+                          gifMakerWithSelectorRef.current?.reset();
+                          setGifUrl(null);
+                          setGifSize(null);
+                          setIsProcessingGif(false);
                           setGifModalOpen(false);
                         } catch (err) {
                           alert("Failed to upload GIF to IPFS.");

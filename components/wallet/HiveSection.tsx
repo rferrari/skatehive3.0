@@ -92,7 +92,7 @@ export default function HiveSection({
         </HStack>
       </Stack>
       <Text color="gray.400" mb={4}>
-        The primary token of the Hive Blockchain and often a reward on posts.
+        The primary token of the Hive Blockchain. Liquid and transferable.
       </Text>
     </Box>
   );
