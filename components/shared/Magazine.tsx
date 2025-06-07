@@ -179,7 +179,7 @@ export default function Magazine({ tag, query }: MagazineProps) {
         renderOnlyPageLengthChange={true}
         showPageCorners={false}
         disableFlipByClick={true}
-        className="flipbook"
+        className="flipbook hide-scrollbar"
         style={{ width: '100%', height: '100vh' }}
         ref={flipBookRef}
         onInit={(instance) => {
@@ -288,7 +288,7 @@ export default function Magazine({ tag, query }: MagazineProps) {
                 {post.title}
               </Heading>
               <Divider mt={2} mb={2} />
-              <Box flex="1 1 0%" minHeight={0} overflowY="auto" overflowX="hidden" width="100%">
+              <Box flex="1 1 0%" minHeight={0} overflowY="auto" overflowX="hidden" width="100%" className="hide-scrollbar">
                 <div className="magazine-content" dangerouslySetInnerHTML={{ __html: markdownRenderer(post.body) }} />
               </Box>
             </Box>
@@ -299,6 +299,27 @@ export default function Magazine({ tag, query }: MagazineProps) {
           <Text>Last Page</Text>
         </Box>
       </HTMLFlipBook>
+      <style jsx global>{`
+        .magazine-content {
+          color: #fff;
+        }
+        /* Hide vertical scrollbar for the post body area */
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .hide-scrollbar {
+          -ms-overflow-style: none; /* IE and Edge */
+          scrollbar-width: none; /* Firefox */
+        }
+        /* Aggressively hide all scrollbars within the flipbook and its children */
+        .flipbook, .flipbook * {
+          scrollbar-width: none !important;      /* Firefox */
+          -ms-overflow-style: none !important;   /* IE and Edge */
+        }
+        .flipbook::-webkit-scrollbar, .flipbook *::-webkit-scrollbar {
+          display: none !important;              /* Chrome, Safari */
+        }
+      `}</style>
     </VStack>
   );
 } 
