@@ -13,11 +13,9 @@ import {
 } from "@chakra-ui/react";
 import { useRouter, usePathname } from "next/navigation";
 import { AiohaModal, useAioha } from "@aioha/react-ui";
-import { FiHome, FiBell, FiUser, FiBook, FiMap } from "react-icons/fi";
-import { FaPiggyBank } from "react-icons/fa";
+import { FiHome, FiBell, FiUser, FiBook, FiMap, FiCreditCard, FiSettings, FiMail, FiAward } from "react-icons/fi";
 import { motion } from "framer-motion";
 import { FaGear } from "react-icons/fa6";
-import { FaMailBulk } from "react-icons/fa";
 import { FaTrophy } from "react-icons/fa";
 import { KeyTypes } from "@aioha/aioha";
 import "@aioha/react-ui/dist/build.css";
@@ -100,20 +98,6 @@ export default function Sidebar({ newNotificationCount = 0 }) {
             Home
           </Button>
           <Button
-            onClick={() => handleNavigation("/leaderboard")}
-            variant="ghost"
-            w="full"
-            justifyContent="flex-start"
-            leftIcon={<Icon as={FaTrophy} boxSize={4} />}
-            px={1}
-            _hover={{
-              bg: primaryBg,
-              color: hoverTextColor,
-            }}
-          >
-            Leaderboard
-          </Button>
-          <Button
             onClick={() => handleNavigation("/blog")}
             variant="ghost"
             w="full"
@@ -126,6 +110,20 @@ export default function Sidebar({ newNotificationCount = 0 }) {
             }}
           >
             Magazine
+          </Button>
+          <Button
+            onClick={() => handleNavigation("/leaderboard")}
+            variant="ghost"
+            w="full"
+            justifyContent="flex-start"
+            leftIcon={<Icon as={FiAward} boxSize={4} />}
+            px={1}
+            _hover={{
+              bg: primaryBg,
+              color: hoverTextColor,
+            }}
+          >
+            Leaderboard
           </Button>
           <Button
             onClick={() => handleNavigation("/skatespots")}
@@ -200,7 +198,7 @@ export default function Sidebar({ newNotificationCount = 0 }) {
                 variant="ghost"
                 w="full"
                 justifyContent="flex-start"
-                leftIcon={<Icon as={FaPiggyBank} boxSize={4} />}
+                leftIcon={<Icon as={FiCreditCard} boxSize={4} />}
                 px={1}
                 _hover={{
                   bg: primaryBg,
@@ -216,7 +214,7 @@ export default function Sidebar({ newNotificationCount = 0 }) {
             variant="ghost"
             w="full"
             justifyContent="flex-start"
-            leftIcon={<Icon as={FaGear} boxSize={4} />}
+            leftIcon={<Icon as={FiSettings} boxSize={4} />}
             px={1}
             _hover={{
               bg: primaryBg,
@@ -231,7 +229,7 @@ export default function Sidebar({ newNotificationCount = 0 }) {
               variant="ghost"
               w="full"
               justifyContent="flex-start"
-              leftIcon={<Icon as={FaMailBulk} boxSize={4} />}
+              leftIcon={<Icon as={FiMail} boxSize={4} />}
               px={1}
               _hover={{
                 bg: primaryBg,
