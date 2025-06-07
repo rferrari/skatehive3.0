@@ -224,6 +224,15 @@ export default function Magazine({ tag, query }: MagazineProps) {
                 '*'
               );
             }
+            // Pause SkateHype iframes by resetting src
+            if (ifr.src && ifr.src.includes('skatehype.com/ifplay.php')) {
+              // Only reset if not already paused (best effort)
+              const oldSrc = ifr.src;
+              ifr.src = '';
+              setTimeout(() => {
+                ifr.src = oldSrc;
+              }, 100); // brief reset
+            }
           });
         }}
       >

@@ -26,6 +26,8 @@ import LoadingComponent from "../homepage/loadingComponent";
 import PostInfiniteScroll from "../blog/PostInfiniteScroll";
 import { useAioha } from "@aioha/react-ui";
 import EditProfile from "./EditProfile";
+import Magazine from "../shared/Magazine";
+
 interface ProfilePageProps {
   username: string;
 }
@@ -63,6 +65,7 @@ export default function ProfilePage({ username }: ProfilePageProps) {
   const [isMobile, setIsMobile] = useState(false);
   const { user } = useAioha();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [showMagazine, setShowMagazine] = useState(false);
 
   const params = useRef([
     username,
@@ -89,6 +92,9 @@ export default function ProfilePage({ username }: ProfilePageProps) {
   const handleEditModalClose = useCallback(() => {
     setIsEditModalOpen(false);
   }, []);
+
+  const handleShowMagazine = useCallback(() => setShowMagazine(true), []);
+  const handleHideMagazine = useCallback(() => setShowMagazine(false), []);
 
   // Optimized profile data update callback
   const updateProfileData = useCallback((newData: Partial<ProfileData>) => {
@@ -336,6 +342,20 @@ export default function ProfilePage({ username }: ProfilePageProps) {
     [profileData, username, speakDescription, isOwner, handleEditModalOpen]
   );
 
+  const MagazineToggle = useMemo(
+    () => (
+      <IconButton
+        aria-label={showMagazine ? "Show Posts" : "Show Magazine"}
+        icon={<FaGlobe />}
+        variant={showMagazine ? "solid" : "ghost"}
+        onClick={showMagazine ? handleHideMagazine : handleShowMagazine}
+        isActive={showMagazine}
+        ml={2}
+      />
+    ),
+    [showMagazine, handleShowMagazine, handleHideMagazine]
+  );
+
   const ViewToggle = useMemo(
     () =>
       !isMobile && (
@@ -364,9 +384,10 @@ export default function ProfilePage({ username }: ProfilePageProps) {
             onClick={() => handleViewModeChange("list")}
             isActive={viewMode === "list"}
           />
+          {MagazineToggle}
         </Flex>
       ),
-    [isMobile, viewMode, handleViewModeChange]
+    [isMobile, viewMode, handleViewModeChange, MagazineToggle]
   );
 
   if (isLoading || !hiveAccount) {
@@ -438,14 +459,18 @@ export default function ProfilePage({ username }: ProfilePageProps) {
       {ProfileHeader}
       {ViewToggle}
 
-      {/* Posts */}
-      <PostInfiniteScroll
-        allPosts={posts}
-        fetchPosts={fetchPosts}
-        viewMode={viewMode}
-        context="profile"
-        hideAuthorInfo={true}
-      />
+      {/* Posts or Magazine */}
+      {showMagazine ? (
+        <Magazine tag={[{ tag: username, limit: 30 }]} query="created" />
+      ) : (
+        <PostInfiniteScroll
+          allPosts={posts}
+          fetchPosts={fetchPosts}
+          viewMode={viewMode}
+          context="profile"
+          hideAuthorInfo={true}
+        />
+      )}
 
       {/* Edit Profile Modal */}
       <EditProfile
