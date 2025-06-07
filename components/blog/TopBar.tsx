@@ -1,12 +1,13 @@
 'use client';
 import { Flex, IconButton, Menu, MenuButton, MenuList, MenuItem, Button } from '@chakra-ui/react';
 import { FaTh, FaBars, FaPen, FaSort } from 'react-icons/fa'; 
+import { FiBook } from 'react-icons/fi';
 import { useRouter } from 'next/navigation';
 import { useAioha } from '@aioha/react-ui';
 
 interface TopBarProps {
-    viewMode: 'grid' | 'list';
-    setViewMode: (mode: 'grid' | 'list') => void;
+    viewMode: 'grid' | 'list' | 'magazine';
+    setViewMode: (mode: 'grid' | 'list' | 'magazine') => void;
     setQuery: (query: string) => void;
 }
 
@@ -42,6 +43,12 @@ export default function TopBar({ viewMode, setViewMode, setQuery }: TopBarProps)
                         onClick={() => setViewMode('list')}
                         isActive={viewMode === 'list'}
                         variant={viewMode === 'list' ? 'solid' : 'outline'}
+                        ml={4}
+                    />
+                    <IconButton
+                        aria-label="Magazine View"
+                        icon={<FiBook />}  
+                        onClick={() => router.push('/magazine')}
                         ml={4}
                     />
                 </Flex>

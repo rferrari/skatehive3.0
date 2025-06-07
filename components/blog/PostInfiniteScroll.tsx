@@ -15,7 +15,7 @@ import { Discussion } from "@hiveio/dhive";
 interface PostsInfiniteScrollProps {
   allPosts: Discussion[];
   fetchPosts: () => Promise<void>;
-  viewMode: "grid" | "list";
+  viewMode: "grid" | "list" | "magazine";
   context?: "blog" | "profile" | "rightsidebar";
   hideAuthorInfo?: boolean;
 }
@@ -30,7 +30,7 @@ export default function PostsInfiniteScroll({
   const hasMore = allPosts.length % 12 === 0; // Adjust this logic based on your pagination
   // Determine columns based on context and viewMode
   const columns =
-    viewMode === "grid" ? (context === "rightsidebar" ? 1 : 3) : 1;
+    viewMode === "grid" || viewMode === "magazine" ? (context === "rightsidebar" ? 1 : 3) : 1;
 
   return (
     <InfiniteScroll
