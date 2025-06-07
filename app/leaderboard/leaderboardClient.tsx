@@ -421,9 +421,6 @@ export default function LeaderboardClient({ skatersData }: Props) {
                 align="center"
                 borderTop="1px solid"
                 borderColor="green.900"
-                _hover={{
-                  bg: useColorModeValue("gray.700", "gray.800"),
-                }}
                 transition="background 0.2s"
               >
                 {/* Sticky Skater Info */}
