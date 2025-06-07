@@ -34,7 +34,7 @@ import VideoUploader, { VideoUploaderRef } from "../../components/homepage/Video
 import GIFMakerWithSelector, { GIFMakerRef as GIFMakerWithSelectorRef } from "../../components/homepage/GIFMakerWithSelector";
 import { extractImageUrls, extractVideoUrls } from "../../lib/utils/extractImageUrls";
 import MatrixOverlay from "../../components/graphics/MatrixOverlay";
-
+import { Image } from "@chakra-ui/react";
 export default function Composer() {
   const [markdown, setMarkdown] = useState("");
   const [title, setTitle] = useState("");
