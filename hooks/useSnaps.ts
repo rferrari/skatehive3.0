@@ -17,7 +17,7 @@ export const useSnaps = () => {
   const [hasMore, setHasMore] = useState(true);
 
   const pageMinSize = 10;
-  
+
 
   // Filter comments by the target tag
   function filterCommentsByTag(comments: Discussion[], targetTag: string): Discussion[] {
@@ -35,6 +35,7 @@ export const useSnaps = () => {
       }
     });
   }
+
   // Fetch comments with a minimum size
   async function getMoreSnaps(): Promise<Discussion[]> {
     const tag = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || ''
@@ -84,12 +85,90 @@ export const useSnaps = () => {
     return allFilteredComments;
   }
 
+
+  // Convert API item to Discussion format
+  function convertApiItemToDiscussion(apiData: any): Discussion {
+    return {
+      body: apiData.body,
+      author: apiData.author,
+      permlink: apiData.permlink,
+      parent_author: apiData.parent_author,
+      parent_permlink: apiData.parent_permlink,
+      created: apiData.created,
+      cashout_time: apiData.cashout_time,
+      last_payout: apiData.last_payout,
+      category: apiData.category,
+      pending_payout_value: apiData.pending_payout_value,
+      author_rewards: apiData.author_rewards,
+      total_payout_value: apiData.total_payout_value,
+      curator_payout_value: apiData.curator_payout_value,
+      beneficiaries: apiData.beneficiaries,
+      max_accepted_payout: apiData.max_accepted_payout,
+      percent_hbd: apiData.percent_hbd,
+      allow_votes: apiData.allow_votes,
+      allow_curation_rewards: apiData.allow_curation_rewards,
+      net_rshares: apiData.net_rshares,
+      total_vote_weight: apiData.total_vote_weight,
+      title: '',
+      abs_rshares: '',
+      children: 0,
+      reblogged_by: [],
+      replies: [],
+      vote_rshares: '',
+      json_metadata: JSON.stringify(apiData.post_json_metadata || {}),
+      author_reputation: parseFloat(apiData.reputation || 0),
+      active_votes: apiData.votes?.map((vote: any) => ({
+        percent: 0,
+        reputation: 0,
+        rshares: vote.rshares,
+        time: vote.timestamp,
+        voter: vote.voter,
+        weight: vote.weight
+      })) || [],
+      url: '',
+      root_title: '',
+      total_pending_payout_value: '',
+      promoted: '',
+      body_length: '',
+      id: 0,
+      last_update: '',
+      active: '',
+      depth: 0,
+      children_abs_rshares: '',
+      max_cashout_time: '',
+      reward_weight: 0,
+      net_votes: 0,
+      root_comment: 0,
+      allow_replies: true,
+    };
+  }
+
+
+  async function fetchFromNewApi(): Promise<Discussion[]> {
+    const tag = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || '';
+    const limit = 10;
+    const apiUrl = `https://api.skatehive.app/api/v1/feed?limit=${limit}&page=${currentPage}`;
+    console.log(apiUrl)
+
+    const response = await fetch(apiUrl);
+    if (!response.ok) {
+      console.error('API fetch failed');
+      return await getMoreSnaps();
+    }
+
+    const apiData = await response.json();
+    const discussions: Discussion[] = apiData.data
+      .map((item: any) => convertApiItemToDiscussion(item));
+
+    return discussions;
+  }
+
   // Fetch posts when `currentPage` changes
   useEffect(() => {
     const fetchPosts = async () => {
       setIsLoading(true);
       try {
-        const newSnaps = await getMoreSnaps();
+        const newSnaps = await fetchFromNewApi();
 
         if (newSnaps.length < pageMinSize) {
           setHasMore(false); // No more items to fetch
