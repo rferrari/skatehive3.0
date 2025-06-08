@@ -41,8 +41,8 @@ function useMagazinePosts(query: string, tag: { tag: string; limit: number }[]) 
 }
 
 const backgroundGradient = {
-  minHeight: '100vh',
-  width: '100vw',
+  minHeight: '100%',
+  width: '100%',
   p: 0,
   m: 0,
   overflow: 'hidden',
@@ -169,7 +169,19 @@ export default function Magazine({ tag, query }: MagazineProps) {
   }
 
   return (
-    <VStack {...backgroundGradient} width="100%" height="100vh" alignItems="flex-start" justifyContent="flex-start" spacing={0}>
+    <VStack
+      {...backgroundGradient}
+      width="100%"
+      height="100%"
+      alignItems="flex-start"
+      justifyContent="flex-start"
+      spacing={0}
+      sx={{
+        '&::-webkit-scrollbar': { display: 'none' },
+        scrollbarWidth: 'none',
+        overflowY: 'hidden',
+      }}
+    >
       <audio ref={audioRef} src="/pageflip.mp3" preload="auto" />
       <HTMLFlipBook
         className="flipbook hide-scrollbar"

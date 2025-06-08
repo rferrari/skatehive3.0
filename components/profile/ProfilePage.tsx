@@ -18,9 +18,10 @@ import {
   Avatar,
   IconButton,
   Link,
+  ButtonGroup,
 } from "@chakra-ui/react";
 import useHiveAccount from "@/hooks/useHiveAccount";
-import { FaGlobe, FaTh, FaBars, FaEdit } from "react-icons/fa";
+import { FaGlobe, FaTh, FaBars, FaEdit, FaBookOpen } from "react-icons/fa";
 import { getProfile, findPosts } from "@/lib/hive/client-functions";
 import LoadingComponent from "../homepage/loadingComponent";
 import PostInfiniteScroll from "../blog/PostInfiniteScroll";
@@ -61,11 +62,10 @@ export default function ProfilePage({ username }: ProfilePageProps) {
   });
   const [posts, setPosts] = useState<any[]>([]);
   const isFetching = useRef(false);
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "list" | "magazine">("grid");
   const [isMobile, setIsMobile] = useState(false);
   const { user } = useAioha();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [showMagazine, setShowMagazine] = useState(false);
 
   const params = useRef([
     username,
@@ -78,7 +78,7 @@ export default function ProfilePage({ username }: ProfilePageProps) {
   const isOwner = useMemo(() => user === username, [user, username]);
 
   // Memoized callbacks
-  const handleViewModeChange = useCallback((mode: "grid" | "list") => {
+  const handleViewModeChange = useCallback((mode: "grid" | "list" | "magazine") => {
     setViewMode(mode);
     if (typeof window !== "undefined") {
       localStorage.setItem("profileViewMode", mode);
@@ -92,9 +92,6 @@ export default function ProfilePage({ username }: ProfilePageProps) {
   const handleEditModalClose = useCallback(() => {
     setIsEditModalOpen(false);
   }, []);
-
-  const handleShowMagazine = useCallback(() => setShowMagazine(true), []);
-  const handleHideMagazine = useCallback(() => setShowMagazine(false), []);
 
   // Optimized profile data update callback
   const updateProfileData = useCallback((newData: Partial<ProfileData>) => {
@@ -116,7 +113,7 @@ export default function ProfilePage({ username }: ProfilePageProps) {
       typeof window !== "undefined"
         ? localStorage.getItem("profileViewMode")
         : null;
-    if (savedView === "grid" || savedView === "list") {
+    if (savedView === "grid" || savedView === "list" || savedView === "magazine") {
       setViewMode(savedView);
     }
   }, []);
@@ -342,52 +339,60 @@ export default function ProfilePage({ username }: ProfilePageProps) {
     [profileData, username, speakDescription, isOwner, handleEditModalOpen]
   );
 
-  const MagazineToggle = useMemo(
-    () => (
-      <IconButton
-        aria-label={showMagazine ? "Show Posts" : "Show Magazine"}
-        icon={<FaGlobe />}
-        variant={showMagazine ? "solid" : "ghost"}
-        onClick={showMagazine ? handleHideMagazine : handleShowMagazine}
-        isActive={showMagazine}
-        ml={2}
-      />
-    ),
-    [showMagazine, handleShowMagazine, handleHideMagazine]
-  );
-
   const ViewToggle = useMemo(
     () =>
       !isMobile && (
-        <Flex
-          justifyContent="flex-end"
-          alignItems="center"
-          mb={0}
-          mt={0}
-          pt={0}
-          pb={0}
-          gap={2}
-          p={0}
-        >
-          <IconButton
-            aria-label="Grid view"
-            icon={<FaTh />}
-            variant={viewMode === "grid" ? "solid" : "ghost"}
-            onClick={() => handleViewModeChange("grid")}
-            isActive={viewMode === "grid"}
-            mr={1}
-          />
-          <IconButton
-            aria-label="List view"
-            icon={<FaBars />}
-            variant={viewMode === "list" ? "solid" : "ghost"}
-            onClick={() => handleViewModeChange("list")}
-            isActive={viewMode === "list"}
-          />
-          {MagazineToggle}
+        <Flex justifyContent="center" alignItems="center" mt={4} mb={4}>
+          <Box
+            bg="gray.800"
+            borderRadius="full"
+            boxShadow="md"
+            px={2}
+            py={1}
+            display="flex"
+            alignItems="center"
+            border="1px solid"
+            borderColor="gray.700"
+          >
+            <ButtonGroup isAttached variant="ghost" size="md">
+              <IconButton
+                aria-label="Grid view"
+                icon={<FaTh />}
+                variant={viewMode === "grid" ? "solid" : "ghost"}
+                colorScheme={viewMode === "grid" ? "primary" : undefined}
+                onClick={() => handleViewModeChange("grid")}
+                isActive={viewMode === "grid"}
+                borderRadius="full"
+                _hover={{ bg: "gray.700" }}
+                _active={{ bg: "primary.600" }}
+              />
+              <IconButton
+                aria-label="List view"
+                icon={<FaBars />}
+                variant={viewMode === "list" ? "solid" : "ghost"}
+                colorScheme={viewMode === "list" ? "primary" : undefined}
+                onClick={() => handleViewModeChange("list")}
+                isActive={viewMode === "list"}
+                borderRadius="full"
+                _hover={{ bg: "gray.700" }}
+                _active={{ bg: "primary.600" }}
+              />
+              <IconButton
+                aria-label={viewMode === "magazine" ? "Show Posts" : "Show Magazine"}
+                icon={<FaBookOpen />}
+                variant={viewMode === "magazine" ? "solid" : "ghost"}
+                colorScheme={viewMode === "magazine" ? "primary" : undefined}
+                onClick={() => handleViewModeChange(viewMode === "magazine" ? "grid" : "magazine")}
+                isActive={viewMode === "magazine"}
+                borderRadius="full"
+                _hover={{ bg: "gray.700" }}
+                _active={{ bg: "primary.600" }}
+              />
+            </ButtonGroup>
+          </Box>
         </Flex>
       ),
-    [isMobile, viewMode, handleViewModeChange, MagazineToggle]
+    [isMobile, viewMode, handleViewModeChange]
   );
 
   if (isLoading || !hiveAccount) {
@@ -460,7 +465,7 @@ export default function ProfilePage({ username }: ProfilePageProps) {
       {ViewToggle}
 
       {/* Posts or Magazine */}
-      {showMagazine ? (
+      {viewMode === "magazine" ? (
         <Magazine tag={[{ tag: username, limit: 30 }]} query="created" />
       ) : (
         <PostInfiniteScroll

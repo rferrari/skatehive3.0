@@ -242,16 +242,21 @@ export default function PostCard({
           <Text fontSize="xs" color="gray.500" mb={1}>
             {postDate}
           </Text>
-          <Text
-            fontWeight="bold"
-            fontSize="xl"
-            mb={1}
-            isTruncated={false}
-            whiteSpace="normal"
-            wordBreak="break-word"
+          <Link
+            href={`/@${author}/${post.permlink}`}
+            _hover={{ textDecoration: "underline" }}
           >
-            {title}
-          </Text>
+            <Text
+              fontWeight="bold"
+              fontSize="xl"
+              mb={1}
+              isTruncated={false}
+              whiteSpace="normal"
+              wordBreak="break-word"
+            >
+              {title}
+            </Text>
+          </Link>
           <Text
             fontSize="sm"
             color="gray.400"

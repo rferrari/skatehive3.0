@@ -5,9 +5,15 @@ import { Discussion } from '@hiveio/dhive';
 import { findPosts } from '@/lib/hive/client-functions';
 import TopBar from '@/components/blog/TopBar';
 import PostInfiniteScroll from '@/components/blog/PostInfiniteScroll';
+import { useSearchParams } from 'next/navigation';
 
 export default function Blog() {
-    const [viewMode, setViewMode] = useState<'grid' | 'list' | 'magazine'>('grid');
+    const searchParams = useSearchParams();
+    const initialView = searchParams?.get('view');
+    const validViews = ['grid', 'list', 'magazine'];
+    const [viewMode, setViewMode] = useState<'grid' | 'list' | 'magazine'>(
+        validViews.includes(initialView as string) ? (initialView as 'grid' | 'list' | 'magazine') : 'grid'
+    );
     const [query, setQuery] = useState("created");
     const [allPosts, setAllPosts] = useState<Discussion[]>([]);
     const isFetching = useRef(false);

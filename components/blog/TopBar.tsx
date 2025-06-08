@@ -1,8 +1,8 @@
 'use client';
-import { Flex, IconButton, Menu, MenuButton, MenuList, MenuItem, Button } from '@chakra-ui/react';
+import { Flex, IconButton, Menu, MenuButton, MenuList, MenuItem, Button, Tooltip } from '@chakra-ui/react';
 import { FaTh, FaBars, FaPen, FaSort } from 'react-icons/fa'; 
 import { FiBook } from 'react-icons/fi';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAioha } from '@aioha/react-ui';
 
 interface TopBarProps {
@@ -13,7 +13,9 @@ interface TopBarProps {
 
 export default function TopBar({ viewMode, setViewMode, setQuery }: TopBarProps) {
     const router = useRouter(); 
+    const pathname = usePathname();
     const { user } = useAioha();
+    const isMagazinePage = pathname === '/magazine';
 
     return (
         <Flex justifyContent="space-between" mb={4} alignItems="center">
@@ -30,27 +32,53 @@ export default function TopBar({ viewMode, setViewMode, setQuery }: TopBarProps)
             <Flex flex="1" justifyContent="flex-end" alignItems="center">
                 {/* Hide grid/list toggle on mobile */}
                 <Flex display={{ base: 'none', md: 'flex' }}>
-                    <IconButton
-                        aria-label="Grid View"
-                        icon={<FaTh />} 
-                        onClick={() => setViewMode('grid')}
-                        isActive={viewMode === 'grid'}
-                        variant={viewMode === 'grid' ? 'solid' : 'outline'}  
-                    />
-                    <IconButton
-                        aria-label="List View"
-                        icon={<FaBars />}  
-                        onClick={() => setViewMode('list')}
-                        isActive={viewMode === 'list'}
-                        variant={viewMode === 'list' ? 'solid' : 'outline'}
-                        ml={4}
-                    />
-                    <IconButton
-                        aria-label="Magazine View"
-                        icon={<FiBook />}  
-                        onClick={() => router.push('/magazine')}
-                        ml={4}
-                    />
+                    <Tooltip label="Grid View" hasArrow>
+                        <IconButton
+                            aria-label="Grid View"
+                            icon={<FaTh />} 
+                            onClick={() => {
+                                if (isMagazinePage) {
+                                    router.push('/blog?view=grid');
+                                } else {
+                                    setViewMode('grid');
+                                }
+                            }}
+                            isActive={viewMode === 'grid'}
+                            variant={viewMode === 'grid' ? 'solid' : 'outline'}
+                            colorScheme={viewMode === 'grid' ? 'teal' : 'gray'}
+                            boxShadow={viewMode === 'grid' ? '0 0 0 2px #319795' : undefined}
+                            mr={2}
+                        />
+                    </Tooltip>
+                    <Tooltip label="List View" hasArrow>
+                        <IconButton
+                            aria-label="List View"
+                            icon={<FaBars />}  
+                            onClick={() => {
+                                if (isMagazinePage) {
+                                    router.push('/blog?view=list');
+                                } else {
+                                    setViewMode('list');
+                                }
+                            }}
+                            isActive={viewMode === 'list'}
+                            variant={viewMode === 'list' ? 'solid' : 'outline'}
+                            colorScheme={viewMode === 'list' ? 'teal' : 'gray'}
+                            boxShadow={viewMode === 'list' ? '0 0 0 2px #319795' : undefined}
+                            mr={2}
+                        />
+                    </Tooltip>
+                    <Tooltip label="Magazine View" hasArrow>
+                        <IconButton
+                            aria-label="Magazine View"
+                            icon={<FiBook />}  
+                            onClick={() => router.push('/magazine')}
+                            isActive={viewMode === 'magazine'}
+                            variant={viewMode === 'magazine' ? 'solid' : 'outline'}
+                            colorScheme={viewMode === 'magazine' ? 'teal' : 'gray'}
+                            boxShadow={viewMode === 'magazine' ? '0 0 0 2px #319795' : undefined}
+                        />
+                    </Tooltip>
                 </Flex>
                 <Menu>
                     <MenuButton
