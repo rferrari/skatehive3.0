@@ -61,7 +61,8 @@ export default function Sidebar({ newNotificationCount = 0 }) {
     <Box
       as="nav"
       bg="background"
-      p={1}
+      p={0}
+      pt={0}
       w={{ base: "full", md: "17%" }}
       h={"100vh"}
       display={{ base: "none", md: "block" }}
@@ -73,14 +74,14 @@ export default function Sidebar({ newNotificationCount = 0 }) {
       }}
     >
       <Flex direction="column" justify="space-between" height="100%">
-        <VStack spacing={4} align="start" ml={4}>
+        <Box ml={4} mt={2} mb={4}>
           <svg
             className="chakra-image css-27hv66"
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 648 648"
             width="80%"
             height="auto"
-            style={{ display: 'block', marginTop: '0.25rem' }}
+            style={{ marginTop: 0 }}
           >
             <defs>
               <style>{`
@@ -150,6 +151,8 @@ export default function Sidebar({ newNotificationCount = 0 }) {
               <polygon className="cls-5" points="309.28 88.36 294.54 88.36 294.54 103.09 309.28 103.09 324 103.09 338.72 103.09 338.72 88.36 324 88.36 309.28 88.36"/>
             </g>
           </svg>
+        </Box>
+        <VStack spacing={2} align="start" ml={4}>
           <Button
             onClick={() => handleNavigation("/")}
             variant="ghost"
