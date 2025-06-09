@@ -41,8 +41,22 @@ const MatrixOverlay: React.FC<{ coverMode?: boolean }> = ({ coverMode = false })
         animationFrameId = requestAnimationFrame(draw);
         return;
       }
-      // Restore a black background fill with low opacity so old characters fade out
-      ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
+      // Use theme background color with alpha for fade effect
+      let bgColor = getComputedStyle(document.body).getPropertyValue('--chakra-colors-background').trim();
+      // Convert hex to rgba with alpha if possible, else fallback
+      function hexToRgba(hex: string, alpha: number) {
+        hex = hex.replace('#', '');
+        if (hex.length === 3) {
+          hex = hex.split('').map((x: string) => x + x).join('');
+        }
+        if (hex.length !== 6) return `rgba(0,0,0,${alpha})`;
+        const r = parseInt(hex.substring(0,2), 16);
+        const g = parseInt(hex.substring(2,4), 16);
+        const b = parseInt(hex.substring(4,6), 16);
+        return `rgba(${r},${g},${b},${alpha})`;
+      }
+      let fadeStyle = bgColor.startsWith('#') ? hexToRgba(bgColor, 0.1) : (bgColor ? bgColor : 'rgba(0,0,0,0.1)');
+      ctx.fillStyle = fadeStyle;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.font = fontSize + "px monospace";
       // Use theme primary color for matrix text
