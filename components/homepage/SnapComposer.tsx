@@ -433,22 +433,6 @@ export default function SnapComposer({
       {!user && (
         <>
           <MatrixOverlay />
-          <Box
-            position="absolute"
-            top={0}
-            left={0}
-            w="100%"
-            h="100%"
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            zIndex={21}
-            pointerEvents="all"
-          >
-            <span style={{ color: "#00FF41", fontWeight: "bold", fontSize: 24, textShadow: "0 0 8px #00FF41" }}>
-              Please log in to post something
-            </span>
-          </Box>
         </>
       )}
     </Box>

@@ -45,7 +45,9 @@ const MatrixOverlay: React.FC<{ coverMode?: boolean }> = ({ coverMode = false })
       ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.font = fontSize + "px monospace";
-      ctx.fillStyle = "#00FF41"; // Full opacity green
+      // Use theme primary color for matrix text
+      let matrixColor = getComputedStyle(document.body).getPropertyValue('--chakra-colors-primary').trim() || '#00FF41';
+      ctx.fillStyle = matrixColor;
       for (let i = 0; i < drops.length; i++) {
         const text = letters[Math.floor(Math.random() * letters.length)];
         ctx.fillText(text, i * fontSize, drops[i] * fontSize);

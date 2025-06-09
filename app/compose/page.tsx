@@ -356,11 +356,6 @@ export default function Composer() {
             <>
               <Box position="absolute" top={0} left={0} w="100%" h="100%" zIndex={21} pointerEvents="all" display="flex" alignItems="center" justifyContent="center">
                 <MatrixOverlay />
-                <Box position="absolute" top={0} left={0} w="100%" h="100%" display="flex" alignItems="center" justifyContent="center" zIndex={22} pointerEvents="all">
-                  <span style={{ color: "#00FF41", fontWeight: "bold", fontSize: 20, textShadow: "0 0 8px #00FF41", textAlign: 'center' }}>
-                    Please log in to upload media
-                  </span>
-                </Box>
               </Box>
             </>
           )}

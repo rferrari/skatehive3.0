@@ -172,8 +172,8 @@ export default function SpotSnapComposer({ onNewComment, onClose }: SpotSnapComp
             isDisabled={isLoading}
             onClick={() => imageCompressorRef.current?.trigger()}
             border="2px solid transparent"
-            _hover={{ borderColor: "var(--chakra-colors-tb1, #00FF00)" }}
-            _active={{ borderColor: "var(--chakra-colors-tb1, #00FF00)" }}
+            _hover={{ borderColor: "primary", boxShadow: "0 0 0 2px var(--chakra-colors-primary)" }}
+            _active={{ borderColor: "accent" }}
           >
             Upload Image
           </Button>
@@ -240,22 +240,6 @@ export default function SpotSnapComposer({ onNewComment, onClose }: SpotSnapComp
       {!user && (
         <>
           <MatrixOverlay />
-          <Box
-            position="absolute"
-            top={0}
-            left={0}
-            w="100%"
-            h="100%"
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            zIndex={21}
-            pointerEvents="all"
-          >
-            <span style={{ color: "#00FF41", fontWeight: "bold", fontSize: 24, textShadow: "0 0 8px #00FF41" }}>
-              Please log in to post a spot
-            </span>
-          </Box>
         </>
       )}
     </Box>

@@ -55,13 +55,13 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
               <thead>
                 <tr
                   style={{
-                    background: "var(--chakra-colors-green-900, #234e36)",
+                    background: "var(--chakra-colors-accent)",
                   }}
                 >
-                  <th align="left" style={{ padding: 8, color: "#68d391" }}>
+                  <th align="left" style={{ padding: 8, color: "var(--chakra-colors-background)" }}>
                     Category
                   </th>
-                  <th align="left" style={{ padding: 8, color: "#68d391" }}>
+                  <th align="left" style={{ padding: 8, color: "var(--chakra-colors-background)" }}>
                     Points
                   </th>
                 </tr>
@@ -119,8 +119,8 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
               🧮 Total Points Formula
             </Text>
             <Box
-              bg="green.900"
-              color="green.200"
+              bg="primary"
+              color="primary"
               borderRadius="md"
               p={3}
               fontSize="sm"
@@ -145,7 +145,7 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
               style={{
                 marginLeft: 18,
                 marginBottom: 16,
-                color: "var(--chakra-colors-primary, #718096)",
+                color: "var(--chakra-colors-text)",
                 fontSize: "0.95em",
               }}
             >
@@ -156,7 +156,7 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
           </Box>
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="green" mr={3} onClick={onClose}>
+          <Button colorScheme="primary" mr={3} onClick={onClose}>
             Close
           </Button>
         </ModalFooter>

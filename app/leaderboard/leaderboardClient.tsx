@@ -103,7 +103,7 @@ export default function LeaderboardClient({ skatersData }: Props) {
     if (rank === 2) return <Text fontSize="2xl">🥈</Text>;
     if (rank === 3) return <Text fontSize="2xl">🥉</Text>;
     return (
-      <Badge colorScheme="green" fontSize="lg" fontWeight="bold" px={2}>
+      <Badge colorScheme="primary" fontSize="lg" fontWeight="bold" px={2}>
         #{rank}
       </Badge>
     );
@@ -133,44 +133,44 @@ export default function LeaderboardClient({ skatersData }: Props) {
   const statColumns = [
     {
       label: "🏆 Points",
-      color: "yellow.300",
+      color: "accent",
       value: (skater: SkaterData) => skater.points,
     },
     {
       label: "⚡ Power",
-      color: "green.200",
+      color: "primary",
       value: (skater: SkaterData) =>
         formatNumber(skater.hp_balance + skater.max_voting_power_usd),
     },
     {
       label: "Posts",
-      color: "blue.200",
+      color: "primary",
       value: (skater: SkaterData) => skater.post_count,
     },
     {
       label: "NFTs",
-      color: "purple.200",
+      color: "primary",
       value: (skater: SkaterData) => skater.skatehive_nft_balance,
     },
     {
       label: "Gnars",
-      color: "orange.200",
+      color: "primary",
       value: (skater: SkaterData) => skater.gnars_votes,
     },
     {
       label: "HBD",
-      color: "red.200",
+      color: "primary",
       value: (skater: SkaterData) =>
         formatNumber(skater.hbd_balance + skater.hbd_savings_balance),
     },
     {
       label: "Hive",
-      color: "cyan.200",
+      color: "primary",
       value: (skater: SkaterData) => formatNumber(skater.hive_balance),
     },
     {
       label: "ETH",
-      color: "pink.200",
+      color: "primary",
       value: (skater: SkaterData) =>
         skater.eth_address
           ? skater.eth_address.slice(0, 6) +
@@ -180,23 +180,23 @@ export default function LeaderboardClient({ skatersData }: Props) {
     },
     {
       label: "Gnars Bal",
-      color: "teal.200",
+      color: "primary",
       value: (skater: SkaterData) => skater.gnars_balance,
     },
     {
       label: "Donations ($)",
-      color: "red.300",
+      color: "primary",
       value: (skater: SkaterData) => formatNumber(skater.giveth_donations_usd),
     },
     {
       label: "Witness",
-      color: "green.400",
+      color: "primary",
       value: (skater: SkaterData) =>
         skater.has_voted_in_witness ? "✅" : "❌",
     },
     {
       label: "Last Updated",
-      color: "gray.300",
+      color: "primary",
       value: (skater: SkaterData) => getTimeSince(skater.last_updated),
     },
   ];
@@ -209,7 +209,7 @@ export default function LeaderboardClient({ skatersData }: Props) {
           onClose={() => setIsRulesOpen(false)}
         />
       )}
-      <Box minH="100vh" bg={"background"} color="green.300" fontFamily="mono">
+      <Box minH="100vh" bg={"background"} color="primary" fontFamily="mono">
         {/* Header */}
         <Box
           px={{ base: 2, md: 8 }}
@@ -224,28 +224,28 @@ export default function LeaderboardClient({ skatersData }: Props) {
               aria-label="Back"
               icon={<ArrowBackIcon />}
               variant="ghost"
-              colorScheme="green"
+              colorScheme="primary"
               fontSize="2xl"
-              _hover={{ color: "green.200", bg: "green.900" }}
+              _hover={{ color: "primary", bg: "background" }}
             />
             <Text
               fontSize={{ base: "2xl", md: "3xl" }}
               fontWeight="bold"
-              color="green.200"
+              color="primary"
               letterSpacing="wider"
             >
               Skatehive Leaderboard
             </Text>
           </Flex>
           <Flex justify="center" mb={8}>
-            <Text color="green.200" fontSize="xl" textAlign="center">
+            <Text color="primary" fontSize="xl" textAlign="center">
               We are {skatersData.length} skaters supporting ourselves. 🛹
             </Text>
           </Flex>
           {/* Sort Options */}
           <Flex justify="space-between" mb={6}>
             <Box minW="220px">
-              <Text color="green.200" fontSize="sm" mb={1} fontWeight="bold">
+              <Text color="primary" fontSize="sm" mb={1} fontWeight="bold">
                 Sort by:
               </Text>
               <select
@@ -255,9 +255,9 @@ export default function LeaderboardClient({ skatersData }: Props) {
                   width: "100%",
                   padding: "8px",
                   borderRadius: "8px",
-                  background: "#101d16",
-                  color: "#68d391",
-                  border: "1px solid #234e36",
+                  background: "var(--chakra-colors-background)",
+                  color: "var(--chakra-colors-primary)",
+                  border: "1px solid var(--chakra-colors-border)",
                   fontFamily: "inherit",
                   fontWeight: "bold",
                   appearance: "none",
@@ -285,9 +285,9 @@ export default function LeaderboardClient({ skatersData }: Props) {
                 minWidth: "120px",
                 padding: "8px",
                 borderRadius: "8px",
-                background: "#101d16",
-                color: "#68d391",
-                border: "1px solid #234e36",
+                background: "var(--chakra-colors-background)",
+                color: "var(--chakra-colors-primary)",
+                border: "1px solid var(--chakra-colors-border)",
                 fontFamily: "inherit",
                 fontWeight: "bold",
                 fontSize: "1rem",
@@ -305,7 +305,7 @@ export default function LeaderboardClient({ skatersData }: Props) {
           overflowX="auto"
           borderRadius="xl"
           borderWidth={1}
-          borderColor="green.800"
+          borderColor="border"
           bg={"background"}
           py={2}
           // Remove maxW and mx to allow full width stretch
@@ -326,7 +326,7 @@ export default function LeaderboardClient({ skatersData }: Props) {
                 alignItems="center"
                 fontWeight="bold"
                 fontSize="md"
-                color="green.200"
+                color="primary"
               >
                 Skater
               </Box>
@@ -380,7 +380,7 @@ export default function LeaderboardClient({ skatersData }: Props) {
                     />
                     <Box minW={0}>
                       <Text
-                        color="green.200"
+                        color="primary"
                         fontWeight="bold"
                         fontSize="md"
                         isTruncated
@@ -388,7 +388,7 @@ export default function LeaderboardClient({ skatersData }: Props) {
                       >
                         {skater.hive_author}
                       </Text>
-                      <Text color="gray.400" fontSize="xs">
+                      <Text color="text" fontSize="xs">
                         Last post: {getTimeSince(skater.last_post)}
                       </Text>
                     </Box>
