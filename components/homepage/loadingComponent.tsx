@@ -103,7 +103,7 @@ const LoadingComponent = () => {
           left: 0,
           right: 0,
           bottom: 0,
-          background: "radial-gradient(circle, rgba(0,255,0,0.07) 0%, rgba(0,255,0,0) 80%)",
+          background: `radial-gradient(circle, var(--chakra-colors-primary, #00FF00) 0% 7%, transparent 80%)`,
           zIndex: 0,
         }}
       >
@@ -125,10 +125,10 @@ const LoadingComponent = () => {
               whiteSpace="pre"
               style={{
                 animation: `matrixFall ${duration}s linear ${delay}s infinite`,
-                background: "linear-gradient(to bottom, #00FF00 0%, #00FFFF 50%, #FF00FF 100%)",
+                background: `linear-gradient(to bottom, var(--chakra-colors-primary, #00FF00) 0%, var(--chakra-colors-secondary, #00FFFF) 50%, var(--chakra-colors-accent, #FF00FF) 100%)`,
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
-                filter: "drop-shadow(0 0 5px rgba(0, 255, 0, 0.5))",
+                filter: `drop-shadow(0 0 5px var(--chakra-colors-primary, #00FF00))`,
               }}
             >
               {columnText}
@@ -143,7 +143,7 @@ const LoadingComponent = () => {
           fontFamily="Joystix"
           p={4}
           borderRadius="md"
-          color="#00FF00"
+          color="primary"
           opacity={messageVisible ? 1 : 0}
           transition="opacity 0.4s"
           _before={{
@@ -154,7 +154,7 @@ const LoadingComponent = () => {
             transform: "translate(-50%, -50%)",
             width: "100%",
             height: "100%",
-            background: "linear-gradient(to right, #00FF00, #00FFFF)",
+            background: `linear-gradient(to right, var(--chakra-colors-primary, #00FF00), var(--chakra-colors-secondary, #00FFFF))`,
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
             animation: "ghost-glitch 1.5s infinite, ghost-flicker 1.1s infinite, ghost-stretch 2.5s infinite",
