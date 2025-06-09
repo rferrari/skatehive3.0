@@ -5,9 +5,13 @@ import Sidebar from "@/components/layout/Sidebar";
 import FooterNavigation from "@/components/layout/FooterNavigation";
 import SplashScreen from "@/components/layout/SplashScreen";
 import { Providers } from "./providers";
-import { fetchNewNotifications, getLastReadNotificationDate } from "@/lib/hive/client-functions";
+import {
+  fetchNewNotifications,
+  getLastReadNotificationDate,
+} from "@/lib/hive/client-functions";
 import { useAioha } from "@aioha/react-ui";
 import { Notifications } from "@hiveio/dhive";
+import { Analytics } from "@vercel/analytics/next";
 
 export default function RootLayoutClient({
   children,
@@ -24,9 +28,12 @@ export default function RootLayoutClient({
   if (loading) return <SplashScreen onFinish={() => setLoading(false)} />;
 
   return (
-    <Providers>
-      <InnerLayout>{children}</InnerLayout>
-    </Providers>
+    <>
+      <Analytics />
+      <Providers>
+        <InnerLayout>{children}</InnerLayout>
+      </Providers>
+    </>
   );
 }
 
@@ -48,7 +55,9 @@ function InnerLayout({ children }: { children: React.ReactNode }) {
   }, [user]);
 
   const newNotificationCount = notifications.filter(
-    n => new Date((n.date.endsWith("Z") ? n.date : n.date + "Z")) > new Date(lastReadDate)
+    (n) =>
+      new Date(n.date.endsWith("Z") ? n.date : n.date + "Z") >
+      new Date(lastReadDate)
   ).length;
 
   const isMobile = useBreakpointValue({ base: true, md: false });
@@ -60,7 +69,9 @@ function InnerLayout({ children }: { children: React.ReactNode }) {
           {children}
         </Box>
       </Flex>
-      {isMobile && <FooterNavigation newNotificationCount={newNotificationCount} />}
+      {isMobile && (
+        <FooterNavigation newNotificationCount={newNotificationCount} />
+      )}
     </Container>
   );
 }
