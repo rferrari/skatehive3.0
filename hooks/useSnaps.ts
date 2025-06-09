@@ -111,7 +111,7 @@ export const useSnaps = () => {
       total_vote_weight: apiData.total_vote_weight,
       title: '',
       abs_rshares: '',
-      children: 0,
+      children: apiData.children.length,
       reblogged_by: [],
       replies: [],
       vote_rshares: '',
@@ -148,7 +148,8 @@ export const useSnaps = () => {
     const tag = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || '';
     const limit = 10;
     const apiUrl = `https://api.skatehive.app/api/v1/feed?limit=${limit}&page=${currentPage}`;
-    console.log(apiUrl)
+    // const apiUrl = `http://localhost:3001/api/v1/feed?limit=${limit}&page=${currentPage}`;
+    // console.log(apiUrl)
 
     const response = await fetch(apiUrl);
     if (!response.ok) {
@@ -169,7 +170,7 @@ export const useSnaps = () => {
       setIsLoading(true);
       try {
         const newSnaps = await fetchFromNewApi();
-
+        // console.dir(newSnaps)
         if (newSnaps.length < pageMinSize) {
           setHasMore(false); // No more items to fetch
         }
