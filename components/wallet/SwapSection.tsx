@@ -15,7 +15,7 @@ export default function SwapSection({ onModalOpen }: SwapSectionProps) {
 
   return (
     <Box p={4} borderRadius="md" bg="muted" width="100%">
-      <Text fontWeight="bold" fontSize="xl" mb={2} color="lime">
+      <Text fontWeight="bold" fontSize="xl" mb={2} color="primary">
         Swap
       </Text>
       <Text fontSize="sm" mb={3}>

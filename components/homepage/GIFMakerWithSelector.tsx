@@ -33,6 +33,12 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
     // Ref to track if user is seeking
     const isSeekingRef = useRef(false);
 
+    // Replace hardcoded background and color values with theme variables
+    const backgroundDefault = 'var(--chakra-colors-background, #fff)';
+    const backgroundProcessing = 'var(--chakra-colors-muted, #ccc)';
+    const backgroundAccent = 'var(--chakra-colors-primary, #0070f3)';
+    const colorDefault = 'var(--chakra-colors-text, #222)';
+
     useImperativeHandle(ref, () => ({
       trigger: () => {
         if (inputRef.current && !isProcessing) {
@@ -241,7 +247,7 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
     }, [startTime, endTime]);
 
     return (
-      <div style={{ maxWidth: 400, margin: "0 auto", padding: 24, background: "#fff", borderRadius: 12, boxShadow: "0 2px 12px rgba(0,0,0,0.08)", textAlign: "center" }}>
+      <div style={{ maxWidth: 400, margin: "0 auto", padding: 24, background: backgroundDefault, borderRadius: 12, boxShadow: "0 2px 12px rgba(0,0,0,0.08)", textAlign: "center" }}>
         <input
           type="file"
           accept="video/*"
@@ -266,7 +272,7 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
                   padding: "6px 16px",
                   fontSize: 15,
                   borderRadius: 6,
-                  background: isProcessing ? "#ccc" : "#0070f3",
+                  background: isProcessing ? backgroundProcessing : backgroundAccent,
                   color: "#fff",
                   border: "none",
                   cursor: isProcessing ? "not-allowed" : "pointer",
@@ -281,7 +287,7 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
                   padding: "6px 16px",
                   fontSize: 15,
                   borderRadius: 6,
-                  background: isProcessing ? "#ccc" : "#222",
+                  background: isProcessing ? backgroundProcessing : colorDefault,
                   color: "#fff",
                   border: "none",
                   cursor: isProcessing ? "not-allowed" : "pointer",
@@ -308,7 +314,7 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
                 const est = parseFloat(estimateGifSizeMB(endTime - startTime));
                 return (
                   <div style={{ marginTop: 4, fontSize: 13, fontWeight: 500 }}>
-                    Estimated GIF size: <span style={{ background: getEstimateColor(est), color: '#222', borderRadius: 6, padding: '2px 8px', marginLeft: 4 }}>{est} MB</span>
+                    Estimated GIF size: <span style={{ background: getEstimateColor(est), color: colorDefault, borderRadius: 6, padding: '2px 8px', marginLeft: 4 }}>{est} MB</span>
                   </div>
                 );
               })()
@@ -320,7 +326,7 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
                 padding: "10px 24px",
                 fontSize: 16,
                 borderRadius: 6,
-                background: isProcessing || !canConvert ? "#ccc" : "#222",
+                background: isProcessing || !canConvert ? backgroundProcessing : colorDefault,
                 color: "#fff",
                 border: "none",
                 cursor: isProcessing || !canConvert ? "not-allowed" : "pointer",
@@ -337,7 +343,7 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
           </div>
         )}
         {status && (
-          <div style={{ marginTop: 8, color: status.startsWith("Error") ? "red" : "#333" }}>{status}</div>
+          <div style={{ marginTop: 8, color: status.startsWith("Error") ? "red" : colorDefault }}>{status}</div>
         )}
       </div>
     );

@@ -50,11 +50,11 @@ export default function HivePowerSection({
                 px={2}
                 py={1}
                 fontSize="sm"
-                bg="teal.500"
-                color="white"
+                bg="primary"
+                color="background"
                 borderRadius="md"
                 fontWeight="bold"
-                _hover={{ bg: "teal.600" }}
+                _hover={{ bg: "accent" }}
                 onClick={() =>
                   onModalOpen(
                     "Power Down",
@@ -66,7 +66,7 @@ export default function HivePowerSection({
                   as={FaArrowDown}
                   boxSize={4}
                   mr={1}
-                  color={theme.colors.primary}
+                  color={theme.colors.background}
                 />
               </Box>
             </Tooltip>

@@ -105,11 +105,11 @@ export default function NotificationsComp({ username }: NotificationCompProps) {
       {isLoading ? (
         <Stack spacing={4} w="full">
           {[...Array(5)].map((_, i) => (
-            <Box key={i} p={3} borderRadius="base" bg="muted" w="full" minH="80px" display="flex" alignItems="center">
-              <SkeletonCircle size="8" mr={4} />
+            <Box key={i} p={3} borderRadius="base" bg="primary" w="full" minH="80px" display="flex" alignItems="center">
+              <SkeletonCircle size="8" mr={4} startColor="muted" endColor="primary" />
               <Box flex="1">
-                <Skeleton height="16px" width="40%" mb={2} />
-                <SkeletonText noOfLines={2} spacing={2} width="80%" />
+                <Skeleton height="16px" width="40%" mb={2} startColor="muted" endColor="primary" />
+                <SkeletonText noOfLines={2} spacing={2} width="80%" startColor="muted" endColor="primary" />
               </Box>
             </Box>
           ))}

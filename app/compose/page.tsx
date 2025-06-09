@@ -371,7 +371,7 @@ export default function Composer() {
               size="lg"
               borderRadius="full"
               p={2}
-              _hover={{ color: "blue.400", bg: "transparent" }}
+              _hover={{ color: "primary", bg: "muted" }}
               style={{
                 height: 64,
                 width: 64,
@@ -381,7 +381,7 @@ export default function Composer() {
               }}
               onClick={handleImageTrigger}
             >
-              <FaImage color="primary" size={48} />
+              <FaImage color="var(--chakra-colors-primary)" size={48} />
             </Button>
           </Tooltip>
           <Tooltip label="Upload Video" placement="bottom">
@@ -390,7 +390,7 @@ export default function Composer() {
               size="lg"
               borderRadius="full"
               p={2}
-              _hover={{ color: "blue.400", bg: "transparent" }}
+              _hover={{ color: "primary", bg: "muted" }}
               style={{
                 height: 64,
                 width: 64,
@@ -400,7 +400,7 @@ export default function Composer() {
               }}
               onClick={handleVideoTrigger}
             >
-              <FaVideo color="primary" size={48} />
+              <FaVideo color="var(--chakra-colors-primary)" size={48} />
             </Button>
           </Tooltip>
           <Tooltip label="Upload GIF or WEBP (max 5MB)" placement="bottom">
@@ -409,7 +409,7 @@ export default function Composer() {
               size="lg"
               borderRadius="full"
               p={2}
-              _hover={{ color: "blue.400", bg: "transparent" }}
+              _hover={{ color: "primary", bg: "muted" }}
               style={{
                 height: 64,
                 width: 64,
@@ -420,7 +420,7 @@ export default function Composer() {
               onClick={() => gifWebpInputRef.current?.click()}
               isDisabled={isUploading}
             >
-              <MdGif color="primary" size={48} />
+              <MdGif color="var(--chakra-colors-primary)" size={48} />
               <input
                 type="file"
                 accept=".gif,.webp"
@@ -436,7 +436,7 @@ export default function Composer() {
               size="lg"
               borderRadius="full"
               p={2}
-              _hover={{ color: "blue.400", bg: "transparent" }}
+              _hover={{ color: "primary", bg: "muted" }}
               style={{
                 height: 64,
                 width: 64,
@@ -446,7 +446,7 @@ export default function Composer() {
               }}
               onClick={() => setGifModalOpen(true)}
             >
-              <MdMovieCreation color="primary" size={48} />
+              <MdMovieCreation color="var(--chakra-colors-primary)" size={48} />
             </Button>
           </Tooltip>
         </Flex>
@@ -468,7 +468,7 @@ export default function Composer() {
       <Flex
         flex="1"
         border="1px solid"
-        borderColor="black"
+        borderColor="primary"
         borderRadius="base"
         justify="center"
         overflow="hidden"
@@ -480,18 +480,18 @@ export default function Composer() {
             onChange={(value) => setMarkdown(value || "")}
             height="100%"
             style={{
-              border: "2px solid limegreen",
+              border: "2px solid var(--chakra-colors-primary, limegreen)",
               padding: "10px",
-              backgroundColor: "background",
-              color: "white",
+              backgroundColor: "var(--chakra-colors-background)",
+              color: "var(--chakra-colors-text, white)",
               width: "100%",
             }}
             extraCommands={extraCommands}
             previewOptions={{
               components: memoizedComponents,
               style: {
-                backgroundColor: "background",
-                color: "white",
+                backgroundColor: "var(--chakra-colors-background)",
+                color: "var(--chakra-colors-text, white)",
               },
             }}
             commands={[

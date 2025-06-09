@@ -40,6 +40,9 @@ function useMagazinePosts(query: string, tag: { tag: string; limit: number }[]) 
   return { posts, error, isLoading };
 }
 
+const magazineGrayGradient = 'linear-gradient(135deg, var(--chakra-colors-background, rgb(8, 8, 8)) 80%, var(--chakra-colors-muted, rgb(51, 54, 57)) 100%)';
+const magazineAccentGradient = 'linear-gradient(135deg, var(--chakra-colors-primary, #b31217) 60%, var(--chakra-colors-accent, #e52d27) 100%)';
+
 const backgroundGradient = {
   minHeight: '100%',
   width: '100%',

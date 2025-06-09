@@ -284,6 +284,11 @@ export default function NotificationItem({
     }
   };
 
+  // Replace hardcoded gradient and box-shadow with theme variables
+  const notificationPulseGradient = 'linear-gradient(180deg, var(--chakra-colors-primary, #39ff14) 0%, var(--chakra-colors-accent, #00ff99) 100%)';
+  const notificationBoxShadowAccent = '0 0 8px 2px var(--chakra-colors-primary, #39ff14)';
+  const notificationBoxShadowAccent16 = '0 0 16px 4px var(--chakra-colors-primary, #39ff14)';
+
   return (
     <div ref={containerRef}>
       <HStack
@@ -310,8 +315,8 @@ export default function NotificationItem({
                 top: 0,
                 bottom: 0,
                 width: "6px",
-                background: "linear-gradient(180deg, #39ff14 0%, #00ff99 100%)",
-                boxShadow: "0 0 8px 2px #39ff14",
+                background: notificationPulseGradient,
+                boxShadow: notificationBoxShadowAccent,
                 animation: "pulseGlowLeft 1.5s infinite",
               }
             : {}
@@ -319,9 +324,9 @@ export default function NotificationItem({
       >
         <style>{`
           @keyframes pulseGlowLeft {
-            0% { box-shadow: 0 0 8px 2px #39ff14; }
-            50% { box-shadow: 0 0 16px 4px #39ff14; }
-            100% { box-shadow: 0 0 8px 2px #39ff14; }
+            0% { box-shadow: ${notificationBoxShadowAccent}; }
+            50% { box-shadow: ${notificationBoxShadowAccent16}; }
+            100% { box-shadow: ${notificationBoxShadowAccent}; }
           }
         `}</style>
         <Box flex="1">
@@ -550,8 +555,8 @@ export default function NotificationItem({
                 <VStack align="start" spacing={2} w="100%">
                   {isLoading ? (
                     <>
-                      <Skeleton height="20px" width="100%" />
-                      <Skeleton height="20px" width="100%" />
+                      <Skeleton height="20px" width="100%" startColor="muted" endColor="primary" />
+                      <Skeleton height="20px" width="100%" startColor="muted" endColor="primary" />
                     </>
                   ) : (
                     <>

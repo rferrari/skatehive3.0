@@ -382,20 +382,20 @@ export default Snap;
 <style jsx global>{`
   .pulse-green {
     animation: pulse-green 1.5s infinite;
-    background: linear-gradient(90deg, #38ff8e 0%, #00e676 100%);
-    color: black;
+    background: var(--chakra-colors-primary, #38ff8e);
+    color: var(--chakra-colors-background, black);
     font-weight: bold;
     border: none;
   }
   @keyframes pulse-green {
     0% {
-      box-shadow: 0 0 0 0 rgba(72, 255, 128, 0.7);
+      box-shadow: 0 0 0 0 var(--chakra-colors-accent, rgba(72, 255, 128, 0.7));
     }
     70% {
-      box-shadow: 0 0 0 10px rgba(72, 255, 128, 0);
+      box-shadow: 0 0 0 10px var(--chakra-colors-accent, rgba(72, 255, 128, 0));
     }
     100% {
-      box-shadow: 0 0 0 0 rgba(72, 255, 128, 0);
+      box-shadow: 0 0 0 0 var(--chakra-colors-accent, rgba(72, 255, 128, 0));
     }
   }
 `}</style>

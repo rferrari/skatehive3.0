@@ -218,7 +218,7 @@ export default function PostCard({
                 as={LuArrowUpRight}
                 onClick={handleHeartClick}
                 cursor="pointer"
-                color={voted ? "#00b894" : undefined}
+                color={voted ? "primary" : undefined}
                 boxSize={5}
               />
               <Text ml={1} fontSize="sm">
@@ -270,6 +270,10 @@ export default function PostCard({
     );
   }
 
+  const postCardPulseGradient = 'linear-gradient(90deg, var(--chakra-colors-primary, #38ff8e) 0%, var(--chakra-colors-accent, #00e676) 100%)';
+  const postCardBoxShadowAccent = '0 0 0 0 var(--chakra-colors-accent, rgba(72, 255, 128, 0.7))';
+  const postCardBoxShadowAccent10 = '0 0 0 10px var(--chakra-colors-accent, rgba(72, 255, 128, 0))';
+
   return (
     <>
       <style jsx global>{`
@@ -300,20 +304,20 @@ export default function PostCard({
 
         .pulse-green {
           animation: pulse-green 1.5s infinite;
-          background: linear-gradient(90deg, #38ff8e 0%, #00e676 100%);
+          background: ${postCardPulseGradient};
           color: black;
           font-weight: bold;
           border: none;
         }
         @keyframes pulse-green {
           0% {
-            box-shadow: 0 0 0 0 rgba(72, 255, 128, 0.7);
+            box-shadow: ${postCardBoxShadowAccent};
           }
           70% {
-            box-shadow: 0 0 0 10px rgba(72, 255, 128, 0);
+            box-shadow: ${postCardBoxShadowAccent10};
           }
           100% {
-            box-shadow: 0 0 0 0 rgba(72, 255, 128, 0);
+            box-shadow: ${postCardBoxShadowAccent};
           }
         }
       `}</style>
@@ -547,7 +551,7 @@ export default function PostCard({
                       handleHeartClick();
                     }}
                     cursor="pointer"
-                    color={voted ? "#00b894" : undefined}
+                    color={voted ? "primary" : undefined}
                     boxSize={6}
                   />
                   <Text ml={2} fontSize="sm">

@@ -45,8 +45,8 @@ export default function TopBar({ viewMode, setViewMode, setQuery }: TopBarProps)
                             }}
                             isActive={viewMode === 'grid'}
                             variant={viewMode === 'grid' ? 'solid' : 'outline'}
-                            colorScheme={viewMode === 'grid' ? 'teal' : 'gray'}
-                            boxShadow={viewMode === 'grid' ? '0 0 0 2px #319795' : undefined}
+                            colorScheme={viewMode === 'grid' ? 'primary' : 'muted'}
+                            boxShadow={viewMode === 'grid' ? '0 0 0 2px var(--chakra-colors-primary, #319795)' : undefined}
                             mr={2}
                         />
                     </Tooltip>
@@ -63,8 +63,8 @@ export default function TopBar({ viewMode, setViewMode, setQuery }: TopBarProps)
                             }}
                             isActive={viewMode === 'list'}
                             variant={viewMode === 'list' ? 'solid' : 'outline'}
-                            colorScheme={viewMode === 'list' ? 'teal' : 'gray'}
-                            boxShadow={viewMode === 'list' ? '0 0 0 2px #319795' : undefined}
+                            colorScheme={viewMode === 'list' ? 'primary' : 'muted'}
+                            boxShadow={viewMode === 'list' ? '0 0 0 2px var(--chakra-colors-primary, #319795)' : undefined}
                             mr={2}
                         />
                     </Tooltip>
@@ -75,8 +75,8 @@ export default function TopBar({ viewMode, setViewMode, setQuery }: TopBarProps)
                             onClick={() => router.push('/magazine')}
                             isActive={viewMode === 'magazine'}
                             variant={viewMode === 'magazine' ? 'solid' : 'outline'}
-                            colorScheme={viewMode === 'magazine' ? 'teal' : 'gray'}
-                            boxShadow={viewMode === 'magazine' ? '0 0 0 2px #319795' : undefined}
+                            colorScheme={viewMode === 'magazine' ? 'primary' : 'muted'}
+                            boxShadow={viewMode === 'magazine' ? '0 0 0 2px var(--chakra-colors-primary, #319795)' : undefined}
                         />
                     </Tooltip>
                 </Flex>

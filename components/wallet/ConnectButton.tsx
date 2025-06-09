@@ -43,7 +43,7 @@ export default function ConnectButton({ onOpen }: { onOpen: () => void }) {
             </>
           )}
         </HStack>
-        <Text fontSize="xs" color="muted">
+        <Text fontSize="xs" color="primary">
           Disconnect
         </Text>
       </HStack>

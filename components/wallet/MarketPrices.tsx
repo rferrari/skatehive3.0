@@ -31,7 +31,7 @@ export default function MarketPrices({
         <Text
           fontWeight="extrabold"
           fontSize={{ base: "xl", md: "2xl" }}
-          color="lime"
+          color="primary"
           mr={2}
         >
           Market Prices
@@ -42,11 +42,11 @@ export default function MarketPrices({
             px={2}
             py={1}
             fontSize="sm"
-            bg="teal.500"
-            color="white"
+            bg="primary"
+            color="background"
             borderRadius="md"
             fontWeight="bold"
-            _hover={{ bg: "teal.600" }}
+            _hover={{ bg: "accent" }}
             onClick={() => router.push("https://hivedex.io/")}
             ml={2}
           >
@@ -54,7 +54,7 @@ export default function MarketPrices({
               as={FaStore}
               boxSize={4}
               mr={1}
-              color={theme.colors.primary}
+              color={theme.colors.background}
             />
           </Box>
         </Tooltip>

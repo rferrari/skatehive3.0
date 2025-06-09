@@ -245,10 +245,13 @@ export default function SnapComposer({
                   variant="ghost"
                   isDisabled={isLoading}
                   border="2px solid transparent"
-                  _hover={{ borderColor: "var(--chakra-colors-tb1, #00FF00)" }}
-                  _active={{ borderColor: "var(--chakra-colors-tb1, #00FF00)" }}
+                  borderRadius="full"
+                  p={2}
+                  _hover={{ borderColor: "primary", boxShadow: "0 0 0 2px var(--chakra-colors-primary)" }}
+                  _active={{ borderColor: "accent" }}
+                  style={{ height: 48, width: 48, display: "flex", alignItems: "center", justifyContent: "center" }}
                 >
-                  <FaImage size={22} />
+                  <FaImage color="var(--chakra-colors-primary)" size={22} />
                 </MenuButton>
                 <MenuList bg="background" border="tb1" borderRadius="base">
                   <MenuItem
@@ -297,11 +300,14 @@ export default function SnapComposer({
                 variant="ghost"
                 isDisabled={isLoading}
                 border="2px solid transparent"
-                _hover={{ borderColor: "var(--chakra-colors-tb1, #00FF00)" }}
-                _active={{ borderColor: "var(--chakra-colors-tb1, #00FF00)" }}
+                borderRadius="full"
+                p={2}
+                _hover={{ borderColor: "primary", boxShadow: "0 0 0 2px var(--chakra-colors-primary)" }}
+                _active={{ borderColor: "accent" }}
+                style={{ height: 48, width: 48, display: "flex", alignItems: "center", justifyContent: "center" }}
                 onClick={() => videoUploaderRef.current?.trigger()}
               >
-                <FaVideo size={22} />
+                <FaVideo color="var(--chakra-colors-primary)" size={22} />
               </Button>
             </HStack>
             <Button

@@ -28,7 +28,7 @@ export default function HiveSection({
         spacing={{ base: 2, md: 4 }}
       >
         <HStack align="center" mb={1} spacing={2} width="100%">
-          <CustomHiveIcon color="rgb(233, 66, 95)" style={{ marginTop: 4 }} />
+          <CustomHiveIcon color={theme.colors.primary} style={{ marginTop: 4 }} />
           <Text fontSize={{ base: "lg", md: "2xl" }} fontWeight="bold">
             HIVE
           </Text>
@@ -44,11 +44,11 @@ export default function HiveSection({
               px={2}
               py={1}
               fontSize="sm"
-              bg="teal.500"
-              color="white"
+              bg="primary"
+              color="background"
               borderRadius="md"
               fontWeight="bold"
-              _hover={{ bg: "teal.600" }}
+              _hover={{ bg: "accent" }}
               onClick={() =>
                 onModalOpen(
                   "Send HIVE",
@@ -62,7 +62,7 @@ export default function HiveSection({
                 as={FaPaperPlane}
                 boxSize={4}
                 mr={1}
-                color={theme.colors.primary}
+                color={theme.colors.background}
               />
             </Box>
           </Tooltip>
@@ -72,11 +72,11 @@ export default function HiveSection({
               px={2}
               py={1}
               fontSize="sm"
-              bg="teal.500"
-              color="white"
+              bg="primary"
+              color="background"
               borderRadius="md"
               fontWeight="bold"
-              _hover={{ bg: "teal.600" }}
+              _hover={{ bg: "accent" }}
               onClick={() =>
                 onModalOpen("Power Up", "Power Up your HIVE to HP")
               }
@@ -85,7 +85,7 @@ export default function HiveSection({
                 as={FaArrowUp}
                 boxSize={4}
                 mr={1}
-                color={theme.colors.primary}
+                color={theme.colors.background}
               />
             </Box>
           </Tooltip>

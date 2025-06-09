@@ -19,6 +19,11 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
     const [compressionProgress, setCompressionProgress] = useState<number>(0);
     const [uploadProgress, setUploadProgress] = useState<number>(0);
 
+    // Replace hardcoded background and color values with theme variables
+    const backgroundMuted = 'var(--chakra-colors-muted, #eee)';
+    const backgroundPrimary = 'var(--chakra-colors-primary, #0070f3)';
+    const backgroundAccent = 'var(--chakra-colors-accent, #00b894)';
+
     useImperativeHandle(ref, () => ({
       trigger: () => {
         if (inputRef.current && !isProcessing) {
@@ -144,16 +149,16 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         )}
         {status === "Compressing video..." && (
           <div style={{ marginTop: 8 }}>
-            <div style={{ height: 8, background: '#eee', borderRadius: 4, overflow: 'hidden', width: 200 }}>
-              <div style={{ width: `${compressionProgress}%`, height: '100%', background: '#0070f3', transition: 'width 0.2s' }} />
+            <div style={{ height: 8, background: backgroundMuted, borderRadius: 4, overflow: 'hidden', width: 200 }}>
+              <div style={{ width: `${compressionProgress}%`, height: '100%', background: backgroundPrimary, transition: 'width 0.2s' }} />
             </div>
             <div style={{ fontSize: 12, marginTop: 2 }}>{compressionProgress}%</div>
           </div>
         )}
         {status === "Uploading video..." && (
           <div style={{ marginTop: 8 }}>
-            <div style={{ height: 8, background: '#eee', borderRadius: 4, overflow: 'hidden', width: 200 }}>
-              <div style={{ width: `${uploadProgress}%`, height: '100%', background: '#00b894', transition: 'width 0.2s' }} />
+            <div style={{ height: 8, background: backgroundMuted, borderRadius: 4, overflow: 'hidden', width: 200 }}>
+              <div style={{ width: `${uploadProgress}%`, height: '100%', background: backgroundAccent, transition: 'width 0.2s' }} />
             </div>
             <div style={{ fontSize: 12, marginTop: 2 }}>{uploadProgress}%</div>
           </div>

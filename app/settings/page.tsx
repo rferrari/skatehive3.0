@@ -55,7 +55,7 @@ const Settings = () => {
                     </Select>
                 </Box>
 
-                <Box mt={8} p={4} borderRadius="md" bg="gray.800">
+                <Box mt={8} p={4} borderRadius="md" bg="background">
                     <Heading size="md" mb={2}>Generate Private Keys</Heading>
                     <Text mb={2}>
                         <b>Security Notice:</b> When your account was created, the Skatehive team temporarily stored your private keys in a Gmail account to deliver them to you. <b>This is not secure.</b> It is strongly recommended that you generate new private keys and update your Hive account, then store your new keys in a safe place only you control.
@@ -64,19 +64,21 @@ const Settings = () => {
                         Permanently change your keys and keep them safe. Never share your private keys with anyone.
                     </Text>
                     <Box textAlign="center">
-                        <button style={{
-                            background: '#00FF00',
-                            color: 'black',
-                            fontWeight: 'bold',
-                            border: 'none',
-                            borderRadius: '6px',
-                            padding: '12px 28px',
-                            fontSize: '1.1rem',
-                            cursor: 'pointer',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.12)'
-                        }}>
+                        <Box
+                            as="button"
+                            bg="primary"
+                            color="background"
+                            fontWeight="bold"
+                            border="none"
+                            borderRadius="md"
+                            px={7}
+                            py={3}
+                            fontSize="lg"
+                            cursor="pointer"
+                            boxShadow="md"
+                        >
                             Generate New Keys
-                        </button>
+                        </Box>
                     </Box>
                 </Box>
             </VStack>

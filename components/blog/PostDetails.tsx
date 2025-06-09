@@ -50,6 +50,16 @@ export default function PostDetails({ post }: PostDetailsProps) {
     handleHeartClick();
   }
 
+  const pulseGreenStyle = {
+    background: 'var(--chakra-colors-primary, #38ff8e)',
+    color: 'black',
+    fontWeight: 'bold',
+    border: 'none',
+  };
+  const boxShadowAccent = '0 0 0 0 var(--chakra-colors-accent, rgba(72, 255, 128, 0.7))';
+  const boxShadowAccent10 = '0 0 0 10px var(--chakra-colors-accent, rgba(72, 255, 128, 0))';
+  const detailsGradient = 'linear-gradient(to bottom, var(--chakra-colors-primary, rgb(5, 37, 4)), var(--chakra-colors-secondary, rgb(29, 33, 31)))';
+
   return (
     <Box
       data-component="PostDetails"
@@ -68,7 +78,7 @@ export default function PostDetails({ post }: PostDetailsProps) {
         mb={4}
         flexWrap="nowrap"
         boxShadow="0px 4px 12px rgba(0, 0, 0, 0.2)"
-        bg="linear-gradient(to bottom,rgb(5, 37, 4),rgb(29, 33, 31))"
+        bg={detailsGradient}
         p={4}
       >
         <Flex alignItems="center" flexShrink={0}>
@@ -115,7 +125,7 @@ export default function PostDetails({ post }: PostDetailsProps) {
                 <SliderTrack
                   bg="gray.700"
                   height="8px"
-                  boxShadow="0 0 10px rgba(255, 255, 0, 0.8)"
+                  boxShadow={boxShadowAccent}
                 >
                   <SliderFilledTrack bgGradient="linear(to-r, green.400, limegreen, red.400)" />
                 </SliderTrack>
@@ -197,20 +207,20 @@ export default function PostDetails({ post }: PostDetailsProps) {
 
       <style jsx global>{`        .pulse-green {
           animation: pulse-green 1.5s infinite;
-          background: linear-gradient(90deg, #38ff8e 0%, #00e676 100%);
-          color: black;
-          font-weight: bold;
-          border: none;
+          background: ${pulseGreenStyle.background};
+          color: ${pulseGreenStyle.color};
+          font-weight: ${pulseGreenStyle.fontWeight};
+          border: ${pulseGreenStyle.border};
         }
         @keyframes pulse-green {
           0% {
-            box-shadow: 0 0 0 0 rgba(72, 255, 128, 0.7);
+            box-shadow: ${boxShadowAccent} ${boxShadowAccent10};
           }
           70% {
-            box-shadow: 0 0 0 10px rgba(72, 255, 128, 0);
+            box-shadow: ${boxShadowAccent} ${boxShadowAccent10};
           }
           100% {
-            box-shadow: 0 0 0 0 rgba(72, 255, 128, 0);
+            box-shadow: ${boxShadowAccent} ${boxShadowAccent10};
           }
         }
       `}</style>

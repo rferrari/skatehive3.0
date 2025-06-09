@@ -102,7 +102,7 @@ export default function EmbeddedMap() {
             <Text
               fontSize="20px"
               fontWeight="bold"
-              color="white"
+              color="text"
               mb={2}
               textAlign="center"
               paddingBottom={5}
@@ -113,18 +113,15 @@ export default function EmbeddedMap() {
             </Text>
             <Box textAlign="center" mb={4}>
               <Button
-                style={{
-                  background: "#00FFAA",
-                  color: "#222",
-                  border: "none",
-                  borderRadius: "6px",
-                  padding: "8px 12px",
-                  fontWeight: "bold",
-                  fontSize: "0.95rem",
-                  cursor: "pointer",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
-                  transition: "background 0.2s",
-                }}
+                bg="primary"
+                color="background"
+                borderRadius="md"
+                px={4}
+                py={2}
+                fontWeight="bold"
+                fontSize="md"
+                boxShadow="md"
+                _hover={{ bg: "accent" }}
                 onClick={() => {
                   const el = document.getElementById("spot-name-field");
                   if (el) {
@@ -145,12 +142,12 @@ export default function EmbeddedMap() {
               <iframe
                 src={mapSrc}
                 style={{
-                  border: "5px solid black",
+                  border: "5px solid var(--chakra-colors-primary, black)",
                   width: "100%",
                   height: "100%",
                   padding: 0,
                   margin: "auto",
-                  boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.5)",
+                  boxShadow: "0px 4px 10px var(--chakra-colors-muted, rgba(0, 0, 0, 0.5))",
                   display: "block",
                   aspectRatio: window.innerWidth < 768 ? "3 / 4.8" : "3 / 2.4",
                 }}
@@ -176,18 +173,18 @@ export default function EmbeddedMap() {
               >
                 <Text
                   fontSize={{ base: "md", md: "lg" }}
-                  color="white"
+                  color="text"
                   mb={3}
-                  style={{ textShadow: "8px 8px 24px #000, 0 0 10px #000" }}
+                  style={{ textShadow: "8px 8px 24px var(--chakra-colors-muted, #000), 0 0 10px var(--chakra-colors-muted, #000)" }}
                 >
                   Welcome to the skatehive Spotbook. The{" "}
                   <Box
                     as="span"
-                    color="blue.600"
+                    color="primary"
+                    bg="muted"
+                    px={2}
+                    borderRadius="sm"
                     style={{
-                      background: "#061a40",
-                      padding: "2px 6px",
-                      borderRadius: "4px",
                       boxDecorationBreak: "clone",
                       WebkitBoxDecorationBreak: "clone",
                     }}
@@ -197,11 +194,11 @@ export default function EmbeddedMap() {
                   pins are street spots. The{" "}
                   <Box
                     as="span"
-                    color="teal.300"
+                    color="accent"
+                    bg="muted"
+                    px={2}
+                    borderRadius="sm"
                     style={{
-                      background: "#061a40",
-                      padding: "2px 6px",
-                      borderRadius: "4px",
                       boxDecorationBreak: "clone",
                       WebkitBoxDecorationBreak: "clone",
                     }}

@@ -73,11 +73,11 @@ export default function HBDSection({
               px={2}
               py={1}
               fontSize="sm"
-              bg="teal.500"
-              color="white"
+              bg="primary"
+              color="background"
               borderRadius="md"
               fontWeight="bold"
-              _hover={{ bg: "teal.600" }}
+              _hover={{ bg: "accent" }}
               onClick={() =>
                 onModalOpen(
                   "Send HBD",
@@ -91,7 +91,7 @@ export default function HBDSection({
                 as={FaPaperPlane}
                 boxSize={4}
                 mr={1}
-                color={theme.colors.primary}
+                color={theme.colors.background}
               />
             </Box>
           </Tooltip>
@@ -101,18 +101,18 @@ export default function HBDSection({
               px={2}
               py={1}
               fontSize="sm"
-              bg="teal.500"
-              color="white"
+              bg="primary"
+              color="background"
               borderRadius="md"
               fontWeight="bold"
-              _hover={{ bg: "teal.600" }}
+              _hover={{ bg: "accent" }}
               onClick={() => onModalOpen("HBD Savings", "Send HBD to Savings")}
             >
               <Icon
                 as={FaArrowDown}
                 boxSize={4}
                 mr={1}
-                color={theme.colors.primary}
+                color={theme.colors.background}
               />
             </Box>
           </Tooltip>
@@ -151,11 +151,11 @@ export default function HBDSection({
                 px={2}
                 py={1}
                 fontSize="sm"
-                bg="teal.500"
-                color="white"
+                bg="primary"
+                color="background"
                 borderRadius="md"
                 fontWeight="bold"
-                _hover={{ bg: "teal.600" }}
+                _hover={{ bg: "accent" }}
                 onClick={() =>
                   onModalOpen(
                     "Withdraw HBD Savings",
@@ -169,7 +169,7 @@ export default function HBDSection({
                   as={FaArrowUp}
                   boxSize={4}
                   mr={1}
-                  color={theme.colors.primary}
+                  color={theme.colors.background}
                 />
               </Box>
             </Tooltip>
@@ -199,8 +199,8 @@ export default function HBDSection({
       {/* Claimable Interest */}
       <Box pl={{ base: 4, md: 12 }} mb={4}>
         <Box
-          borderLeft="2px solid #4ade80"
-          borderColor="green.400"
+          borderLeft="2px solid var(--chakra-colors-primary, #4ade80)"
+          borderColor="primary"
           pl={4}
           display="flex"
           alignItems="center"
@@ -222,7 +222,9 @@ export default function HBDSection({
               {estimatedClaimableInterest.toFixed(3)}
             </Text>
             <Button
-              colorScheme="teal"
+              bg="primary"
+              color="background"
+              _hover={{ bg: "accent" }}
               size="sm"
               isDisabled={daysUntilClaim > 0}
               onClick={onClaimInterest}
