@@ -201,20 +201,20 @@ export default function InvitePage() {
       <Heading size="lg" mb={4}>
         Invite a Shredder to Skatehive
       </Heading>
-      <Box bg="gray.800" p={3} borderRadius="md" mb={2}>
-        <Text fontSize="sm" color="gray.200">
+      <Box bg="secondary" p={3} borderRadius="md" mb={2}>
+        <Text fontSize="sm" color="text">
           <b>What are Account Creation Tokens (ACTs)?</b><br />
           ACTs let you create new Hive accounts for free. You earn ACTs automatically by holding Hive Power (staked HIVE). Each ACT can be used to create one new account. If you have no ACTs, you&apos;ll need to pay a 3 HIVE fee to create an account.
         </Text>
         <Accordion allowToggle mt={2}>
           <AccordionItem border="none">
-            <AccordionButton px={0} _hover={{ bg: "gray.700" }}>
-              <Box as="span" flex="1" textAlign="left" color="primary.300" fontSize="sm">
+            <AccordionButton px={0} _hover={{ bg: "muted" }}>
+              <Box as="span" flex="1" textAlign="left" color="accent" fontSize="sm">
                 More info about earning ACTs
               </Box>
               <AccordionIcon />
             </AccordionButton>
-            <AccordionPanel pb={2} color="gray.300" fontSize="sm">
+            <AccordionPanel pb={2} color="text" fontSize="sm">
               <b>Rule of thumb:</b> You need at least 5000 HP to start generating ACTs, and each ACT requires 100 billion Resource Credits (RC). The more HP you have, the faster you&apos;ll earn ACTs.
             </AccordionPanel>
           </AccordionItem>
@@ -225,11 +225,11 @@ export default function InvitePage() {
         <Flex align="center" mb={2}><Spinner size="sm" mr={2} /> Loading ACT balance...</Flex>
       ) : (
         <Box mb={2}>
-          <Text fontWeight="bold" color="primary.400">
+          <Text fontWeight="bold" color="primary">
             Account Creation Tokens (ACT): {hiveAccount?.pending_claimed_accounts ?? 0}
           </Text>
           {Number(hiveAccount?.pending_claimed_accounts ?? 0) === 0 && (
-            <Text color="red.300" fontSize="sm">You have no ACTs. You must pay 3 HIVE to create an account.</Text>
+            <Text color="error" fontSize="sm">You have no ACTs. You must pay 3 HIVE to create an account.</Text>
           )}
         </Box>
       )}
@@ -242,8 +242,8 @@ export default function InvitePage() {
             value={desiredUsername}
             onChange={(e) => setDesiredUsername(e.target.value)}
             maxW="375px"
-            bg="black"
-            color="white"
+            bg="background"
+            color="text"
             mb={2}
           />
         </FormControl>
@@ -255,8 +255,8 @@ export default function InvitePage() {
             value={desiredEmail}
             onChange={(e) => setDesiredEmail(e.target.value)}
             maxW="375px"
-            bg="black"
-            color="white"
+            bg="background"
+            color="text"
             mb={2}
           />
         </FormControl>
@@ -267,7 +267,7 @@ export default function InvitePage() {
             onChange={() => setUseAccountToken(!useAccountToken)}
             mb={2}
           />
-          <Text fontSize="sm" color="yellow.400">
+          <Text fontSize="sm" color="accent">
             {useAccountToken ? "Using Account Creation Token" : "Paying 3 HIVE"}
           </Text>
         </FormControl>
@@ -277,8 +277,8 @@ export default function InvitePage() {
             value={selectedLanguage}
             onChange={(e) => setSelectedLanguage(e.target.value)}
             maxW="375px"
-            bg="black"
-            color="white"
+            bg="background"
+            color="text"
             mb={2}
           >
             {randomLanguages.map((lang) => (
@@ -289,7 +289,7 @@ export default function InvitePage() {
           </Select>
         </FormControl>
         <Button
-          colorScheme="yellow"
+          colorScheme="accent"
           onClick={handleCheck}
           isLoading={loading}
           isDisabled={!desiredUsername || !desiredEmail}
@@ -298,19 +298,20 @@ export default function InvitePage() {
         </Button>
         {isCheckedOnce && (
           <Flex
-            border="2px solid yellow"
+            border="2px solid"
+            borderColor="accent"
             borderRadius="5px"
-            bg="black"
+            bg="background"
             p="10px"
             align="center"
             mb={2}
           >
             {accountAvailable ? (
-              <Icon as={FaCheck} color="green" />
+              <Icon as={FaCheck} color="success" />
             ) : (
-              <Icon as={FaTimes} color="red" />
+              <Icon as={FaTimes} color="error" />
             )}
-            <Text color={accountAvailable ? "yellow" : "white"} ml={2}>
+            <Text color={accountAvailable ? "accent" : "text"} ml={2}>
               {accountAvailable
                 ? "Yeah!! Account available. Drop it!"
                 : "Please choose another nickname! " + String(accountInvalid).replace(/'/g, "&apos;")}
@@ -318,7 +319,7 @@ export default function InvitePage() {
           </Flex>
         )}
         <Button
-          colorScheme="green"
+          colorScheme="success"
           onClick={handleCreateAccount}
           isLoading={loading}
           isDisabled={!areKeysDownloaded}
@@ -328,13 +329,13 @@ export default function InvitePage() {
         {broadcastSuccess && (
           <Text
             borderRadius="15"
-            borderColor="yellow"
+            borderColor="accent"
             p={5}
-            background="#252525"
+            background="muted"
             fontSize="14px"
             whiteSpace="pre"
             mb={2}
-            color="green.300"
+            color="success"
             textAlign="center"
           >
             {broadcastMessage}
@@ -343,13 +344,13 @@ export default function InvitePage() {
         {broadcastError && (
           <Text
             borderRadius="15"
-            borderColor="red"
+            borderColor="error"
             p={5}
-            background="#252525"
+            background="muted"
             fontSize="14px"
             whiteSpace="pre"
             mb={2}
-            color="red.300"
+            color="error"
             textAlign="center"
           >
             {broadcastError}
