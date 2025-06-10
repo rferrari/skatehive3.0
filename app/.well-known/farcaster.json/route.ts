@@ -4,12 +4,11 @@ export async function GET() {
 
   const config = {
     accountAssociation: {
-      header:
-        'eyJmaWQiOjIwNzIxLCJ0eXBlIjoiY3VzdG9keSIsImtleSI6IjB4MzVmNzA2QjY5NGFjZjllNjYxMGM3NjhiMjFDRjdiNWI4QWZhMzQ3RSJ9',
-      payload: 'eyJkb21haW4iOiJza2F0ZWhpdmUuYXBwIn0',
-      signature:
-        'MHhhNDdlYjdmNDU0NWNlYzJmOGNhY2YyOGI0MDc2NjRjMDU1NWViMDBkMWZjZjQ3YTc0ODhlOTg4NWZiMmJjZDczMjA5Mjk0NDcyZTkxOTMyNTMyMzFlYjU1NzBkNzM1YTk2ZTEzZGEzNWQyZjM5MDU5YTY4MDliZTg5MTc4YTc2OTFi',
+      header: "eyJmaWQiOjIwNzIxLCJ0eXBlIjoiY3VzdG9keSIsImtleSI6IjB4MzVmNzA2QjY5NGFjZjllNjYxMGM3NjhiMjFDRjdiNWI4QWZhMzQ3RSJ9",
+      payload: "eyJkb21haW4iOiJteS5za2F0ZWhpdmUuYXBwIn0",
+      signature: "MHg1MDcxYTNmZDFmMjhiMDEwY2JhYzRhM2FmNGU1NmUxZGFkYjYxMmI3OGM0OGNlMWUxZDMyN2M5YTU0ZWIxYmJkNDFkYmFhZTRhMzAyMmFmYTgyMjA5ZDY4OWUxM2JkMzU1YTU2MmUxNTkwMjUyNWFlMzI5OWRmMmZkYjdkOGQwOTFj"
     },
+
     frame: {
       version: '1',
       name: 'SkateHive',
