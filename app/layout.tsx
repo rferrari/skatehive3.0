@@ -65,8 +65,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${vt323.variable}`}>
-                <InitFrameSDK />
-
+      <InitFrameSDK />
       <body>
         <RootLayoutClient>{children}</RootLayoutClient>
       </body>
