@@ -1,7 +1,8 @@
 import { VT323 } from "next/font/google";
-import { metadata } from "./layoutMetadata";
 import RootLayoutClient from "./RootLayoutClient";
 import "./globals.css";
+import { Metadata } from "next";
+import InitFrameSDK from "@/hooks/init-frame-sdk";
 
 // Initialize the VT323 font
 const vt323 = VT323({
@@ -11,8 +12,45 @@ const vt323 = VT323({
   variable: "--font-vt323",
 });
 
-// Export the metadata for Next.js to use
-export { metadata };
+const frameObject = {
+  version: "next",
+  imageUrl: `https://my.skatehive.app/opengraph-image`,
+  button: {
+    title: "Be brave",
+    action: {
+      type: "launch_frame", // Simplified action type
+      name: "Skatehive",
+      url: "https://my.skatehive.app",
+    },
+  },
+  postUrl: "https://my.skatehive.app",
+};
+
+export const metadata: Metadata = {
+  metadataBase: new URL("https://my.skatehive.app"),
+  title: "Skatehive App",
+  description: "The infinity skateboard maganize",
+  manifest: "/manifest.json",
+  openGraph: {
+    images: "/ogimage.png",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Skatehive App",
+    description: "The infinity skateboard maganize",
+    images: "/ogimage.png",
+  },
+  alternates: {
+    canonical: "/", // This will be automatically resolved relative to metadataBase
+  },
+  other: {
+    // Use compliant image URL
+    "fc:frame": JSON.stringify(frameObject),
+    "fc:frame:image": "https://my.skatehive.app/ogimage.png",
+    "fc:frame:post_url": "https://my.skatehive.app",
+  },
+};
+
 
 // Export the viewport configuration separately
 export const viewport = {
@@ -27,6 +65,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${vt323.variable}`}>
+                <InitFrameSDK />
+
       <body>
         <RootLayoutClient>{children}</RootLayoutClient>
       </body>
