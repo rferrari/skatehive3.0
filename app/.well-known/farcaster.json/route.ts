@@ -11,10 +11,10 @@ export async function GET() {
 
     frame: {
       version: '1',
-      name: 'SkateHive',
+      name: 'SkateHive 3.0',
       buttonTitle: 'Open post',
       homeUrl: appUrl,
-      imageUrl: `${appUrl}/opengraph-image`,
+      imageUrl: `${appUrl}/opengraph-image.png`,
       webhookUrl: `${appUrl}/api/webhook`,
       iconUrl: `https://ipfs.skatehive.app/ipfs/QmXTZqirogp735AaPFcpzAjmwS57mPYsJhktJMuRuSV5Rm`,
       splashImageUrl: `https://ipfs.skatehive.app/ipfs/QmXTZqirogp735AaPFcpzAjmwS57mPYsJhktJMuRuSV5Rm`,
