@@ -1,3 +1,4 @@
+'use client';
 import { useState, useEffect } from "react";
 import useHiveAccount from "@/hooks/useHiveAccount";
 import { useWalletActions } from "@/hooks/useWalletActions";

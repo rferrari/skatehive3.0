@@ -1,3 +1,4 @@
+'use client';
 import { useEffect, useState } from 'react';
 import { fetchNewNotifications, getLastReadNotificationDate } from '@/lib/hive/client-functions';
 import { Box, Text, Stack, Spinner, Button, HStack, Tabs, TabList, TabPanels, Tab, TabPanel, Center, Flex, Select, Skeleton, SkeletonText, SkeletonCircle } from '@chakra-ui/react';

@@ -10,6 +10,7 @@ import SnapReplyModal from "../homepage/SnapReplyModal";
 import { getPost } from "@/lib/hive/client-functions";
 import PostDetails from "@/components/blog/PostDetails";
 import { useComments } from "@/hooks/useComments";
+import InitFrameSDK from "@/hooks/init-frame-sdk";
 
 interface PostPageProps {
   author: string;
@@ -17,6 +18,9 @@ interface PostPageProps {
 }
 
 export default function PostPage({ author, permlink }: PostPageProps) {
+  // Add InitFrameSDK at the top so it runs on mount
+  InitFrameSDK();
+
   const [isLoading, setIsLoading] = useState(false);
   const [post, setPost] = useState<Discussion | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +32,7 @@ export default function PostPage({ author, permlink }: PostPageProps) {
   const data = useComments(author, permlink, true);
   const commentsData = {
     ...data,
-    loadNextPage: () => {},
+    loadNextPage: () => { },
     hasMore: false,
   };
 

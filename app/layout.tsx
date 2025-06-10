@@ -2,7 +2,7 @@ import { VT323 } from "next/font/google";
 import RootLayoutClient from "./RootLayoutClient";
 import "./globals.css";
 import { Metadata } from "next";
-import InitFrameSDK from "@/hooks/init-frame-sdk";
+import { ColorModeScript } from "@chakra-ui/react";
 
 // Initialize the VT323 font
 const vt323 = VT323({
@@ -64,9 +64,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${vt323.variable}`}>
-      <InitFrameSDK />
-      <body>
+    <html lang="en" className={`${vt323.variable}`} data-theme="dark" style={{ colorScheme: "dark" }}>
+      <body className="chakra-ui-dark">
+        <ColorModeScript initialColorMode="dark" />
         <RootLayoutClient>{children}</RootLayoutClient>
       </body>
     </html>

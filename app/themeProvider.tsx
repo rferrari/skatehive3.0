@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { ChakraProvider, extendTheme } from '@chakra-ui/react';
 
-// Import your existing themes
+// Import themes
 import forestTheme from '@/themes/forest';
 import blueSkyTheme from '@/themes/bluesky';
 import hackerTheme from '@/themes/hacker';
@@ -13,7 +13,7 @@ import cannabisTheme from '@/themes/cannabis';
 import gayTheme from '@/themes/gay';
 import basketballTheme from '@/themes/basketballTheme';
 
-// Map of available themes
+// Available themes map
 export const themeMap = {
     forest: forestTheme,
     bluesky: blueSkyTheme,
@@ -24,21 +24,19 @@ export const themeMap = {
     windows95: windows95Theme,
     hiveBR: hiveBRTheme,
     cannabis: cannabisTheme,
-    gay: gayTheme, // Add the new theme here
+    gay: gayTheme,
 };
 
-// Define the types
-export type ThemeName = keyof typeof themeMap;  // Export ThemeName type
+export type ThemeName = keyof typeof themeMap;
+
 interface ThemeContextProps {
     themeName: ThemeName;
     setThemeName: (themeName: ThemeName) => void;
     theme: any;
 }
 
-// Create a Context for the theme
 const ThemeContext = createContext<ThemeContextProps | undefined>(undefined);
 
-// Custom hook to use the ThemeContext
 export const useTheme = () => {
     const context = useContext(ThemeContext);
     if (!context) {
@@ -47,21 +45,21 @@ export const useTheme = () => {
     return context;
 };
 
-// ThemeProvider component to manage and provide theme state
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
-    const defaultTheme = process.env.NEXT_PUBLIC_THEME as ThemeName; // Default theme
+    const defaultTheme = (process.env.NEXT_PUBLIC_THEME as ThemeName) || 'hacker';
     const [themeName, setThemeName] = useState<ThemeName>(
         themeMap[defaultTheme] ? defaultTheme : 'hacker'
     );
     const [theme, setTheme] = useState(themeMap[themeName]);
 
     useEffect(() => {
+        // Load saved theme after mount to avoid hydration mismatch
         const savedThemeName = localStorage.getItem('theme') as ThemeName;
-        if (savedThemeName && themeMap[savedThemeName]) {
+        if (savedThemeName && themeMap[savedThemeName] && savedThemeName !== themeName) {
             setThemeName(savedThemeName);
             setTheme(themeMap[savedThemeName]);
         }
-    }, []);
+    }, [themeName]);
 
     const changeTheme = (newThemeName: ThemeName) => {
         setThemeName(newThemeName);
@@ -69,22 +67,28 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
         localStorage.setItem('theme', newThemeName);
     };
 
-    // Add global styles to ensure body background matches theme
-    const styles = {
-        global: {
-            'html, body': {
-                bg: 'background',
-                color: 'text',
+    // Extended theme with consistent dark mode
+    const extendedTheme = extendTheme({
+        ...theme,
+        config: {
+            initialColorMode: 'dark',
+            useSystemColorMode: false,
+        },
+        styles: {
+            global: {
+                'html, body': {
+                    bg: 'background',
+                    color: 'text',
+                }
             }
         }
-    };
-
-    // Extend the selected theme with our global styles
-    const extendedTheme = extendTheme({ styles }, theme);
+    });
 
     return (
         <ThemeContext.Provider value={{ themeName, setThemeName: changeTheme, theme }}>
-            <ChakraProvider theme={extendedTheme}>{children}</ChakraProvider>
+            <ChakraProvider theme={extendedTheme}>
+                {children}
+            </ChakraProvider>
         </ThemeContext.Provider>
     );
 };
