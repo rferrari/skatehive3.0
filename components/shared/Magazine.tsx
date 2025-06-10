@@ -8,6 +8,7 @@ import AuthorAvatar from '@/components/blog/PostCard'; // Update this import if 
 import markdownRenderer from '@/lib/utils/MarkdownRenderer';
 import LoadingComponent from '../homepage/loadingComponent';
 import MatrixOverlay from '@/components/graphics/MatrixOverlay';
+import { useTheme } from '@/app/themeProvider';
 
 function useMagazinePosts(query: string, tag: { tag: string; limit: number }[]) {
   const [posts, setPosts] = useState<Discussion[]>([]);
@@ -40,8 +41,8 @@ function useMagazinePosts(query: string, tag: { tag: string; limit: number }[]) 
   return { posts, error, isLoading };
 }
 
-const magazineGrayGradient = 'linear-gradient(135deg, var(--chakra-colors-background, rgb(8, 8, 8)) 80%, var(--chakra-colors-muted, rgb(51, 54, 57)) 100%)';
-const magazineAccentGradient = 'linear-gradient(135deg, var(--chakra-colors-primary, #b31217) 60%, var(--chakra-colors-accent, #e52d27) 100%)';
+const magazineGrayGradient = (theme: any) => `linear-gradient(135deg, ${theme.colors.background} 80%, ${theme.colors.muted} 100%)`;
+const magazineAccentGradient = (theme: any) => `linear-gradient(135deg, ${theme.colors.primary} 60%, ${theme.colors.accent} 100%)`;
 
 const backgroundGradient = {
   minHeight: '100%',
@@ -51,21 +52,21 @@ const backgroundGradient = {
   overflow: 'hidden',
 };
 
-const pageStyles = {
-  background: 'linear-gradient(135deg,rgb(8, 8, 8) 80%,rgb(51, 54, 57) 100%)',
+const pageStyles = (theme: any) => ({
+  background: `linear-gradient(135deg,${theme.colors.background} 80%,${theme.colors.muted} 100%)`,
   borderRadius: '16px',
   boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'space-between',
   padding: '32px 28px 48px 28px',
-  color: '#232526',
+  color: theme.colors.text,
   overflow: 'auto',
   position: 'relative',
   minHeight: 400,
   zIndex: 1,
-  border: '1px solid #e0e7ef',
-};
+  border: `1px solid ${theme.colors.border || '#e0e7ef'}`,
+});
 
 const flipbookStyles = {
   width: '100%',
@@ -81,30 +82,31 @@ const retroFont = {
 };
 const neonGreen = '#39FF14';
 const blackShadow = '0 4px 32px #000, 0 8px 48px #000, 0 0 8px #000, 0 0 2px #000';
-const retroBoxShadow = '0 0 0 2px #232526, 0 0 8px #39FF14';
+const retroBoxShadow = (theme: any) => `0 0 0 2px ${theme.colors.text}, 0 0 8px ${theme.colors.primary}`;
 
-const coverStyles = {
-  ...pageStyles,
+const coverStyles = (theme: any) => ({
+  ...pageStyles(theme),
   borderRadius: '0px 16px 0px 0px',
   background: 'transparent',
-  color: neonGreen,
+  color: theme.colors.primary,
   backgroundSize: 'cover',
   textAlign: 'center',
-  boxShadow: retroBoxShadow,
-  ...retroFont,
-};
+  boxShadow: retroBoxShadow(theme),
+  fontFamily: `'Joystix', 'VT323', 'Fira Mono', 'monospace'`,
+  letterSpacing: '0.5px',
+});
 
-const backCoverStyles = {
-  ...pageStyles,
-  background: 'linear-gradient(120deg, #b31217 60%, #e52d27 100%)',
-  color: 'white',
+const backCoverStyles = (theme: any) => ({
+  ...pageStyles(theme),
+  background: `linear-gradient(120deg, ${theme.colors.primary} 60%, ${theme.colors.accent} 100%)`,
+  color: theme.colors.text,
   justifyContent: 'center',
   alignItems: 'center',
   backgroundImage:
     'url(https://media1.giphy.com/media/9ZsHm0z5QwSYpV7g01/giphy.gif?cid=6c09b952uxaerotyqa9vct5pkiwvar6l6knjgsctieeg0sh1&ep=v1_gifs_search&rid=giphy.gif&ct=g)',
   backgroundSize: 'cover',
   boxShadow: '0 8px 32px 0 rgba(179,18,23,0.25)',
-};
+});
 
 export interface MagazineProps {
   tag: { tag: string; limit: number }[];
@@ -127,6 +129,7 @@ function addEnableJsApiToYouTubeIframes(html: string) {
 }
 
 export default function Magazine({ tag, query }: MagazineProps) {
+  const { theme } = useTheme();
   const { posts, error, isLoading } = useMagazinePosts(query, tag);
   const flipBookRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -251,7 +254,7 @@ export default function Magazine({ tag, query }: MagazineProps) {
           });
         }}
       >
-        <Box sx={coverStyles} width="100%" height="100%" position="relative" overflow="hidden">
+        <Box sx={coverStyles(theme)} width="100%" height="100%" position="relative" overflow="hidden">
           {/* Matrix effect as background */}
           <Box
             position="absolute"
@@ -285,15 +288,15 @@ export default function Magazine({ tag, query }: MagazineProps) {
                 fontWeight="extrabold"
                 letterSpacing="tight"
                 mb={2}
-                style={{ ...retroFont, textShadow: blackShadow, color: neonGreen }}
+                style={{ fontFamily: `'Joystix', 'VT323', 'Fira Mono', 'monospace'`, textShadow: '0 4px 32px #000, 0 8px 48px #000, 0 0 8px #000, 0 0 2px #000', color: theme.colors.primary }}
               >
                 SkateHive Magazine
               </Heading>
               <Text
                 fontSize="xl"
-                color={neonGreen}
+                color={theme.colors.primary}
                 mb={4}
-                style={{ ...retroFont, textShadow: blackShadow }}
+                style={{ fontFamily: `'Joystix', 'VT323', 'Fira Mono', 'monospace'`, textShadow: '0 4px 32px #000, 0 8px 48px #000, 0 0 8px #000, 0 0 2px #000' }}
               >
                 The Community Skateboarding Zine
               </Text>
@@ -320,7 +323,7 @@ export default function Magazine({ tag, query }: MagazineProps) {
           return (
             <Box
               key={`${post.id}-${index}`}
-              sx={{ ...pageStyles, borderRadius: pageBorderRadius }}
+              sx={{ ...pageStyles(theme), borderRadius: pageBorderRadius }}
               position="relative"
               width="100%"
               height="100%"
@@ -336,17 +339,17 @@ export default function Magazine({ tag, query }: MagazineProps) {
                   borderRadius="full"
                   mr={2}
                 />
-                <Text fontSize="sm" color={neonGreen} style={retroFont} fontWeight="bold">
+                <Text fontSize="sm" color={theme.colors.primary} style={{ fontFamily: `'Joystix', 'VT323', 'Fira Mono', 'monospace'`, letterSpacing: '0.5px' }} fontWeight="bold">
                   @{post.author}
                 </Text>
-                <Text fontSize="xs" color="#A6E22E" style={retroFont} ml={2}>
+                <Text fontSize="xs" color={theme.colors.accent} style={{ fontFamily: `'Joystix', 'VT323', 'Fira Mono', 'monospace'`, letterSpacing: '0.5px' }} ml={2}>
                   {new Date(post.created).toLocaleDateString()}
                 </Text>
-                <Badge variant={'solid'} bg={neonGreen} color="#181c1b" h={'24px'} minW={'48px'} px={2} borderRadius={8} display="flex" alignItems="center" justifyContent="center" fontWeight="bold" style={retroFont} ml={2}>
+                <Badge variant={'solid'} bg={theme.colors.primary} color={theme.colors.background} h={'24px'} minW={'48px'} px={2} borderRadius={8} display="flex" alignItems="center" justifyContent="center" fontWeight="bold" style={{ fontFamily: `'Joystix', 'VT323', 'Fira Mono', 'monospace'`, letterSpacing: '0.5px' }} ml={2}>
                   ${Number(getPayoutValue(post as any)).toFixed(2)}
                 </Badge>
               </Flex>
-              <Heading fontSize="lg" color={neonGreen} style={retroFont} mb={2}>
+              <Heading fontSize="lg" color={theme.colors.primary} style={{ fontFamily: `'Joystix', 'VT323', 'Fira Mono', 'monospace'`, letterSpacing: '0.5px' }} mb={2}>
                 {post.title}
               </Heading>
               <Divider mt={2} mb={2} />
@@ -356,14 +359,14 @@ export default function Magazine({ tag, query }: MagazineProps) {
             </Box>
           );
         })}
-        <Box sx={backCoverStyles}>
-          <Heading>Back Cover</Heading>
-          <Text>Last Page</Text>
+        <Box sx={backCoverStyles(theme)}>
+          <Heading color={theme.colors.primary}>Back Cover</Heading>
+          <Text color={theme.colors.text}>Last Page</Text>
         </Box>
       </HTMLFlipBook>
       <style jsx global>{`
         .magazine-content {
-          color: #fff;
+          color: var(--chakra-colors-text, #fff);
         }
         .magazine-content iframe {
           max-width: 100%;
