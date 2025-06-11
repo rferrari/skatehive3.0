@@ -9,6 +9,7 @@ interface VideoUploaderProps {
 
 export interface VideoUploaderRef {
   trigger: () => void;
+  handleFile: (file: File) => void;
 }
 
 const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
@@ -23,15 +24,6 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
     const backgroundMuted = 'var(--chakra-colors-muted, #eee)';
     const backgroundPrimary = 'var(--chakra-colors-primary, #0070f3)';
     const backgroundAccent = 'var(--chakra-colors-accent, #00b894)';
-
-    useImperativeHandle(ref, () => ({
-      trigger: () => {
-        if (inputRef.current && !isProcessing) {
-          inputRef.current.value = ""; // reset so same file can be selected again
-          inputRef.current.click();
-        }
-      },
-    }));
 
     const compressVideo = async (file: File): Promise<Blob> => {
       setStatus("Compressing video...");
@@ -79,10 +71,8 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
       });
     };
 
-    const handleVideoUpload = async (
-      event: React.ChangeEvent<HTMLInputElement>
-    ) => {
-      const file = event.target.files?.[0];
+    // Extracted video upload logic for direct file handling
+    const processVideoFile = async (file: File) => {
       if (!file) {
         setStatus("");
         setCompressionProgress(0);
@@ -131,6 +121,29 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         onUpload(null);
       }
     };
+
+    const handleVideoUpload = async (
+      event: React.ChangeEvent<HTMLInputElement>
+    ) => {
+      const file = event.target.files?.[0];
+      if (file) {
+        await processVideoFile(file);
+      }
+    };
+
+    const handleFile = async (file: File) => {
+      await processVideoFile(file);
+    };
+
+    useImperativeHandle(ref, () => ({
+      trigger: () => {
+        if (inputRef.current && !isProcessing) {
+          inputRef.current.value = ""; // reset so same file can be selected again
+          inputRef.current.click();
+        }
+      },
+      handleFile,
+    }));
 
     return (
       <div>

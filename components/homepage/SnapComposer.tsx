@@ -59,6 +59,9 @@ export default function SnapComposer({
   const [compressedImages, setCompressedImages] = useState<{ url: string; fileName: string; caption: string }[]>([]);
   const gifWebpInputRef = useRef<HTMLInputElement>(null);
 
+  // Drag and drop state
+  const [isDragOver, setIsDragOver] = useState(false);
+
   const buttonText = post ? "Reply" : "Post";
 
   // Function to extract hashtags from text
@@ -210,15 +213,93 @@ export default function SnapComposer({
     }
   }
 
+  // Drag and drop handlers
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    const files = Array.from(e.dataTransfer.files);
+    for (const file of files) {
+      if (file.type.startsWith("image/")) {
+        // If GIF or WEBP, use GIF/WEBP upload logic
+        if (file.type === "image/gif" || file.type === "image/webp") {
+          // Simulate input event for GIF/WEBP
+          const fakeEvent = { target: { files: [file] } } as unknown as React.ChangeEvent<HTMLInputElement>;
+          await handleGifWebpUpload(fakeEvent);
+        } else {
+          // For other images, use compressed image upload logic
+          const url = URL.createObjectURL(file);
+          await handleCompressedImageUpload(url, file.name);
+          URL.revokeObjectURL(url);
+        }
+      } else if (file.type.startsWith("video/")) {
+        // For video, use video uploader logic if available
+        if (videoUploaderRef.current && videoUploaderRef.current.handleFile) {
+          setIsLoading(true);
+          try {
+            await videoUploaderRef.current.handleFile(file);
+          } catch (error) {
+            console.error("Error uploading video:", error);
+          } finally {
+            setIsLoading(false);
+          }
+        } else {
+          alert("Video upload not supported.");
+        }
+      } else {
+        alert("Unsupported file type: " + file.type);
+      }
+    }
+  };
+
   return (
     <Box position="relative">
       {/* Snap Composer UI, blurred and unclickable if not logged in */}
       <Box
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
         style={{
           filter: !user ? "blur(2px)" : "none",
           pointerEvents: !user ? "none" : "auto",
+          border: isDragOver ? "2px dashed var(--chakra-colors-primary)" : undefined,
+          background: isDragOver ? "rgba(0,0,0,0.04)" : undefined,
+          transition: "border 0.2s, background 0.2s",
         }}
       >
+        {/* Optionally, overlay a message when dragging */}
+        {isDragOver && (
+          <Box
+            position="absolute"
+            top={0}
+            left={0}
+            right={0}
+            bottom={0}
+            zIndex={10}
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            bg="rgba(0,0,0,0.08)"
+            borderRadius="base"
+            pointerEvents="none"
+          >
+            <Box color="primary" fontWeight="bold" fontSize="xl">
+              Drop files to upload
+            </Box>
+          </Box>
+        )}
         <Box
           p={4}
           mb={1}

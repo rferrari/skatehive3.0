@@ -139,10 +139,16 @@ function addEnableJsApiToYouTubeIframes(html: string) {
   );
 }
 
-export default function Magazine({ posts, isLoading, error }: MagazineProps) {
+export default function Magazine(props: MagazineProps) {
   const { theme } = useTheme();
   const flipBookRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // If tag and query are provided, use the hook to fetch posts
+  const shouldFetch = props.tag && props.query;
+  const { posts, isLoading, error } = shouldFetch
+    ? useMagazinePosts(props.query!, props.tag!)
+    : { posts: props.posts, isLoading: props.isLoading, error: props.error };
 
   useEffect(() => {
     if (audioRef.current) {
