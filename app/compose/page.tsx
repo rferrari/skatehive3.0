@@ -60,11 +60,12 @@ export default function Composer() {
   const [selectedThumbnail, setSelectedThumbnail] = useState<string | null>(
     null
   );
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const placeholders = [
-    "Don't forget to title your post...",
+    "Don't forget a title...",
     "Where is your mind?",
-    "Write a bangin' title here...",
+    "Write a title here...",
   ];
 
   useEffect(() => {
@@ -191,42 +192,45 @@ export default function Composer() {
     videoUploaderRef.current?.trigger();
   };
 
-  const { getRootProps, getInputProps } = useDropzone({
-    noClick: true,
-    noKeyboard: true,
-    onDrop: async (acceptedFiles) => {
-      setIsUploading(true);
-      for (const file of acceptedFiles) {
-        const formData = new FormData();
-        formData.append("file", file);
-        try {
-          const response = await fetch("/api/pinata", {
-            method: "POST",
-            body: formData,
-          });
-          if (!response.ok) {
-            throw new Error("Failed to upload file");
-          }
-          const result = await response.json();
-          const url = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`;
-          if (file.type.startsWith("image/")) {
-            insertAtCursor(`\n![${file.name}](${url})\n`);
-          } else if (file.type.startsWith("video/")) {
-            insertAtCursor(
-              `\n<iframe src="${url}" frameborder="0" allowfullscreen></iframe>\n`
-            );
-          }
-        } catch (error) {
-          console.error("Error uploading file:", error);
+  const onDrop = async (acceptedFiles: File[]) => {
+    setIsUploading(true);
+    for (const file of acceptedFiles) {
+      const formData = new FormData();
+      formData.append("file", file);
+      try {
+        const response = await fetch("/api/pinata", {
+          method: "POST",
+          body: formData,
+        });
+        if (!response.ok) {
+          throw new Error("Failed to upload file");
         }
+        const result = await response.json();
+        const url = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`;
+        if (file.type.startsWith("image/")) {
+          insertAtCursor(`\n![${file.name}](${url})\n`);
+        } else if (file.type.startsWith("video/")) {
+          insertAtCursor(
+            `\n<iframe src=\"${url}\" frameborder=\"0\" allowfullscreen></iframe>\n`
+          );
+        }
+      } catch (error) {
+        console.error("Error uploading file:", error);
       }
-      setIsUploading(false);
-    },
+    }
+    setIsUploading(false);
+  };
+
+  const {
+    getRootProps,
+    isDragActive
+  } = useDropzone({
+    onDrop,
     accept: {
-      "image/*": [".png", ".gif", ".jpeg", ".jpg"],
-      "video/*": [".mp4", ".mov"],
+      "image/*": [".png", ".gif", ".jpeg", ".jpg", ".webp"],
+      "video/*": [".mp4", ".mov"]
     },
-    multiple: false,
+    multiple: false
   });
 
   const extraCommands: never[] = [];
@@ -302,6 +306,18 @@ export default function Composer() {
 
   const isMobile = useBreakpointValue({ base: true, md: false });
 
+  const headerCommand = {
+    name: "header",
+    keyCommand: "header",
+    buttonProps: { "aria-label": "Insert Header" },
+    icon: (
+      <span style={{ fontWeight: "bold", fontSize: 18 }}>H</span>
+    ),
+    execute: (state: import("@uiw/react-md-editor").TextState, api: import("@uiw/react-md-editor").TextAreaTextApi) => {
+      api.replaceSelection("# Header\n");
+    },
+  };
+
   return (
     <Flex
       width="100%"
@@ -333,15 +349,6 @@ export default function Composer() {
           maxLength={123}
           flex="1"
           minW={0}
-          sx={{
-            "&::placeholder": {
-              transition: "opacity 0.3s ease-in-out",
-              opacity: 0.7,
-            },
-            "&:focus::placeholder": {
-              opacity: 0.3,
-            },
-          }}
         />
         <Flex
           justify={{ base: "center", md: "flex-end" }}
@@ -462,20 +469,24 @@ export default function Composer() {
       </Flex>
       <Flex
         flex="1"
-        border="1px solid"
-        borderColor="primary"
         borderRadius="base"
         justify="center"
         overflow="hidden"
         width="100%"
       >
-        <Box position="relative" width="100%" height="100%">
+        <Box
+          {...getRootProps()}
+          position="relative"
+          width="100%"
+          height="100%"
+          border={isDragActive ? "2px dashed var(--chakra-colors-primary, limegreen)" : undefined}
+          transition="border 0.2s"
+        >
           <MDEditor
             value={markdown}
             onChange={(value) => setMarkdown(value || "")}
             height="100%"
             style={{
-              border: "2px solid var(--chakra-colors-primary, limegreen)",
               padding: "10px",
               backgroundColor: "var(--chakra-colors-background)",
               color: "var(--chakra-colors-text, white)",
@@ -490,6 +501,7 @@ export default function Composer() {
               },
             }}
             commands={[
+              headerCommand,
               commands.bold,
               commands.italic,
               commands.strikethrough,
@@ -647,29 +659,36 @@ export default function Composer() {
           </ModalContent>
         </Modal>
       </Flex>
-      <Input
-        placeholder="Enter hashtags"
-        mt="4"
-        value={hashtagInput}
-        onChange={(e) => setHashtagInput(e.target.value)}
-        onKeyDown={handleHashtagKeyDown}
-        borderRadius="base"
-      />
-      <Wrap mt="2">
-        {hashtags.map((tag, index) => (
-          <WrapItem key={index}>
-            <Tag
-              size="md"
-              borderRadius="base"
-              variant="solid"
-              colorScheme="blue"
-            >
-              <TagLabel>{tag}</TagLabel>
-              <TagCloseButton onClick={() => removeHashtag(index)} />
-            </Tag>
-          </WrapItem>
-        ))}
-      </Wrap>
+      {/* Hashtags input and tags, right-aligned and 25% width */}
+      <Flex width="100%" direction="row" alignItems="center" mt={4} mb={2}>
+        <Box flex="1">
+          <Wrap justify="flex-start">
+            {hashtags.map((tag, index) => (
+              <WrapItem key={index}>
+                <Tag
+                  size="md"
+                  borderRadius="base"
+                  variant="solid"
+                  colorScheme="blue"
+                >
+                  <TagLabel>{tag}</TagLabel>
+                  <TagCloseButton onClick={() => removeHashtag(index)} />
+                </Tag>
+              </WrapItem>
+            ))}
+          </Wrap>
+        </Box>
+        <Box>
+          <Input
+            placeholder="Enter hashtags"
+            value={hashtagInput}
+            onChange={(e) => setHashtagInput(e.target.value)}
+            onKeyDown={handleHashtagKeyDown}
+            borderRadius="base"
+            width="200px"
+          />
+        </Box>
+      </Flex>
       <Flex mt="1" justify="space-between">
         <Button
           size="sm"
