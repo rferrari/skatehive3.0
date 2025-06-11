@@ -23,7 +23,14 @@ function useMagazinePosts(query: string, tag: { tag: string; limit: number }[]) 
     findPosts(query, tag)
       .then((data) => {
         if (isMounted) {
-          setPosts(data);
+          // Normalize data to always be an array
+          let postsArray = [];
+          if (Array.isArray(data)) {
+            postsArray = data;
+          } else if (data && typeof data === 'object') {
+            postsArray = [data];
+          }
+          setPosts(postsArray);
           setIsLoading(false);
         }
       })
@@ -109,8 +116,12 @@ const backCoverStyles = (theme: any) => ({
 });
 
 export interface MagazineProps {
-  tag: { tag: string; limit: number }[];
-  query: string;
+  posts: Discussion[];
+  isLoading: boolean;
+  error: string | null;
+  // For community magazine, still accept tag/query
+  tag?: { tag: string; limit: number }[];
+  query?: string;
 }
 
 // Add a function to ensure all YouTube iframes have enablejsapi=1 in their src
@@ -128,9 +139,8 @@ function addEnableJsApiToYouTubeIframes(html: string) {
   );
 }
 
-export default function Magazine({ tag, query }: MagazineProps) {
+export default function Magazine({ posts, isLoading, error }: MagazineProps) {
   const { theme } = useTheme();
-  const { posts, error, isLoading } = useMagazinePosts(query, tag);
   const flipBookRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 

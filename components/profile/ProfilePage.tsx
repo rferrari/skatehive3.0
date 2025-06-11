@@ -466,7 +466,7 @@ export default function ProfilePage({ username }: ProfilePageProps) {
 
       {/* Posts or Magazine */}
       {viewMode === "magazine" ? (
-        <Magazine tag={[{ tag: username, limit: 30 }]} query="created" />
+        <Magazine posts={posts} isLoading={isLoading} error={error} />
       ) : (
         <PostInfiniteScroll
           allPosts={posts}
