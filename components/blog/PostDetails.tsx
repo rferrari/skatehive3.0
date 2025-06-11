@@ -13,6 +13,7 @@ import {
   SliderMark,
   Divider,
   Image,
+  useTheme,
 } from "@chakra-ui/react";
 import React, { useState, useEffect } from "react";
 import { Discussion } from "@hiveio/dhive";
@@ -35,6 +36,26 @@ export default function PostDetails({ post }: PostDetailsProps) {
   const [voted, setVoted] = useState(
     post.active_votes?.some((item) => item.voter === user)
   );
+  const theme = useTheme();
+
+  // Get theme colors
+  const primary = theme.colors.primary ?? '#38ff8e';
+  const secondary = theme.colors.secondary ?? '#1d211f';
+  const accent = theme.colors.accent ?? '#48BB78';
+  const muted = theme.colors.muted ?? '#276749';
+  const color = theme.colors.color ?? '#F0FFF4';
+
+  // Compose gradient and box shadows using theme colors
+  const detailsGradient = `linear-gradient(to bottom, ${primary}, ${secondary})`;
+  const boxShadowAccent = `0 0 0 0 ${accent}B3`;
+  const boxShadowAccent10 = `0 0 0 10px ${accent}00`;
+
+  const pulseGreenStyle = {
+    background: primary,
+    color: 'black',
+    fontWeight: 'bold',
+    border: 'none',
+  };
 
   function handleHeartClick() {
     setShowSlider(!showSlider);
@@ -49,16 +70,6 @@ export default function PostDetails({ post }: PostDetailsProps) {
     setVoted(vote.success);
     handleHeartClick();
   }
-
-  const pulseGreenStyle = {
-    background: 'var(--chakra-colors-primary, #38ff8e)',
-    color: 'black',
-    fontWeight: 'bold',
-    border: 'none',
-  };
-  const boxShadowAccent = '0 0 0 0 var(--chakra-colors-accent, rgba(72, 255, 128, 0.7))';
-  const boxShadowAccent10 = '0 0 0 10px var(--chakra-colors-accent, rgba(72, 255, 128, 0))';
-  const detailsGradient = 'linear-gradient(to bottom, var(--chakra-colors-primary, rgb(5, 37, 4)), var(--chakra-colors-secondary, rgb(29, 33, 31)))';
 
   return (
     <Box
@@ -77,7 +88,7 @@ export default function PostDetails({ post }: PostDetailsProps) {
         alignItems="center"
         mb={4}
         flexWrap="nowrap"
-        boxShadow="0px 4px 12px rgba(0, 0, 0, 0.2)"
+        boxShadow={theme.shadows.md}
         bg={detailsGradient}
         p={4}
       >
@@ -123,11 +134,11 @@ export default function PostDetails({ post }: PostDetailsProps) {
                 onChange={(val) => setSliderValue(val)}
               >
                 <SliderTrack
-                  bg="gray.700"
+                  bg={muted}
                   height="8px"
                   boxShadow={boxShadowAccent}
                 >
-                  <SliderFilledTrack bgGradient="linear(to-r, green.400, limegreen, red.400)" />
+                  <SliderFilledTrack bgGradient={`linear(to-r, ${primary}, ${accent}, red.400)`} />
                 </SliderTrack>
                 <SliderThumb
                   boxSize="30px"
@@ -158,32 +169,30 @@ export default function PostDetails({ post }: PostDetailsProps) {
           <Flex
             data-subcomponent="PostDetails/VoteSummary"
             mt={4}
-            justifyContent="flex-end" // Align items to the right
+            justifyContent="flex-end"
             alignItems="center"
           >
             <Flex alignItems="center" mr={4}>
-              {" "}
-              {/* Group like button and vote count */}
               {voted ? (
                 <Icon
                   as={FaHeart}
                   onClick={handleHeartClick}
                   cursor="pointer"
-                  color="green.300"
+                  color={primary}
                 />
               ) : (
                 <Icon
                   as={FaRegHeart}
                   onClick={handleHeartClick}
                   cursor="pointer"
-                  color="green.300"
+                  color={primary}
                 />
               )}
-              <Text ml={2} fontSize="sm" color="green.300">
+              <Text ml={2} fontSize="sm" color={primary}>
                 {post.active_votes.length}
               </Text>
             </Flex>
-            <Text fontWeight="bold" fontSize="sm" color="green.300">
+            <Text fontWeight="bold" fontSize="sm" color={primary}>
               ${getPayoutValue(post)}
             </Text>
           </Flex>
@@ -205,12 +214,13 @@ export default function PostDetails({ post }: PostDetailsProps) {
         }}
       />
 
-      <style jsx global>{`        .pulse-green {
+      <style jsx global>{`
+        .pulse-green {
           animation: pulse-green 1.5s infinite;
-          background: ${pulseGreenStyle.background};
-          color: ${pulseGreenStyle.color};
-          font-weight: ${pulseGreenStyle.fontWeight};
-          border: ${pulseGreenStyle.border};
+          background: ${primary};
+          color: black;
+          font-weight: bold;
+          border: none;
         }
         @keyframes pulse-green {
           0% {

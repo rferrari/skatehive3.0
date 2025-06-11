@@ -19,10 +19,16 @@ import {
   IconButton,
   Link,
   ButtonGroup,
+  Button,
+  Spinner,
+  useToast,
+  useToken,
 } from "@chakra-ui/react";
 import useHiveAccount from "@/hooks/useHiveAccount";
 import { FaGlobe, FaTh, FaBars, FaEdit, FaBookOpen } from "react-icons/fa";
-import { getProfile, findPosts } from "@/lib/hive/client-functions";
+import { MdPersonAdd } from "react-icons/md";
+import { TbUserCheck } from "react-icons/tb";
+import { getProfile, findPosts, checkFollow, changeFollow } from "@/lib/hive/client-functions";
 import LoadingComponent from "../homepage/loadingComponent";
 import PostInfiniteScroll from "../blog/PostInfiniteScroll";
 import { useAioha } from "@aioha/react-ui";
@@ -66,6 +72,9 @@ export default function ProfilePage({ username }: ProfilePageProps) {
   const [isMobile, setIsMobile] = useState(false);
   const { user } = useAioha();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isFollowing, setIsFollowing] = useState<boolean | null>(null);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
+  const toast = useToast();
 
   const params = useRef([
     username,
@@ -215,128 +224,206 @@ export default function ProfilePage({ username }: ProfilePageProps) {
     }
   }, [username, hiveAccount]);
 
-  // Memoized components
+  // Check follow status when user or username changes
+  useEffect(() => {
+    if (user && username && user !== username) {
+      setIsFollowLoading(true);
+      checkFollow(user, username)
+        .then((res) => setIsFollowing(res))
+        .catch(() => setIsFollowing(false))
+        .finally(() => setIsFollowLoading(false));
+    } else {
+      setIsFollowing(null);
+    }
+  }, [user, username]);
+
+  const handleFollowToggle = useCallback(async () => {
+    if (!user || !username || user === username) return;
+    const prev = isFollowing;
+    const next = !isFollowing;
+    setIsFollowing(next);
+    setIsFollowLoading(true);
+    try {
+      const keychainResult = await changeFollow(user, username);
+      // Poll for backend confirmation
+      let tries = 0;
+      const maxTries = 10;
+      const poll = async () => {
+        tries++;
+        const backendState = await checkFollow(user, username);
+        if (backendState === next) {
+          setIsFollowing(next);
+          setIsFollowLoading(false);
+        } else if (tries < maxTries) {
+          setTimeout(poll, 1000);
+        } else {
+          setIsFollowing(prev);
+          setIsFollowLoading(false);
+          toast({
+            title: "Follow state not confirmed",
+            description: "The blockchain did not confirm your follow/unfollow action. Please try again.",
+            status: "error",
+            duration: 4000,
+            isClosable: true,
+          });
+        }
+      };
+      poll();
+    } catch (err) {
+      setIsFollowing(prev);
+      setIsFollowLoading(false);
+      toast({
+        title: "Follow action failed",
+        description: "There was a problem updating your follow status. Please try again.",
+        status: "error",
+        duration: 4000,
+        isClosable: true,
+      });
+    }
+  }, [user, username, isFollowing, toast]);
+
+  const [primary, secondary, background] = useToken('colors', ['primary', 'secondary', 'background']);
   const ProfileHeader = useMemo(
-    () => (
-      <Box position="relative" w="100%" p={0} m={0}>
-        <Box
-          position={{ base: "static", md: "absolute" }}
-          left={{ base: "auto", md: 0 }}
-          top={{ base: "auto", md: "-60px" }}
-          transform={{ base: "none", md: "none" }}
-          display="flex"
-          flexDirection="row"
-          alignItems="center"
-          zIndex={2}
-          ml={{ base: 0, md: 8 }}
-          p={0}
-          m={0}
-          w={{ base: "100%", md: "auto" }}
-          mt={{ base: "-32px", md: 0 }}
-        >
-          <Avatar
-            src={profileData.profileImage}
-            name={username}
-            borderRadius="md"
-            boxSize="100px"
-            mr={{ base: 0, md: 4 }}
-            mb={{ base: 2, md: 0 }}
-          />
-          {profileData.about && (
-            <Box position="relative" ml={{ base: 0, md: 2 }} p={0} m={0}>
-              <Box
-                bg="gray.800"
-                color="white"
-                px={4}
-                py={3}
-                borderRadius="lg"
-                boxShadow="md"
-                maxW={{ base: "95vw", sm: "400px", md: "500px" }}
-                fontSize="md"
-                fontStyle="italic"
-                wordBreak="break-word"
-                overflowWrap="anywhere"
-                cursor="pointer"
-                onClick={speakDescription}
-                _after={{
-                  content: '""',
-                  position: "absolute",
-                  left: "-16px",
-                  top: "24px",
-                  borderWidth: "8px",
-                  borderStyle: "solid",
-                  borderColor: "transparent",
-                  borderRightColor: "var(--chakra-colors-gray-800, #2D3748)",
-                }}
+    () => {
+      return (
+        <Box position="relative" w="100%" p={0} m={0}>
+          {/* Follow/Unfollow button in upper right */}
+          {!isOwner && user && (
+            <Box position="absolute" top={2} right={2} zIndex={3} bg={background} px={0} py={0} borderRadius="md" boxShadow="md">
+              <Button
+                onClick={handleFollowToggle}
+                colorScheme={isFollowing ? 'secondary' : 'primary'}
+                isLoading={isFollowLoading}
+                isDisabled={isFollowLoading}
+                borderRadius="md"
+                fontWeight="bold"
+                px={2}
+                py={0}
+                size="xs"
+                variant="solid"
               >
-                {profileData.about}
-              </Box>
+                {isFollowing ? 'Unfollow' : 'Follow'}
+              </Button>
             </Box>
           )}
-        </Box>
-
-        <Flex
-          direction="column"
-          alignItems="center"
-          justifyContent="center"
-          w="100%"
-          px={2}
-          mt={{ base: 2, md: 0 }}
-          mb={0}
-          pt={0}
-          pb={0}
-        >
-          <Heading as="h2" size="lg" color="primary" mb={1} textAlign="center">
-            {profileData.name}
-          </Heading>
-          <Text fontSize="xs" color="text" mb={0} textAlign="center">
-            Following: {profileData.following} | Followers:{" "}
-            {profileData.followers} | Location: {profileData.location}
-          </Text>
+          <Box
+            position={{ base: "static", md: "absolute" }}
+            left={{ base: "auto", md: 0 }}
+            top={{ base: "auto", md: "-60px" }}
+            transform={{ base: "none", md: "none" }}
+            display="flex"
+            flexDirection="row"
+            alignItems="center"
+            zIndex={2}
+            ml={{ base: 0, md: 8 }}
+            p={0}
+            m={0}
+            w={{ base: "100%", md: "auto" }}
+            mt={{ base: "-32px", md: 0 }}
+          >
+            <Avatar
+              src={profileData.profileImage}
+              name={username}
+              borderRadius="md"
+              boxSize="100px"
+              mr={{ base: 0, md: 4 }}
+              mb={{ base: 2, md: 0 }}
+            />
+            {profileData.about && (
+              <Box position="relative" ml={{ base: 0, md: 2 }} p={0} m={0}>
+                <Box
+                  bg="gray.800"
+                  color="white"
+                  px={4}
+                  py={3}
+                  borderRadius="lg"
+                  boxShadow="md"
+                  maxW={{ base: "95vw", sm: "400px", md: "500px" }}
+                  fontSize="md"
+                  fontStyle="italic"
+                  wordBreak="break-word"
+                  overflowWrap="anywhere"
+                  cursor="pointer"
+                  onClick={speakDescription}
+                  _after={{
+                    content: '""',
+                    position: "absolute",
+                    left: "-16px",
+                    top: "24px",
+                    borderWidth: "8px",
+                    borderStyle: "solid",
+                    borderColor: "transparent",
+                    borderRightColor: "var(--chakra-colors-gray-800, #2D3748)",
+                  }}
+                >
+                  {profileData.about}
+                </Box>
+              </Box>
+            )}
+          </Box>
 
           <Flex
+            direction="column"
             alignItems="center"
             justifyContent="center"
+            w="100%"
+            px={2}
+            mt={{ base: 2, md: 0 }}
             mb={0}
-            mt={0}
             pt={0}
             pb={0}
-            gap={2}
           >
-            {profileData.website && (
-              <Link
-                href={
-                  profileData.website.startsWith("http")
-                    ? profileData.website
-                    : `https://${profileData.website}`
-                }
-                isExternal
-                fontSize="xs"
-                color="primary"
-                display="flex"
-                alignItems="center"
-              >
-                <Icon as={FaGlobe} w={2} h={2} mr={1} />
-                {profileData.website}
-              </Link>
-            )}
+            <Heading as="h2" size="lg" color="primary" mb={1} textAlign="center">
+              {profileData.name}
+            </Heading>
+            <Text fontSize="xs" color="text" mb={0} textAlign="center">
+              Following: {profileData.following} | Followers: {profileData.followers} | Location: {profileData.location}
+            </Text>
 
-            {/* Edit icon for profile owner - now outside website conditional */}
-            {isOwner && (
-              <IconButton
-                aria-label="Edit Profile"
-                icon={<FaEdit />}
-                size="sm"
-                variant="ghost"
-                colorScheme="primary"
-                onClick={handleEditModalOpen}
-              />
-            )}
+            <Flex
+              alignItems="center"
+              justifyContent="center"
+              mb={0}
+              mt={0}
+              pt={0}
+              pb={0}
+              gap={2}
+            >
+              {profileData.website && (
+                <Link
+                  href={
+                    profileData.website.startsWith("http")
+                      ? profileData.website
+                      : `https://${profileData.website}`
+                  }
+                  isExternal
+                  fontSize="xs"
+                  color="primary"
+                  display="flex"
+                  alignItems="center"
+                >
+                  <Icon as={FaGlobe} w={2} h={2} mr={1} />
+                  {profileData.website}
+                </Link>
+              )}
+
+              {/* Edit icon for profile owner - now outside website conditional */}
+              {isOwner && (
+                <IconButton
+                  aria-label="Edit Profile"
+                  icon={<FaEdit />}
+                  size="sm"
+                  variant="ghost"
+                  colorScheme="primary"
+                  onClick={handleEditModalOpen}
+                />
+              )}
+            </Flex>
           </Flex>
-        </Flex>
-      </Box>
-    ),
-    [profileData, username, speakDescription, isOwner, handleEditModalOpen]
+        </Box>
+      );
+    },
+    [profileData, username, speakDescription, isOwner, handleEditModalOpen, isFollowing, isFollowLoading, handleFollowToggle, user]
   );
 
   const ViewToggle = useMemo(

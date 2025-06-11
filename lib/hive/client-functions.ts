@@ -211,18 +211,20 @@ export async function checkAccountName(username: string) {
 export async function changeFollow(follower: string, following: string) {
   const keychain = new KeychainSDK(window);
   const status = await checkFollow(follower, following)
-  let type = ''
+  let whatArr: string[];
   if (status) {
-    type = ''
+    // Unfollow: what should be an empty array
+    whatArr = [];
   } else {
-    type = 'blog'
+    // Follow: what should be ['blog']
+    whatArr = ['blog'];
   }
   const json = JSON.stringify([
     'follow',
     {
       follower: follower,
       following: following,
-      what: [type], //null value for unfollow, 'blog' for follow
+      what: whatArr, // [] for unfollow, ['blog'] for follow
     },
   ]);
 
@@ -231,7 +233,7 @@ export async function changeFollow(follower: string, following: string) {
       username: follower,
       id: "follow",
       method: KeychainKeyTypes.posting,
-      json: JSON.stringify(json)
+      json: json
     },
   };
   try {
