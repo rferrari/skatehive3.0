@@ -6,6 +6,7 @@ import { findPosts } from '@/lib/hive/client-functions';
 import TopBar from '@/components/blog/TopBar';
 import PostInfiniteScroll from '@/components/blog/PostInfiniteScroll';
 import { useSearchParams } from 'next/navigation';
+import JoinSkatehiveBanner from '@/components/blog/JoinSkatehiveBanner';
 
 export default function Blog() {
     const searchParams = useSearchParams();
@@ -89,6 +90,7 @@ export default function Blog() {
                 scrollbarWidth: 'none',
             }}
         >
+            <JoinSkatehiveBanner />
             <TopBar viewMode={viewMode} setViewMode={(mode) => {
                 if (typeof window !== 'undefined' && window.innerWidth < 768) {
                     setViewMode('grid');
