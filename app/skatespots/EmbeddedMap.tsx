@@ -47,9 +47,9 @@ export default function EmbeddedMap() {
             100% { transform: translateY(0); }
           }
           @keyframes glow {
-            0% { text-shadow: 0 0 5px black, 0 0 10px black, 0 0 15px black, 0 0 20px black, 0 0 25px black; color: lime; }
-            50% { text-shadow: 0 0 10px lime, 0 0 20px lime, 0 0 30px lime, 0 0 40px lime, 0 0 50px lime; color: black; }
-            100% { text-shadow: 0 0 5px black, 0 0 10px black, 0 0 15px black, 0 0 20px black, 0 0 25px black; color: lime; }
+            0% { text-shadow: 0 0 5px var(--chakra-colors-background), 0 0 10px var(--chakra-colors-background), 0 0 15px var(--chakra-colors-background), 0 0 20px var(--chakra-colors-background), 0 0 25px var(--chakra-colors-background); color: var(--chakra-colors-text); }
+            50% { text-shadow: 0 0 10px var(--chakra-colors-text), 0 0 20px var(--chakra-colors-text), 0 0 30px var(--chakra-colors-text), 0 0 40px var(--chakra-colors-text), 0 0 50px var(--chakra-colors-text); color: var(--chakra-colors-background); }
+            100% { text-shadow: 0 0 5px var(--chakra-colors-background), 0 0 10px var(--chakra-colors-background), 0 0 15px var(--chakra-colors-background), 0 0 20px var(--chakra-colors-background), 0 0 25px var(--chakra-colors-background); color: var(--chakra-colors-text); }
           }
         `}
       />
@@ -109,7 +109,7 @@ export default function EmbeddedMap() {
               textShadow="2px 2px 4px rgba(0, 0, 0, 1)"
               animation="float 5s ease-in-out infinite"
             >
-              A Global Skatespot Database
+              A Skatespot Finder
             </Text>
             <Box textAlign="center" mb={4}>
               <Button

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Box, Text, Stack, Button, Input } from "@chakra-ui/react";
+import { Box, Text, Stack, Button, Input, useBreakpointValue } from "@chakra-ui/react";
 import { useTheme } from "@/app/themeProvider";
 
 interface SwapSectionProps {
@@ -12,6 +12,7 @@ export default function SwapSection({ onModalOpen }: SwapSectionProps) {
     "HIVE_TO_HBD" | "HBD_TO_HIVE"
   >("HIVE_TO_HBD");
   const [convertAmount, setConvertAmount] = useState("");
+  const isMobile = useBreakpointValue({ base: true, md: false });
 
   return (
     <Box p={4} borderRadius="md" bg="muted" width="100%">
@@ -19,14 +20,14 @@ export default function SwapSection({ onModalOpen }: SwapSectionProps) {
         Swap
       </Text>
       <Text fontSize="sm" mb={3}>
-        Need more options?{" "}
+        
         <a
-          href="https://hive-engine.com/?p=market&t=SWAP.HIVE"
+          href={isMobile ? "https://hivedex.io/" : "https://hivehub.dev/market/swap"}
           target="_blank"
           rel="noopener noreferrer"
           style={{ color: theme.colors.primary, textDecoration: "underline" }}
         >
-          Try Hive Engine Swap
+          ...More Swap Options
         </a>
       </Text>
       <Stack direction="row" spacing={4} align="center" mb={3}>

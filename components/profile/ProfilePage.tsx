@@ -127,10 +127,14 @@ export default function ProfilePage({ username }: ProfilePageProps) {
     }
   }, []);
 
-  // Detect mobile view
+  // Detect mobile view and force grid view on mobile
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (mobile) {
+        setViewMode("grid");
+      }
     };
     handleResize();
     window.addEventListener("resize", handleResize);

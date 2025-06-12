@@ -292,12 +292,13 @@ export default function NotificationItem({
   return (
     <div ref={containerRef}>
       <HStack
-        spacing={3}
-        p={3}
+        spacing={{ base: 2, md: 3 }}
+        p={{ base: 2, md: 3 }}
         bg="muted"
         w="full"
         align="stretch"
         position="relative"
+        direction={{ base: "column", md: "row" }}
         sx={
           isNew
             ? {
@@ -314,7 +315,7 @@ export default function NotificationItem({
                 left: 0,
                 top: 0,
                 bottom: 0,
-                width: "6px",
+                width: { base: "4px", md: "6px" },
                 background: notificationPulseGradient,
                 boxShadow: notificationBoxShadowAccent,
                 animation: "pulseGlowLeft 1.5s infinite",
@@ -329,24 +330,24 @@ export default function NotificationItem({
             100% { box-shadow: ${notificationBoxShadowAccent}; }
           }
         `}</style>
-        <Box flex="1">
-          <HStack>
+        <Box flex="1" w="full">
+          <HStack spacing={{ base: 2, md: 3 }} align={{ base: "flex-start", md: "center" }}>
             <Avatar
               src={`https://images.hive.blog/u/${author}/avatar/sm`}
               name=""
-              size={"xs"}
+              size={{ base: "sm", md: "xs" }}
             />
             {notification.type === "follow" ? (
               <HStack spacing={2}>
-                <Text color={isNew ? "accent" : "primary"} fontSize="sm">
+                <Text color={isNew ? "accent" : "primary"} fontSize={{ base: "xs", md: "sm" }}>
                   {notification.msg.replace(/^@/, "")}
                 </Text>
                 {isFollowingBack ? (
-                  <Text fontSize="sm" color="primary">
+                  <Text fontSize={{ base: "xs", md: "sm" }} color="primary">
                     Following
                   </Text>
                 ) : (
-                  <Button size="sm" onClick={handleFollowBack}>
+                  <Button size={{ base: "xs", md: "sm" }} onClick={handleFollowBack}>
                     Follow Back
                   </Button>
                 )}
@@ -355,10 +356,12 @@ export default function NotificationItem({
               <Box>
                 <Text
                   color={isNew ? "accent" : "primary"}
-                  fontSize="sm"
+                  fontSize={{ base: "xs", md: "sm" }}
                   display="flex"
                   alignItems="center"
                   flexWrap="wrap"
+                  noOfLines={2}
+                  wordBreak="break-word"
                 >
                   <Link
                     href={`/@${author}`}
@@ -368,7 +371,7 @@ export default function NotificationItem({
                   >
                     {notification.msg.replace(/^@/, "").split(" ")[0]}
                   </Link>
-                  <Text as="span" ml={1}>
+                  <Text as="span" ml={{ base: 0.5, md: 1 }}>
                     upvoted your
                   </Text>
                   <Link
@@ -376,12 +379,12 @@ export default function NotificationItem({
                     color={isNew ? "accent" : "primary"}
                     fontWeight="bold"
                     _hover={{ textDecoration: "underline" }}
-                    ml={1}
+                    ml={{ base: 0.5, md: 1 }}
                   >
                     post
                   </Link>
                   {":"}
-                  <Text as="span" color="green.300" fontWeight="bold" ml={1}>
+                  <Text as="span" color="green.300" fontWeight="bold" ml={{ base: 0.5, md: 1 }}>
                     {(() => {
                       const match = notification.msg.match(/\(([^)]+)\)/);
                       return match && match[1] ? `(${match[1]})` : "";
@@ -393,14 +396,14 @@ export default function NotificationItem({
                       as="span"
                       color="green.300"
                       fontWeight="normal"
-                      ml={2}
-                      fontSize="sm"
+                      ml={{ base: 0.5, md: 1 }}
+                      fontSize={{ base: "2xs", md: "xs" }}
                     >
                       &quot;{postContent.replace(/\n/g, " ").slice(0, 100)}
                       {postContent.length > 100 ? "…" : ""}&quot;
                     </Text>
                   )}
-                  <Text as="span" fontSize="xs" color="gray.400" ml={2}>
+                  <Text as="span" fontSize={{ base: "2xs", md: "xs" }} color="gray.400" ml={{ base: 1, md: 2 }}>
                     {formattedDate}
                   </Text>
                 </Text>
@@ -409,10 +412,12 @@ export default function NotificationItem({
               <Box>
                 <Text
                   color={isNew ? "accent" : "primary"}
-                  fontSize="sm"
+                  fontSize={{ base: "xs", md: "sm" }}
                   display="flex"
                   alignItems="center"
                   flexWrap="wrap"
+                  noOfLines={2}
+                  wordBreak="break-word"
                 >
                   <Link
                     href={`/@${author}`}
@@ -422,7 +427,7 @@ export default function NotificationItem({
                   >
                     {notification.msg.replace(/^@/, "").split(" ")[0]}
                   </Link>
-                  <Text as="span" ml={1}>
+                  <Text as="span" ml={{ base: 0.5, md: 1 }}>
                     replied to your
                   </Text>
                   <Link
@@ -430,7 +435,7 @@ export default function NotificationItem({
                     color={isNew ? "accent" : "primary"}
                     fontWeight="bold"
                     _hover={{ textDecoration: "underline" }}
-                    ml={1}
+                    ml={{ base: 0.5, md: 1 }}
                   >
                     comment
                   </Link>
@@ -439,12 +444,12 @@ export default function NotificationItem({
                     ` "${parentPost.body.replace(/\n/g, " ").slice(0, 100)}${
                       parentPost.body.length > 100 ? "…" : ""
                     }"`}
-                  <Text as="span" fontSize="xs" color="gray.400" ml={2}>
+                  <Text as="span" fontSize={{ base: "2xs", md: "xs" }} color="gray.400" ml={{ base: 1, md: 2 }}>
                     {formattedDate}
                   </Text>
                 </Text>
                 {reply && (
-                  <Text fontSize="lg" color="green.300" mt={1}>
+                  <Text fontSize={{ base: "xs", md: "sm" }} color="green.300" mt={1}>
                     {postContent}
                   </Text>
                 )}
@@ -453,10 +458,12 @@ export default function NotificationItem({
               <Box>
                 <Text
                   color={isNew ? "accent" : "primary"}
-                  fontSize="sm"
+                  fontSize={{ base: "xs", md: "sm" }}
                   display="flex"
                   alignItems="center"
                   flexWrap="wrap"
+                  noOfLines={2}
+                  wordBreak="break-word"
                 >
                   <Link
                     href={`/@${author}`}
@@ -466,7 +473,7 @@ export default function NotificationItem({
                   >
                     {notification.msg.replace(/^@/, "").split(" ")[0]}
                   </Link>
-                  <Text as="span" ml={1}>
+                  <Text as="span" ml={{ base: 0.5, md: 1 }}>
                     mentioned you in
                   </Text>
                   {parentPost?.title && (
@@ -475,13 +482,13 @@ export default function NotificationItem({
                       color={isNew ? "accent" : "primary"}
                       fontWeight="bold"
                       _hover={{ textDecoration: "underline" }}
-                      ml={1}
+                      ml={{ base: 0.5, md: 1 }}
                     >
                       {parentPost.title}
                     </Link>
                   )}
                   {":"}
-                  <Text as="span" fontSize="xs" color="gray.400" ml={2}>
+                  <Text as="span" fontSize={{ base: "2xs", md: "xs" }} color="gray.400" ml={{ base: 1, md: 2 }}>
                     {formattedDate}
                   </Text>
                 </Text>
@@ -490,10 +497,12 @@ export default function NotificationItem({
               <Box>
                 <Text
                   color={isNew ? "accent" : "primary"}
-                  fontSize="sm"
+                  fontSize={{ base: "xs", md: "sm" }}
                   display="flex"
                   alignItems="center"
                   flexWrap="wrap"
+                  noOfLines={2}
+                  wordBreak="break-word"
                 >
                   <Link
                     href={`/@${author}`}
@@ -503,7 +512,7 @@ export default function NotificationItem({
                   >
                     {notification.msg.replace(/^@/, "").split(" ")[0]}
                   </Link>
-                  <Text as="span" ml={1}>
+                  <Text as="span" ml={{ base: 0.5, md: 1 }}>
                     replied to your
                   </Text>
                   <Link
@@ -511,7 +520,7 @@ export default function NotificationItem({
                     color={isNew ? "accent" : "primary"}
                     fontWeight="bold"
                     _hover={{ textDecoration: "underline" }}
-                    ml={1}
+                    ml={{ base: 0.5, md: 1 }}
                   >
                     post
                   </Link>
@@ -520,12 +529,12 @@ export default function NotificationItem({
                     ` "${parentPost.title.slice(0, 100)}${
                       parentPost.title.length > 100 ? "…" : ""
                     }"`}
-                  <Text as="span" fontSize="xs" color="gray.400" ml={2}>
+                  <Text as="span" fontSize={{ base: "2xs", md: "xs" }} color="gray.400" ml={{ base: 1, md: 2 }}>
                     {formattedDate}
                   </Text>
                 </Text>
                 {reply && (
-                  <Text fontSize="lg" color="green.300" mt={1}>
+                  <Text fontSize={{ base: "xs", md: "sm" }} color="green.300" mt={1}>
                     {postContent}
                   </Text>
                 )}
@@ -533,10 +542,11 @@ export default function NotificationItem({
             ) : (
               <Text
                 color={isNew ? "accent" : "primary"}
-                fontSize="sm"
+                fontSize={{ base: "xs", md: "sm" }}
                 noOfLines={2}
                 overflow="hidden"
                 textOverflow="ellipsis"
+                wordBreak="break-word"
               >
                 {notification.msg.replace(/^@/, "")} - {parentPost?.title}
                 {(notification.type === "reply" ||
@@ -555,19 +565,19 @@ export default function NotificationItem({
                 <VStack align="start" spacing={2} w="100%">
                   {isLoading ? (
                     <>
-                      <Skeleton height="20px" width="100%" startColor="muted" endColor="primary" />
-                      <Skeleton height="20px" width="100%" startColor="muted" endColor="primary" />
+                      <Skeleton height="16px" width="100%" startColor="muted" endColor="primary" />
+                      <Skeleton height="16px" width="100%" startColor="muted" endColor="primary" />
                     </>
                   ) : (
                     <>
                       <Text
-                        fontSize="sm"
+                        fontSize={{ base: "xs", md: "sm" }}
                         color="primary"
-                        ml={5}
+                        ml={{ base: 2, md: 5 }}
                         noOfLines={3}
                         overflow="hidden"
                         textOverflow="ellipsis"
-                        w="90%"
+                        w="100%"
                         wordBreak="break-word"
                       >
                         {postContent}
@@ -580,10 +590,10 @@ export default function NotificationItem({
           {/* Indent Reply and heart to align with main text, not all the way right */}
           {(notification.type === "reply" ||
             notification.type === "reply_comment") && (
-            <Flex mt={2} alignItems="center" w="100%" ml={8}>
+            <Flex mt={2} alignItems="center" w="100%" ml={{ base: 2, md: 8 }}>
               <Text
                 onClick={handleReplyClick}
-                fontSize="sm"
+                fontSize={{ base: "xs", md: "sm" }}
                 cursor="pointer"
                 mr={2}
               >
@@ -593,7 +603,7 @@ export default function NotificationItem({
                 aria-label={hasVoted ? "Unlike" : "Like"}
                 icon={hasVoted ? <FaHeart /> : <FaRegHeart />}
                 variant="ghost"
-                size="sm"
+                size={{ base: "xs", md: "sm" }}
                 isRound
                 alignSelf="center"
                 color={hasVoted ? "red.500" : isNew ? "accent" : "primary"}

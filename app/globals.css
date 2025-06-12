@@ -24,7 +24,7 @@ body {
       rgb(var(--background-end-rgb))
     )
     rgb(var(--background-start-rgb));
-  overflow-y: hidden !important;
+  /* Removed overflow-y: hidden !important; to allow scrolling on mobile */
   /* Hide scrollbar for all browsers */
   scrollbar-width: none; /* Firefox */
 }
