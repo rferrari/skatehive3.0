@@ -21,6 +21,7 @@ import { KeyTypes } from "@aioha/aioha";
 import "@aioha/react-ui/dist/build.css";
 import { useAccount } from "wagmi";
 import { useDisclosure } from "@chakra-ui/react";
+import { useTheme } from "@/app/themeProvider";
 
 const communityTag = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG;
 
@@ -37,9 +38,27 @@ export default function Sidebar({ newNotificationCount = 0 }) {
     onOpen: openConnectModal,
     onClose: closeConnectModal,
   } = useDisclosure();
+  const { themeName } = useTheme();
 
   const [primaryBg] = useToken("colors", ["primary"]);
-  const hoverTextColor = "black";
+  let hoverTextColor = "black";
+  if (themeName === "windows95") hoverTextColor = "background";
+  else if (themeName === "nounish") hoverTextColor = "secondary";
+  else if (themeName === "hiveBR") hoverTextColor = "accent";
+
+  const logoColor = themeName === "nounish" ? "secondary" : undefined;
+  const nounishSvgStyle = themeName === "nounish"
+    ? `<style>
+        .cls-7 { fill: var(--chakra-colors-secondary) !important; }
+        .cls-5 { fill: var(--chakra-colors-text) !important; }
+      </style>`
+    : '';
+
+  const hivebrSvgStyle = themeName === "hiveBR"
+    ? `<style>
+        .cls-5 { fill: var(--chakra-colors-accent) !important; }
+      </style>`
+    : '';
 
   useEffect(() => {
     setBellAnimating(newNotificationCount > 0);
@@ -81,7 +100,7 @@ export default function Sidebar({ newNotificationCount = 0 }) {
             viewBox="0 0 648 648"
             width="80%"
             height="auto"
-            style={{ marginTop: 0 }}
+            style={{ marginTop: 0, color: logoColor }}
           >
             <defs>
               <style>{`
@@ -96,10 +115,25 @@ export default function Sidebar({ newNotificationCount = 0 }) {
                 .cls-8 { fill: #afaeae; }
                 .cls-9 { fill: #fff; }
               `}</style>
+              {themeName === 'nounish' && (
+                <style>{`.cls-7 { fill: var(--chakra-colors-secondary) !important; } .cls-5 { fill: var(--chakra-colors-text) !important; }`}</style>
+              )}
+              {themeName === 'hiveBR' && (
+                <style>{`.cls-5 { fill: var(--chakra-colors-accent) !important; }`}</style>
+              )}
               <linearGradient id="linear-gradient" x1="73.65" y1="331.36" x2="574.37" y2="331.36" gradientTransform="translate(0 648) scale(1 -1)" gradientUnits="userSpaceOnUse">
-                <stop offset="0" stopColor="#1b1b1b"/>
-                <stop offset=".6" stopColor="#626262"/>
-                <stop offset="1" stopColor="#a4a4a4"/>
+                {themeName === 'hiveBR' ? (
+                  <>
+                    <stop offset="0" stopColor="var(--chakra-colors-primary)"/>
+                    <stop offset="1" stopColor="var(--chakra-colors-secondary)"/>
+                  </>
+                ) : (
+                  <>
+                    <stop offset="0" stopColor="#1b1b1b"/>
+                    <stop offset=".6" stopColor="#626262"/>
+                    <stop offset="1" stopColor="#a4a4a4"/>
+                  </>
+                )}
               </linearGradient>
             </defs>
             <path className="cls-8" d="M294.54,309.27v-14.72h-29.46v44.18h29.46v-14.72h14.73v-14.73h-14.73Z"/>

@@ -41,27 +41,44 @@ const MatrixOverlay: React.FC<{ coverMode?: boolean }> = ({ coverMode = false })
         animationFrameId = requestAnimationFrame(draw);
         return;
       }
-      // Use theme background color with alpha for fade effect
+      // Use theme background color for fade effect (linear-gradient)
       let bgColor = getComputedStyle(document.body).getPropertyValue('--chakra-colors-background').trim();
-      // Convert hex to rgba with alpha if possible, else fallback
-      function hexToRgba(hex: string, alpha: number) {
-        hex = hex.replace('#', '');
-        if (hex.length === 3) {
-          hex = hex.split('').map((x: string) => x + x).join('');
+      let borderColor = getComputedStyle(document.body).getPropertyValue('--chakra-colors-border').trim() || '#e0e0e0';
+      // If background is a gradient, use it as a fillStyle
+      let fadeStyle: string | CanvasGradient = bgColor;
+      if (bgColor.startsWith('linear-gradient')) {
+        // Create a canvas gradient matching the CSS linear-gradient
+        // For simplicity, parse the two color stops from the gradient string
+        const match = bgColor.match(/linear-gradient\(45deg,\s*(#[0-9a-fA-F]{6}),\s*(#[0-9a-fA-F]{6})/);
+        if (match && ctx) {
+          const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+          grad.addColorStop(0, match[1]);
+          grad.addColorStop(1, match[2]);
+          fadeStyle = grad;
         }
-        if (hex.length !== 6) return `rgba(0,0,0,${alpha})`;
-        const r = parseInt(hex.substring(0,2), 16);
-        const g = parseInt(hex.substring(2,4), 16);
-        const b = parseInt(hex.substring(4,6), 16);
-        return `rgba(${r},${g},${b},${alpha})`;
+      } else if (bgColor.startsWith('#')) {
+        // fallback to rgba with alpha for solid color
+        function hexToRgba(hex: string, alpha: number) {
+          hex = hex.replace('#', '');
+          if (hex.length === 3) {
+            hex = hex.split('').map((x: string) => x + x).join('');
+          }
+          if (hex.length !== 6) return `rgba(0,0,0,${alpha})`;
+          const r = parseInt(hex.substring(0,2), 16);
+          const g = parseInt(hex.substring(2,4), 16);
+          const b = parseInt(hex.substring(4,6), 16);
+          return `rgba(${r},${g},${b},${alpha})`;
+        }
+        fadeStyle = hexToRgba(bgColor, 0.1);
+      } else {
+        fadeStyle = bgColor ? bgColor : 'rgba(0,0,0,0.1)';
       }
-      let fadeStyle = bgColor.startsWith('#') ? hexToRgba(bgColor, 0.1) : (bgColor ? bgColor : 'rgba(0,0,0,0.1)');
       ctx.fillStyle = fadeStyle;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.font = fontSize + "px monospace";
-      // Use theme primary color for matrix text
-      let matrixColor = getComputedStyle(document.body).getPropertyValue('--chakra-colors-primary').trim() || '#00FF41';
-      ctx.fillStyle = matrixColor;
+      let textColor = getComputedStyle(document.body).getPropertyValue('--chakra-colors-text').trim() || '#212121';
+      // Use theme text color for matrix text
+      ctx.fillStyle = textColor;
       for (let i = 0; i < drops.length; i++) {
         const text = letters[Math.floor(Math.random() * letters.length)];
         ctx.fillText(text, i * fontSize, drops[i] * fontSize);
