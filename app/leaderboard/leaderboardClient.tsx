@@ -154,13 +154,13 @@ export default function LeaderboardClient({ skatersData }: Props) {
     },
     {
       key: 'nfts',
-      label: "NFTs",
+      label: "SKTHV NFTs",
       color: "primary",
       value: (skater: SkaterData) => skater.skatehive_nft_balance,
     },
     {
       key: 'gnars',
-      label: "Gnars",
+      label: "Gnars NFTs",
       color: "primary",
       value: (skater: SkaterData) => skater.gnars_votes,
     },
@@ -179,13 +179,11 @@ export default function LeaderboardClient({ skatersData }: Props) {
     },
     {
       key: 'eth',
-      label: "ETH",
+      label: "ETH Connect",
       color: "primary",
       value: (skater: SkaterData) =>
         skater.eth_address
-          ? skater.eth_address.slice(0, 6) +
-            "..." +
-            skater.eth_address.slice(-4)
+          ? '...' + skater.eth_address.slice(-4)
           : "-",
     },
     {
@@ -196,20 +194,20 @@ export default function LeaderboardClient({ skatersData }: Props) {
     },
     {
       key: 'donations',
-      label: "Donations ($)",
+      label: "Giveth Donation",
       color: "primary",
       value: (skater: SkaterData) => formatNumber(skater.giveth_donations_usd),
     },
     {
       key: 'witness',
-      label: "Witness",
+      label: "Witness Vote",
       color: "primary",
       value: (skater: SkaterData) =>
         skater.has_voted_in_witness ? "✅" : "❌",
     },
     {
       key: 'last_updated',
-      label: "Last Updated",
+      label: "Last Update",
       color: "primary",
       value: (skater: SkaterData) => getTimeSince(skater.last_updated),
     },
@@ -337,18 +335,18 @@ export default function LeaderboardClient({ skatersData }: Props) {
             {/* Table Header */}
             <Flex>
               <Box
-                minW="260px"
-                maxW="260px"
+                minW="190px"
+                maxW="190px"
                 position="sticky"
                 left={0}
                 zIndex={2}
                 bg={"background"}
-                py={2}
-                px={4}
+                py={1}
+                px={2}
                 display="flex"
                 alignItems="center"
                 fontWeight="bold"
-                fontSize="md"
+                fontSize="sm"
                 borderRight="2px solid var(--chakra-colors-border)"
                 color="primary"
               >
@@ -357,8 +355,9 @@ export default function LeaderboardClient({ skatersData }: Props) {
               {statColumns.map((col, i) => (
                 <Box
                   key={col.key}
-                  minW={i === 0 ? "120px" : "60px"}
-                  px={i === 0 ? 2 : 1}
+                  minW="70px"
+                  maxW="70px"
+                  px={1}
                   py={2}
                   fontWeight="bold"
                   fontSize="xs"
@@ -384,40 +383,40 @@ export default function LeaderboardClient({ skatersData }: Props) {
                   >
                     {/* Sticky Skater Info */}
                     <Box
-                      minW="260px"
-                      maxW="260px"
+                      minW="190px"
+                      maxW="190px"
                       position="sticky"
                       left={0}
                       zIndex={1}
                       bg={"background"}
-                      py={3}
-                      px={4}
+                      py={2}
+                      px={2}
                       display="flex"
                       alignItems="center"
-                      gap={4}
+                      gap={2}
                       borderRight="2px solid var(--chakra-colors-border)"
                     >
-                      <Box w="36px" textAlign="center">
+                      <Box w="28px" textAlign="center">
                         {getRankIcon(rank)}
                       </Box>
                       <Avatar
                         src={`https://images.hive.blog/u/${skater.hive_author}/avatar/small`}
                         name={skater.hive_author}
-                        size="md"
-                        mr={2}
+                        size="sm"
+                        mr={1}
                       />
                       <Box minW={0}>
                         <Text
                           color="primary"
                           fontWeight="bold"
-                          fontSize="md"
+                          fontSize="sm"
                           isTruncated
                           maxW="100px"
                         >
                           {skater.hive_author}
                         </Text>
-                        <Text color="text" fontSize="xs">
-                          Last post: {getTimeSince(skater.last_post)}
+                        <Text color="text" fontSize="xs" lineHeight={1}>
+                          Last: {getTimeSince(skater.last_post)}
                         </Text>
                       </Box>
                     </Box>
@@ -425,8 +424,9 @@ export default function LeaderboardClient({ skatersData }: Props) {
                     {statColumns.map((col, i) => (
                       <Box
                         key={col.key}
-                        minW={i === 0 ? "120px" : "60px"}
-                        px={i === 0 ? 2 : 1}
+                        minW="70px"
+                        maxW="70px"
+                        px={1}
                         py={3}
                         color={col.color}
                         textAlign="center"
