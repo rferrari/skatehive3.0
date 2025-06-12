@@ -106,7 +106,7 @@ export default function LeaderboardClient({ skatersData }: Props) {
     if (rank === 3) return <Text fontSize="2xl">🥉</Text>;
     return (
       <Badge colorScheme="primary" fontSize="lg" fontWeight="bold" px={2}>
-        #{rank}
+        {rank}
       </Badge>
     );
   };
@@ -220,12 +220,13 @@ export default function LeaderboardClient({ skatersData }: Props) {
         onClose={() => setIsRulesOpen(false)}
       />
       <Box
-        minH="100vh"
+        maxH="100vh"
+        overflowY="auto"
         bg={"background"}
         color="primary"
         fontFamily="mono"
         transition="filter 0.3s, opacity 0.3s"
-        style={isRulesOpen ? { filter: 'blur(8px)', opacity: 0.3, pointerEvents: 'none' } : { overflowY: 'hidden' }}
+        style={isRulesOpen ? { filter: 'blur(8px)', opacity: 0.3, pointerEvents: 'none' } : {}}
         sx={{
           '&::-webkit-scrollbar': { display: 'none' },
           'scrollbarWidth': 'none',
