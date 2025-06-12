@@ -12,6 +12,8 @@ import {
 } from "@chakra-ui/react";
 import { ArrowBackIcon } from "@chakra-ui/icons";
 import RulesModal from "./RulesModal";
+import React from "react";
+
 interface SkaterData {
   id: number;
   hive_author: string;
@@ -132,43 +134,51 @@ export default function LeaderboardClient({ skatersData }: Props) {
   // Add more stat columns here
   const statColumns = [
     {
+      key: 'points',
       label: "🏆 Points",
       color: "accent",
-      value: (skater: SkaterData) => skater.points,
+      value: (skater: SkaterData) => Math.round(skater.points),
     },
     {
-      label: "⚡ Power",
+      key: 'power',
+      label: <img src="/images/hp_logo.png" alt="HP" style={{ display: 'inline', height: '18px', verticalAlign: 'middle' }} />,
       color: "primary",
       value: (skater: SkaterData) =>
         formatNumber(skater.hp_balance + skater.max_voting_power_usd),
     },
     {
+      key: 'posts',
       label: "Posts",
       color: "primary",
       value: (skater: SkaterData) => skater.post_count,
     },
     {
+      key: 'nfts',
       label: "NFTs",
       color: "primary",
       value: (skater: SkaterData) => skater.skatehive_nft_balance,
     },
     {
+      key: 'gnars',
       label: "Gnars",
       color: "primary",
       value: (skater: SkaterData) => skater.gnars_votes,
     },
     {
-      label: "HBD",
+      key: 'hbd',
+      label: <img src="/images/hbd_savings.png" alt="HBD" style={{ display: 'inline', height: '18px', verticalAlign: 'middle' }} />,
       color: "primary",
       value: (skater: SkaterData) =>
         formatNumber(skater.hbd_balance + skater.hbd_savings_balance),
     },
     {
+      key: 'hive',
       label: "Hive",
       color: "primary",
       value: (skater: SkaterData) => formatNumber(skater.hive_balance),
     },
     {
+      key: 'eth',
       label: "ETH",
       color: "primary",
       value: (skater: SkaterData) =>
@@ -179,22 +189,26 @@ export default function LeaderboardClient({ skatersData }: Props) {
           : "-",
     },
     {
+      key: 'gnars_balance',
       label: "Gnars Bal",
       color: "primary",
       value: (skater: SkaterData) => skater.gnars_balance,
     },
     {
+      key: 'donations',
       label: "Donations ($)",
       color: "primary",
       value: (skater: SkaterData) => formatNumber(skater.giveth_donations_usd),
     },
     {
+      key: 'witness',
       label: "Witness",
       color: "primary",
       value: (skater: SkaterData) =>
         skater.has_voted_in_witness ? "✅" : "❌",
     },
     {
+      key: 'last_updated',
       label: "Last Updated",
       color: "primary",
       value: (skater: SkaterData) => getTimeSince(skater.last_updated),
@@ -203,57 +217,65 @@ export default function LeaderboardClient({ skatersData }: Props) {
 
   return (
     <>
-      {isRulesOpen && (
-        <RulesModal
-          isOpen={isRulesOpen}
-          onClose={() => setIsRulesOpen(false)}
-        />
-      )}
-      <Box minH="100vh" bg={"background"} color="primary" fontFamily="mono">
+      <RulesModal
+        isOpen={isRulesOpen}
+        onClose={() => setIsRulesOpen(false)}
+      />
+      <Box
+        minH="100vh"
+        bg={"background"}
+        color="primary"
+        fontFamily="mono"
+        transition="filter 0.3s, opacity 0.3s"
+        style={isRulesOpen ? { filter: 'blur(8px)', opacity: 0.3, pointerEvents: 'none' } : { overflowY: 'hidden' }}
+        sx={{
+          '&::-webkit-scrollbar': { display: 'none' },
+          'scrollbarWidth': 'none',
+        }}
+      >
         {/* Header */}
         <Box
-          px={{ base: 2, md: 8 }}
-          py={8}
+          px={{ base: 1, md: 2 }}
+          pt={2}
+          pb={2}
           bg={"background"}
           maxW="100wh"
           mx="0"
           borderRadius="xl"
         >
-          <Flex align="center" gap={6} mb={6}>
-            <IconButton
-              aria-label="Back"
-              icon={<ArrowBackIcon />}
-              variant="ghost"
-              colorScheme="primary"
-              fontSize="2xl"
-              _hover={{ color: "primary", bg: "background" }}
-            />
+          <Flex direction="column" align="center" justify="center" mb={2}>
             <Text
-              fontSize={{ base: "2xl", md: "3xl" }}
-              fontWeight="bold"
+              fontSize={{ base: "4xl", md: "7xl" }}
+              fontWeight="extrabold"
               color="primary"
               letterSpacing="wider"
+              textAlign="center"
+              mb={1}
+              style={{ textTransform: 'uppercase' }}
             >
               Skatehive Leaderboard
             </Text>
-          </Flex>
-          <Flex justify="center" mb={8}>
-            <Text color="primary" fontSize="xl" textAlign="center">
-              We are {skatersData.length} skaters supporting ourselves. 🛹
+            <Text
+              color="primary"
+              fontSize={{ base: "xs", md: "sm" }}
+              fontStyle="italic"
+              textAlign="center"
+              mb={0}
+            >
+              We are {skatersData.length} skaters supporting each other. 🛹
             </Text>
           </Flex>
           {/* Sort Options */}
-          <Flex justify="space-between" mb={6}>
-            <Box minW="220px">
-              <Text color="primary" fontSize="sm" mb={1} fontWeight="bold">
+          <Flex justify="space-between" align="center" mb={4}>
+            <Flex align="center" gap={2}>
+              <Text color="primary" fontSize="sm" fontWeight="bold" mb={0}>
                 Sort by:
               </Text>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as SortOption)}
                 style={{
-                  width: "100%",
-                  padding: "8px",
+                  padding: "4px 10px",
                   borderRadius: "8px",
                   background: "var(--chakra-colors-background)",
                   color: "var(--chakra-colors-primary)",
@@ -263,6 +285,8 @@ export default function LeaderboardClient({ skatersData }: Props) {
                   appearance: "none",
                   outline: "none",
                   cursor: "pointer",
+                  fontSize: "1em",
+                  minWidth: 0,
                 }}
               >
                 <option value="points">🏆 Points</option>
@@ -278,22 +302,24 @@ export default function LeaderboardClient({ skatersData }: Props) {
                 <option value="witness">🗳️ Witness</option>
                 <option value="last_updated">⏰ Last Updated</option>
               </select>
-            </Box>
+            </Flex>
             <button
               onClick={() => setIsRulesOpen(true)}
               style={{
-                minWidth: "120px",
-                padding: "8px",
+                padding: "4px 16px",
                 borderRadius: "8px",
                 background: "var(--chakra-colors-background)",
                 color: "var(--chakra-colors-primary)",
                 border: "1px solid var(--chakra-colors-border)",
                 fontFamily: "inherit",
                 fontWeight: "bold",
-                fontSize: "1rem",
+                fontSize: "0.95em",
                 cursor: "pointer",
-                marginLeft: "16px",
+                marginLeft: "8px",
                 transition: "background 0.2s, color 0.2s",
+                minWidth: 0,
+                height: "32px",
+                lineHeight: 1,
               }}
             >
               Rules
@@ -304,11 +330,8 @@ export default function LeaderboardClient({ skatersData }: Props) {
         <Box
           overflowX="auto"
           borderRadius="xl"
-          borderWidth={1}
-          borderColor="border"
           bg={"background"}
           py={2}
-          // Remove maxW and mx to allow full width stretch
         >
           <Box minW="1100px">
             {/* Table Header */}
@@ -326,18 +349,19 @@ export default function LeaderboardClient({ skatersData }: Props) {
                 alignItems="center"
                 fontWeight="bold"
                 fontSize="md"
+                borderRight="2px solid var(--chakra-colors-border)"
                 color="primary"
               >
                 Skater
               </Box>
-              {statColumns.map((col) => (
+              {statColumns.map((col, i) => (
                 <Box
-                  key={col.label}
-                  minW="120px"
-                  px={2}
+                  key={col.key}
+                  minW={i === 0 ? "120px" : "60px"}
+                  px={i === 0 ? 2 : 1}
                   py={2}
                   fontWeight="bold"
-                  fontSize="sm"
+                  fontSize="xs"
                   color={col.color}
                   textAlign="center"
                   bg={"background"}
@@ -350,66 +374,71 @@ export default function LeaderboardClient({ skatersData }: Props) {
             {sortedSkaters.map((skater, index) => {
               const rank = index + 1;
               return (
-                <Flex
-                  key={skater.id}
-                  align="center"
-                  transition="background 0.2s"
-                >
-                  {/* Sticky Skater Info */}
-                  <Box
-                    minW="260px"
-                    maxW="260px"
-                    position="sticky"
-                    left={0}
-                    zIndex={1}
-                    bg={"background"}
-                    py={3}
-                    px={4}
-                    display="flex"
-                    alignItems="center"
-                    gap={4}
+                <React.Fragment key={skater.id}>
+                  {index === 0 && (
+                    <Box as="hr" borderTop="2px solid var(--chakra-colors-border)" my={1} />
+                  )}
+                  <Flex
+                    align="center"
+                    transition="background 0.2s"
                   >
-                    <Box w="36px" textAlign="center">
-                      {getRankIcon(rank)}
-                    </Box>
-                    <Avatar
-                      src={`https://images.hive.blog/u/${skater.hive_author}/avatar/small`}
-                      name={skater.hive_author}
-                      size="md"
-                      mr={2}
-                    />
-                    <Box minW={0}>
-                      <Text
-                        color="primary"
-                        fontWeight="bold"
-                        fontSize="md"
-                        isTruncated
-                        maxW="100px"
-                      >
-                        {skater.hive_author}
-                      </Text>
-                      <Text color="text" fontSize="xs">
-                        Last post: {getTimeSince(skater.last_post)}
-                      </Text>
-                    </Box>
-                  </Box>
-                  {/* Stats */}
-                  {statColumns.map((col) => (
+                    {/* Sticky Skater Info */}
                     <Box
-                      key={col.label}
-                      minW="120px"
-                      px={2}
-                      py={3}
-                      color={col.color}
-                      textAlign="center"
-                      fontWeight="semibold"
-                      fontSize="md"
+                      minW="260px"
+                      maxW="260px"
+                      position="sticky"
+                      left={0}
+                      zIndex={1}
                       bg={"background"}
+                      py={3}
+                      px={4}
+                      display="flex"
+                      alignItems="center"
+                      gap={4}
+                      borderRight="2px solid var(--chakra-colors-border)"
                     >
-                      {col.value(skater)}
+                      <Box w="36px" textAlign="center">
+                        {getRankIcon(rank)}
+                      </Box>
+                      <Avatar
+                        src={`https://images.hive.blog/u/${skater.hive_author}/avatar/small`}
+                        name={skater.hive_author}
+                        size="md"
+                        mr={2}
+                      />
+                      <Box minW={0}>
+                        <Text
+                          color="primary"
+                          fontWeight="bold"
+                          fontSize="md"
+                          isTruncated
+                          maxW="100px"
+                        >
+                          {skater.hive_author}
+                        </Text>
+                        <Text color="text" fontSize="xs">
+                          Last post: {getTimeSince(skater.last_post)}
+                        </Text>
+                      </Box>
                     </Box>
-                  ))}
-                </Flex>
+                    {/* Stats */}
+                    {statColumns.map((col, i) => (
+                      <Box
+                        key={col.key}
+                        minW={i === 0 ? "120px" : "60px"}
+                        px={i === 0 ? 2 : 1}
+                        py={3}
+                        color={col.color}
+                        textAlign="center"
+                        fontWeight="semibold"
+                        fontSize="sm"
+                        bg={"background"}
+                      >
+                        {col.value(skater)}
+                      </Box>
+                    ))}
+                  </Flex>
+                </React.Fragment>
               );
             })}
           </Box>

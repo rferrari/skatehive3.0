@@ -2,11 +2,12 @@
 import { Container, Box } from '@chakra-ui/react';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Discussion } from '@hiveio/dhive';
-import { findPosts } from '@/lib/hive/client-functions';
+import { findPosts, getPayoutValue } from '@/lib/hive/client-functions';
 import TopBar from '@/components/blog/TopBar';
 import PostInfiniteScroll from '@/components/blog/PostInfiniteScroll';
 import { useSearchParams } from 'next/navigation';
 import JoinSkatehiveBanner from '@/components/blog/JoinSkatehiveBanner';
+import PostGrid from '@/components/blog/PostGrid';
 
 export default function Blog() {
     const searchParams = useSearchParams();
@@ -18,6 +19,7 @@ export default function Blog() {
     const [query, setQuery] = useState("created");
     const [allPosts, setAllPosts] = useState<Discussion[]>([]);
     const isFetching = useRef(false);
+    const [isGoatLoading, setIsGoatLoading] = useState(false);
 
     const tag = process.env.NEXT_PUBLIC_HIVE_SEARCH_TAG
 
@@ -30,19 +32,64 @@ export default function Blog() {
         }
     ]);
 
-    // 1. Move fetchPosts outside and wrap in useCallback
+    const fetchGoatPosts = useCallback(async () => {
+        setIsGoatLoading(true);
+        setAllPosts([]);
+        params.current = [{
+            tag: tag,
+            limit: 100,
+            start_author: '',
+            start_permlink: '',
+        }];
+        let allFetchedPosts: Discussion[] = [];
+        let keepFetching = true;
+        let batchCount = 0;
+        const maxBatches = 10; // 10 batches x 100 = 1000 posts
+        while (keepFetching && batchCount < maxBatches) {
+            const posts = await findPosts('created', params.current);
+            if (!posts || posts.length === 0) break;
+            allFetchedPosts = [...allFetchedPosts, ...posts];
+            // Remove duplicates by permlink
+            const uniquePosts = Array.from(new Map(allFetchedPosts.map(p => [p.author + '/' + p.permlink, p])).values());
+            // Sort by payout
+            const sorted = uniquePosts.sort((a, b) => Number(getPayoutValue(b)) - Number(getPayoutValue(a)));
+            // Show top 12 so far
+            setAllPosts(sorted.slice(0, 12));
+            // Prepare for next batch
+            params.current = [{
+                tag: tag,
+                limit: 100,
+                start_author: posts[posts.length - 1].author,
+                start_permlink: posts[posts.length - 1].permlink,
+            }];
+            batchCount++;
+            if (posts.length < 100) break;
+            // Optionally, add a small delay to avoid rate limits
+            await new Promise(res => setTimeout(res, 300));
+        }
+        setIsGoatLoading(false);
+    }, [tag]);
+
     const fetchPosts = useCallback(async () => {
+        if (query === 'goat') {
+            fetchGoatPosts();
+            return;
+        }
         if (isFetching.current) return; // Prevent multiple fetches
         isFetching.current = true;
         try {
-            const posts = await findPosts(query, params.current);
-            if (posts.length > 0) {
-                setAllPosts(prevPosts => [...prevPosts, ...posts]);
+            const posts = await findPosts(query === 'highest_paid' ? 'created' : query, params.current);
+            let sortedPosts = posts;
+            if (query === 'highest_paid') {
+                sortedPosts = [...posts].sort((a, b) => Number(getPayoutValue(b)) - Number(getPayoutValue(a)));
+            }
+            if (sortedPosts.length > 0) {
+                setAllPosts(prevPosts => [...prevPosts, ...sortedPosts]);
                 params.current = [{
                     tag: tag,
                     limit: 12,
-                    start_author: posts[posts.length - 1].author,
-                    start_permlink: posts[posts.length - 1].permlink,
+                    start_author: sortedPosts[sortedPosts.length - 1].author,
+                    start_permlink: sortedPosts[sortedPosts.length - 1].permlink,
                 }];
             }
         } catch (error) {
@@ -50,7 +97,7 @@ export default function Blog() {
         } finally {
             isFetching.current = false;
         }
-    }, [query, tag]);
+    }, [query, tag, fetchGoatPosts]);
 
     useEffect(() => {
         setAllPosts([]);
@@ -60,8 +107,12 @@ export default function Blog() {
             start_author: '',
             start_permlink: '',
         }];
-        fetchPosts();
-    }, [fetchPosts, tag]);
+        if (query === 'goat') {
+            fetchGoatPosts();
+        } else {
+            fetchPosts();
+        }
+    }, [fetchPosts, fetchGoatPosts, query, tag]);
 
     // Detect mobile and force grid view
     useEffect(() => {
@@ -98,7 +149,16 @@ export default function Blog() {
                     setViewMode(mode);
                 }
             }} setQuery={setQuery} />
-            <PostInfiniteScroll allPosts={allPosts} fetchPosts={fetchPosts} viewMode={viewMode} context="blog" />
+            {isGoatLoading && query === 'goat' && (
+                <Box textAlign="center" color="primary" py={4} fontWeight="bold">
+                    Scanning for GOAT posts...
+                </Box>
+            )}
+            {query === 'goat' ? (
+                <PostGrid posts={allPosts} columns={3} />
+            ) : (
+                <PostInfiniteScroll allPosts={allPosts} fetchPosts={fetchPosts} viewMode={viewMode} context="blog" />
+            )}
         </Box>
     );
 }

@@ -119,8 +119,8 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
               🧮 Total Points Formula
             </Text>
             <Box
-              bg="primary"
-              color="primary"
+              bg="accent"
+              color="background"
               borderRadius="md"
               p={3}
               fontSize="sm"
@@ -128,7 +128,7 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
               mb={4}
               textAlign="center"
             >
-              <Text>
+              <Text color="inherit">
                 <b>Total Points</b> = All category points added together
                 <br />
                 <span style={{ fontSize: "0.95em" }}>

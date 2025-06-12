@@ -18,7 +18,7 @@ export default function TopBar({ viewMode, setViewMode, setQuery }: TopBarProps)
     const isMagazinePage = pathname === '/magazine';
 
     return (
-        <Flex justifyContent="space-between" mb={4} alignItems="center">
+        <Flex justifyContent="space-between" mb={4} alignItems="center" pt={4} pl={8} pr={4}>
             <Flex flex="1" alignItems="center">
                 {user && (
                     <IconButton
@@ -93,7 +93,8 @@ export default function TopBar({ viewMode, setViewMode, setQuery }: TopBarProps)
                     <MenuList zIndex="popover">
                         <MenuItem onClick={() => setQuery('created')}>Recent</MenuItem>
                         <MenuItem onClick={() => setQuery('trending')}>Trending</MenuItem>
-                        <MenuItem onClick={() => setQuery('hot')}>Hot</MenuItem>
+                        <MenuItem onClick={() => setQuery('highest_paid')}>Highest Paid</MenuItem>
+                        <MenuItem onClick={() => setQuery('goat')}>GOAT</MenuItem>
                     </MenuList>
                 </Menu>
             </Flex>
