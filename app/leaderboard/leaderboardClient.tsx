@@ -9,6 +9,7 @@ import {
   Badge,
   useToast,
   Image,
+  Link,
 } from "@chakra-ui/react";
 import RulesModal from "./RulesModal";
 import React from "react";
@@ -193,6 +194,12 @@ export default function LeaderboardClient({ skatersData }: Props) {
       value: (skater: SkaterData) => skater.skatehive_nft_balance,
     },
     {
+      key: "gnars_balance",
+      label: "Gnars NFTs",
+      color: "primary",
+      value: (skater: SkaterData) => skater.gnars_balance,
+    },
+    {
       key: "gnars",
       label: "Gnars Votes",
       color: "primary",
@@ -216,12 +223,6 @@ export default function LeaderboardClient({ skatersData }: Props) {
       label: "Hive",
       color: "primary",
       value: (skater: SkaterData) => formatNumber(skater.hive_balance),
-    },
-    {
-      key: "gnars_balance",
-      label: "Gnars Bal",
-      color: "primary",
-      value: (skater: SkaterData) => skater.gnars_balance,
     },
     {
       key: "donations",
@@ -330,11 +331,11 @@ export default function LeaderboardClient({ skatersData }: Props) {
                 <option value="power">⚡ Power</option>
                 <option value="posts">💬 Posts</option>
                 <option value="nfts">🎨 NFTs</option>
-                <option value="gnars">🪙 Gnars</option>
+                <option value="gnars_balance">🟢 Gnars NFTs</option>
+                <option value="gnars">🪙 Gnars Votes</option>
                 <option value="donations">🎁 Donations</option>
                 <option value="hive">💰 Hive</option>
                 <option value="eth">🦄 ETH</option>
-                <option value="gnars_balance">🟢 Gnars Bal</option>
                 <option value="giveth_donations_usd">🎁 Donations ($)</option>
                 <option value="witness">🗳️ Witness</option>
                 <option value="last_updated">⏰ Last Updated</option>
@@ -369,8 +370,8 @@ export default function LeaderboardClient({ skatersData }: Props) {
             {/* Table Header */}
             <Flex>
               <Box
-                minW="190px"
-                maxW="190px"
+                minW="240px"
+                maxW="240px"
                 position="sticky"
                 left={0}
                 zIndex={2}
@@ -389,8 +390,8 @@ export default function LeaderboardClient({ skatersData }: Props) {
               {statColumns.map((col, i) => (
                 <Box
                   key={col.key}
-                  minW="90px"
-                  maxW="90px"
+                  minW="65px"
+                  maxW="65px"
                   px={1}
                   py={2}
                   fontWeight="bold"
@@ -418,8 +419,8 @@ export default function LeaderboardClient({ skatersData }: Props) {
                   <Flex align="center" transition="background 0.2s">
                     {/* Sticky Skater Info */}
                     <Box
-                      minW="190px"
-                      maxW="190px"
+                      minW="240px"
+                      maxW="240px"
                       position="sticky"
                       left={0}
                       zIndex={1}
@@ -442,6 +443,8 @@ export default function LeaderboardClient({ skatersData }: Props) {
                       />
                       <Box minW={0}>
                         <Text
+                          as={Link}
+                          href={`https://peakd.com/@${skater.hive_author}`}
                           color="primary"
                           fontWeight="bold"
                           fontSize="sm"
@@ -449,16 +452,19 @@ export default function LeaderboardClient({ skatersData }: Props) {
                           maxW="100px"
                           whiteSpace="normal"
                           wordBreak="break-word"
+                          target="_blank"
+                          rel="noopener noreferrer"
                         >
                           {skater.hive_author}
                         </Text>
                         {/* Ethereum identity below username */}
                         {skater.eth_address && skater.eth_address !== "0x0000000000000000000000000000000000000000" && (
                           <span
-                            style={{ fontSize: "10px", color: "#aaa", cursor: "pointer", userSelect: "all", marginTop: 0, textAlign: "left" }}
+                            style={{ fontSize: "10px", color: "#aaa", cursor: "pointer", userSelect: "all", marginTop: 0, textAlign: "left", display: "flex", alignItems: "center", gap: "2px" }}
                             onClick={() => copyToClipboard(skater.eth_address)}
                             title="Click to copy address"
                           >
+                            <Image src="/images/ethvector.svg" alt="ETH" height="12px" width="12px" style={{ marginRight: "2px", display: "inline" }} />
                             <Name address={skater.eth_address as Address} resolverOrder={resolverOrder}>{formatEthAddress(skater.eth_address)}</Name>
                           </span>
                         )}
@@ -471,8 +477,8 @@ export default function LeaderboardClient({ skatersData }: Props) {
                     {statColumns.map((col, i) => (
                       <Box
                         key={col.key}
-                        minW="90px"
-                        maxW="90px"
+                        minW="65px"
+                        maxW="65px"
                         px={1}
                         py={3}
                         color={col.color}
