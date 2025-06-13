@@ -9,10 +9,22 @@ import {
   Badge,
   IconButton,
   Button,
+  useToast,
 } from "@chakra-ui/react";
-import { ArrowBackIcon } from "@chakra-ui/icons";
 import RulesModal from "./RulesModal";
 import React from "react";
+import { Name, IdentityResolver } from "@paperclip-labs/whisk-sdk/identity";
+import { Address } from "viem";
+
+const resolverOrder = [
+  IdentityResolver.Farcaster,
+  IdentityResolver.Nns,
+  IdentityResolver.Ens,
+  IdentityResolver.Base,
+  IdentityResolver.Lens,
+  IdentityResolver.Uni,
+  IdentityResolver.World,
+];
 
 interface SkaterData {
   id: number;
@@ -56,6 +68,23 @@ type SortOption =
 export default function LeaderboardClient({ skatersData }: Props) {
   const [sortBy, setSortBy] = useState<SortOption>("points");
   const [isRulesOpen, setIsRulesOpen] = useState(false);
+  const toast = useToast();
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Address copied!",
+      status: "success",
+      duration: 2000,
+      isClosable: true,
+    });
+  };
+
+  const formatEthAddress = (address: string) => {
+    if (!address || address === "0x0000000000000000000000000000000000000000") return "-";
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  };
+
   const sortedSkaters = useMemo(() => {
     const sorted = [...skatersData].sort((a, b) => {
       switch (sortBy) {
@@ -134,91 +163,97 @@ export default function LeaderboardClient({ skatersData }: Props) {
   // Add more stat columns here
   const statColumns = [
     {
-      key: 'points',
+      key: "points",
       label: "🏆 Points",
       color: "accent",
       value: (skater: SkaterData) => Math.round(skater.points),
     },
     {
-      key: 'power',
-      label: <img src="/images/hp_logo.png" alt="HP" style={{ display: 'inline', height: '18px', verticalAlign: 'middle' }} />,
+      key: "power",
+      label: (
+        <img
+          src="/images/hp_logo.png"
+          alt="HP"
+          style={{ display: "inline", height: "18px", verticalAlign: "middle" }}
+        />
+      ),
       color: "primary",
       value: (skater: SkaterData) =>
         formatNumber(skater.hp_balance + skater.max_voting_power_usd),
     },
     {
-      key: 'posts',
+      key: "posts",
       label: "Posts",
       color: "primary",
       value: (skater: SkaterData) => skater.post_count,
     },
     {
-      key: 'nfts',
+      key: "nfts",
       label: "SKTHV NFTs",
       color: "primary",
       value: (skater: SkaterData) => skater.skatehive_nft_balance,
     },
     {
-      key: 'gnars',
-      label: "Gnars NFTs",
+      key: "gnars",
+      label: "Gnars Votes",
       color: "primary",
       value: (skater: SkaterData) => skater.gnars_votes,
     },
     {
-      key: 'hbd',
-      label: <img src="/images/hbd_savings.png" alt="HBD" style={{ display: 'inline', height: '18px', verticalAlign: 'middle' }} />,
+      key: "hbd",
+      label: (
+        <img
+          src="/images/hbd_savings.png"
+          alt="HBD"
+          style={{ display: "inline", height: "18px", verticalAlign: "middle" }}
+        />
+      ),
       color: "primary",
       value: (skater: SkaterData) =>
         formatNumber(skater.hbd_balance + skater.hbd_savings_balance),
     },
     {
-      key: 'hive',
+      key: "hive",
       label: "Hive",
       color: "primary",
       value: (skater: SkaterData) => formatNumber(skater.hive_balance),
     },
     {
-      key: 'eth',
-      label: "ETH Connect",
-      color: "primary",
-      value: (skater: SkaterData) =>
-        skater.eth_address
-          ? '...' + skater.eth_address.slice(-4)
-          : "-",
-    },
-    {
-      key: 'gnars_balance',
+      key: "gnars_balance",
       label: "Gnars Bal",
       color: "primary",
       value: (skater: SkaterData) => skater.gnars_balance,
     },
     {
-      key: 'donations',
+      key: "donations",
       label: "Giveth Donation",
       color: "primary",
       value: (skater: SkaterData) => formatNumber(skater.giveth_donations_usd),
     },
     {
-      key: 'witness',
+      key: "witness",
       label: "Witness Vote",
       color: "primary",
       value: (skater: SkaterData) =>
         skater.has_voted_in_witness ? "✅" : "❌",
     },
-    {
-      key: 'last_updated',
-      label: "Last Update",
-      color: "primary",
-      value: (skater: SkaterData) => getTimeSince(skater.last_updated),
-    },
+    // {
+    //   key: "last_updated",
+    //   label: "Last Update",
+    //   color: "primary",
+    //   value: (skater: SkaterData) => getTimeSince(skater.last_updated),
+    // },
   ];
-
+  console.log("Sorted Skaters:", sortedSkaters);
   return (
     <>
-      <RulesModal
-        isOpen={isRulesOpen}
-        onClose={() => setIsRulesOpen(false)}
-      />
+      {isRulesOpen && (
+        <RulesModal
+          isOpen={isRulesOpen}
+          onClose={() => setIsRulesOpen(false)}
+        />
+      )}
+      {/* Main Container */}
       <Box
         maxH="100vh"
         overflowY="auto"
@@ -226,10 +261,14 @@ export default function LeaderboardClient({ skatersData }: Props) {
         color="primary"
         fontFamily="mono"
         transition="filter 0.3s, opacity 0.3s"
-        style={isRulesOpen ? { filter: 'blur(8px)', opacity: 0.3, pointerEvents: 'none' } : {}}
+        style={
+          isRulesOpen
+            ? { filter: "blur(8px)", opacity: 0.3, pointerEvents: "none" }
+            : {}
+        }
         sx={{
-          '&::-webkit-scrollbar': { display: 'none' },
-          'scrollbarWidth': 'none',
+          "&::-webkit-scrollbar": { display: "none" },
+          scrollbarWidth: "none",
         }}
       >
         {/* Header */}
@@ -250,7 +289,7 @@ export default function LeaderboardClient({ skatersData }: Props) {
               letterSpacing="wider"
               textAlign="center"
               mb={1}
-              style={{ textTransform: 'uppercase' }}
+              style={{ textTransform: "uppercase" }}
             >
               Skatehive Leaderboard
             </Text>
@@ -326,12 +365,7 @@ export default function LeaderboardClient({ skatersData }: Props) {
           </Flex>
         </Box>
         {/* Leaderboard */}
-        <Box
-          overflowX="auto"
-          borderRadius="xl"
-          bg={"background"}
-          py={2}
-        >
+        <Box overflowX="auto" borderRadius="xl" bg={"background"} py={2}>
           <Box minW="1100px">
             {/* Table Header */}
             <Flex>
@@ -356,8 +390,8 @@ export default function LeaderboardClient({ skatersData }: Props) {
               {statColumns.map((col, i) => (
                 <Box
                   key={col.key}
-                  minW="70px"
-                  maxW="70px"
+                  minW="90px"
+                  maxW="90px"
                   px={1}
                   py={2}
                   fontWeight="bold"
@@ -376,12 +410,13 @@ export default function LeaderboardClient({ skatersData }: Props) {
               return (
                 <React.Fragment key={skater.id}>
                   {index === 0 && (
-                    <Box as="hr" borderTop="2px solid var(--chakra-colors-border)" my={1} />
+                    <Box
+                      as="hr"
+                      borderTop="2px solid var(--chakra-colors-border)"
+                      my={1}
+                    />
                   )}
-                  <Flex
-                    align="center"
-                    transition="background 0.2s"
-                  >
+                  <Flex align="center" transition="background 0.2s">
                     {/* Sticky Skater Info */}
                     <Box
                       minW="190px"
@@ -413,9 +448,21 @@ export default function LeaderboardClient({ skatersData }: Props) {
                           fontSize="sm"
                           isTruncated
                           maxW="100px"
+                          whiteSpace="normal"
+                          wordBreak="break-word"
                         >
                           {skater.hive_author}
                         </Text>
+                        {/* Ethereum identity below username */}
+                        {skater.eth_address && skater.eth_address !== "0x0000000000000000000000000000000000000000" && (
+                          <span
+                            style={{ fontSize: "10px", color: "#aaa", cursor: "pointer", userSelect: "all", marginTop: 0, textAlign: "left" }}
+                            onClick={() => copyToClipboard(skater.eth_address)}
+                            title="Click to copy address"
+                          >
+                            <Name address={skater.eth_address as Address} resolverOrder={resolverOrder}>{formatEthAddress(skater.eth_address)}</Name>
+                          </span>
+                        )}
                         <Text color="text" fontSize="xs" lineHeight={1}>
                           Last: {getTimeSince(skater.last_post)}
                         </Text>
@@ -425,8 +472,8 @@ export default function LeaderboardClient({ skatersData }: Props) {
                     {statColumns.map((col, i) => (
                       <Box
                         key={col.key}
-                        minW="70px"
-                        maxW="70px"
+                        minW="90px"
+                        maxW="90px"
                         px={1}
                         py={3}
                         color={col.color}
