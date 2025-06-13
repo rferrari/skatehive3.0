@@ -22,6 +22,7 @@ import { getPostDate } from "@/lib/utils/GetPostDate";
 import { useAioha } from "@aioha/react-ui";
 import { getPayoutValue } from "@/lib/hive/client-functions";
 import markdownRenderer from "@/lib/utils/MarkdownRenderer";
+import useHivePower from "@/hooks/useHivePower";
 
 interface PostDetailsProps {
   post: Discussion;
@@ -33,9 +34,12 @@ export default function PostDetails({ post }: PostDetailsProps) {
   const { aioha, user } = useAioha();
   const [sliderValue, setSliderValue] = useState(100);
   const [showSlider, setShowSlider] = useState(false);
+  const [activeVotes, setActiveVotes] = useState(post.active_votes || []);
+  const [payoutValue, setPayoutValue] = useState(parseFloat(getPayoutValue(post)));
   const [voted, setVoted] = useState(
     post.active_votes?.some((item) => item.voter === user)
   );
+  const { hivePower, isLoading: isHivePowerLoading, error: hivePowerError, estimateVoteValue } = useHivePower(user);
   const theme = useTheme();
 
   // Get theme colors
@@ -67,7 +71,19 @@ export default function PostDetails({ post }: PostDetailsProps) {
       post.permlink,
       sliderValue * 100
     );
-    setVoted(vote.success);
+    if (vote.success) {
+      setVoted(true);
+      setActiveVotes([...activeVotes, { voter: user }]);
+      // Estimate the value and optimistically update payout
+      if (estimateVoteValue) {
+        try {
+          const estimatedValue = await estimateVoteValue(sliderValue);
+          setPayoutValue((prev) => prev + estimatedValue);
+        } catch (e) {
+          // fallback: do not update payout
+        }
+      }
+    }
     handleHeartClick();
   }
 
@@ -186,14 +202,15 @@ export default function PostDetails({ post }: PostDetailsProps) {
                   onClick={handleHeartClick}
                   cursor="pointer"
                   color={primary}
+                  opacity={0.5}
                 />
               )}
               <Text ml={2} fontSize="sm" color={primary}>
-                {post.active_votes.length}
+                {activeVotes.length}
               </Text>
             </Flex>
             <Text fontWeight="bold" fontSize="sm" color={primary}>
-              ${getPayoutValue(post)}
+              ${payoutValue.toFixed(2)}
             </Text>
           </Flex>
         )}

@@ -30,6 +30,7 @@ import useHiveAccount from "@/hooks/useHiveAccount";
 import VideoRenderer from "../layout/VideoRenderer";
 import SnapComposer from "./SnapComposer";
 import { FaLink } from "react-icons/fa6";
+import useHivePower from "@/hooks/useHivePower";
 
 const separateContent = (body: string) => {
   const textParts: string[] = [];
@@ -121,12 +122,14 @@ interface SnapProps {
 const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
   const { aioha, user } = useAioha();
   const { hiveAccount } = useHiveAccount(user || "");
+  const { hivePower, isLoading: isHivePowerLoading, error: hivePowerError, estimateVoteValue } = useHivePower(user);
   const toast = useToast();
   const commentDate = getPostDate(Discussion.created);
 
   const [sliderValue, setSliderValue] = useState(5);
   const [showSlider, setShowSlider] = useState(false);
-  const [rewardAmount, setRewardAmount] = useState(getPayoutValue(Discussion));
+  const [activeVotes, setActiveVotes] = useState(Discussion.active_votes || []);
+  const [rewardAmount, setRewardAmount] = useState(parseFloat(getPayoutValue(Discussion)));
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [inlineReplies, setInlineReplies] = useState<Discussion[]>([]);
   const [inlineComposerStates, setInlineComposerStates] = useState<
@@ -158,9 +161,6 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
   }
 
   async function handleVote() {
-    const votingValue = await calculateUserVoteValue(hiveAccount);
-    const newRewardAmount =
-      parseFloat(rewardAmount) + votingValue * (sliderValue / 100);
     const vote = await aioha.vote(
       Discussion.author,
       Discussion.permlink,
@@ -168,7 +168,16 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
     );
     if (vote.success) {
       setVoted(true);
-      setRewardAmount(newRewardAmount.toFixed(3));
+      setActiveVotes([...activeVotes, { voter: user }]);
+      // Estimate the value and optimistically update payout
+      if (estimateVoteValue) {
+        try {
+          const estimatedValue = await estimateVoteValue(sliderValue);
+          setRewardAmount((prev) => parseFloat((prev + estimatedValue).toFixed(3)));
+        } catch (e) {
+          // fallback: do not update payout
+        }
+      }
     }
     handleHeartClick();
   }
@@ -315,17 +324,13 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
               <Tooltip label="upvote" hasArrow openDelay={1000}>
                 <Button
                   leftIcon={
-                    voted ? (
-                      <LuArrowUpRight size={24} />
-                    ) : (
-                      <LuArrowUpRight size={24} color="rgb(75, 72, 72)" />
-                    )
+                    <LuArrowUpRight size={24} color={voted ? undefined : "rgb(75, 72, 72)"} style={{ opacity: voted ? 1 : 0.5 }} />
                   }
                   variant="ghost"
                   onClick={handleHeartClick}
                   size="sm"
                 >
-                  {Discussion.active_votes?.length}
+                  {activeVotes.length}
                 </Button>
               </Tooltip>
             </HStack>
@@ -348,7 +353,7 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
             </HStack>
             <Tooltip label="reward amount" hasArrow openDelay={1000}>
               <Text fontWeight="bold" fontSize="xl">
-                ${rewardAmount}
+                ${rewardAmount.toFixed(2)}
               </Text>
             </Tooltip>
           </HStack>

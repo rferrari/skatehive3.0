@@ -29,6 +29,7 @@ import {
   LinkWithDomain,
   extractImageUrls,
 } from "@/lib/utils/extractImageUrls"; // Import YouTube extraction function
+import useHivePower from "@/hooks/useHivePower";
 
 interface PostCardProps {
   post: Discussion;
@@ -59,6 +60,9 @@ export default function PostCard({
   const [sliderValue, setSliderValue] = useState(100);
   const [showSlider, setShowSlider] = useState(false);
   const { aioha, user } = useAioha();
+  const { hivePower, isLoading: isHivePowerLoading, error: hivePowerError, estimateVoteValue } = useHivePower(user);
+  const [activeVotes, setActiveVotes] = useState(post.active_votes || []);
+  const [payoutValue, setPayoutValue] = useState(parseFloat(getPayoutValue(post)));
   const [voted, setVoted] = useState(
     post.active_votes?.some((item) => item.voter === user)
   );
@@ -101,7 +105,19 @@ export default function PostCard({
       post.permlink,
       sliderValue * 100
     );
-    setVoted(vote.success);
+    if (vote.success) {
+      setVoted(true);
+      setActiveVotes([...activeVotes, { voter: user }]);
+      // Estimate the value and optimistically update payout
+      if (estimateVoteValue) {
+        try {
+          const estimatedValue = await estimateVoteValue(sliderValue);
+          setPayoutValue((prev) => prev + estimatedValue);
+        } catch (e) {
+          // fallback: do not update payout
+        }
+      }
+    }
     handleHeartClick();
   }
 
@@ -218,15 +234,16 @@ export default function PostCard({
                 as={LuArrowUpRight}
                 onClick={handleHeartClick}
                 cursor="pointer"
-                color={voted ? "primary" : undefined}
+                color={voted ? "primary" : "gray.500"}
+                opacity={voted ? 1 : 0.5}
                 boxSize={5}
               />
               <Text ml={1} fontSize="sm">
-                {post.active_votes.length}
+                {activeVotes.length}
               </Text>
             </Flex>
             <Text fontWeight="bold" fontSize="sm">
-              ${getPayoutValue(post)}
+              ${payoutValue.toFixed(2)}
             </Text>
             <Flex alignItems="center">
               <Icon as={FaComment} />
@@ -551,15 +568,16 @@ export default function PostCard({
                       handleHeartClick();
                     }}
                     cursor="pointer"
-                    color={voted ? "primary" : undefined}
+                    color={voted ? "primary" : "gray.500"}
+                    opacity={voted ? 1 : 0.5}
                     boxSize={6}
                   />
                   <Text ml={2} fontSize="sm">
-                    {post.active_votes.length}
+                    {activeVotes.length}
                   </Text>
                 </Flex>
                 <Text fontWeight="bold" fontSize="sm">
-                  ${getPayoutValue(post)}
+                  ${payoutValue.toFixed(2)}
                 </Text>
                 <Flex alignItems="center">
                   <Icon as={FaComment} />
