@@ -22,6 +22,8 @@ import { getPostDate } from "@/lib/utils/GetPostDate";
 import { useAioha } from "@aioha/react-ui";
 import { getPayoutValue } from "@/lib/hive/client-functions";
 import markdownRenderer from "@/lib/utils/MarkdownRenderer";
+import useHivePower from "@/hooks/useHivePower";
+import VoteListModal from "./VoteListModal";
 
 interface PostDetailsProps {
   post: Discussion;
@@ -33,10 +35,16 @@ export default function PostDetails({ post }: PostDetailsProps) {
   const { aioha, user } = useAioha();
   const [sliderValue, setSliderValue] = useState(100);
   const [showSlider, setShowSlider] = useState(false);
+  const [activeVotes, setActiveVotes] = useState(post.active_votes || []);
+  const [payoutValue, setPayoutValue] = useState(parseFloat(getPayoutValue(post)));
   const [voted, setVoted] = useState(
     post.active_votes?.some((item) => item.voter === user)
   );
+  const { hivePower, isLoading: isHivePowerLoading, error: hivePowerError, estimateVoteValue } = useHivePower(user);
   const theme = useTheme();
+
+  // VoteListModal state
+  const [showVoteList, setShowVoteList] = useState(false);
 
   // Get theme colors
   const primary = theme.colors.primary ?? '#38ff8e';
@@ -44,6 +52,7 @@ export default function PostDetails({ post }: PostDetailsProps) {
   const accent = theme.colors.accent ?? '#48BB78';
   const muted = theme.colors.muted ?? '#276749';
   const color = theme.colors.color ?? '#F0FFF4';
+  const colorBackground = theme.colors.background ?? '#121212';
 
   // Compose gradient and box shadows using theme colors
   const detailsGradient = `linear-gradient(to bottom, ${primary}, ${secondary})`;
@@ -67,7 +76,19 @@ export default function PostDetails({ post }: PostDetailsProps) {
       post.permlink,
       sliderValue * 100
     );
-    setVoted(vote.success);
+    if (vote.success) {
+      setVoted(true);
+      setActiveVotes([...activeVotes, { voter: user }]);
+      // Estimate the value and optimistically update payout
+      if (estimateVoteValue) {
+        try {
+          const estimatedValue = await estimateVoteValue(sliderValue);
+          setPayoutValue((prev) => prev + estimatedValue);
+        } catch (e) {
+          // fallback: do not update payout
+        }
+      }
+    }
     handleHeartClick();
   }
 
@@ -84,46 +105,73 @@ export default function PostDetails({ post }: PostDetailsProps) {
     >
       <Flex
         data-subcomponent="PostDetails/Header"
-        justifyContent="space-between"
-        alignItems="center"
-        mb={4}
-        flexWrap="nowrap"
+        direction="column"
         boxShadow={theme.shadows.md}
         bg={detailsGradient}
         p={4}
+        mb={4}
       >
-        <Flex alignItems="center" flexShrink={0}>
+        <Flex direction="row" alignItems="center" w="100%">
           <Avatar
             size="sm"
             name={author}
             src={`https://images.hive.blog/u/${author}/avatar/sm`}
           />
           <Box ml={3} whiteSpace="nowrap">
-            <Text fontWeight="medium" fontSize="sm" mb={-2}>
-              <Link href={`/@${author}`}>@{author}</Link>
+            <Text fontWeight="medium" fontSize="sm" mb={-2} color={colorBackground}>
+              <Link href={`/@${author}`} color={colorBackground}>@{author}</Link>
             </Text>
-            <Text fontSize="sm" color="primary">
+            <Text fontSize="sm" color={colorBackground}>
               {postDate}
             </Text>
           </Box>
+          <Divider
+            orientation="vertical"
+            h="34px"
+            borderColor="color"
+            mx={4}
+            display={["none", "block"]}
+          />
+          <Box flexGrow={1} ml={4} textAlign="start" minWidth={0}>
+            <Text fontSize="lg" fontWeight="bold" color={colorBackground}>
+              {title}
+            </Text>
+          </Box>
+          <Flex alignItems="center" ml={4}>
+            {voted ? (
+              <Icon
+                as={FaHeart}
+                onClick={handleHeartClick}
+                cursor="pointer"
+                color={primary}
+              />
+            ) : (
+              <Icon
+                as={FaRegHeart}
+                onClick={handleHeartClick}
+                cursor="pointer"
+                color={primary}
+                opacity={0.5}
+              />
+            )}
+            <Text
+              ml={2}
+              fontSize="sm"
+              color={primary}
+              cursor="pointer"
+              onClick={() => setShowVoteList(true)}
+              _hover={{ textDecoration: 'underline' }}
+            >
+              {activeVotes.length}
+            </Text>
+          </Flex>
         </Flex>
-        <Divider
-          orientation="vertical"
-          h="34px"
-          borderColor="color"
-          mx={4}
-          display={["none", "block"]}
-        />
-        <Box flexGrow={1} ml={4} textAlign="start" minWidth={0}>
-          <Text fontSize="lg" fontWeight="bold">
-            {title}
-          </Text>
-        </Box>
         {showSlider ? (
           <Flex
             data-subcomponent="PostDetails/VoteControls"
-            mt={4}
+            mt={2}
             alignItems="center"
+            w="100%"
           >
             <Box width="100%" mr={2}>
               <Slider
@@ -165,38 +213,13 @@ export default function PostDetails({ post }: PostDetailsProps) {
               X
             </Button>
           </Flex>
-        ) : (
-          <Flex
-            data-subcomponent="PostDetails/VoteSummary"
-            mt={4}
-            justifyContent="flex-end"
-            alignItems="center"
-          >
-            <Flex alignItems="center" mr={4}>
-              {voted ? (
-                <Icon
-                  as={FaHeart}
-                  onClick={handleHeartClick}
-                  cursor="pointer"
-                  color={primary}
-                />
-              ) : (
-                <Icon
-                  as={FaRegHeart}
-                  onClick={handleHeartClick}
-                  cursor="pointer"
-                  color={primary}
-                />
-              )}
-              <Text ml={2} fontSize="sm" color={primary}>
-                {post.active_votes.length}
-              </Text>
-            </Flex>
-            <Text fontWeight="bold" fontSize="sm" color={primary}>
-              ${getPayoutValue(post)}
-            </Text>
-          </Flex>
-        )}
+        ) : null}
+        <VoteListModal
+          isOpen={showVoteList}
+          onClose={() => setShowVoteList(false)}
+          votes={activeVotes}
+          post={post}
+        />
       </Flex>
 
       <Divider />

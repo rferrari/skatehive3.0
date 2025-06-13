@@ -21,6 +21,7 @@ import { Discussion } from "@hiveio/dhive";
 import { getFileSignature, uploadImage } from "@/lib/hive/client-functions";
 import ImageCompressor, { ImageCompressorRef } from "../../src/components/ImageCompressor";
 import MatrixOverlay from "../graphics/MatrixOverlay";
+import imageCompression from "browser-image-compression";
 
 interface SpotSnapComposerProps {
   onNewComment: (newComment: Partial<Discussion>) => void;
@@ -37,6 +38,7 @@ export default function SpotSnapComposer({ onNewComment, onClose }: SpotSnapComp
   const [spotName, setSpotName] = useState("");
   const [lat, setLat] = useState("");
   const [lon, setLon] = useState("");
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const buttonText = "Post Spot";
 
@@ -120,8 +122,84 @@ export default function SpotSnapComposer({ onNewComment, onClose }: SpotSnapComp
     }
   }
 
+  // Drag and drop handlers (reuse SnapComposer style)
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    const files = Array.from(e.dataTransfer.files);
+    for (const file of files) {
+      if (file.type.startsWith("image/")) {
+        // For dropped images, compress and upload
+        try {
+          const options = {
+            maxSizeMB: 2,
+            maxWidthOrHeight: 1920,
+            useWebWorker: true,
+          };
+          const compressedFile = await imageCompression(file, options);
+          const url = URL.createObjectURL(compressedFile);
+          await handleCompressedImageUpload(url, compressedFile.name);
+          URL.revokeObjectURL(url);
+        } catch (err) {
+          alert("Error compressing image: " + (err instanceof Error ? err.message : err));
+        }
+      } else {
+        alert("Only image files are supported for drag-and-drop here.");
+      }
+    }
+  };
+
   return (
-    <Box p={4} mb={1} borderRadius="base" borderBottom={"1px"} borderColor="muted" position="relative">
+    <Box
+      p={4}
+      mb={1}
+      borderRadius="base"
+      borderBottom={"1px"}
+      borderColor="muted"
+      position="relative"
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      style={{
+        border: isDragOver ? "2px dashed var(--chakra-colors-primary)" : undefined,
+        background: isDragOver ? "rgba(0,0,0,0.04)" : undefined,
+        transition: "border 0.2s, background 0.2s",
+      }}
+    >
+      {/* Optionally, overlay a message when dragging */}
+      {isDragOver && (
+        <Box
+          position="absolute"
+          top={0}
+          left={0}
+          right={0}
+          bottom={0}
+          zIndex={10}
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          bg="rgba(0,0,0,0.08)"
+          borderRadius="base"
+          pointerEvents="none"
+        >
+          <Box color="primary" fontWeight="bold" fontSize="xl">
+            Drop images to upload
+          </Box>
+        </Box>
+      )}
       <VStack spacing={3} align="stretch">
         <FormControl isRequired>
           <FormLabel>Spot Name</FormLabel>

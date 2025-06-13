@@ -31,6 +31,7 @@ import { FaVideo } from "react-icons/fa6";
 import { FaTimes } from "react-icons/fa";
 import ImageCompressor, { ImageCompressorRef } from "../../src/components/ImageCompressor";
 import MatrixOverlay from "../graphics/MatrixOverlay";
+import imageCompression from "browser-image-compression";
 
 interface SnapComposerProps {
   pa: string;
@@ -239,10 +240,20 @@ export default function SnapComposer({
           const fakeEvent = { target: { files: [file] } } as unknown as React.ChangeEvent<HTMLInputElement>;
           await handleGifWebpUpload(fakeEvent);
         } else {
-          // For other images, use compressed image upload logic
-          const url = URL.createObjectURL(file);
-          await handleCompressedImageUpload(url, file.name);
-          URL.revokeObjectURL(url);
+          // For other images, resize and compress before upload
+          try {
+            const options = {
+              maxSizeMB: 2,
+              maxWidthOrHeight: 1920,
+              useWebWorker: true,
+            };
+            const compressedFile = await imageCompression(file, options);
+            const url = URL.createObjectURL(compressedFile);
+            await handleCompressedImageUpload(url, compressedFile.name);
+            URL.revokeObjectURL(url);
+          } catch (err) {
+            alert("Error compressing image: " + (err instanceof Error ? err.message : err));
+          }
         }
       } else if (file.type.startsWith("video/")) {
         // For video, use video uploader logic if available
@@ -327,12 +338,18 @@ export default function SnapComposer({
                   isDisabled={isLoading}
                   border="2px solid transparent"
                   borderRadius="full"
-                  p={2}
+                  height="48px"
+                  width="48px"
+                  p={0}
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
                   _hover={{ borderColor: "primary", boxShadow: "0 0 0 2px var(--chakra-colors-primary)" }}
                   _active={{ borderColor: "accent" }}
-                  style={{ height: 48, width: 48, display: "flex", alignItems: "center", justifyContent: "center" }}
                 >
-                  <FaImage color="var(--chakra-colors-primary)" size={22} />
+                  <Box display="flex" alignItems="center" justifyContent="center" width="100%" height="100%">
+                    <FaImage color="var(--chakra-colors-primary)" size={22} />
+                  </Box>
                 </MenuButton>
                 <MenuList bg="background" border="tb1" borderRadius="base">
                   <MenuItem
@@ -375,17 +392,20 @@ export default function SnapComposer({
                 ref={imageCompressorRef}
                 onUpload={handleCompressedImageUpload}
                 isProcessing={isLoading}
-                hideStatus={true}
               />
               <Button
                 variant="ghost"
                 isDisabled={isLoading}
                 border="2px solid transparent"
                 borderRadius="full"
-                p={2}
+                height="48px"
+                width="48px"
+                p={0}
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
                 _hover={{ borderColor: "primary", boxShadow: "0 0 0 2px var(--chakra-colors-primary)" }}
                 _active={{ borderColor: "accent" }}
-                style={{ height: 48, width: 48, display: "flex", alignItems: "center", justifyContent: "center" }}
                 onClick={() => videoUploaderRef.current?.trigger()}
               >
                 <FaVideo color="var(--chakra-colors-primary)" size={22} />
