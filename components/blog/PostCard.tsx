@@ -239,8 +239,11 @@ export default function PostCard({
                 color={voted ? "primary" : "gray.500"}
                 opacity={voted ? 1 : 0.5}
                 boxSize={5}
+                _hover={{ bg: 'gray.700', borderRadius: 'full' }}
               />
-              <Text ml={1} fontSize="sm" cursor="pointer" onClick={() => setShowVoteList(true)}>
+              <Text ml={1} fontSize="sm" cursor="pointer" onClick={() => setShowVoteList(true)}
+                _hover={{ textDecoration: 'underline' }}
+              >
                 {activeVotes.length}
               </Text>
             </Flex>
@@ -574,8 +577,11 @@ export default function PostCard({
                     color={voted ? "primary" : "gray.500"}
                     opacity={voted ? 1 : 0.5}
                     boxSize={6}
+                    _hover={{ bg: 'gray.700', borderRadius: 'full' }}
                   />
-                  <Text ml={2} fontSize="sm" cursor="pointer" onClick={() => setShowVoteList(true)}>
+                  <Text ml={2} fontSize="sm" cursor="pointer" onClick={() => setShowVoteList(true)}
+                    _hover={{ textDecoration: 'underline' }}
+                  >
                     {activeVotes.length}
                   </Text>
                 </Flex>

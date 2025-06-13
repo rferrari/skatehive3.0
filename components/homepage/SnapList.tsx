@@ -5,6 +5,7 @@ import Snap from "./Snap";
 import SnapComposer from "./SnapComposer";
 import { Discussion } from "@hiveio/dhive"; // Add this import for consistency
 import LoadingComponent from "./loadingComponent";
+import VoteListModal from "@/components/blog/VoteListModal";
 
 interface SnapListProps {
   author: string;
@@ -38,6 +39,8 @@ export default function SnapList({
 }: SnapListProps) {
   const { comments, loadNextPage, isLoading, hasMore } = data;
   const [displayedComments, setDisplayedComments] = useState<Discussion[]>([]);
+  const [voteListModalOpen, setVoteListModalOpen] = useState(false);
+  const [voteListSnap, setVoteListSnap] = useState<Discussion | null>(null);
 
   // Mounted state
   const [hasMounted, setHasMounted] = useState(false);
@@ -85,6 +88,15 @@ export default function SnapList({
     }
   );
 
+  const handleOpenVoteList = (snap: Discussion) => {
+    setVoteListSnap(snap);
+    setVoteListModalOpen(true);
+  };
+  const handleCloseVoteList = () => {
+    setVoteListModalOpen(false);
+    setVoteListSnap(null);
+  };
+
   // Conditionally render after all hooks have run
   if (!hasMounted) return null;
 
@@ -125,11 +137,20 @@ export default function SnapList({
                   onOpen={onOpen}
                   setReply={setReply}
                   {...(!post ? { setConversation } : {})}
+                  onOpenVoteList={() => handleOpenVoteList(Discussion)}
                 />
               ))}
             </VStack>
           </InfiniteScroll>
         </>
+      )}
+      {voteListSnap && (
+        <VoteListModal
+          isOpen={voteListModalOpen}
+          onClose={handleCloseVoteList}
+          votes={voteListSnap.active_votes || []}
+          post={voteListSnap}
+        />
       )}
     </VStack>
   );

@@ -23,6 +23,7 @@ import { useAioha } from "@aioha/react-ui";
 import { getPayoutValue } from "@/lib/hive/client-functions";
 import markdownRenderer from "@/lib/utils/MarkdownRenderer";
 import useHivePower from "@/hooks/useHivePower";
+import VoteListModal from "./VoteListModal";
 
 interface PostDetailsProps {
   post: Discussion;
@@ -41,6 +42,9 @@ export default function PostDetails({ post }: PostDetailsProps) {
   );
   const { hivePower, isLoading: isHivePowerLoading, error: hivePowerError, estimateVoteValue } = useHivePower(user);
   const theme = useTheme();
+
+  // VoteListModal state
+  const [showVoteList, setShowVoteList] = useState(false);
 
   // Get theme colors
   const primary = theme.colors.primary ?? '#38ff8e';
@@ -133,6 +137,34 @@ export default function PostDetails({ post }: PostDetailsProps) {
               {title}
             </Text>
           </Box>
+          <Flex alignItems="center" ml={4}>
+            {voted ? (
+              <Icon
+                as={FaHeart}
+                onClick={handleHeartClick}
+                cursor="pointer"
+                color={primary}
+              />
+            ) : (
+              <Icon
+                as={FaRegHeart}
+                onClick={handleHeartClick}
+                cursor="pointer"
+                color={primary}
+                opacity={0.5}
+              />
+            )}
+            <Text
+              ml={2}
+              fontSize="sm"
+              color={primary}
+              cursor="pointer"
+              onClick={() => setShowVoteList(true)}
+              _hover={{ textDecoration: 'underline' }}
+            >
+              {activeVotes.length}
+            </Text>
+          </Flex>
         </Flex>
         {showSlider ? (
           <Flex
@@ -181,40 +213,13 @@ export default function PostDetails({ post }: PostDetailsProps) {
               X
             </Button>
           </Flex>
-        ) : (
-          <Flex
-            data-subcomponent="PostDetails/VoteSummary"
-            mt={2}
-            justifyContent="flex-end"
-            alignItems="center"
-            w="100%"
-          >
-            <Flex alignItems="center" mr={4}>
-              {voted ? (
-                <Icon
-                  as={FaHeart}
-                  onClick={handleHeartClick}
-                  cursor="pointer"
-                  color={primary}
-                />
-              ) : (
-                <Icon
-                  as={FaRegHeart}
-                  onClick={handleHeartClick}
-                  cursor="pointer"
-                  color={primary}
-                  opacity={0.5}
-                />
-              )}
-              <Text ml={2} fontSize="sm" color={primary}>
-                {activeVotes.length}
-              </Text>
-            </Flex>
-            <Text fontWeight="bold" fontSize="sm" color={primary}>
-              ${payoutValue.toFixed(2)}
-            </Text>
-          </Flex>
-        )}
+        ) : null}
+        <VoteListModal
+          isOpen={showVoteList}
+          onClose={() => setShowVoteList(false)}
+          votes={activeVotes}
+          post={post}
+        />
       </Flex>
 
       <Divider />

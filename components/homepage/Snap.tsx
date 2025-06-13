@@ -117,9 +117,10 @@ interface SnapProps {
   onOpen: () => void;
   setReply: (Discussion: Discussion) => void;
   setConversation?: (conversation: Discussion) => void;
+  onOpenVoteList?: () => void;
 }
 
-const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
+const Snap = ({ Discussion, onOpen, setReply, setConversation, onOpenVoteList }: SnapProps) => {
   const { aioha, user } = useAioha();
   const { hiveAccount } = useHiveAccount(user || "");
   const { hivePower, isLoading: isHivePowerLoading, error: hivePowerError, estimateVoteValue } = useHivePower(user);
@@ -329,10 +330,22 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
                   variant="ghost"
                   onClick={handleHeartClick}
                   size="sm"
-                >
-                  {activeVotes.length}
-                </Button>
+                  p={2}
+                  _hover={{ bg: 'gray.700', borderRadius: 'full' }}
+                />
               </Tooltip>
+              <Text
+                ml={1}
+                fontSize="sm"
+                cursor="pointer"
+                onClick={e => {
+                  e.stopPropagation();
+                  if (onOpenVoteList) onOpenVoteList();
+                }}
+                _hover={{ textDecoration: 'underline' }}
+              >
+                {activeVotes.length}
+              </Text>
             </HStack>
             <HStack>
               <Tooltip label="comments" hasArrow openDelay={1000}>
