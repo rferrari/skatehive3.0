@@ -175,6 +175,13 @@ export default function PostCard({
     .replace(/[#*_`>\[\]()!\-]/g, "")
     .replace(/\n+/g, " ");
 
+  // Deduplicate votes by voter (keep the last occurrence)
+  const uniqueVotesMap = new Map();
+  activeVotes.forEach((vote) => {
+    uniqueVotesMap.set(vote.voter, vote);
+  });
+  const uniqueVotes = Array.from(uniqueVotesMap.values());
+
   if (listView) {
     return (
       <Box
@@ -244,7 +251,7 @@ export default function PostCard({
               <Text ml={1} fontSize="sm" cursor="pointer" onClick={() => setShowVoteList(true)}
                 _hover={{ textDecoration: 'underline' }}
               >
-                {activeVotes.length}
+                {uniqueVotes.length}
               </Text>
             </Flex>
             <Text fontWeight="bold" fontSize="sm">
@@ -582,7 +589,7 @@ export default function PostCard({
                   <Text ml={2} fontSize="sm" cursor="pointer" onClick={() => setShowVoteList(true)}
                     _hover={{ textDecoration: 'underline' }}
                   >
-                    {activeVotes.length}
+                    {uniqueVotes.length}
                   </Text>
                 </Flex>
                 <Text fontWeight="bold" fontSize="sm">

@@ -29,15 +29,22 @@ interface VoteListModalProps {
 }
 
 const VoteListModal = ({ isOpen, onClose, votes, post }: VoteListModalProps) => {
+  // Deduplicate votes by voter (keep the last occurrence)
+  const uniqueVotesMap = new Map();
+  votes.forEach((vote) => {
+    uniqueVotesMap.set(vote.voter, vote);
+  });
+  const uniqueVotes = Array.from(uniqueVotesMap.values());
+
   // Sort by rshares (raw value) descending, fallback to weight if rshares is missing
-  const sortedVotes = [...votes].sort((a, b) => {
+  const sortedVotes = [...uniqueVotes].sort((a, b) => {
     const aValue = typeof a.rshares === "number" ? a.rshares : a.weight || 0;
     const bValue = typeof b.rshares === "number" ? b.rshares : b.weight || 0;
     return bValue - aValue;
   });
 
   // Calculate total rshares for the post
-  const totalRshares = votes.reduce((sum, v) => sum + (typeof v.rshares === "number" ? v.rshares : 0), 0);
+  const totalRshares = uniqueVotes.reduce((sum, v) => sum + (typeof v.rshares === "number" ? v.rshares : 0), 0);
   // Get payout value for the post
   const payout = parseFloat(getPayoutValue(post));
 

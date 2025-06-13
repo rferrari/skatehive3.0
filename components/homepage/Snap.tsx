@@ -208,6 +208,13 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation, onOpenVoteList }:
 
   const replies = Discussion.replies || [];
 
+  // Deduplicate votes by voter (keep the last occurrence)
+  const uniqueVotesMap = new Map();
+  activeVotes.forEach((vote) => {
+    uniqueVotesMap.set(vote.voter, vote);
+  });
+  const uniqueVotes = Array.from(uniqueVotesMap.values());
+
   return (
     <Box pl={effectiveDepth > 1 ? 1 : 0} ml={effectiveDepth > 1 ? 2 : 0}>
       <Box mt={1} mb={1} borderRadius="base" width="100%">
@@ -344,7 +351,7 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation, onOpenVoteList }:
                 }}
                 _hover={{ textDecoration: 'underline' }}
               >
-                {activeVotes.length}
+                {uniqueVotes.length}
               </Text>
             </HStack>
             <HStack>
