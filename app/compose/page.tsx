@@ -35,6 +35,8 @@ import GIFMakerWithSelector, { GIFMakerRef as GIFMakerWithSelectorRef } from "..
 import { extractImageUrls, extractVideoUrls } from "../../lib/utils/extractImageUrls";
 import MatrixOverlay from "../../components/graphics/MatrixOverlay";
 import { Image } from "@chakra-ui/react";
+import imageCompression from "browser-image-compression";
+
 export default function Composer() {
   const [markdown, setMarkdown] = useState("");
   const [title, setTitle] = useState("");
@@ -195,8 +197,32 @@ export default function Composer() {
   const onDrop = async (acceptedFiles: File[]) => {
     setIsUploading(true);
     for (const file of acceptedFiles) {
+      let fileToUpload = file;
+      let fileName = file.name;
+      if (
+        file.type.startsWith("image/") &&
+        file.type !== "image/gif" &&
+        file.type !== "image/webp"
+      ) {
+        try {
+          const options = {
+            maxSizeMB: 2,
+            maxWidthOrHeight: 1920,
+            useWebWorker: true,
+          };
+          const compressedFile = await imageCompression(file, options);
+          fileToUpload = compressedFile;
+          fileName = compressedFile.name;
+        } catch (err) {
+          alert(
+            "Error compressing image: " +
+              (err instanceof Error ? err.message : err)
+          );
+          continue;
+        }
+      }
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", fileToUpload, fileName);
       try {
         const response = await fetch("/api/pinata", {
           method: "POST",
@@ -208,7 +234,7 @@ export default function Composer() {
         const result = await response.json();
         const url = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`;
         if (file.type.startsWith("image/")) {
-          insertAtCursor(`\n![${file.name}](${url})\n`);
+          insertAtCursor(`\n![${fileName}](${url})\n`);
         } else if (file.type.startsWith("video/")) {
           insertAtCursor(
             `\n<iframe src=\"${url}\" frameborder=\"0\" allowfullscreen></iframe>\n`

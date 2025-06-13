@@ -5,8 +5,7 @@ import React, {
   useState,
   useEffect,
 } from "react";
-import { FFmpeg } from "@ffmpeg/ffmpeg";
-import { fetchFile } from "@ffmpeg/util";
+import imageCompression from "browser-image-compression";
 
 export interface ImageCompressorProps {
   onUpload: (url: string | null, fileName?: string) => void;
@@ -21,8 +20,8 @@ export interface ImageCompressorRef {
 const SUPPORTED_TYPES = [
   "image/jpeg",
   "image/png",
-  "image/heic",
-  "image/heif",
+  // "image/heic", // browser-image-compression does not support HEIC
+  // "image/heif",
 ];
 
 const statusStyle: React.CSSProperties = {
@@ -38,7 +37,6 @@ const errorStyle: React.CSSProperties = {
 const ImageCompressor = forwardRef<ImageCompressorRef, ImageCompressorProps>(
   ({ onUpload, isProcessing = false, hideStatus = false }, ref) => {
     const inputRef = useRef<HTMLInputElement>(null);
-    const ffmpegRef = useRef<any>(null);
     const [status, setStatus] = useState<string>("");
     const [error, setError] = useState<string>("");
     const [blobUrl, setBlobUrl] = useState<string | null>(null);
@@ -60,53 +58,6 @@ const ImageCompressor = forwardRef<ImageCompressorRef, ImageCompressorProps>(
       };
     }, [blobUrl]);
 
-    const compressImage = async (file: File): Promise<Blob> => {
-      if (!ffmpegRef.current) {
-        setStatus("Loading FFmpeg...");
-        ffmpegRef.current = new FFmpeg();
-        await ffmpegRef.current.load();
-        ffmpegRef.current.on('log', ({ message }: { message: string }) => {
-          console.log('[FFmpeg]', message);
-        });
-        ffmpegRef.current.on('error', (err: any) => {
-          console.error('[FFmpeg ERROR]', err);
-        });
-      }
-      const ffmpeg = ffmpegRef.current;
-      setStatus("Compressing image...");
-      await ffmpeg.writeFile(file.name, await fetchFile(file));
-      let outputName = "output";
-      let outputType = "";
-      let args: string[] = [];
-      if (file.type === "image/jpeg" || file.type === "image/heic" || file.type === "image/heif") {
-        // For HEIC, convert to JPEG for browser compatibility
-        outputName += ".jpg";
-        outputType = "image/jpeg";
-        // Check if ffmpeg supports HEIC
-        if ((file.type === "image/heic" || file.type === "image/heif") && !ffmpeg?.core?.config?.formats?.includes?.("heic")) {
-          throw new Error("HEIC format not supported.");
-        }
-        args = [
-          "-i", file.name,
-          "-q:v", "10",
-          outputName,
-        ];
-      } else if (file.type === "image/png") {
-        outputName += ".png";
-        outputType = "image/png";
-        args = [
-          "-i", file.name,
-          "-compression_level", "9",
-          outputName,
-        ];
-      } else {
-        throw new Error("Unsupported file type.");
-      }
-      await ffmpeg.exec(args);
-      const data = await ffmpeg.readFile(outputName);
-      return new Blob([data.buffer], { type: outputType });
-    };
-
     const handleImageUpload = async (
       event: React.ChangeEvent<HTMLInputElement>
     ) => {
@@ -118,26 +69,28 @@ const ImageCompressor = forwardRef<ImageCompressorRef, ImageCompressorProps>(
         return;
       }
       if (!SUPPORTED_TYPES.includes(file.type)) {
-        setError("Unsupported file type. Please upload a JPEG, PNG, or HEIC image.");
+        setError("Unsupported file type. Please upload a JPEG or PNG image.");
         onUpload(null);
         return;
       }
       try {
-        const compressedBlob = await compressImage(file);
+        setStatus("Resizing and compressing image...");
+        const options = {
+          maxSizeMB: 2,
+          maxWidthOrHeight: 1920,
+          useWebWorker: true,
+        };
+        const compressedFile = await imageCompression(file, options);
         if (blobUrl) {
           URL.revokeObjectURL(blobUrl);
         }
-        const url = URL.createObjectURL(compressedBlob);
+        const url = URL.createObjectURL(compressedFile);
         setBlobUrl(url);
         setStatus("Image compressed successfully!");
-        onUpload(url, file.name);
+        onUpload(url, compressedFile.name);
       } catch (err: any) {
         console.error(err);
-        if (err?.message?.includes("HEIC format not supported")) {
-          setError("HEIC format not supported.");
-        } else {
-          setError("Error compressing image.");
-        }
+        setError("Error compressing image.");
         setStatus("");
         onUpload(null);
       }
@@ -148,7 +101,7 @@ const ImageCompressor = forwardRef<ImageCompressorRef, ImageCompressorProps>(
         <input
           ref={inputRef}
           type="file"
-          accept="image/jpeg,image/png,image/heic,image/heif"
+          accept="image/jpeg,image/png"
           style={{ display: "none" }}
           onChange={handleImageUpload}
           disabled={isProcessing}
