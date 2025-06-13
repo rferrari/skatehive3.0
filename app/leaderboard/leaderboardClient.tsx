@@ -7,9 +7,8 @@ import {
   Text,
   Avatar,
   Badge,
-  IconButton,
-  Button,
   useToast,
+  Image,
 } from "@chakra-ui/react";
 import RulesModal from "./RulesModal";
 import React from "react";
@@ -171,7 +170,7 @@ export default function LeaderboardClient({ skatersData }: Props) {
     {
       key: "power",
       label: (
-        <img
+        <Image
           src="/images/hp_logo.png"
           alt="HP"
           style={{ display: "inline", height: "18px", verticalAlign: "middle" }}
@@ -202,7 +201,7 @@ export default function LeaderboardClient({ skatersData }: Props) {
     {
       key: "hbd",
       label: (
-        <img
+        <Image
           src="/images/hbd_savings.png"
           alt="HBD"
           style={{ display: "inline", height: "18px", verticalAlign: "middle" }}

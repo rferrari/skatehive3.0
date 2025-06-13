@@ -116,9 +116,9 @@ const backCoverStyles = (theme: any) => ({
 });
 
 export interface MagazineProps {
-  posts: Discussion[];
-  isLoading: boolean;
-  error: string | null;
+  posts?: Discussion[];
+  isLoading?: boolean;
+  error?: string | null;
   // For community magazine, still accept tag/query
   tag?: { tag: string; limit: number }[];
   query?: string;
@@ -145,10 +145,10 @@ export default function Magazine(props: MagazineProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // If tag and query are provided, use the hook to fetch posts
-  const shouldFetch = props.tag && props.query;
-  const { posts, isLoading, error } = shouldFetch
-    ? useMagazinePosts(props.query!, props.tag!)
-    : { posts: props.posts, isLoading: props.isLoading, error: props.error };
+  const magazinePosts = useMagazinePosts(props.query!, props.tag!);
+  const posts = props.tag && props.query ? magazinePosts.posts : props.posts || [];
+  const isLoading = props.tag && props.query ? magazinePosts.isLoading : props.isLoading || false;
+  const error = props.tag && props.query ? magazinePosts.error : props.error || null;
 
   useEffect(() => {
     if (audioRef.current) {
