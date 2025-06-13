@@ -30,6 +30,7 @@ import {
   extractImageUrls,
 } from "@/lib/utils/extractImageUrls"; // Import YouTube extraction function
 import useHivePower from "@/hooks/useHivePower";
+import VoteListModal from "./VoteListModal";
 
 interface PostCardProps {
   post: Discussion;
@@ -70,6 +71,7 @@ export default function PostCard({
   const default_thumbnail =
     "https://images.hive.blog/u/" + author + "/avatar/large";
   const [visibleImages, setVisibleImages] = useState<number>(3);
+  const [showVoteList, setShowVoteList] = useState(false);
 
   useEffect(() => {
     let images: string[] = [];
@@ -238,7 +240,7 @@ export default function PostCard({
                 opacity={voted ? 1 : 0.5}
                 boxSize={5}
               />
-              <Text ml={1} fontSize="sm">
+              <Text ml={1} fontSize="sm" cursor="pointer" onClick={() => setShowVoteList(true)}>
                 {activeVotes.length}
               </Text>
             </Flex>
@@ -283,6 +285,7 @@ export default function PostCard({
             {summary}
           </Text>
         </Flex>
+        <VoteListModal isOpen={showVoteList} onClose={() => setShowVoteList(false)} votes={activeVotes} post={post} />
       </Box>
     );
   }
@@ -572,7 +575,7 @@ export default function PostCard({
                     opacity={voted ? 1 : 0.5}
                     boxSize={6}
                   />
-                  <Text ml={2} fontSize="sm">
+                  <Text ml={2} fontSize="sm" cursor="pointer" onClick={() => setShowVoteList(true)}>
                     {activeVotes.length}
                   </Text>
                 </Flex>
@@ -589,6 +592,7 @@ export default function PostCard({
             )}
           </Box>
         </Box>
+        <VoteListModal isOpen={showVoteList} onClose={() => setShowVoteList(false)} votes={activeVotes} post={post} />
       </Box>
     </>
   );
