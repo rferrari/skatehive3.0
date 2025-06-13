@@ -4,21 +4,17 @@ import PostPage from "@/components/blog/PostPage";
 import NotificationsComp from "@/components/notifications/NotificationsComp";
 import ProfilePage from "@/components/profile/ProfilePage";
 import MainWallet from "@/components/wallet/MainWallet";
+import InitFrameSDK from "@/hooks/init-frame-sdk";
 import HiveClient from "@/lib/hive/hiveclient";
+import { cleanUsername } from "@/lib/utils/cleanUsername";
 import { Metadata, ResolvingMetadata } from "next";
 
 // Constants
 const DOMAIN_URL = "https://my.skatehive.app";
 const FALLBACK_IMAGE = "https://my.skatehive.app/ogimage.png";
 const FALLBACK_METADATA = {
-  title: 'Skatehive',
-  description: 'The infinity skateboard magazine',
-};
-
-// Helper function to clean username from @ symbol
-const cleanUsername = (slug: string): string => {
-  const decoded = decodeURIComponent(slug);
-  return decoded.startsWith("@") ? decoded.slice(1) : decoded;
+  title: "Skatehive",
+  description: "The infinity skateboard magazine",
 };
 
 // Helper function to check if slug is a username
@@ -37,13 +33,16 @@ const generatePostMetadata = async (user: string, permlink: string) => {
   const images = post.body ? post.body.match(/!\[.*?\]\((.*?)\)/g) : [];
   const imageUrls = images
     ? images.map((img: string) => {
-      const match = img.match(/\((.*?)\)/);
-      return match ? match[1] : "";
-    })
+        const match = img.match(/\((.*?)\)/);
+        return match ? match[1] : "";
+      })
     : [];
 
   const originalBanner = post.json_metadata?.image || imageUrls[0] || [];
-  const postUrl = new URL(`/@${decodedUser}/${decodedPermlink}`, DOMAIN_URL).toString();
+  const postUrl = new URL(
+    `/@${decodedUser}/${decodedPermlink}`,
+    DOMAIN_URL
+  ).toString();
 
   const frameImage =
     (Array.isArray(imageUrls) && imageUrls[0]) ||
@@ -73,10 +72,10 @@ const generatePostMetadata = async (user: string, permlink: string) => {
       url: postUrl,
       images: Array.isArray(originalBanner)
         ? originalBanner.map((img: string) => ({
-          url: new URL(img, DOMAIN_URL).toString(),
-          width: 1200,
-          height: 630,
-        }))
+            url: new URL(img, DOMAIN_URL).toString(),
+            width: 1200,
+            height: 630,
+          }))
         : [],
     },
     twitter: {
@@ -117,6 +116,7 @@ export async function generateMetadata(
   // Wallet page
   if (slug.length === 2 && isUsername(slug[0]) && slug[1] === "wallet") {
     const username = cleanUsername(slug[0]);
+    console.log("wallet logs");
     return {
       title: `${username} | Wallet | Skatehive`,
       description: `View ${username}'s wallet on Skatehive.`,
@@ -133,8 +133,11 @@ export async function generateMetadata(
   }
 
   // Post page
-  const isPost = (slug.length === 2 && isUsername(slug[0]) &&
-    slug[1] !== "wallet" && slug[1] !== "notifications") ||
+  const isPost =
+    (slug.length === 2 &&
+      isUsername(slug[0]) &&
+      slug[1] !== "wallet" &&
+      slug[1] !== "notifications") ||
     (slug.length === 3 && isUsername(slug[1]));
 
   if (isPost) {
@@ -144,8 +147,8 @@ export async function generateMetadata(
     } catch (error) {
       console.error("Error generating post metadata:", error);
       return {
-        title: 'Post | Skatehive',
-        description: 'View this post on Skatehive.',
+        title: "Post | Skatehive",
+        description: "View this post on Skatehive.",
       };
     }
   }
@@ -173,9 +176,11 @@ async function getData(user: string, permlink: string) {
   }
 }
 
-export default async function Page(props: { params: Promise<{ slug?: string[] }> }) {
+export default async function Page(props: {
+  params: Promise<{ slug?: string[] }>;
+}) {
   const params = await props.params;
-
+  InitFrameSDK();
   if (!params?.slug || !Array.isArray(params.slug)) {
     return <></>;
   }
@@ -198,8 +203,11 @@ export default async function Page(props: { params: Promise<{ slug?: string[] }>
   }
 
   // Post page: /@username/permlink or /category/@username/permlink
-  const isPostRoute = (slug.length === 2 && isUsername(slug[0]) &&
-    slug[1] !== "wallet" && slug[1] !== "notifications") ||
+  const isPostRoute =
+    (slug.length === 2 &&
+      isUsername(slug[0]) &&
+      slug[1] !== "wallet" &&
+      slug[1] !== "notifications") ||
     (slug.length === 3 && isUsername(slug[1]));
 
   if (isPostRoute) {

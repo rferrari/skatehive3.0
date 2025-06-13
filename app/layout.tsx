@@ -3,6 +3,7 @@ import RootLayoutClient from "./RootLayoutClient";
 import "./globals.css";
 import { Metadata } from "next";
 import { ColorModeScript } from "@chakra-ui/react";
+import InitFrameSDK from "@/hooks/init-frame-sdk";
 
 // Initialize the VT323 font
 const vt323 = VT323({
@@ -51,7 +52,6 @@ export const metadata: Metadata = {
   },
 };
 
-
 // Export the viewport configuration separately
 export const viewport = {
   width: "device-width",
@@ -64,8 +64,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${vt323.variable}`} data-theme="dark" style={{ colorScheme: "dark" }}>
+    <html
+      lang="en"
+      className={`${vt323.variable}`}
+      data-theme="dark"
+      style={{ colorScheme: "dark" }}
+    >
       <body className="chakra-ui-dark">
+        <InitFrameSDK />
         <ColorModeScript initialColorMode="dark" />
         <RootLayoutClient>{children}</RootLayoutClient>
       </body>

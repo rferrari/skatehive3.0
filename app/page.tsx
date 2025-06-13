@@ -1,10 +1,10 @@
 "use client";
 
-import { Container, Flex, Box } from "@chakra-ui/react";
+import { Flex, Box } from "@chakra-ui/react";
 import SnapList from "@/components/homepage/SnapList";
 import RightSidebar from "@/components/layout/RightSideBar";
 import { useState } from "react";
-import { Discussion } from "@hiveio/dhive"; // Ensure this import is consistent
+import { Discussion } from "@hiveio/dhive";
 import Conversation from "@/components/homepage/Conversation";
 import SnapReplyModal from "@/components/homepage/SnapReplyModal";
 import { useSnaps } from "@/hooks/useSnaps";
