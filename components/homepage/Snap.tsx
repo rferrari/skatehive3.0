@@ -184,7 +184,7 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation, onOpenVoteList }:
   }
 
   const handleSharePost = async () => {
-    const postLink = `@${window.location.origin}/${Discussion.author}/${Discussion.permlink}`;
+    const postLink = `${window.location.origin}/@${Discussion.author}/${Discussion.permlink}`;
     await navigator.clipboard.writeText(postLink);
     toast({
       title: "Post link copied to clipboard.",
