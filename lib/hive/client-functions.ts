@@ -353,14 +353,22 @@ export function getPayoutValue(post: any): string {
   const timeDifferenceInMs = now.getTime() - createdDate.getTime();
   const timeDifferenceInDays = timeDifferenceInMs / (1000 * 60 * 60 * 24);
 
+  // Helper to parse payout strings like "1.234 HBD"
+  function parsePayout(val: string | undefined): number {
+    if (!val) return 0;
+    return parseFloat(val.replace(" HBD", "").replace(",", ""));
+  }
+
   if (timeDifferenceInDays >= 7) {
-    // Post is older than 7 days, return the total payout value
-    return post.total_payout_value.replace(" HBD", "");
+    // Post is older than 7 days, sum total and curator payouts
+    const total = parsePayout(post.total_payout_value);
+    const curator = parsePayout(post.curator_payout_value);
+    return (total + curator).toFixed(3);
   } else if (timeDifferenceInDays < 7) {
     // Post is less than 7 days old, return the pending payout value
-    return post.pending_payout_value.replace(" HBD", "");
+    return parsePayout(post.pending_payout_value).toFixed(3);
   } else {
-    return "0.000"
+    return "0.000";
   }
 }
 

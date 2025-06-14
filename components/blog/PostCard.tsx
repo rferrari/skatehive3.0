@@ -11,6 +11,13 @@ import {
   SliderThumb,
   Button,
   Link,
+  Tooltip,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverArrow,
+  PopoverBody,
+  useDisclosure,
 } from "@chakra-ui/react";
 import React, { useState, useEffect, useMemo } from "react";
 import { Discussion } from "@hiveio/dhive";
@@ -72,6 +79,18 @@ export default function PostCard({
     "https://images.hive.blog/u/" + author + "/avatar/large";
   const [visibleImages, setVisibleImages] = useState<number>(3);
   const [showVoteList, setShowVoteList] = useState(false);
+  const { isOpen: isPayoutOpen, onOpen: openPayout, onClose: closePayout, onToggle: togglePayout } = useDisclosure();
+
+  // Calculate days remaining for pending payout
+  const createdDate = new Date(post.created);
+  const now = new Date();
+  const timeDifferenceInMs = now.getTime() - createdDate.getTime();
+  const timeDifferenceInDays = timeDifferenceInMs / (1000 * 60 * 60 * 24);
+  const daysRemaining = Math.max(0, 7 - Math.floor(timeDifferenceInDays));
+  const isPending = timeDifferenceInDays < 7;
+  // Calculate payout timestamp (creation + 7 days)
+  const payoutDate = new Date(createdDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+  const payoutDateString = payoutDate.toLocaleString();
 
   useEffect(() => {
     let images: string[] = [];
@@ -182,6 +201,20 @@ export default function PostCard({
   });
   const uniqueVotes = Array.from(uniqueVotesMap.values());
 
+  // Helper to convert Asset or string to string
+  function assetToString(val: string | { toString: () => string }): string {
+    return typeof val === "string" ? val : val.toString();
+  }
+  // Helper to parse payout strings like "1.234 HBD"
+  function parsePayout(val: string | { toString: () => string } | undefined): number {
+    if (!val) return 0;
+    const str = assetToString(val);
+    return parseFloat(str.replace(" HBD", "").replace(",", ""));
+  }
+  const authorPayout = parsePayout(post.total_payout_value);
+  const curatorPayout = parsePayout(post.curator_payout_value);
+  const payoutTooltip = `Author: $${authorPayout.toFixed(3)}\nCurators: $${curatorPayout.toFixed(3)}`;
+
   if (listView) {
     return (
       <Box
@@ -254,9 +287,35 @@ export default function PostCard({
                 {uniqueVotes.length}
               </Text>
             </Flex>
-            <Text fontWeight="bold" fontSize="sm">
-              ${payoutValue.toFixed(2)}
-            </Text>
+            <Popover placement="top" isOpen={isPayoutOpen} onClose={closePayout} closeOnBlur={true}>
+              <PopoverTrigger>
+                <span
+                  style={{ cursor: 'pointer' }}
+                  onMouseDown={openPayout}
+                  onMouseUp={closePayout}
+                >
+                  <Text fontWeight="bold" fontSize="sm">
+                    ${payoutValue.toFixed(2)}
+                  </Text>
+                </span>
+              </PopoverTrigger>
+              <PopoverContent w="auto" bg="gray.800" color="white" borderRadius="md" boxShadow="lg" p={2}>
+                <PopoverArrow />
+                <PopoverBody>
+                  {isPending ? (
+                    <div>
+                      <div><b>Pending</b></div>
+                      <div>{daysRemaining} day{daysRemaining !== 1 ? 's' : ''} until payout</div>
+                    </div>
+                  ) : (
+                    <>
+                      <div>Author: <b>${authorPayout.toFixed(3)}</b></div>
+                      <div>Curators: <b>${curatorPayout.toFixed(3)}</b></div>
+                    </>
+                  )}
+                </PopoverBody>
+              </PopoverContent>
+            </Popover>
             <Flex alignItems="center">
               <Icon as={FaComment} />
               <Text ml={1} fontSize="sm">
@@ -592,9 +651,35 @@ export default function PostCard({
                     {uniqueVotes.length}
                   </Text>
                 </Flex>
-                <Text fontWeight="bold" fontSize="sm">
-                  ${payoutValue.toFixed(2)}
-                </Text>
+                <Popover placement="top" isOpen={isPayoutOpen} onClose={closePayout} closeOnBlur={true}>
+                  <PopoverTrigger>
+                    <span
+                      style={{ cursor: 'pointer' }}
+                      onMouseDown={openPayout}
+                      onMouseUp={closePayout}
+                    >
+                      <Text fontWeight="bold" fontSize="sm">
+                        ${payoutValue.toFixed(2)}
+                      </Text>
+                    </span>
+                  </PopoverTrigger>
+                  <PopoverContent w="auto" bg="gray.800" color="white" borderRadius="md" boxShadow="lg" p={2}>
+                    <PopoverArrow />
+                    <PopoverBody>
+                      {isPending ? (
+                        <div>
+                          <div><b>Pending</b></div>
+                          <div>{daysRemaining} day{daysRemaining !== 1 ? 's' : ''} until payout</div>
+                        </div>
+                      ) : (
+                        <>
+                          <div>Author: <b>${authorPayout.toFixed(3)}</b></div>
+                          <div>Curators: <b>${curatorPayout.toFixed(3)}</b></div>
+                        </>
+                      )}
+                    </PopoverBody>
+                  </PopoverContent>
+                </Popover>
                 <Flex alignItems="center">
                   <Icon as={FaComment} />
                   <Text ml={2} fontSize="sm">
