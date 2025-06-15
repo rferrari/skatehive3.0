@@ -255,8 +255,6 @@ export default function LeaderboardClient({ skatersData }: Props) {
       )}
       {/* Main Container */}
       <Box
-        maxH="100vh"
-        overflowY="auto"
         bg={"background"}
         color="primary"
         fontFamily="mono"
@@ -364,41 +362,64 @@ export default function LeaderboardClient({ skatersData }: Props) {
             </button>
           </Flex>
         </Box>
-        {/* Leaderboard */}
-        <Box overflowX="auto" borderRadius="xl" bg={"background"} py={2}>
-          <Box minW="1100px">
+        {/* Leaderboard Table Scrollable Area */}
+        <Box
+          overflowX="hidden"
+          borderRadius="xl"
+          bg={"background"}
+          py={0}
+          maxH="70vh"
+          overflowY="auto"
+        >
+          <Box width="100%">
             {/* Table Header */}
-            <Flex>
+            <Flex
+              position="sticky"
+              top={0}
+              zIndex={3}
+              bg="background"
+              boxShadow="sm"
+              borderBottom="2px solid var(--chakra-colors-border)"
+              m={0}
+            >
               <Box
                 minW="240px"
                 maxW="240px"
                 position="sticky"
                 left={0}
-                zIndex={2}
+                zIndex={4}
                 bg={"background"}
-                py={1}
-                px={2}
                 display="flex"
                 alignItems="center"
+                px={2}
+                gap={2}
                 fontWeight="bold"
                 fontSize="sm"
                 borderRight="2px solid var(--chakra-colors-border)"
                 color="primary"
+                boxShadow="sm"
+                m={0}
               >
                 Skater
               </Box>
               {statColumns.map((col, i) => (
                 <Box
                   key={col.key}
-                  minW="65px"
-                  maxW="65px"
-                  px={1}
-                  py={2}
+                  minW="73px"
+                  maxW="73px"
+                  h="48px"
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
                   fontWeight="bold"
                   fontSize="xs"
                   color={col.color}
                   textAlign="center"
                   bg={"background"}
+                  zIndex={3}
+                  boxShadow="sm"
+                  m={0}
+                  borderRight={i !== statColumns.length - 1 ? "0.5px solid rgba(255,255,255,0.08)" : undefined}
                 >
                   {col.label}
                 </Box>
@@ -409,14 +430,11 @@ export default function LeaderboardClient({ skatersData }: Props) {
               const rank = index + 1;
               return (
                 <React.Fragment key={skater.id}>
-                  {index === 0 && (
-                    <Box
-                      as="hr"
-                      borderTop="2px solid var(--chakra-colors-border)"
-                      my={1}
-                    />
-                  )}
-                  <Flex align="center" transition="background 0.2s">
+                  <Flex
+                    align="center"
+                    transition="background 0.2s"
+                    borderTop={index !== 0 ? "0.5px solid rgba(255,255,255,0.08)" : undefined}
+                  >
                     {/* Sticky Skater Info */}
                     <Box
                       minW="240px"
@@ -425,10 +443,9 @@ export default function LeaderboardClient({ skatersData }: Props) {
                       left={0}
                       zIndex={1}
                       bg={"background"}
-                      py={2}
-                      px={2}
                       display="flex"
                       alignItems="center"
+                      px={2}
                       gap={2}
                       borderRight="2px solid var(--chakra-colors-border)"
                     >
@@ -441,7 +458,7 @@ export default function LeaderboardClient({ skatersData }: Props) {
                         size="sm"
                         mr={1}
                       />
-                      <Box minW={0}>
+                      <Box minW={0} maxW="140px" overflow="hidden">
                         <Text
                           as={Link}
                           href={`https://peakd.com/@${skater.hive_author}`}
@@ -449,24 +466,27 @@ export default function LeaderboardClient({ skatersData }: Props) {
                           fontWeight="bold"
                           fontSize="sm"
                           isTruncated
-                          maxW="100px"
-                          whiteSpace="normal"
-                          wordBreak="break-word"
+                          maxW="100%"
+                          whiteSpace="nowrap"
+                          overflow="hidden"
+                          textOverflow="ellipsis"
                           target="_blank"
                           rel="noopener noreferrer"
                         >
                           {skater.hive_author}
                         </Text>
                         {/* Ethereum identity below username */}
-                        {skater.eth_address && skater.eth_address !== "0x0000000000000000000000000000000000000000" && (
+                        {skater.eth_address && skater.eth_address !== "0x0000000000000000000000000000000000000000" ? (
                           <span
-                            style={{ fontSize: "10px", color: "#aaa", cursor: "pointer", userSelect: "all", marginTop: 0, textAlign: "left", display: "flex", alignItems: "center", gap: "2px" }}
+                            style={{ fontSize: "10px", color: "#aaa", cursor: "pointer", userSelect: "all", marginTop: 0, textAlign: "left", display: "flex", alignItems: "center", gap: "2px", minHeight: '16px' }}
                             onClick={() => copyToClipboard(skater.eth_address)}
                             title="Click to copy address"
                           >
                             <Image src="/images/ethvector.svg" alt="ETH" height="12px" width="12px" style={{ marginRight: "2px", display: "inline" }} />
                             <Name address={skater.eth_address as Address} resolverOrder={resolverOrder}>{formatEthAddress(skater.eth_address)}</Name>
                           </span>
+                        ) : (
+                          <span style={{ display: 'block', minHeight: '16px' }}></span>
                         )}
                         <Text color="text" fontSize="xs" lineHeight={1}>
                           Last: {getTimeSince(skater.last_post)}
@@ -477,15 +497,18 @@ export default function LeaderboardClient({ skatersData }: Props) {
                     {statColumns.map((col, i) => (
                       <Box
                         key={col.key}
-                        minW="65px"
-                        maxW="65px"
-                        px={1}
-                        py={3}
+                        minW="73px"
+                        maxW="73px"
+                        h="48px"
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="center"
                         color={col.color}
                         textAlign="center"
                         fontWeight="semibold"
                         fontSize="sm"
                         bg={"background"}
+                        borderRight={i !== statColumns.length - 1 ? "0.5px solid rgba(255,255,255,0.08)" : undefined}
                       >
                         {col.value(skater)}
                       </Box>
