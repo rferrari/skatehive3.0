@@ -23,6 +23,9 @@ import {
   Spinner,
   useToast,
   useToken,
+  Modal,
+  ModalOverlay,
+  ModalContent,
 } from "@chakra-ui/react";
 import useHiveAccount from "@/hooks/useHiveAccount";
 import { FaGlobe, FaTh, FaBars, FaEdit, FaBookOpen } from "react-icons/fa";
@@ -34,6 +37,8 @@ import PostInfiniteScroll from "../blog/PostInfiniteScroll";
 import { useAioha } from "@aioha/react-ui";
 import EditProfile from "./EditProfile";
 import Magazine from "../shared/Magazine";
+import { ArrowBackIcon } from '@chakra-ui/icons';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 interface ProfilePageProps {
   username: string;
@@ -75,6 +80,8 @@ export default function ProfilePage({ username }: ProfilePageProps) {
   const [isFollowing, setIsFollowing] = useState<boolean | null>(null);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   const toast = useToast();
+  const router = useRouter();
+  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
 
   const params = useRef([
     username,
@@ -116,15 +123,16 @@ export default function ProfilePage({ username }: ProfilePageProps) {
     }
   }, [profileData.about]);
 
-  // Load saved view mode from localStorage on mount
+  // Replace the useEffect that loads the saved view mode
   useEffect(() => {
-    const savedView =
-      typeof window !== "undefined"
-        ? localStorage.getItem("profileViewMode")
-        : null;
-    if (savedView === "grid" || savedView === "list" || savedView === "magazine") {
-      setViewMode(savedView);
+    let initialView = "grid";
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("view") === "magazine") {
+        initialView = "magazine";
+      }
     }
+    setViewMode(initialView as 'grid' | 'list' | 'magazine');
   }, []);
 
   // Detect mobile view and force grid view on mobile
@@ -241,6 +249,7 @@ export default function ProfilePage({ username }: ProfilePageProps) {
     }
   }, [user, username]);
 
+  // Place handleFollowToggle here, before ProfileHeader useMemo
   const handleFollowToggle = useCallback(async () => {
     if (!user || !username || user === username) return;
     const prev = isFollowing;
@@ -285,6 +294,25 @@ export default function ProfilePage({ username }: ProfilePageProps) {
       });
     }
   }, [user, username, isFollowing, toast]);
+
+  // When viewMode changes, update the URL
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      params.set('view', viewMode);
+      router.replace(`?${params.toString()}`);
+    }
+  }, [viewMode, router]);
+
+  // Back button handler for modal
+  const closeMagazine = () => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      params.set('view', 'grid');
+      router.replace(`?${params.toString()}`);
+    }
+    setViewMode('grid');
+  };
 
   const [primary, secondary, background] = useToken('colors', ['primary', 'secondary', 'background']);
   const ProfileHeader = useMemo(
@@ -516,66 +544,84 @@ export default function ProfilePage({ username }: ProfilePageProps) {
   }
 
   return (
-    <Box
-      id="scrollableDiv"
-      color="text"
-      maxW="container.lg"
-      mx="auto"
-      p={0}
-      m={0}
-      maxH="100vh"
-      overflowY="auto"
-      sx={{
-        "&::-webkit-scrollbar": { display: "none" },
-        scrollbarWidth: "none",
-      }}
-    >
-      {/* Cover Image */}
+    <>
+      {/* Magazine Modal */}
+      <Modal isOpen={viewMode === 'magazine'} onClose={closeMagazine} size="full" motionPreset="none">
+        <ModalOverlay />
+        <ModalContent p={0} m={0} maxW="100vw" maxH="100vh" borderRadius={0} overflow="hidden" bg="background" position="relative">
+          <IconButton
+            aria-label="Back"
+            icon={<ArrowBackIcon />}
+            position="absolute"
+            top={4}
+            left={4}
+            zIndex={10}
+            onClick={closeMagazine}
+            bg="background"
+            color="primary"
+            _hover={{ bg: "muted" }}
+            size="lg"
+          />
+          <Magazine tag={[{ tag: username, limit: 30 }]} query="created" />
+        </ModalContent>
+      </Modal>
+      {/* Main Profile Content */}
       <Box
-        position="relative"
-        w={{ base: "100vw", md: "100%" }}
-        maxW={{ base: "100vw", md: "container.lg" }}
-        mx={{ base: "unset", md: "auto" }}
-        overflow="hidden"
-        height={{ base: "120px", md: "200px" }}
+        id="scrollableDiv"
+        color="text"
+        maxW="container.lg"
+        mx="auto"
         p={0}
         m={0}
-        mt={4}
+        maxH="100vh"
+        overflowY="auto"
+        sx={{
+          "&::-webkit-scrollbar": { display: "none" },
+          scrollbarWidth: "none",
+        }}
       >
-        <Image
-          src={profileData.coverImage}
-          alt={`${username} cover`}
+        {/* Cover Image */}
+        <Box
+          position="relative"
           w={{ base: "100vw", md: "100%" }}
-          h={{ base: "120px", md: "200px" }}
-          objectFit="cover"
-          fallback={<Box height="100%" />}
+          maxW={{ base: "100vw", md: "container.lg" }}
+          mx={{ base: "unset", md: "auto" }}
+          overflow="hidden"
+          height={{ base: "120px", md: "200px" }}
+          p={0}
+          m={0}
+          mt={4}
+        >
+          <Image
+            src={profileData.coverImage}
+            alt={`${username} cover`}
+            w={{ base: "100vw", md: "100%" }}
+            h={{ base: "120px", md: "200px" }}
+            objectFit="cover"
+            fallback={<Box height="100%" />}
+          />
+        </Box>
+        {ProfileHeader}
+        {ViewToggle}
+        {/* Posts or Magazine */}
+        {viewMode !== "magazine" ? (
+          <PostInfiniteScroll
+            allPosts={posts}
+            fetchPosts={fetchPosts}
+            viewMode={viewMode}
+            context="profile"
+            hideAuthorInfo={true}
+          />
+        ) : null}
+        {/* Edit Profile Modal */}
+        <EditProfile
+          isOpen={isEditModalOpen}
+          onClose={handleEditModalClose}
+          profileData={profileData}
+          onProfileUpdate={updateProfileData}
+          username={username}
         />
       </Box>
-
-      {ProfileHeader}
-      {ViewToggle}
-
-      {/* Posts or Magazine */}
-      {viewMode === "magazine" ? (
-        <Magazine posts={posts} isLoading={isLoading} error={error} />
-      ) : (
-        <PostInfiniteScroll
-          allPosts={posts}
-          fetchPosts={fetchPosts}
-          viewMode={viewMode}
-          context="profile"
-          hideAuthorInfo={true}
-        />
-      )}
-
-      {/* Edit Profile Modal */}
-      <EditProfile
-        isOpen={isEditModalOpen}
-        onClose={handleEditModalClose}
-        profileData={profileData}
-        onProfileUpdate={updateProfileData}
-        username={username}
-      />
-    </Box>
+    </>
   );
 }

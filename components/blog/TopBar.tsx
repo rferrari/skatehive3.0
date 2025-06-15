@@ -72,7 +72,13 @@ export default function TopBar({ viewMode, setViewMode, setQuery }: TopBarProps)
                         <IconButton
                             aria-label="Magazine View"
                             icon={<FiBook />}  
-                            onClick={() => router.push('/magazine')}
+                            onClick={() => {
+                                if (isMagazinePage) {
+                                    router.push('/blog?view=magazine');
+                                } else {
+                                    setViewMode('magazine');
+                                }
+                            }}
                             isActive={viewMode === 'magazine'}
                             variant={viewMode === 'magazine' ? 'solid' : 'outline'}
                             colorScheme={viewMode === 'magazine' ? 'primary' : 'muted'}
