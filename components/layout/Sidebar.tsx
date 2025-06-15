@@ -13,7 +13,7 @@ import {
 } from "@chakra-ui/react";
 import { useRouter, usePathname } from "next/navigation";
 import { AiohaModal, useAioha } from "@aioha/react-ui";
-import { FiHome, FiBell, FiUser, FiBook, FiMap, FiCreditCard, FiSettings, FiMail, FiAward } from "react-icons/fi";
+import { FiHome, FiBell, FiUser, FiBook, FiMap, FiCreditCard, FiSettings, FiMail, FiAward, FiTarget } from "react-icons/fi";
 import { motion } from "framer-motion";
 import { FaGear } from "react-icons/fa6";
 import { FaTrophy } from "react-icons/fa";
