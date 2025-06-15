@@ -30,6 +30,7 @@
     "@vercel/analytics": "^1.5.0",
     "@wagmi/core": "^2.17.2",
     "browser-image-compression": "^2.0.2",
+    "dayjs": "^1.11.13",
     "ethers": "^6.14.3",
     "framer-motion": "^6.5.1",
     "keychain-sdk": "^0.9.4",

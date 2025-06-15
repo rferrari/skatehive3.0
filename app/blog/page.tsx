@@ -5,9 +5,12 @@ import { Discussion } from '@hiveio/dhive';
 import { findPosts, getPayoutValue } from '@/lib/hive/client-functions';
 import TopBar from '@/components/blog/TopBar';
 import PostInfiniteScroll from '@/components/blog/PostInfiniteScroll';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import JoinSkatehiveBanner from '@/components/blog/JoinSkatehiveBanner';
 import PostGrid from '@/components/blog/PostGrid';
+import Magazine from '@/components/shared/Magazine';
+import { Modal, ModalOverlay, ModalContent, IconButton } from '@chakra-ui/react';
+import { ArrowBackIcon } from '@chakra-ui/icons';
 
 export default function Blog() {
     const searchParams = useSearchParams();
@@ -20,6 +23,7 @@ export default function Blog() {
     const [allPosts, setAllPosts] = useState<Discussion[]>([]);
     const isFetching = useRef(false);
     const [isGoatLoading, setIsGoatLoading] = useState(false);
+    const router = useRouter();
 
     const tag = process.env.NEXT_PUBLIC_HIVE_SEARCH_TAG
 
@@ -128,37 +132,80 @@ export default function Blog() {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
+    // Modal logic for magazine view
+    const isMagazineOpen = viewMode === 'magazine';
+    const closeMagazine = () => {
+        // Remove view=magazine from the query string, revert to grid
+        const params = new URLSearchParams(window.location.search);
+        params.set('view', 'grid');
+        router.replace(`/blog?${params.toString()}`);
+        setViewMode('grid');
+    };
+    // Magazine props (same as /magazine/page.tsx)
+    const communityTag = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || 'hive-173115';
+    const magazineTag = [{ tag: communityTag, limit: 30 }];
+    const magazineQuery = 'created';
+
     return (
-        <Box
-            id="scrollableDiv"
-            maxW="container.lg"
-            mx="auto"
-            maxH="100vh"
-            overflowY="auto"
-            p={0}
-            sx={{
-                '&::-webkit-scrollbar': { display: 'none' },
-                scrollbarWidth: 'none',
-            }}
-        >
-            <JoinSkatehiveBanner />
-            <TopBar viewMode={viewMode} setViewMode={(mode) => {
-                if (typeof window !== 'undefined' && window.innerWidth < 768) {
-                    setViewMode('grid');
-                } else {
-                    setViewMode(mode);
-                }
-            }} setQuery={setQuery} />
-            {isGoatLoading && query === 'goat' && (
-                <Box textAlign="center" color="primary" py={4} fontWeight="bold">
-                    Scanning for GOAT posts...
-                </Box>
-            )}
-            {query === 'goat' ? (
-                <PostGrid posts={allPosts} columns={3} />
-            ) : (
-                <PostInfiniteScroll allPosts={allPosts} fetchPosts={fetchPosts} viewMode={viewMode} context="blog" />
-            )}
-        </Box>
+        <>
+            {/* Magazine Modal */}
+            <Modal isOpen={isMagazineOpen} onClose={closeMagazine} size="full" motionPreset="none">
+                <ModalOverlay />
+                <ModalContent p={0} m={0} maxW="100vw" maxH="100vh" borderRadius={0} overflow="hidden" bg="background" position="relative">
+                    <IconButton
+                        aria-label="Back"
+                        icon={<ArrowBackIcon />}
+                        position="absolute"
+                        top={4}
+                        left={4}
+                        zIndex={10}
+                        onClick={closeMagazine}
+                        bg="background"
+                        color="primary"
+                        _hover={{ bg: "muted" }}
+                        size="lg"
+                    />
+                    <Magazine tag={magazineTag} query={magazineQuery} />
+                </ModalContent>
+            </Modal>
+            {/* Main Blog Content */}
+            <Box
+                id="scrollableDiv"
+                maxW="container.lg"
+                mx="auto"
+                maxH="100vh"
+                overflowY="auto"
+                p={0}
+                sx={{
+                    '&::-webkit-scrollbar': { display: 'none' },
+                    scrollbarWidth: 'none',
+                }}
+            >
+                <JoinSkatehiveBanner />
+                <TopBar viewMode={viewMode} setViewMode={(mode) => {
+                    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                        setViewMode('grid');
+                        const params = new URLSearchParams(window.location.search);
+                        params.set('view', 'grid');
+                        router.replace(`/blog?${params.toString()}`);
+                    } else {
+                        setViewMode(mode);
+                        const params = new URLSearchParams(window.location.search);
+                        params.set('view', mode);
+                        router.replace(`/blog?${params.toString()}`);
+                    }
+                }} setQuery={setQuery} />
+                {isGoatLoading && query === 'goat' && (
+                    <Box textAlign="center" color="primary" py={4} fontWeight="bold">
+                        Scanning for GOAT posts...
+                    </Box>
+                )}
+                {query === 'goat' ? (
+                    <PostGrid posts={allPosts} columns={3} />
+                ) : (
+                    <PostInfiniteScroll allPosts={allPosts} fetchPosts={fetchPosts} viewMode={viewMode} context="blog" />
+                )}
+            </Box>
+        </>
     );
 }

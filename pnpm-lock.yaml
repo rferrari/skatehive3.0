@@ -68,6 +68,9 @@ dependencies:
   browser-image-compression:
     specifier: ^2.0.2
     version: 2.0.2
+  dayjs:
+    specifier: ^1.11.13
+    version: 1.11.13
   ethers:
     specifier: ^6.14.3
     version: 6.14.3
