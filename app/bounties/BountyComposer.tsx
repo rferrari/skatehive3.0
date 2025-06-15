@@ -142,12 +142,12 @@ export default function BountyComposer({ onNewBounty, onClose }: BountyComposerP
             _focusVisible={{ border: "tb1" }}
           />
           <HStack mt={2} spacing={2}>
+            <Box fontSize="sm" color="muted" minW="60px">Optional:</Box>
             <Button
               leftIcon={<FaImage size={20} />}
               variant="ghost"
               isDisabled={isLoading}
               onClick={() => {
-                // Use a ref to trigger file input for image upload
                 document.querySelector<HTMLInputElement>("input[type='file'][accept^='image']")?.click();
               }}
               border="2px solid transparent"
