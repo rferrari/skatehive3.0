@@ -11,6 +11,7 @@ import {
   Text,
   VStack,
   Icon,
+  Image,
 } from "@chakra-ui/react";
 import { FaCheck, FaTimes, FaPiggyBank } from "react-icons/fa";
 import { MdSkateboarding, MdPublic, MdOutlinePsychology } from "react-icons/md";
@@ -19,6 +20,7 @@ import {
   checkAccountExists,
 } from "@/lib/invite/helpers";
 import { useTheme } from "@/app/themeProvider";
+import CommunityTotalPayout from "@/components/shared/CommunityTotalPayout";
 
 export default function JoinPage() {
   const [desiredUsername, setDesiredUsername] = useState("");
@@ -85,20 +87,30 @@ export default function JoinPage() {
         style={{ objectFit: 'cover', objectPosition: 'center 30%', width: '100%', height: '100%', pointerEvents: 'none', filter: 'brightness(0.5)' }}
         aria-hidden="true"
       />
-      <Flex direction="column" align="center" justify="center" minH="100vh" px={4} position="relative" zIndex={1} mt={{ base: -3, md: -6 }}>
+      <Flex direction="column" align="center" justify="center" minH="100vh" px={4} position="relative" zIndex={1} mt={0} overflow="auto">
         {/* Hero Section */}
-        <Box textAlign="center" mt={{ base: 2, md: 4 }} mb={4}>
-          <Icon as={MdSkateboarding} boxSize={16} color={iconColor} mb={4} />
+        <Box textAlign="center" mt={2} mb={2}>
+          <Image src="/images/treflipgog%20crop.gif" alt="Skateboarder Treflip" maxW="64px" height="64px" objectFit="contain" mb={4} mx="auto" />
           <Heading size="2xl" color={textColor} mb={2}
             textShadow="0 4px 24px rgba(0,0,0,0.95)"
           >
             Welcome to Skatehive
           </Heading>
-          <Text fontSize="xl" color={textColor} maxW="lg" mx="auto"
-            textShadow="0 4px 24px rgba(0,0,0,0.95)"
+          <Box
+            maxW="2xl"
+            mx="auto"
+            px={4}
+            py={2}
+            borderRadius="md"
+            background="rgba(0,0,0,0.4)"
+            display="inline-block"
           >
-            The decentralized skateboarding community. Connect, share, and grow with skaters worldwide. Join us and claim your unique Hive username!
-          </Text>
+            <Text fontSize="lg" color={textColor} textAlign="center"
+              textShadow="0 4px 24px rgba(0,0,0,0.95)"
+            >
+              The decentralized skateboarding community. Connect, share, and grow with skaters worldwide. Join us and claim your unique Hive username!
+            </Text>
+          </Box>
         </Box>
         {/* Form Card */}
         <Box
@@ -207,13 +219,12 @@ export default function JoinPage() {
             </VStack>
           </Box>
         </Box>
+        {/* Community Payout Banner */}
+        <Box mt={8} w="full">
+          <CommunityTotalPayout />
+        </Box>
         {/* Features Section */}
-        <Box mt={8} w="full" maxW="3xl">
-          <Heading size="md" color={textColor} textAlign="center" mb={6}
-            textShadow="0 4px 24px rgba(0,0,0,0.95)"
-          >
-            Why Join Skatehive?
-          </Heading>
+        <Box mt={10} w="full" maxW="3xl">
           <Flex direction={{ base: "column", md: "row" }} gap={6} justify="center">
             <FeatureCard icon={MdPublic} title="Global Community" desc="Connect with skaters from all over the world and share your passion." />
             <FeatureCard icon={MdOutlinePsychology} title="Learn Web3" desc="Explore how decentralized tech connects skaters to shred limits in the digital realm." />
