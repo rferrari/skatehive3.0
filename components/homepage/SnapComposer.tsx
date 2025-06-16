@@ -39,6 +39,7 @@ interface SnapComposerProps {
   onNewComment: (newComment: Partial<Discussion>) => void;
   post?: boolean;
   onClose: () => void;
+  submitLabel?: string;
 }
 
 export default function SnapComposer({
@@ -47,6 +48,7 @@ export default function SnapComposer({
   onNewComment,
   post = false,
   onClose,
+  submitLabel,
 }: SnapComposerProps) {
   const { user, aioha } = useAioha();
   const postBodyRef = useRef<HTMLTextAreaElement>(null);
@@ -63,7 +65,7 @@ export default function SnapComposer({
   // Drag and drop state
   const [isDragOver, setIsDragOver] = useState(false);
 
-  const buttonText = post ? "Reply" : "Post";
+  const buttonText = submitLabel || (post ? "Reply" : "Post");
 
   // Function to extract hashtags from text
   function extractHashtags(text: string): string[] {
@@ -412,12 +414,19 @@ export default function SnapComposer({
               </Button>
             </HStack>
             <Button
-              variant="solid"
               colorScheme="primary"
+              isLoading={isLoading}
               onClick={handleComment}
-              isDisabled={isLoading}
+              borderRadius="base"
+              fontWeight="bold"
+              px={8}
+              py={6}
+              mt={2}
+              mb={1}
+              width="100%"
+              fontSize="lg"
             >
-              {isLoading ? <Spinner size="sm" /> : buttonText}
+              {buttonText}
             </Button>
           </HStack>
           <Box width="100%">
