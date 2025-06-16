@@ -11,7 +11,7 @@ const SidebarLogo = () => {
     console.log("activeAuction", activeAuction);
     const router = useRouter();
     const [pixelColor] = useToken("colors", ["primary"]);
-    const gridSizes = [4, 16, 41];
+    const gridSizes = [4, 16];
     const gridSize = React.useMemo(() => gridSizes[Math.floor(Math.random() * gridSizes.length)], []);
 
     return (
