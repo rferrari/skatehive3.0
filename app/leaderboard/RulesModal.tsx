@@ -36,8 +36,7 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
             </Text>
             <Text fontSize="sm" color="primary" mb={4}>
               The leaderboard ranks top Skatehive contributors using data from
-              Hive and Ethereum. It rewards transparency, recognition, and
-              engagement.
+              Hive and Ethereum. Points are determined by skatehive-centric blockchain metrics. Your hive power, Skatehive NFTs and supporting the Skatehive witness (hive node operator) are all factors in your score.
             </Text>
             <Text fontWeight="bold" mb={2} color="primary">
               🌟 How You Earn Points
@@ -69,49 +68,47 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
               <tbody>
                 <tr>
                   <td style={{ padding: 6 }}>Hive Balance</td>
-                  <td style={{ padding: 6 }}>+0.1/Hive (max 100)</td>
+                  <td style={{ padding: 6 }}>0.1 points per Hive, capped at 1,000 Hive (max 100 points)</td>
                 </tr>
                 <tr>
                   <td style={{ padding: 6 }}>Hive Power (HP)</td>
-                  <td style={{ padding: 6 }}>+0.5/HP (max 6,000)</td>
+                  <td style={{ padding: 6 }}>0.5 points per HP, capped at 12,000 HP (max 6,000 points)</td>
                 </tr>
                 <tr>
                   <td style={{ padding: 6 }}>Gnars Votes</td>
-                  <td style={{ padding: 6 }}>+30/vote</td>
+                  <td style={{ padding: 6 }}>30 points per Gnars Vote</td>
                 </tr>
                 <tr>
                   <td style={{ padding: 6 }}>Skatehive NFTs</td>
-                  <td style={{ padding: 6 }}>+50/NFT</td>
+                  <td style={{ padding: 6 }}>50 points per Skatehive NFT</td>
                 </tr>
                 <tr>
                   <td style={{ padding: 6 }}>Witness Vote</td>
-                  <td style={{ padding: 6 }}>+1,000</td>
+                  <td style={{ padding: 6 }}>1000 points for voting for the Skatehive witness</td>
                 </tr>
                 <tr>
                   <td style={{ padding: 6 }}>HBD Savings</td>
-                  <td style={{ padding: 6 }}>+0.2/HBD (max 200)</td>
+                  <td style={{ padding: 6 }}>0.2 points per HBD in savings, capped at 1,000 HBD (max 200 points)</td>
                 </tr>
                 <tr>
-                  <td style={{ padding: 6 }}>Posts</td>
-                  <td style={{ padding: 6 }}>+0.1/post (max 300)</td>
+                  <td style={{ padding: 6 }}>Number of Posts</td>
+                  <td style={{ padding: 6 }}>0.1 points per post, capped at 3,000 posts (max 300 points)</td>
                 </tr>
                 <tr>
                   <td style={{ padding: 6 }}>Voting Power</td>
-                  <td style={{ padding: 6 }}>+1,000/USD</td>
+                  <td style={{ padding: 6 }}>1000 points per USD of voting power</td>
                 </tr>
                 <tr>
                   <td style={{ padding: 6 }}>Giveth Donations</td>
-                  <td style={{ padding: 6 }}>+5/USD (max 5,000)</td>
+                  <td style={{ padding: 6 }}>5 points per USD donated, capped at 1,000 USD (max 5,000 points)</td>
                 </tr>
                 <tr>
                   <td style={{ padding: 6 }}>Last Post Activity</td>
-                  <td style={{ padding: 6 }}>
-                    -0 to -100 (inactivity penalty)
-                  </td>
+                  <td style={{ padding: 6 }}>0 points deducted if last post within 7 days, up to 100 points deducted</td>
                 </tr>
                 <tr>
-                  <td style={{ padding: 6 }}>Ethereum Wallet</td>
-                  <td style={{ padding: 6 }}>+5,000 (bonus)</td>
+                  <td style={{ padding: 6 }}>Ethereum Wallet Bonus</td>
+                  <td style={{ padding: 6 }}>5000 points for having a valid Ethereum wallet</td>
                 </tr>
               </tbody>
             </Box>
