@@ -24,6 +24,7 @@ export const config = createConfig({
     [base.id]: http(),
   },
 });
+
 export function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     aioha.registerKeychain();
