@@ -1,10 +1,9 @@
 import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalCloseButton,
-  ModalBody,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverHeader,
+  PopoverBody,
   VStack,
   HStack,
   Avatar,
@@ -12,8 +11,10 @@ import {
   Box,
   useColorModeValue,
   Link,
+  Button,
 } from "@chakra-ui/react";
 import { getPayoutValue } from "@/lib/hive/client-functions";
+import React from "react";
 
 interface Vote {
   voter: string;
@@ -21,14 +22,13 @@ interface Vote {
   rshares?: number;
 }
 
-interface VoteListModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+interface VoteListPopoverProps {
+  trigger: React.ReactNode;
   votes: Vote[];
   post: any;
 }
 
-const VoteListModal = ({ isOpen, onClose, votes, post }: VoteListModalProps) => {
+const VoteListPopover = ({ trigger, votes, post }: VoteListPopoverProps) => {
   // Deduplicate votes by voter (keep the last occurrence)
   const uniqueVotesMap = new Map();
   votes.forEach((vote) => {
@@ -55,17 +55,14 @@ const VoteListModal = ({ isOpen, onClose, votes, post }: VoteListModalProps) => 
   const emptyColor = useColorModeValue("gray.500", "gray.400");
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="md">
-      <ModalOverlay />
-      <ModalContent bg={bg}>
-        <ModalHeader>Voters</ModalHeader>
-        <ModalCloseButton />
-        <ModalBody>
+    <Popover placement="auto" isLazy>
+      <PopoverTrigger>{trigger}</PopoverTrigger>
+      <PopoverContent w="320px" maxH="300px" overflowY="auto" bg={bg}>
+        <PopoverHeader fontWeight="bold">Voters</PopoverHeader>
+        <PopoverBody>
           <VStack
             align="stretch"
-            spacing={2}
-            maxH="400px"
-            overflowY="auto"
+            spacing={1}
             sx={{
               scrollbarWidth: 'none', // Firefox
               '::-webkit-scrollbar': { display: 'none' }, // Chrome/Safari
@@ -79,7 +76,7 @@ const VoteListModal = ({ isOpen, onClose, votes, post }: VoteListModalProps) => 
               // Estimate dollar value
               const dollarValue = totalRshares > 0 ? (rshares / totalRshares) * payout : 0;
               return (
-                <HStack key={vote.voter + idx} spacing={2} p={1} borderRadius="md" _hover={{ bg: hoverBg }}>
+                <HStack key={vote.voter + idx} spacing={1} p={0.5} borderRadius="md" _hover={{ bg: hoverBg }} minH="32px">
                   <Link
                     href={`/@${vote.voter}`}
                     display="flex"
@@ -88,20 +85,20 @@ const VoteListModal = ({ isOpen, onClose, votes, post }: VoteListModalProps) => 
                     minW={0}
                     _hover={{ textDecoration: "underline" }}
                   >
-                    <Avatar size="md" name={vote.voter} src={`https://images.hive.blog/u/${vote.voter}/avatar/sm`} mr={2} />
-                    <Text fontWeight="bold" fontSize="lg" isTruncated>{vote.voter}</Text>
+                    <Avatar size="sm" name={vote.voter} src={`https://images.hive.blog/u/${vote.voter}/avatar/sm`} mr={1} />
+                    <Text fontWeight="medium" fontSize="sm" isTruncated>{vote.voter}</Text>
                   </Link>
-                  <Text fontFamily="mono" color={valueColor} fontSize="md">
+                  <Text fontFamily="mono" color={valueColor} fontSize="sm">
                     ${dollarValue.toFixed(4)}
                   </Text>
                 </HStack>
               );
             })}
           </VStack>
-        </ModalBody>
-      </ModalContent>
-    </Modal>
+        </PopoverBody>
+      </PopoverContent>
+    </Popover>
   );
 };
 
-export default VoteListModal; 
+export default VoteListPopover; 

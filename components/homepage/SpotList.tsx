@@ -4,7 +4,6 @@ import { useComments } from "@/hooks/useComments";
 import { Discussion } from "@hiveio/dhive";
 import Snap from "@/components/homepage/Snap";
 import Conversation from "@/components/homepage/Conversation";
-import VoteListModal from "@/components/blog/VoteListModal";
 
 interface SpotListProps {
   newSpot?: Discussion | null;
@@ -20,8 +19,6 @@ export default function SpotList({ newSpot }: SpotListProps) {
   const [visibleCount, setVisibleCount] = useState(10);
   const [conversation, setConversation] = useState<Discussion | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [voteListModalOpen, setVoteListModalOpen] = useState(false);
-  const [voteListSpot, setVoteListSpot] = useState<Discussion | null>(null);
 
   // Update displayed spots when comments or newSpot changes
   useEffect(() => {
@@ -50,16 +47,6 @@ export default function SpotList({ newSpot }: SpotListProps) {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setConversation(null);
-  };
-
-  const handleOpenVoteList = (spot: Discussion) => {
-    setVoteListSpot(spot);
-    setVoteListModalOpen(true);
-  };
-
-  const handleCloseVoteList = () => {
-    setVoteListModalOpen(false);
-    setVoteListSpot(null);
   };
 
   if (isLoading) {
@@ -97,7 +84,6 @@ export default function SpotList({ newSpot }: SpotListProps) {
             onOpen={() => handleOpenConversation(spot)}
             setReply={() => {}}
             setConversation={handleOpenConversation}
-            onOpenVoteList={() => handleOpenVoteList(spot)}
           />
         ))}
         {visibleCount < displayedSpots.length && (
@@ -119,14 +105,6 @@ export default function SpotList({ newSpot }: SpotListProps) {
           )}
         </ModalContent>
       </Modal>
-      {voteListSpot && (
-        <VoteListModal
-          isOpen={voteListModalOpen}
-          onClose={handleCloseVoteList}
-          votes={voteListSpot.active_votes || []}
-          post={voteListSpot}
-        />
-      )}
     </>
   );
 } 

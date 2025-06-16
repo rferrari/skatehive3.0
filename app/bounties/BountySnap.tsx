@@ -37,6 +37,7 @@ import VideoRenderer from "@/components/layout/VideoRenderer";
 import SnapComposer from "@/components/homepage/SnapComposer";
 import { FaLink } from "react-icons/fa6";
 import useHivePower from "@/hooks/useHivePower";
+import VoteListPopover from "@/components/blog/VoteListModal";
 
 const separateContent = (body: string) => {
   const textParts: string[] = [];
@@ -123,13 +124,12 @@ interface BountySnapProps {
   onOpen: () => void;
   setReply: (Discussion: Discussion) => void;
   setConversation?: (conversation: Discussion) => void;
-  onOpenVoteList?: () => void;
   hideSubmitButton?: boolean;
   showMedia?: boolean;
   showTitle?: boolean;
 }
 
-const BountySnap = ({ Discussion, onOpen, setReply, setConversation, onOpenVoteList, hideSubmitButton, showMedia, showTitle }: BountySnapProps) => {
+const BountySnap = ({ Discussion, onOpen, setReply, setConversation, hideSubmitButton, showMedia, showTitle }: BountySnapProps) => {
   const { aioha, user } = useAioha();
   const { hiveAccount } = useHiveAccount(user || "");
   const { hivePower, isLoading: isHivePowerLoading, error: hivePowerError, estimateVoteValue } = useHivePower(user);
@@ -353,18 +353,15 @@ const BountySnap = ({ Discussion, onOpen, setReply, setConversation, onOpenVoteL
                 _hover={{ bg: 'gray.700', borderRadius: 'full' }}
               />
             </Tooltip>
-            <Text
-              ml={1}
-              fontSize="sm"
-              cursor="pointer"
-              onClick={e => {
-                e.stopPropagation();
-                if (onOpenVoteList) onOpenVoteList();
-              }}
-              _hover={{ textDecoration: 'underline' }}
-            >
-              {uniqueVotes.length}
-            </Text>
+            <VoteListPopover
+              trigger={
+                <Button variant="ghost" size="sm" ml={1} p={1} _hover={{ textDecoration: 'underline' }} onClick={e => e.stopPropagation()}>
+                  {uniqueVotes.length}
+                </Button>
+              }
+              votes={activeVotes}
+              post={Discussion}
+            />
           </HStack>
         </HStack>
       </Box>

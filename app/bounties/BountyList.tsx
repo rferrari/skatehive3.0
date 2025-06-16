@@ -4,7 +4,6 @@ import { useComments } from "@/hooks/useComments";
 import { Discussion } from "@hiveio/dhive";
 import BountySnap from "./BountySnap";
 import BountySubmission from "./BountySubmission";
-import VoteListModal from "@/components/blog/VoteListModal";
 
 interface BountyListProps {
   newBounty?: Discussion | null;
@@ -20,8 +19,6 @@ export default function BountyList({ newBounty }: BountyListProps) {
   const [visibleCount, setVisibleCount] = useState(10);
   const [submission, setSubmission] = useState<Discussion | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [voteListModalOpen, setVoteListModalOpen] = useState(false);
-  const [voteListBounty, setVoteListBounty] = useState<Discussion | null>(null);
 
   useEffect(() => {
     let bounties = [...comments];
@@ -47,16 +44,6 @@ export default function BountyList({ newBounty }: BountyListProps) {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSubmission(null);
-  };
-
-  const handleOpenVoteList = (bounty: Discussion) => {
-    setVoteListBounty(bounty);
-    setVoteListModalOpen(true);
-  };
-
-  const handleCloseVoteList = () => {
-    setVoteListModalOpen(false);
-    setVoteListBounty(null);
   };
 
   if (isLoading) {
@@ -94,7 +81,6 @@ export default function BountyList({ newBounty }: BountyListProps) {
             onOpen={() => handleOpenSubmission(bounty)}
             setReply={() => {}}
             setConversation={handleOpenSubmission}
-            onOpenVoteList={() => handleOpenVoteList(bounty)}
           />
         ))}
       </SimpleGrid>
@@ -118,14 +104,6 @@ export default function BountyList({ newBounty }: BountyListProps) {
           )}
         </ModalContent>
       </Modal>
-      {voteListBounty && (
-        <VoteListModal
-          isOpen={voteListModalOpen}
-          onClose={handleCloseVoteList}
-          votes={voteListBounty.active_votes || []}
-          post={voteListBounty}
-        />
-      )}
     </>
   );
 } 

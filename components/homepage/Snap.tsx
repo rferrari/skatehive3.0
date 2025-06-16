@@ -37,6 +37,7 @@ import VideoRenderer from "../layout/VideoRenderer";
 import SnapComposer from "./SnapComposer";
 import { FaLink } from "react-icons/fa6";
 import useHivePower from "@/hooks/useHivePower";
+import VoteListPopover from "@/components/blog/VoteListModal";
 
 const separateContent = (body: string) => {
   const textParts: string[] = [];
@@ -123,10 +124,9 @@ interface SnapProps {
   onOpen: () => void;
   setReply: (Discussion: Discussion) => void;
   setConversation?: (conversation: Discussion) => void;
-  onOpenVoteList?: () => void;
 }
 
-const Snap = ({ Discussion, onOpen, setReply, setConversation, onOpenVoteList }: SnapProps) => {
+const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
   const { aioha, user } = useAioha();
   const { hiveAccount } = useHiveAccount(user || "");
   const { hivePower, isLoading: isHivePowerLoading, error: hivePowerError, estimateVoteValue } = useHivePower(user);
@@ -368,18 +368,15 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation, onOpenVoteList }:
                   _hover={{ bg: 'gray.700', borderRadius: 'full' }}
                 />
               </Tooltip>
-              <Text
-                ml={1}
-                fontSize="sm"
-                cursor="pointer"
-                onClick={e => {
-                  e.stopPropagation();
-                  if (onOpenVoteList) onOpenVoteList();
-                }}
-                _hover={{ textDecoration: 'underline' }}
-              >
-                {uniqueVotes.length}
-              </Text>
+              <VoteListPopover
+                trigger={
+                  <Button variant="ghost" size="sm" ml={1} p={1} _hover={{ textDecoration: 'underline' }} onClick={e => e.stopPropagation()}>
+                    {uniqueVotes.length}
+                  </Button>
+                }
+                votes={activeVotes}
+                post={Discussion}
+              />
             </HStack>
             <HStack>
               <Tooltip label="comments" hasArrow openDelay={1000}>

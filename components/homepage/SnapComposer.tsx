@@ -61,6 +61,7 @@ export default function SnapComposer({
   const imageCompressorRef = useRef<ImageCompressorRef>(null);
   const [compressedImages, setCompressedImages] = useState<{ url: string; fileName: string; caption: string }[]>([]);
   const gifWebpInputRef = useRef<HTMLInputElement>(null);
+  const imageUploadInputRef = useRef<HTMLInputElement>(null);
 
   // Drag and drop state
   const [isDragOver, setIsDragOver] = useState(false);
@@ -119,6 +120,36 @@ export default function SnapComposer({
       setIsLoading(false);
       e.target.value = ""; // Reset input
     }
+  };
+
+  // Unified image upload handler
+  const handleUnifiedImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    for (const file of files) {
+      if (file.type === "image/gif" || file.type === "image/webp") {
+        // Use GIF/WEBP logic
+        const fakeEvent = { target: { files: [file] } } as unknown as React.ChangeEvent<HTMLInputElement>;
+        await handleGifWebpUpload(fakeEvent);
+      } else if (file.type.startsWith("image/")) {
+        // Use image compression logic
+        try {
+          const options = {
+            maxSizeMB: 2,
+            maxWidthOrHeight: 1920,
+            useWebWorker: true,
+          };
+          const compressedFile = await imageCompression(file, options);
+          const url = URL.createObjectURL(compressedFile);
+          await handleCompressedImageUpload(url, compressedFile.name);
+          URL.revokeObjectURL(url);
+        } catch (err) {
+          alert("Error compressing image: " + (err instanceof Error ? err.message : err));
+        }
+      } else {
+        alert("Unsupported file type: " + file.type);
+      }
+    }
+    e.target.value = ""; // Reset input
   };
 
   async function handleComment() {
@@ -333,9 +364,11 @@ export default function SnapComposer({
           />
           <HStack justify="space-between" mb={3}>
             <HStack>
-              <Menu>
-                <MenuButton
-                  as={Button}
+              {/* Image Upload Button */}
+              <Box position="relative">
+                <IconButton
+                  aria-label="Upload Image"
+                  icon={<FaImage color="var(--chakra-colors-primary)" size={22} />}
                   variant="ghost"
                   isDisabled={isLoading}
                   border="2px solid transparent"
@@ -348,48 +381,37 @@ export default function SnapComposer({
                   justifyContent="center"
                   _hover={{ borderColor: "primary", boxShadow: "0 0 0 2px var(--chakra-colors-primary)" }}
                   _active={{ borderColor: "accent" }}
-                >
-                  <Box display="flex" alignItems="center" justifyContent="center" width="100%" height="100%">
-                    <FaImage color="var(--chakra-colors-primary)" size={22} />
-                  </Box>
-                </MenuButton>
-                <MenuList bg="background" border="tb1" borderRadius="base">
-                  <MenuItem
-                    icon={<FaImage size={22} />}
-                    bg={"background"}
-                    _hover={{ bg: "tb1" }}
-                    _active={{ bg: "tb1" }}
-                    onClick={() => imageCompressorRef.current?.trigger()}
-                  >
-                    Upload Image (JPEG, PNG, HEIC)
-                  </MenuItem>
-                  <MenuItem
-                    icon={<MdGif size={22} />}
-                    bg={"background"}
-                    _hover={{ bg: "tb1" }}
-                    _active={{ bg: "tb1" }}
-                    onClick={() => gifWebpInputRef.current?.click()}
-                  >
-                    Upload GIF or WEBP
-                    <input
-                      type="file"
-                      accept=".gif,.webp"
-                      style={{ display: "none" }}
-                      ref={gifWebpInputRef}
-                      onChange={handleGifWebpUpload}
-                    />
-                  </MenuItem>
-                  <MenuItem
-                    icon={<MdGif size={22} />}
-                    onClick={() => setGiphyModalOpen(true)}
-                    bg={"background"}
-                    _hover={{ bg: "tb1" }}
-                    _active={{ bg: "tb1" }}
-                  >
-                    Use GIFY
-                  </MenuItem>
-                </MenuList>
-              </Menu>
+                  onClick={() => imageUploadInputRef.current?.click()}
+                />
+                <input
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.heic,.gif,.webp"
+                  style={{ display: "none" }}
+                  ref={imageUploadInputRef}
+                  onChange={handleUnifiedImageUpload}
+                  multiple
+                />
+              </Box>
+              {/* Giphy Button (only in reply modal) */}
+              {post && (
+                <IconButton
+                  aria-label="Add GIF from Giphy"
+                  icon={<MdGif size={22} color="var(--chakra-colors-primary)" />}
+                  variant="ghost"
+                  isDisabled={isLoading}
+                  border="2px solid transparent"
+                  borderRadius="full"
+                  height="48px"
+                  width="48px"
+                  p={0}
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  _hover={{ borderColor: "primary", boxShadow: "0 0 0 2px var(--chakra-colors-primary)" }}
+                  _active={{ borderColor: "accent" }}
+                  onClick={() => setGiphyModalOpen((open) => !open)}
+                />
+              )}
               <ImageCompressor
                 ref={imageCompressorRef}
                 onUpload={handleCompressedImageUpload}

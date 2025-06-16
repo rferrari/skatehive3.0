@@ -23,7 +23,7 @@ import { useAioha } from "@aioha/react-ui";
 import { getPayoutValue } from "@/lib/hive/client-functions";
 import markdownRenderer from "@/lib/utils/MarkdownRenderer";
 import useHivePower from "@/hooks/useHivePower";
-import VoteListModal from "./VoteListModal";
+import VoteListPopover from "./VoteListModal";
 
 interface PostDetailsProps {
   post: Discussion;
@@ -42,9 +42,6 @@ export default function PostDetails({ post }: PostDetailsProps) {
   );
   const { hivePower, isLoading: isHivePowerLoading, error: hivePowerError, estimateVoteValue } = useHivePower(user);
   const theme = useTheme();
-
-  // VoteListModal state
-  const [showVoteList, setShowVoteList] = useState(false);
 
   // Get theme colors
   const primary = theme.colors.primary ?? '#38ff8e';
@@ -154,16 +151,15 @@ export default function PostDetails({ post }: PostDetailsProps) {
                 opacity={0.5}
               />
             )}
-            <Text
-              ml={2}
-              fontSize="sm"
-              color={primary}
-              cursor="pointer"
-              onClick={() => setShowVoteList(true)}
-              _hover={{ textDecoration: 'underline' }}
-            >
-              {activeVotes.length}
-            </Text>
+            <VoteListPopover
+              trigger={
+                <Button variant="ghost" size="sm" ml={2} p={1} color={primary} _hover={{ textDecoration: 'underline' }}>
+                  {activeVotes.length}
+                </Button>
+              }
+              votes={activeVotes}
+              post={post}
+            />
           </Flex>
         </Flex>
         {showSlider ? (
@@ -214,12 +210,6 @@ export default function PostDetails({ post }: PostDetailsProps) {
             </Button>
           </Flex>
         ) : null}
-        <VoteListModal
-          isOpen={showVoteList}
-          onClose={() => setShowVoteList(false)}
-          votes={activeVotes}
-          post={post}
-        />
       </Flex>
 
       <Divider />

@@ -37,7 +37,7 @@ import {
   extractImageUrls,
 } from "@/lib/utils/extractImageUrls"; // Import YouTube extraction function
 import useHivePower from "@/hooks/useHivePower";
-import VoteListModal from "./VoteListModal";
+import VoteListPopover from "./VoteListModal";
 
 interface PostCardProps {
   post: Discussion;
@@ -78,7 +78,6 @@ export default function PostCard({
   const default_thumbnail =
     "https://images.hive.blog/u/" + author + "/avatar/large";
   const [visibleImages, setVisibleImages] = useState<number>(3);
-  const [showVoteList, setShowVoteList] = useState(false);
   const { isOpen: isPayoutOpen, onOpen: openPayout, onClose: closePayout, onToggle: togglePayout } = useDisclosure();
 
   // Calculate days remaining for pending payout
@@ -281,11 +280,15 @@ export default function PostCard({
                 boxSize={5}
                 _hover={{ bg: 'gray.700', borderRadius: 'full' }}
               />
-              <Text ml={1} fontSize="sm" cursor="pointer" onClick={() => setShowVoteList(true)}
-                _hover={{ textDecoration: 'underline' }}
-              >
-                {uniqueVotes.length}
-              </Text>
+              <VoteListPopover
+                trigger={
+                  <Button variant="ghost" size="sm" ml={1} p={1} _hover={{ textDecoration: 'underline' }}>
+                    {uniqueVotes.length}
+                  </Button>
+                }
+                votes={activeVotes}
+                post={post}
+              />
             </Flex>
             <Popover placement="top" isOpen={isPayoutOpen} onClose={closePayout} closeOnBlur={true}>
               <PopoverTrigger>
@@ -354,7 +357,6 @@ export default function PostCard({
             {summary}
           </Text>
         </Flex>
-        <VoteListModal isOpen={showVoteList} onClose={() => setShowVoteList(false)} votes={activeVotes} post={post} />
       </Box>
     );
   }
@@ -645,11 +647,15 @@ export default function PostCard({
                     boxSize={6}
                     _hover={{ bg: 'gray.700', borderRadius: 'full' }}
                   />
-                  <Text ml={2} fontSize="sm" cursor="pointer" onClick={() => setShowVoteList(true)}
-                    _hover={{ textDecoration: 'underline' }}
-                  >
-                    {uniqueVotes.length}
-                  </Text>
+                  <VoteListPopover
+                    trigger={
+                      <Button variant="ghost" size="sm" ml={1} p={1} _hover={{ textDecoration: 'underline' }}>
+                        {uniqueVotes.length}
+                      </Button>
+                    }
+                    votes={activeVotes}
+                    post={post}
+                  />
                 </Flex>
                 <Popover placement="top" isOpen={isPayoutOpen} onClose={closePayout} closeOnBlur={true}>
                   <PopoverTrigger>
@@ -690,7 +696,6 @@ export default function PostCard({
             )}
           </Box>
         </Box>
-        <VoteListModal isOpen={showVoteList} onClose={() => setShowVoteList(false)} votes={activeVotes} post={post} />
       </Box>
     </>
   );
