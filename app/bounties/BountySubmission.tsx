@@ -14,7 +14,7 @@ import { Discussion } from "@hiveio/dhive";
 import { useComments } from "@/hooks/useComments";
 import { CloseIcon } from "@chakra-ui/icons";
 import BountySnap from "./BountySnap";
-import SnapComposer from "@/components/homepage/SnapComposer";
+import BountyReplyComposer from "./BountyReplyComposer";
 
 interface BountySubmissionProps {
   Discussion: Discussion;
@@ -97,18 +97,11 @@ const BountySubmission = ({
         showTitle={false}
       />
       <Divider my={4} />
-      <Box mt={2}>
-        <SnapComposer
-          pa={Discussion.author}
-          pp={Discussion.permlink}
-          onNewComment={
-            handleNewReply as (newComment: Partial<Discussion>) => void
-          }
-          onClose={() => console.log("Composer closed")}
-          post
-          submitLabel="Submit"
-        />
-      </Box>
+      <BountyReplyComposer
+        parentDiscussion={Discussion}
+        onNewReply={handleNewReply}
+        onClose={() => console.log("Composer closed")}
+      />
       <Divider my={4} />
       <VStack spacing={2} align="stretch">
         {[

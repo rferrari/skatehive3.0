@@ -423,7 +423,8 @@ export default function SnapComposer({
               py={6}
               mt={2}
               mb={1}
-              width="100%"
+              width="30%"
+              minWidth="120px"
               fontSize="lg"
             >
               {buttonText}
