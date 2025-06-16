@@ -10,13 +10,17 @@ import {
   VStack,
   HStack,
   IconButton,
+  Wrap,
+  Image,
 } from "@chakra-ui/react";
 import { useAioha } from "@aioha/react-ui";
 import { Discussion } from "@hiveio/dhive";
-import ImageUploader from "@/components/homepage/ImageUploader";
+import ImageCompressor, { ImageCompressorRef } from "../../src/components/ImageCompressor";
 import VideoUploader, { VideoUploaderRef } from "@/components/homepage/VideoUploader";
-import { FaImage, FaVideo } from "react-icons/fa";
+import { FaImage, FaVideo, FaTimes } from "react-icons/fa";
 import { CloseIcon } from "@chakra-ui/icons";
+import { getFileSignature, uploadImage } from "@/lib/hive/client-functions";
+import imageCompression from "browser-image-compression";
 
 interface BountyComposerProps {
   onNewBounty?: (newBounty: Partial<Discussion>) => void;
@@ -30,6 +34,10 @@ export default function BountyComposer({ onNewBounty, onClose }: BountyComposerP
   const [reward, setReward] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const videoUploaderRef = useRef<VideoUploaderRef>(null);
+  const imageCompressorRef = useRef<ImageCompressorRef>(null);
+  const [compressedImages, setCompressedImages] = useState<{ url: string; fileName: string; caption: string }[]>([]);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const buttonText = "Post Bounty";
 
@@ -52,6 +60,17 @@ export default function BountyComposer({ onNewBounty, onClose }: BountyComposerP
     let bountyBody = `Trick/Challenge: ${trick}\n`;
     bountyBody += `Bounty Rules: ${description}\n`;
     bountyBody += `Reward: ${reward}`;
+    // Add image markdown
+    if (compressedImages.length > 0) {
+      const imageMarkup = compressedImages
+        .map((img) => `![${img.caption || "image"}](${img.url})`)
+        .join("\n");
+      bountyBody += `\n\n${imageMarkup}`;
+    }
+    // Add video if present
+    if (videoUrl) {
+      bountyBody += `\n\n<iframe src=\"${videoUrl}\" frameborder=\"0\" allowfullscreen></iframe>`;
+    }
     try {
       const tags = [
         "bounty",
@@ -63,11 +82,13 @@ export default function BountyComposer({ onNewBounty, onClose }: BountyComposerP
         permlink,
         "",
         bountyBody,
-        { app: "Skatehive App 3.0", tags }
+        { app: "Skatehive App 3.0", tags, images: compressedImages.map(img => img.url) }
       );
       if (commentResponse.success) {
         setTrick("");
         setReward("");
+        setCompressedImages([]);
+        setVideoUrl(null);
         if (descriptionRef.current) descriptionRef.current.value = "";
         const newBounty: Partial<Discussion> = {
           author: user,
@@ -90,21 +111,79 @@ export default function BountyComposer({ onNewBounty, onClose }: BountyComposerP
     }
   }
 
-  // Handler for image upload
-  const handleImageUpload = (files: File[]) => {
-    files.forEach(async (file) => {
-      // Simulate upload and get a URL (replace with real upload logic if needed)
-      const url = URL.createObjectURL(file);
-      if (descriptionRef.current) {
-        descriptionRef.current.value += `\n![image](${url})`;
+  // Handler for compressed image upload
+  const handleCompressedImageUpload = async (url: string | null, fileName?: string) => {
+    if (!url) return;
+    setIsLoading(true);
+    try {
+      const blob = await fetch(url).then(res => res.blob());
+      const file = new File([blob], fileName || "compressed.jpg", { type: blob.type });
+      const signature = await getFileSignature(file);
+      const uploadUrl = await uploadImage(file, signature, compressedImages.length);
+      if (uploadUrl) {
+        setCompressedImages(prev => [...prev, { url: uploadUrl, fileName: file.name, caption: "" }]);
       }
-    });
+    } catch (error) {
+      console.error("Error uploading compressed image:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Drag and drop handlers
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  };
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  };
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    const files = Array.from(e.dataTransfer.files);
+    for (const file of files) {
+      if (file.type.startsWith("image/")) {
+        try {
+          const options = {
+            maxSizeMB: 2,
+            maxWidthOrHeight: 1920,
+            useWebWorker: true,
+          };
+          const compressedFile = await imageCompression(file, options);
+          const url = URL.createObjectURL(compressedFile);
+          await handleCompressedImageUpload(url, compressedFile.name);
+          URL.revokeObjectURL(url);
+        } catch (err) {
+          alert("Error compressing image: " + (err instanceof Error ? err.message : err));
+        }
+      } else if (file.type.startsWith("video/")) {
+        if (videoUploaderRef.current && videoUploaderRef.current.handleFile) {
+          setIsLoading(true);
+          try {
+            await videoUploaderRef.current.handleFile(file);
+          } catch (error) {
+            console.error("Error uploading video:", error);
+          } finally {
+            setIsLoading(false);
+          }
+        } else {
+          alert("Video upload not supported.");
+        }
+      } else {
+        alert("Unsupported file type: " + file.type);
+      }
+    }
   };
 
   // Handler for video upload
   const handleVideoUpload = (url: string | null) => {
-    if (url && descriptionRef.current) {
-      descriptionRef.current.value += `\n<iframe src=\"${url}\" frameborder=\"0\" allowfullscreen></iframe>`;
+    if (url) {
+      setVideoUrl(url);
     }
   };
 
@@ -117,6 +196,14 @@ export default function BountyComposer({ onNewBounty, onClose }: BountyComposerP
       borderColor="muted"
       position="relative"
       bg="background"
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      style={{
+        border: isDragOver ? "2px dashed var(--chakra-colors-primary)" : undefined,
+        background: isDragOver ? "rgba(0,0,0,0.04)" : undefined,
+        transition: "border 0.2s, background 0.2s",
+      }}
     >
       <VStack spacing={3} align="stretch">
         <FormControl isRequired>
@@ -147,16 +234,18 @@ export default function BountyComposer({ onNewBounty, onClose }: BountyComposerP
               leftIcon={<FaImage size={20} />}
               variant="ghost"
               isDisabled={isLoading}
-              onClick={() => {
-                document.querySelector<HTMLInputElement>("input[type='file'][accept^='image']")?.click();
-              }}
+              onClick={() => imageCompressorRef.current?.trigger()}
               border="2px solid transparent"
               _hover={{ borderColor: "primary", boxShadow: "0 0 0 2px var(--chakra-colors-primary)" }}
               _active={{ borderColor: "accent" }}
             >
               Upload Image
             </Button>
-            <ImageUploader onUpload={handleImageUpload} onRemove={() => {}} images={[]} />
+            <ImageCompressor
+              ref={imageCompressorRef}
+              onUpload={handleCompressedImageUpload}
+              isProcessing={isLoading}
+            />
             <Button
               leftIcon={<FaVideo size={20} />}
               variant="ghost"
@@ -170,6 +259,38 @@ export default function BountyComposer({ onNewBounty, onClose }: BountyComposerP
             </Button>
             <VideoUploader ref={videoUploaderRef} onUpload={handleVideoUpload} isProcessing={isLoading} />
           </HStack>
+          {/* Image Previews */}
+          {compressedImages.length > 0 && (
+            <Wrap mt={2} spacing={2}>
+              {compressedImages.map((img, idx) => (
+                <Box key={img.url} position="relative">
+                  <Image
+                    src={img.url}
+                    alt={img.fileName}
+                    boxSize="80px"
+                    objectFit="cover"
+                    borderRadius="md"
+                    border="2px solid var(--chakra-colors-primary)"
+                  />
+                  <IconButton
+                    icon={<FaTimes />}
+                    size="xs"
+                    aria-label="Remove image"
+                    position="absolute"
+                    top={1}
+                    right={1}
+                    onClick={() => setCompressedImages(prev => prev.filter((_, i) => i !== idx))}
+                  />
+                </Box>
+              ))}
+            </Wrap>
+          )}
+          {/* Video Preview */}
+          {videoUrl && (
+            <Box mt={2}>
+              <video src={videoUrl} controls style={{ maxWidth: "100%", borderRadius: 8 }} />
+            </Box>
+          )}
         </FormControl>
         <FormControl isRequired>
           <FormLabel>Reward</FormLabel>

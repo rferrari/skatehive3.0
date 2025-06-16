@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Box, VStack, Text, Spinner, Button, Modal, ModalOverlay, ModalContent } from "@chakra-ui/react";
+import { Box, SimpleGrid, Text, Spinner, Button, Modal, ModalOverlay, ModalContent } from "@chakra-ui/react";
 import { useComments } from "@/hooks/useComments";
 import { Discussion } from "@hiveio/dhive";
-import Snap from "@/components/homepage/Snap";
-import Conversation from "@/components/homepage/Conversation";
+import BountySnap from "./BountySnap";
+import BountySubmission from "./BountySubmission";
 import VoteListModal from "@/components/blog/VoteListModal";
 
 interface BountyListProps {
@@ -18,7 +18,7 @@ export default function BountyList({ newBounty }: BountyListProps) {
   );
   const [displayedBounties, setDisplayedBounties] = useState<Discussion[]>([]);
   const [visibleCount, setVisibleCount] = useState(10);
-  const [conversation, setConversation] = useState<Discussion | null>(null);
+  const [submission, setSubmission] = useState<Discussion | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [voteListModalOpen, setVoteListModalOpen] = useState(false);
   const [voteListBounty, setVoteListBounty] = useState<Discussion | null>(null);
@@ -39,14 +39,14 @@ export default function BountyList({ newBounty }: BountyListProps) {
     setVisibleCount((prev) => prev + 10);
   };
 
-  const handleOpenConversation = (bounty: Discussion) => {
-    setConversation(bounty);
+  const handleOpenSubmission = (bounty: Discussion) => {
+    setSubmission(bounty);
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setConversation(null);
+    setSubmission(null);
   };
 
   const handleOpenVoteList = (bounty: Discussion) => {
@@ -86,30 +86,32 @@ export default function BountyList({ newBounty }: BountyListProps) {
 
   return (
     <>
-      <VStack spacing={6} align="stretch" my={8}>
+      <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing={6} my={8}>
         {displayedBounties.slice(0, visibleCount).map((bounty) => (
-          <Snap
+          <BountySnap
             key={bounty.permlink}
             Discussion={bounty}
-            onOpen={() => handleOpenConversation(bounty)}
+            onOpen={() => handleOpenSubmission(bounty)}
             setReply={() => {}}
-            setConversation={handleOpenConversation}
+            setConversation={handleOpenSubmission}
             onOpenVoteList={() => handleOpenVoteList(bounty)}
           />
         ))}
-        {visibleCount < displayedBounties.length && (
-          <Button onClick={handleLoadMore} alignSelf="center" colorScheme="primary" variant="outline">
+      </SimpleGrid>
+      {visibleCount < displayedBounties.length && (
+        <Box display="flex" justifyContent="center" my={4}>
+          <Button onClick={handleLoadMore} colorScheme="primary" variant="outline">
             Load More
           </Button>
-        )}
-      </VStack>
+        </Box>
+      )}
       <Modal isOpen={isModalOpen} onClose={handleCloseModal} size="2xl">
         <ModalOverlay />
         <ModalContent bg="background" color="text">
-          {conversation && (
-            <Conversation
-              Discussion={conversation}
-              setConversation={() => setIsModalOpen(false)}
+          {submission && (
+            <BountySubmission
+              Discussion={submission}
+              setSubmission={() => setIsModalOpen(false)}
               onOpen={() => {}}
               setReply={() => {}}
             />
