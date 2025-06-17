@@ -15,6 +15,7 @@ import { useComments } from "@/hooks/useComments";
 import { CloseIcon } from "@chakra-ui/icons";
 import BountySnap from "./BountySnap";
 import BountyReplyComposer from "./BountyReplyComposer";
+import { parse, isAfter } from "date-fns";
 
 interface BountySubmissionProps {
   Discussion: Discussion;
@@ -48,6 +49,18 @@ const BountySubmission = ({
     setOptimisticReplies((prev) => [...prev, newReply]);
     setReply(newReply);
   }
+
+  // Helper to get deadline from bounty body
+  function getDeadlineFromBody(body: string): Date | null {
+    const deadlineMatch = body.match(/Deadline:\s*(\d{2}-\d{2}-\d{4})/);
+    if (deadlineMatch && deadlineMatch[1]) {
+      return parse(deadlineMatch[1], "MM-dd-yyyy", new Date());
+    }
+    return null;
+  }
+  const deadline = getDeadlineFromBody(Discussion.body);
+  const now = new Date();
+  const isActive = deadline ? isAfter(deadline, now) : true;
 
   if (isLoading) {
     return (
@@ -95,13 +108,20 @@ const BountySubmission = ({
         hideSubmitButton={true}
         showMedia={true}
         showTitle={false}
+        showAuthor={true}
       />
       <Divider my={4} />
-      <BountyReplyComposer
-        parentDiscussion={Discussion}
-        onNewReply={handleNewReply}
-        onClose={() => console.log("Composer closed")}
-      />
+      {isActive ? (
+        <BountyReplyComposer
+          parentDiscussion={Discussion}
+          onNewReply={handleNewReply}
+          onClose={() => console.log("Composer closed")}
+        />
+      ) : (
+        <Text color="red.400" fontWeight="bold" textAlign="center" my={4}>
+          Submissions are closed for this bounty.
+        </Text>
+      )}
       <Divider my={4} />
       <VStack spacing={2} align="stretch">
         {[

@@ -44,3 +44,10 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
     height: 100vh;
   }
 }
+
+.hide-scrollbar {
+  scrollbar-width: none; /* Firefox */
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}

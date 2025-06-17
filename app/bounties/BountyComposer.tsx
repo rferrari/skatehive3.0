@@ -21,6 +21,7 @@ import { FaImage, FaVideo, FaTimes } from "react-icons/fa";
 import { CloseIcon } from "@chakra-ui/icons";
 import { getFileSignature, uploadImage } from "@/lib/hive/client-functions";
 import imageCompression from "browser-image-compression";
+import { format, isAfter, parseISO } from "date-fns";
 
 interface BountyComposerProps {
   onNewBounty?: (newBounty: Partial<Discussion>) => void;
@@ -38,6 +39,7 @@ export default function BountyComposer({ onNewBounty, onClose }: BountyComposerP
   const [compressedImages, setCompressedImages] = useState<{ url: string; fileName: string; caption: string }[]>([]);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [deadline, setDeadline] = useState("");
 
   const buttonText = "Post Bounty";
 
@@ -55,11 +57,23 @@ export default function BountyComposer({ onNewBounty, onClose }: BountyComposerP
       alert("Please enter a description for the bounty.");
       return;
     }
+    if (!deadline) {
+      alert("Please select a deadline for the bounty.");
+      return;
+    }
+    const today = new Date();
+    const selectedDate = parseISO(deadline);
+    if (!isAfter(selectedDate, today)) {
+      alert("Deadline must be in the future.");
+      return;
+    }
     setIsLoading(true);
     const permlink = new Date().toISOString().replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
     let bountyBody = `Trick/Challenge: ${trick}\n`;
     bountyBody += `Bounty Rules: ${description}\n`;
     bountyBody += `Reward: ${reward}`;
+    const formattedDeadline = format(selectedDate, "MM-dd-yyyy");
+    bountyBody += `\nDeadline: ${formattedDeadline}`;
     // Add image markdown
     if (compressedImages.length > 0) {
       const imageMarkup = compressedImages
@@ -87,6 +101,7 @@ export default function BountyComposer({ onNewBounty, onClose }: BountyComposerP
       if (commentResponse.success) {
         setTrick("");
         setReward("");
+        setDeadline("");
         setCompressedImages([]);
         setVideoUrl(null);
         if (descriptionRef.current) descriptionRef.current.value = "";
@@ -301,11 +316,28 @@ export default function BountyComposer({ onNewBounty, onClose }: BountyComposerP
             isDisabled={isLoading}
           />
         </FormControl>
+        <FormControl isRequired>
+          <FormLabel>Deadline</FormLabel>
+          <Input
+            type="date"
+            value={deadline}
+            min={format(new Date(), "yyyy-MM-dd")}
+            onChange={e => setDeadline(e.target.value)}
+            isDisabled={isLoading}
+          />
+        </FormControl>
         <Button
           variant="solid"
           colorScheme="primary"
           onClick={handleBounty}
-          isDisabled={isLoading || !trick.trim() || !reward.trim() || !(descriptionRef.current && descriptionRef.current.value.trim())}
+          isDisabled={
+            isLoading ||
+            !trick.trim() ||
+            !reward.trim() ||
+            !(descriptionRef.current && descriptionRef.current.value.trim()) ||
+            !deadline ||
+            !isAfter(parseISO(deadline), new Date())
+          }
         >
           {isLoading ? <Spinner size="sm" /> : buttonText}
         </Button>

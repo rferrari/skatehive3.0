@@ -9,9 +9,10 @@ import { Discussion } from "@hiveio/dhive";
 export default function BountiesClient() {
   const [newBounty, setNewBounty] = useState<Partial<Discussion> | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   return (
-    <Box maxW="900px" mx="auto" py={8} px={4}>
+    <Box maxW="900px" mx="auto" py={8} px={4} className="hide-scrollbar" style={{ overflowY: 'auto', height: '100vh' }}>
       <Box display="grid" gridTemplateColumns={{ base: "1fr", md: "1fr auto" }} alignItems="center" mb={4}>
         <Box>
           <Text
@@ -49,7 +50,7 @@ export default function BountiesClient() {
           </Button>
         </Box>
       </Box>
-      <BountyList newBounty={newBounty as any} />
+      <BountyList newBounty={newBounty as any} refreshTrigger={refreshTrigger} />
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} size="2xl" isCentered>
         <ModalOverlay />
         <ModalContent bg="background" color="text" p={0} borderRadius="xl">
@@ -57,6 +58,7 @@ export default function BountiesClient() {
             onNewBounty={(bounty) => {
               setNewBounty(bounty);
               setIsModalOpen(false);
+              setRefreshTrigger((prev) => prev + 1);
             }}
             onClose={() => setIsModalOpen(false)}
           />

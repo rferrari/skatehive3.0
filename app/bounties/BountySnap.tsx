@@ -20,6 +20,7 @@ import {
   PopoverArrow,
   PopoverBody,
   useDisclosure,
+  Tag,
 } from "@chakra-ui/react";
 import { Discussion } from "@hiveio/dhive";
 import { FaRegComment } from "react-icons/fa";
@@ -38,6 +39,8 @@ import SnapComposer from "@/components/homepage/SnapComposer";
 import { FaLink } from "react-icons/fa6";
 import useHivePower from "@/hooks/useHivePower";
 import VoteListPopover from "@/components/blog/VoteListModal";
+import { parse, isAfter, isBefore, isEqual } from "date-fns";
+import spitfire from "/public/images/spitfire.png";
 
 const separateContent = (body: string) => {
   const textParts: string[] = [];
@@ -127,9 +130,10 @@ interface BountySnapProps {
   hideSubmitButton?: boolean;
   showMedia?: boolean;
   showTitle?: boolean;
+  showAuthor?: boolean;
 }
 
-const BountySnap = ({ Discussion, onOpen, setReply, setConversation, hideSubmitButton, showMedia, showTitle }: BountySnapProps) => {
+const BountySnap = ({ Discussion, onOpen, setReply, setConversation, hideSubmitButton, showMedia, showTitle, showAuthor = true }: BountySnapProps) => {
   const { aioha, user } = useAioha();
   const { hiveAccount } = useHiveAccount(user || "");
   const { hivePower, isLoading: isHivePowerLoading, error: hivePowerError, estimateVoteValue } = useHivePower(user);
@@ -252,6 +256,22 @@ const BountySnap = ({ Discussion, onOpen, setReply, setConversation, hideSubmitB
     title = trickMatch[1].trim();
   }
 
+  // Extract Deadline from body (format: MM-DD-YYYY)
+  let deadline = null;
+  const deadlineMatch = Discussion.body.match(/Deadline:\s*(\d{2}-\d{2}-\d{4})/);
+  if (deadlineMatch && deadlineMatch[1]) {
+    deadline = parse(deadlineMatch[1], "MM-dd-yyyy", new Date());
+  }
+  const nowDate = new Date();
+  let statusNote = null;
+  if (deadline) {
+    if (isAfter(deadline, nowDate)) {
+      statusNote = <Tag colorScheme="green" size="md" mb={1}>Active</Tag>;
+    } else {
+      statusNote = <Tag colorScheme="red" size="md" mb={1}>Complete</Tag>;
+    }
+  }
+
   return (
     <Box pl={effectiveDepth > 1 ? 1 : 0} ml={effectiveDepth > 1 ? 2 : 0}>
       <Box mt={1} mb={1} borderRadius="base" width="100%">
@@ -271,32 +291,35 @@ const BountySnap = ({ Discussion, onOpen, setReply, setConversation, hideSubmitB
             <Text fontWeight="bold" fontSize="xl" mb={1}>
               {title || "Untitled Bounty"}
             </Text>
+            {statusNote}
           </Box>
         )}
         <HStack mb={2}>
-          <Link
-            href={`/@${Discussion.author}`}
-            _hover={{ textDecoration: 'none' }}
-            display="flex"
-            alignItems="center"
-            role="group"
-          >
-            <Avatar
-              size="sm"
-              name={Discussion.author}
-              src={`https://images.hive.blog/u/${Discussion.author}/avatar/sm`}
-              ml={2}
-            />
-            <Text
-              fontWeight="medium"
-              fontSize="sm"
-              ml={2}
-              whiteSpace="nowrap"
-              _groupHover={{ textDecoration: 'underline' }}
+          {showAuthor && (
+            <Link
+              href={`/@${Discussion.author}`}
+              _hover={{ textDecoration: 'none' }}
+              display="flex"
+              alignItems="center"
+              role="group"
             >
-              {Discussion.author}
-            </Text>
-          </Link>
+              <Avatar
+                size="sm"
+                name={Discussion.author}
+                src={`https://images.hive.blog/u/${Discussion.author}/avatar/sm`}
+                ml={2}
+              />
+              <Text
+                fontWeight="medium"
+                fontSize="sm"
+                ml={2}
+                whiteSpace="nowrap"
+                _groupHover={{ textDecoration: 'underline' }}
+              >
+                {Discussion.author}
+              </Text>
+            </Link>
+          )}
           <HStack ml={0} width="100%">
             <Text fontWeight="medium" fontSize="sm" color="gray">
               · {commentDate}
@@ -353,6 +376,32 @@ const BountySnap = ({ Discussion, onOpen, setReply, setConversation, hideSubmitB
                 _hover={{ bg: 'gray.700', borderRadius: 'full' }}
               />
             </Tooltip>
+            {showSlider && (
+              <Flex mt={4} alignItems="center">
+                <Box width="150px" mr={2}>
+                  <Slider
+                    aria-label="slider-ex-1"
+                    min={1}
+                    max={100}
+                    value={sliderValue}
+                    onChange={setSliderValue}
+                  >
+                    <SliderTrack bg="gray.700" height="8px" boxShadow="0 0 10px rgba(255, 255, 0, 0.8)">
+                      <SliderFilledTrack bgGradient="linear(to-r, green.400, limegreen, red.400)" />
+                    </SliderTrack>
+                    <SliderThumb boxSize="30px" bg="transparent" boxShadow={"none"} _focus={{ boxShadow: "none" }} zIndex={1}>
+                      <Image src="/images/spitfire.png" alt="thumb" w="100%" h="auto" mr={2} mb={1} />
+                    </SliderThumb>
+                  </Slider>
+                </Box>
+                <Button size="xs" colorScheme="primary" onClick={handleVote} isDisabled={voted} ml={2}>
+                  {voted ? "Voted" : `Vote ${sliderValue}%`}
+                </Button>
+                <Button size="xs" variant="ghost" onClick={() => setShowSlider(false)} ml={1}>
+                  Cancel
+                </Button>
+              </Flex>
+            )}
             <VoteListPopover
               trigger={
                 <Button variant="ghost" size="sm" ml={1} p={1} _hover={{ textDecoration: 'underline' }} onClick={e => e.stopPropagation()}>
