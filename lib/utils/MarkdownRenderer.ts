@@ -1,6 +1,11 @@
 import { DefaultRenderer } from "@hiveio/content-renderer";
 
 export function processMediaContent(content: string): string {
+    // Handle 3Speak videos
+    content = content.replace(
+        /\[!\[.*?\]\(.*?\)\]\((https?:\/\/3speak\.tv\/watch\?v=([\w\-/]+))\)/g,
+        (_, url, videoId) => create3SpeakEmbed(videoId)
+    );
     // Replace markdown images with IPFS links
     content = content.replace(
         /!\[.*?\]\((https:\/\/(?:gateway\.pinata\.cloud|ipfs\.skatehive\.app)\/ipfs\/([\w-]+)).*?\)/g,
@@ -67,5 +72,17 @@ function createSimpleVideoTag(videoID: string): string {
 function createImageTag(imageID: string): string {
     return `<div style="text-align: center; display: flex; justify-content: center; margin: 1rem 0;">
         <img src="https://ipfs.skatehive.app/ipfs/${imageID}" alt="IPFS Image" style="max-width: 100%; height: auto;">
+    </div>`;
+}
+
+function create3SpeakEmbed(videoID: string): string {
+    return `<div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; margin: 1rem 0;">
+        <iframe
+            src="https://3speak.tv/embed?v=${videoID}"
+            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+            frameborder="0"
+            allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
+        ></iframe>
     </div>`;
 }

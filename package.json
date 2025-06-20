@@ -50,6 +50,7 @@
     "react-infinite-scroll-component": "^6.1.0",
     "react-pageflip": "^2.0.3",
     "react-select-country-list": "^2.2.3",
+    "rehype-raw": "^7.0.0",
     "swiper": "^11.2.8",
     "viem": "~2.30.6",
     "wagmi": "^2.15.4"
