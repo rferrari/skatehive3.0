@@ -244,11 +244,11 @@ export default function Magazine(props: MagazineProps) {
               vid.pause();
             }
           });
-          // Pause all YouTube iframes
+          // Pause all iframe videos
           const iframes = document.querySelectorAll('.flipbook iframe');
           iframes.forEach((iframe) => {
             const ifr = iframe as HTMLIFrameElement;
-            if (ifr.src && ifr.src.includes('youtube.com/embed')) {
+            if (ifr.src.includes('youtube.com/embed')) {
               ifr.contentWindow?.postMessage(
                 JSON.stringify({
                   event: 'command',
@@ -257,18 +257,16 @@ export default function Magazine(props: MagazineProps) {
                 }),
                 '*'
               );
-            }
-            // Pause SkateHype iframes by resetting src
-            if (ifr.src && ifr.src.includes('skatehype.com/ifplay.php')) {
-              // Only reset if not already paused (best effort)
+            } else if (ifr.src.includes('skatehype.com/ifplay.php') || ifr.src.includes('3speak.tv')) {
               const oldSrc = ifr.src;
               ifr.src = '';
               setTimeout(() => {
                 ifr.src = oldSrc;
-              }, 100); // brief reset
+              }, 100);
             }
           });
         }}
+        onUpdate={() => {}}
       >
         <Box sx={coverStyles(theme)} width="100%" height="100%" position="relative" overflow="hidden">
           {/* Matrix effect as background */}
