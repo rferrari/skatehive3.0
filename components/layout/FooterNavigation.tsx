@@ -20,7 +20,7 @@ import { useState } from "react";
 import { KeyTypes } from "@aioha/aioha";
 
 export default function FooterNavigation({ newNotificationCount = 0 }) {
-  const { user } = useAioha();
+  const { user, aioha } = useAioha();
   const router = useRouter();
   const [modalDisplayed, setModalDisplayed] = useState(false);
 
@@ -157,7 +157,10 @@ export default function FooterNavigation({ newNotificationCount = 0 }) {
                       Go to Profile
                     </MenuItem>
                     <MenuItem
-                      onClick={() => setModalDisplayed(true)}
+                      onClick={async () => {
+                        await aioha.logout();
+                        setModalDisplayed(true);
+                      }}
                       icon={
                         user ? (
                           <Image
@@ -193,7 +196,10 @@ export default function FooterNavigation({ newNotificationCount = 0 }) {
               />
             </Tooltip>
             <Button
-              onClick={() => setModalDisplayed(true)}
+              onClick={async () => {
+                await aioha.logout();
+                setModalDisplayed(true);
+              }}
               variant="solid"
               size="lg"
               colorScheme="green"
@@ -213,7 +219,7 @@ export default function FooterNavigation({ newNotificationCount = 0 }) {
           keyType: KeyTypes.Posting,
           loginTitle: "Login",
         }}
-        onLogin={console.log}
+        onLogin={() => setModalDisplayed(false)}
         onClose={() => setModalDisplayed(false)}
       />
     </>

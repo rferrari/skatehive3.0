@@ -14,7 +14,8 @@ const skateTheme = extendTheme({
   colors: {
     background: '#121212',       // Softer than black
     text: '#A8FF60',             // Muted green for better readability
-    primary: '#A8FF60',          // Same muted green
+    primary: '#a7ff00',
+    'primary-alpha': 'rgba(167, 255, 0, 0.8)',
     secondary: '#1E1E1E',        // Slight contrast layer
     accent: '#FFD700',           // Gold for highlights
     muted: '#202020',            // Muted background

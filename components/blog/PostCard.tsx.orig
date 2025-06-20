@@ -429,39 +429,43 @@ export default function PostCard({
         >
           {/* Only show author info if not hidden */}
           {!hideAuthorInfo && (
-            <Box mb={4}>
-              <Flex alignItems="center" minWidth={0}>
-                <Link
-                  href={`/@${author}`}
-                  onClick={stopPropagation}
-                  display="flex"
-                  alignItems="center"
-                  _hover={{ textDecoration: "underline" }}
-                >
-                  <Avatar
-                    size="sm"
-                    name={author}
-                    src={`https://images.hive.blog/u/${author}/avatar/sm`}
-                  />
+            <Box p={4} bg="black" color="white">
+              <Flex alignItems="center" mb={2}>
+                <Avatar
+                  name={author}
+                  src={default_thumbnail}
+                  size="sm"
+                  mr={2}
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent card click event
+                    router.push(`/@${author}`);
+                  }}
+                />
+                <Box flex="1" minW={0}>
                   <Text
                     fontWeight="bold"
-                    fontSize="3xl"
-                    ml={2}
-                    color="gray.200"
-                    _hover={{ color: "white" }}
+                    color="white"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      router.push(`/@${author}`);
+                    }}
                     isTruncated
                   >
                     {author}
                   </Text>
-                </Link>
+                </Box>
+                <Text fontSize="sm" color="gray.500" ml={2} whiteSpace="nowrap">
+                  {postDate}
+                </Text>
               </Flex>
             </Box>
           )}
-          <Flex justifyContent="flex-end">
-            <Text fontSize="sm" color="gray.500">
+          {/* If author info is hidden, show post date above title */}
+          {hideAuthorInfo && (
+            <Text fontSize="xs" color="gray.500" mb={1}>
               {postDate}
             </Text>
-          </Flex>
+          )}
           <Link
             href={`/@${author}/${post.permlink}`}
             onClick={stopPropagation}

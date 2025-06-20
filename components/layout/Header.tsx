@@ -25,7 +25,7 @@ export default function Header() {
     const [profileInfo, setProfileInfo] = useState<ProfileInfo | null>(null);
     const [communityInfo, setCommunityInfo] = useState<CommunityInfo | null>(null);
     const [loading, setLoading] = useState(true);
-    const { user } = useAioha();
+    const { user, aioha } = useAioha();
 
     const communityTag = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG;
 
@@ -102,7 +102,16 @@ export default function Header() {
                         </>
                     )}
                 </Flex>
-                <Button onClick={() => setModalDisplayed(true)}>
+                <Button
+                    onClick={async () => {
+                        if (user) {
+                            await aioha.logout();
+                        } else {
+                            await aioha.logout();
+                            setModalDisplayed(true);
+                        }
+                    }}
+                >
                     {user ?? 'Login'}
                 </Button>
             </Flex>
@@ -114,7 +123,7 @@ export default function Header() {
                         keyType: KeyTypes.Posting,
                         loginTitle: 'Login',
                     }}
-                    onLogin={console.log}
+                    onLogin={() => setModalDisplayed(false)}
                     onClose={() => setModalDisplayed(false)}
                 />
             </div>

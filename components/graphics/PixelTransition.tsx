@@ -6,7 +6,6 @@ import "./PixelTransition.css";
 interface PixelTransitionProps {
     firstContent: React.ReactNode;
     secondContent: React.ReactNode;
-    gridSize?: number;
     pixelColor?: string;
     animationStepDuration?: number;
     className?: string;
@@ -17,13 +16,13 @@ interface PixelTransitionProps {
 const PixelTransition: React.FC<PixelTransitionProps> = ({
     firstContent,
     secondContent,
-    gridSize = 7,
     pixelColor = "currentColor",
     animationStepDuration = 0.3,
     className = "",
     style = {},
     aspectRatio = "100%",
 }) => {
+    const gridSize = 16;
     const containerRef = useRef<HTMLDivElement | null>(null);
     const pixelGridRef = useRef<HTMLDivElement | null>(null);
     const activeRef = useRef<HTMLDivElement | null>(null);
@@ -57,7 +56,7 @@ const PixelTransition: React.FC<PixelTransitionProps> = ({
                 pixelGridEl.appendChild(pixel);
             }
         }
-    }, [gridSize, pixelColor]);
+    }, [pixelColor]);
 
     const animatePixels = (activate: boolean): void => {
         setIsActive(activate);

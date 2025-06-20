@@ -83,6 +83,16 @@ export default function ProfilePage({ username }: ProfilePageProps) {
   const router = useRouter();
   const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
 
+  const buttonStyle = {
+    "&:hover": {
+      boxShadow: "4px 4px 6px var(--chakra-colors-primary-alpha)",
+    },
+    "&:active": {
+      transform: "translate(2px, 2px)",
+      boxShadow: "2px 2px 3px var(--chakra-colors-primary-alpha)",
+    },
+  };
+
   const params = useRef([
     username,
     "",
@@ -364,19 +374,18 @@ export default function ProfilePage({ username }: ProfilePageProps) {
             {profileData.about && (
               <Box position="relative" ml={{ base: 0, md: 2 }} p={0} m={0}>
                 <Box
-                  bg="gray.800"
-                  color="white"
+                  bg="muted"
+                  color="text"
                   px={4}
                   py={3}
                   borderRadius="lg"
                   boxShadow="md"
-                  maxW={{ base: "95vw", sm: "400px", md: "500px" }}
-                  fontSize="md"
+                  maxW="180px"
+                  fontSize="0.625rem"
                   fontStyle="italic"
-                  wordBreak="break-word"
-                  overflowWrap="anywhere"
                   cursor="pointer"
                   onClick={speakDescription}
+                  noOfLines={4}
                   _after={{
                     content: '""',
                     position: "absolute",
@@ -385,7 +394,7 @@ export default function ProfilePage({ username }: ProfilePageProps) {
                     borderWidth: "8px",
                     borderStyle: "solid",
                     borderColor: "transparent",
-                    borderRightColor: "var(--chakra-colors-gray-800, #2D3748)",
+                    borderRightColor: "muted",
                   }}
                 >
                   {profileData.about}
@@ -462,56 +471,38 @@ export default function ProfilePage({ username }: ProfilePageProps) {
     () =>
       !isMobile && (
         <Flex justifyContent="center" alignItems="center" mt={4} mb={4}>
-          <Box
-            bg="gray.800"
-            borderRadius="full"
-            boxShadow="md"
-            px={2}
-            py={1}
-            display="flex"
-            alignItems="center"
-            border="1px solid"
-            borderColor="gray.700"
-          >
-            <ButtonGroup isAttached variant="ghost" size="md">
-              <IconButton
-                aria-label="Grid view"
-                icon={<FaTh />}
-                variant={viewMode === "grid" ? "solid" : "ghost"}
-                colorScheme={viewMode === "grid" ? "primary" : undefined}
-                onClick={() => handleViewModeChange("grid")}
-                isActive={viewMode === "grid"}
-                borderRadius="full"
-                _hover={{ bg: "gray.700" }}
-                _active={{ bg: "primary.600" }}
-              />
-              <IconButton
-                aria-label="List view"
-                icon={<FaBars />}
-                variant={viewMode === "list" ? "solid" : "ghost"}
-                colorScheme={viewMode === "list" ? "primary" : undefined}
-                onClick={() => handleViewModeChange("list")}
-                isActive={viewMode === "list"}
-                borderRadius="full"
-                _hover={{ bg: "gray.700" }}
-                _active={{ bg: "primary.600" }}
-              />
-              <IconButton
-                aria-label={viewMode === "magazine" ? "Show Posts" : "Show Magazine"}
-                icon={<FaBookOpen />}
-                variant={viewMode === "magazine" ? "solid" : "ghost"}
-                colorScheme={viewMode === "magazine" ? "primary" : undefined}
-                onClick={() => handleViewModeChange(viewMode === "magazine" ? "grid" : "magazine")}
-                isActive={viewMode === "magazine"}
-                borderRadius="full"
-                _hover={{ bg: "gray.700" }}
-                _active={{ bg: "primary.600" }}
-              />
-            </ButtonGroup>
-          </Box>
+          <ButtonGroup size="sm" isAttached variant="outline" colorScheme="green">
+            <IconButton
+              aria-label="Grid view"
+              icon={<FaTh />}
+              onClick={() => handleViewModeChange("grid")}
+              isActive={viewMode === "grid"}
+              sx={buttonStyle}
+            />
+            <IconButton
+              aria-label="List view"
+              icon={<FaBars />}
+              onClick={() => handleViewModeChange("list")}
+              isActive={viewMode === "list"}
+              sx={buttonStyle}
+            />
+            <IconButton
+              aria-label={
+                viewMode === "magazine" ? "Show Posts" : "Show Magazine"
+              }
+              icon={<FaBookOpen />}
+              onClick={() =>
+                handleViewModeChange(
+                  viewMode === "magazine" ? "grid" : "magazine"
+                )
+              }
+              isActive={viewMode === "magazine"}
+              sx={buttonStyle}
+            />
+          </ButtonGroup>
         </Flex>
       ),
-    [isMobile, viewMode, handleViewModeChange]
+    [isMobile, viewMode, handleViewModeChange, buttonStyle]
   );
 
   if (isLoading || !hiveAccount) {

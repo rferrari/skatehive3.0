@@ -11,8 +11,6 @@ const SidebarLogo = () => {
     console.log("activeAuction", activeAuction);
     const router = useRouter();
     const [pixelColor] = useToken("colors", ["primary"]);
-    const gridSizes = [4, 16];
-    const gridSize = React.useMemo(() => gridSizes[Math.floor(Math.random() * gridSizes.length)], []);
 
     return (
         <PixelTransition
@@ -31,7 +29,6 @@ const SidebarLogo = () => {
                     cursor={"pointer"}
                 />
             }
-            gridSize={gridSize}
             pixelColor={pixelColor}
             animationStepDuration={0.4}
         />

@@ -38,8 +38,9 @@ export default function PostDetails({ post }: PostDetailsProps) {
   const [activeVotes, setActiveVotes] = useState(post.active_votes || []);
   const [payoutValue, setPayoutValue] = useState(parseFloat(getPayoutValue(post)));
   const [voted, setVoted] = useState(
-    post.active_votes?.some((item) => item.voter === user)
+    post.active_votes?.some((item) => item.voter.toLowerCase() === user?.toLowerCase())
   );
+
   const { hivePower, isLoading: isHivePowerLoading, error: hivePowerError, estimateVoteValue } = useHivePower(user);
   const theme = useTheme();
 

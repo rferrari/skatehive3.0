@@ -1,5 +1,5 @@
 'use client';
-import { Flex, IconButton, Menu, MenuButton, MenuList, MenuItem, Button, Tooltip } from '@chakra-ui/react';
+import { Flex, IconButton, Menu, MenuButton, MenuList, MenuItem, Button, Tooltip, ButtonGroup } from '@chakra-ui/react';
 import { FaTh, FaBars, FaPen, FaSort } from 'react-icons/fa'; 
 import { FiBook } from 'react-icons/fi';
 import { useRouter, usePathname } from 'next/navigation';
@@ -17,6 +17,16 @@ export default function TopBar({ viewMode, setViewMode, setQuery }: TopBarProps)
     const { user } = useAioha();
     const isMagazinePage = pathname === '/magazine';
 
+    const buttonStyle = {
+        "&:hover": {
+          boxShadow: "4px 4px 6px var(--chakra-colors-primary-alpha)",
+        },
+        "&:active": {
+          transform: "translate(2px, 2px)",
+          boxShadow: "2px 2px 3px var(--chakra-colors-primary-alpha)",
+        },
+      };
+
     return (
         <Flex justifyContent="space-between" mb={4} alignItems="center" pt={4} pl={8} pr={4}>
             <Flex flex="1" alignItems="center">
@@ -31,7 +41,7 @@ export default function TopBar({ viewMode, setViewMode, setQuery }: TopBarProps)
             </Flex>
             <Flex flex="1" justifyContent="flex-end" alignItems="center">
                 {/* Hide grid/list toggle on mobile */}
-                <Flex display={{ base: 'none', md: 'flex' }}>
+                <ButtonGroup size="sm" isAttached variant="outline" colorScheme="green" display={{ base: 'none', md: 'flex' }}>
                     <Tooltip label="Grid View" hasArrow>
                         <IconButton
                             aria-label="Grid View"
@@ -44,10 +54,7 @@ export default function TopBar({ viewMode, setViewMode, setQuery }: TopBarProps)
                                 }
                             }}
                             isActive={viewMode === 'grid'}
-                            variant={viewMode === 'grid' ? 'solid' : 'outline'}
-                            colorScheme={viewMode === 'grid' ? 'primary' : 'muted'}
-                            boxShadow={viewMode === 'grid' ? '0 0 0 2px var(--chakra-colors-primary, #319795)' : undefined}
-                            mr={2}
+                            sx={buttonStyle}
                         />
                     </Tooltip>
                     <Tooltip label="List View" hasArrow>
@@ -62,10 +69,7 @@ export default function TopBar({ viewMode, setViewMode, setQuery }: TopBarProps)
                                 }
                             }}
                             isActive={viewMode === 'list'}
-                            variant={viewMode === 'list' ? 'solid' : 'outline'}
-                            colorScheme={viewMode === 'list' ? 'primary' : 'muted'}
-                            boxShadow={viewMode === 'list' ? '0 0 0 2px var(--chakra-colors-primary, #319795)' : undefined}
-                            mr={2}
+                            sx={buttonStyle}
                         />
                     </Tooltip>
                     <Tooltip label="Magazine View" hasArrow>
@@ -80,12 +84,10 @@ export default function TopBar({ viewMode, setViewMode, setQuery }: TopBarProps)
                                 }
                             }}
                             isActive={viewMode === 'magazine'}
-                            variant={viewMode === 'magazine' ? 'solid' : 'outline'}
-                            colorScheme={viewMode === 'magazine' ? 'primary' : 'muted'}
-                            boxShadow={viewMode === 'magazine' ? '0 0 0 2px var(--chakra-colors-primary, #319795)' : undefined}
+                            sx={buttonStyle}
                         />
                     </Tooltip>
-                </Flex>
+                </ButtonGroup>
                 <Menu>
                     <MenuButton
                         as={Button}
