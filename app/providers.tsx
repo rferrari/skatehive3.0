@@ -11,6 +11,7 @@ import { http, createConfig } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WhiskSdkProvider } from "@paperclip-labs/whisk-sdk";
 import { IdentityResolver } from "@paperclip-labs/whisk-sdk/identity";
+import { UserProvider } from "@/contexts/UserContext";
 
 export const WHISK_API_KEY = process.env.NEXT_PUBLIC_WHISK_API_KEY as string;
 
@@ -38,32 +39,34 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <ThemeProvider>
-      <QueryClientProvider client={queryClient}>
-        <WagmiProvider config={config}>
-          <WhiskSdkProvider
-            apiKey={WHISK_API_KEY}
-            config={{
-              identity: {
-                resolverOrder: [
-                  IdentityResolver.Nns,
-                  IdentityResolver.Farcaster,
-                  IdentityResolver.Ens,
-                  IdentityResolver.Base,
-                  IdentityResolver.Lens,
-                  IdentityResolver.Uni,
-                  IdentityResolver.World,
-                ],
-              },
-            }}
-          >
-            <AiohaProvider aioha={aioha}>
-              <CSSReset />
-              {children}
-            </AiohaProvider>
-          </WhiskSdkProvider>
-        </WagmiProvider>
-      </QueryClientProvider>
-    </ThemeProvider>
+    <UserProvider>
+      <ThemeProvider>
+        <QueryClientProvider client={queryClient}>
+          <WagmiProvider config={config}>
+            <WhiskSdkProvider
+              apiKey={WHISK_API_KEY}
+              config={{
+                identity: {
+                  resolverOrder: [
+                    IdentityResolver.Nns,
+                    IdentityResolver.Farcaster,
+                    IdentityResolver.Ens,
+                    IdentityResolver.Base,
+                    IdentityResolver.Lens,
+                    IdentityResolver.Uni,
+                    IdentityResolver.World,
+                  ],
+                },
+              }}
+            >
+              <AiohaProvider aioha={aioha}>
+                <CSSReset />
+                {children}
+              </AiohaProvider>
+            </WhiskSdkProvider>
+          </WagmiProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
+    </UserProvider>
   );
 }

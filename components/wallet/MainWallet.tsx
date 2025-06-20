@@ -34,7 +34,7 @@ interface MainWalletProps {
 
 export default function MainWallet({ username }: MainWalletProps) {
   const { hiveAccount, isLoading, error } = useHiveAccount(username);
-  const { handleConfirm, handleClaimInterest } = useWalletActions();
+  const { handleConfirm, handleClaimHbdInterest } = useWalletActions();
   const { isConnected } = useAccount();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { theme } = useTheme();
@@ -135,8 +135,9 @@ export default function MainWallet({ username }: MainWalletProps) {
   if (lastInterestPayment) {
     const last = new Date(lastInterestPayment);
     const now = new Date();
-    daysSinceLastPayment = Math.floor(
-      (now.getTime() - last.getTime()) / (1000 * 60 * 60 * 24)
+    daysSinceLastPayment = Math.max(
+      0,
+      Math.floor((now.getTime() - last.getTime()) / (1000 * 60 * 60 * 24))
     );
   }
   const estimatedClaimableInterest =
@@ -226,7 +227,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                 daysUntilClaim={daysUntilClaim}
                 lastInterestPayment={lastInterestPayment}
                 onModalOpen={handleModalOpen}
-                onClaimInterest={handleClaimInterest}
+                onClaimInterest={handleClaimHbdInterest}
               />
             </Box>
           </Box>

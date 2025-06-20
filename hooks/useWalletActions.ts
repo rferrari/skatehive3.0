@@ -1,9 +1,12 @@
 import { useAioha } from "@aioha/react-ui";
 import { KeyTypes } from "@aioha/aioha";
-import { KeychainSDK } from "keychain-sdk";
+import { KeychainSDK, KeychainKeyTypes } from "keychain-sdk";
+import { useHiveUser } from "@/contexts/UserContext";
+import { Operation } from "@hiveio/dhive";
 
 export function useWalletActions() {
   const { user, aioha } = useAioha();
+  const { hiveUser } = useHiveUser();
 
   const handleConfirm = async (
     amount: number,
@@ -110,22 +113,34 @@ export function useWalletActions() {
     }
   };
 
-  const handleClaimInterest = async () => {
-    if (!user) return;
+  const handleClaimHbdInterest = async () => {
+    if (!hiveUser || !hiveUser.name) {
+      console.error("Username is not available.");
+      return;
+    }
+
+    const op: Operation = [
+      "transfer_to_savings",
+      {
+        from: hiveUser.name,
+        to: hiveUser.name,
+        amount: "0.001 HBD",
+        memo: "Trigger HBD interest payment",
+      },
+    ];
+
     try {
       const keychain = new KeychainSDK(window);
-      await keychain.transfer({
-        username: String(user),
-        to: String(user),
-        amount: "0.001",
-        memo: "Claim HBD interest",
-        enforce: false,
-        currency: "HBD",
+      const response = await keychain.broadcast({
+        username: hiveUser.name,
+        operations: [op],
+        method: KeychainKeyTypes.active,
       });
-    } catch (e) {
-      console.error(e);
+      console.log("Claim HBD interest response:", response);
+    } catch (error) {
+      console.error("Error claiming HBD interest:", error);
     }
   };
 
-  return { handleConfirm, handleClaimInterest };
+  return { handleConfirm, handleClaimHbdInterest };
 }

@@ -34,7 +34,7 @@ function daysAgo(dateString: string) {
   const diff = Math.floor(
     (now.getTime() - last.getTime()) / (1000 * 60 * 60 * 24)
   );
-  return diff;
+  return Math.max(0, diff);
 }
 
 export default function HBDSection({
@@ -209,7 +209,7 @@ export default function HBDSection({
           <Box>
             <Text fontWeight="bold">Staked HBD - Claimable</Text>
             <Text color="gray.400" fontSize="sm">
-              Claimable balance for the HBD staking.
+              Claimable interest earned for the HBD savings.
             </Text>
             {lastInterestPayment && (
               <Text color="gray.400" fontSize="sm">
@@ -226,7 +226,9 @@ export default function HBDSection({
               color="background"
               _hover={{ bg: "accent" }}
               size="sm"
-              isDisabled={daysUntilClaim > 0}
+              isDisabled={
+                daysUntilClaim > 0 || estimatedClaimableInterest <= 0
+              }
               onClick={onClaimInterest}
             >
               {daysUntilClaim > 0 ? `CLAIM IN ${daysUntilClaim} DAYS` : "CLAIM"}
