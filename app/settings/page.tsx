@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Box, Select, Text, useToast, VStack, Heading, Accordion, AccordionItem, AccordionButton, AccordionPanel, AccordionIcon } from '@chakra-ui/react';
 import { useTheme, ThemeName, themeMap } from '../themeProvider';
 import LottieAnimation from '@/components/shared/LottieAnimation';
+import UpvoteSnapContainer from '@/components/settings/UpvoteSnapContainer';
 
 const Settings = () => {
     const { themeName, setThemeName } = useTheme();
@@ -55,6 +56,8 @@ const Settings = () => {
                         ))}
                     </Select>
                 </Box>
+
+                <UpvoteSnapContainer />
 
                 <LottieAnimation src="https://lottie.host/911167fe-726b-4e03-a295-56839461ebc4/WOauo8GTeO.lottie" />
 

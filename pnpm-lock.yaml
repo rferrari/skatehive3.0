@@ -160,6 +160,9 @@ devDependencies:
   '@types/react-dom':
     specifier: ^19.1.5
     version: 19.1.5(@types/react@19.1.6)
+  '@types/react-infinite-scroll-component':
+    specifier: ^5.0.0
+    version: 5.0.0(react@18.3.1)
   '@types/react-select-country-list':
     specifier: ^2.2.3
     version: 2.2.3
@@ -2459,6 +2462,15 @@ packages:
       '@types/react': ^19.0.0
     dependencies:
       '@types/react': 19.1.6
+    dev: true
+
+  /@types/react-infinite-scroll-component@5.0.0(react@18.3.1):
+    resolution: {integrity: sha512-1DrmAOFfiy6nchA/KiXCAEzXxG4VHsEGJGlRyMZYy8A9WGfr0fAVe+MXep+VkjIPnNPf06qDbJGSNiPzt67wJg==}
+    deprecated: This is a stub types definition. react-infinite-scroll-component provides its own type definitions, so you do not need this installed.
+    dependencies:
+      react-infinite-scroll-component: 6.1.0(react@18.3.1)
+    transitivePeerDependencies:
+      - react
     dev: true
 
   /@types/react-select-country-list@2.2.3:
@@ -8080,7 +8092,6 @@ packages:
     dependencies:
       react: 18.3.1
       throttle-debounce: 2.3.0
-    dev: false
 
   /react-is@16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
@@ -8229,7 +8240,6 @@ packages:
     engines: {node: '>=0.10.0'}
     dependencies:
       loose-envify: 1.4.0
-    dev: false
 
   /readable-stream@2.3.8:
     resolution: {integrity: sha512-8p0AUk4XODgIewSi0l8Epjs+EVnWiK7NoDIEGU0HhE7+ZyY8D1IMY7odu5lRrFXGg71L15KG8QrPmum45RTtdA==}
@@ -9204,7 +9214,6 @@ packages:
   /throttle-debounce@2.3.0:
     resolution: {integrity: sha512-H7oLPV0P7+jgvrk+6mwwwBDmxTaxnu9HMXmloNLXwnNO0ZxZ31Orah2n8lU1eMPvsaowP2CX+USCgyovXfdOFQ==}
     engines: {node: '>=8'}
-    dev: false
 
   /throttle-debounce@3.0.1:
     resolution: {integrity: sha512-dTEWWNu6JmeVXY0ZYoPuH5cRIwc0MeGbJwah9KUNYSJwommQpCzTySTpEe8Gs1J23aeWEuAobe4Ag7EHVt/LOg==}
