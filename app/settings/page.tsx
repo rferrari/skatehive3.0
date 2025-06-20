@@ -1,6 +1,6 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import { Box, Select, Text, useToast, VStack, Heading } from '@chakra-ui/react';
+import { Box, Select, Text, useToast, VStack, Heading, Accordion, AccordionItem, AccordionButton, AccordionPanel, AccordionIcon } from '@chakra-ui/react';
 import { useTheme, ThemeName, themeMap } from '../themeProvider';
 
 const Settings = () => {
@@ -55,32 +55,31 @@ const Settings = () => {
                     </Select>
                 </Box>
 
-                <Box mt={8} p={4} borderRadius="md" bg="background">
-                    <Heading size="md" mb={2}>Generate Private Keys</Heading>
-                    <Text mb={2}>
-                        <b>Security Notice:</b> When your account was created, the Skatehive team temporarily stored your private keys in a Gmail account to deliver them to you. <b>This is not secure.</b> It is strongly recommended that you generate new private keys and update your Hive account, then store your new keys in a safe place only you control.
-                    </Text>
-                    <Text color="orange.300" mb={4}>
-                        Permanently change your keys and keep them safe. Never share your private keys with anyone.
-                    </Text>
-                    <Box textAlign="center">
-                        <Box
-                            as="button"
-                            bg="primary"
-                            color="background"
-                            fontWeight="bold"
-                            border="none"
-                            borderRadius="md"
-                            px={7}
-                            py={3}
-                            fontSize="lg"
-                            cursor="pointer"
-                            boxShadow="md"
-                        >
-                            Generate New Keys
-                        </Box>
-                    </Box>
-                </Box>
+                <Accordion allowToggle>
+                    <AccordionItem border="none">
+                        <h2>
+                            <AccordionButton>
+                                <Box flex="1" textAlign="left">
+                                    <Heading size="md">Generate Private Keys (BETA)</Heading>
+                                </Box>
+                                <AccordionIcon />
+                            </AccordionButton>
+                        </h2>
+                        <AccordionPanel pb={4}>
+                            <Box mt={2} p={4} borderRadius="md" bg="background">
+                                <Text mb={2}>
+                                    <b>Security Notice:</b> When your account was created, the Skatehive team temporarily stored your private keys in a Gmail account to deliver them to you. <b>This is not secure.</b> It is strongly recommended that you generate new private keys and update your Hive account, then store your new keys in a safe place only you control.
+                                </Text>
+                                <Text color="orange.300" mb={4}>
+                                    Permanently change your keys and keep them safe. Never share your private keys with anyone.
+                                </Text>
+                                <Box textAlign="center">
+                                    <Text fontWeight="bold" fontSize="lg" color="gray.500">Coming Soon...</Text>
+                                </Box>
+                            </Box>
+                        </AccordionPanel>
+                    </AccordionItem>
+                </Accordion>
             </VStack>
         </Box>
     );

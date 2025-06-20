@@ -13,7 +13,7 @@ import {
   Image,
 } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
-import { FiBell, FiBook, FiHome, FiUser } from "react-icons/fi";
+import { FiBell, FiBook, FiHome, FiUser, FiSettings, FiX } from "react-icons/fi";
 import { FaPen, FaPiggyBank } from "react-icons/fa";
 import { FiMap } from "react-icons/fi";
 import { useState } from "react";
@@ -157,22 +157,20 @@ export default function FooterNavigation({ newNotificationCount = 0 }) {
                       Go to Profile
                     </MenuItem>
                     <MenuItem
+                      onClick={() => handleNavigation("/settings")}
+                      icon={<Icon as={FiSettings} boxSize={4} />}
+                      color="primary" // Terminal green text
+                      bg="black" // Consistent background
+                      _hover={{ bg: "gray.800", color: "green.300" }} // Hover effect
+                    >
+                      Settings
+                    </MenuItem>
+                    <MenuItem
                       onClick={async () => {
                         await aioha.logout();
                         setModalDisplayed(true);
                       }}
-                      icon={
-                        user ? (
-                          <Image
-                            src={`https://images.hive.blog/u/${user}/avatar`}
-                            alt="Profile Image"
-                            boxSize={4}
-                            borderRadius="full"
-                          />
-                        ) : (
-                          <Icon as={FiUser} boxSize={4} />
-                        )
-                      }
+                      icon={<Icon as={FiX} boxSize={4} />}
                       color="primary"
                       bg="black" // Consistent background
                       _hover={{ bg: "gray.800", color: "green.300" }} // Hover effect

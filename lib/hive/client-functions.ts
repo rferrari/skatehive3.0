@@ -3,7 +3,7 @@ import { Broadcast, Custom, KeychainKeyTypes, KeychainRequestResponse, KeychainS
 import HiveClient from "./hiveclient";
 import crypto from 'crypto';
 import { signImageHash } from "./server-functions";
-import { Discussion, Notifications } from "@hiveio/dhive";
+import { Discussion, Notifications, Operation } from "@hiveio/dhive";
 import { extractNumber } from "../utils/extractNumber";
 
 
@@ -98,7 +98,19 @@ export async function transferWithKeychain(username: string, destination: string
   }
 }
 
-export async function updateProfile(username: string, name: string, about: string, location: string, coverImageUrl: string, avatarUrl: string, website: string) {
+export async function updateProfile(
+  username: string,
+  name: string,
+  about: string,
+  location: string,
+  coverImageUrl: string,
+  avatarUrl:string,
+  website: string,
+  ethAddress? : string,
+  videoParts? : any[],
+  level? : any
+
+  ) {
   try {
     const keychain = new KeychainSDK(window);
 
@@ -113,28 +125,32 @@ export async function updateProfile(username: string, name: string, about: strin
         version: 2
       }
     };
+    const extMetadata: { extensions: any } = {
+      extensions: {}
+  };
+  if (ethAddress) extMetadata.extensions.eth_address = ethAddress;
+  if (videoParts) extMetadata.extensions.video_parts = videoParts;
+  if (level) extMetadata.extensions.level = level;
 
-    const formParamsAsObject = {
-      data: {
-        username: username,
-        operations: [
-          [
-            'account_update2',
-            {
-              account: username,
-              posting_json_metadata: JSON.stringify(profileMetadata),
-              extensions: []
-            }
-          ]
-        ],
-        method: KeychainKeyTypes.active,
-      },
-    };
+    const op: Operation = [
+      'account_update2',
+      {
+        account: username,
+        json_metadata: JSON.stringify(extMetadata),
+        posting_json_metadata: JSON.stringify(profileMetadata),
+      }
+    ];
+    const broadcastData: Broadcast = {
+      username: username,
+      operations: [op],
+      method: KeychainKeyTypes.active,
+  };
 
-    const broadcast = await keychain.broadcast(formParamsAsObject.data as unknown as Broadcast);
+    const broadcast = await keychain.broadcast(broadcastData);
     console.log('Broadcast success:', broadcast);
   } catch (error) {
     console.error('Profile update failed:', error);
+    throw error;
   }
 }
 

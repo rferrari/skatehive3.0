@@ -28,7 +28,7 @@ import {
   ModalContent,
 } from "@chakra-ui/react";
 import useHiveAccount from "@/hooks/useHiveAccount";
-import { FaGlobe, FaTh, FaBars, FaEdit, FaBookOpen } from "react-icons/fa";
+import { FaGlobe, FaTh, FaBars, FaEdit, FaBookOpen, FaVideo } from "react-icons/fa";
 import { MdPersonAdd } from "react-icons/md";
 import { TbUserCheck } from "react-icons/tb";
 import { getProfile, findPosts, checkFollow, changeFollow } from "@/lib/hive/client-functions";
@@ -39,6 +39,8 @@ import EditProfile from "./EditProfile";
 import Magazine from "../shared/Magazine";
 import { ArrowBackIcon } from '@chakra-ui/icons';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { VideoPart } from "@/types/VideoPart";
+import VideoPartsView from "./VideoPartsView";
 
 interface ProfilePageProps {
   username: string;
@@ -54,7 +56,7 @@ export interface ProfileData {
   location: string;
   about: string;
   ethereum_address?: string;
-  video_parts?: string[];
+  video_parts?: VideoPart[];
 }
 
 export default function ProfilePage({ username }: ProfilePageProps) {
@@ -73,7 +75,7 @@ export default function ProfilePage({ username }: ProfilePageProps) {
   });
   const [posts, setPosts] = useState<any[]>([]);
   const isFetching = useRef(false);
-  const [viewMode, setViewMode] = useState<"grid" | "list" | "magazine">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "list" | "magazine" | "videoparts">("grid");
   const [isMobile, setIsMobile] = useState(false);
   const { user } = useAioha();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -104,7 +106,7 @@ export default function ProfilePage({ username }: ProfilePageProps) {
   const isOwner = useMemo(() => user === username, [user, username]);
 
   // Memoized callbacks
-  const handleViewModeChange = useCallback((mode: "grid" | "list" | "magazine") => {
+  const handleViewModeChange = useCallback((mode: "grid" | "list" | "magazine" | "videoparts") => {
     setViewMode(mode);
     if (typeof window !== "undefined") {
       localStorage.setItem("profileViewMode", mode);
@@ -142,17 +144,14 @@ export default function ProfilePage({ username }: ProfilePageProps) {
         initialView = "magazine";
       }
     }
-    setViewMode(initialView as 'grid' | 'list' | 'magazine');
+    setViewMode(initialView as 'grid' | 'list' | 'magazine' | 'videoparts');
   }, []);
 
-  // Detect mobile view and force grid view on mobile
+  // Detect mobile view
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
-      if (mobile) {
-        setViewMode("grid");
-      }
     };
     handleResize();
     window.addEventListener("resize", handleResize);
@@ -197,7 +196,7 @@ export default function ProfilePage({ username }: ProfilePageProps) {
         let coverImage = "";
         let website = "";
         let ethereum_address = "";
-        let video_parts: string[] = [];
+        let video_parts: VideoPart[] = [];
 
         if (hiveAccount?.posting_json_metadata) {
           try {
@@ -467,44 +466,6 @@ export default function ProfilePage({ username }: ProfilePageProps) {
     [profileData, username, speakDescription, isOwner, handleEditModalOpen, isFollowing, isFollowLoading, handleFollowToggle, user]
   );
 
-  const ViewToggle = useMemo(
-    () =>
-      !isMobile && (
-        <Flex justifyContent="center" alignItems="center" mt={4} mb={4}>
-          <ButtonGroup size="sm" isAttached variant="outline" colorScheme="green">
-            <IconButton
-              aria-label="Grid view"
-              icon={<FaTh />}
-              onClick={() => handleViewModeChange("grid")}
-              isActive={viewMode === "grid"}
-              sx={buttonStyle}
-            />
-            <IconButton
-              aria-label="List view"
-              icon={<FaBars />}
-              onClick={() => handleViewModeChange("list")}
-              isActive={viewMode === "list"}
-              sx={buttonStyle}
-            />
-            <IconButton
-              aria-label={
-                viewMode === "magazine" ? "Show Posts" : "Show Magazine"
-              }
-              icon={<FaBookOpen />}
-              onClick={() =>
-                handleViewModeChange(
-                  viewMode === "magazine" ? "grid" : "magazine"
-                )
-              }
-              isActive={viewMode === "magazine"}
-              sx={buttonStyle}
-            />
-          </ButtonGroup>
-        </Flex>
-      ),
-    [isMobile, viewMode, handleViewModeChange, buttonStyle]
-  );
-
   if (isLoading || !hiveAccount) {
     return (
       <Box
@@ -593,17 +554,54 @@ export default function ProfilePage({ username }: ProfilePageProps) {
           />
         </Box>
         {ProfileHeader}
-        {ViewToggle}
-        {/* Posts or Magazine */}
-        {viewMode !== "magazine" ? (
+        
+        <Flex justify="center" align="center" direction="column">
+          <ButtonGroup isAttached variant="outline" size="sm" my={4} colorScheme="green">
+            <IconButton
+              aria-label="Grid view"
+              icon={<FaTh />}
+              onClick={() => handleViewModeChange("grid")}
+              isActive={viewMode === "grid"}
+              sx={buttonStyle}
+            />
+            <IconButton
+              aria-label="List view"
+              icon={<FaBars />}
+              onClick={() => handleViewModeChange("list")}
+              isActive={viewMode === "list"}
+              sx={buttonStyle}
+            />
+            <IconButton
+              aria-label="Show Magazine"
+              icon={<FaBookOpen />}
+              onClick={() => handleViewModeChange("magazine")}
+              isActive={viewMode === "magazine"}
+              sx={buttonStyle}
+            />
+            <IconButton
+              aria-label="Show Videoparts"
+              icon={<FaVideo />}
+              onClick={() => handleViewModeChange("videoparts")}
+              isActive={viewMode === "videoparts"}
+              sx={buttonStyle}
+            />
+          </ButtonGroup>
+        </Flex>
+        
+        {/* Content Views */}
+        {viewMode !== "magazine" && viewMode !== "videoparts" && (
           <PostInfiniteScroll
             allPosts={posts}
             fetchPosts={fetchPosts}
-            viewMode={viewMode}
+            viewMode={viewMode as "grid" | "list"}
             context="profile"
             hideAuthorInfo={true}
           />
-        ) : null}
+        )}
+        {viewMode === "videoparts" && (
+          <VideoPartsView profileData={profileData} username={username} onProfileUpdate={updateProfileData} />
+        )}
+        
         {/* Edit Profile Modal */}
         <EditProfile
           isOpen={isEditModalOpen}
