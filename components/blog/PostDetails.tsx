@@ -225,6 +225,11 @@ export default function PostDetails({ post }: PostDetailsProps) {
           "&::-webkit-scrollbar": {
             display: "none",
           },
+          iframe: {
+            width: "100%",
+            aspectRatio: "16 / 9",
+            height: "auto",
+          },
         }}
       />
 
