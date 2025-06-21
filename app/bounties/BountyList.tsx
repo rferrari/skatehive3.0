@@ -166,11 +166,31 @@ export default function BountyList({ newBounty, refreshTrigger }: BountyListProp
           <Box>
             <VStack align="start" spacing={6}>
               <Text fontSize="2xl" color="primary.400">{activeBounties.length}</Text>
-              <Wrap>{rewardsUpForGrabs.map((reward, i) => <Tag key={i} colorScheme="primary" mx={1}>{reward}</Tag>)}</Wrap>
+              <Wrap>
+                {rewardsUpForGrabs.length > 0 ? (
+                  rewardsUpForGrabs.map((reward, i) => (
+                    <Tag key={i} colorScheme="primary" mx={1}>
+                      {reward}
+                    </Tag>
+                  ))
+                ) : (
+                  <Text fontSize="2xl" color="primary.400">0</Text>
+                )}
+              </Wrap>
               {isLoadingGrinders ? (
                 <Text color="muted">Loading...</Text>
               ) : (
-                <Wrap>{bountyGrinders.map((user, i) => <Tag key={i} colorScheme="accent" mx={1}>@{user}</Tag>)}</Wrap>
+                <Wrap>
+                  {bountyGrinders.length > 0 ? (
+                    bountyGrinders.map((user, i) => (
+                      <Tag key={i} colorScheme="accent" mx={1}>
+                        @{user}
+                      </Tag>
+                    ))
+                  ) : (
+                    <Text fontSize="2xl" color="primary.400">0</Text>
+                  )}
+                </Wrap>
               )}
             </VStack>
           </Box>

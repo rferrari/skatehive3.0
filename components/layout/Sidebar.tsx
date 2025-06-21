@@ -211,6 +211,34 @@ export default function Sidebar({ newNotificationCount = 0 }) {
                 Skatespots
               </Box>
             </Button>
+            <Button
+              onClick={() => handleNavigation("/bounties")}
+              variant="ghost"
+              w="full"
+              justifyContent="flex-start"
+              pl={0}
+              pr={4}
+              py={3}
+              mb={1}
+              role="group"
+              _hover={{}}
+              _active={{ bg: 'transparent' }}
+              _focus={{ bg: 'transparent' }}
+            >
+              <Box
+                as="span"
+                display="flex"
+                alignItems="center"
+                px={1}
+                py={0.5}
+                borderRadius="md"
+                transition="background 0.2s"
+                _groupHover={{ bg: primaryBg, color: hoverTextColor }}
+              >
+                <Icon as={FiTarget} boxSize={4} mr={2} />
+                Bounties
+              </Box>
+            </Button>
             {user && (
               <>
                 <Button
