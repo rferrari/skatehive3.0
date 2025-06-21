@@ -67,40 +67,44 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
               </thead>
               <tbody>
                 <tr>
-                  <td style={{ padding: 6 }}>Hive Balance</td>
-                  <td style={{ padding: 6 }}>0.1 points per Hive, capped at 1,000 Hive (max 100 points)</td>
-                </tr>
-                <tr>
                   <td style={{ padding: 6 }}>Hive Power (HP)</td>
                   <td style={{ padding: 6 }}>0.5 points per HP, capped at 12,000 HP (max 6,000 points)</td>
-                </tr>
-                <tr>
-                  <td style={{ padding: 6 }}>Gnars Votes</td>
-                  <td style={{ padding: 6 }}>30 points per Gnars Vote</td>
-                </tr>
-                <tr>
-                  <td style={{ padding: 6 }}>Skatehive NFTs</td>
-                  <td style={{ padding: 6 }}>50 points per Skatehive NFT</td>
-                </tr>
-                <tr>
-                  <td style={{ padding: 6 }}>Witness Vote</td>
-                  <td style={{ padding: 6 }}>1000 points for voting for the Skatehive witness</td>
-                </tr>
-                <tr>
-                  <td style={{ padding: 6 }}>HBD Savings</td>
-                  <td style={{ padding: 6 }}>0.2 points per HBD in savings, capped at 1,000 HBD (max 200 points)</td>
                 </tr>
                 <tr>
                   <td style={{ padding: 6 }}>Number of Posts</td>
                   <td style={{ padding: 6 }}>0.1 points per post, capped at 3,000 posts (max 300 points)</td>
                 </tr>
                 <tr>
-                  <td style={{ padding: 6 }}>Voting Power</td>
-                  <td style={{ padding: 6 }}>1000 points per USD of voting power</td>
+                  <td style={{ padding: 6 }}>Skatehive NFTs</td>
+                  <td style={{ padding: 6 }}>50 points per Skatehive NFT</td>
+                </tr>
+                <tr>
+                  <td style={{ padding: 6 }}>Gnars NFTs</td>
+                  <td style={{ padding: 6 }}>25 points per Gnars NFT</td>
+                </tr>
+                <tr>
+                  <td style={{ padding: 6 }}>Gnars Votes</td>
+                  <td style={{ padding: 6 }}>30 points per Gnars Vote</td>
+                </tr>
+                <tr>
+                  <td style={{ padding: 6 }}>HBD Savings</td>
+                  <td style={{ padding: 6 }}>0.2 points per HBD in savings, capped at 1,000 HBD (max 200 points)</td>
+                </tr>
+                <tr>
+                  <td style={{ padding: 6 }}>Hive Balance</td>
+                  <td style={{ padding: 6 }}>0.1 points per Hive, capped at 1,000 Hive (max 100 points)</td>
                 </tr>
                 <tr>
                   <td style={{ padding: 6 }}>Giveth Donations</td>
                   <td style={{ padding: 6 }}>5 points per USD donated, capped at 1,000 USD (max 5,000 points)</td>
+                </tr>
+                <tr>
+                  <td style={{ padding: 6 }}>Witness Vote</td>
+                  <td style={{ padding: 6 }}>1000 points for voting for the Skatehive witness</td>
+                </tr>
+                <tr>
+                  <td style={{ padding: 6 }}>Voting Mana</td>
+                  <td style={{ padding: 6 }}>1000 points per USD of voting power</td>
                 </tr>
                 <tr>
                   <td style={{ padding: 6 }}>Last Post Activity</td>

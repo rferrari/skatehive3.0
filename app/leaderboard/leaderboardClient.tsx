@@ -182,6 +182,15 @@ export default function LeaderboardClient({ skatersData }: Props) {
         formatNumber(skater.hp_balance + skater.max_voting_power_usd),
     },
     {
+      key: "voting_mana",
+      label: "Voting Mana",
+      color: "primary",
+      value: (skater: SkaterData) =>
+        skater.max_voting_power_usd != null
+          ? `$${skater.max_voting_power_usd.toFixed(2)}`
+          : "-",
+    },
+    {
       key: "posts",
       label: "Posts",
       color: "primary",
@@ -370,6 +379,13 @@ export default function LeaderboardClient({ skatersData }: Props) {
           py={0}
           maxH="70vh"
           overflowY="auto"
+          sx={{
+            "&::-webkit-scrollbar": {
+              display: "none",
+            },
+            msOverflowStyle: "none", // IE and Edge
+            scrollbarWidth: "none", // Firefox
+          }}
         >
           <Box width="100%">
             {/* Table Header */}
