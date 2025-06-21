@@ -25,7 +25,8 @@ interface SkaterData {
 async function getLeaderboardData(): Promise<SkaterData[]> {
   try {
     const res = await fetch("https://api.skatehive.app/api/skatehive", {
-      next: { revalidate: 300 }, // Revalidate every 5 minutes
+      next: { revalidate: 0 },
+      cache: 'no-store'
     });
 
     if (!res.ok) {
