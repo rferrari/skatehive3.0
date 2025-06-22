@@ -24,7 +24,9 @@ const SocialMediaShareModal = ({
   onClose,
   comment,
 }: SocialMediaShareModalProps) => {
-  const postLink = `${typeof window !== 'undefined' ? window.location.origin : ''}/post/${comment.author}/${comment.permlink}`;
+  const postLink = `${
+    typeof window !== "undefined" ? window.location.origin : ""
+  }/post/${comment.author}/${comment.permlink}`;
   const { onCopy } = useClipboard(postLink);
 
   // Validate permlink to prevent [object Object] URLs
