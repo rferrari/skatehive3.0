@@ -25,7 +25,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
     const backgroundPrimary = 'var(--chakra-colors-primary, #0070f3)';
     const backgroundAccent = 'var(--chakra-colors-accent, #00b894)';
 
-    const compressVideo = async (file: File): Promise<Blob> => {
+    const compressVideo = async (file: File, shouldResize: boolean): Promise<Blob> => {
       setStatus("Compressing video...");
       setCompressionProgress(0);
       if (!ffmpegRef.current) {
@@ -38,13 +38,22 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         setCompressionProgress(Math.round(progress * 100));
       });
       await ffmpeg.writeFile(file.name, await fetchFile(file));
-      await ffmpeg.exec([
+      
+      const ffmpegArgs = [
         "-i", file.name,
-        "-vcodec", "libx264",
-        "-crf", "28",
+        "-c:v", "libx264",
+        "-c:a", "aac",
+        "-crf", "25",
         "-preset", "veryfast",
-        "output.mp4"
-      ]);
+      ];
+
+      if (shouldResize) {
+        ffmpegArgs.push("-vf", "scale=854:-2");
+      }
+      ffmpegArgs.push("output.mp4");
+
+      await ffmpeg.exec(ffmpegArgs);
+
       const data = await ffmpeg.readFile("output.mp4");
       setCompressionProgress(100);
       return new Blob([data.buffer], { type: "video/mp4" });
@@ -81,18 +90,41 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         return;
       }
       try {
-        setStatus("Compressing video...");
+        const twelveMB = 12 * 1024 * 1024;
+        const shouldResize = file.size > twelveMB;
+
+        setStatus("Converting video...");
         setCompressionProgress(0);
         setUploadProgress(0);
-        // Compress video
-        const compressedBlob = await compressVideo(file);
+
+        if (shouldResize) {
+          console.log("File is larger than 12MB, compressing with resize.");
+        } else {
+          console.log("File is smaller than 12MB, converting to MP4 without resize.");
+        }
+
+        const compressedBlob = await compressVideo(file, shouldResize);
+
+        console.log(`Original file size: ${file.size} bytes`);
+        console.log(`Compressed video size: ${compressedBlob.size} bytes`);
+
+        if (compressedBlob.size === 0) {
+          setStatus("Error: Compression resulted in an empty file.");
+          onUpload(null);
+          return;
+        }
+        if (shouldResize && compressedBlob.size > file.size) {
+          setStatus("Error: Compressed file is larger than the original.");
+          onUpload(null);
+          return;
+        }
+
         const compressedFile = new File([compressedBlob], "compressed.mp4", {
           type: "video/mp4",
         });
         const formData = new FormData();
         formData.append("file", compressedFile);
         setStatus("Uploading video...");
-        setCompressionProgress(0);
         setUploadProgress(0);
         // Upload to Pinata with progress
         const responseText = await uploadWithProgress(formData);
