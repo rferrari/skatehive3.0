@@ -1,0 +1,28 @@
+{
+  "frame": {
+    "version": "1",
+    "name": "Skatehive",
+    "iconUrl": "https://my.skatehive.app/logos/skate-hive-logo.png",
+    "homeUrl": "https://my.skatehive.app",
+    "imageUrl": "https://my.skatehive.app/opengraph-image.png",
+    "buttonTitle": "Open post",
+    "splashImageUrl": "https://ipfs.skatehive.app/ipfs/QmXTZqirogp735AaPFcpzAjmwS57mPYsJhktJMuRuSV5Rm",
+    "splashBackgroundColor": "#000000",
+    "webhookUrl": "https://my.skatehive.app/api/webhook",
+    "subtitle": "The infinity skateboard magazine",
+    "description": "A decentralized skateboarding community where skaters from around the world can share their content, earn rewards, and connect with fellow skaters.",
+    "screenshotUrls": [
+      "https://my.skatehive.app/images/screenshot1.png",
+      "https://my.skatehive.app/images/screenshot2.png",
+      "https://my.skatehive.app/images/screenshot3.png"
+    ],
+    "primaryCategory": "social",
+    "tags": ["skateboarding", "social", "community", "web3", "hive"],
+    "heroImageUrl": "https://my.skatehive.app/opengraph-image.png",
+    "tagline": "Skate, Create, Earn",
+    "ogTitle": "Skatehive - The Infinity Skateboard Magazine",
+    "ogDescription": "A decentralized skateboarding community where skaters from around the world can share their content, earn rewards, and connect with fellow skaters.",
+    "ogImageUrl": "https://my.skatehive.app/opengraph-image.png",
+    "castShareUrl": "https://my.skatehive.app/share"
+  }
+}
