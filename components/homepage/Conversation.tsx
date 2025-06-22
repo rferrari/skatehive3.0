@@ -40,7 +40,7 @@ const Conversation = ({
   const [optimisticReplies, setOptimisticReplies] = useState<Discussion[]>([]);
 
   const theme = useTheme();
-  const [primaryColor] = useToken('colors', ['primary']);
+  const [primaryColor] = useToken("colors", ["primary"]);
 
   function onBackClick() {
     setConversation(undefined);
@@ -63,14 +63,7 @@ const Conversation = ({
   }
 
   return (
-    <Box
-      bg="muted"
-      p={4}
-      mt={1}
-      mb={1}
-      borderRadius="base"
-      boxShadow="lg"
-    >
+    <Box bg="muted" p={4} mt={1} mb={1} borderRadius="base" boxShadow="lg">
       <HStack mb={4} spacing={2}>
         <Text fontSize="2xl" fontWeight="extrabold">
           Conversation
@@ -80,7 +73,7 @@ const Conversation = ({
           variant="ghost"
           ml="auto"
           aria-label="Close"
-          _hover={{ bg: primaryColor + '20' }}
+          _hover={{ bg: primaryColor + "20" }}
         >
           <CloseIcon color={primaryColor} />
         </Button>
@@ -100,7 +93,7 @@ const Conversation = ({
           onNewComment={
             handleNewReply as (newComment: Partial<Discussion>) => void
           } // changed cast type
-          onClose={() => console.log("Composer closed")}
+          onClose={() => {}}
           post
         />
       </Box>

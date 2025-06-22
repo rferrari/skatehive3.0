@@ -149,7 +149,6 @@ export const useSnaps = () => {
     const limit = 10;
     const apiUrl = `https://api.skatehive.app/api/v1/feed?limit=${limit}&page=${currentPage}`;
     // const apiUrl = `http://localhost:3001/api/v1/feed?limit=${limit}&page=${currentPage}`;
-    // console.log(apiUrl)
 
     const response = await fetch(apiUrl);
     if (!response.ok) {

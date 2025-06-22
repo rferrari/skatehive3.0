@@ -4,6 +4,7 @@ import "./globals.css";
 import { Metadata } from "next";
 import { ColorModeScript } from "@chakra-ui/react";
 import InitFrameSDK from "@/hooks/init-frame-sdk";
+import FrameMetaTags from "./components/FrameMetaTags";
 
 // Initialize the VT323 font
 const vt323 = VT323({
@@ -13,27 +14,16 @@ const vt323 = VT323({
   variable: "--font-vt323",
 });
 
-const frameObject = {
-  version: "next",
-  imageUrl: `https://my.skatehive.app/opengraph-image`,
-  button: {
-    title: "Be brave",
-    action: {
-      type: "launch_frame", // Simplified action type
-      name: "Skatehive",
-      url: "https://my.skatehive.app",
-    },
-  },
-  postUrl: "https://my.skatehive.app",
-};
-
 export const metadata: Metadata = {
   metadataBase: new URL("https://my.skatehive.app"),
   title: "Skatehive App",
   description: "The infinity skateboard maganize",
   manifest: "/manifest.json",
   openGraph: {
+    title: "Skatehive App",
+    description: "The infinity skateboard maganize",
     images: "/ogimage.png",
+    type: "website",
   },
   twitter: {
     card: "summary_large_image",
@@ -43,12 +33,6 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: "/", // This will be automatically resolved relative to metadataBase
-  },
-  other: {
-    // Use compliant image URL
-    "fc:frame": JSON.stringify(frameObject),
-    "fc:frame:image": "https://my.skatehive.app/ogimage.png",
-    "fc:frame:post_url": "https://my.skatehive.app",
   },
 };
 
@@ -70,6 +54,9 @@ export default function RootLayout({
       data-theme="dark"
       style={{ colorScheme: "dark" }}
     >
+      <head>
+        <FrameMetaTags />
+      </head>
       <body className="chakra-ui-dark">
         <InitFrameSDK />
         <ColorModeScript initialColorMode="dark" />

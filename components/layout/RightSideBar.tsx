@@ -1,25 +1,25 @@
-'use client';
-import { Box, Spinner } from '@chakra-ui/react';
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { Discussion } from '@hiveio/dhive';
-import { findPosts } from '@/lib/hive/client-functions';
-import PostInfiniteScroll from '@/components/blog/PostInfiniteScroll';
+"use client";
+import { Box, Spinner } from "@chakra-ui/react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { Discussion } from "@hiveio/dhive";
+import { findPosts } from "@/lib/hive/client-functions";
+import PostInfiniteScroll from "@/components/blog/PostInfiniteScroll";
 
 export default function RightSideBar() {
-  const [query, setQuery] = useState('created');
+  const [query, setQuery] = useState("created");
   const [allPosts, setAllPosts] = useState<Discussion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null); // Reference for the sidebar
   const isFetching = useRef(false);
 
-  const tag = process.env.NEXT_PUBLIC_HIVE_SEARCH_TAG
+  const tag = process.env.NEXT_PUBLIC_HIVE_SEARCH_TAG;
 
   const params = useRef([
     {
       tag: tag,
       limit: 8,
-      start_author: '',
-      start_permlink: '',
+      start_author: "",
+      start_permlink: "",
     },
   ]);
 
@@ -39,7 +39,7 @@ export default function RightSideBar() {
         },
       ];
     } catch (error) {
-      console.log(error);
+      // Error fetching leaderboard data
     } finally {
       isFetching.current = false;
       setIsLoading(false); // Reset loading state
@@ -65,15 +65,15 @@ export default function RightSideBar() {
   useEffect(() => {
     const sidebar = sidebarRef.current;
     if (sidebar) {
-      sidebar.addEventListener('scroll', handleScroll);
-      return () => sidebar.removeEventListener('scroll', handleScroll);
+      sidebar.addEventListener("scroll", handleScroll);
+      return () => sidebar.removeEventListener("scroll", handleScroll);
     }
   }, [handleScroll]);
 
   return (
     <Box
       as="aside"
-      w={{ base: '100%', md: '400px' }}
+      w={{ base: "100%", md: "400px" }}
       h="100vh"
       overflowY="auto"
       pr={4}
@@ -82,16 +82,19 @@ export default function RightSideBar() {
       top={0}
       ref={sidebarRef}
       id="scrollableDiv"
-      sx={
-        {
-          '&::-webkit-scrollbar': {
-            display: 'none',
-          },
-          scrollbarWidth: 'none',
-        }
-      }
+      sx={{
+        "&::-webkit-scrollbar": {
+          display: "none",
+        },
+        scrollbarWidth: "none",
+      }}
     >
-      <PostInfiniteScroll allPosts={allPosts} fetchPosts={fetchPosts} viewMode="grid" context="rightsidebar" />
+      <PostInfiniteScroll
+        allPosts={allPosts}
+        fetchPosts={fetchPosts}
+        viewMode="grid"
+        context="rightsidebar"
+      />
     </Box>
   );
 }

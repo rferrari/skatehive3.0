@@ -45,7 +45,6 @@ export async function sendInvite(email: string, url: string): Promise<void> {
 
     // Send the email
     const mail = await transporter.sendMail(mailOptions);
-    //console.log(mail)
     return
 }
 

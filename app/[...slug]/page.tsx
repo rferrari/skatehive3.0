@@ -4,7 +4,6 @@ import PostPage from "@/components/blog/PostPage";
 import NotificationsComp from "@/components/notifications/NotificationsComp";
 import ProfilePage from "@/components/profile/ProfilePage";
 import MainWallet from "@/components/wallet/MainWallet";
-import InitFrameSDK from "@/hooks/init-frame-sdk";
 import HiveClient from "@/lib/hive/hiveclient";
 import { cleanUsername } from "@/lib/utils/cleanUsername";
 import { Metadata, ResolvingMetadata } from "next";
@@ -28,66 +27,60 @@ const generatePostMetadata = async (user: string, permlink: string) => {
   const decodedPermlink = decodeURIComponent(permlink);
 
   const post = await getData(decodedUser, decodedPermlink);
-
-  // Extract images from markdown and metadata
-  const images = post.body ? post.body.match(/!\[.*?\]\((.*?)\)/g) : [];
-  const imageUrls = images
-    ? images.map((img: string) => {
-        const match = img.match(/\((.*?)\)/);
-        return match ? match[1] : "";
-      })
-    : [];
-
-  const originalBanner = post.json_metadata?.image || imageUrls[0] || [];
-  const postUrl = new URL(
-    `/@${decodedUser}/${decodedPermlink}`,
-    DOMAIN_URL
-  ).toString();
-
-  const frameImage =
-    (Array.isArray(imageUrls) && imageUrls[0]) ||
-    (Array.isArray(originalBanner) && originalBanner[0]) ||
-    FALLBACK_IMAGE;
-
-  const frameObject = {
-    version: "next",
-    imageUrl: frameImage,
-    button: {
-      title: "Open post",
-      action: {
-        type: "launch_frame",
-        name: "Skatehive",
-        url: postUrl,
-      },
-    },
-    postUrl: postUrl,
-  };
+  if (!post || !post.author) {
+    throw new Error("Post not found");
+  }
+  const author = cleanUsername(post.author);
+  const title = post.title || "Untitled Post";
+  const description = post.body
+    ? post.body.slice(0, 160) + "..."
+    : "No description available";
+  const image = post.json_metadata?.image
+    ? post.json_metadata.image[0]
+    : FALLBACK_IMAGE;
 
   return {
-    title: post.title,
-    description: `${String(post.body).slice(0, 128)}...`,
-    authors: [{ name: post.author }],
-    applicationName: "SkateHive",
+    title: `${title} | ${author} | Skatehive`,
+    description: description,
     openGraph: {
-      url: postUrl,
-      images: Array.isArray(originalBanner)
-        ? originalBanner.map((img: string) => ({
-            url: new URL(img, DOMAIN_URL).toString(),
-            width: 1200,
-            height: 630,
-          }))
-        : [],
+      title: `${title} | ${author} | Skatehive`,
+      description: description,
+      url: `${DOMAIN_URL}/@${author}/${decodedPermlink}`,
+      images: [
+        {
+          url: image,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
+      siteName: "Skatehive",
     },
     twitter: {
       card: "summary_large_image",
-      title: post.title,
-      description: `${String(post.body).slice(0, 128)}...`,
-      images: frameImage,
+      title: `${title} | ${author} | Skatehive`,
+      description: description,
+      images: [image],
+    },
+    alternates: {
+      canonical: `${DOMAIN_URL}/@${author}/${decodedPermlink}`,
     },
     other: {
-      "fc:frame": JSON.stringify(frameObject),
-      "fc:frame:image": frameImage,
-      "fc:frame:post_url": postUrl,
+      "fc:frame": JSON.stringify({
+        version: "next",
+        imageUrl: image,
+        button: {
+          title: "View Post",
+          action: {
+            type: "launch_frame",
+            name: "Skatehive",
+            url: `${DOMAIN_URL}/@${author}/${decodedPermlink}`,
+          },
+        },
+        postUrl: `${DOMAIN_URL}/@${author}/${decodedPermlink}`,
+      }),
+      "fc:frame:image": image,
+      "fc:frame:post_url": `${DOMAIN_URL}/@${author}/${decodedPermlink}`,
     },
   };
 };
@@ -180,7 +173,7 @@ export default async function Page(props: {
   params: Promise<{ slug?: string[] }>;
 }) {
   const params = await props.params;
-  InitFrameSDK();
+
   if (!params?.slug || !Array.isArray(params.slug)) {
     return <></>;
   }
