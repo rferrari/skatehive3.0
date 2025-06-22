@@ -364,7 +364,7 @@ export default function NotificationItem({
                   wordBreak="break-word"
                 >
                   <Link
-                    href={`/@${author}`}
+                    href={`/user/${author}`}
                     color={isNew ? "accent" : "primary"}
                     fontWeight="bold"
                     _hover={{ textDecoration: "underline" }}
@@ -420,7 +420,7 @@ export default function NotificationItem({
                   wordBreak="break-word"
                 >
                   <Link
-                    href={`/@${author}`}
+                    href={`/user/${author}`}
                     color={isNew ? "accent" : "primary"}
                     fontWeight="bold"
                     _hover={{ textDecoration: "underline" }}
@@ -466,7 +466,7 @@ export default function NotificationItem({
                   wordBreak="break-word"
                 >
                   <Link
-                    href={`/@${author}`}
+                    href={`/user/${author}`}
                     color={isNew ? "accent" : "primary"}
                     fontWeight="bold"
                     _hover={{ textDecoration: "underline" }}
@@ -505,7 +505,7 @@ export default function NotificationItem({
                   wordBreak="break-word"
                 >
                   <Link
-                    href={`/@${author}`}
+                    href={`/user/${author}`}
                     color={isNew ? "accent" : "primary"}
                     fontWeight="bold"
                     _hover={{ textDecoration: "underline" }}

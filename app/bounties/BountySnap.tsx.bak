@@ -152,13 +152,13 @@ const BountySnap = ({
     estimateVoteValue,
   } = useHivePower(user);
   const toast = useToast();
-  const commentDate = getPostDate(discussion.created);
+  const commentDate = getPostDate(Discussion.created);
 
   const [sliderValue, setSliderValue] = useState(5);
   const [showSlider, setShowSlider] = useState(false);
-  const [activeVotes, setActiveVotes] = useState(discussion.active_votes || []);
+  const [activeVotes, setActiveVotes] = useState(Discussion.active_votes || []);
   const [rewardAmount, setRewardAmount] = useState(
-    parseFloat(getPayoutValue(discussion))
+    parseFloat(getPayoutValue(Discussion))
   );
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [inlineReplies, setInlineReplies] = useState<Discussion[]>([]);
@@ -166,16 +166,16 @@ const BountySnap = ({
     Record<string, boolean>
   >({});
 
-  const effectiveDepth = discussion.depth || 0;
+  const effectiveDepth = Discussion.depth || 0;
 
   const { text, media } = useMemo(
-    () => separateContent(discussion.body),
-    [discussion.body]
+    () => separateContent(Discussion.body),
+    [Discussion.body]
   );
   const renderedMedia = useMemo(() => renderMedia(media), [media]);
 
   const [voted, setVoted] = useState(
-    discussion.active_votes?.some(
+    Discussion.active_votes?.some(
       (item: { voter: string }) => item.voter === user
     ) || false
   );
@@ -186,14 +186,14 @@ const BountySnap = ({
 
   function handleConversation() {
     if (setConversation) {
-      setConversation(discussion);
+      setConversation(Discussion);
     }
   }
 
   async function handleVote() {
     const vote = await aioha.vote(
-      discussion.author,
-      discussion.permlink,
+      Discussion.author,
+      Discussion.permlink,
       sliderValue * 100
     );
     if (vote.success) {
@@ -215,16 +215,7 @@ const BountySnap = ({
   }
 
   const handleSharePost = async () => {
-    // Validate permlink to prevent [object Object] URLs
-    if (typeof discussion.permlink !== "string") {
-      console.error(
-        "🚨 BountySnap: Invalid permlink type:",
-        typeof discussion.permlink
-      );
-      return;
-    }
-
-    const postLink = `${window.location.origin}/post/${discussion.author}/${discussion.permlink}`;
+    const postLink = `${window.location.origin}/post/${Discussion.author}/${Discussion.permlink}`;
     await navigator.clipboard.writeText(postLink);
     toast({
       title: "Post link copied to clipboard.",
@@ -246,7 +237,7 @@ const BountySnap = ({
     }));
   }
 
-  const replies = discussion.replies || [];
+  const replies = Discussion.replies || [];
 
   // Deduplicate votes by voter (keep the last occurrence)
   const uniqueVotesMap = new Map();
@@ -267,10 +258,10 @@ const BountySnap = ({
     const str = assetToString(val);
     return parseFloat(str.replace(" HBD", "").replace(",", ""));
   }
-  const authorPayout = parsePayout(discussion.total_payout_value);
-  const curatorPayout = parsePayout(discussion.curator_payout_value);
+  const authorPayout = parsePayout(Discussion.total_payout_value);
+  const curatorPayout = parsePayout(Discussion.curator_payout_value);
   // Calculate days remaining for pending payout
-  const createdDate = new Date(discussion.created);
+  const createdDate = new Date(Discussion.created);
   const now = new Date();
   const timeDifferenceInMs = now.getTime() - createdDate.getTime();
   const timeDifferenceInDays = timeDifferenceInMs / (1000 * 60 * 60 * 24);
@@ -284,14 +275,14 @@ const BountySnap = ({
 
   // Extract Trick/Challenge as title
   let title = "";
-  const trickMatch = discussion.body.match(/Trick\/Challenge:\s*(.*)/);
+  const trickMatch = Discussion.body.match(/Trick\/Challenge:\s*(.*)/);
   if (trickMatch && trickMatch[1]) {
     title = trickMatch[1].trim();
   }
 
   // Extract Deadline from body (format: MM-DD-YYYY)
   let deadline = null;
-  const deadlineMatch = discussion.body.match(
+  const deadlineMatch = Discussion.body.match(
     /Deadline:\s*(\d{2}-\d{2}-\d{4})/
   );
   if (deadlineMatch && deadlineMatch[1]) {
@@ -340,7 +331,7 @@ const BountySnap = ({
         <HStack mb={2}>
           {showAuthor && (
             <Link
-              href={`/user/${discussion.author}`}
+              href={`/user/${Discussion.author}`}
               _hover={{ textDecoration: "none" }}
               display="flex"
               alignItems="center"
@@ -348,8 +339,8 @@ const BountySnap = ({
             >
               <Avatar
                 size="sm"
-                name={discussion.author}
-                src={`https://images.hive.blog/u/${discussion.author}/avatar/sm`}
+                name={Discussion.author}
+                src={`https://images.hive.blog/u/${Discussion.author}/avatar/sm`}
                 ml={2}
               />
               <Text
@@ -359,7 +350,7 @@ const BountySnap = ({
                 whiteSpace="nowrap"
                 _groupHover={{ textDecoration: "underline" }}
               >
-                {discussion.author}
+                {Discussion.author}
               </Text>
             </Link>
           )}
@@ -387,16 +378,16 @@ const BountySnap = ({
         </Box>
 
         <Box mt={2}>
-          {inlineComposerStates[discussion.permlink] && (
+          {inlineComposerStates[Discussion.permlink] && (
             <Box mt={2}>
               <SnapComposer
-                pa={discussion.author}
-                pp={discussion.permlink}
+                pa={Discussion.author}
+                pp={Discussion.permlink}
                 onNewComment={handleInlineNewReply}
                 onClose={() =>
                   setInlineComposerStates((prev: Record<string, boolean>) => ({
                     ...prev,
-                    [discussion.permlink]: false,
+                    [Discussion.permlink]: false,
                   }))
                 }
                 post
@@ -491,7 +482,7 @@ const BountySnap = ({
                 </Button>
               }
               votes={activeVotes}
-              post={discussion}
+              post={Discussion}
             />
           </HStack>
         </HStack>

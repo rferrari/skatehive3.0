@@ -78,7 +78,7 @@ const VoteListPopover = ({ trigger, votes, post }: VoteListPopoverProps) => {
               return (
                 <HStack key={vote.voter + idx} spacing={1} p={0.5} borderRadius="md" _hover={{ bg: hoverBg }} minH="32px">
                   <Link
-                    href={`/@${vote.voter}`}
+                    href={`/user/${vote.voter}`}
                     display="flex"
                     alignItems="center"
                     flex={1}

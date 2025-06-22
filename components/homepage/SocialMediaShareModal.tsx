@@ -26,6 +26,15 @@ const SocialMediaShareModal = ({
   onClose,
   comment,
 }: SocialMediaShareModalProps) => {
+  // Validate permlink to prevent [object Object] URLs
+  if (typeof comment.permlink !== "string") {
+    console.error(
+      "🚨 SocialMediaShareModal: Invalid permlink type:",
+      typeof comment.permlink
+    );
+    return null; // Prevent rendering with invalid data
+  }
+
   const postLink = `${window.location.origin}/post/${comment.author}/${comment.permlink}`;
   const { onCopy } = useClipboard(postLink);
 

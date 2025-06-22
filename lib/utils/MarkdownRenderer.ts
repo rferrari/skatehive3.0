@@ -1,10 +1,17 @@
 import { DefaultRenderer } from "@hiveio/content-renderer";
 
 export function processMediaContent(content: string): string {
-    // Handle 3Speak videos
+    // Handle 3Speak videos with better validation
     content = content.replace(
         /\[!\[.*?\]\(.*?\)\]\((https?:\/\/3speak\.tv\/watch\?v=([\w\-/]+))\)/g,
-        (_, url, videoId) => create3SpeakEmbed(videoId)
+        (match, url, videoId) => {
+            // Validate videoId is a proper string
+            if (!videoId || typeof videoId !== 'string' || videoId.includes('[object') || videoId === '[object Object]') {
+                console.error('Invalid 3Speak videoId detected:', { videoId, match, url });
+                return match; // Return original match if invalid
+            }
+            return create3SpeakEmbed(videoId);
+        }
     );
     // Replace markdown images with IPFS links
     content = content.replace(
@@ -76,9 +83,22 @@ function createImageTag(imageID: string): string {
 }
 
 function create3SpeakEmbed(videoID: string): string {
+    
+    // Ensure videoID is a string and not an object
+    const safeVideoID = typeof videoID === 'string' ? videoID : String(videoID);
+    
+    // Additional validation to prevent [object Object] in URLs
+    if (safeVideoID.includes('[object') || safeVideoID === '[object Object]') {
+        console.error('create3SpeakEmbed: Invalid videoID detected:', { originalVideoID: videoID, safeVideoID });
+        return `<div>Invalid video ID: ${safeVideoID}</div>`;
+    }
+    
+    // Log the final embed URL
+    const embedUrl = `https://3speak.tv/embed?v=${safeVideoID}`;
+    
     return `<div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; margin: 1rem 0;">
         <iframe
-            src="https://3speak.tv/embed?v=${videoID}"
+            src="${embedUrl}"
             style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
             frameborder="0"
             allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"

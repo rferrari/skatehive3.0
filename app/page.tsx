@@ -62,7 +62,7 @@ export default function Home() {
           />
         ) : (
           <Conversation
-            Discussion={conversation}
+            discussion={conversation}
             setConversation={setConversation}
             onOpen={onOpen}
             setReply={setReply}
@@ -78,7 +78,7 @@ export default function Home() {
         <SnapReplyModal
           isOpen={isOpen}
           onClose={onClose}
-          Discussion={reply}
+          discussion={reply}
           onNewReply={handleNewComment}
         />
       )}

@@ -21,21 +21,21 @@ import { getPostDate } from "@/lib/utils/GetPostDate";
 interface SnapReplyModalProps {
   isOpen: boolean;
   onClose: () => void;
-  Discussion?: Discussion;
+  discussion?: Discussion;
   onNewReply: (newComment: Partial<Discussion>) => void;
 }
 
 export default function SnapReplyModal({
   isOpen,
   onClose,
-  Discussion,
+  discussion,
   onNewReply,
 }: SnapReplyModalProps) {
-  if (!Discussion) {
+  if (!discussion) {
     return <div></div>;
   }
 
-  const commentDate = getPostDate(Discussion.created);
+  const commentDate = getPostDate(discussion.created);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="2xl">
@@ -55,13 +55,13 @@ export default function SnapReplyModal({
           <HStack mb={2}>
             <Avatar
               size="sm"
-              name={Discussion.author}
-              src={`https://images.hive.blog/u/${Discussion.author}/avatar/sm`}
+              name={discussion.author}
+              src={`https://images.hive.blog/u/${discussion.author}/avatar/sm`}
             />
             <Box ml={3}>
               <Text fontWeight="medium" fontSize="sm">
-                <Link href={`/@${Discussion.author}`}>
-                  @{Discussion.author}
+                <Link href={`/user/${discussion.author}`}>
+                  @{discussion.author}
                 </Link>
               </Text>
               <Text fontWeight="medium" fontSize="sm" color="primary">
@@ -73,13 +73,13 @@ export default function SnapReplyModal({
         <ModalBody>
           <Box
             dangerouslySetInnerHTML={{
-              __html: markdownRenderer(Discussion.body),
+              __html: markdownRenderer(discussion.body),
             }}
             pb={6}
           />
           <SnapComposer
-            pa={Discussion.author}
-            pp={Discussion.permlink}
+            pa={discussion.author}
+            pp={discussion.permlink}
             onNewComment={onNewReply}
             post={true}
             onClose={onClose}

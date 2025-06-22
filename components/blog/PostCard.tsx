@@ -68,17 +68,31 @@ export default function PostCard({
   const [sliderValue, setSliderValue] = useState(100);
   const [showSlider, setShowSlider] = useState(false);
   const { aioha, user } = useAioha();
-  const { hivePower, isLoading: isHivePowerLoading, error: hivePowerError, estimateVoteValue } = useHivePower(user);
+  const {
+    hivePower,
+    isLoading: isHivePowerLoading,
+    error: hivePowerError,
+    estimateVoteValue,
+  } = useHivePower(user);
   const [activeVotes, setActiveVotes] = useState(post.active_votes || []);
-  const [payoutValue, setPayoutValue] = useState(parseFloat(getPayoutValue(post)));
+  const [payoutValue, setPayoutValue] = useState(
+    parseFloat(getPayoutValue(post))
+  );
   const [voted, setVoted] = useState(
-    post.active_votes?.some((item) => item.voter.toLowerCase() === user?.toLowerCase())
+    post.active_votes?.some(
+      (item) => item.voter.toLowerCase() === user?.toLowerCase()
+    )
   );
   const router = useRouter();
   const default_thumbnail =
     "https://images.hive.blog/u/" + author + "/avatar/large";
   const [visibleImages, setVisibleImages] = useState<number>(3);
-  const { isOpen: isPayoutOpen, onOpen: openPayout, onClose: closePayout, onToggle: togglePayout } = useDisclosure();
+  const {
+    isOpen: isPayoutOpen,
+    onOpen: openPayout,
+    onClose: closePayout,
+    onToggle: togglePayout,
+  } = useDisclosure();
 
   // Calculate days remaining for pending payout
   const createdDate = new Date(post.created);
@@ -90,6 +104,31 @@ export default function PostCard({
   // Calculate payout timestamp (creation + 7 days)
   const payoutDate = new Date(createdDate.getTime() + 7 * 24 * 60 * 60 * 1000);
   const payoutDateString = payoutDate.toLocaleString();
+
+  // Debug props changes
+  useEffect(() => {
+    console.log("PostCard props changed:", {
+      author,
+      permlink: post.permlink,
+      postId: post.id,
+      authorType: typeof author,
+      permlinkType: typeof post.permlink,
+      timestamp: new Date().toISOString(),
+    });
+
+    if (
+      typeof post.permlink !== "string" ||
+      post.permlink.includes("[object")
+    ) {
+      console.error("CORRUPTED PERMLINK DETECTED IN PROPS:", {
+        author,
+        permlink: post.permlink,
+        post: post,
+        timestamp: new Date().toISOString(),
+        stack: new Error().stack,
+      });
+    }
+  }, [author, post.permlink, post.id]);
 
   useEffect(() => {
     let images: string[] = [];
@@ -142,7 +181,41 @@ export default function PostCard({
   }
 
   function viewPost() {
-    router.push("/@" + author + "/" + post.permlink);
+    // Enhanced debugging to catch problematic values
+    console.log("PostCard viewPost called with:", {
+      author,
+      permlink: post.permlink,
+      authorType: typeof author,
+      permlinkType: typeof post.permlink,
+    });
+
+    if (typeof author !== "string" || typeof post.permlink !== "string") {
+      console.error("PostCard: Invalid author or permlink types:", {
+        author,
+        permlink: post.permlink,
+        authorType: typeof author,
+        permlinkType: typeof post.permlink,
+      });
+      return;
+    }
+
+    // Check for object-like strings
+    if (author.includes("[object") || post.permlink.includes("[object")) {
+      console.error("Object-like string detected in navigation:", {
+        author,
+        permlink: post.permlink,
+        authorType: typeof author,
+        permlinkType: typeof post.permlink,
+      });
+      return;
+    }
+
+    // Use the correct URL format with proper encoding
+    const url = `/post/${encodeURIComponent(author)}/${encodeURIComponent(
+      post.permlink
+    )}`;
+    console.log("Navigating to URL:", url);
+    router.push(url);
   }
 
   // **Function to load more slides**
@@ -205,14 +278,18 @@ export default function PostCard({
     return typeof val === "string" ? val : val.toString();
   }
   // Helper to parse payout strings like "1.234 HBD"
-  function parsePayout(val: string | { toString: () => string } | undefined): number {
+  function parsePayout(
+    val: string | { toString: () => string } | undefined
+  ): number {
     if (!val) return 0;
     const str = assetToString(val);
     return parseFloat(str.replace(" HBD", "").replace(",", ""));
   }
   const authorPayout = parsePayout(post.total_payout_value);
   const curatorPayout = parsePayout(post.curator_payout_value);
-  const payoutTooltip = `Author: $${authorPayout.toFixed(3)}\nCurators: $${curatorPayout.toFixed(3)}`;
+  const payoutTooltip = `Author: $${authorPayout.toFixed(
+    3
+  )}\nCurators: $${curatorPayout.toFixed(3)}`;
 
   if (listView) {
     return (
@@ -278,11 +355,17 @@ export default function PostCard({
                 color={voted ? "primary" : "gray.500"}
                 opacity={voted ? 1 : 0.5}
                 boxSize={5}
-                _hover={{ bg: 'gray.700', borderRadius: 'full' }}
+                _hover={{ bg: "gray.700", borderRadius: "full" }}
               />
               <VoteListPopover
                 trigger={
-                  <Button variant="ghost" size="sm" ml={1} p={1} _hover={{ textDecoration: 'underline' }}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    ml={1}
+                    p={1}
+                    _hover={{ textDecoration: "underline" }}
+                  >
                     {uniqueVotes.length}
                   </Button>
                 }
@@ -290,10 +373,15 @@ export default function PostCard({
                 post={post}
               />
             </Flex>
-            <Popover placement="top" isOpen={isPayoutOpen} onClose={closePayout} closeOnBlur={true}>
+            <Popover
+              placement="top"
+              isOpen={isPayoutOpen}
+              onClose={closePayout}
+              closeOnBlur={true}
+            >
               <PopoverTrigger>
                 <span
-                  style={{ cursor: 'pointer' }}
+                  style={{ cursor: "pointer" }}
                   onMouseDown={openPayout}
                   onMouseUp={closePayout}
                 >
@@ -302,18 +390,34 @@ export default function PostCard({
                   </Text>
                 </span>
               </PopoverTrigger>
-              <PopoverContent w="auto" bg="gray.800" color="white" borderRadius="md" boxShadow="lg" p={2}>
+              <PopoverContent
+                w="auto"
+                bg="gray.800"
+                color="white"
+                borderRadius="md"
+                boxShadow="lg"
+                p={2}
+              >
                 <PopoverArrow />
                 <PopoverBody>
                   {isPending ? (
                     <div>
-                      <div><b>Pending</b></div>
-                      <div>{daysRemaining} day{daysRemaining !== 1 ? 's' : ''} until payout</div>
+                      <div>
+                        <b>Pending</b>
+                      </div>
+                      <div>
+                        {daysRemaining} day{daysRemaining !== 1 ? "s" : ""}{" "}
+                        until payout
+                      </div>
                     </div>
                   ) : (
                     <>
-                      <div>Author: <b>${authorPayout.toFixed(3)}</b></div>
-                      <div>Curators: <b>${curatorPayout.toFixed(3)}</b></div>
+                      <div>
+                        Author: <b>${authorPayout.toFixed(3)}</b>
+                      </div>
+                      <div>
+                        Curators: <b>${curatorPayout.toFixed(3)}</b>
+                      </div>
                     </>
                   )}
                 </PopoverBody>
@@ -334,7 +438,7 @@ export default function PostCard({
             {postDate}
           </Text>
           <Link
-            href={`/@${author}/${post.permlink}`}
+            href={`/post/${author}/${post.permlink}`}
             _hover={{ textDecoration: "underline" }}
           >
             <Text
@@ -361,9 +465,12 @@ export default function PostCard({
     );
   }
 
-  const postCardPulseGradient = 'linear-gradient(90deg, var(--chakra-colors-primary, #38ff8e) 0%, var(--chakra-colors-accent, #00e676) 100%)';
-  const postCardBoxShadowAccent = '0 0 0 0 var(--chakra-colors-accent, rgba(72, 255, 128, 0.7))';
-  const postCardBoxShadowAccent10 = '0 0 0 10px var(--chakra-colors-accent, rgba(72, 255, 128, 0))';
+  const postCardPulseGradient =
+    "linear-gradient(90deg, var(--chakra-colors-primary, #38ff8e) 0%, var(--chakra-colors-accent, #00e676) 100%)";
+  const postCardBoxShadowAccent =
+    "0 0 0 0 var(--chakra-colors-accent, rgba(72, 255, 128, 0.7))";
+  const postCardBoxShadowAccent10 =
+    "0 0 0 10px var(--chakra-colors-accent, rgba(72, 255, 128, 0))";
 
   return (
     <>
@@ -417,6 +524,16 @@ export default function PostCard({
         borderBottom="1px solid rgb(46, 46, 46)"
         overflow="hidden"
         height="100%"
+        onClick={(e) => {
+          console.log("PostCard container clicked", {
+            author,
+            permlink: post.permlink,
+            target: e.target,
+            currentTarget: e.currentTarget,
+          });
+          viewPost();
+        }}
+        cursor="pointer"
       >
         <Box
           py={4}
@@ -463,7 +580,7 @@ export default function PostCard({
             </Text>
           </Flex>
           <Link
-            href={`/@${author}/${post.permlink}`}
+            href={`/post/${author}/${post.permlink}`}
             onClick={stopPropagation}
             _hover={{ textDecoration: "underline" }}
           >
@@ -639,11 +756,17 @@ export default function PostCard({
                     color={voted ? "primary" : "gray.500"}
                     opacity={voted ? 1 : 0.5}
                     boxSize={6}
-                    _hover={{ bg: 'gray.700', borderRadius: 'full' }}
+                    _hover={{ bg: "gray.700", borderRadius: "full" }}
                   />
                   <VoteListPopover
                     trigger={
-                      <Button variant="ghost" size="sm" ml={1} p={1} _hover={{ textDecoration: 'underline' }}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        ml={1}
+                        p={1}
+                        _hover={{ textDecoration: "underline" }}
+                      >
                         {uniqueVotes.length}
                       </Button>
                     }
@@ -651,10 +774,15 @@ export default function PostCard({
                     post={post}
                   />
                 </Flex>
-                <Popover placement="top" isOpen={isPayoutOpen} onClose={closePayout} closeOnBlur={true}>
+                <Popover
+                  placement="top"
+                  isOpen={isPayoutOpen}
+                  onClose={closePayout}
+                  closeOnBlur={true}
+                >
                   <PopoverTrigger>
                     <span
-                      style={{ cursor: 'pointer' }}
+                      style={{ cursor: "pointer" }}
                       onMouseDown={openPayout}
                       onMouseUp={closePayout}
                     >
@@ -663,18 +791,34 @@ export default function PostCard({
                       </Text>
                     </span>
                   </PopoverTrigger>
-                  <PopoverContent w="auto" bg="gray.800" color="white" borderRadius="md" boxShadow="lg" p={2}>
+                  <PopoverContent
+                    w="auto"
+                    bg="gray.800"
+                    color="white"
+                    borderRadius="md"
+                    boxShadow="lg"
+                    p={2}
+                  >
                     <PopoverArrow />
                     <PopoverBody>
                       {isPending ? (
                         <div>
-                          <div><b>Pending</b></div>
-                          <div>{daysRemaining} day{daysRemaining !== 1 ? 's' : ''} until payout</div>
+                          <div>
+                            <b>Pending</b>
+                          </div>
+                          <div>
+                            {daysRemaining} day{daysRemaining !== 1 ? "s" : ""}{" "}
+                            until payout
+                          </div>
                         </div>
                       ) : (
                         <>
-                          <div>Author: <b>${authorPayout.toFixed(3)}</b></div>
-                          <div>Curators: <b>${curatorPayout.toFixed(3)}</b></div>
+                          <div>
+                            Author: <b>${authorPayout.toFixed(3)}</b>
+                          </div>
+                          <div>
+                            Curators: <b>${curatorPayout.toFixed(3)}</b>
+                          </div>
                         </>
                       )}
                     </PopoverBody>

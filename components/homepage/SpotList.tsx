@@ -1,5 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { Box, VStack, Text, Spinner, Image, Divider, Button, Modal, ModalOverlay, ModalContent } from "@chakra-ui/react";
+import {
+  Box,
+  VStack,
+  Text,
+  Spinner,
+  Button,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+} from "@chakra-ui/react";
 import { useComments } from "@/hooks/useComments";
 import { Discussion } from "@hiveio/dhive";
 import Snap from "@/components/homepage/Snap";
@@ -31,7 +40,9 @@ export default function SpotList({ newSpot }: SpotListProps) {
       }
     }
     // Sort by created date, newest first
-    spots.sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime());
+    spots.sort(
+      (a, b) => new Date(b.created).getTime() - new Date(a.created).getTime()
+    );
     setDisplayedSpots(spots);
   }, [comments, newSpot]);
 
@@ -80,14 +91,19 @@ export default function SpotList({ newSpot }: SpotListProps) {
         {displayedSpots.slice(0, visibleCount).map((spot) => (
           <Snap
             key={spot.permlink}
-            Discussion={spot}
+            discussion={spot}
             onOpen={() => handleOpenConversation(spot)}
             setReply={() => {}}
             setConversation={handleOpenConversation}
           />
         ))}
         {visibleCount < displayedSpots.length && (
-          <Button onClick={handleLoadMore} alignSelf="center" colorScheme="primary" variant="outline">
+          <Button
+            onClick={handleLoadMore}
+            alignSelf="center"
+            colorScheme="primary"
+            variant="outline"
+          >
             Load More
           </Button>
         )}
@@ -97,7 +113,7 @@ export default function SpotList({ newSpot }: SpotListProps) {
         <ModalContent bg="background" color="text">
           {conversation && (
             <Conversation
-              Discussion={conversation}
+              discussion={conversation}
               setConversation={() => setIsModalOpen(false)}
               onOpen={() => {}}
               setReply={() => {}}
@@ -107,4 +123,4 @@ export default function SpotList({ newSpot }: SpotListProps) {
       </Modal>
     </>
   );
-} 
+}

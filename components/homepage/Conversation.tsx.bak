@@ -30,8 +30,8 @@ const Conversation = ({
   setReply,
 }: ConversationProps) => {
   const { comments, isLoading, error } = useComments(
-    discussion.author,
-    discussion.permlink,
+    Discussion.author,
+    Discussion.permlink,
     true
   );
   const replies = comments;
@@ -79,7 +79,7 @@ const Conversation = ({
         </Button>
       </HStack>
       <Snap
-        discussion={{ ...discussion, depth: 0 } as any} // Use the built‑in depth for root
+        discussion={{ ...Discussion, depth: 0 } as any} // Use the built‑in depth for root
         onOpen={onOpen}
         setReply={setReply}
         setConversation={setConversation}
@@ -88,8 +88,8 @@ const Conversation = ({
       <Box mt={2}>
         {/* Inline snap composer replacing the generic Textarea */}
         <SnapComposer
-          pa={discussion.author}
-          pp={discussion.permlink}
+          pa={Discussion.author}
+          pp={Discussion.permlink}
           onNewComment={
             handleNewReply as (newComment: Partial<Discussion>) => void
           } // changed cast type
@@ -104,7 +104,7 @@ const Conversation = ({
           [...optimisticReplies, ...replies].map((reply: any) => (
             <Snap
               key={reply.permlink}
-              discussion={reply}
+              Discussion={reply}
               onOpen={onOpen}
               setReply={setReply}
             />

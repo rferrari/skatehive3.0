@@ -18,27 +18,27 @@ import BountyReplyComposer from "./BountyReplyComposer";
 import { parse, isAfter } from "date-fns";
 
 interface BountySubmissionProps {
-  Discussion: Discussion;
+  discussion: Discussion;
   setSubmission: (submission: Discussion | undefined) => void;
   onOpen: () => void;
   setReply: (reply: Discussion) => void;
 }
 
 const BountySubmission = ({
-  Discussion,
+  discussion,
   setSubmission,
   onOpen,
   setReply,
 }: BountySubmissionProps) => {
   const { comments, isLoading, error } = useComments(
-    Discussion.author,
-    Discussion.permlink,
+    discussion.author,
+    discussion.permlink,
     true
   );
   const replies = comments;
   const [optimisticReplies, setOptimisticReplies] = useState<Discussion[]>([]);
   const theme = useTheme();
-  const [primaryColor] = useToken('colors', ['primary']);
+  const [primaryColor] = useToken("colors", ["primary"]);
 
   function onBackClick() {
     setSubmission(undefined);
@@ -58,7 +58,7 @@ const BountySubmission = ({
     }
     return null;
   }
-  const deadline = getDeadlineFromBody(Discussion.body);
+  const deadline = getDeadlineFromBody(discussion.body);
   const now = new Date();
   const isActive = deadline ? isAfter(deadline, now) : true;
 
@@ -72,20 +72,17 @@ const BountySubmission = ({
   }
 
   return (
-    <Box
-      bg="muted"
-      p={4}
-      mt={1}
-      mb={1}
-      borderRadius="base"
-      boxShadow="lg"
-    >
+    <Box bg="muted" p={4} mt={1} mb={1} borderRadius="base" boxShadow="lg">
       {/* Large Title (Trick/Challenge) */}
       <HStack mb={4} spacing={2} align="flex-start">
         <Box flex={1}>
-          <Text fontSize={{ base: "2xl", md: "4xl" }} fontWeight="extrabold" mb={1}>
+          <Text
+            fontSize={{ base: "2xl", md: "4xl" }}
+            fontWeight="extrabold"
+            mb={1}
+          >
             {(() => {
-              const match = Discussion.body.match(/Trick\/Challenge:\s*(.*)/);
+              const match = discussion.body.match(/Trick\/Challenge:\s*(.*)/);
               return match && match[1] ? match[1].trim() : "Bounty Submission";
             })()}
           </Text>
@@ -95,13 +92,13 @@ const BountySubmission = ({
           variant="ghost"
           ml="auto"
           aria-label="Close"
-          _hover={{ bg: primaryColor + '20' }}
+          _hover={{ bg: primaryColor + "20" }}
         >
           <CloseIcon color={primaryColor} />
         </Button>
       </HStack>
       <BountySnap
-        Discussion={{ ...Discussion, depth: 0 } as any}
+        discussion={{ ...discussion, depth: 0 } as any}
         onOpen={onOpen}
         setReply={setReply}
         setConversation={setSubmission}
@@ -113,7 +110,7 @@ const BountySubmission = ({
       <Divider my={4} />
       {isActive ? (
         <BountyReplyComposer
-          parentDiscussion={Discussion}
+          parentDiscussion={discussion}
           onNewReply={handleNewReply}
           onClose={() => console.log("Composer closed")}
         />
@@ -124,13 +121,10 @@ const BountySubmission = ({
       )}
       <Divider my={4} />
       <VStack spacing={2} align="stretch">
-        {[
-          ...optimisticReplies,
-          ...replies,
-        ].map((reply: any) => (
+        {[...optimisticReplies, ...replies].map((reply: any) => (
           <BountySnap
             key={reply.permlink}
-            Discussion={reply}
+            discussion={reply}
             onOpen={onOpen}
             setReply={setReply}
           />
@@ -140,4 +134,4 @@ const BountySubmission = ({
   );
 };
 
-export default BountySubmission; 
+export default BountySubmission;

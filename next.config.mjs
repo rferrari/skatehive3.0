@@ -12,7 +12,29 @@ const nextConfig = {
             };
         }
         return config;
-    }
+    },
+    async redirects() {
+        return [
+            // Profile redirects: /@username -> /user/username
+            {
+                source: '/@:username',
+                destination: '/user/:username',
+                permanent: true,
+            },
+            // Post redirects: /@author/permlink -> /post/author/permlink
+            {
+                source: '/@:author/:permlink',
+                destination: '/post/:author/:permlink',
+                permanent: true,
+            },
+            // Category post redirects: /category/@author/permlink -> /post/author/permlink
+            {
+                source: '/:category/@:author/:permlink',
+                destination: '/post/:author/:permlink',
+                permanent: true,
+            }
+        ];
+    },
 }
 
 export default nextConfig;

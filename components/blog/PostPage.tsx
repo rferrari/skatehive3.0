@@ -18,6 +18,17 @@ interface PostPageProps {
 }
 
 export default function PostPage({ author, permlink }: PostPageProps) {
+  // Add debugging at the start of PostPage
+  console.log("PostPage component called with:", { author, permlink });
+  console.log("PostPage author type:", typeof author);
+  console.log("PostPage permlink type:", typeof permlink);
+
+  // Add URL debugging
+  if (typeof window !== "undefined") {
+    console.log("Current window.location:", window.location.href);
+    console.log("Current pathname:", window.location.pathname);
+  }
+
   // Add InitFrameSDK at the top so it runs on mount
   InitFrameSDK();
 
@@ -32,7 +43,7 @@ export default function PostPage({ author, permlink }: PostPageProps) {
   const data = useComments(author, permlink, true);
   const commentsData = {
     ...data,
-    loadNextPage: () => { },
+    loadNextPage: () => {},
     hasMore: false,
   };
 
@@ -81,7 +92,15 @@ export default function PostPage({ author, permlink }: PostPageProps) {
         h={{ base: "auto", md: "100vh" }}
         gap={4}
       >
-        <Box flex={1} h={{ base: "auto", md: "100vh" }} overflowY="auto" sx={{ '&::-webkit-scrollbar': { display: 'none' }, scrollbarWidth: 'none' }}>
+        <Box
+          flex={1}
+          h={{ base: "auto", md: "100vh" }}
+          overflowY="auto"
+          sx={{
+            "&::-webkit-scrollbar": { display: "none" },
+            scrollbarWidth: "none",
+          }}
+        >
           <PostDetails post={post} />
         </Box>
         <Box
@@ -106,7 +125,7 @@ export default function PostPage({ author, permlink }: PostPageProps) {
             </>
           ) : (
             <Conversation
-              Discussion={conversation}
+              discussion={conversation}
               setConversation={setConversation}
               onOpen={onOpen}
               setReply={setReply}
@@ -118,7 +137,7 @@ export default function PostPage({ author, permlink }: PostPageProps) {
         <SnapReplyModal
           isOpen={isOpen}
           onClose={onClose}
-          Discussion={reply}
+          discussion={reply}
           onNewReply={handleNewComment}
         />
       )}

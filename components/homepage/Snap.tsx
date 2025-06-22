@@ -120,39 +120,46 @@ const renderMedia = (mediaContent: string) => {
 };
 
 interface SnapProps {
-  Discussion: Discussion;
+  discussion: Discussion;
   onOpen: () => void;
   setReply: (Discussion: Discussion) => void;
   setConversation?: (conversation: Discussion) => void;
 }
 
-const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
+const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
   const { aioha, user } = useAioha();
   const { hiveAccount } = useHiveAccount(user || "");
-  const { hivePower, isLoading: isHivePowerLoading, error: hivePowerError, estimateVoteValue } = useHivePower(user);
+  const {
+    hivePower,
+    isLoading: isHivePowerLoading,
+    error: hivePowerError,
+    estimateVoteValue,
+  } = useHivePower(user);
   const toast = useToast();
-  const commentDate = getPostDate(Discussion.created);
+  const commentDate = getPostDate(discussion.created);
 
   const [sliderValue, setSliderValue] = useState(5);
   const [showSlider, setShowSlider] = useState(false);
-  const [activeVotes, setActiveVotes] = useState(Discussion.active_votes || []);
-  const [rewardAmount, setRewardAmount] = useState(parseFloat(getPayoutValue(Discussion)));
+  const [activeVotes, setActiveVotes] = useState(discussion.active_votes || []);
+  const [rewardAmount, setRewardAmount] = useState(
+    parseFloat(getPayoutValue(discussion))
+  );
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [inlineReplies, setInlineReplies] = useState<Discussion[]>([]);
   const [inlineComposerStates, setInlineComposerStates] = useState<
     Record<string, boolean>
   >({});
 
-  const effectiveDepth = Discussion.depth || 0;
+  const effectiveDepth = discussion.depth || 0;
 
   const { text, media } = useMemo(
-    () => separateContent(Discussion.body),
-    [Discussion.body]
+    () => separateContent(discussion.body),
+    [discussion.body]
   );
   const renderedMedia = useMemo(() => renderMedia(media), [media]);
 
   const [voted, setVoted] = useState(
-    Discussion.active_votes?.some(
+    discussion.active_votes?.some(
       (item: { voter: string }) => item.voter === user
     ) || false
   );
@@ -163,14 +170,14 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
 
   function handleConversation() {
     if (setConversation) {
-      setConversation(Discussion);
+      setConversation(discussion);
     }
   }
 
   async function handleVote() {
     const vote = await aioha.vote(
-      Discussion.author,
-      Discussion.permlink,
+      discussion.author,
+      discussion.permlink,
       sliderValue * 100
     );
     if (vote.success) {
@@ -180,7 +187,9 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
       if (estimateVoteValue) {
         try {
           const estimatedValue = await estimateVoteValue(sliderValue);
-          setRewardAmount((prev) => parseFloat((prev + estimatedValue).toFixed(3)));
+          setRewardAmount((prev) =>
+            parseFloat((prev + estimatedValue).toFixed(3))
+          );
         } catch (e) {
           // fallback: do not update payout
         }
@@ -190,7 +199,16 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
   }
 
   const handleSharePost = async () => {
-    const postLink = `${window.location.origin}/@${Discussion.author}/${Discussion.permlink}`;
+    // Validate permlink to prevent [object Object] URLs
+    if (typeof discussion.permlink !== "string") {
+      console.error(
+        "🚨 Snap: Invalid permlink type:",
+        typeof discussion.permlink
+      );
+      return;
+    }
+
+    const postLink = `${window.location.origin}/post/${discussion.author}/${discussion.permlink}`;
     await navigator.clipboard.writeText(postLink);
     toast({
       title: "Post link copied to clipboard.",
@@ -212,7 +230,7 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
     }));
   }
 
-  const replies = Discussion.replies || [];
+  const replies = discussion.replies || [];
 
   // Deduplicate votes by voter (keep the last occurrence)
   const uniqueVotesMap = new Map();
@@ -226,37 +244,43 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
     return typeof val === "string" ? val : val.toString();
   }
   // Helper to parse payout strings like "1.234 HBD"
-  function parsePayout(val: string | { toString: () => string } | undefined): number {
+  function parsePayout(
+    val: string | { toString: () => string } | undefined
+  ): number {
     if (!val) return 0;
     const str = assetToString(val);
     return parseFloat(str.replace(" HBD", "").replace(",", ""));
   }
-  const authorPayout = parsePayout(Discussion.total_payout_value);
-  const curatorPayout = parsePayout(Discussion.curator_payout_value);
+  const authorPayout = parsePayout(discussion.total_payout_value);
+  const curatorPayout = parsePayout(discussion.curator_payout_value);
   // Calculate days remaining for pending payout
-  const createdDate = new Date(Discussion.created);
+  const createdDate = new Date(discussion.created);
   const now = new Date();
   const timeDifferenceInMs = now.getTime() - createdDate.getTime();
   const timeDifferenceInDays = timeDifferenceInMs / (1000 * 60 * 60 * 24);
   const daysRemaining = Math.max(0, 7 - Math.floor(timeDifferenceInDays));
   const isPending = timeDifferenceInDays < 7;
-  const { isOpen: isPayoutOpen, onOpen: openPayout, onClose: closePayout } = useDisclosure();
+  const {
+    isOpen: isPayoutOpen,
+    onOpen: openPayout,
+    onClose: closePayout,
+  } = useDisclosure();
 
   return (
     <Box pl={effectiveDepth > 1 ? 1 : 0} ml={effectiveDepth > 1 ? 2 : 0}>
       <Box mt={1} mb={1} borderRadius="base" width="100%">
         <HStack mb={2}>
           <Link
-            href={`/@${Discussion.author}`}
-            _hover={{ textDecoration: 'none' }}
+            href={`/user/${discussion.author}`}
+            _hover={{ textDecoration: "none" }}
             display="flex"
             alignItems="center"
             role="group"
           >
             <Avatar
               size="sm"
-              name={Discussion.author}
-              src={`https://images.hive.blog/u/${Discussion.author}/avatar/sm`}
+              name={discussion.author}
+              src={`https://images.hive.blog/u/${discussion.author}/avatar/sm`}
               ml={2}
             />
             <Text
@@ -264,9 +288,9 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
               fontSize="sm"
               ml={2}
               whiteSpace="nowrap"
-              _groupHover={{ textDecoration: 'underline' }}
+              _groupHover={{ textDecoration: "underline" }}
             >
-              {Discussion.author}
+              {discussion.author}
             </Text>
           </Link>
           <HStack ml={0} width="100%">
@@ -293,16 +317,16 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
         </Box>
 
         <Box mt={2}>
-          {inlineComposerStates[Discussion.permlink] && (
+          {inlineComposerStates[discussion.permlink] && (
             <Box mt={2}>
               <SnapComposer
-                pa={Discussion.author}
-                pp={Discussion.permlink}
+                pa={discussion.author}
+                pp={discussion.permlink}
                 onNewComment={handleInlineNewReply}
                 onClose={() =>
                   setInlineComposerStates((prev: Record<string, boolean>) => ({
                     ...prev,
-                    [Discussion.permlink]: false,
+                    [discussion.permlink]: false,
                   }))
                 }
                 post
@@ -346,7 +370,12 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
                 </SliderThumb>
               </Slider>
             </Box>
-            <Button size="xs" onClick={handleVote} ml={2} className="pulse-green">
+            <Button
+              size="xs"
+              onClick={handleVote}
+              ml={2}
+              className="pulse-green"
+            >
               &nbsp;&nbsp;&nbsp;Vote {sliderValue} %&nbsp;&nbsp;&nbsp;
             </Button>
             <Button size="xs" onClick={handleHeartClick} ml={2}>
@@ -359,23 +388,34 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
               <Tooltip label="upvote" hasArrow openDelay={1000}>
                 <Button
                   leftIcon={
-                    <LuArrowUpRight size={24} color={voted ? undefined : "rgb(75, 72, 72)"} style={{ opacity: voted ? 1 : 0.5 }} />
+                    <LuArrowUpRight
+                      size={24}
+                      color={voted ? undefined : "rgb(75, 72, 72)"}
+                      style={{ opacity: voted ? 1 : 0.5 }}
+                    />
                   }
                   variant="ghost"
                   onClick={handleHeartClick}
                   size="sm"
                   p={2}
-                  _hover={{ bg: 'gray.700', borderRadius: 'full' }}
+                  _hover={{ bg: "gray.700", borderRadius: "full" }}
                 />
               </Tooltip>
               <VoteListPopover
                 trigger={
-                  <Button variant="ghost" size="sm" ml={1} p={1} _hover={{ textDecoration: 'underline' }} onClick={e => e.stopPropagation()}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    ml={1}
+                    p={1}
+                    _hover={{ textDecoration: "underline" }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     {uniqueVotes.length}
                   </Button>
                 }
                 votes={activeVotes}
-                post={Discussion}
+                post={discussion}
               />
             </HStack>
             <HStack>
@@ -384,22 +424,27 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
                   leftIcon={<FaRegComment size={18} />}
                   variant="ghost"
                   onClick={() => {
-                    console.log(Discussion.depth);
+                    console.log(discussion.depth);
                     effectiveDepth > 1
-                      ? handleReplyButtonClick(Discussion.permlink)
+                      ? handleReplyButtonClick(discussion.permlink)
                       : handleConversation();
                   }}
                   size="sm"
                 >
-                  {setConversation && Discussion.children}
+                  {setConversation && discussion.children}
                 </Button>
               </Tooltip>
             </HStack>
             <Tooltip label="reward amount" hasArrow openDelay={1000}>
-              <Popover placement="top" isOpen={isPayoutOpen} onClose={closePayout} closeOnBlur={true}>
+              <Popover
+                placement="top"
+                isOpen={isPayoutOpen}
+                onClose={closePayout}
+                closeOnBlur={true}
+              >
                 <PopoverTrigger>
                   <span
-                    style={{ cursor: 'pointer' }}
+                    style={{ cursor: "pointer" }}
                     onMouseDown={openPayout}
                     onMouseUp={closePayout}
                   >
@@ -408,18 +453,34 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
                     </Text>
                   </span>
                 </PopoverTrigger>
-                <PopoverContent w="auto" bg="gray.800" color="white" borderRadius="md" boxShadow="lg" p={2}>
+                <PopoverContent
+                  w="auto"
+                  bg="gray.800"
+                  color="white"
+                  borderRadius="md"
+                  boxShadow="lg"
+                  p={2}
+                >
                   <PopoverArrow />
                   <PopoverBody>
                     {isPending ? (
                       <div>
-                        <div><b>Pending</b></div>
-                        <div>{daysRemaining} day{daysRemaining !== 1 ? 's' : ''} until payout</div>
+                        <div>
+                          <b>Pending</b>
+                        </div>
+                        <div>
+                          {daysRemaining} day{daysRemaining !== 1 ? "s" : ""}{" "}
+                          until payout
+                        </div>
                       </div>
                     ) : (
                       <>
-                        <div>Author: <b>${authorPayout.toFixed(3)}</b></div>
-                        <div>Curators: <b>${curatorPayout.toFixed(3)}</b></div>
+                        <div>
+                          Author: <b>${authorPayout.toFixed(3)}</b>
+                        </div>
+                        <div>
+                          Curators: <b>${curatorPayout.toFixed(3)}</b>
+                        </div>
                       </>
                     )}
                   </PopoverBody>
@@ -439,7 +500,7 @@ const Snap = ({ Discussion, onOpen, setReply, setConversation }: SnapProps) => {
               return (
                 <Snap
                   key={reply.permlink}
-                  Discussion={{ ...reply, depth: nextDepth } as any}
+                  discussion={{ ...reply, depth: nextDepth } as any}
                   onOpen={onOpen}
                   setReply={setReply}
                   setConversation={setConversation}
@@ -473,4 +534,4 @@ export default Snap;
       box-shadow: 0 0 0 0 var(--chakra-colors-accent, rgba(72, 255, 128, 0));
     }
   }
-`}</style>
+`}</style>;

@@ -16,23 +16,38 @@ const vt323 = VT323({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://my.skatehive.app"),
-  title: "Skatehive App",
-  description: "The infinity skateboard maganize",
+  title: {
+    default: "Skatehive App",
+    template: "%s", // This allows child pages to completely override the title
+  },
+  description: "The infinity skateboard magazine",
   manifest: "/manifest.json",
+  applicationName: "Skatehive",
   openGraph: {
     title: "Skatehive App",
-    description: "The infinity skateboard maganize",
-    images: "/ogimage.png",
+    description: "The infinity skateboard magazine", 
+    url: "https://my.skatehive.app",
+    siteName: "Skatehive",
+    images: [
+      {
+        url: "/ogimage.png",
+        width: 1200,
+        height: 630,
+      },
+    ],
     type: "website",
+    locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
     title: "Skatehive App",
-    description: "The infinity skateboard maganize",
+    description: "The infinity skateboard magazine",
     images: "/ogimage.png",
+    site: "@skatehive",
   },
-  alternates: {
-    canonical: "/", // This will be automatically resolved relative to metadataBase
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 

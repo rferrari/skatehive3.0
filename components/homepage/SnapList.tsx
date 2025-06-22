@@ -121,7 +121,7 @@ export default function SnapList({
               {sortedComments.map((Discussion: Discussion) => (
                 <Snap
                   key={Discussion.permlink}
-                  Discussion={Discussion}
+                  discussion={Discussion}
                   onOpen={onOpen}
                   setReply={setReply}
                   {...(!post ? { setConversation } : {})}

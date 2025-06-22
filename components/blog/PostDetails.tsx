@@ -117,7 +117,7 @@ export default function PostDetails({ post }: PostDetailsProps) {
           />
           <Box ml={3} whiteSpace="nowrap">
             <Text fontWeight="medium" fontSize="sm" mb={-2} color={colorBackground}>
-              <Link href={`/@${author}`} color={colorBackground}>@{author}</Link>
+              <Link href={`/user/${author}`} color={colorBackground}>@{author}</Link>
             </Text>
             <Text fontSize="sm" color={colorBackground}>
               {postDate}
