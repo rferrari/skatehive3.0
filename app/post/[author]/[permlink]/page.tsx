@@ -2,10 +2,6 @@ import PostPage from "@/components/blog/PostPage";
 import HiveClient from "@/lib/hive/hiveclient";
 import { cleanUsername } from "@/lib/utils/cleanUsername";
 import { Metadata } from "next";
-import dynamic from "next/dynamic";
-const InitFrameSDK = dynamic(() => import("@/hooks/init-frame-sdk"), {
-  ssr: false,
-});
 
 // Constants
 const DOMAIN_URL = "https://my.skatehive.app";
