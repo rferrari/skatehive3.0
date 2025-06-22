@@ -1,12 +1,12 @@
 // app/[...slug]/page.tsx
 
 import PostPage from "@/components/blog/PostPage";
-import NotificationsComp from "@/components/notifications/NotificationsComp";
 import ProfilePage from "@/components/profile/ProfilePage";
 import MainWallet from "@/components/wallet/MainWallet";
 import HiveClient from "@/lib/hive/hiveclient";
 import { cleanUsername } from "@/lib/utils/cleanUsername";
 import { Metadata, ResolvingMetadata } from "next";
+import { redirect } from "next/navigation";
 
 // Constants
 const DOMAIN_URL = "https://my.skatehive.app";
@@ -116,7 +116,7 @@ export async function generateMetadata(
     };
   }
 
-  // Notifications page
+  // Notifications page (legacy URLs)
   if (slug.length === 2 && isUsername(slug[0]) && slug[1] === "notifications") {
     const username = cleanUsername(slug[0]);
     return {
@@ -124,6 +124,8 @@ export async function generateMetadata(
       description: `View notifications for ${username} on Skatehive.`,
     };
   }
+
+
 
   // Post page
   const isPost =
@@ -190,17 +192,18 @@ export default async function Page(props: {
     return <MainWallet username={cleanUsername(slug[0])} />;
   }
 
-  // Notifications page: /@username/notifications
+  // Legacy notifications page: /@username/notifications (redirect to new notifications page)
   if (slug.length === 2 && isUsername(slug[0]) && slug[1] === "notifications") {
-    return <NotificationsComp username={cleanUsername(slug[0])} />;
+    redirect('/notifications');
   }
+
+
 
   // Post page: /@username/permlink or /category/@username/permlink
   const isPostRoute =
     (slug.length === 2 &&
       isUsername(slug[0]) &&
-      slug[1] !== "wallet" &&
-      slug[1] !== "notifications") ||
+      slug[1] !== "wallet") ||
     (slug.length === 3 && isUsername(slug[1]));
 
   if (isPostRoute) {

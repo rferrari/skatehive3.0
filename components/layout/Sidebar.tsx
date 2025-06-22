@@ -13,10 +13,19 @@ import {
 } from "@chakra-ui/react";
 import { useRouter, usePathname } from "next/navigation";
 import { AiohaModal, useAioha } from "@aioha/react-ui";
-import { FiHome, FiBell, FiUser, FiBook, FiMap, FiCreditCard, FiSettings, FiMail, FiAward, FiTarget } from "react-icons/fi";
+import {
+  FiHome,
+  FiBell,
+  FiUser,
+  FiBook,
+  FiMap,
+  FiCreditCard,
+  FiSettings,
+  FiMail,
+  FiAward,
+  FiTarget,
+} from "react-icons/fi";
 import { motion } from "framer-motion";
-import { FaGear } from "react-icons/fa6";
-import { FaTrophy } from "react-icons/fa";
 import { KeyTypes } from "@aioha/aioha";
 import "@aioha/react-ui/dist/build.css";
 import { useAccount } from "wagmi";
@@ -48,18 +57,20 @@ export default function Sidebar({ newNotificationCount = 0 }) {
   else if (themeName === "hiveBR") hoverTextColor = "accent";
 
   const logoColor = themeName === "nounish" ? "secondary" : undefined;
-  const nounishSvgStyle = themeName === "nounish"
-    ? `<style>
+  const nounishSvgStyle =
+    themeName === "nounish"
+      ? `<style>
         .cls-7 { fill: var(--chakra-colors-secondary) !important; }
         .cls-5 { fill: var(--chakra-colors-text) !important; }
       </style>`
-    : '';
+      : "";
 
-  const hivebrSvgStyle = themeName === "hiveBR"
-    ? `<style>
+  const hivebrSvgStyle =
+    themeName === "hiveBR"
+      ? `<style>
         .cls-5 { fill: var(--chakra-colors-accent) !important; }
       </style>`
-    : '';
+      : "";
 
   useEffect(() => {
     setBellAnimating(newNotificationCount > 0);
@@ -110,8 +121,8 @@ export default function Sidebar({ newNotificationCount = 0 }) {
               mb={1}
               role="group"
               _hover={{}}
-              _active={{ bg: 'transparent' }}
-              _focus={{ bg: 'transparent' }}
+              _active={{ bg: "transparent" }}
+              _focus={{ bg: "transparent" }}
             >
               <Box
                 as="span"
@@ -138,8 +149,8 @@ export default function Sidebar({ newNotificationCount = 0 }) {
               mb={1}
               role="group"
               _hover={{}}
-              _active={{ bg: 'transparent' }}
-              _focus={{ bg: 'transparent' }}
+              _active={{ bg: "transparent" }}
+              _focus={{ bg: "transparent" }}
             >
               <Box
                 as="span"
@@ -166,8 +177,8 @@ export default function Sidebar({ newNotificationCount = 0 }) {
               mb={1}
               role="group"
               _hover={{}}
-              _active={{ bg: 'transparent' }}
-              _focus={{ bg: 'transparent' }}
+              _active={{ bg: "transparent" }}
+              _focus={{ bg: "transparent" }}
             >
               <Box
                 as="span"
@@ -194,8 +205,8 @@ export default function Sidebar({ newNotificationCount = 0 }) {
               mb={1}
               role="group"
               _hover={{}}
-              _active={{ bg: 'transparent' }}
-              _focus={{ bg: 'transparent' }}
+              _active={{ bg: "transparent" }}
+              _focus={{ bg: "transparent" }}
             >
               <Box
                 as="span"
@@ -222,8 +233,8 @@ export default function Sidebar({ newNotificationCount = 0 }) {
               mb={1}
               role="group"
               _hover={{}}
-              _active={{ bg: 'transparent' }}
-              _focus={{ bg: 'transparent' }}
+              _active={{ bg: "transparent" }}
+              _focus={{ bg: "transparent" }}
             >
               <Box
                 as="span"
@@ -242,7 +253,7 @@ export default function Sidebar({ newNotificationCount = 0 }) {
             {user && (
               <>
                 <Button
-                  onClick={() => handleNavigation("/@" + user + "/notifications")}
+                  onClick={() => handleNavigation("/notifications")}
                   variant="ghost"
                   w="full"
                   justifyContent="flex-start"
@@ -252,8 +263,8 @@ export default function Sidebar({ newNotificationCount = 0 }) {
                   mb={1}
                   role="group"
                   _hover={{}}
-                  _active={{ bg: 'transparent' }}
-                  _focus={{ bg: 'transparent' }}
+                  _active={{ bg: "transparent" }}
+                  _focus={{ bg: "transparent" }}
                 >
                   <Box
                     as="span"
@@ -292,8 +303,8 @@ export default function Sidebar({ newNotificationCount = 0 }) {
                   mb={1}
                   role="group"
                   _hover={{}}
-                  _active={{ bg: 'transparent' }}
-                  _focus={{ bg: 'transparent' }}
+                  _active={{ bg: "transparent" }}
+                  _focus={{ bg: "transparent" }}
                 >
                   <Box
                     as="span"
@@ -330,8 +341,8 @@ export default function Sidebar({ newNotificationCount = 0 }) {
                   mb={1}
                   role="group"
                   _hover={{}}
-                  _active={{ bg: 'transparent' }}
-                  _focus={{ bg: 'transparent' }}
+                  _active={{ bg: "transparent" }}
+                  _focus={{ bg: "transparent" }}
                 >
                   <Box
                     as="span"
@@ -360,8 +371,8 @@ export default function Sidebar({ newNotificationCount = 0 }) {
               mb={1}
               role="group"
               _hover={{}}
-              _active={{ bg: 'transparent' }}
-              _focus={{ bg: 'transparent' }}
+              _active={{ bg: "transparent" }}
+              _focus={{ bg: "transparent" }}
             >
               <Box
                 as="span"
@@ -389,8 +400,8 @@ export default function Sidebar({ newNotificationCount = 0 }) {
                 mb={1}
                 role="group"
                 _hover={{}}
-                _active={{ bg: 'transparent' }}
-                _focus={{ bg: 'transparent' }}
+                _active={{ bg: "transparent" }}
+                _focus={{ bg: "transparent" }}
               >
                 <Box
                   as="span"
@@ -419,8 +430,8 @@ export default function Sidebar({ newNotificationCount = 0 }) {
                 mb={1}
                 role="group"
                 _hover={{}}
-                _active={{ bg: 'transparent' }}
-                _focus={{ bg: 'transparent' }}
+                _active={{ bg: "transparent" }}
+                _focus={{ bg: "transparent" }}
               >
                 <Box
                   as="span"
