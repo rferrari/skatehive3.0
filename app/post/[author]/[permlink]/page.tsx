@@ -2,7 +2,10 @@ import PostPage from "@/components/blog/PostPage";
 import HiveClient from "@/lib/hive/hiveclient";
 import { cleanUsername } from "@/lib/utils/cleanUsername";
 import { Metadata } from "next";
-import InitFrameSDK from "@/hooks/init-frame-sdk";
+import dynamic from "next/dynamic";
+const InitFrameSDK = dynamic(() => import("@/hooks/init-frame-sdk"), {
+  ssr: false,
+});
 
 // Constants
 const DOMAIN_URL = "https://my.skatehive.app";
@@ -212,7 +215,6 @@ export async function generateMetadata({
         images: bannerImage,
       },
       other: {
-        // Farcaster Frame metadata
         "fc:frame": JSON.stringify({
           version: "next",
           imageUrl: bannerImage,
@@ -227,11 +229,7 @@ export async function generateMetadata({
           postUrl: postUrl,
         }),
         "fc:frame:image": bannerImage,
-        "fc:frame:image:aspect_ratio": "1.91:1",
         "fc:frame:post_url": postUrl,
-        "fc:frame:button:1": "Open post",
-        "fc:frame:button:1:action": "link",
-        "fc:frame:button:1:target": postUrl,
       },
     };
   } catch (error) {
@@ -277,12 +275,9 @@ export default async function PostPageRoute({
   const decodedPermlink = decodeURIComponent(permlink);
 
   return (
-    <>
-      <InitFrameSDK />
-      <PostPage
-        author={cleanUsername(decodedAuthor)}
-        permlink={decodedPermlink}
-      />
-    </>
+    <PostPage
+      author={cleanUsername(decodedAuthor)}
+      permlink={decodedPermlink}
+    />
   );
 }

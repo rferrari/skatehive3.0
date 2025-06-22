@@ -5,7 +5,6 @@ import {
   ModalHeader,
   ModalCloseButton,
   ModalBody,
-  VStack,
   IconButton,
   useClipboard,
   HStack,
@@ -13,7 +12,6 @@ import {
   ModalFooter,
 } from "@chakra-ui/react";
 import { FaFacebook, FaTwitter, FaLink, FaGlasses } from "react-icons/fa";
-import { MdCastConnected } from "react-icons/md"; // Example icon for Farcaster
 
 interface SocialMediaShareModalProps {
   isOpen: boolean;
@@ -26,6 +24,9 @@ const SocialMediaShareModal = ({
   onClose,
   comment,
 }: SocialMediaShareModalProps) => {
+  const postLink = `${typeof window !== 'undefined' ? window.location.origin : ''}/post/${comment.author}/${comment.permlink}`;
+  const { onCopy } = useClipboard(postLink);
+
   // Validate permlink to prevent [object Object] URLs
   if (typeof comment.permlink !== "string") {
     console.error(
@@ -34,9 +35,6 @@ const SocialMediaShareModal = ({
     );
     return null; // Prevent rendering with invalid data
   }
-
-  const postLink = `${window.location.origin}/post/${comment.author}/${comment.permlink}`;
-  const { onCopy } = useClipboard(postLink);
 
   const handleShare = (platform: string) => {
     let shareUrl = "";
