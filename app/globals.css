@@ -51,3 +51,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
 .hide-scrollbar::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera */
 }
+
+.markdown-body p {
+  margin-bottom: 1em;
+}
