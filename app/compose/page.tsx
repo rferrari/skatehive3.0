@@ -21,6 +21,7 @@ import {
   ModalBody,
   Box,
   useBreakpointValue,
+  useToast,
 } from "@chakra-ui/react";
 import { useState, useMemo, useRef, useEffect } from "react";
 import MDEditor, { commands } from "@uiw/react-md-editor";
@@ -63,6 +64,7 @@ export default function Composer() {
     null
   );
   const [isDragOver, setIsDragOver] = useState(false);
+  const toast = useToast();
 
   const placeholders = [
     "Don't forget a title...",
@@ -124,7 +126,15 @@ export default function Composer() {
   };
 
   const handleSubmit = async () => {
-    const permlink = title.replaceAll(" ", "-");
+    if (!user) {
+      toast({
+        title: "You must be logged in to submit a post.",
+        status: "error",
+        duration: 4000,
+        isClosable: true,
+      });
+      return;
+    }
     const allImages = extractImageUrls(markdown);
     let imageArray: string[] = [];
     if (selectedThumbnail) {
@@ -135,15 +145,51 @@ export default function Composer() {
     } else {
       imageArray = allImages;
     }
+    const permlink = title
+      .toLowerCase()
+      .replace(/[^a-z0-9-]+/g, "-") // replace invalid chars with dash
+      .replace(/^-+|-+$/g, "")      // trim leading/trailing dashes
+      .slice(0, 255);                // max length for Hive permlink
     try {
-      await aioha.comment(null, communityTag, permlink, title, markdown, {
-        tags: hashtags,
-        app: "Skatehive App 3.0",
-        image: imageArray,
-      });
-      console.log("Post submitted successfully");
-    } catch (error) {
+      const result = await aioha.comment(
+        null,
+        communityTag,
+        permlink,
+        title,
+        markdown,
+        {
+          tags: hashtags,
+          app: "Skatehive App 3.0",
+          image: imageArray,
+        }
+      );
+      console.log("aioha.comment result:", result);
+      if (result && result.success) {
+        toast({
+          title: "Post submitted successfully!",
+          status: "success",
+          duration: 4000,
+          isClosable: true,
+        });
+        // Optionally clear form here
+      } else {
+        toast({
+          title: "Failed to submit post.",
+          description: result?.error || "Unknown error.",
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
+      }
+    } catch (error: any) {
       console.error("Failed to submit post:", error);
+      toast({
+        title: "Failed to submit post.",
+        description: error?.message || String(error),
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
     }
   };
 
