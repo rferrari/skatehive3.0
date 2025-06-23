@@ -65,6 +65,7 @@ export default function Composer() {
   );
   const [isDragOver, setIsDragOver] = useState(false);
   const toast = useToast();
+  const [gifCaption, setGifCaption] = useState<string>("skatehive-gif");
 
   const placeholders = [
     "Don't forget a title...",
@@ -136,14 +137,21 @@ export default function Composer() {
       return;
     }
     const allImages = extractImageUrls(markdown);
+    // For GIFs, append ?filename=... if not present
+    function ensureGifFilename(url: string): string {
+      if (url.match(/\.gif($|\?)/i) && !url.includes("?filename=")) {
+        return url + (url.includes("?") ? "&" : "?") + "filename=skatehive.gif";
+      }
+      return url;
+    }
     let imageArray: string[] = [];
     if (selectedThumbnail) {
       imageArray = [
-        selectedThumbnail,
-        ...allImages.filter((url) => url !== selectedThumbnail),
+        ensureGifFilename(selectedThumbnail),
+        ...allImages.filter((url) => url !== selectedThumbnail).map(ensureGifFilename),
       ];
     } else {
-      imageArray = allImages;
+      imageArray = allImages.map(ensureGifFilename);
     }
     const permlink = title
       .toLowerCase()
@@ -209,7 +217,11 @@ export default function Composer() {
           throw new Error("Failed to upload file to IPFS");
         }
         const result = await response.json();
-        const ipfsUrl = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`;
+        let ipfsUrl = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`;
+        // If GIF, append filename param for better frontend compatibility
+        if (fileName && fileName.toLowerCase().endsWith('.gif')) {
+          ipfsUrl += `?filename=${encodeURIComponent(fileName)}`;
+        }
         insertAtCursor(`\n![${fileName || "image"}](${ipfsUrl})\n`);
         setIsUploading(false);
       } catch (error) {
@@ -325,7 +337,7 @@ export default function Composer() {
     gifMakerWithSelectorRef.current?.trigger();
   };
 
-  const handleGifUpload = (url: string | null) => {
+  const handleGifUpload = (url: string | null, caption?: string) => {
     setIsProcessingGif(!!url);
     setGifUrl(url);
     if (url) {
@@ -336,6 +348,7 @@ export default function Composer() {
     } else {
       setGifSize(null);
     }
+    setGifCaption(caption || "skatehive-gif");
   };
 
   const handleGifWebpUpload = async (
@@ -365,7 +378,10 @@ export default function Composer() {
         throw new Error("Failed to upload GIF/WEBP to IPFS");
       }
       const result = await response.json();
-      const ipfsUrl = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`;
+      let ipfsUrl = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`;
+      if (file.type === "image/gif") {
+        ipfsUrl += `?filename=${encodeURIComponent(file.name)}`;
+      }
       insertAtCursor(`\n![${file.name}](${ipfsUrl})\n`);
     } catch (error) {
       alert("Error uploading GIF/WEBP to IPFS.");
@@ -608,29 +624,14 @@ export default function Composer() {
             <ModalCloseButton />
             <ModalBody>
               <div style={{ maxWidth: 480, margin: "0 auto", padding: 12 }}>
-                {/* Hide instructions and select button after GIF is generated */}
+                {/* Keep instructions, remove only the outer select button */}
                 {!gifUrl && (
                   <>
                     <p style={{ marginBottom: 16, color: "#bbb" }}>
                       Upload a video (3-30 seconds), select a 3-second segment, and
                       convert it to a GIF!
                     </p>
-                    <button
-                      onClick={handleGifTrigger}
-                      disabled={isProcessingGif}
-                      style={{
-                        padding: "10px 24px",
-                        fontSize: 16,
-                        borderRadius: 6,
-                        background: isProcessingGif ? "#ccc" : "#222",
-                        color: "#fff",
-                        border: "none",
-                        cursor: isProcessingGif ? "not-allowed" : "pointer",
-                        marginBottom: 24,
-                      }}
-                    >
-                      {isProcessingGif ? "Processing..." : "Select Video (3-30s)"}
-                    </button>
+                    {/* Removed the Select Video (3-30s) button here */}
                   </>
                 )}
                 <GIFMakerWithSelector
@@ -700,7 +701,10 @@ export default function Composer() {
                             res.blob()
                           );
                           const formData = new FormData();
-                          formData.append("file", blob, "blog-gif.gif");
+                          // Use the user-provided caption as the filename, fallback to skatehive-gif.gif
+                          const safeCaption = gifCaption ? gifCaption.replace(/[^a-zA-Z0-9-_]/g, "-") : "skatehive-gif";
+                          const filename = `${safeCaption}.gif`;
+                          formData.append("file", blob, filename);
                           const response = await fetch("/api/pinata", {
                             method: "POST",
                             body: formData,
@@ -708,8 +712,8 @@ export default function Composer() {
                           if (!response.ok)
                             throw new Error("Failed to upload GIF to IPFS");
                           const result = await response.json();
-                          const ipfsUrl = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`;
-                          insertAtCursor(`\n![skatehive](${ipfsUrl})\n`);
+                          let ipfsUrl = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}?filename=${encodeURIComponent(filename)}`;
+                          insertAtCursor(`\n![${filename}](${ipfsUrl})\n`);
                           gifMakerWithSelectorRef.current?.reset();
                           setGifUrl(null);
                           setGifSize(null);
@@ -770,7 +774,7 @@ export default function Composer() {
           Thumbnail
         </Button>
         <Button size="sm" colorScheme="blue" onClick={handleSubmit}>
-          Submit
+          Publish
         </Button>
       </Flex>
       {showThumbnailPicker && (
