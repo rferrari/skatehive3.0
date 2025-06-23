@@ -21,6 +21,7 @@ import {
   ModalBody,
   Box,
   useBreakpointValue,
+  useToast,
 } from "@chakra-ui/react";
 import { useState, useMemo, useRef, useEffect } from "react";
 import MDEditor, { commands } from "@uiw/react-md-editor";
@@ -36,6 +37,7 @@ import { extractImageUrls, extractVideoUrls } from "../../lib/utils/extractImage
 import MatrixOverlay from "../../components/graphics/MatrixOverlay";
 import { Image } from "@chakra-ui/react";
 import imageCompression from "browser-image-compression";
+import rehypeMentionLinks from "../../lib/utils/rehypeMentionLinks";
 
 export default function Composer() {
   const [markdown, setMarkdown] = useState("");
@@ -63,6 +65,8 @@ export default function Composer() {
     null
   );
   const [isDragOver, setIsDragOver] = useState(false);
+  const toast = useToast();
+  const [gifCaption, setGifCaption] = useState<string>("skatehive-gif");
 
   const placeholders = [
     "Don't forget a title...",
@@ -124,26 +128,77 @@ export default function Composer() {
   };
 
   const handleSubmit = async () => {
-    const permlink = title.replaceAll(" ", "-");
+    if (!user) {
+      toast({
+        title: "You must be logged in to submit a post.",
+        status: "error",
+        duration: 4000,
+        isClosable: true,
+      });
+      return;
+    }
     const allImages = extractImageUrls(markdown);
+    // For GIFs, append ?filename=... if not present
+    function ensureGifFilename(url: string): string {
+      if (url.match(/\.gif($|\?)/i) && !url.includes("?filename=")) {
+        return url + (url.includes("?") ? "&" : "?") + "filename=skatehive.gif";
+      }
+      return url;
+    }
     let imageArray: string[] = [];
     if (selectedThumbnail) {
       imageArray = [
-        selectedThumbnail,
-        ...allImages.filter((url) => url !== selectedThumbnail),
+        ensureGifFilename(selectedThumbnail),
+        ...allImages.filter((url) => url !== selectedThumbnail).map(ensureGifFilename),
       ];
     } else {
-      imageArray = allImages;
+      imageArray = allImages.map(ensureGifFilename);
     }
+    const permlink = title
+      .toLowerCase()
+      .replace(/[^a-z0-9-]+/g, "-") // replace invalid chars with dash
+      .replace(/^-+|-+$/g, "")      // trim leading/trailing dashes
+      .slice(0, 255);                // max length for Hive permlink
     try {
-      await aioha.comment(null, communityTag, permlink, title, markdown, {
-        tags: hashtags,
-        app: "Skatehive App 3.0",
-        image: imageArray,
-      });
-      console.log("Post submitted successfully");
-    } catch (error) {
+      const result = await aioha.comment(
+        null,
+        communityTag,
+        permlink,
+        title,
+        markdown,
+        {
+          tags: hashtags,
+          app: "Skatehive App 3.0",
+          image: imageArray,
+        }
+      );
+      console.log("aioha.comment result:", result);
+      if (result && result.success) {
+        toast({
+          title: "Post submitted successfully!",
+          status: "success",
+          duration: 4000,
+          isClosable: true,
+        });
+        // Optionally clear form here
+      } else {
+        toast({
+          title: "Failed to submit post.",
+          description: result?.error || "Unknown error.",
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
+      }
+    } catch (error: any) {
       console.error("Failed to submit post:", error);
+      toast({
+        title: "Failed to submit post.",
+        description: error?.message || String(error),
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
     }
   };
 
@@ -163,7 +218,11 @@ export default function Composer() {
           throw new Error("Failed to upload file to IPFS");
         }
         const result = await response.json();
-        const ipfsUrl = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`;
+        let ipfsUrl = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`;
+        // If GIF, append filename param for better frontend compatibility
+        if (fileName && fileName.toLowerCase().endsWith('.gif')) {
+          ipfsUrl += `?filename=${encodeURIComponent(fileName)}`;
+        }
         insertAtCursor(`\n![${fileName || "image"}](${ipfsUrl})\n`);
         setIsUploading(false);
       } catch (error) {
@@ -269,6 +328,81 @@ export default function Composer() {
       }: React.IframeHTMLAttributes<HTMLIFrameElement> & {
         node?: unknown;
       }) => <VideoRenderer src={props.src} {...props} />,
+      
+      p: ({ children, ...props }) => {
+        // If the paragraph contains only a YouTube URL, embed it
+        if (
+          Array.isArray(children) &&
+          children.length === 1 &&
+          typeof children[0] === "string"
+        ) {
+          const text = children[0].trim();
+          // Regex for YouTube URLs
+          const ytMatch = text.match(
+            /^(https?:\/\/(?:www\.|m\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11}))(?:[&?][^\s]*)?$/
+          );
+          if (ytMatch) {
+            const videoId = ytMatch[2];
+            const embedUrl = `https://www.youtube.com/embed/${videoId}`;
+            return (
+              <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, overflow: "hidden", margin: "16px 0" }}>
+                <iframe
+                  src={embedUrl}
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  title="YouTube Video"
+                  style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }}
+                />
+              </div>
+            );
+          }
+        }
+        // Default paragraph rendering
+        return <p {...props}>{children}</p>;
+      },
+      a: ({ href, children, ...props }) => {
+        // Regex for YouTube URLs
+        const ytMatch = href?.match(
+          /^(https?:\/\/(?:www\.|m\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11}))(?:[&?][^\s]*)?$/
+        );
+        if (ytMatch) {
+          const videoId = ytMatch[2];
+          const embedUrl = `https://www.youtube.com/embed/${videoId}`;
+          return (
+            <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, overflow: "hidden", margin: "16px 0" }}>
+              <iframe
+                src={embedUrl}
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                title="YouTube Video"
+                style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }}
+              />
+            </div>
+          );
+        }
+        // Default anchor rendering
+        return <a href={href} {...props}>{children}</a>;
+      },
+      text: ({ children }) => {
+        if (typeof children === "string") {
+          // Replace @username with a link to /@username
+          const parts = children.split(/(@[a-zA-Z0-9._-]+)/g);
+          return parts.map((part, i) => {
+            if (/^@[a-zA-Z0-9._-]+$/.test(part)) {
+              const username = part.slice(1);
+              return (
+                <a key={i} href={`/@${username}`} style={{ color: '#3182ce', textDecoration: 'underline' }}>
+                  {part}
+                </a>
+              );
+            }
+            return <React.Fragment key={i}>{part}</React.Fragment>;
+          });
+        }
+        return children;
+      },
     }),
     []
   );
@@ -279,7 +413,7 @@ export default function Composer() {
     gifMakerWithSelectorRef.current?.trigger();
   };
 
-  const handleGifUpload = (url: string | null) => {
+  const handleGifUpload = (url: string | null, caption?: string) => {
     setIsProcessingGif(!!url);
     setGifUrl(url);
     if (url) {
@@ -290,6 +424,7 @@ export default function Composer() {
     } else {
       setGifSize(null);
     }
+    setGifCaption(caption || "skatehive-gif");
   };
 
   const handleGifWebpUpload = async (
@@ -319,7 +454,10 @@ export default function Composer() {
         throw new Error("Failed to upload GIF/WEBP to IPFS");
       }
       const result = await response.json();
-      const ipfsUrl = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`;
+      let ipfsUrl = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`;
+      if (file.type === "image/gif") {
+        ipfsUrl += `?filename=${encodeURIComponent(file.name)}`;
+      }
       insertAtCursor(`\n![${file.name}](${ipfsUrl})\n`);
     } catch (error) {
       alert("Error uploading GIF/WEBP to IPFS.");
@@ -525,6 +663,7 @@ export default function Composer() {
                 backgroundColor: "var(--chakra-colors-background)",
                 color: "var(--chakra-colors-text, white)",
               },
+              rehypePlugins: [rehypeMentionLinks],
             }}
             commands={[
               headerCommand,
@@ -562,29 +701,14 @@ export default function Composer() {
             <ModalCloseButton />
             <ModalBody>
               <div style={{ maxWidth: 480, margin: "0 auto", padding: 12 }}>
-                {/* Hide instructions and select button after GIF is generated */}
+                {/* Keep instructions, remove only the outer select button */}
                 {!gifUrl && (
                   <>
                     <p style={{ marginBottom: 16, color: "#bbb" }}>
                       Upload a video (3-30 seconds), select a 3-second segment, and
                       convert it to a GIF!
                     </p>
-                    <button
-                      onClick={handleGifTrigger}
-                      disabled={isProcessingGif}
-                      style={{
-                        padding: "10px 24px",
-                        fontSize: 16,
-                        borderRadius: 6,
-                        background: isProcessingGif ? "#ccc" : "#222",
-                        color: "#fff",
-                        border: "none",
-                        cursor: isProcessingGif ? "not-allowed" : "pointer",
-                        marginBottom: 24,
-                      }}
-                    >
-                      {isProcessingGif ? "Processing..." : "Select Video (3-30s)"}
-                    </button>
+                    {/* Removed the Select Video (3-30s) button here */}
                   </>
                 )}
                 <GIFMakerWithSelector
@@ -654,7 +778,10 @@ export default function Composer() {
                             res.blob()
                           );
                           const formData = new FormData();
-                          formData.append("file", blob, "blog-gif.gif");
+                          // Use the user-provided caption as the filename, fallback to skatehive-gif.gif
+                          const safeCaption = gifCaption ? gifCaption.replace(/[^a-zA-Z0-9-_]/g, "-") : "skatehive-gif";
+                          const filename = `${safeCaption}.gif`;
+                          formData.append("file", blob, filename);
                           const response = await fetch("/api/pinata", {
                             method: "POST",
                             body: formData,
@@ -662,8 +789,8 @@ export default function Composer() {
                           if (!response.ok)
                             throw new Error("Failed to upload GIF to IPFS");
                           const result = await response.json();
-                          const ipfsUrl = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`;
-                          insertAtCursor(`\n![skatehive](${ipfsUrl})\n`);
+                          let ipfsUrl = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}?filename=${encodeURIComponent(filename)}`;
+                          insertAtCursor(`\n![${filename}](${ipfsUrl})\n`);
                           gifMakerWithSelectorRef.current?.reset();
                           setGifUrl(null);
                           setGifSize(null);
@@ -724,7 +851,7 @@ export default function Composer() {
           Thumbnail
         </Button>
         <Button size="sm" colorScheme="blue" onClick={handleSubmit}>
-          Submit
+          Publish
         </Button>
       </Flex>
       {showThumbnailPicker && (

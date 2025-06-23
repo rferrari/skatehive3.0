@@ -7,9 +7,11 @@ import React, {
 } from "react";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile } from "@ffmpeg/util";
+import { Box, Input, Button, Text, useBreakpointValue } from "@chakra-ui/react";
+import { useTheme } from "@/app/themeProvider";
 
 interface GIFMakerWithSelectorProps {
-  onUpload: (url: string | null) => void;
+  onUpload: (url: string | null, caption?: string) => void;
   isProcessing?: boolean;
 }
 
@@ -32,12 +34,18 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
     const [canConvert, setCanConvert] = useState<boolean>(false);
     // Ref to track if user is seeking
     const isSeekingRef = useRef(false);
+    const [caption, setCaption] = useState("");
 
-    // Replace hardcoded background and color values with theme variables
-    const backgroundDefault = 'var(--chakra-colors-background, #fff)';
-    const backgroundProcessing = 'var(--chakra-colors-muted, #ccc)';
-    const backgroundAccent = 'var(--chakra-colors-primary, #0070f3)';
-    const colorDefault = 'var(--chakra-colors-text, #222)';
+    // THEME
+    const { theme } = useTheme();
+    const colors = theme.colors;
+    const borderRadius = theme.radii?.md || "12px";
+    const boxShadow = theme.shadows?.md || "0 2px 12px rgba(0,0,0,0.08)";
+    const fontSizeSm = theme.fontSizes?.sm || "14px";
+    const fontSizeMd = theme.fontSizes?.md || "16px";
+    const fontSizeLg = theme.fontSizes?.lg || "18px";
+    const fontWeightMedium = theme.fontWeights?.medium || 500;
+    const fontWeightBold = theme.fontWeights?.bold || 700;
 
     useImperativeHandle(ref, () => ({
       trigger: () => {
@@ -57,7 +65,6 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
       },
     }));
 
-    // Clean up videoUrl blob when component unmounts or video changes
     useEffect(() => {
       return () => {
         if (videoUrl) {
@@ -92,6 +99,7 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
         setStartTime(null);
         setEndTime(null);
         setCanConvert(false);
+        onUpload(null, caption);
         return;
       }
       setStatus("Validating video duration...");
@@ -104,7 +112,7 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
         setStartTime(null);
         setEndTime(null);
         setCanConvert(false);
-        onUpload(null);
+        onUpload(null, caption);
         return;
       }
       const url = URL.createObjectURL(file);
@@ -121,7 +129,6 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
       if (videoRef.current) {
         const current = videoRef.current.currentTime;
         setStartTime(current);
-        // If endTime is set, validate the segment
         if (endTime !== null) {
           if (current >= endTime) {
             setStatus("Start time must be before end time.");
@@ -140,7 +147,6 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
       if (videoRef.current) {
         const current = videoRef.current.currentTime;
         setEndTime(current);
-        // If startTime is set, validate the segment
         if (startTime !== null) {
           if (current <= startTime) {
             setStatus("End time must be after start time.");
@@ -156,7 +162,6 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
     };
 
     useEffect(() => {
-      // Enable convert if both start and end are set and valid
       if (
         startTime !== null &&
         endTime !== null &&
@@ -194,11 +199,11 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
         const gifBlob = new Blob([data.buffer], { type: "image/gif" });
         const gifUrl = URL.createObjectURL(gifBlob);
         setStatus("GIF created successfully!");
-        onUpload(gifUrl);
+        onUpload(gifUrl, caption || "skatehive-gif");
       } catch (error) {
         setStatus("Error converting video.");
         console.error("Error during GIF conversion:", error);
-        onUpload(null);
+        onUpload(null, caption || "skatehive-gif");
       }
     };
 
@@ -207,15 +212,14 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
       return (0.3 + 0.3 * duration).toFixed(2);
     };
 
-    // Get color for estimated size
+    // Get color for estimated size using theme colors
     const getEstimateColor = (size: number) => {
-      if (size < 1.5) return '#d4f8e8'; // light green
-      if (size < 1.7) return '#fff9c4'; // light yellow
-      if (size < 2.0) return '#ffe0b2'; // light orange
-      return '#ffd6d6'; // light red
+      if (size < 1.5) return colors.success || "#38A169";
+      if (size < 1.7) return colors.warning || "#FFA500";
+      if (size < 2.0) return colors.accent || "#B0C4DE";
+      return colors.error || "#FF6B6B";
     };
 
-    // Looping preview effect
     useEffect(() => {
       const video = videoRef.current;
       if (!video) return;
@@ -228,11 +232,11 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
         isSeekingRef.current = false;
       };
       const handleTimeUpdate = () => {
-        if (isSeekingRef.current) return; // Don't loop while seeking
+        if (isSeekingRef.current) return;
         if (video.currentTime >= endTime) {
           video.currentTime = startTime;
           if (!isSeekingRef.current) {
-            video.play(); // ensure it keeps looping only if not seeking
+            video.play();
           }
         }
       };
@@ -247,56 +251,113 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
     }, [startTime, endTime]);
 
     return (
-      <div style={{ maxWidth: 400, margin: "0 auto", padding: 24, background: backgroundDefault, borderRadius: 12, boxShadow: "0 2px 12px rgba(0,0,0,0.08)", textAlign: "center" }}>
-        <input
-          type="file"
-          accept="video/*"
-          ref={inputRef}
-          style={{ display: "none" }}
-          onChange={handleFileChange}
-          disabled={isProcessing}
-        />
-        {videoUrl && videoFile ? (
+      <Box maxW={400} mx="auto" p={6} bg={colors.background} borderRadius={borderRadius} boxShadow={boxShadow} textAlign="center">
+        {/* Only show Select Video button if no video is selected */}
+        {!videoUrl && !videoFile && (
           <>
-            <video
+            <Button
+              onClick={() => inputRef.current && inputRef.current.click()}
+              bg={colors.background}
+              color={colors.primary}
+              borderWidth="2px"
+              borderColor={colors.primary}
+              fontWeight={fontWeightBold}
+              mb={4}
+              w="100%"
+              borderRadius={borderRadius}
+              _hover={{ bg: colors.primary, color: colors.background, borderColor: colors.primary }}
+              _active={{ bg: colors.primary, color: colors.background, borderColor: colors.primary }}
+              isDisabled={isProcessing}
+            >
+              Select Video (3–30s)
+            </Button>
+            <Input
+              type="file"
+              accept="video/*"
+              ref={inputRef}
+              display="none"
+              onChange={handleFileChange}
+              isDisabled={isProcessing}
+            />
+          </>
+        )}
+        {/* After video is selected, show the rest of the UI */}
+        {videoUrl && videoFile && (
+          <>
+            <Box mb={3}>
+              <Input
+                type="text"
+                placeholder="Enter GIF caption or title (filename)"
+                value={caption}
+                onChange={e => setCaption(e.target.value)}
+                width="100%"
+                px={3}
+                py={2}
+                borderRadius={theme.radii?.base || 6}
+                borderColor={colors.border}
+                fontSize={fontSizeMd}
+                mb={1}
+                maxLength={64}
+                isDisabled={isProcessing}
+                _placeholder={{ color: colors.muted, opacity: 1 }}
+                bg={colors.muted}
+                color={colors.text}
+              />
+              <Text fontSize={fontSizeSm} color={colors.text} opacity={0.7}>
+                This will be used as the GIF filename for Hive frontends.
+              </Text>
+            </Box>
+            <Box as="video"
               ref={videoRef}
               src={videoUrl}
               controls
-              style={{ maxWidth: "100%", borderRadius: 8, marginBottom: 16 }}
+              maxW="100%"
+              borderRadius={theme.radii?.base || 8}
+              mb={4}
+              mx="auto"
+              display="block"
             />
-            <div style={{ display: "flex", justifyContent: "center", gap: 12, margin: "16px 0" }}>
-              <button
+            <Box display="flex" justifyContent="center" gap={3} my={4}>
+              {/* Set Start Button */}
+              <Button
                 onClick={handleSetStart}
-                disabled={isProcessing}
-                style={{
-                  padding: "6px 16px",
-                  fontSize: 15,
-                  borderRadius: 6,
-                  background: isProcessing ? backgroundProcessing : backgroundAccent,
-                  color: "#fff",
-                  border: "none",
-                  cursor: isProcessing ? "not-allowed" : "pointer",
-                }}
+                isDisabled={isProcessing}
+                px={4}
+                py={2}
+                fontSize={fontSizeMd}
+                borderRadius={theme.radii?.base || 6}
+                bg={colors.background}
+                color={colors.primary}
+                borderWidth="2px"
+                borderColor={colors.primary}
+                fontWeight={fontWeightBold}
+                _hover={{ bg: colors.primary, color: colors.background, borderColor: colors.primary }}
+                _active={{ bg: colors.primary, color: colors.background, borderColor: colors.primary }}
+                cursor={isProcessing ? "not-allowed" : "pointer"}
               >
                 Set Start
-              </button>
-              <button
+              </Button>
+              {/* Set End Button */}
+              <Button
                 onClick={handleSetEnd}
-                disabled={isProcessing}
-                style={{
-                  padding: "6px 16px",
-                  fontSize: 15,
-                  borderRadius: 6,
-                  background: isProcessing ? backgroundProcessing : colorDefault,
-                  color: "#fff",
-                  border: "none",
-                  cursor: isProcessing ? "not-allowed" : "pointer",
-                }}
+                isDisabled={isProcessing}
+                px={4}
+                py={2}
+                fontSize={fontSizeMd}
+                borderRadius={theme.radii?.base || 6}
+                bg={colors.background}
+                color={colors.primary}
+                borderWidth="2px"
+                borderColor={colors.primary}
+                fontWeight={fontWeightBold}
+                _hover={{ bg: colors.primary, color: colors.background, borderColor: colors.primary }}
+                _active={{ bg: colors.primary, color: colors.background, borderColor: colors.primary }}
+                cursor={isProcessing ? "not-allowed" : "pointer"}
               >
                 Set End
-              </button>
-            </div>
-            <div style={{ marginTop: 12, fontSize: 14, color: "#555" }}>
+              </Button>
+            </Box>
+            <Text mt={3} fontSize={fontSizeSm} color={colors.text}>
               {startTime !== null && endTime !== null ? (
                 <>
                   Segment: {startTime.toFixed(2)}s - {endTime.toFixed(2)}s ({(endTime - startTime).toFixed(2)}s)
@@ -308,44 +369,50 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
               ) : (
                 <>No segment selected.</>
               )}
-            </div>
+            </Text>
             {startTime !== null && endTime !== null && (
               (() => {
                 const est = parseFloat(estimateGifSizeMB(endTime - startTime));
                 return (
-                  <div style={{ marginTop: 4, fontSize: 13, fontWeight: 500 }}>
-                    Estimated GIF size: <span style={{ background: getEstimateColor(est), color: colorDefault, borderRadius: 6, padding: '2px 8px', marginLeft: 4 }}>{est} MB</span>
-                  </div>
+                  <Text mt={1} fontSize={fontSizeSm} fontWeight={fontWeightMedium}>
+                    Estimated GIF size: <Box as="span" color={getEstimateColor(est)} bg={colors.muted} borderRadius={theme.radii?.base || 6} px={2} py={0.5} ml={2} display="inline-block">{est} MB</Box>
+                  </Text>
                 );
               })()
             )}
-            <button
+            {/* Convert to GIF Button */}
+            <Button
               onClick={handleConvert}
-              disabled={isProcessing || !canConvert}
-              style={{
-                padding: "10px 24px",
-                fontSize: 16,
-                borderRadius: 6,
-                background: isProcessing || !canConvert ? backgroundProcessing : colorDefault,
-                color: "#fff",
-                border: "none",
-                cursor: isProcessing || !canConvert ? "not-allowed" : "pointer",
-                marginTop: 8,
-                marginBottom: 8,
-              }}
+              isDisabled={isProcessing || !canConvert}
+              px={6}
+              py={2.5}
+              fontSize={fontSizeLg}
+              borderRadius={theme.radii?.base || 6}
+              bg={colors.background}
+              color={colors.primary}
+              borderWidth="2px"
+              borderColor={colors.primary}
+              fontWeight={fontWeightBold}
+              cursor={isProcessing || !canConvert ? "not-allowed" : "pointer"}
+              mt={2}
+              mb={2}
+              _hover={{ bg: colors.primary, color: colors.background, borderColor: colors.primary }}
+              _active={{ bg: colors.primary, color: colors.background, borderColor: colors.primary }}
             >
               {isProcessing ? "Processing..." : "Convert to GIF"}
-            </button>
+            </Button>
           </>
-        ) : (
-          <div style={{ marginBottom: 16, color: "#555" }}>
-            Upload a video (up to 30 seconds) to select a segment and convert to GIF.
-          </div>
+        )}
+        {/* Status and info text always at the bottom */}
+        {!videoUrl && !videoFile && (
+          <Text mb={4} color={colors.text} opacity={0.7}>
+            Try to only use 2-3 GIFs per post. Often, selecting a GIF as a thumbnail is a fun way to get peoples attention.
+          </Text>
         )}
         {status && (
-          <div style={{ marginTop: 8, color: status.startsWith("Error") ? "red" : colorDefault }}>{status}</div>
+          <Text mt={2} color={status.startsWith("Error") ? colors.error : colors.text}>{status}</Text>
         )}
-      </div>
+      </Box>
     );
   }
 );

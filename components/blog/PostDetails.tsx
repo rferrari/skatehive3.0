@@ -24,6 +24,10 @@ import { getPayoutValue } from "@/lib/hive/client-functions";
 import markdownRenderer from "@/lib/utils/MarkdownRenderer";
 import useHivePower from "@/hooks/useHivePower";
 import VoteListPopover from "./VoteListModal";
+import ReactMarkdown from 'react-markdown';
+import rehypeMentionLinks from '@/lib/utils/rehypeMentionLinks';
+import rehypeRaw from 'rehype-raw';
+import { processMediaContent } from '@/lib/utils/MarkdownRenderer';
 
 interface PostDetailsProps {
   post: Discussion;
@@ -109,13 +113,13 @@ export default function PostDetails({ post }: PostDetailsProps) {
         p={4}
         mb={4}
       >
-        <Flex direction="row" alignItems="center" w="100%">
+        <Flex direction={["column", "row"]} alignItems={["flex-start", "center"]} w="100%">
           <Avatar
             size="sm"
             name={author}
             src={`https://images.hive.blog/u/${author}/avatar/sm`}
           />
-          <Box ml={3} whiteSpace="nowrap">
+          <Box ml={[0, 3]} mt={[2, 0]} whiteSpace="nowrap">
             <Text fontWeight="medium" fontSize="sm" mb={-2} color={colorBackground}>
               <Link href={`/user/${author}`} color={colorBackground}>@{author}</Link>
             </Text>
@@ -130,12 +134,12 @@ export default function PostDetails({ post }: PostDetailsProps) {
             mx={4}
             display={["none", "block"]}
           />
-          <Box flexGrow={1} ml={4} textAlign="start" minWidth={0}>
+          <Box flexGrow={1} ml={[0, 4]} mt={[2, 0]} textAlign="start" minWidth={0}>
             <Text fontSize="lg" fontWeight="bold" color={colorBackground}>
               {title}
             </Text>
           </Box>
-          <Flex alignItems="center" ml={4}>
+          <Flex alignItems="center" ml={[0, 4]} mt={[2, 0]}>
             {voted ? (
               <Icon
                 as={FaHeart}
@@ -215,23 +219,12 @@ export default function PostDetails({ post }: PostDetailsProps) {
 
       <Divider />
 
-      <Box
-        data-subcomponent="PostDetails/Body"
-        maxW={"container.xs"}
-        mt={4}
-        dangerouslySetInnerHTML={{ __html: markdownRenderer(body) }}
-        overflow={"auto"}
-        sx={{
-          "&::-webkit-scrollbar": {
-            display: "none",
-          },
-          iframe: {
-            width: "100%",
-            aspectRatio: "16 / 9",
-            height: "auto",
-          },
-        }}
-      />
+      <Box mt={4} className="markdown-body">
+        <ReactMarkdown
+          rehypePlugins={[rehypeRaw, rehypeMentionLinks]}
+          children={processMediaContent(body)}
+        />
+      </Box>
 
       <style jsx global>{`
         .pulse-green {
