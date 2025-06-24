@@ -101,6 +101,9 @@ export default function BountyList({ newBounty, refreshTrigger }: BountyListProp
     return match && match[1] ? match[1].trim() : null;
   }).filter(Boolean);
 
+  // Extract permlinks for dependency
+  const activeBountyPermlinks = activeBounties.map(b => b.permlink).join(",");
+
   // Fetch replies for all active bounties to get bounty grinders
   useEffect(() => {
     let cancelled = false;
@@ -124,7 +127,7 @@ export default function BountyList({ newBounty, refreshTrigger }: BountyListProp
     }
     fetchGrinders();
     return () => { cancelled = true; };
-  }, [activeBounties.map(b => b.permlink).join(",")]);
+  }, [activeBountyPermlinks, activeBounties]);
 
   if (isLoading) {
     return (

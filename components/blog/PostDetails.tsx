@@ -236,8 +236,9 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
       <Box mt={4} className="markdown-body">
         <ReactMarkdown
           rehypePlugins={[rehypeRaw, rehypeMentionLinks]}
-          children={processMediaContent(body)}
-        />
+        >
+          {processMediaContent(body)}
+        </ReactMarkdown>
       </Box>
 
       <style jsx global>{`
