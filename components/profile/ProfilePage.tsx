@@ -463,7 +463,7 @@ export default function ProfilePage({ username }: ProfilePageProps) {
         </Box>
       );
     },
-    [profileData, username, speakDescription, isOwner, handleEditModalOpen, isFollowing, isFollowLoading, handleFollowToggle, user]
+    [profileData, username, speakDescription, isOwner, handleEditModalOpen, isFollowing, isFollowLoading, handleFollowToggle, user, background]
   );
 
   if (isLoading || !hiveAccount) {

@@ -15,6 +15,8 @@ function useMagazinePosts(query: string, tag: { tag: string; limit: number }[]) 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<null | string>(null);
 
+  const tagString = JSON.stringify(tag);
+
   useEffect(() => {
     let isMounted = true;
     setIsLoading(true);
@@ -43,7 +45,7 @@ function useMagazinePosts(query: string, tag: { tag: string; limit: number }[]) 
     return () => {
       isMounted = false;
     };
-  }, [query, JSON.stringify(tag)]);
+  }, [query, tagString, tag]);
 
   return { posts, error, isLoading };
 }
@@ -146,7 +148,9 @@ export default function Magazine(props: MagazineProps) {
 
   // If tag and query are provided, use the hook to fetch posts
   const magazinePosts = useMagazinePosts(props.query!, props.tag!);
-  const posts = props.tag && props.query ? magazinePosts.posts : props.posts || [];
+  const posts = useMemo(() => {
+    return props.tag && props.query ? magazinePosts.posts : props.posts || [];
+  }, [magazinePosts.posts, props.posts, props.tag, props.query]);
   const isLoading = props.tag && props.query ? magazinePosts.isLoading : props.isLoading || false;
   const error = props.tag && props.query ? magazinePosts.error : props.error || null;
 

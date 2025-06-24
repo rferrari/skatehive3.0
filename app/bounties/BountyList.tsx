@@ -118,12 +118,13 @@ export default function BountyList({
     return deadline && isAfter(deadline, now);
   });
   // Rewards up for grabs
-  const rewardsUpForGrabs = activeBounties
-    .map((b) => {
-      const match = b.body.match(/Reward:\s*(.*)/);
-      return match && match[1] ? match[1].trim() : null;
-    })
-    .filter(Boolean);
+  const rewardsUpForGrabs = activeBounties.map(b => {
+    const match = b.body.match(/Reward:\s*(.*)/);
+    return match && match[1] ? match[1].trim() : null;
+  }).filter(Boolean);
+
+  // Extract permlinks for dependency
+  const activeBountyPermlinks = activeBounties.map(b => b.permlink).join(",");
 
   // Fetch replies for all active bounties to get bounty grinders
   useEffect(() => {
@@ -150,10 +151,8 @@ export default function BountyList({
       }
     }
     fetchGrinders();
-    return () => {
-      cancelled = true;
-    };
-  }, [activeBounties.map((b) => b.permlink).join(",")]);
+    return () => { cancelled = true; };
+  }, [activeBountyPermlinks, activeBounties]);
 
   if (isLoading) {
     return (

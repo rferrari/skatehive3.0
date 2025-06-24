@@ -19,7 +19,7 @@ import {
   useToast,
   Spinner,
 } from "@chakra-ui/react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   useAccount,
   useWriteContract,
@@ -87,7 +87,14 @@ export default function SendTokenModal({
     hash: currentHash,
   });
 
-  // Handle successful transaction
+  const handleClose = useCallback(() => {
+    setRecipient("");
+    setAmount("");
+    resetContract();
+    resetEth();
+    onClose();
+  }, [resetContract, resetEth, onClose]);
+
   useEffect(() => {
     if (isSuccess && currentHash) {
       toast({
@@ -99,7 +106,7 @@ export default function SendTokenModal({
       });
       handleClose();
     }
-  }, [isSuccess, currentHash, toast]);
+  }, [isSuccess, currentHash, toast, handleClose]);
 
   // Handle transaction error
   useEffect(() => {
@@ -113,14 +120,6 @@ export default function SendTokenModal({
       });
     }
   }, [currentError, toast]);
-
-  const handleClose = () => {
-    setRecipient("");
-    setAmount("");
-    resetContract();
-    resetEth();
-    onClose();
-  };
 
   const handleSend = async () => {
     if (!recipient || !amount || !address) {
