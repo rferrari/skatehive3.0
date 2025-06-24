@@ -424,7 +424,7 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
                   onClick={() => handleReplyButtonClick(Discussion.permlink)}
                   size="sm"
                 >
-                  {setConversation && discussion.children}
+                  {Discussion.children ?? 0}
                 </Button>
               </Tooltip>
             </HStack>

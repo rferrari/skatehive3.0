@@ -166,19 +166,6 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
               votes={activeVotes}
               post={post}
             />
-            <Button
-              variant="ghost"
-              size="sm"
-              ml={2}
-              p={1}
-              color={primary}
-              leftIcon={<FaRegComment size={18} />}
-              _hover={{ textDecoration: 'underline' }}
-            >
-              <span style={{ marginLeft: 4 }}>
-                {typeof post.children === 'number' ? post.children : 0}
-              </span>
-            </Button>
           </Flex>
         </Flex>
         {showSlider ? (
