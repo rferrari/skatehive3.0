@@ -92,16 +92,8 @@ export default function PostPage({ author, permlink }: PostPageProps) {
         h={{ base: "auto", md: "100vh" }}
         gap={4}
       >
-        <Box
-          flex={1}
-          h={{ base: "auto", md: "100vh" }}
-          overflowY="auto"
-          sx={{
-            "&::-webkit-scrollbar": { display: "none" },
-            scrollbarWidth: "none",
-          }}
-        >
-          <PostDetails post={post} />
+        <Box flex={1} h={{ base: "auto", md: "100vh" }} overflowY="auto" sx={{ '&::-webkit-scrollbar': { display: 'none' }, scrollbarWidth: 'none' }}>
+          <PostDetails post={post} onOpenConversation={onOpen} />
         </Box>
         <Box
           width={{ base: "100%", md: "300px" }}

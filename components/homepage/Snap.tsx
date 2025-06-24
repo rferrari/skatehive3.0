@@ -38,6 +38,7 @@ import SnapComposer from "./SnapComposer";
 import { FaLink } from "react-icons/fa6";
 import useHivePower from "@/hooks/useHivePower";
 import VoteListPopover from "@/components/blog/VoteListModal";
+import { fetchComments } from "@/lib/hive/fetchComments";
 
 const separateContent = (body: string) => {
   const textParts: string[] = [];
@@ -145,7 +146,8 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
     parseFloat(getPayoutValue(discussion))
   );
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const [inlineReplies, setInlineReplies] = useState<Discussion[]>([]);
+  const [inlineRepliesMap, setInlineRepliesMap] = useState<Record<string, Discussion[]>>({});
+  const [inlineRepliesLoading, setInlineRepliesLoading] = useState<Record<string, boolean>>({});
   const [inlineComposerStates, setInlineComposerStates] = useState<
     Record<string, boolean>
   >({});
@@ -220,17 +222,32 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
 
   function handleInlineNewReply(newComment: Partial<Discussion>) {
     const newReply = newComment as Discussion;
-    setInlineReplies((prev: Discussion[]) => [...prev, newReply]);
+    setInlineRepliesMap((prev) => ({ ...prev, [Discussion.permlink]: [...(prev[Discussion.permlink] || []), newReply] }));
   }
 
-  function handleReplyButtonClick(permlink: string) {
+  async function handleReplyButtonClick(permlink: string) {
     setInlineComposerStates((prev: Record<string, boolean>) => ({
       ...prev,
       [permlink]: !prev[permlink],
     }));
+    // If opening, fetch replies if not already loaded
+    if (!inlineComposerStates[permlink]) {
+      setInlineRepliesLoading((prev) => ({ ...prev, [permlink]: true }));
+      try {
+        const replies = await fetchRepliesForPermlink(Discussion.author, permlink);
+        setInlineRepliesMap((prev) => ({ ...prev, [permlink]: replies }));
+      } catch (e) {
+        setInlineRepliesMap((prev) => ({ ...prev, [permlink]: [] }));
+      } finally {
+        setInlineRepliesLoading((prev) => ({ ...prev, [permlink]: false }));
+      }
+    }
   }
 
-  const replies = discussion.replies || [];
+  // Helper to fetch replies for a given author/permlink
+  async function fetchRepliesForPermlink(author: string, permlink: string) {
+    return fetchComments(author, permlink, false);
+  }
 
   // Deduplicate votes by voter (keep the last occurrence)
   const uniqueVotesMap = new Map();
@@ -314,25 +331,6 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
             }}
           />
           <Box>{renderedMedia}</Box>
-        </Box>
-
-        <Box mt={2}>
-          {inlineComposerStates[discussion.permlink] && (
-            <Box mt={2}>
-              <SnapComposer
-                pa={discussion.author}
-                pp={discussion.permlink}
-                onNewComment={handleInlineNewReply}
-                onClose={() =>
-                  setInlineComposerStates((prev: Record<string, boolean>) => ({
-                    ...prev,
-                    [discussion.permlink]: false,
-                  }))
-                }
-                post
-              />
-            </Box>
-          )}
         </Box>
 
         {showSlider ? (
@@ -423,12 +421,7 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
                 <Button
                   leftIcon={<FaRegComment size={18} />}
                   variant="ghost"
-                  onClick={() => {
-                    console.log(discussion.depth);
-                    effectiveDepth > 1
-                      ? handleReplyButtonClick(discussion.permlink)
-                      : handleConversation();
-                  }}
+                  onClick={() => handleReplyButtonClick(Discussion.permlink)}
                   size="sm"
                 >
                   {setConversation && discussion.children}
@@ -489,26 +482,44 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
             </Tooltip>
           </HStack>
         )}
+        {inlineComposerStates[Discussion.permlink] && (
+          <Box mt={2}>
+            <SnapComposer
+              pa={Discussion.author}
+              pp={Discussion.permlink}
+              onNewComment={handleInlineNewReply}
+              onClose={() =>
+                setInlineComposerStates((prev: Record<string, boolean>) => ({
+                  ...prev,
+                  [Discussion.permlink]: false,
+                }))
+              }
+              post
+            />
+            {/* Replies loading indicator */}
+            {inlineRepliesLoading[Discussion.permlink] && (
+              <Text mt={2} color="gray.400" fontSize="sm">Loading replies...</Text>
+            )}
+            {/* Show replies for this permlink */}
+            {inlineRepliesMap[Discussion.permlink] && inlineRepliesMap[Discussion.permlink].length > 0 && (
+              <VStack spacing={2} align="stretch" mt={2}>
+                {inlineRepliesMap[Discussion.permlink].map((reply: Discussion) => {
+                  const nextDepth = effectiveDepth + 1;
+                  return (
+                    <Snap
+                      key={reply.permlink}
+                      Discussion={{ ...reply, depth: nextDepth } as any}
+                      onOpen={onOpen}
+                      setReply={setReply}
+                      setConversation={setConversation}
+                    />
+                  );
+                })}
+              </VStack>
+            )}
+          </Box>
+        )}
       </Box>
-
-      {(replies.length > 0 || inlineReplies.length > 0) && (
-        <VStack spacing={2} align="stretch" mt={2}>
-          {[...inlineReplies, ...replies]
-            .filter((reply): reply is Discussion => typeof reply !== "string")
-            .map((reply: Discussion) => {
-              const nextDepth = effectiveDepth + 1;
-              return (
-                <Snap
-                  key={reply.permlink}
-                  discussion={{ ...reply, depth: nextDepth } as any}
-                  onOpen={onOpen}
-                  setReply={setReply}
-                  setConversation={setConversation}
-                />
-              );
-            })}
-        </VStack>
-      )}
     </Box>
   );
 };

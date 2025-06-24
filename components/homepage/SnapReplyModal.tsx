@@ -83,6 +83,7 @@ export default function SnapReplyModal({
             onNewComment={onNewReply}
             post={true}
             onClose={onClose}
+            buttonSize="sm"
           />
         </ModalBody>
       </ModalContent>

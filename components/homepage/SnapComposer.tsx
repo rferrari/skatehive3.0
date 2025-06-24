@@ -40,6 +40,7 @@ interface SnapComposerProps {
   post?: boolean;
   onClose: () => void;
   submitLabel?: string;
+  buttonSize?: 'sm' | 'md' | 'lg';
 }
 
 export default function SnapComposer({
@@ -49,6 +50,7 @@ export default function SnapComposer({
   post = false,
   onClose,
   submitLabel,
+  buttonSize = 'lg',
 }: SnapComposerProps) {
   const { user, aioha } = useAioha();
   const postBodyRef = useRef<HTMLTextAreaElement>(null);
@@ -435,22 +437,31 @@ export default function SnapComposer({
                 <FaVideo color="var(--chakra-colors-primary)" size={22} />
               </Button>
             </HStack>
-            <Button
-              colorScheme="primary"
-              isLoading={isLoading}
-              onClick={handleComment}
-              borderRadius="base"
-              fontWeight="bold"
-              px={8}
-              py={6}
-              mt={2}
-              mb={1}
-              width="30%"
-              minWidth="120px"
-              fontSize="lg"
-            >
-              {buttonText}
-            </Button>
+            <Box display={buttonSize === 'sm' ? 'inline-block' : undefined}>
+              <Button
+                colorScheme="primary"
+                isLoading={isLoading}
+                onClick={handleComment}
+                borderRadius={buttonSize === 'sm' ? 'sm' : 'base'}
+                fontWeight="bold"
+                size={buttonSize}
+                px={buttonSize === 'sm' ? 1 : 8}
+                py={buttonSize === 'sm' ? 0 : 6}
+                mt={2}
+                mb={1}
+                minWidth={buttonSize === 'sm' ? undefined : '120px'}
+                width={buttonSize === 'sm' ? undefined : '30%'}
+                maxWidth={buttonSize === 'sm' ? undefined : undefined}
+                fontSize={buttonSize === 'sm' ? 'xs' : 'lg'}
+                lineHeight={buttonSize === 'sm' ? '1' : undefined}
+                flex={buttonSize === 'sm' ? 'none' : undefined}
+                alignSelf={buttonSize === 'sm' ? 'flex-start' : undefined}
+                display={buttonSize === 'sm' ? 'inline-flex' : undefined}
+                height={buttonSize === 'sm' ? 'auto' : undefined}
+              >
+                {buttonText}
+              </Button>
+            </Box>
           </HStack>
           <Box width="100%">
             <VideoUploader ref={videoUploaderRef} onUpload={setVideoUrl} isProcessing={isLoading} />
