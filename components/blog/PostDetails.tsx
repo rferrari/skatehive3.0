@@ -17,7 +17,7 @@ import {
 } from "@chakra-ui/react";
 import React, { useState, useEffect } from "react";
 import { Discussion } from "@hiveio/dhive";
-import { FaHeart, FaComment, FaRegHeart } from "react-icons/fa";
+import { FaHeart, FaComment, FaRegHeart, FaRegComment } from "react-icons/fa";
 import { getPostDate } from "@/lib/utils/GetPostDate";
 import { useAioha } from "@aioha/react-ui";
 import { getPayoutValue } from "@/lib/hive/client-functions";
@@ -31,9 +31,10 @@ import { processMediaContent } from '@/lib/utils/MarkdownRenderer';
 
 interface PostDetailsProps {
   post: Discussion;
+  onOpenConversation: () => void;
 }
 
-export default function PostDetails({ post }: PostDetailsProps) {
+export default function PostDetails({ post, onOpenConversation }: PostDetailsProps) {
   const { title, author, body, created } = post;
   const postDate = getPostDate(created);
   const { aioha, user } = useAioha();
@@ -165,6 +166,19 @@ export default function PostDetails({ post }: PostDetailsProps) {
               votes={activeVotes}
               post={post}
             />
+            <Button
+              variant="ghost"
+              size="sm"
+              ml={2}
+              p={1}
+              color={primary}
+              leftIcon={<FaRegComment size={18} />}
+              _hover={{ textDecoration: 'underline' }}
+            >
+              <span style={{ marginLeft: 4 }}>
+                {typeof post.children === 'number' ? post.children : 0}
+              </span>
+            </Button>
           </Flex>
         </Flex>
         {showSlider ? (
