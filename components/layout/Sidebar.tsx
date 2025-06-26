@@ -331,7 +331,7 @@ export default function Sidebar({ newNotificationCount = 0 }) {
                   </Box>
                 </Button>
                 <Button
-                  onClick={() => handleNavigation("/@" + user + "/wallet")}
+                  onClick={() => handleNavigation("/wallet")}
                   variant="ghost"
                   w="full"
                   justifyContent="flex-start"
