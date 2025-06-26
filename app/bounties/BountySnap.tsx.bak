@@ -152,13 +152,13 @@ const BountySnap = ({
     estimateVoteValue,
   } = useHivePower(user);
   const toast = useToast();
-  const commentDate = getPostDate(Discussion.created);
+  const commentDate = getPostDate(discussion.created);
 
   const [sliderValue, setSliderValue] = useState(5);
   const [showSlider, setShowSlider] = useState(false);
-  const [activeVotes, setActiveVotes] = useState(Discussion.active_votes || []);
+  const [activeVotes, setActiveVotes] = useState(discussion.active_votes || []);
   const [rewardAmount, setRewardAmount] = useState(
-    parseFloat(getPayoutValue(Discussion))
+    parseFloat(getPayoutValue(discussion))
   );
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [inlineReplies, setInlineReplies] = useState<Discussion[]>([]);
@@ -166,11 +166,11 @@ const BountySnap = ({
     Record<string, boolean>
   >({});
 
-  const effectiveDepth = Discussion.depth || 0;
+  const effectiveDepth = discussion.depth || 0;
 
   const { text, media } = useMemo(
-    () => separateContent(Discussion.body),
-    [Discussion.body]
+    () => separateContent(discussion.body),
+    [discussion.body]
   );
   const renderedMedia = useMemo(() => renderMedia(media), [media]);
 

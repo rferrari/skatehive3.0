@@ -118,10 +118,10 @@ export default function SnapList({
             scrollableTarget="scrollableDiv"
           >
             <VStack spacing={1} align="stretch">
-              {sortedComments.map((Discussion: Discussion) => (
+              {sortedComments.map((discussion: Discussion) => (
                 <Snap
-                  key={Discussion.permlink}
-                  discussion={Discussion}
+                  key={discussion.permlink}
+                  discussion={discussion}
                   onOpen={onOpen}
                   setReply={setReply}
                   {...(!post ? { setConversation } : {})}

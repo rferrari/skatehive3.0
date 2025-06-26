@@ -123,7 +123,7 @@ const renderMedia = (mediaContent: string) => {
 interface SnapProps {
   discussion: Discussion;
   onOpen: () => void;
-  setReply: (Discussion: Discussion) => void;
+  setReply: (discussion: Discussion) => void;
   setConversation?: (conversation: Discussion) => void;
 }
 
@@ -146,8 +146,12 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
     parseFloat(getPayoutValue(discussion))
   );
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const [inlineRepliesMap, setInlineRepliesMap] = useState<Record<string, Discussion[]>>({});
-  const [inlineRepliesLoading, setInlineRepliesLoading] = useState<Record<string, boolean>>({});
+  const [inlineRepliesMap, setInlineRepliesMap] = useState<
+    Record<string, Discussion[]>
+  >({});
+  const [inlineRepliesLoading, setInlineRepliesLoading] = useState<
+    Record<string, boolean>
+  >({});
   const [inlineComposerStates, setInlineComposerStates] = useState<
     Record<string, boolean>
   >({});
@@ -222,7 +226,10 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
 
   function handleInlineNewReply(newComment: Partial<Discussion>) {
     const newReply = newComment as Discussion;
-    setInlineRepliesMap((prev) => ({ ...prev, [Discussion.permlink]: [...(prev[Discussion.permlink] || []), newReply] }));
+    setInlineRepliesMap((prev) => ({
+      ...prev,
+      [discussion.permlink]: [...(prev[discussion.permlink] || []), newReply],
+    }));
   }
 
   async function handleReplyButtonClick(permlink: string) {
@@ -234,7 +241,10 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
     if (!inlineComposerStates[permlink]) {
       setInlineRepliesLoading((prev) => ({ ...prev, [permlink]: true }));
       try {
-        const replies = await fetchRepliesForPermlink(Discussion.author, permlink);
+        const replies = await fetchRepliesForPermlink(
+          discussion.author,
+          permlink
+        );
         setInlineRepliesMap((prev) => ({ ...prev, [permlink]: replies }));
       } catch (e) {
         setInlineRepliesMap((prev) => ({ ...prev, [permlink]: [] }));
@@ -421,10 +431,10 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
                 <Button
                   leftIcon={<FaRegComment size={18} />}
                   variant="ghost"
-                  onClick={() => handleReplyButtonClick(Discussion.permlink)}
+                  onClick={() => handleReplyButtonClick(discussion.permlink)}
                   size="sm"
                 >
-                  {Discussion.children ?? 0}
+                  {discussion.children ?? 0}
                 </Button>
               </Tooltip>
             </HStack>
@@ -482,41 +492,46 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
             </Tooltip>
           </HStack>
         )}
-        {inlineComposerStates[Discussion.permlink] && (
+        {inlineComposerStates[discussion.permlink] && (
           <Box mt={2}>
             <SnapComposer
-              pa={Discussion.author}
-              pp={Discussion.permlink}
+              pa={discussion.author}
+              pp={discussion.permlink}
               onNewComment={handleInlineNewReply}
               onClose={() =>
                 setInlineComposerStates((prev: Record<string, boolean>) => ({
                   ...prev,
-                  [Discussion.permlink]: false,
+                  [discussion.permlink]: false,
                 }))
               }
               post
             />
             {/* Replies loading indicator */}
-            {inlineRepliesLoading[Discussion.permlink] && (
-              <Text mt={2} color="gray.400" fontSize="sm">Loading replies...</Text>
+            {inlineRepliesLoading[discussion.permlink] && (
+              <Text mt={2} color="gray.400" fontSize="sm">
+                Loading replies...
+              </Text>
             )}
             {/* Show replies for this permlink */}
-            {inlineRepliesMap[Discussion.permlink] && inlineRepliesMap[Discussion.permlink].length > 0 && (
-              <VStack spacing={2} align="stretch" mt={2}>
-                {inlineRepliesMap[Discussion.permlink].map((reply: Discussion) => {
-                  const nextDepth = effectiveDepth + 1;
-                  return (
-                    <Snap
-                      key={reply.permlink}
-                      Discussion={{ ...reply, depth: nextDepth } as any}
-                      onOpen={onOpen}
-                      setReply={setReply}
-                      setConversation={setConversation}
-                    />
-                  );
-                })}
-              </VStack>
-            )}
+            {inlineRepliesMap[discussion.permlink] &&
+              inlineRepliesMap[discussion.permlink].length > 0 && (
+                <VStack spacing={2} align="stretch" mt={2}>
+                  {inlineRepliesMap[discussion.permlink].map(
+                    (reply: Discussion) => {
+                      const nextDepth = effectiveDepth + 1;
+                      return (
+                        <Snap
+                          key={reply.permlink}
+                          discussion={{ ...reply, depth: nextDepth } as any}
+                          onOpen={onOpen}
+                          setReply={setReply}
+                          setConversation={setConversation}
+                        />
+                      );
+                    }
+                  )}
+                </VStack>
+              )}
           </Box>
         )}
       </Box>

@@ -34,11 +34,11 @@ async function fetchComments(
         ])) as Discussion[];
 
         if (recursive) {
-            const fetchReplies = async (Discussion: Discussion): Promise<Discussion> => {
-                if (Discussion.children && Discussion.children > 0) {
-                    Discussion.replies = await fetchComments(Discussion.author, Discussion.permlink, true) as any;
+            const fetchReplies = async (discussion: Discussion): Promise<Discussion> => {
+                if (discussion.children && discussion.children > 0) {
+                    discussion.replies = await fetchComments(discussion.author, discussion.permlink, true) as any;
                 }
-                return Discussion;
+                return discussion;
             };
             const commentsWithReplies = await Promise.all(comments.map(fetchReplies));
             return commentsWithReplies;

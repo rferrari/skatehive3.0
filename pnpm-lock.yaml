@@ -68,6 +68,9 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.79.2
         version: 5.79.2(react@18.3.1)
+      '@types/unist':
+        specifier: ^3.0.3
+        version: 3.0.3
       '@uiw/react-markdown-preview':
         specifier: ^5.1.4
         version: 5.1.4(@types/react@19.1.6)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -134,6 +137,9 @@ importers:
       react-infinite-scroll-component:
         specifier: ^6.1.0
         version: 6.1.0(react@18.3.1)
+      react-markdown:
+        specifier: ^10.1.0
+        version: 10.1.0(@types/react@19.1.6)(react@18.3.1)
       react-pageflip:
         specifier: ^2.0.3
         version: 2.0.3
@@ -146,6 +152,9 @@ importers:
       swiper:
         specifier: ^11.2.8
         version: 11.2.8
+      unist-util-visit:
+        specifier: ^5.0.0
+        version: 5.0.0
       viem:
         specifier: ~2.30.6
         version: 2.30.6(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.25.67)
@@ -3809,6 +3818,12 @@ packages:
 
   react-is@16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
+
+  react-markdown@10.1.0:
+    resolution: {integrity: sha512-qKxVopLT/TyA6BX3Ue5NwabOsAzm0Q7kAPwq6L+wWDwisYs7R8vZ0nRXqq6rkueboxpkjvLGU9fWifiX/ZZFxQ==}
+    peerDependencies:
+      '@types/react': '>=18'
+      react: '>=18'
 
   react-markdown@9.0.3:
     resolution: {integrity: sha512-Yk7Z94dbgYTOrdk41Z74GoKA7rThnsbbqBTRYuxoe08qvfQ9tJVhmAKw6BJS/ZORG7kTy/s1QvYzSuaoBA1qfw==}
@@ -9882,11 +9897,7 @@ snapshots:
 
   react-is@16.13.1: {}
 
-  /react-markdown@10.1.0(@types/react@19.1.6)(react@18.3.1):
-    resolution: {integrity: sha512-qKxVopLT/TyA6BX3Ue5NwabOsAzm0Q7kAPwq6L+wWDwisYs7R8vZ0nRXqq6rkueboxpkjvLGU9fWifiX/ZZFxQ==}
-    peerDependencies:
-      '@types/react': '>=18'
-      react: '>=18'
+  react-markdown@10.1.0(@types/react@19.1.6)(react@18.3.1):
     dependencies:
       '@types/hast': 3.0.4
       '@types/mdast': 4.0.4
@@ -9903,13 +9914,8 @@ snapshots:
       vfile: 6.0.3
     transitivePeerDependencies:
       - supports-color
-    dev: false
 
-  /react-markdown@9.0.3(@types/react@19.1.6)(react@18.3.1):
-    resolution: {integrity: sha512-Yk7Z94dbgYTOrdk41Z74GoKA7rThnsbbqBTRYuxoe08qvfQ9tJVhmAKw6BJS/ZORG7kTy/s1QvYzSuaoBA1qfw==}
-    peerDependencies:
-      '@types/react': '>=18'
-      react: '>=18'
+  react-markdown@9.0.3(@types/react@19.1.6)(react@18.3.1):
     dependencies:
       '@types/hast': 3.0.4
       '@types/react': 19.1.6

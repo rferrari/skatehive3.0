@@ -30,8 +30,8 @@ const Conversation = ({
   setReply,
 }: ConversationProps) => {
   const { comments, isLoading, error } = useComments(
-    Discussion.author,
-    Discussion.permlink,
+    discussion.author,
+    discussion.permlink,
     true
   );
   const replies = comments;
@@ -88,8 +88,8 @@ const Conversation = ({
       <Box mt={2}>
         {/* Inline snap composer replacing the generic Textarea */}
         <SnapComposer
-          pa={Discussion.author}
-          pp={Discussion.permlink}
+          pa={discussion.author}
+          pp={discussion.permlink}
           onNewComment={
             handleNewReply as (newComment: Partial<Discussion>) => void
           } // changed cast type
