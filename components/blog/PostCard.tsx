@@ -439,11 +439,12 @@ export default function PostCard({
           >
             <Text
               fontWeight="bold"
-              fontSize="xl"
+              fontSize={listView ? "xl" : "lg"}
               mb={1}
               isTruncated={false}
               whiteSpace="normal"
               wordBreak="break-word"
+              noOfLines={2}
             >
               {title}
             </Text>
@@ -572,13 +573,12 @@ export default function PostCard({
           >
             <Text
               fontWeight="bold"
-              fontSize="lg"
-              textAlign="left"
+              fontSize={listView ? "xl" : "lg"}
               mb={1}
-              display="flex"
-              alignItems="center"
+              isTruncated={false}
               whiteSpace="normal"
               wordBreak="break-word"
+              noOfLines={2}
             >
               {title}
             </Text>
@@ -601,6 +601,7 @@ export default function PostCard({
                 className="custom-swiper"
                 onSwiper={(swiper) => {
                   setTimeout(() => {
+                    if (!swiper.el) return;
                     const next = swiper.el.querySelector('.swiper-button-next');
                     const prev = swiper.el.querySelector('.swiper-button-prev');
                     if (next) next.addEventListener('click', (e) => e.stopPropagation());
@@ -635,6 +636,7 @@ export default function PostCard({
                 className="custom-swiper"
                 onSwiper={(swiper) => {
                   setTimeout(() => {
+                    if (!swiper.el) return;
                     const next = swiper.el.querySelector('.swiper-button-next');
                     const prev = swiper.el.querySelector('.swiper-button-prev');
                     if (next) next.addEventListener('click', (e) => e.stopPropagation());

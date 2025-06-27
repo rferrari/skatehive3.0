@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   Box,
   SimpleGrid,
@@ -113,10 +113,13 @@ export default function BountyList({
   // --- Stats Computation ---
   // Get all active bounties
   const now = new Date();
-  const activeBounties = displayedBounties.filter((b) => {
-    const deadline = getDeadlineFromBody(b.body);
-    return deadline && isAfter(deadline, now);
-  });
+  const activeBounties = useMemo(() =>
+    displayedBounties.filter((b) => {
+      const deadline = getDeadlineFromBody(b.body);
+      return deadline && isAfter(deadline, now);
+    }),
+    [displayedBounties, now]
+  );
   // Rewards up for grabs
   const rewardsUpForGrabs = activeBounties.map(b => {
     const match = b.body.match(/Reward:\s*(.*)/);
@@ -152,7 +155,7 @@ export default function BountyList({
     }
     fetchGrinders();
     return () => { cancelled = true; };
-  }, [activeBountyPermlinks, activeBounties]);
+  }, [activeBountyPermlinks]);
 
   if (isLoading) {
     return (
@@ -224,20 +227,18 @@ export default function BountyList({
                 )}
               </Wrap>
               {isLoadingGrinders ? (
-                <Text color="muted">Loading...</Text>
+                <Text color="primary.400">Loading...</Text>
+              ) : activeBounties.length === 0 ? (
+                <Text color="primary.400">No active bounties</Text>
+              ) : bountyGrinders.length === 0 ? (
+                <Text color="primary.400">No grinders yet</Text>
               ) : (
                 <Wrap>
-                  {bountyGrinders.length > 0 ? (
-                    bountyGrinders.map((user, i) => (
-                      <Tag key={i} colorScheme="accent" mx={1}>
-                        @{user}
-                      </Tag>
-                    ))
-                  ) : (
-                    <Text fontSize="2xl" color="primary.400">
-                      0
-                    </Text>
-                  )}
+                  {bountyGrinders.map((user, i) => (
+                    <Tag key={i} colorScheme="primary" mx={1} fontWeight="bold">
+                      @{user}
+                    </Tag>
+                  ))}
                 </Wrap>
               )}
             </VStack>
