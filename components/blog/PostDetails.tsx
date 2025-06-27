@@ -14,6 +14,11 @@ import {
   Divider,
   Image,
   useTheme,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverArrow,
+  PopoverBody,
 } from "@chakra-ui/react";
 import React, { useState, useEffect, useRef } from "react";
 import { Discussion } from "@hiveio/dhive";
@@ -117,6 +122,33 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
     handleHeartClick();
   }
 
+  // Helper to convert Asset or string to string
+  function assetToString(val: string | { toString: () => string }): string {
+    return typeof val === "string" ? val : val.toString();
+  }
+  // Helper to parse payout strings like "1.234 HBD"
+  function parsePayout(val: string | { toString: () => string } | undefined): number {
+    if (!val) return 0;
+    const str = assetToString(val);
+    return parseFloat(str.replace(" HBD", "").replace(",", ""));
+  }
+  // Payout logic copied from PostCard
+  const createdDate = new Date(post.created);
+  const now = new Date();
+  const timeDifferenceInMs = now.getTime() - createdDate.getTime();
+  const timeDifferenceInDays = timeDifferenceInMs / (1000 * 60 * 60 * 24);
+  const isPending = timeDifferenceInDays < 7;
+  let daysRemaining = 0;
+  if (isPending) {
+    daysRemaining = Math.max(0, 7 - Math.floor(timeDifferenceInDays));
+  }
+  const authorPayout = parsePayout(post.total_payout_value);
+  const curatorPayout = parsePayout(post.curator_payout_value);
+  // Popover state for payout split
+  const [isPayoutOpen, setIsPayoutOpen] = useState(false);
+  function openPayout() { setIsPayoutOpen(true); }
+  function closePayout() { setIsPayoutOpen(false); }
+
   return (
     <Box
       data-component="PostDetails"
@@ -188,6 +220,39 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
               votes={activeVotes}
               post={post}
             />
+            <Popover placement="top" isOpen={isPayoutOpen} onClose={closePayout} closeOnBlur={true}>
+              <PopoverTrigger>
+                <span style={{ cursor: "pointer" }} onMouseDown={openPayout} onMouseUp={closePayout}>
+                  <Text ml={3} fontWeight="bold" color={primary} fontSize="md">
+                    ${payoutValue.toFixed(2)}
+                  </Text>
+                </span>
+              </PopoverTrigger>
+              <PopoverContent w="auto" bg="gray.800" color="white" borderRadius="md" boxShadow="lg" p={2}>
+                <PopoverArrow />
+                <PopoverBody>
+                  {isPending ? (
+                    <div>
+                      <div>
+                        <b>Pending</b>
+                      </div>
+                      <div>
+                        {daysRemaining} day{daysRemaining !== 1 ? "s" : ""} until payout
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div>
+                        Author: <b>${authorPayout.toFixed(3)}</b>
+                      </div>
+                      <div>
+                        Curators: <b>${curatorPayout.toFixed(3)}</b>
+                      </div>
+                    </>
+                  )}
+                </PopoverBody>
+              </PopoverContent>
+            </Popover>
           </Flex>
         </Flex>
         {showSlider ? (

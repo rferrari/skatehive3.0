@@ -523,16 +523,7 @@ export default function PostCard({
         borderBottom="1px solid rgb(46, 46, 46)"
         overflow="hidden"
         height="100%"
-        onClick={(e) => {
-          console.log("PostCard container clicked", {
-            author,
-            permlink: post.permlink,
-            target: e.target,
-            currentTarget: e.currentTarget,
-          });
-          viewPost();
-        }}
-        cursor="pointer"
+        cursor="default"
       >
         <Box
           py={4}
@@ -549,7 +540,6 @@ export default function PostCard({
               <Flex alignItems="center" minWidth={0} justifyContent="space-between">
                 <Link
                   href={`/@${author}`}
-                  onClick={stopPropagation}
                   display="flex"
                   alignItems="center"
                   _hover={{ textDecoration: "underline" }}
@@ -578,7 +568,6 @@ export default function PostCard({
           )}
           <Link
             href={`/post/${author}/${post.permlink}`}
-            onClick={stopPropagation}
             _hover={{ textDecoration: "underline" }}
           >
             <Text
@@ -609,12 +598,18 @@ export default function PostCard({
                 navigation={true}
                 modules={[Navigation, Pagination]}
                 onSlideChange={handleSlideChange}
-                onClick={handleSwiperClick} // Add this line to handle Swiper clicks
                 className="custom-swiper"
+                onSwiper={(swiper) => {
+                  setTimeout(() => {
+                    const next = swiper.el.querySelector('.swiper-button-next');
+                    const prev = swiper.el.querySelector('.swiper-button-prev');
+                    if (next) next.addEventListener('click', (e) => e.stopPropagation());
+                    if (prev) prev.addEventListener('click', (e) => e.stopPropagation());
+                  }, 0);
+                }}
               >
                 {imageUrls.slice(0, visibleImages).map((url, index) => (
-                  // Add the stopPropagation to each SwiperSlide instead
-                  <SwiperSlide key={index} onClick={stopPropagation}>
+                  <SwiperSlide key={index}>
                     <Box h="200px" w="100%" sx={{ userSelect: "none" }}>
                       <Image
                         src={url}
@@ -638,9 +633,17 @@ export default function PostCard({
                 navigation={true}
                 modules={[Navigation, Pagination]}
                 className="custom-swiper"
+                onSwiper={(swiper) => {
+                  setTimeout(() => {
+                    const next = swiper.el.querySelector('.swiper-button-next');
+                    const prev = swiper.el.querySelector('.swiper-button-prev');
+                    if (next) next.addEventListener('click', (e) => e.stopPropagation());
+                    if (prev) prev.addEventListener('click', (e) => e.stopPropagation());
+                  }, 0);
+                }}
               >
                 {youtubeLinks.map((link, index) => (
-                  <SwiperSlide key={index} onClick={stopPropagation}>
+                  <SwiperSlide key={index}>
                     <Box h="200px" w="100%">
                       <iframe
                         src={link.url}
