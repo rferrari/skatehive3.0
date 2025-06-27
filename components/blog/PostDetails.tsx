@@ -15,7 +15,7 @@ import {
   Image,
   useTheme,
 } from "@chakra-ui/react";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Discussion } from "@hiveio/dhive";
 import { FaHeart, FaComment, FaRegHeart, FaRegComment } from "react-icons/fa";
 import { getPostDate } from "@/lib/utils/GetPostDate";
@@ -68,6 +68,28 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
     fontWeight: 'bold',
     border: 'none',
   };
+
+  const processedBody = processMediaContent(body);
+  const markdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (processedBody.includes("<!--INSTAGRAM_EMBED_SCRIPT-->") && typeof window !== "undefined") {
+      // Remove any existing Instagram embed script
+      const existing = document.querySelector('script[src="https://www.instagram.com/embed.js"]');
+      if (!existing) {
+        const script = document.createElement("script");
+        script.src = "https://www.instagram.com/embed.js";
+        script.async = true;
+        document.body.appendChild(script);
+      } else {
+        // @ts-ignore
+        const instgrm = (window as any).instgrm;
+        if (instgrm && instgrm.Embeds) {
+          instgrm.Embeds.process();
+        }
+      }
+    }
+  }, [processedBody]);
 
   function handleHeartClick() {
     setShowSlider(!showSlider);
@@ -220,15 +242,23 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
 
       <Divider />
 
-      <Box mt={4} className="markdown-body">
+      <Box mt={4} className="markdown-body" ref={markdownRef}>
         <ReactMarkdown
           rehypePlugins={[rehypeRaw, rehypeMentionLinks]}
         >
-          {processMediaContent(body)}
+          {processedBody.replace("<!--INSTAGRAM_EMBED_SCRIPT-->", "")}
         </ReactMarkdown>
       </Box>
 
       <style jsx global>{`
+        .markdown-body .instagram-media {
+          display: block;
+          margin-left: auto !important;
+          margin-right: auto !important;
+          margin-top: 2rem;
+          margin-bottom: 2rem;
+          max-width: 100%;
+        }
         .pulse-green {
           animation: pulse-green 1.5s infinite;
           background: ${primary};
@@ -251,4 +281,3 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
     </Box>
   );
 }
-

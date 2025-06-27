@@ -28,6 +28,19 @@ export function processMediaContent(content: string): string {
             return ipfsHash ? createSimpleVideoTag(ipfsHash) : match;
         }
     );
+    // Instagram post URL to embed
+    let foundInstagram = false;
+    content = content.replace(
+        /^https?:\/\/(www\.)?instagram\.com\/p\/([\w-]+)\/?[^\s]*$/gim,
+        (match, p1, postId) => {
+            foundInstagram = true;
+            return `<blockquote class="instagram-media" data-instgrm-permalink="${match}" data-instgrm-version="14" style=" background:#FFF; border:0; border-radius:3px; box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15); margin: 1px; max-width:658px; min-width:326px; padding:0; width:99.375%; width:-webkit-calc(100% - 2px); width:calc(100% - 2px);"></blockquote>`;
+        }
+    );
+    // Add the Instagram embed script ONCE if any Instagram post was embedded
+    if (foundInstagram) {
+        content += '\n<!--INSTAGRAM_EMBED_SCRIPT-->';
+    }
     return content;
 }
 

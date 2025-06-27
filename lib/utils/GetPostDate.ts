@@ -1,5 +1,4 @@
 export function getPostDate(date: string | Date): string {
-    // Added check for "just now"
     if (date === "just now") {
         return "just now";
     }
@@ -8,22 +7,21 @@ export function getPostDate(date: string | Date): string {
 
     const offset = today.getTimezoneOffset();
     const adjustedToday = new Date(today.getTime() + offset * 60000);
-    const diffMs = adjustedToday.getTime() - created.getTime(); // milliseconds between now & then
-    const diffDays = Math.floor(diffMs / 86400000); // days
-    const diffHrs = Math.floor(diffMs / 3600000); // hours
-    const diffMins = Math.round(diffMs / 60000); // minutes
+    const diffMs = adjustedToday.getTime() - created.getTime();
+    const diffDays = Math.floor(diffMs / 86400000);
+    const diffHrs = Math.floor(diffMs / 3600000);
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffSecs = Math.floor(diffMs / 1000);
 
-    let postCreated = "";
-
-    if (diffMins < 60) {
-        postCreated = `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+    if (diffMins < 1) {
+        return "just now";
+    } else if (diffMins < 60) {
+        return `${diffMins}m`;
     } else if (diffHrs < 24) {
-        postCreated = `${diffHrs} hour${diffHrs > 1 ? 's' : ''} ago`;
+        return `${diffHrs}h`;
     } else if (diffDays < 31) {
-        postCreated = `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+        return `${diffDays}d`;
     } else {
-        postCreated = `${created.getDate()}/${created.getMonth() + 1}/${created.getFullYear()}`;
+        return `${created.getDate()}/${created.getMonth() + 1}/${created.getFullYear()}`;
     }
-
-    return postCreated;
 }

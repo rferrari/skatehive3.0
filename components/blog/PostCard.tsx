@@ -433,10 +433,6 @@ export default function PostCard({
         </Flex>
         {/* Content */}
         <Flex direction="column" flex={1} p={4} justify="center" minW={0}>
-          {/* Always show post date above title */}
-          <Text fontSize="xs" color="gray.500" mb={1}>
-            {postDate}
-          </Text>
           <Link
             href={`/post/${author}/${post.permlink}`}
             _hover={{ textDecoration: "underline" }}
@@ -452,6 +448,9 @@ export default function PostCard({
               {title}
             </Text>
           </Link>
+          <Text fontSize="xs" color="gray.500" mb={2} textAlign="right">
+            {postDate}
+          </Text>
           <Text
             fontSize="sm"
             color="gray.400"
@@ -547,7 +546,7 @@ export default function PostCard({
           {/* Only show author info if not hidden */}
           {!hideAuthorInfo && (
             <Box mb={4}>
-              <Flex alignItems="center" minWidth={0}>
+              <Flex alignItems="center" minWidth={0} justifyContent="space-between">
                 <Link
                   href={`/@${author}`}
                   onClick={stopPropagation}
@@ -571,14 +570,12 @@ export default function PostCard({
                     {author}
                   </Text>
                 </Link>
+                <Text fontSize="xs" color="gray.500" ml={2} minWidth="40px" textAlign="right">
+                  {postDate}
+                </Text>
               </Flex>
             </Box>
           )}
-          <Flex justifyContent="flex-end">
-            <Text fontSize="sm" color="gray.500">
-              {postDate}
-            </Text>
-          </Flex>
           <Link
             href={`/post/${author}/${post.permlink}`}
             onClick={stopPropagation}
@@ -588,7 +585,7 @@ export default function PostCard({
               fontWeight="bold"
               fontSize="lg"
               textAlign="left"
-              mb={2}
+              mb={1}
               display="flex"
               alignItems="center"
               whiteSpace="normal"
@@ -597,7 +594,6 @@ export default function PostCard({
               {title}
             </Text>
           </Link>
-
           <Box
             flex="1"
             display="flex"
