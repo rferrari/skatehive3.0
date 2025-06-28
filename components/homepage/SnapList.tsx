@@ -5,6 +5,7 @@ import Snap from "./Snap";
 import SnapComposer from "./SnapComposer";
 import { Discussion } from "@hiveio/dhive"; // Add this import for consistency
 import LoadingComponent from "./loadingComponent";
+import UpvoteSnapContainer from "../settings/UpvoteSnapContainer";
 
 interface SnapListProps {
   author: string;
@@ -104,6 +105,8 @@ export default function SnapList({
             } // Cast handler to expected type
             onClose={() => null}
           />
+
+          <UpvoteSnapContainer hideIfVoted />
 
           <InfiniteScroll
             dataLength={sortedComments.length}

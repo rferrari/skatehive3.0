@@ -11,7 +11,11 @@ interface SnapContainer {
   permlink: string;
 }
 
-export default function UpvoteSnapContainer() {
+interface UpvoteSnapContainerProps {
+  hideIfVoted?: boolean;
+}
+
+export default function UpvoteSnapContainer({ hideIfVoted = false }: UpvoteSnapContainerProps) {
   const { user, aioha } = useAioha();
   const [snapContainer, setSnapContainer] = useState<Discussion | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -136,6 +140,10 @@ export default function UpvoteSnapContainer() {
 
   if (!snapContainer) {
     return <Text>Could not load Snap Container information.</Text>;
+  }
+
+  if (hideIfVoted && hasVoted) {
+    return null;
   }
 
   return (
