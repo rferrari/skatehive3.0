@@ -33,6 +33,7 @@ import ReactMarkdown from 'react-markdown';
 import rehypeMentionLinks from '@/lib/utils/rehypeMentionLinks';
 import rehypeRaw from 'rehype-raw';
 import { processMediaContent } from '@/lib/utils/MarkdownRenderer';
+import HiveMarkdown from "@/components/shared/HiveMarkdown";
 
 interface PostDetailsProps {
   post: Discussion;
@@ -308,10 +309,7 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
       <Divider />
 
       <Box mt={4} className="markdown-body" ref={markdownRef}>
-        <div
-          className="markdown-body"
-          dangerouslySetInnerHTML={{ __html: markdownRenderer(processedBody.replace("<!--INSTAGRAM_EMBED_SCRIPT-->", "")) }}
-        />
+        <HiveMarkdown markdown={processedBody.replace("<!--INSTAGRAM_EMBED_SCRIPT-->", "")} />
       </Box>
 
       <style jsx global>{`

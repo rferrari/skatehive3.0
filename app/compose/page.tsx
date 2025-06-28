@@ -39,6 +39,7 @@ import { Image } from "@chakra-ui/react";
 import imageCompression from "browser-image-compression";
 import rehypeMentionLinks from "../../lib/utils/rehypeMentionLinks";
 import markdownRenderer from "@/lib/utils/MarkdownRenderer";
+import HiveMarkdown from "@/components/shared/HiveMarkdown";
 
 export default function Composer() {
   const [markdown, setMarkdown] = useState("");
@@ -679,11 +680,7 @@ export default function Composer() {
           />
           {/* Custom preview using Hive renderer when in preview mode */}
           {previewMode === 'preview' && (
-            <div
-              className="markdown-body"
-              style={{ width: '100%', background: 'var(--chakra-colors-background)', color: 'var(--chakra-colors-text, white)', padding: 16, borderRadius: 8, marginTop: 8 }}
-              dangerouslySetInnerHTML={{ __html: markdownRenderer(markdown) }}
-            />
+            <HiveMarkdown markdown={markdown} />
           )}
         </Box>
         <ImageCompressor

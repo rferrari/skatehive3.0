@@ -5,7 +5,7 @@ import HTMLFlipBook from 'react-pageflip';
 import { Discussion } from '@hiveio/dhive';
 import { getPayoutValue, findPosts } from '@/lib/hive/client-functions';
 import AuthorAvatar from '@/components/blog/PostCard'; // Update this import if you have a dedicated AuthorAvatar
-import markdownRenderer from '@/lib/utils/MarkdownRenderer';
+import HiveMarkdown from "@/components/shared/HiveMarkdown";
 import LoadingComponent from '../homepage/loadingComponent';
 import MatrixOverlay from '@/components/graphics/MatrixOverlay';
 import { useTheme } from '@/app/themeProvider';
@@ -372,7 +372,7 @@ export default function Magazine(props: MagazineProps) {
               </Heading>
               <Divider mt={2} mb={2} />
               <Box flex="1 1 0%" minHeight={0} overflowY="auto" overflowX="hidden" width="100%" className="hide-scrollbar">
-                <div className="magazine-content" dangerouslySetInnerHTML={{ __html: addEnableJsApiToYouTubeIframes(markdownRenderer(post.body)) }} />
+                <HiveMarkdown markdown={post.body} />
               </Box>
             </Box>
           );
