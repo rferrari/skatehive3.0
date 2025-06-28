@@ -38,6 +38,7 @@ import MatrixOverlay from "../../components/graphics/MatrixOverlay";
 import { Image } from "@chakra-ui/react";
 import imageCompression from "browser-image-compression";
 import rehypeMentionLinks from "../../lib/utils/rehypeMentionLinks";
+import markdownRenderer from "@/lib/utils/MarkdownRenderer";
 
 export default function Composer() {
   const [markdown, setMarkdown] = useState("");
@@ -67,6 +68,7 @@ export default function Composer() {
   const [isDragOver, setIsDragOver] = useState(false);
   const toast = useToast();
   const [gifCaption, setGifCaption] = useState<string>("skatehive-gif");
+  const [previewMode, setPreviewMode] = useState<'edit' | 'preview' | 'live'>('live');
 
   const placeholders = [
     "Don't forget a title...",
@@ -657,14 +659,7 @@ export default function Composer() {
               width: "100%",
             }}
             extraCommands={extraCommands}
-            previewOptions={{
-              components: memoizedComponents,
-              style: {
-                backgroundColor: "var(--chakra-colors-background)",
-                color: "var(--chakra-colors-text, white)",
-              },
-              rehypePlugins: [rehypeMentionLinks],
-            }}
+            preview={previewMode}
             commands={[
               headerCommand,
               commands.bold,
@@ -682,6 +677,14 @@ export default function Composer() {
               commands.codeLive,
             ]}
           />
+          {/* Custom preview using Hive renderer when in preview mode */}
+          {previewMode === 'preview' && (
+            <div
+              className="markdown-body"
+              style={{ width: '100%', background: 'var(--chakra-colors-background)', color: 'var(--chakra-colors-text, white)', padding: 16, borderRadius: 8, marginTop: 8 }}
+              dangerouslySetInnerHTML={{ __html: markdownRenderer(markdown) }}
+            />
+          )}
         </Box>
         <ImageCompressor
           ref={imageCompressorRef}

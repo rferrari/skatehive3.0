@@ -308,11 +308,10 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
       <Divider />
 
       <Box mt={4} className="markdown-body" ref={markdownRef}>
-        <ReactMarkdown
-          rehypePlugins={[rehypeRaw, rehypeMentionLinks]}
-        >
-          {processedBody.replace("<!--INSTAGRAM_EMBED_SCRIPT-->", "")}
-        </ReactMarkdown>
+        <div
+          className="markdown-body"
+          dangerouslySetInnerHTML={{ __html: markdownRenderer(processedBody.replace("<!--INSTAGRAM_EMBED_SCRIPT-->", "")) }}
+        />
       </Box>
 
       <style jsx global>{`
