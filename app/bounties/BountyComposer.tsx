@@ -222,26 +222,21 @@ export default function BountyComposer({ onNewBounty, onClose }: BountyComposerP
     >
       <VStack spacing={3} align="stretch">
         <FormControl isRequired>
-          <FormLabel>Trick/Challenge</FormLabel>
+          <FormLabel fontWeight="bold">Challenge</FormLabel>
           <Input
-            placeholder="e.g. Kickflip Back Lip"
+            placeholder="e.g. Kickflip down 5 stair"
             value={trick}
             onChange={e => setTrick(e.target.value)}
             isDisabled={isLoading}
           />
         </FormControl>
         <FormControl isRequired>
-          <FormLabel>Description</FormLabel>
+          <FormLabel fontWeight="bold">Rules</FormLabel>
           <Textarea
-            placeholder="Describe the bounty, rules, etc."
-            bg="background"
-            borderRadius={"base"}
-            mb={3}
             ref={descriptionRef}
-            _placeholder={{ color: "text" }}
+            placeholder="Describe the rules for this bounty..."
             isDisabled={isLoading}
-            onKeyDown={handleKeyDown}
-            _focusVisible={{ border: "tb1" }}
+            minH={24}
           />
           <HStack mt={2} spacing={2}>
             <Box fontSize="sm" color="muted" minW="60px">Optional:</Box>
@@ -308,7 +303,7 @@ export default function BountyComposer({ onNewBounty, onClose }: BountyComposerP
           )}
         </FormControl>
         <FormControl isRequired>
-          <FormLabel>Reward</FormLabel>
+          <FormLabel fontWeight="bold">Reward</FormLabel>
           <Input
             placeholder="e.g. 10 HBD, Skatehive NFT, etc."
             value={reward}
@@ -317,7 +312,7 @@ export default function BountyComposer({ onNewBounty, onClose }: BountyComposerP
           />
         </FormControl>
         <FormControl isRequired>
-          <FormLabel>Deadline</FormLabel>
+          <FormLabel fontWeight="bold">Deadline</FormLabel>
           <Input
             type="date"
             value={deadline}

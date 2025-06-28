@@ -15,6 +15,7 @@ import {
   Tag,
   Wrap,
   VStack,
+  Flex,
 } from "@chakra-ui/react";
 import { useComments } from "@/hooks/useComments";
 import { Discussion } from "@hiveio/dhive";
@@ -41,7 +42,7 @@ export default function BountyList({
   const [visibleCount, setVisibleCount] = useState(10);
   const [submission, setSubmission] = useState<Discussion | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
+  const [filter, setFilter] = useState<"all" | "active" | "completed">("active");
   const [bountyGrinders, setBountyGrinders] = useState<string[]>([]);
   const [isLoadingGrinders, setIsLoadingGrinders] = useState(false);
 
@@ -187,63 +188,59 @@ export default function BountyList({
       {/* Stats Board */}
       <Box
         mb={6}
-        p={4}
+        p={0}
         borderRadius="lg"
         bg="muted"
         boxShadow="md"
-        maxW="700px"
+        maxW="1000px"
         mx="auto"
+        overflow="hidden"
       >
-        <SimpleGrid columns={2} spacing={4} alignItems="center">
-          <Box>
-            <VStack align="start" spacing={6}>
-              <Text fontWeight="bold" fontSize="lg">
-                Active Bounties
-              </Text>
-              <Text fontWeight="bold" fontSize="lg">
-                Rewards Up for Grabs
-              </Text>
-              <Text fontWeight="bold" fontSize="lg">
-                Active Bounty Hunters
-              </Text>
-            </VStack>
+        <Flex
+          direction="row"
+          align="center"
+          justify="center"
+          height="80px"
+          bg="muted"
+        >
+          {/* Active Bounties */}
+          <Box flex="1" textAlign="center">
+            <Text fontWeight="bold" fontSize="2xl" color="primary.400">
+              {activeBounties.length}
+            </Text>
+            <Text fontSize="md" color="text">
+              active bounties
+            </Text>
           </Box>
-          <Box>
-            <VStack align="start" spacing={6}>
-              <Text fontSize="2xl" color="primary.400">
-                {activeBounties.length}
-              </Text>
-              <Wrap>
-                {rewardsUpForGrabs.length > 0 ? (
-                  rewardsUpForGrabs.map((reward, i) => (
-                    <Tag key={i} colorScheme="primary" mx={1}>
-                      {reward}
-                    </Tag>
-                  ))
-                ) : (
-                  <Text fontSize="2xl" color="primary.400">
-                    0
-                  </Text>
-                )}
-              </Wrap>
-              {isLoadingGrinders ? (
-                <Text color="primary.400">Loading...</Text>
-              ) : activeBounties.length === 0 ? (
-                <Text color="primary.400">No active bounties</Text>
-              ) : bountyGrinders.length === 0 ? (
-                <Text color="primary.400">No hunters yet</Text>
+          <Box height="60%" borderLeft="2px solid" borderColor="gray.700" />
+          {/* Rewards Up for Grabs */}
+          <Box flex="1" textAlign="center">
+            <Text fontWeight="bold" fontSize="2xl" color="primary.400">
+              {rewardsUpForGrabs.length > 0 ? (
+                rewardsUpForGrabs.join(", ")
               ) : (
-                <Wrap>
-                  {bountyGrinders.map((user, i) => (
-                    <Tag key={i} colorScheme="primary" mx={1} fontWeight="bold">
-                      @{user}
-                    </Tag>
-                  ))}
-                </Wrap>
+                0
               )}
-            </VStack>
+            </Text>
+            <Text fontSize="md" color="text">
+              rewards
+            </Text>
           </Box>
-        </SimpleGrid>
+          <Box height="60%" borderLeft="2px solid" borderColor="gray.700" />
+          {/* Active Bounty Hunters */}
+          <Box flex="1" textAlign="center">
+            <Text fontWeight="bold" fontSize="2xl" color="primary.400">
+              {isLoadingGrinders
+                ? "..."
+                : activeBounties.length === 0
+                ? "0"
+                : bountyGrinders.length}
+            </Text>
+            <Text fontSize="md" color="text">
+              hunters
+            </Text>
+          </Box>
+        </Flex>
       </Box>
       <Tabs
         variant="soft-rounded"

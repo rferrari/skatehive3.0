@@ -5,6 +5,7 @@ import { Box, Text, Button, Modal, ModalOverlay, ModalContent } from "@chakra-ui
 import BountyComposer from "./BountyComposer";
 import BountyList from "./BountyList";
 import { Discussion } from "@hiveio/dhive";
+import Image from "next/image";
 
 export default function BountiesClient() {
   const [newBounty, setNewBounty] = useState<Partial<Discussion> | null>(null);
@@ -15,17 +16,20 @@ export default function BountiesClient() {
     <Box maxW="900px" mx="auto" py={8} px={4} className="hide-scrollbar" style={{ overflowY: 'auto', height: '100vh' }}>
       <Box display="grid" gridTemplateColumns={{ base: "1fr", md: "1fr auto" }} alignItems="center" mb={4}>
         <Box>
-          <Text
-            fontSize={{ base: "4xl", md: "7xl" }}
-            fontWeight="extrabold"
-            color="primary"
-            letterSpacing="wider"
-            textAlign="left"
-            mb={1}
-            style={{ textTransform: "uppercase" }}
-          >
-            Bounties
-          </Text>
+          <Box display="flex" alignItems="center" mb={1}>
+            <Image src="/images/ripper.png" alt="Ripper" height={96} width={96} style={{ marginRight: 12 }} />
+            <Text
+              fontSize={{ base: "4xl", md: "7xl" }}
+              fontWeight="extrabold"
+              color="primary"
+              letterSpacing="wider"
+              textAlign="left"
+              mb={0}
+              style={{ textTransform: "uppercase" }}
+            >
+              Bounties
+            </Text>
+          </Box>
           <Text
             color="primary"
             fontSize={{ base: "md", md: "lg" }}

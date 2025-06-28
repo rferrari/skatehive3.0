@@ -169,7 +169,17 @@ const BountySnap = ({
   const effectiveDepth = discussion.depth || 0;
 
   const { text, media } = useMemo(
-    () => separateContent(discussion.body),
+    () => {
+      // Replace labels for display
+      let displayBody = discussion.body
+        .replace(/Trick\/Challenge:/g, '<b>Challenge:</b>')
+        .replace(/Bounty Rules:/g, '<b>Rules:</b>')
+        .replace(/Reward:/g, '<b>Reward:</b>')
+        .replace(/Deadline:/g, '<b>Deadline:</b>');
+      // Remove the Deadline line from the display
+      displayBody = displayBody.replace(/^.*<b>Deadline:<\/b>.*$/m, '');
+      return separateContent(displayBody);
+    },
     [discussion.body]
   );
   const renderedMedia = useMemo(() => renderMedia(media), [media]);
@@ -297,6 +307,20 @@ const BountySnap = ({
   if (deadlineMatch && deadlineMatch[1]) {
     deadline = parse(deadlineMatch[1], "MM-dd-yyyy", new Date());
   }
+  // Calculate static countdown string
+  let deadlineCountdown = null;
+  if (deadline) {
+    const now = new Date();
+    const diffMs = deadline.getTime() - now.getTime();
+    if (diffMs > 0) {
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+      deadlineCountdown = `${diffDays}d ${diffHours}h${diffDays === 0 ? ` ${diffMinutes}m` : ''} left`;
+    } else {
+      deadlineCountdown = 'Expired';
+    }
+  }
   const nowDate = new Date();
   let statusNote = null;
   if (deadline) {
@@ -316,8 +340,38 @@ const BountySnap = ({
   }
 
   return (
-    <Box pl={effectiveDepth > 1 ? 1 : 0} ml={effectiveDepth > 1 ? 2 : 0}>
-      <Box mt={1} mb={1} borderRadius="base" width="100%">
+    <Box
+      pl={effectiveDepth > 1 ? 1 : 0}
+      ml={effectiveDepth > 1 ? 2 : 0}
+      p={4}
+      pt={8}
+      position="relative"
+      display="flex"
+      flexDirection="column"
+      minHeight="420px"
+      maxHeight="420px"
+      sx={{
+        backgroundImage: 'url(/images/paper.svg)',
+        backgroundRepeat: 'no-repeat',
+        backgroundSize: 'contain',
+        backgroundPosition: 'center',
+        borderRadius: '16px',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Overlay for readability */}
+      <Box
+        position="absolute"
+        top={0}
+        left={0}
+        right={0}
+        bottom={0}
+        bg="background"
+        opacity={0.85}
+        zIndex={0}
+        borderRadius="16px"
+      />
+      <Box mt={1} mb={1} borderRadius="base" width="100%" position="relative" zIndex={1} flexGrow={1}>
         {/* Title as clickable bold text (only if showTitle) */}
         {showTitle !== false && (
           <Box
@@ -331,10 +385,17 @@ const BountySnap = ({
             mb={2}
             _hover={{ textDecoration: "underline", cursor: "pointer" }}
           >
-            <Text fontWeight="bold" fontSize="xl" mb={1}>
-              {title || "Untitled Bounty"}
-            </Text>
-            {statusNote}
+            <Flex align="center" justify="space-between" mb={1}>
+              <Text fontWeight="bold" fontSize="xl" textShadow="0 2px 8px rgba(0,0,0,0.25)">
+                {title || "Untitled Bounty"}
+              </Text>
+              <Text fontWeight="medium" fontSize="sm" color="gray" textShadow="0 2px 8px rgba(0,0,0,0.18)">
+                {deadlineCountdown ? deadlineCountdown : commentDate}
+              </Text>
+            </Flex>
+            <HStack spacing={2} align="center">
+              {statusNote}
+            </HStack>
           </Box>
         )}
         <HStack mb={2}>
@@ -358,29 +419,24 @@ const BountySnap = ({
                 ml={2}
                 whiteSpace="nowrap"
                 _groupHover={{ textDecoration: "underline" }}
+                textShadow="0 2px 8px rgba(0,0,0,0.25)"
               >
                 {discussion.author}
               </Text>
             </Link>
           )}
-          <HStack ml={0} width="100%">
-            <Text fontWeight="medium" fontSize="sm" color="gray">
-              · {commentDate}
-            </Text>
-            <FaLink
-              size={16}
-              color="gray"
-              cursor="pointer"
-              onClick={handleSharePost}
-              style={{ marginRight: "2px" }}
-            />
-          </HStack>
+          <HStack ml={0} width="100%"></HStack>
         </HStack>
         <Box>
           <Box
             dangerouslySetInnerHTML={{ __html: markdownRenderer(text) }}
             sx={{
-              p: { marginBottom: "1rem", lineHeight: "1.6", marginLeft: "4" },
+              p: {
+                marginBottom: "1rem",
+                lineHeight: "1.6",
+                marginLeft: "4",
+                textShadow: "0 2px 8px rgba(0,0,0,0.18)",
+              },
             }}
           />
           {showMedia && <Box>{renderedMedia}</Box>}
@@ -407,6 +463,17 @@ const BountySnap = ({
 
         <HStack justify="center" spacing={8} mt={3}>
           <HStack>
+            {/* Link icon as first item in footer */}
+            <Button
+              variant="ghost"
+              size="sm"
+              p={1}
+              minW={"auto"}
+              onClick={handleSharePost}
+              leftIcon={<FaLink size={16} color="gray" />}
+              _hover={{ bg: "gray.700", borderRadius: "full" }}
+            >
+            </Button>
             <Tooltip label="upvote" hasArrow openDelay={1000}>
               <Button
                 leftIcon={
