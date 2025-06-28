@@ -204,7 +204,7 @@ export default function BountyList({
                 Rewards Up for Grabs
               </Text>
               <Text fontWeight="bold" fontSize="lg">
-                Active Bounty Grinders
+                Active Bounty Hunters
               </Text>
             </VStack>
           </Box>
@@ -231,7 +231,7 @@ export default function BountyList({
               ) : activeBounties.length === 0 ? (
                 <Text color="primary.400">No active bounties</Text>
               ) : bountyGrinders.length === 0 ? (
-                <Text color="primary.400">No grinders yet</Text>
+                <Text color="primary.400">No hunters yet</Text>
               ) : (
                 <Wrap>
                   {bountyGrinders.map((user, i) => (

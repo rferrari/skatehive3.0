@@ -294,7 +294,8 @@ export default function PostCard({
   if (listView) {
     return (
       <Box
-        borderBottom="1px solid rgb(46, 46, 46)"
+        borderBottom="1px solid"
+        borderColor="muted"
         overflow="hidden"
         height="200px"
         display="flex"
@@ -521,7 +522,8 @@ export default function PostCard({
       `}</style>
       <Box
         position="relative"
-        borderBottom="1px solid rgb(46, 46, 46)"
+        borderBottom="1px solid"
+        borderColor="muted"
         overflow="hidden"
         height="100%"
         cursor="default"
