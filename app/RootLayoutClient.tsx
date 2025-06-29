@@ -12,6 +12,7 @@ import {
 import { useAioha } from "@aioha/react-ui";
 import { Notifications } from "@hiveio/dhive";
 import { Analytics } from "@vercel/analytics/next";
+import InitFrameSDK from "@/hooks/init-frame-sdk";
 
 export default function RootLayoutClient({
   children,
@@ -19,16 +20,29 @@ export default function RootLayoutClient({
   children: React.ReactNode;
 }) {
   const [loading, setLoading] = useState(true);
+  const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
-    // Simulate a loading delay for splash screen
-    setTimeout(() => setLoading(false), 2000); // Adjust duration if needed
+    setIsHydrated(true);
   }, []);
+
+  // Only show splash screen after hydration to avoid SSR/client mismatch
+  if (!isHydrated) {
+    return (
+      <>
+        <Analytics />
+        <Providers>
+          <InnerLayout>{children}</InnerLayout>
+        </Providers>
+      </>
+    );
+  }
 
   if (loading) return <SplashScreen onFinish={() => setLoading(false)} />;
 
   return (
     <>
+      <InitFrameSDK />
       <Analytics />
       <Providers>
         <InnerLayout>{children}</InnerLayout>

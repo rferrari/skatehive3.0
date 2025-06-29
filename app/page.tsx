@@ -1,87 +1,24 @@
-"use client";
+import { Metadata } from "next";
+import HomePageClient from "./HomePageClient";
 
-import { Flex, Box } from "@chakra-ui/react";
-import SnapList from "@/components/homepage/SnapList";
-import RightSidebar from "@/components/layout/RightSideBar";
-import { useState } from "react";
-import { Discussion } from "@hiveio/dhive";
-import Conversation from "@/components/homepage/Conversation";
-import SnapReplyModal from "@/components/homepage/SnapReplyModal";
-import { useSnaps } from "@/hooks/useSnaps";
+export const metadata: Metadata = {
+  title: "Skatehive - The Infinity Skateboard Magazine",
+  description:
+    "Discover the latest skateboarding content, tricks, spots, and community posts. Join the global skateboarding community on Skatehive.",
+  openGraph: {
+    title: "Skatehive - The Infinity Skateboard Magazine",
+    description:
+      "Discover the latest skateboarding content, tricks, spots, and community posts. Join the global skateboarding community on Skatehive.",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Skatehive - The Infinity Skateboard Magazine",
+    description:
+      "Discover the latest skateboarding content, tricks, spots, and community posts. Join the global skateboarding community on Skatehive.",
+  },
+};
 
 export default function Home() {
-  const thread_author = "peak.snaps";
-  const thread_permlink = "snaps";
-
-  const [conversation, setConversation] = useState<Discussion | undefined>();
-  const [reply, setReply] = useState<Discussion>();
-  const [isOpen, setIsOpen] = useState(false);
-  const [newComment, setNewComment] = useState<Discussion | null>(null); // Define the state
-
-  const onOpen = () => setIsOpen(true);
-  const onClose = () => setIsOpen(false);
-
-  const handleNewComment = (
-    newComment: Partial<Discussion> | CharacterData
-  ) => {
-    setNewComment(newComment as Discussion);
-  };
-
-  const snaps = useSnaps();
-
-  return (
-    <Flex direction={{ base: "column", md: "row" }}>
-      <Box
-        maxH="100vh"
-        overflowY="auto"
-        flex="1"
-        borderLeft="1px"
-        borderRight="1px"
-        borderColor="muted"
-        p={0}
-        pt={2}
-        justifyContent="center"
-        sx={{
-          "&::-webkit-scrollbar": {
-            display: "none",
-          },
-          scrollbarWidth: "none",
-        }}
-        id="scrollableDiv"
-      >
-        {!conversation ? (
-          <SnapList
-            author={thread_author}
-            permlink={thread_permlink}
-            setConversation={setConversation}
-            onOpen={onOpen}
-            setReply={setReply}
-            newComment={newComment}
-            setNewComment={setNewComment}
-            data={snaps}
-          />
-        ) : (
-          <Conversation
-            discussion={conversation}
-            setConversation={setConversation}
-            onOpen={onOpen}
-            setReply={setReply}
-          />
-        )}
-      </Box>
-
-      {/* Changed: Wrap RightSidebar in a Box displayed only on mobile */}
-      <Box display={{ base: "none", md: "block", lg: "block" }}>
-        <RightSidebar />
-      </Box>
-      {isOpen && (
-        <SnapReplyModal
-          isOpen={isOpen}
-          onClose={onClose}
-          discussion={reply}
-          onNewReply={handleNewComment}
-        />
-      )}
-    </Flex>
-  );
+  return <HomePageClient />;
 }

@@ -3,8 +3,6 @@ import RootLayoutClient from "./RootLayoutClient";
 import "./globals.css";
 import { Metadata } from "next";
 import { ColorModeScript } from "@chakra-ui/react";
-import InitFrameSDK from "@/hooks/init-frame-sdk";
-import FrameMetaTags from "./components/FrameMetaTags";
 
 // Initialize the VT323 font
 const vt323 = VT323({
@@ -14,40 +12,88 @@ const vt323 = VT323({
   variable: "--font-vt323",
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL("https://my.skatehive.app"),
-  title: {
-    default: "Skatehive App",
-    template: "%s", // This allows child pages to completely override the title
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://my.skatehive.app";
+
+const frameObject = {
+  version: "next",
+  imageUrl: `${BASE_URL}/opengraph-image`,
+  button: {
+    title: "Open",
+    action: {
+      type: "launch_frame",
+      name: "Skatehive",
+      url: BASE_URL,
+    },
   },
-  description: "The infinity skateboard magazine",
+  postUrl: BASE_URL,
+};
+
+export const metadata: Metadata = {
+  metadataBase: new URL(BASE_URL),
+  title: {
+    default: "Skatehive - The Infinity Skateboard Magazine",
+    template: "%s | Skatehive",
+  },
+  description: "The infinity skateboard magazine - Discover skateboarding content, tricks, spots, and join the global skateboarding community.",
+  keywords: ["skateboarding", "skate", "skateboard", "tricks", "spots", "community", "magazine"],
+  authors: [{ name: "Skatehive Community" }],
+  creator: "Skatehive",
+  publisher: "Skatehive",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
   manifest: "/manifest.json",
-  applicationName: "Skatehive",
   openGraph: {
-    title: "Skatehive App",
-    description: "The infinity skateboard magazine", 
-    url: "https://my.skatehive.app",
+    title: "Skatehive - The Infinity Skateboard Magazine",
+    description: "The infinity skateboard magazine - Discover skateboarding content, tricks, spots, and join the global skateboarding community.",
+    url: BASE_URL,
     siteName: "Skatehive",
     images: [
       {
         url: "/ogimage.png",
         width: 1200,
         height: 630,
+        alt: "Skatehive - The infinity skateboard magazine",
       },
     ],
-    type: "website",
     locale: "en_US",
+    type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Skatehive App",
-    description: "The infinity skateboard magazine",
-    images: "/ogimage.png",
+    title: "Skatehive - The Infinity Skateboard Magazine",
+    description: "The infinity skateboard magazine - Discover skateboarding content, tricks, spots, and join the global skateboarding community.",
+    images: ["/ogimage.png"],
+    creator: "@skatehive",
     site: "@skatehive",
   },
   robots: {
     index: true,
     follow: true,
+    nocache: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      noimageindex: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/favicon.ico",
+  },
+  verification: {
+    google: "your-google-verification-code",
+  },
+  other: { 
+    "fc:frame": JSON.stringify(frameObject),
+    "fc:frame:image": `${BASE_URL}/ogimage.png`,
+    "fc:frame:post_url": BASE_URL,
   },
 };
 
@@ -69,11 +115,7 @@ export default function RootLayout({
       data-theme="dark"
       style={{ colorScheme: "dark" }}
     >
-      <head>
-        <FrameMetaTags />
-      </head>
       <body className="chakra-ui-dark">
-        <InitFrameSDK />
         <ColorModeScript initialColorMode="dark" />
         <RootLayoutClient>{children}</RootLayoutClient>
       </body>

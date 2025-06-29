@@ -1,7 +1,7 @@
 // app/page.tsx
 "use client";
 
-import { Box, Container, Flex, Spinner } from "@chakra-ui/react";
+import { Box, Flex, Spinner } from "@chakra-ui/react";
 import SnapList from "../homepage/SnapList";
 import { useEffect, useState } from "react";
 import { Discussion } from "@hiveio/dhive"; // Ensure this import is consistent
@@ -99,7 +99,15 @@ export default function PostPage({ author, permlink }: PostPageProps) {
         h={{ base: "auto", md: "100vh" }}
         gap={4}
       >
-        <Box flex={1} h={{ base: "auto", md: "100vh" }} overflowY="auto" sx={{ '&::-webkit-scrollbar': { display: 'none' }, scrollbarWidth: 'none' }}>
+        <Box
+          flex={1}
+          h={{ base: "auto", md: "100vh" }}
+          overflowY="auto"
+          sx={{
+            "&::-webkit-scrollbar": { display: "none" },
+            scrollbarWidth: "none",
+          }}
+        >
           <PostDetails post={post} onOpenConversation={onOpen} />
         </Box>
         <Box
