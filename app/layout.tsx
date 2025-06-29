@@ -34,8 +34,17 @@ export const metadata: Metadata = {
     default: "Skatehive - The Infinity Skateboard Magazine",
     template: "%s | Skatehive",
   },
-  description: "The infinity skateboard magazine - Discover skateboarding content, tricks, spots, and join the global skateboarding community.",
-  keywords: ["skateboarding", "skate", "skateboard", "tricks", "spots", "community", "magazine"],
+  description:
+    "The infinity skateboard magazine - Discover skateboarding content, tricks, spots, and join the global skateboarding community.",
+  keywords: [
+    "skateboarding",
+    "skate",
+    "skateboard",
+    "tricks",
+    "spots",
+    "community",
+    "magazine",
+  ],
   authors: [{ name: "Skatehive Community" }],
   creator: "Skatehive",
   publisher: "Skatehive",
@@ -47,7 +56,8 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   openGraph: {
     title: "Skatehive - The Infinity Skateboard Magazine",
-    description: "The infinity skateboard magazine - Discover skateboarding content, tricks, spots, and join the global skateboarding community.",
+    description:
+      "The infinity skateboard magazine - Discover skateboarding content, tricks, spots, and join the global skateboarding community.",
     url: BASE_URL,
     siteName: "Skatehive",
     images: [
@@ -64,7 +74,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Skatehive - The Infinity Skateboard Magazine",
-    description: "The infinity skateboard magazine - Discover skateboarding content, tricks, spots, and join the global skateboarding community.",
+    description:
+      "The infinity skateboard magazine - Discover skateboarding content, tricks, spots, and join the global skateboarding community.",
     images: ["/ogimage.png"],
     creator: "@skatehive",
     site: "@skatehive",
@@ -77,9 +88,9 @@ export const metadata: Metadata = {
       index: true,
       follow: true,
       noimageindex: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
     },
   },
   icons: {
@@ -90,7 +101,7 @@ export const metadata: Metadata = {
   verification: {
     google: "your-google-verification-code",
   },
-  other: { 
+  other: {
     "fc:frame": JSON.stringify(frameObject),
     "fc:frame:image": `${BASE_URL}/ogimage.png`,
     "fc:frame:post_url": BASE_URL,
