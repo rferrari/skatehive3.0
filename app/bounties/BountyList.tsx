@@ -281,6 +281,7 @@ export default function BountyList({
             setReply={() => {}}
             setConversation={() => {}}
             showAuthor={true}
+            disableFooter={true}
           />
         ))}
       </SimpleGrid>

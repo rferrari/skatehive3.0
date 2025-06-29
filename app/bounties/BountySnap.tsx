@@ -133,6 +133,7 @@ interface BountySnapProps {
   showAuthor?: boolean;
   showPosterBackground?: boolean;
   disableCardClick?: boolean;
+  disableFooter?: boolean;
 }
 
 const BountySnap = ({
@@ -146,6 +147,7 @@ const BountySnap = ({
   showAuthor = true,
   showPosterBackground = true,
   disableCardClick = false,
+  disableFooter = false,
 }: BountySnapProps) => {
   const { aioha, user } = useAioha();
   const { hiveAccount } = useHiveAccount(user || "");
@@ -477,110 +479,112 @@ const BountySnap = ({
         </Box>
       </Box>
       {/* Footer (absolute) */}
-      <Box position="absolute" left={0} right={0} bottom={0} px={4} pb={4} zIndex={1} height="70px"
-        pointerEvents={disableCardClick ? 'auto' : undefined}
-      >
-        <HStack justify="center" spacing={8} height="100%">
-          <HStack>
-            <Button
-              variant="ghost"
-              size="sm"
-              p={1}
-              minW={"auto"}
-              onClick={(e) => { e.stopPropagation(); handleSharePost(); }}
-              leftIcon={<FaLink size={16} color="gray" />}
-              _hover={{ bg: "gray.700", borderRadius: "full" }}
-            >
-            </Button>
-            <Tooltip label="upvote" hasArrow openDelay={1000}>
+      {!disableFooter && (
+        <Box position="absolute" left={0} right={0} bottom={0} px={4} pb={4} zIndex={1} height="70px"
+          pointerEvents={disableCardClick ? 'auto' : undefined}
+        >
+          <HStack justify="center" spacing={8} height="100%">
+            <HStack>
               <Button
-                leftIcon={
-                  <LuArrowUpRight
-                    size={24}
-                    color={voted ? undefined : "rgb(75, 72, 72)"}
-                    style={{ opacity: voted ? 1 : 0.5 }}
-                  />
-                }
                 variant="ghost"
-                onClick={(e) => { e.stopPropagation(); handleHeartClick(); }}
                 size="sm"
-                p={2}
+                p={1}
+                minW={"auto"}
+                onClick={(e) => { e.stopPropagation(); handleSharePost(); }}
+                leftIcon={<FaLink size={16} color="gray" />}
                 _hover={{ bg: "gray.700", borderRadius: "full" }}
-              />
-            </Tooltip>
-            {showSlider && (
-              <Flex mt={4} alignItems="center">
-                <Box width="150px" mr={2}>
-                  <Slider
-                    aria-label="slider-ex-1"
-                    min={1}
-                    max={100}
-                    value={sliderValue}
-                    onChange={setSliderValue}
-                  >
-                    <SliderTrack
-                      bg="gray.700"
-                      height="8px"
-                      boxShadow="0 0 10px rgba(255, 255, 0, 0.8)"
-                    >
-                      <SliderFilledTrack bgGradient="linear(to-r, green.400, limegreen, red.400)" />
-                    </SliderTrack>
-                    <SliderThumb
-                      boxSize="30px"
-                      bg="transparent"
-                      boxShadow={"none"}
-                      _focus={{ boxShadow: "none" }}
-                      zIndex={1}
-                    >
-                      <Image
-                        src="/images/spitfire.png"
-                        alt="thumb"
-                        w="100%"
-                        h="auto"
-                        mr={2}
-                        mb={1}
-                      />
-                    </SliderThumb>
-                  </Slider>
-                </Box>
+              >
+              </Button>
+              <Tooltip label="upvote" hasArrow openDelay={1000}>
                 <Button
-                  size="xs"
-                  colorScheme="primary"
-                  onClick={(e) => { e.stopPropagation(); handleVote(); }}
-                  isDisabled={voted}
-                  ml={2}
-                >
-                  {voted ? "Voted" : `Vote ${sliderValue}%`}
-                </Button>
-                <Button
-                  size="xs"
+                  leftIcon={
+                    <LuArrowUpRight
+                      size={24}
+                      color={voted ? undefined : "rgb(75, 72, 72)"}
+                      style={{ opacity: voted ? 1 : 0.5 }}
+                    />
+                  }
                   variant="ghost"
-                  onClick={(e) => { e.stopPropagation(); setShowSlider(false); }}
-                  ml={1}
-                >
-                  Cancel
-                </Button>
-              </Flex>
-            )}
-            <VoteListPopover
-              trigger={
-                <Button
-                  variant="ghost"
+                  onClick={(e) => { e.stopPropagation(); handleHeartClick(); }}
                   size="sm"
-                  ml={1}
-                  p={1}
-                  _hover={{ textDecoration: "underline" }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {uniqueVotes.length}
-                </Button>
-              }
-              votes={activeVotes}
-              post={discussion}
-            />
+                  p={2}
+                  _hover={{ bg: "gray.700", borderRadius: "full" }}
+                />
+              </Tooltip>
+              {showSlider && (
+                <Flex mt={4} alignItems="center">
+                  <Box width="150px" mr={2}>
+                    <Slider
+                      aria-label="slider-ex-1"
+                      min={1}
+                      max={100}
+                      value={sliderValue}
+                      onChange={setSliderValue}
+                    >
+                      <SliderTrack
+                        bg="gray.700"
+                        height="8px"
+                        boxShadow="0 0 10px rgba(255, 255, 0, 0.8)"
+                      >
+                        <SliderFilledTrack bgGradient="linear(to-r, green.400, limegreen, red.400)" />
+                      </SliderTrack>
+                      <SliderThumb
+                        boxSize="30px"
+                        bg="transparent"
+                        boxShadow={"none"}
+                        _focus={{ boxShadow: "none" }}
+                        zIndex={1}
+                      >
+                        <Image
+                          src="/images/spitfire.png"
+                          alt="thumb"
+                          w="100%"
+                          h="auto"
+                          mr={2}
+                          mb={1}
+                        />
+                      </SliderThumb>
+                    </Slider>
+                  </Box>
+                  <Button
+                    size="xs"
+                    colorScheme="primary"
+                    onClick={(e) => { e.stopPropagation(); handleVote(); }}
+                    isDisabled={voted}
+                    ml={2}
+                  >
+                    {voted ? "Voted" : `Vote ${sliderValue}%`}
+                  </Button>
+                  <Button
+                    size="xs"
+                    variant="ghost"
+                    onClick={(e) => { e.stopPropagation(); setShowSlider(false); }}
+                    ml={1}
+                  >
+                    Cancel
+                  </Button>
+                </Flex>
+              )}
+              <VoteListPopover
+                trigger={
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    ml={1}
+                    p={1}
+                    _hover={{ textDecoration: "underline" }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {uniqueVotes.length}
+                  </Button>
+                }
+                votes={activeVotes}
+                post={discussion}
+              />
+            </HStack>
           </HStack>
-        </HStack>
-      </Box>
+        </Box>
+      )}
       {/* Content area (between header and footer, scrollable but no visible scrollbar) */}
       <Box
         position="relative"
