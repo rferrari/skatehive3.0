@@ -1,5 +1,6 @@
 import React from "react";
 import markdownRenderer from "@/lib/utils/MarkdownRenderer";
+import { Image } from "@chakra-ui/react";
 
 interface HiveMarkdownProps {
   markdown: string;
@@ -9,17 +10,17 @@ interface HiveMarkdownProps {
 
 // Mention component for inline rendering
 const Mention: React.FC<{ username: string }> = ({ username }) => (
-  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-    <img
+  <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+    <Image
       src={`https://images.hive.blog/u/${username}/avatar/small`}
       alt={`@${username}`}
       style={{
         width: 25,
         height: 25,
-        borderRadius: '50%',
-        objectFit: 'cover',
-        verticalAlign: 'middle',
-        display: 'inline-block',
+        borderRadius: "50%",
+        objectFit: "cover",
+        verticalAlign: "middle",
+        display: "inline-block",
         marginRight: 4,
       }}
       loading="lazy"
@@ -27,8 +28,8 @@ const Mention: React.FC<{ username: string }> = ({ username }) => (
     <a
       href={`/@${username}`}
       style={{
-        textDecoration: 'underline',
-        color: '#3182ce',
+        textDecoration: "underline",
+        color: "#3182ce",
       }}
     >
       @{username}
@@ -36,12 +37,17 @@ const Mention: React.FC<{ username: string }> = ({ username }) => (
   </span>
 );
 
-const HiveMarkdown: React.FC<HiveMarkdownProps> = ({ markdown, className = "markdown-body", style }) => {
+const HiveMarkdown: React.FC<HiveMarkdownProps> = ({
+  markdown,
+  className = "markdown-body",
+  style,
+}) => {
   const rawHtml = markdownRenderer(markdown);
 
   // Replace <mention data-username="username">@username</mention> with <Mention />
   const processMentions = (html: string) => {
-    const regex = /<mention data-username="([a-zA-Z0-9._-]+)">@([a-zA-Z0-9._-]+)<\/mention>/g;
+    const regex =
+      /<mention data-username="([a-zA-Z0-9._-]+)">@([a-zA-Z0-9._-]+)<\/mention>/g;
     const parts: Array<string | React.ReactElement> = [];
     let lastIndex = 0;
     let match: RegExpExecArray | null;
@@ -63,17 +69,27 @@ const HiveMarkdown: React.FC<HiveMarkdownProps> = ({ markdown, className = "mark
   };
 
   // If there are mentions, process them, else just dangerouslySetInnerHTML
-  if (rawHtml.includes('<mention')) {
+  if (rawHtml.includes("<mention")) {
     return (
       <div className={className} style={style}>
         {processMentions(rawHtml).map((part, i) =>
-          typeof part === 'string' ? <span key={i} dangerouslySetInnerHTML={{ __html: part }} /> : part
+          typeof part === "string" ? (
+            <span key={i} dangerouslySetInnerHTML={{ __html: part }} />
+          ) : (
+            part
+          )
         )}
       </div>
     );
   }
 
-  return <div className={className} style={style} dangerouslySetInnerHTML={{ __html: rawHtml }} />;
+  return (
+    <div
+      className={className}
+      style={style}
+      dangerouslySetInnerHTML={{ __html: rawHtml }}
+    />
+  );
 };
 
-export default HiveMarkdown; 
+export default HiveMarkdown;
