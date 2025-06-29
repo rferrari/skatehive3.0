@@ -20,7 +20,6 @@ import {
 import { useComments } from "@/hooks/useComments";
 import { Discussion } from "@hiveio/dhive";
 import BountySnap from "./BountySnap";
-import BountySubmission from "./BountySubmission";
 import { parse, isAfter } from "date-fns";
 import HiveClient from "@/lib/hive/hiveclient";
 
@@ -40,8 +39,6 @@ export default function BountyList({
   );
   const [displayedBounties, setDisplayedBounties] = useState<Discussion[]>([]);
   const [visibleCount, setVisibleCount] = useState(10);
-  const [submission, setSubmission] = useState<Discussion | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [filter, setFilter] = useState<"all" | "active" | "completed">("active");
   const [bountyGrinders, setBountyGrinders] = useState<string[]>([]);
   const [isLoadingGrinders, setIsLoadingGrinders] = useState(false);
@@ -69,16 +66,6 @@ export default function BountyList({
 
   const handleLoadMore = () => {
     setVisibleCount((prev) => prev + 10);
-  };
-
-  const handleOpenSubmission = (bounty: Discussion) => {
-    setSubmission(bounty);
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSubmission(null);
   };
 
   // Helper to get deadline from bounty body
@@ -287,9 +274,12 @@ export default function BountyList({
           <BountySnap
             key={bounty.permlink}
             discussion={bounty}
-            onOpen={() => handleOpenSubmission(bounty)}
+            onOpen={() => {
+              const url = `/post/${bounty.author}/${bounty.permlink}`;
+              window.location.href = url;
+            }}
             setReply={() => {}}
-            setConversation={handleOpenSubmission}
+            setConversation={() => {}}
             showAuthor={true}
           />
         ))}
@@ -305,19 +295,6 @@ export default function BountyList({
           </Button>
         </Box>
       )}
-      <Modal isOpen={isModalOpen} onClose={handleCloseModal} size="2xl">
-        <ModalOverlay />
-        <ModalContent bg="background" color="text">
-          {submission && (
-            <BountySubmission
-              discussion={submission}
-              setSubmission={() => setIsModalOpen(false)}
-              onOpen={() => {}}
-              setReply={() => {}}
-            />
-          )}
-        </ModalContent>
-      </Modal>
     </>
   );
 }

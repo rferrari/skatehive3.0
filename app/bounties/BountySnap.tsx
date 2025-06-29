@@ -132,6 +132,7 @@ interface BountySnapProps {
   showTitle?: boolean;
   showAuthor?: boolean;
   showPosterBackground?: boolean;
+  disableCardClick?: boolean;
 }
 
 const BountySnap = ({
@@ -144,6 +145,7 @@ const BountySnap = ({
   showTitle,
   showAuthor = true,
   showPosterBackground = true,
+  disableCardClick = false,
 }: BountySnapProps) => {
   const { aioha, user } = useAioha();
   const { hiveAccount } = useHiveAccount(user || "");
@@ -343,6 +345,11 @@ const BountySnap = ({
 
   return (
     <Box
+      as="div"
+      role={disableCardClick ? undefined : "button"}
+      onClick={disableCardClick ? undefined : onOpen}
+      tabIndex={disableCardClick ? undefined : 0}
+      aria-label={disableCardClick ? undefined : "Open bounty submission"}
       pl={effectiveDepth > 1 ? 1 : 0}
       ml={effectiveDepth > 1 ? 2 : 0}
       p={0}
@@ -352,16 +359,40 @@ const BountySnap = ({
       flexDirection="column"
       minHeight="370px"
       maxHeight="370px"
-      sx={showPosterBackground ? {
-        backgroundImage: 'url(/images/paper.svg)',
-        backgroundRepeat: 'no-repeat',
-        backgroundSize: '100% 100%',
-        backgroundPosition: 'center',
-        borderRadius: '16px',
-        overflow: 'hidden',
-      } : {
-        borderRadius: '16px',
-        overflow: 'hidden',
+      sx={{
+        ...(showPosterBackground
+          ? {
+              backgroundImage: 'url(/images/paper.svg)',
+              backgroundRepeat: 'no-repeat',
+              backgroundSize: '100% 100%',
+              backgroundPosition: 'center',
+              borderRadius: '16px',
+              overflow: 'hidden',
+              transition: 'box-shadow 0.2s, background 0.2s',
+              cursor: disableCardClick ? 'default' : 'pointer',
+              ...(disableCardClick
+                ? {}
+                : {
+                    ':hover': {
+                      boxShadow: '0 0 0 3px #ff9800, 0 2px 16px rgba(0,0,0,0.18)',
+                      background: 'rgba(0,0,0,0.03)',
+                    },
+                  }),
+            }
+          : {
+              borderRadius: '16px',
+              overflow: 'hidden',
+              transition: 'box-shadow 0.2s, background 0.2s',
+              cursor: disableCardClick ? 'default' : 'pointer',
+              ...(disableCardClick
+                ? {}
+                : {
+                    ':hover': {
+                      boxShadow: '0 0 0 3px #ff9800, 0 2px 16px rgba(0,0,0,0.18)',
+                      background: 'rgba(0,0,0,0.03)',
+                    },
+                  }),
+            }),
       }}
     >
       {/* Overlay for readability (restored) */}
@@ -404,6 +435,7 @@ const BountySnap = ({
                 display="flex"
                 alignItems="center"
                 role="group"
+                onClick={(e) => e.stopPropagation()}
               >
                 <Avatar
                   size="xs"
@@ -445,7 +477,9 @@ const BountySnap = ({
         </Box>
       </Box>
       {/* Footer (absolute) */}
-      <Box position="absolute" left={0} right={0} bottom={0} px={4} pb={4} zIndex={1} height="70px">
+      <Box position="absolute" left={0} right={0} bottom={0} px={4} pb={4} zIndex={1} height="70px"
+        pointerEvents={disableCardClick ? 'auto' : undefined}
+      >
         <HStack justify="center" spacing={8} height="100%">
           <HStack>
             <Button
@@ -453,7 +487,7 @@ const BountySnap = ({
               size="sm"
               p={1}
               minW={"auto"}
-              onClick={handleSharePost}
+              onClick={(e) => { e.stopPropagation(); handleSharePost(); }}
               leftIcon={<FaLink size={16} color="gray" />}
               _hover={{ bg: "gray.700", borderRadius: "full" }}
             >
@@ -468,7 +502,7 @@ const BountySnap = ({
                   />
                 }
                 variant="ghost"
-                onClick={handleHeartClick}
+                onClick={(e) => { e.stopPropagation(); handleHeartClick(); }}
                 size="sm"
                 p={2}
                 _hover={{ bg: "gray.700", borderRadius: "full" }}
@@ -512,7 +546,7 @@ const BountySnap = ({
                 <Button
                   size="xs"
                   colorScheme="primary"
-                  onClick={handleVote}
+                  onClick={(e) => { e.stopPropagation(); handleVote(); }}
                   isDisabled={voted}
                   ml={2}
                 >
@@ -521,7 +555,7 @@ const BountySnap = ({
                 <Button
                   size="xs"
                   variant="ghost"
-                  onClick={() => setShowSlider(false)}
+                  onClick={(e) => { e.stopPropagation(); setShowSlider(false); }}
                   ml={1}
                 >
                   Cancel

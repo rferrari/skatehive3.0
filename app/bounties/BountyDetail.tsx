@@ -1,0 +1,183 @@
+import {
+  Box,
+  Text,
+  Avatar,
+  Flex,
+  Icon,
+  Button,
+  Link,
+  Divider,
+  Tag,
+  useTheme,
+  Spinner,
+  VStack,
+} from "@chakra-ui/react";
+import React, { useMemo, useState } from "react";
+import { Discussion } from "@hiveio/dhive";
+import { getPostDate } from "@/lib/utils/GetPostDate";
+import { useComments } from "@/hooks/useComments";
+import { parse, isAfter, isValid } from "date-fns";
+import HiveMarkdown from "@/components/shared/HiveMarkdown";
+import { processMediaContent } from "@/lib/utils/MarkdownRenderer";
+import SnapList from "@/components/homepage/SnapList";
+import SnapComposer from "@/components/homepage/SnapComposer";
+import MatrixOverlay from "@/components/graphics/MatrixOverlay";
+
+interface BountyDetailProps {
+  post: Discussion;
+}
+
+const getDeadlineFromBody = (body: string): Date | null => {
+  const deadlineMatch = body.match(/Deadline:\s*([^\n]+)/);
+  if (deadlineMatch && deadlineMatch[1]) {
+    // Try MM-dd-yyyy
+    let date = parse(deadlineMatch[1], "MM-dd-yyyy", new Date());
+    if (!isValid(date)) {
+      // Try M/d/yyyy
+      date = parse(deadlineMatch[1], "M/d/yyyy", new Date());
+    }
+    return isValid(date) ? date : null;
+  }
+  return null;
+};
+
+const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
+  const { author, created, body, title: postTitle } = post;
+  const postDate = getPostDate(created);
+  const theme = useTheme();
+  const { comments, isLoading } = useComments(post.author, post.permlink, true);
+  const [newComment, setNewComment] = useState<Discussion | null>(null);
+
+  // Extract bounty fields
+  const title = useMemo(() => {
+    const match = body.match(/Trick\/Challenge:\s*(.*)/);
+    return match && match[1] ? match[1].trim() : postTitle || "Bounty Submission";
+  }, [body, postTitle]);
+  const rules = useMemo(() => {
+    const match = body.match(/Bounty Rules:\s*([\s\S]*?)(?:\n|$)/);
+    return match && match[1] ? match[1].trim() : "";
+  }, [body]);
+  const reward = useMemo(() => {
+    const match = body.match(/Reward:\s*([^\n]*)/);
+    return match && match[1] ? match[1].trim() : "N/A";
+  }, [body]);
+  const deadline = getDeadlineFromBody(body);
+  const now = new Date();
+  const isActive = deadline ? isAfter(deadline, now) : true;
+
+  return (
+    <Box bg="background" color="text" minH="100vh">
+      <Flex direction={{ base: "column", md: "row" }} h={{ base: "auto", md: "100vh" }} gap={4}>
+        {/* Left: Bounty Details */}
+        <Box flex={1} h={{ base: "auto", md: "100vh" }} overflowY="auto" sx={{ '&::-webkit-scrollbar': { display: 'none' }, scrollbarWidth: 'none' }}>
+          <Box
+            data-component="BountyDetail"
+            borderRadius="base"
+            overflow="hidden"
+            bg="muted"
+            mb={3}
+            p={4}
+            w="100%"
+            mt={{ base: "0px", md: "10px" }}
+            boxShadow={theme.shadows.md}
+          >
+            {/* Header */}
+            <Flex
+              direction="column"
+              boxShadow={theme.shadows.md}
+              bg={theme.colors.primary ? `linear-gradient(to bottom, ${theme.colors.primary}, ${theme.colors.secondary})` : undefined}
+              p={4}
+              mb={4}
+            >
+              <Flex direction={["column", "row"]} alignItems={["flex-start", "center"]} w="100%">
+                <Avatar
+                  size="sm"
+                  name={author}
+                  src={`https://images.hive.blog/u/${author}/avatar/sm`}
+                />
+                <Box ml={[0, 3]} mt={[2, 0]} whiteSpace="nowrap">
+                  <Text fontWeight="medium" fontSize="sm" mb={-2} color={theme.colors.background}>
+                    <Link href={`/user/${author}`} color={theme.colors.background}>@{author}</Link>
+                  </Text>
+                  <Text fontSize="sm" color={theme.colors.background}>
+                    {postDate}
+                  </Text>
+                </Box>
+                <Divider
+                  orientation="vertical"
+                  h="34px"
+                  borderColor="color"
+                  mx={4}
+                  display={["none", "block"]}
+                />
+                <Box flexGrow={1} ml={[0, 4]} mt={[2, 0]} textAlign="start" minWidth={0}>
+                  <Text fontSize="lg" fontWeight="bold" color={theme.colors.background}>
+                    {title}
+                  </Text>
+                  <Tag colorScheme={isActive ? "green" : "red"} size="md" ml={2}>
+                    {isActive ? "Active Bounty" : "Closed Bounty"}
+                  </Tag>
+                </Box>
+              </Flex>
+            </Flex>
+            {/* Bounty Details */}
+            <Box mb={4}>
+              <Text fontWeight="bold" color="orange.300" fontSize="lg">
+                Reward: {reward}
+              </Text>
+              <Text color="gray.500" fontSize="md">
+                Deadline: {deadline ? deadline.toLocaleDateString() : "N/A"}
+              </Text>
+            </Box>
+            <Divider />
+            {/* Rules/Description */}
+            <Box my={4}>
+              <Text fontWeight="bold" mb={1}>Rules:</Text>
+              <Text whiteSpace="pre-line">{rules}</Text>
+            </Box>
+            {/* Media Section */}
+            <Box my={4}>
+              <HiveMarkdown markdown={processMediaContent(body)} />
+            </Box>
+            <Divider />
+            {/* Submission Composer Removed */}
+            {!isActive && (
+              <Text color="red.400" fontWeight="bold" textAlign="center" my={4}>
+                Submissions are closed for this bounty.
+              </Text>
+            )}
+          </Box>
+        </Box>
+        {/* Right: Submissions List */}
+        <Box width={{ base: "100%", md: "350px" }} h={{ base: "auto", md: "100vh" }} overflowY="auto" bg="muted" borderRadius="base" boxShadow={theme.shadows.md} p={4}>
+          <Text fontWeight="bold" fontSize="lg" mb={2} mt={2}>
+            Submissions
+          </Text>
+          {/* Composer: Only show if active */}
+          {isActive && (
+            <SnapComposer
+              pa={post.author}
+              pp={post.permlink}
+              onNewComment={setNewComment as (newComment: Partial<Discussion>) => void}
+              onClose={() => null}
+            />
+          )}
+          <SnapList
+            author={post.author}
+            permlink={post.permlink}
+            setConversation={() => {}}
+            onOpen={() => {}}
+            setReply={() => {}}
+            newComment={newComment}
+            setNewComment={setNewComment}
+            post={true}
+            data={{ comments, loadNextPage: () => {}, isLoading, hasMore: false }}
+            hideComposer={true}
+          />
+        </Box>
+      </Flex>
+    </Box>
+  );
+};
+
+export default BountyDetail; 

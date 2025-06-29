@@ -17,6 +17,7 @@ interface SnapListProps {
   setNewComment: (Discussion: Discussion | null) => void;
   post?: boolean;
   data: InfiniteScrollData;
+  hideComposer?: boolean;
 }
 
 interface InfiniteScrollData {
@@ -36,6 +37,7 @@ export default function SnapList({
   setNewComment,
   post = false,
   data,
+  hideComposer = false,
 }: SnapListProps) {
   const { comments, loadNextPage, isLoading, hasMore } = data;
   const [displayedComments, setDisplayedComments] = useState<Discussion[]>([]);
@@ -97,14 +99,16 @@ export default function SnapList({
         </Box>
       ) : (
         <>
-          <SnapComposer
-            pa={author}
-            pp={permlink}
-            onNewComment={
-              handleNewComment as (newComment: Partial<Discussion>) => void
-            } // Cast handler to expected type
-            onClose={() => null}
-          />
+          {!hideComposer && (
+            <SnapComposer
+              pa={author}
+              pp={permlink}
+              onNewComment={
+                handleNewComment as (newComment: Partial<Discussion>) => void
+              } // Cast handler to expected type
+              onClose={() => null}
+            />
+          )}
 
           <UpvoteSnapContainer hideIfVoted />
 

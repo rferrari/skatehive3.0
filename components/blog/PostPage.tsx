@@ -11,6 +11,7 @@ import { getPost } from "@/lib/hive/client-functions";
 import PostDetails from "@/components/blog/PostDetails";
 import { useComments } from "@/hooks/useComments";
 import InitFrameSDK from "@/hooks/init-frame-sdk";
+import BountyDetail from "@/app/bounties/BountyDetail";
 
 interface PostPageProps {
   author: string;
@@ -83,6 +84,12 @@ export default function PostPage({ author, permlink }: PostPageProps) {
         <Spinner size="xl" color="primary" />
       </Box>
     );
+  }
+
+  // Detect if this is a bounty post
+  const isBounty = post.body && post.body.includes("Trick/Challenge:");
+  if (isBounty) {
+    return <BountyDetail post={post} />;
   }
 
   return (
