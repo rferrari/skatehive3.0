@@ -42,6 +42,8 @@ export default function BountyList({
   const [filter, setFilter] = useState<"all" | "active" | "completed">("active");
   const [bountyGrinders, setBountyGrinders] = useState<string[]>([]);
   const [isLoadingGrinders, setIsLoadingGrinders] = useState(false);
+  const [hivePrice, setHivePrice] = useState<number | null>(null);
+  const [isPriceLoading, setIsPriceLoading] = useState(true);
 
   useEffect(() => {
     let bounties = [...comments];
@@ -98,6 +100,24 @@ export default function BountyList({
   const indexToFilter = (idx: number) =>
     ["all", "active", "completed"][idx] as typeof filter;
 
+  useEffect(() => {
+    async function fetchPrices() {
+      setIsPriceLoading(true);
+      try {
+        const res = await fetch(
+          "https://api.coingecko.com/api/v3/simple/price?ids=hive&vs_currencies=usd"
+        );
+        const data = await res.json();
+        setHivePrice(data.hive ? data.hive.usd : null);
+      } catch (e) {
+        setHivePrice(null);
+      } finally {
+        setIsPriceLoading(false);
+      }
+    }
+    fetchPrices();
+  }, []);
+
   // --- Stats Computation ---
   // Get all active bounties
   const now = new Date();
@@ -113,6 +133,27 @@ export default function BountyList({
     const match = b.body.match(/Reward:\s*(.*)/);
     return match && match[1] ? match[1].trim() : null;
   }).filter(Boolean);
+
+  // Calculate total USD value of active rewards
+  const totalActiveRewardsUSD = useMemo(() => {
+    if (isPriceLoading || hivePrice === null) return null;
+    let total = 0;
+    for (const reward of rewardsUpForGrabs) {
+      if (!reward) continue;
+      // Match e.g. "10 HBD" or "5 Hive"
+      const match = reward.match(/([\d.]+)\s*(HBD|HIVE)/i);
+      if (match) {
+        const amount = parseFloat(match[1]);
+        const currency = match[2].toUpperCase();
+        if (currency === "HBD") {
+          total += amount * 1;
+        } else if (currency === "HIVE") {
+          total += amount * hivePrice;
+        }
+      }
+    }
+    return total;
+  }, [rewardsUpForGrabs, hivePrice, isPriceLoading]);
 
   // Extract permlinks for dependency
   const activeBountyPermlinks = activeBounties.map(b => b.permlink).join(",");
@@ -203,14 +244,12 @@ export default function BountyList({
           {/* Rewards Up for Grabs */}
           <Box flex="1" textAlign="center">
             <Text fontWeight="bold" fontSize="2xl" color="primary.400">
-              {rewardsUpForGrabs.length > 0 ? (
-                rewardsUpForGrabs.join(", ")
-              ) : (
-                0
-              )}
+              {isPriceLoading || totalActiveRewardsUSD === null
+                ? "Calculating..."
+                : `~$${totalActiveRewardsUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })} USD`}
             </Text>
             <Text fontSize="md" color="text">
-              rewards
+              active rewards
             </Text>
           </Box>
           <Box height="60%" borderLeft="2px solid" borderColor="gray.700" />
@@ -224,7 +263,7 @@ export default function BountyList({
                 : bountyGrinders.length}
             </Text>
             <Text fontSize="md" color="text">
-              hunters
+              active hunters
             </Text>
           </Box>
         </Flex>

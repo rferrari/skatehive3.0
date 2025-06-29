@@ -322,7 +322,13 @@ const BountySnap = ({
       const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
       const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-      deadlineCountdown = `${diffDays}d ${diffHours}h${diffDays === 0 ? ` ${diffMinutes}m` : ''} left`;
+      let parts = [];
+      if (diffDays > 0) parts.push(`${diffDays}d`);
+      if (diffHours > 0) parts.push(`${diffHours}h`);
+      if (diffMinutes > 0) parts.push(`${diffMinutes}m`);
+      deadlineCountdown = parts.length > 0 ? (
+        <span>{parts.join(' ')} <img src="/images/clock.gif" alt="clock" style={{ display: 'inline', width: '18px', height: '18px', verticalAlign: 'middle', marginLeft: '2px' }} /></span>
+      ) : 'Expired';
     } else {
       deadlineCountdown = 'Expired';
     }
@@ -459,7 +465,7 @@ const BountySnap = ({
             </Box>
           )}
           <Text fontWeight="medium" fontSize="sm" color="gray" textShadow="0 2px 8px rgba(0,0,0,0.18)">
-            {deadlineCountdown ? deadlineCountdown : commentDate}
+            {commentDate}
           </Text>
         </Flex>
         {/* Centered status row */}
@@ -583,6 +589,14 @@ const BountySnap = ({
               />
             </HStack>
           </HStack>
+        </Box>
+      )}
+      {/* Time Remaining Footer */}
+      {deadlineCountdown && (
+        <Box position="absolute" left={0} right={0} bottom={disableFooter ? 0 : '70px'} px={4} pb={2} zIndex={2} textAlign="center">
+          <Text fontSize="md" fontWeight="bold">
+            {deadlineCountdown}
+          </Text>
         </Box>
       )}
       {/* Content area (between header and footer, scrollable but no visible scrollbar) */}

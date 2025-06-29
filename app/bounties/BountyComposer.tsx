@@ -12,6 +12,7 @@ import {
   IconButton,
   Wrap,
   Image,
+  Select,
 } from "@chakra-ui/react";
 import { useAioha } from "@aioha/react-ui";
 import { Discussion } from "@hiveio/dhive";
@@ -32,7 +33,8 @@ export default function BountyComposer({ onNewBounty, onClose }: BountyComposerP
   const { user, aioha } = useAioha();
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const [trick, setTrick] = useState("");
-  const [reward, setReward] = useState("");
+  const [rewardAmount, setRewardAmount] = useState("");
+  const [rewardCurrency, setRewardCurrency] = useState("HBD");
   const [isLoading, setIsLoading] = useState(false);
   const videoUploaderRef = useRef<VideoUploaderRef>(null);
   const imageCompressorRef = useRef<ImageCompressorRef>(null);
@@ -49,8 +51,12 @@ export default function BountyComposer({ onNewBounty, onClose }: BountyComposerP
       alert("Please enter a trick/challenge name.");
       return;
     }
-    if (!reward.trim()) {
-      alert("Please enter a reward for the bounty.");
+    if (!rewardAmount.trim() || isNaN(Number(rewardAmount)) || Number(rewardAmount) <= 0) {
+      alert("Please enter a valid numerical reward amount.");
+      return;
+    }
+    if (!rewardCurrency) {
+      alert("Please select a reward currency.");
       return;
     }
     if (!description.trim()) {
@@ -71,7 +77,7 @@ export default function BountyComposer({ onNewBounty, onClose }: BountyComposerP
     const permlink = new Date().toISOString().replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
     let bountyBody = `Trick/Challenge: ${trick}\n`;
     bountyBody += `Bounty Rules: ${description}\n`;
-    bountyBody += `Reward: ${reward}`;
+    bountyBody += `Reward: ${rewardAmount} ${rewardCurrency}`;
     const formattedDeadline = format(selectedDate, "MM-dd-yyyy");
     bountyBody += `\nDeadline: ${formattedDeadline}`;
     // Add image markdown
@@ -100,7 +106,8 @@ export default function BountyComposer({ onNewBounty, onClose }: BountyComposerP
       );
       if (commentResponse.success) {
         setTrick("");
-        setReward("");
+        setRewardAmount("");
+        setRewardCurrency("HBD");
         setDeadline("");
         setCompressedImages([]);
         setVideoUrl(null);
@@ -304,12 +311,26 @@ export default function BountyComposer({ onNewBounty, onClose }: BountyComposerP
         </FormControl>
         <FormControl isRequired>
           <FormLabel fontWeight="bold">Reward</FormLabel>
-          <Input
-            placeholder="e.g. 10 HBD, Skatehive NFT, etc."
-            value={reward}
-            onChange={e => setReward(e.target.value)}
-            isDisabled={isLoading}
-          />
+          <HStack>
+            <Input
+              placeholder="Amount"
+              type="number"
+              min={0}
+              value={rewardAmount}
+              onChange={e => setRewardAmount(e.target.value)}
+              isDisabled={isLoading}
+              width="120px"
+            />
+            <Select
+              value={rewardCurrency}
+              onChange={e => setRewardCurrency(e.target.value)}
+              isDisabled={isLoading}
+              width="100px"
+            >
+              <option value="HBD">HBD</option>
+              <option value="HIVE">Hive</option>
+            </Select>
+          </HStack>
         </FormControl>
         <FormControl isRequired>
           <FormLabel fontWeight="bold">Deadline</FormLabel>
@@ -328,7 +349,10 @@ export default function BountyComposer({ onNewBounty, onClose }: BountyComposerP
           isDisabled={
             isLoading ||
             !trick.trim() ||
-            !reward.trim() ||
+            !rewardAmount.trim() ||
+            isNaN(Number(rewardAmount)) ||
+            Number(rewardAmount) <= 0 ||
+            !rewardCurrency ||
             !(descriptionRef.current && descriptionRef.current.value.trim()) ||
             !deadline ||
             !isAfter(parseISO(deadline), new Date())
