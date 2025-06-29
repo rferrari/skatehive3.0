@@ -106,6 +106,7 @@ const BountySubmission = ({
         showMedia={true}
         showTitle={false}
         showAuthor={true}
+        showPosterBackground={false}
       />
       <Divider my={4} />
       {isActive ? (
@@ -127,6 +128,7 @@ const BountySubmission = ({
             discussion={reply}
             onOpen={onOpen}
             setReply={setReply}
+            showAuthor={true}
           />
         ))}
       </VStack>

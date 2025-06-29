@@ -290,7 +290,7 @@ export default function BountyList({
             onOpen={() => handleOpenSubmission(bounty)}
             setReply={() => {}}
             setConversation={handleOpenSubmission}
-            showAuthor={false}
+            showAuthor={true}
           />
         ))}
       </SimpleGrid>

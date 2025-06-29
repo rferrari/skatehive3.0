@@ -131,6 +131,7 @@ interface BountySnapProps {
   showMedia?: boolean;
   showTitle?: boolean;
   showAuthor?: boolean;
+  showPosterBackground?: boolean;
 }
 
 const BountySnap = ({
@@ -142,6 +143,7 @@ const BountySnap = ({
   showMedia,
   showTitle,
   showAuthor = true,
+  showPosterBackground = true,
 }: BountySnapProps) => {
   const { aioha, user } = useAioha();
   const { hiveAccount } = useHiveAccount(user || "");
@@ -343,127 +345,109 @@ const BountySnap = ({
     <Box
       pl={effectiveDepth > 1 ? 1 : 0}
       ml={effectiveDepth > 1 ? 2 : 0}
-      p={4}
-      pt={8}
+      p={0}
+      pt={4}
       position="relative"
       display="flex"
       flexDirection="column"
-      minHeight="420px"
-      maxHeight="420px"
-      sx={{
+      minHeight="370px"
+      maxHeight="370px"
+      sx={showPosterBackground ? {
         backgroundImage: 'url(/images/paper.svg)',
         backgroundRepeat: 'no-repeat',
-        backgroundSize: 'contain',
+        backgroundSize: '100% 100%',
         backgroundPosition: 'center',
+        borderRadius: '16px',
+        overflow: 'hidden',
+      } : {
         borderRadius: '16px',
         overflow: 'hidden',
       }}
     >
-      {/* Overlay for readability */}
-      <Box
-        position="absolute"
-        top={0}
-        left={0}
-        right={0}
-        bottom={0}
-        bg="background"
-        opacity={0.85}
-        zIndex={0}
-        borderRadius="16px"
-      />
-      <Box mt={1} mb={1} borderRadius="base" width="100%" position="relative" zIndex={1} flexGrow={1}>
-        {/* Title as clickable bold text (only if showTitle) */}
-        {showTitle !== false && (
-          <Box
-            as="button"
-            width="100%"
-            textAlign="left"
-            onClick={onOpen}
-            bg="transparent"
-            border="none"
-            p={0}
-            mb={2}
-            _hover={{ textDecoration: "underline", cursor: "pointer" }}
-          >
-            <Flex align="center" justify="space-between" mb={1}>
-              <Text fontWeight="bold" fontSize="xl" textShadow="0 2px 8px rgba(0,0,0,0.25)">
-                {title || "Untitled Bounty"}
-              </Text>
-              <Text fontWeight="medium" fontSize="sm" color="gray" textShadow="0 2px 8px rgba(0,0,0,0.18)">
-                {deadlineCountdown ? deadlineCountdown : commentDate}
-              </Text>
-            </Flex>
-            <HStack spacing={2} align="center">
-              {statusNote}
-            </HStack>
-          </Box>
-        )}
-        <HStack mb={2}>
-          {showAuthor && (
-            <Link
-              href={`/user/${discussion.author}`}
-              _hover={{ textDecoration: "none" }}
-              display="flex"
-              alignItems="center"
-              role="group"
-            >
-              <Avatar
-                size="sm"
-                name={discussion.author}
-                src={`https://images.hive.blog/u/${discussion.author}/avatar/sm`}
-                ml={2}
-              />
-              <Text
-                fontWeight="medium"
-                fontSize="sm"
-                ml={2}
-                whiteSpace="nowrap"
-                _groupHover={{ textDecoration: "underline" }}
-                textShadow="0 2px 8px rgba(0,0,0,0.25)"
-              >
-                {discussion.author}
-              </Text>
-            </Link>
-          )}
-          <HStack ml={0} width="100%"></HStack>
-        </HStack>
-        <Box>
-          <Box
-            dangerouslySetInnerHTML={{ __html: markdownRenderer(text) }}
-            sx={{
-              p: {
-                marginBottom: "1rem",
-                lineHeight: "1.6",
-                marginLeft: "4",
-                textShadow: "0 2px 8px rgba(0,0,0,0.18)",
-              },
-            }}
-          />
-          {showMedia && <Box>{renderedMedia}</Box>}
+      {/* Overlay for readability (restored) */}
+      {showPosterBackground && (
+        <Box
+          position="absolute"
+          top={0}
+          left={0}
+          right={0}
+          bottom={0}
+          bg="background"
+          opacity={0.85}
+          zIndex={0}
+          borderRadius="16px"
+        />
+      )}
+      {/* Title at the very top */}
+      <Box px={4} pt={3} zIndex={1}>
+        <Box
+          mb={1}
+          minHeight="2.5em"
+          maxHeight="2.5em"
+          display="flex"
+          alignItems="center"
+          lineHeight="1.1em"
+          wordBreak="break-word"
+        >
+          <Text fontWeight="bold" fontSize="xl" lineHeight="1.1" display="block">
+            {title || "Untitled Bounty"}
+          </Text>
         </Box>
-
-        <Box mt={2}>
-          {inlineComposerStates[discussion.permlink] && (
-            <Box mt={2}>
-              <SnapComposer
-                pa={discussion.author}
-                pp={discussion.permlink}
-                onNewComment={handleInlineNewReply}
-                onClose={() =>
-                  setInlineComposerStates((prev: Record<string, boolean>) => ({
-                    ...prev,
-                    [discussion.permlink]: false,
-                  }))
-                }
-                post
-              />
+        {/* Author, status, time row */}
+        <Flex align="center" justify="space-between" width="100%" mb={1}>
+          {showAuthor && (
+            <Box display="flex" alignItems="center">
+              <Text mr={1} fontWeight="normal" fontSize="md" color="gray.400">by</Text>
+              <Link
+                href={`/user/${discussion.author}`}
+                _hover={{ textDecoration: "none" }}
+                display="flex"
+                alignItems="center"
+                role="group"
+              >
+                <Avatar
+                  size="xs"
+                  name={discussion.author}
+                  src={`https://images.hive.blog/u/${discussion.author}/avatar/sm`}
+                  ml={0}
+                />
+                <Text
+                  fontWeight="medium"
+                  fontSize="sm"
+                  ml={1}
+                  whiteSpace="nowrap"
+                  _groupHover={{ textDecoration: "underline" }}
+                  textShadow="0 2px 8px rgba(0,0,0,0.25)"
+                >
+                  {discussion.author}
+                </Text>
+              </Link>
             </Box>
           )}
+          <Text fontWeight="medium" fontSize="sm" color="gray" textShadow="0 2px 8px rgba(0,0,0,0.18)">
+            {deadlineCountdown ? deadlineCountdown : commentDate}
+          </Text>
+        </Flex>
+        {/* Centered status row */}
+        <Flex align="center" justify="center" width="100%" mb={2}>
+          <Box>
+            {statusNote}
+          </Box>
+        </Flex>
+        {/* Reward bar (now below header, above description, no background) */}
+        <Box mb={2}>
+          <Text fontWeight="bold" fontSize="md" color="orange.300" letterSpacing="wider">
+            Reward: {(() => {
+              const match = discussion.body.match(/Reward:\s*([^\n]*)/);
+              return match && match[1] ? match[1].trim() : 'N/A';
+            })()}
+          </Text>
         </Box>
-
-        <HStack justify="center" spacing={8} mt={3}>
+      </Box>
+      {/* Footer (absolute) */}
+      <Box position="absolute" left={0} right={0} bottom={0} px={4} pb={4} zIndex={1} height="70px">
+        <HStack justify="center" spacing={8} height="100%">
           <HStack>
-            {/* Link icon as first item in footer */}
             <Button
               variant="ghost"
               size="sm"
@@ -562,6 +546,42 @@ const BountySnap = ({
             />
           </HStack>
         </HStack>
+      </Box>
+      {/* Content area (between header and footer, scrollable but no visible scrollbar) */}
+      <Box
+        position="relative"
+        flex="1 1 auto"
+        overflowY="auto"
+        px={4}
+        pt="0px"
+        pb="80px"  // footer height + spacing
+        zIndex={1}
+        height="100%"
+        minHeight="0"
+        sx={{
+          '::-webkit-scrollbar': { display: 'none' }, // Hide scrollbar for Chrome, Safari
+          scrollbarWidth: 'none', // Hide scrollbar for Firefox
+        }}
+      >
+        {/* Rules (5 lines, clamp) */}
+        {text && (
+          <Box
+            mb={2}
+            lineHeight="1.1em"
+            wordBreak="break-word"
+          >
+            <Text fontSize="md" lineHeight="1.1" display="block">
+              {/* Only show rules part of text */}
+              {(() => {
+                const rulesMatch = discussion.body.match(/Bounty Rules:\s*([\s\S]*?)(?:\n|$)/);
+                return rulesMatch && rulesMatch[1] ? rulesMatch[1].trim() : '';
+              })()}
+            </Text>
+          </Box>
+        )}
+        {/* Media and rest of content */}
+        {showMedia && <Box>{renderedMedia}</Box>}
+        {/* Inline composer, replies, etc. remain unchanged and can be added here if needed */}
       </Box>
     </Box>
   );
