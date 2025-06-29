@@ -1,6 +1,6 @@
 'use client';
 import { Container, Box } from '@chakra-ui/react';
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, Suspense } from 'react';
 import { Discussion } from '@hiveio/dhive';
 import { findPosts, getPayoutValue } from '@/lib/hive/client-functions';
 import TopBar from '@/components/blog/TopBar';
@@ -12,7 +12,7 @@ import Magazine from '@/components/shared/Magazine';
 import { Modal, ModalOverlay, ModalContent, IconButton } from '@chakra-ui/react';
 import { ArrowBackIcon } from '@chakra-ui/icons';
 
-export default function Blog() {
+function BlogContent() {
     const searchParams = useSearchParams();
     const initialView = searchParams?.get('view');
     const validViews = ['grid', 'list', 'magazine'];
@@ -207,5 +207,30 @@ export default function Blog() {
                 )}
             </Box>
         </>
+    );
+}
+
+export default function Blog() {
+    return (
+        <Suspense fallback={
+            <Box
+                maxW="container.lg"
+                mx="auto"
+                maxH="100vh"
+                overflowY="auto"
+                p={0}
+                sx={{
+                    '&::-webkit-scrollbar': { display: 'none' },
+                    scrollbarWidth: 'none',
+                }}
+            >
+                <JoinSkatehiveBanner />
+                <Box textAlign="center" color="primary" py={4} fontWeight="bold">
+                    Loading...
+                </Box>
+            </Box>
+        }>
+            <BlogContent />
+        </Suspense>
     );
 }

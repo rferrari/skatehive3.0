@@ -98,9 +98,6 @@ export const metadata: Metadata = {
     shortcut: "/favicon.ico",
     apple: "/favicon.ico",
   },
-  verification: {
-    google: "your-google-verification-code",
-  },
   other: {
     "fc:frame": JSON.stringify(frameObject),
     "fc:frame:image": `${BASE_URL}/ogimage.png`,

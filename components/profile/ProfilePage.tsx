@@ -38,7 +38,7 @@ import { useAioha } from "@aioha/react-ui";
 import EditProfile from "./EditProfile";
 import Magazine from "../shared/Magazine";
 import { ArrowBackIcon } from '@chakra-ui/icons';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { VideoPart } from "@/types/VideoPart";
 import VideoPartsView from "./VideoPartsView";
 

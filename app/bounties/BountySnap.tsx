@@ -5,7 +5,6 @@ import {
   Button,
   Avatar,
   Link,
-  VStack,
   Flex,
   Slider,
   SliderTrack,
@@ -14,23 +13,14 @@ import {
   Tooltip,
   useToast,
   Image,
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-  PopoverArrow,
-  PopoverBody,
   useDisclosure,
   Tag,
 } from "@chakra-ui/react";
 import { Discussion } from "@hiveio/dhive";
-import { FaRegComment } from "react-icons/fa";
 import { LuArrowUpRight } from "react-icons/lu";
 import { useAioha } from "@aioha/react-ui";
-import { useState, useEffect, useMemo } from "react";
-import {
-  getPayoutValue,
-  calculateUserVoteValue,
-} from "@/lib/hive/client-functions";
+import { useState, useMemo } from "react";
+import { getPayoutValue } from "@/lib/hive/client-functions";
 import markdownRenderer from "@/lib/utils/MarkdownRenderer";
 import { getPostDate } from "@/lib/utils/GetPostDate";
 import useHiveAccount from "@/hooks/useHiveAccount";
@@ -174,20 +164,17 @@ const BountySnap = ({
 
   const effectiveDepth = discussion.depth || 0;
 
-  const { text, media } = useMemo(
-    () => {
-      // Replace labels for display
-      let displayBody = discussion.body
-        .replace(/Trick\/Challenge:/g, '<b>Challenge:</b>')
-        .replace(/Bounty Rules:/g, '<b>Rules:</b>')
-        .replace(/Reward:/g, '<b>Reward:</b>')
-        .replace(/Deadline:/g, '<b>Deadline:</b>');
-      // Remove the Deadline line from the display
-      displayBody = displayBody.replace(/^.*<b>Deadline:<\/b>.*$/m, '');
-      return separateContent(displayBody);
-    },
-    [discussion.body]
-  );
+  const { text, media } = useMemo(() => {
+    // Replace labels for display
+    let displayBody = discussion.body
+      .replace(/Trick\/Challenge:/g, "<b>Challenge:</b>")
+      .replace(/Bounty Rules:/g, "<b>Rules:</b>")
+      .replace(/Reward:/g, "<b>Reward:</b>")
+      .replace(/Deadline:/g, "<b>Deadline:</b>");
+    // Remove the Deadline line from the display
+    displayBody = displayBody.replace(/^.*<b>Deadline:<\/b>.*$/m, "");
+    return separateContent(displayBody);
+  }, [discussion.body]);
   const renderedMedia = useMemo(() => renderMedia(media), [media]);
 
   const [voted, setVoted] = useState(
@@ -320,17 +307,35 @@ const BountySnap = ({
     const diffMs = deadline.getTime() - now.getTime();
     if (diffMs > 0) {
       const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-      const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const diffHours = Math.floor(
+        (diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+      );
       const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
       let parts = [];
       if (diffDays > 0) parts.push(`${diffDays}d`);
       if (diffHours > 0) parts.push(`${diffHours}h`);
       if (diffMinutes > 0) parts.push(`${diffMinutes}m`);
-      deadlineCountdown = parts.length > 0 ? (
-        <span>{parts.join(' ')} <img src="/images/clock.gif" alt="clock" style={{ display: 'inline', width: '18px', height: '18px', verticalAlign: 'middle', marginLeft: '2px' }} /></span>
-      ) : 'Expired';
+      deadlineCountdown =
+        parts.length > 0 ? (
+          <span>
+            {parts.join(" ")}{" "}
+            <Image
+              src="/images/clock.gif"
+              alt="clock"
+              style={{
+                display: "inline",
+                width: "18px",
+                height: "18px",
+                verticalAlign: "middle",
+                marginLeft: "2px",
+              }}
+            />
+          </span>
+        ) : (
+          "Expired"
+        );
     } else {
-      deadlineCountdown = 'Expired';
+      deadlineCountdown = "Expired";
     }
   }
   const nowDate = new Date();
@@ -370,34 +375,36 @@ const BountySnap = ({
       sx={{
         ...(showPosterBackground
           ? {
-              backgroundImage: 'url(/images/paper.svg)',
-              backgroundRepeat: 'no-repeat',
-              backgroundSize: '100% 100%',
-              backgroundPosition: 'center',
-              borderRadius: '16px',
-              overflow: 'hidden',
-              transition: 'box-shadow 0.2s, background 0.2s',
-              cursor: disableCardClick ? 'default' : 'pointer',
+              backgroundImage: "url(/images/paper.svg)",
+              backgroundRepeat: "no-repeat",
+              backgroundSize: "100% 100%",
+              backgroundPosition: "center",
+              borderRadius: "16px",
+              overflow: "hidden",
+              transition: "box-shadow 0.2s, background 0.2s",
+              cursor: disableCardClick ? "default" : "pointer",
               ...(disableCardClick
                 ? {}
                 : {
-                    ':hover': {
-                      boxShadow: '0 0 0 3px #ff9800, 0 2px 16px rgba(0,0,0,0.18)',
-                      background: 'rgba(0,0,0,0.03)',
+                    ":hover": {
+                      boxShadow:
+                        "0 0 0 3px #ff9800, 0 2px 16px rgba(0,0,0,0.18)",
+                      background: "rgba(0,0,0,0.03)",
                     },
                   }),
             }
           : {
-              borderRadius: '16px',
-              overflow: 'hidden',
-              transition: 'box-shadow 0.2s, background 0.2s',
-              cursor: disableCardClick ? 'default' : 'pointer',
+              borderRadius: "16px",
+              overflow: "hidden",
+              transition: "box-shadow 0.2s, background 0.2s",
+              cursor: disableCardClick ? "default" : "pointer",
               ...(disableCardClick
                 ? {}
                 : {
-                    ':hover': {
-                      boxShadow: '0 0 0 3px #ff9800, 0 2px 16px rgba(0,0,0,0.18)',
-                      background: 'rgba(0,0,0,0.03)',
+                    ":hover": {
+                      boxShadow:
+                        "0 0 0 3px #ff9800, 0 2px 16px rgba(0,0,0,0.18)",
+                      background: "rgba(0,0,0,0.03)",
                     },
                   }),
             }),
@@ -428,7 +435,12 @@ const BountySnap = ({
           lineHeight="1.1em"
           wordBreak="break-word"
         >
-          <Text fontWeight="bold" fontSize="xl" lineHeight="1.1" display="block">
+          <Text
+            fontWeight="bold"
+            fontSize="xl"
+            lineHeight="1.1"
+            display="block"
+          >
             {title || "Untitled Bounty"}
           </Text>
         </Box>
@@ -436,7 +448,9 @@ const BountySnap = ({
         <Flex align="center" justify="space-between" width="100%" mb={1}>
           {showAuthor && (
             <Box display="flex" alignItems="center">
-              <Text mr={1} fontWeight="normal" fontSize="md" color="gray.400">by</Text>
+              <Text mr={1} fontWeight="normal" fontSize="md" color="gray.400">
+                by
+              </Text>
               <Link
                 href={`/user/${discussion.author}`}
                 _hover={{ textDecoration: "none" }}
@@ -464,30 +478,47 @@ const BountySnap = ({
               </Link>
             </Box>
           )}
-          <Text fontWeight="medium" fontSize="sm" color="gray" textShadow="0 2px 8px rgba(0,0,0,0.18)">
+          <Text
+            fontWeight="medium"
+            fontSize="sm"
+            color="gray"
+            textShadow="0 2px 8px rgba(0,0,0,0.18)"
+          >
             {commentDate}
           </Text>
         </Flex>
         {/* Centered status row */}
         <Flex align="center" justify="center" width="100%" mb={2}>
-          <Box>
-            {statusNote}
-          </Box>
+          <Box>{statusNote}</Box>
         </Flex>
         {/* Reward bar (now below header, above description, no background) */}
         <Box mb={2}>
-          <Text fontWeight="bold" fontSize="md" color="orange.300" letterSpacing="wider">
-            Reward: {(() => {
+          <Text
+            fontWeight="bold"
+            fontSize="md"
+            color="orange.300"
+            letterSpacing="wider"
+          >
+            Reward:{" "}
+            {(() => {
               const match = discussion.body.match(/Reward:\s*([^\n]*)/);
-              return match && match[1] ? match[1].trim() : 'N/A';
+              return match && match[1] ? match[1].trim() : "N/A";
             })()}
           </Text>
         </Box>
       </Box>
       {/* Footer (absolute) */}
       {!disableFooter && (
-        <Box position="absolute" left={0} right={0} bottom={0} px={4} pb={4} zIndex={1} height="70px"
-          pointerEvents={disableCardClick ? 'auto' : undefined}
+        <Box
+          position="absolute"
+          left={0}
+          right={0}
+          bottom={0}
+          px={4}
+          pb={4}
+          zIndex={1}
+          height="70px"
+          pointerEvents={disableCardClick ? "auto" : undefined}
         >
           <HStack justify="center" spacing={8} height="100%">
             <HStack>
@@ -496,11 +527,13 @@ const BountySnap = ({
                 size="sm"
                 p={1}
                 minW={"auto"}
-                onClick={(e) => { e.stopPropagation(); handleSharePost(); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSharePost();
+                }}
                 leftIcon={<FaLink size={16} color="gray" />}
                 _hover={{ bg: "gray.700", borderRadius: "full" }}
-              >
-              </Button>
+              ></Button>
               <Tooltip label="upvote" hasArrow openDelay={1000}>
                 <Button
                   leftIcon={
@@ -511,7 +544,10 @@ const BountySnap = ({
                     />
                   }
                   variant="ghost"
-                  onClick={(e) => { e.stopPropagation(); handleHeartClick(); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleHeartClick();
+                  }}
                   size="sm"
                   p={2}
                   _hover={{ bg: "gray.700", borderRadius: "full" }}
@@ -555,7 +591,10 @@ const BountySnap = ({
                   <Button
                     size="xs"
                     colorScheme="primary"
-                    onClick={(e) => { e.stopPropagation(); handleVote(); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleVote();
+                    }}
                     isDisabled={voted}
                     ml={2}
                   >
@@ -564,7 +603,10 @@ const BountySnap = ({
                   <Button
                     size="xs"
                     variant="ghost"
-                    onClick={(e) => { e.stopPropagation(); setShowSlider(false); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowSlider(false);
+                    }}
                     ml={1}
                   >
                     Cancel
@@ -593,7 +635,16 @@ const BountySnap = ({
       )}
       {/* Time Remaining Footer */}
       {deadlineCountdown && (
-        <Box position="absolute" left={0} right={0} bottom={disableFooter ? 0 : '70px'} px={4} pb={2} zIndex={2} textAlign="center">
+        <Box
+          position="absolute"
+          left={0}
+          right={0}
+          bottom={disableFooter ? 0 : "70px"}
+          px={4}
+          pb={2}
+          zIndex={2}
+          textAlign="center"
+        >
           <Text fontSize="md" fontWeight="bold">
             {deadlineCountdown}
           </Text>
@@ -606,27 +657,25 @@ const BountySnap = ({
         overflowY="auto"
         px={4}
         pt="0px"
-        pb="80px"  // footer height + spacing
+        pb="80px" // footer height + spacing
         zIndex={1}
         height="100%"
         minHeight="0"
         sx={{
-          '::-webkit-scrollbar': { display: 'none' }, // Hide scrollbar for Chrome, Safari
-          scrollbarWidth: 'none', // Hide scrollbar for Firefox
+          "::-webkit-scrollbar": { display: "none" }, // Hide scrollbar for Chrome, Safari
+          scrollbarWidth: "none", // Hide scrollbar for Firefox
         }}
       >
         {/* Rules (5 lines, clamp) */}
         {text && (
-          <Box
-            mb={2}
-            lineHeight="1.1em"
-            wordBreak="break-word"
-          >
+          <Box mb={2} lineHeight="1.1em" wordBreak="break-word">
             <Text fontSize="md" lineHeight="1.1" display="block">
               {/* Only show rules part of text */}
               {(() => {
-                const rulesMatch = discussion.body.match(/Bounty Rules:\s*([\s\S]*?)(?:\n|$)/);
-                return rulesMatch && rulesMatch[1] ? rulesMatch[1].trim() : '';
+                const rulesMatch = discussion.body.match(
+                  /Bounty Rules:\s*([\s\S]*?)(?:\n|$)/
+                );
+                return rulesMatch && rulesMatch[1] ? rulesMatch[1].trim() : "";
               })()}
             </Text>
           </Box>

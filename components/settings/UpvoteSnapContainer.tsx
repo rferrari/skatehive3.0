@@ -17,7 +17,6 @@ interface UpvoteSnapContainerProps {
 
 export default function UpvoteSnapContainer({ hideIfVoted = false }: UpvoteSnapContainerProps) {
   const { user, aioha } = useAioha();
-  if (!user) return null;
   const [snapContainer, setSnapContainer] = useState<Discussion | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isVoting, setIsVoting] = useState(false);
@@ -72,6 +71,8 @@ export default function UpvoteSnapContainer({ hideIfVoted = false }: UpvoteSnapC
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [fetchSnapContainerData]);
+
+  if (!user) return null;
 
   const handleUpvote = async () => {
     if (!user) {

@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Box, Text, VStack, Spinner } from "@chakra-ui/react";
 
-export default function SharePage() {
+function SharePageContent() {
   const searchParams = useSearchParams();
   const [castData, setCastData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -73,5 +73,22 @@ export default function SharePage() {
         )}
       </VStack>
     </Box>
+  );
+}
+
+export default function SharePage() {
+  return (
+    <Suspense fallback={
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minH="100vh"
+      >
+        <Spinner size="xl" />
+      </Box>
+    }>
+      <SharePageContent />
+    </Suspense>
   );
 }

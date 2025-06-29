@@ -77,7 +77,7 @@ export default function BountiesClient() {
                 <ul style={{ paddingLeft: 20, margin: 0 }}>
                   <li>Anyone can post a bounty or claim one. Got crypto? Submit. Got tricks? Send it.</li>
                   <li>All clips must be original and filmed for the bounty. <b>NO RECYCLED CLIPS!</b> Cheaters get roasted by the community.</li>
-                  <li>Bounty creators gotta send the prize. If you don't, the community will clown your ass hard.</li>
+                  <li>Bounty creators gotta send the prize. If you don&apos;t, the community will clown your ass hard.</li>
                   <li>Bounties are for fun, hype, and getting rewarded. Skatehive is not liable for injuries, broken boards, or copyright violations.</li>
                 </ul>
               </AccordionPanel>
