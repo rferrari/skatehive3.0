@@ -22,6 +22,8 @@ import { Discussion } from "@hiveio/dhive";
 import BountySnap from "./BountySnap";
 import { parse, isAfter } from "date-fns";
 import HiveClient from "@/lib/hive/hiveclient";
+import { useBountyClaims } from "@/hooks/useBountyClaims";
+import { useHiveUser } from "@/contexts/UserContext";
 
 interface BountyListProps {
   newBounty?: Discussion | null;
@@ -39,11 +41,19 @@ export default function BountyList({
   );
   const [displayedBounties, setDisplayedBounties] = useState<Discussion[]>([]);
   const [visibleCount, setVisibleCount] = useState(10);
-  const [filter, setFilter] = useState<"all" | "active" | "completed">("active");
+  const [filter, setFilter] = useState<
+    "active" | "claimed" | "all" | "completed"
+  >("active");
   const [bountyGrinders, setBountyGrinders] = useState<string[]>([]);
   const [isLoadingGrinders, setIsLoadingGrinders] = useState(false);
   const [hivePrice, setHivePrice] = useState<number | null>(null);
   const [isPriceLoading, setIsPriceLoading] = useState(true);
+
+  // Claimed bounties logic
+  const { hiveUser } = useHiveUser();
+  const { claimedBounties, isLoading: isLoadingClaims } = useBountyClaims(hiveUser?.name);
+  const [claimedBountyDetails, setClaimedBountyDetails] = useState<Discussion[]>([]);
+  const [isLoadingClaimedDetails, setIsLoadingClaimedDetails] = useState(false);
 
   useEffect(() => {
     let bounties = [...comments];
@@ -58,6 +68,23 @@ export default function BountyList({
     );
     setDisplayedBounties(bounties);
   }, [comments, newBounty]);
+
+  // Fetch details for claimed bounties
+  useEffect(() => {
+    if (filter === 'claimed' && claimedBounties.length > 0) {
+      setIsLoadingClaimedDetails(true);
+      const fetchDetails = async () => {
+        const details = await Promise.all(
+          claimedBounties.map(claim =>
+            HiveClient.database.call('get_content', [claim.author, claim.permlink])
+          )
+        );
+        setClaimedBountyDetails(details.filter(d => d.permlink) as Discussion[]);
+        setIsLoadingClaimedDetails(false);
+      };
+      fetchDetails();
+    }
+  }, [filter, claimedBounties]);
 
   // Refresh comments when refreshTrigger changes
   useEffect(() => {
@@ -80,25 +107,31 @@ export default function BountyList({
   }
 
   // Filter bounties based on status
-  const filteredBounties = displayedBounties.filter((bounty) => {
-    if (filter === "all") return true;
-    const deadline = getDeadlineFromBody(bounty.body);
-    if (!deadline) return false;
-    const now = new Date();
-    if (filter === "active") return isAfter(deadline, now);
-    if (filter === "completed") return !isAfter(deadline, now);
-    return true;
-  });
+  const filteredBounties = useMemo(() => {
+    if (filter === 'claimed') {
+      return claimedBountyDetails;
+    }
+    return displayedBounties.filter((bounty) => {
+      if (filter === "all") return true;
+      const deadline = getDeadlineFromBody(bounty.body);
+      if (!deadline) return false;
+      const now = new Date();
+      if (filter === "active") return isAfter(deadline, now);
+      if (filter === "completed") return !isAfter(deadline, now);
+      return true;
+    });
+  }, [filter, displayedBounties, claimedBountyDetails]);
 
   // Map filter state to tab index
   const filterToIndex = (f: typeof filter) => {
-    if (f === "all") return 0;
-    if (f === "active") return 1;
-    if (f === "completed") return 2;
+    if (f === "active") return 0;
+    if (f === "claimed") return 1;
+    if (f === "all") return 2;
+    if (f === "completed") return 3;
     return 0;
   };
   const indexToFilter = (idx: number) =>
-    ["all", "active", "completed"][idx] as typeof filter;
+    ["active", "claimed", "all", "completed"][idx] as typeof filter;
 
   useEffect(() => {
     async function fetchPrices() {
@@ -186,7 +219,7 @@ export default function BountyList({
     return () => { cancelled = true; };
   }, [activeBountyPermlinks]);
 
-  if (isLoading) {
+  if (isLoading || (filter === 'claimed' && (isLoadingClaims || isLoadingClaimedDetails))) {
     return (
       <Box textAlign="center" my={8}>
         <Spinner size="xl" />
@@ -203,10 +236,18 @@ export default function BountyList({
     );
   }
 
-  if (displayedBounties.length === 0) {
+  if (displayedBounties.length === 0 && filter !== 'claimed') {
     return (
       <Box textAlign="center" my={8}>
         <Text>No bounties have been submitted yet.</Text>
+      </Box>
+    );
+  }
+
+  if (filter === 'claimed' && claimedBountyDetails.length === 0) {
+    return (
+      <Box textAlign="center" my={8}>
+        <Text>You have not claimed any bounties yet.</Text>
       </Box>
     );
   }
@@ -277,16 +318,8 @@ export default function BountyList({
       >
         <TabList>
           <Tab
-            _selected={{
-              color: "primary",
-              bg: "primary.900",
-              borderColor: "primary",
-              borderWidth: "2px",
-            }}
-          >
-            All
-          </Tab>
-          <Tab
+            borderWidth="2px"
+            borderColor="transparent"
             _selected={{
               color: "primary",
               bg: "primary.900",
@@ -297,6 +330,32 @@ export default function BountyList({
             Active
           </Tab>
           <Tab
+            borderWidth="2px"
+            borderColor="transparent"
+            _selected={{
+              color: "primary",
+              bg: "primary.900",
+              borderColor: "primary",
+              borderWidth: "2px",
+            }}
+          >
+            Claimed
+          </Tab>
+          <Tab
+            borderWidth="2px"
+            borderColor="transparent"
+            _selected={{
+              color: "primary",
+              bg: "primary.900",
+              borderColor: "primary",
+              borderWidth: "2px",
+            }}
+          >
+            All
+          </Tab>
+          <Tab
+            borderWidth="2px"
+            borderColor="transparent"
             _selected={{
               color: "primary",
               bg: "primary.900",

@@ -26,7 +26,7 @@ import {
   CheckboxGroup,
   useDisclosure,
 } from "@chakra-ui/react";
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { Discussion } from "@hiveio/dhive";
 import { getPostDate } from "@/lib/utils/GetPostDate";
 import { useComments } from "@/hooks/useComments";
@@ -43,6 +43,7 @@ import useHivePower from "@/hooks/useHivePower";
 import { useHiveUser } from "@/contexts/UserContext";
 import { transferWithKeychain, commentWithKeychain } from "@/lib/hive/client-functions";
 import { KeychainSDK } from "keychain-sdk";
+import { claimBounty, hasUserClaimed } from "@/hooks/useBountyClaims";
 
 interface BountyDetailProps {
   post: Discussion;
@@ -79,6 +80,12 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
   );
   const { hivePower, isLoading: isHivePowerLoading, error: hivePowerError, estimateVoteValue } = useHivePower(user);
 
+  // Claim state
+  const { hiveUser } = useHiveUser();
+  const [isClaiming, setIsClaiming] = useState(false);
+  const [hasClaimed, setHasClaimed] = useState(false);
+  const [claimError, setClaimError] = useState<string | null>(null);
+
   // Reward Modal State
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [selectedWinners, setSelectedWinners] = useState<string[]>([]);
@@ -101,6 +108,13 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
   const now = new Date();
   const isActive = deadline ? isAfter(deadline, now) : true;
 
+  // Check if user has claimed the bounty
+  useEffect(() => {
+    if (hiveUser?.name && isActive) {
+      hasUserClaimed(hiveUser.name, post.author, post.permlink).then(setHasClaimed);
+    }
+  }, [hiveUser, isActive, post.author, post.permlink]);
+
   // Get unique commenters (exclude bounty creator)
   const uniqueCommenters = useMemo(() => {
     if (!comments) return [];
@@ -115,7 +129,6 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
     const match = body.match(/Reward:\s*([0-9.]+)/);
     return match && match[1] ? parseFloat(match[1]) : 0;
   }, [body]);
-  const { hiveUser } = useHiveUser();
   const [isRewarding, setIsRewarding] = useState(false);
   const [rewardError, setRewardError] = useState<string | null>(null);
   const [rewardSuccess, setRewardSuccess] = useState(false);
@@ -233,6 +246,28 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
       setRewardError(err.message || "Failed to reward bounty hunters.");
     } finally {
       setIsRewarding(false);
+    }
+  }
+
+  // Handler for claiming the bounty
+  async function handleClaimBounty() {
+    if (!hiveUser?.name) {
+      setClaimError("You must be logged in to claim a bounty.");
+      return;
+    }
+    setIsClaiming(true);
+    setClaimError(null);
+    try {
+      const result = await claimBounty(hiveUser.name, post.author, post.permlink);
+      if (result.success) {
+        setHasClaimed(true);
+      } else {
+        setClaimError(result.message || "Failed to claim bounty.");
+      }
+    } catch (err: any) {
+      setClaimError(err.message || "An error occurred while claiming the bounty.");
+    } finally {
+      setIsClaiming(false);
     }
   }
 
@@ -374,6 +409,20 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
               <Text fontWeight="bold" mb={1}>Rules:</Text>
               <HiveMarkdown markdown={body.replace(/^Trick\/Challenge:.*$/gim, '').replace(/^Reward:.*$/gim, '').replace(/^Deadline:.*$/gim, '').replace(/^Bounty Rules: ?/gim, '').trim()} />
             </Box>
+            {/* Claim Bounty Button */}
+            {isActive && hiveUser?.name && hiveUser.name !== post.author && (
+              <Flex justify="center" my={4}>
+                <Button 
+                  colorScheme="green" 
+                  onClick={handleClaimBounty}
+                  isLoading={isClaiming}
+                  isDisabled={hasClaimed}
+                >
+                  {hasClaimed ? "Bounty Claimed" : "Claim Bounty"}
+                </Button>
+              </Flex>
+            )}
+            {claimError && <Text color="red.400" textAlign="center">{claimError}</Text>}
             {/* Media Section */}
             {/* Media Section removed, as full body is now shown above */}
             <Divider />
@@ -435,7 +484,7 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
               onChange={(val) => setSelectedWinners(val as string[])}
             >
               <VStack align="start">
-                {uniqueCommenters.map((username) => (
+                {uniqueCommenters.map((username: string) => (
                   <Checkbox key={username} value={username}>
                     @{username}
                   </Checkbox>
