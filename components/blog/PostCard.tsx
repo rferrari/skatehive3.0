@@ -152,7 +152,7 @@ export default function PostCard({
         setImageUrls([default_thumbnail]);
       }
     }
-  }, [body, metadata, default_thumbnail]);
+  }, [body, metadata, default_thumbnail, post]);
 
   function handleHeartClick() {
     setShowSlider(!showSlider);

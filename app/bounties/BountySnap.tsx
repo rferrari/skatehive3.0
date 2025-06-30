@@ -691,7 +691,6 @@ const BountySnap = ({
                   <Avatar
                     name={vote.voter}
                     src={`https://images.hive.blog/u/${vote.voter}/avatar/small`}
-                    showBorder={false}
                   />
                 </Tooltip>
               ))}

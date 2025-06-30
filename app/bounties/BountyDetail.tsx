@@ -309,7 +309,7 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
               Claim Bounty to Submit
             </Text>
             <Text color="gray.300">
-              Click "Claim Bounty" on the left to unlock submissions.
+              Click &quot;Claim Bounty&quot; on the left to unlock submissions.
             </Text>
           </Box>
         </Box>
