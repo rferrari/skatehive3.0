@@ -15,6 +15,7 @@ import {
   Image,
   useDisclosure,
   Tag,
+  AvatarGroup,
 } from "@chakra-ui/react";
 import { Discussion } from "@hiveio/dhive";
 import { LuArrowUpRight } from "react-icons/lu";
@@ -507,6 +508,20 @@ const BountySnap = ({
           </Text>
         </Box>
       </Box>
+
+      {/* Claimants Avatars */}
+      {uniqueVotes && uniqueVotes.length > 0 && (
+          <Flex justify="center" mb={2} px={4} zIndex={1}>
+              <AvatarGroup size='xs' max={5}>
+                  {uniqueVotes.map(vote => (
+                      <Tooltip label={vote.voter} key={vote.voter} hasArrow>
+                          <Avatar name={vote.voter} src={`https://images.hive.blog/u/${vote.voter}/avatar/small`} />
+                      </Tooltip>
+                  ))}
+              </AvatarGroup>
+          </Flex>
+      )}
+
       {/* Footer (absolute) */}
       {!disableFooter && (
         <Box

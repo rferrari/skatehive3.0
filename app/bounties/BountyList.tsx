@@ -22,8 +22,16 @@ import { Discussion } from "@hiveio/dhive";
 import BountySnap from "./BountySnap";
 import { parse, isAfter } from "date-fns";
 import HiveClient from "@/lib/hive/hiveclient";
-import { useBountyClaims } from "@/hooks/useBountyClaims";
 import { useHiveUser } from "@/contexts/UserContext";
+
+// Manually define the type for get_account_votes response
+interface AccountVote {
+  author: string;
+  permlink: string;
+  weight: number;
+  rshares: number;
+  time: string;
+}
 
 interface BountyListProps {
   newBounty?: Discussion | null;
@@ -51,9 +59,8 @@ export default function BountyList({
 
   // Claimed bounties logic
   const { hiveUser } = useHiveUser();
-  const { claimedBounties, isLoading: isLoadingClaims } = useBountyClaims(hiveUser?.name);
-  const [claimedBountyDetails, setClaimedBountyDetails] = useState<Discussion[]>([]);
-  const [isLoadingClaimedDetails, setIsLoadingClaimedDetails] = useState(false);
+  const [claimedBounties, setClaimedBounties] = useState<Discussion[]>([]);
+  const [isLoadingClaims, setIsLoadingClaims] = useState(false);
 
   useEffect(() => {
     let bounties = [...comments];
@@ -69,22 +76,35 @@ export default function BountyList({
     setDisplayedBounties(bounties);
   }, [comments, newBounty]);
 
-  // Fetch details for claimed bounties
+  // Fetch claimed bounties by user
   useEffect(() => {
-    if (filter === 'claimed' && claimedBounties.length > 0) {
-      setIsLoadingClaimedDetails(true);
-      const fetchDetails = async () => {
-        const details = await Promise.all(
-          claimedBounties.map(claim =>
-            HiveClient.database.call('get_content', [claim.author, claim.permlink])
-          )
-        );
-        setClaimedBountyDetails(details.filter(d => d.permlink) as Discussion[]);
-        setIsLoadingClaimedDetails(false);
+    if (filter === 'claimed' && hiveUser?.name) {
+      setIsLoadingClaims(true);
+      const fetchClaims = async () => {
+        try {
+          // Fetch the user's comments
+          const userComments: Discussion[] = await HiveClient.database.call('get_discussions_by_comments', [{ start_author: hiveUser.name, limit: 100 }]);
+
+          // Filter to find comments that are replies to a known bounty
+          const bountyAuthorPerms = new Set(comments.map(c => `${c.author}/${c.permlink}`));
+          const claimedComments = userComments.filter((comment: Discussion) => 
+            bountyAuthorPerms.has(`${comment.parent_author}/${comment.parent_permlink}`)
+          );
+
+          // Now find the original bounty discussion from the parent permlink
+          const claimedBountyPermlinks = new Set(claimedComments.map((c: Discussion) => c.parent_permlink));
+          const finalBounties = comments.filter(bounty => claimedBountyPermlinks.has(bounty.permlink));
+
+          setClaimedBounties(finalBounties);
+        } catch (error) {
+          console.error("Failed to fetch claimed bounties:", error);
+        } finally {
+          setIsLoadingClaims(false);
+        }
       };
-      fetchDetails();
+      fetchClaims();
     }
-  }, [filter, claimedBounties]);
+  }, [filter, hiveUser?.name, comments]);
 
   // Refresh comments when refreshTrigger changes
   useEffect(() => {
@@ -109,7 +129,7 @@ export default function BountyList({
   // Filter bounties based on status
   const filteredBounties = useMemo(() => {
     if (filter === 'claimed') {
-      return claimedBountyDetails;
+      return claimedBounties;
     }
     return displayedBounties.filter((bounty) => {
       if (filter === "all") return true;
@@ -120,7 +140,7 @@ export default function BountyList({
       if (filter === "completed") return !isAfter(deadline, now);
       return true;
     });
-  }, [filter, displayedBounties, claimedBountyDetails]);
+  }, [filter, displayedBounties, claimedBounties]);
 
   // Map filter state to tab index
   const filterToIndex = (f: typeof filter) => {
@@ -219,7 +239,7 @@ export default function BountyList({
     return () => { cancelled = true; };
   }, [activeBountyPermlinks]);
 
-  if (isLoading || (filter === 'claimed' && (isLoadingClaims || isLoadingClaimedDetails))) {
+  if (isLoading || (filter === 'claimed' && isLoadingClaims)) {
     return (
       <Box textAlign="center" my={8}>
         <Spinner size="xl" />
@@ -244,10 +264,10 @@ export default function BountyList({
     );
   }
 
-  if (filter === 'claimed' && claimedBountyDetails.length === 0) {
+  if (filter === 'claimed' && claimedBounties.length === 0) {
     return (
       <Box textAlign="center" my={8}>
-        <Text>You have not claimed any bounties yet.</Text>
+        <Text>You have not claimed any bounties yet. Go upvote a bounty to claim it!</Text>
       </Box>
     );
   }
