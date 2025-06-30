@@ -16,6 +16,7 @@ import {
   Wrap,
   VStack,
   Flex,
+  Divider,
 } from "@chakra-ui/react";
 import { useComments } from "@/hooks/useComments";
 import { Discussion } from "@hiveio/dhive";
@@ -298,10 +299,10 @@ export default function BountyList({
               {activeBounties.length}
             </Text>
             <Text fontSize="md" color="text">
-              active bounties
+              {activeBounties.length === 1 ? 'active bounty' : 'active bounties'}
             </Text>
           </Box>
-          <Box height="60%" borderLeft="2px solid" borderColor="gray.700" />
+          <Divider orientation="vertical" height="60px" />
           {/* Rewards Up for Grabs */}
           <Box flex="1" textAlign="center">
             <Text fontWeight="bold" fontSize="2xl" color="primary.400">
@@ -313,7 +314,7 @@ export default function BountyList({
               active rewards
             </Text>
           </Box>
-          <Box height="60%" borderLeft="2px solid" borderColor="gray.700" />
+          <Divider orientation="vertical" height="60px" />
           {/* Active Bounty Hunters */}
           <Box flex="1" textAlign="center">
             <Text fontWeight="bold" fontSize="2xl" color="primary.400">
@@ -324,7 +325,7 @@ export default function BountyList({
                 : bountyGrinders.length}
             </Text>
             <Text fontSize="md" color="text">
-              active hunters
+              {bountyGrinders.length === 1 ? 'active hunter' : 'active hunters'}
             </Text>
           </Box>
         </Flex>

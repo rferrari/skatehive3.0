@@ -267,6 +267,65 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
     }
   }
 
+  const renderComposerOrBlocker = () => {
+    if (!isActive) {
+      return null;
+    }
+
+    if (!user) {
+      return (
+        <Box textAlign="center" p={4} bg="gray.800" borderRadius="md">
+          <Text>Please log in to submit.</Text>
+        </Box>
+      );
+    }
+
+    if (user === post.author) {
+      return (
+        <Box textAlign="center" p={4} bg="gray.800" borderRadius="md">
+          <Text>You cannot submit to your own bounty.</Text>
+        </Box>
+      );
+    }
+
+    if (!hasClaimed) {
+      return (
+        <Box
+          position="relative"
+          p={4}
+          borderRadius="md"
+          bg="gray.800"
+          textAlign="center"
+          height="150px"
+          display="flex"
+          flexDirection="column"
+          justifyContent="center"
+          alignItems="center"
+          overflow="hidden"
+        >
+          <MatrixOverlay />
+          <Box position="relative" zIndex={1}>
+            <Text fontWeight="bold" fontSize="lg" color="white">
+              Claim Bounty to Submit
+            </Text>
+            <Text color="gray.300">
+              Click "Claim Bounty" on the left to unlock submissions.
+            </Text>
+          </Box>
+        </Box>
+      );
+    }
+
+    return (
+      <SnapComposer
+        pa={post.author}
+        pp={post.permlink}
+        onNewComment={setNewComment as (newComment: Partial<Discussion>) => void}
+        onClose={() => null}
+      />
+    );
+  };
+
   return (
     <Box bg="background" color="text" minH="100vh">
       <Flex direction={{ base: "column", md: "row" }} h={{ base: "auto", md: "100vh" }} gap={4}>
@@ -376,15 +435,7 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
           <Text fontWeight="bold" fontSize="2xl" textAlign="left" mb={2} mt={2}>
             Submissions: {post.children || 0}
           </Text>
-          {/* Composer: Only show if active */}
-          {isActive && (
-            <SnapComposer
-              pa={post.author}
-              pp={post.permlink}
-              onNewComment={setNewComment as (newComment: Partial<Discussion>) => void}
-              onClose={() => null}
-            />
-          )}
+          {renderComposerOrBlocker()}
           {isActive && <Divider my={4} />}
           <SnapList
             author={post.author}
