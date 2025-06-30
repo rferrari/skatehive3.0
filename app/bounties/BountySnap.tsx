@@ -684,15 +684,19 @@ const BountySnap = ({
         )}
         {/* Claimants Avatars */}
         {uniqueVotes && uniqueVotes.length > 0 && (
-            <Flex justify="center" mt={4} mb={2}>
-                <AvatarGroup size='xs' max={5}>
-                    {uniqueVotes.map(vote => (
-                        <Tooltip label={vote.voter} key={vote.voter} hasArrow>
-                            <Avatar name={vote.voter} src={`https://images.hive.blog/u/${vote.voter}/avatar/small`} />
-                        </Tooltip>
-                    ))}
-                </AvatarGroup>
-            </Flex>
+          <Flex justify="center" mt={4} mb={2}>
+            <AvatarGroup size="xs" max={5}>
+              {uniqueVotes.map((vote) => (
+                <Tooltip label={vote.voter} key={vote.voter} hasArrow>
+                  <Avatar
+                    name={vote.voter}
+                    src={`https://images.hive.blog/u/${vote.voter}/avatar/small`}
+                    showBorder={false}
+                  />
+                </Tooltip>
+              ))}
+            </AvatarGroup>
+          </Flex>
         )}
         {/* Media and rest of content */}
         {showMedia && <Box>{renderedMedia}</Box>}
