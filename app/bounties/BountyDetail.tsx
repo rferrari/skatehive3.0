@@ -3,18 +3,12 @@ import {
   Text,
   Avatar,
   Flex,
-  Icon,
   Button,
   Link,
   Divider,
   Tag,
   useTheme,
-  Spinner,
   VStack,
-  Slider,
-  SliderTrack,
-  SliderFilledTrack,
-  SliderThumb,
   Modal,
   ModalOverlay,
   ModalContent,
@@ -26,18 +20,15 @@ import {
   CheckboxGroup,
   useDisclosure,
 } from "@chakra-ui/react";
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState } from "react";
 import { Discussion } from "@hiveio/dhive";
 import { getPostDate } from "@/lib/utils/GetPostDate";
 import { useComments } from "@/hooks/useComments";
 import { parse, isAfter, isValid } from "date-fns";
 import HiveMarkdown from "@/components/shared/HiveMarkdown";
-import { processMediaContent } from "@/lib/utils/MarkdownRenderer";
 import SnapList from "@/components/homepage/SnapList";
 import SnapComposer from "@/components/homepage/SnapComposer";
 import MatrixOverlay from "@/components/graphics/MatrixOverlay";
-import { FaHeart, FaRegHeart, FaComment } from "react-icons/fa";
-import VoteListPopover from "@/components/blog/VoteListModal";
 import { useAioha } from "@aioha/react-ui";
 import useHivePower from "@/hooks/useHivePower";
 import { useHiveUser } from "@/contexts/UserContext";
@@ -142,9 +133,9 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
 
   const rewardPerWinner = selectedWinners.length > 0 ? (rewardInfo.amount / selectedWinners.length).toFixed(3) : "0";
 
-  function handleHeartClick() {
-    setShowSlider(!showSlider);
-  }
+  // function handleHeartClick() {
+  //   setShowSlider(!showSlider);
+  // }
 
   async function handleVote() {
     const vote = await aioha.vote(
@@ -309,7 +300,7 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
               Claim Bounty to Submit
             </Text>
             <Text color="gray.300">
-              Click "Claim Bounty" on the left to unlock submissions.
+              Click &quot;Claim Bounty&quot; on the left to unlock submissions.
             </Text>
           </Box>
         </Box>
