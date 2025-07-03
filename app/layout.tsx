@@ -18,7 +18,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://my.skatehive.app";
 
 const frameObject = {
   version: "next",
-  imageUrl: `${BASE_URL}/opengraph-image`,
+  imageUrl: `${BASE_URL}/ogimage.png`,
   button: {
     title: "Open",
     action: {
