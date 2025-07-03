@@ -26,6 +26,22 @@ export default function RootLayoutClient({
     setIsHydrated(true);
   }, []);
 
+  useEffect(() => {
+    // Set theme from localStorage before showing app
+    const theme = localStorage.getItem('theme') || 'skate';
+    document.documentElement.setAttribute('data-theme', theme);
+    document.body.classList.add('show-splash');
+
+    // Hide splash and show app after hydration
+    const splash = document.getElementById("splash-root");
+    const app = document.getElementById("app-root");
+    if (splash && app) {
+      splash.style.display = "none";
+      app.style.display = "";
+      document.body.classList.remove("show-splash");
+    }
+  }, []);
+
   // Only show splash screen after hydration to avoid SSR/client mismatch
   if (!isHydrated) {
     return (
