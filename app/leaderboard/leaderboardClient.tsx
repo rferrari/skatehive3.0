@@ -81,7 +81,8 @@ export default function LeaderboardClient({ skatersData }: Props) {
   };
 
   const formatEthAddress = (address: string) => {
-    if (!address || address === "0x0000000000000000000000000000000000000000") return "-";
+    if (!address || address === "0x0000000000000000000000000000000000000000")
+      return "-";
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
@@ -246,14 +247,7 @@ export default function LeaderboardClient({ skatersData }: Props) {
       value: (skater: SkaterData) =>
         skater.has_voted_in_witness ? "✅" : "❌",
     },
-    // {
-    //   key: "last_updated",
-    //   label: "Last Update",
-    //   color: "primary",
-    //   value: (skater: SkaterData) => getTimeSince(skater.last_updated),
-    // },
   ];
-  console.log("Sorted Skaters:", sortedSkaters);
   return (
     <>
       {isRulesOpen && (
@@ -435,7 +429,11 @@ export default function LeaderboardClient({ skatersData }: Props) {
                   zIndex={3}
                   boxShadow="sm"
                   m={0}
-                  borderRight={i !== statColumns.length - 1 ? "0.5px solid rgba(255,255,255,0.08)" : undefined}
+                  borderRight={
+                    i !== statColumns.length - 1
+                      ? "0.5px solid rgba(255,255,255,0.08)"
+                      : undefined
+                  }
                 >
                   {col.label}
                 </Box>
@@ -449,7 +447,11 @@ export default function LeaderboardClient({ skatersData }: Props) {
                   <Flex
                     align="center"
                     transition="background 0.2s"
-                    borderTop={index !== 0 ? "0.5px solid rgba(255,255,255,0.08)" : undefined}
+                    borderTop={
+                      index !== 0
+                        ? "0.5px solid rgba(255,255,255,0.08)"
+                        : undefined
+                    }
                   >
                     {/* Sticky Skater Info */}
                     <Box
@@ -492,17 +494,43 @@ export default function LeaderboardClient({ skatersData }: Props) {
                           {skater.hive_author}
                         </Text>
                         {/* Ethereum identity below username */}
-                        {skater.eth_address && skater.eth_address !== "0x0000000000000000000000000000000000000000" ? (
+                        {skater.eth_address &&
+                        skater.eth_address !==
+                          "0x0000000000000000000000000000000000000000" ? (
                           <span
-                            style={{ fontSize: "10px", color: "#aaa", cursor: "pointer", userSelect: "all", marginTop: 0, textAlign: "left", display: "flex", alignItems: "center", gap: "2px", minHeight: '16px' }}
+                            style={{
+                              fontSize: "10px",
+                              color: "#aaa",
+                              cursor: "pointer",
+                              userSelect: "all",
+                              marginTop: 0,
+                              textAlign: "left",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "2px",
+                              minHeight: "16px",
+                            }}
                             onClick={() => copyToClipboard(skater.eth_address)}
                             title="Click to copy address"
                           >
-                            <Image src="/images/ethvector.svg" alt="ETH" height="12px" width="12px" style={{ marginRight: "2px", display: "inline" }} />
-                            <Name address={skater.eth_address as Address} resolverOrder={resolverOrder}>{formatEthAddress(skater.eth_address)}</Name>
+                            <Image
+                              src="/images/ethvector.svg"
+                              alt="ETH"
+                              height="12px"
+                              width="12px"
+                              style={{ marginRight: "2px", display: "inline" }}
+                            />
+                            <Name
+                              address={skater.eth_address as Address}
+                              resolverOrder={resolverOrder}
+                            >
+                              {formatEthAddress(skater.eth_address)}
+                            </Name>
                           </span>
                         ) : (
-                          <span style={{ display: 'block', minHeight: '16px' }}></span>
+                          <span
+                            style={{ display: "block", minHeight: "16px" }}
+                          ></span>
                         )}
                         <Text color="text" fontSize="xs" lineHeight={1}>
                           Last: {getTimeSince(skater.last_post)}
@@ -524,7 +552,11 @@ export default function LeaderboardClient({ skatersData }: Props) {
                         fontWeight="semibold"
                         fontSize="sm"
                         bg={"background"}
-                        borderRight={i !== statColumns.length - 1 ? "0.5px solid rgba(255,255,255,0.08)" : undefined}
+                        borderRight={
+                          i !== statColumns.length - 1
+                            ? "0.5px solid rgba(255,255,255,0.08)"
+                            : undefined
+                        }
                       >
                         {col.value(skater)}
                       </Box>

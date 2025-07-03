@@ -11,7 +11,6 @@ import {
   SliderThumb,
   Button,
   Link,
-  Tooltip,
   Popover,
   PopoverTrigger,
   PopoverContent,
@@ -103,32 +102,6 @@ export default function PostCard({
   const isPending = timeDifferenceInDays < 7;
   // Calculate payout timestamp (creation + 7 days)
   const payoutDate = new Date(createdDate.getTime() + 7 * 24 * 60 * 60 * 1000);
-  const payoutDateString = payoutDate.toLocaleString();
-
-  // Debug props changes
-  useEffect(() => {
-    console.log("PostCard props changed:", {
-      author,
-      permlink: post.permlink,
-      postId: post.id,
-      authorType: typeof author,
-      permlinkType: typeof post.permlink,
-      timestamp: new Date().toISOString(),
-    });
-
-    if (
-      typeof post.permlink !== "string" ||
-      post.permlink.includes("[object")
-    ) {
-      console.error("CORRUPTED PERMLINK DETECTED IN PROPS:", {
-        author,
-        permlink: post.permlink,
-        post: post,
-        timestamp: new Date().toISOString(),
-        stack: new Error().stack,
-      });
-    }
-  }, [author, post.permlink, post.id]);
 
   useEffect(() => {
     let images: string[] = [];
@@ -287,9 +260,9 @@ export default function PostCard({
   }
   const authorPayout = parsePayout(post.total_payout_value);
   const curatorPayout = parsePayout(post.curator_payout_value);
-  const payoutTooltip = `Author: $${authorPayout.toFixed(
-    3
-  )}\nCurators: $${curatorPayout.toFixed(3)}`;
+  // const payoutTooltip = `Author: $${authorPayout.toFixed(
+  //   3
+  // )}\nCurators: $${curatorPayout.toFixed(3)}`;
 
   if (listView) {
     return (
@@ -540,7 +513,11 @@ export default function PostCard({
           {/* Only show author info if not hidden */}
           {!hideAuthorInfo && (
             <Box mb={4}>
-              <Flex alignItems="center" minWidth={0} justifyContent="space-between">
+              <Flex
+                alignItems="center"
+                minWidth={0}
+                justifyContent="space-between"
+              >
                 <Link
                   href={`/@${author}`}
                   display="flex"
@@ -563,7 +540,13 @@ export default function PostCard({
                     {author}
                   </Text>
                 </Link>
-                <Text fontSize="xs" color="gray.500" ml={2} minWidth="40px" textAlign="right">
+                <Text
+                  fontSize="xs"
+                  color="gray.500"
+                  ml={2}
+                  minWidth="40px"
+                  textAlign="right"
+                >
                   {postDate}
                 </Text>
               </Flex>
@@ -604,10 +587,16 @@ export default function PostCard({
                 onSwiper={(swiper) => {
                   setTimeout(() => {
                     if (!swiper.el) return;
-                    const next = swiper.el.querySelector('.swiper-button-next');
-                    const prev = swiper.el.querySelector('.swiper-button-prev');
-                    if (next) next.addEventListener('click', (e) => e.stopPropagation());
-                    if (prev) prev.addEventListener('click', (e) => e.stopPropagation());
+                    const next = swiper.el.querySelector(".swiper-button-next");
+                    const prev = swiper.el.querySelector(".swiper-button-prev");
+                    if (next)
+                      next.addEventListener("click", (e) =>
+                        e.stopPropagation()
+                      );
+                    if (prev)
+                      prev.addEventListener("click", (e) =>
+                        e.stopPropagation()
+                      );
                   }, 0);
                 }}
               >
@@ -639,10 +628,16 @@ export default function PostCard({
                 onSwiper={(swiper) => {
                   setTimeout(() => {
                     if (!swiper.el) return;
-                    const next = swiper.el.querySelector('.swiper-button-next');
-                    const prev = swiper.el.querySelector('.swiper-button-prev');
-                    if (next) next.addEventListener('click', (e) => e.stopPropagation());
-                    if (prev) prev.addEventListener('click', (e) => e.stopPropagation());
+                    const next = swiper.el.querySelector(".swiper-button-next");
+                    const prev = swiper.el.querySelector(".swiper-button-prev");
+                    if (next)
+                      next.addEventListener("click", (e) =>
+                        e.stopPropagation()
+                      );
+                    if (prev)
+                      prev.addEventListener("click", (e) =>
+                        e.stopPropagation()
+                      );
                   }, 0);
                 }}
               >

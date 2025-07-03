@@ -2,7 +2,9 @@ import { VT323 } from "next/font/google";
 import RootLayoutClient from "./RootLayoutClient";
 import "./globals.css";
 import { Metadata } from "next";
-import { ColorModeScript } from "@chakra-ui/react";
+import { ColorModeScript, Image } from "@chakra-ui/react";
+// Import buffer polyfill to suppress deprecation warnings
+import "../lib/buffer-polyfill";
 
 // Initialize the VT323 font
 const vt323 = VT323({
@@ -129,15 +131,21 @@ export default function RootLayout({
       </head>
       <body className="chakra-ui-dark">
         <div id="splash-root">
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            height: "100vh",
-            width: "100vw",
-            background: "#111"
-          }}>
-            <img src="/images/hiveLogo.png" alt="Skatehive" style={{ height: "80px" }} />
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              height: "100vh",
+              width: "100vw",
+              background: "#111",
+            }}
+          >
+            <Image
+              src="/images/hiveLogo.png"
+              alt="Skatehive"
+              style={{ height: "80px" }}
+            />
           </div>
         </div>
         <div id="app-root" style={{ display: "none" }}>

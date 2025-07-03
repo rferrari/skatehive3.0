@@ -29,9 +29,9 @@ import {
   checkAccountExists,
 } from "@/lib/invite/helpers";
 import { useAioha } from "@aioha/react-ui";
-import { KeychainSDK, KeychainRequestTypes, KeychainKeyTypes } from "keychain-sdk";
 import * as dhive from "@hiveio/dhive";
 import useHiveAccount from "@/hooks/useHiveAccount";
+import { useKeychainSDK } from "@/hooks/useKeychainSDK";
 
 const randomLanguages = [
   { code: "EN", label: "English" },
@@ -41,7 +41,11 @@ const randomLanguages = [
 
 export default function InvitePage() {
   const { user } = useAioha();
-  const { hiveAccount, isLoading: isAccountLoading } = useHiveAccount(user || "");
+  const { hiveAccount, isLoading: isAccountLoading } = useHiveAccount(
+    user || ""
+  );
+  const { KeychainSDK, KeychainRequestTypes, KeychainKeyTypes, isLoaded } =
+    useKeychainSDK();
   const toast = useToast();
   const [desiredUsername, setDesiredUsername] = useState("");
   const [desiredEmail, setDesiredEmail] = useState("");
@@ -99,7 +103,9 @@ export default function InvitePage() {
       setAreKeysDownloaded(true);
     } else {
       setAccountAvailable(false);
-      setBroadcastError("Account is not available. Please choose another nickname.");
+      setBroadcastError(
+        "Account is not available. Please choose another nickname."
+      );
     }
   };
 
@@ -107,6 +113,17 @@ export default function InvitePage() {
     setBroadcastSuccess(false);
     setBroadcastError("");
     setBroadcastMessage("");
+
+    if (
+      !isLoaded ||
+      !KeychainSDK ||
+      !KeychainRequestTypes ||
+      !KeychainKeyTypes
+    ) {
+      setBroadcastError("Keychain SDK is not loaded yet. Please try again.");
+      return;
+    }
+
     setLoading(true);
     try {
       // Use Hive Keychain to broadcast account creation
@@ -173,7 +190,9 @@ export default function InvitePage() {
         if (data.success) {
           setBroadcastMessage("Invite sent successfully!");
         } else {
-          setBroadcastError(data.error || "Failed to send invite. Try again or contact support.");
+          setBroadcastError(
+            data.error || "Failed to send invite. Try again or contact support."
+          );
         }
       } else {
         setBroadcastError(broadcast.error + ": " + broadcast.message);
@@ -203,33 +222,51 @@ export default function InvitePage() {
       </Heading>
       <Box bg="secondary" p={3} borderRadius="md" mb={2}>
         <Text fontSize="sm" color="text">
-          <b>What are Account Creation Tokens (ACTs)?</b><br />
-          ACTs let you create new Hive accounts for free. You earn ACTs automatically by holding Hive Power (staked HIVE). Each ACT can be used to create one new account. If you have no ACTs, you&apos;ll need to pay a 3 HIVE fee to create an account.
+          <b>What are Account Creation Tokens (ACTs)?</b>
+          <br />
+          ACTs let you create new Hive accounts for free. You earn ACTs
+          automatically by holding Hive Power (staked HIVE). Each ACT can be
+          used to create one new account. If you have no ACTs, you&apos;ll need
+          to pay a 3 HIVE fee to create an account.
         </Text>
         <Accordion allowToggle mt={2}>
           <AccordionItem border="none">
             <AccordionButton px={0} _hover={{ bg: "muted" }}>
-              <Box as="span" flex="1" textAlign="left" color="accent" fontSize="sm">
+              <Box
+                as="span"
+                flex="1"
+                textAlign="left"
+                color="accent"
+                fontSize="sm"
+              >
                 More info about earning ACTs
               </Box>
               <AccordionIcon />
             </AccordionButton>
             <AccordionPanel pb={2} color="text" fontSize="sm">
-              <b>Rule of thumb:</b> You need at least 5000 HP to start generating ACTs, and each ACT requires 100 billion Resource Credits (RC). The more HP you have, the faster you&apos;ll earn ACTs.
+              <b>Rule of thumb:</b> You need at least 5000 HP to start
+              generating ACTs, and each ACT requires 100 billion Resource
+              Credits (RC). The more HP you have, the faster you&apos;ll earn
+              ACTs.
             </AccordionPanel>
           </AccordionItem>
         </Accordion>
       </Box>
       {/* ACT Balance Display */}
       {isAccountLoading ? (
-        <Flex align="center" mb={2}><Spinner size="sm" mr={2} /> Loading ACT balance...</Flex>
+        <Flex align="center" mb={2}>
+          <Spinner size="sm" mr={2} /> Loading ACT balance...
+        </Flex>
       ) : (
         <Box mb={2}>
           <Text fontWeight="bold" color="primary">
-            Account Creation Tokens (ACT): {hiveAccount?.pending_claimed_accounts ?? 0}
+            Account Creation Tokens (ACT):{" "}
+            {hiveAccount?.pending_claimed_accounts ?? 0}
           </Text>
           {Number(hiveAccount?.pending_claimed_accounts ?? 0) === 0 && (
-            <Text color="error" fontSize="sm">You have no ACTs. You must pay 3 HIVE to create an account.</Text>
+            <Text color="error" fontSize="sm">
+              You have no ACTs. You must pay 3 HIVE to create an account.
+            </Text>
           )}
         </Box>
       )}
@@ -238,7 +275,7 @@ export default function InvitePage() {
           <Text fontWeight="bold">Friend&apos;s desired Hive Wallet Name</Text>
           <Input
             type="text"
-            placeholder="Friend&apos;s desired Hive Wallet Name"
+            placeholder="Friend's desired Hive Wallet Name"
             value={desiredUsername}
             onChange={(e) => setDesiredUsername(e.target.value)}
             maxW="375px"
@@ -251,7 +288,7 @@ export default function InvitePage() {
           <Text fontWeight="bold">Friend&apos;s Email</Text>
           <Input
             type="email"
-            placeholder="Friend&apos;s email"
+            placeholder="Friend's email"
             value={desiredEmail}
             onChange={(e) => setDesiredEmail(e.target.value)}
             maxW="375px"
@@ -314,7 +351,8 @@ export default function InvitePage() {
             <Text color={accountAvailable ? "accent" : "text"} ml={2}>
               {accountAvailable
                 ? "Yeah!! Account available. Drop it!"
-                : "Please choose another nickname! " + String(accountInvalid).replace(/'/g, "&apos;")}
+                : "Please choose another nickname! " +
+                  String(accountInvalid).replace(/'/g, "&apos;")}
             </Text>
           </Flex>
         )}
@@ -359,4 +397,4 @@ export default function InvitePage() {
       </VStack>
     </Box>
   );
-} 
+}
