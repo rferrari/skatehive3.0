@@ -25,8 +25,7 @@ interface SkaterData {
 async function getLeaderboardData(): Promise<SkaterData[]> {
   try {
     const res = await fetch("https://api.skatehive.app/api/skatehive", {
-      next: { revalidate: 0 },
-      cache: 'no-store'
+      next: { revalidate: 60 } // Revalidate every 60 seconds
     });
 
     if (!res.ok) {
@@ -58,8 +57,26 @@ function generatePodiumImageUrl(top3: SkaterData[]): string {
   )}&names=${top3.map((s) => s.hive_author).join(",")}`;
 }
 
+async function getLeaderboardDataForMetadata(): Promise<SkaterData[]> {
+  try {
+    const res = await fetch("https://api.skatehive.app/api/skatehive", {
+      next: { revalidate: 300 } // Revalidate every 5 minutes for metadata (less frequent)
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to fetch leaderboard data");
+    }
+
+    const data = await res.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching leaderboard for metadata:", error);
+    return [];
+  }
+}
+
 export async function generateMetadata(): Promise<Metadata> {
-  const skatersData = await getLeaderboardData();
+  const skatersData = await getLeaderboardDataForMetadata();
 
   // Get top 3 by points
   const top3 = [...skatersData].sort((a, b) => b.points - a.points).slice(0, 3);
