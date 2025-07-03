@@ -55,3 +55,13 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
 .markdown-body p {
   margin-bottom: 1em;
 }
+
+body.show-splash #app-root {
+  display: none !important;
+}
+body.show-splash #splash-root {
+  display: block !important;
+}
+#splash-root {
+  display: none;
+}

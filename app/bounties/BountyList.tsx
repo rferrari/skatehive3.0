@@ -174,14 +174,13 @@ export default function BountyList({
 
   // --- Stats Computation ---
   // Get all active bounties
-  const now = new Date();
-  const activeBounties = useMemo(() =>
-    displayedBounties.filter((b) => {
+  const activeBounties = useMemo(() => {
+    const now = new Date();
+    return displayedBounties.filter((b) => {
       const deadline = getDeadlineFromBody(b.body);
       return deadline && isAfter(deadline, now);
-    }),
-    [displayedBounties, now]
-  );
+    });
+  }, [displayedBounties]);
   // Rewards up for grabs
   const rewardsUpForGrabs = activeBounties.map(b => {
     const match = b.body.match(/Reward:\s*(.*)/);
@@ -238,7 +237,7 @@ export default function BountyList({
     }
     fetchGrinders();
     return () => { cancelled = true; };
-  }, [activeBountyPermlinks]);
+  }, [activeBountyPermlinks, activeBounties]);
 
   if (isLoading || (filter === 'claimed' && isLoadingClaims)) {
     return (

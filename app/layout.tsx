@@ -120,12 +120,30 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${vt323.variable}`}
-      data-theme="dark"
+      data-theme="skate"
       style={{ colorScheme: "dark" }}
+      suppressHydrationWarning
     >
+      <head>
+        {/* Removed the inline script that set the theme and splash class */}
+      </head>
       <body className="chakra-ui-dark">
-        <ColorModeScript initialColorMode="dark" />
-        <RootLayoutClient>{children}</RootLayoutClient>
+        <div id="splash-root">
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            height: "100vh",
+            width: "100vw",
+            background: "#111"
+          }}>
+            <img src="/images/hiveLogo.png" alt="Skatehive" style={{ height: "80px" }} />
+          </div>
+        </div>
+        <div id="app-root" style={{ display: "none" }}>
+          <ColorModeScript initialColorMode="dark" />
+          <RootLayoutClient>{children}</RootLayoutClient>
+        </div>
       </body>
     </html>
   );
