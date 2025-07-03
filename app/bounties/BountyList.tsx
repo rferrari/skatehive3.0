@@ -17,6 +17,7 @@ import {
   VStack,
   Flex,
   Divider,
+  Select,
 } from "@chakra-ui/react";
 import { useComments } from "@/hooks/useComments";
 import { Discussion } from "@hiveio/dhive";
@@ -51,17 +52,16 @@ export default function BountyList({
   const [displayedBounties, setDisplayedBounties] = useState<Discussion[]>([]);
   const [visibleCount, setVisibleCount] = useState(10);
   const [filter, setFilter] = useState<
-    "active" | "claimed" | "all" | "completed"
+    "active" | "claimed" | "my-claimed" | "all" | "completed"
   >("active");
   const [bountyGrinders, setBountyGrinders] = useState<string[]>([]);
   const [isLoadingGrinders, setIsLoadingGrinders] = useState(false);
   const [hivePrice, setHivePrice] = useState<number | null>(null);
   const [isPriceLoading, setIsPriceLoading] = useState(true);
+  const [sortBy, setSortBy] = useState<'default' | 'rewards' | 'hot' | 'ending'>('default');
 
   // Claimed bounties logic
   const { hiveUser } = useHiveUser();
-  const [claimedBounties, setClaimedBounties] = useState<Discussion[]>([]);
-  const [isLoadingClaims, setIsLoadingClaims] = useState(false);
 
   useEffect(() => {
     let bounties = [...comments];
@@ -76,36 +76,6 @@ export default function BountyList({
     );
     setDisplayedBounties(bounties);
   }, [comments, newBounty]);
-
-  // Fetch claimed bounties by user
-  useEffect(() => {
-    if (filter === 'claimed' && hiveUser?.name) {
-      setIsLoadingClaims(true);
-      const fetchClaims = async () => {
-        try {
-          // Fetch the user's comments
-          const userComments: Discussion[] = await HiveClient.database.call('get_discussions_by_comments', [{ start_author: hiveUser.name, limit: 100 }]);
-
-          // Filter to find comments that are replies to a known bounty
-          const bountyAuthorPerms = new Set(comments.map(c => `${c.author}/${c.permlink}`));
-          const claimedComments = userComments.filter((comment: Discussion) => 
-            bountyAuthorPerms.has(`${comment.parent_author}/${comment.parent_permlink}`)
-          );
-
-          // Now find the original bounty discussion from the parent permlink
-          const claimedBountyPermlinks = new Set(claimedComments.map((c: Discussion) => c.parent_permlink));
-          const finalBounties = comments.filter(bounty => claimedBountyPermlinks.has(bounty.permlink));
-
-          setClaimedBounties(finalBounties);
-        } catch (error) {
-          console.error("Failed to fetch claimed bounties:", error);
-        } finally {
-          setIsLoadingClaims(false);
-        }
-      };
-      fetchClaims();
-    }
-  }, [filter, hiveUser?.name, comments]);
 
   // Refresh comments when refreshTrigger changes
   useEffect(() => {
@@ -129,8 +99,15 @@ export default function BountyList({
 
   // Filter bounties based on status
   const filteredBounties = useMemo(() => {
+    if (filter === 'my-claimed' && hiveUser?.name) {
+      return displayedBounties.filter(bounty =>
+        bounty.active_votes?.some(vote => vote.voter === hiveUser.name)
+      );
+    }
     if (filter === 'claimed') {
-      return claimedBounties;
+      return displayedBounties.filter(bounty =>
+        bounty.active_votes && bounty.active_votes.length > 0
+      );
     }
     return displayedBounties.filter((bounty) => {
       if (filter === "all") return true;
@@ -141,18 +118,61 @@ export default function BountyList({
       if (filter === "completed") return !isAfter(deadline, now);
       return true;
     });
-  }, [filter, displayedBounties, claimedBounties]);
+  }, [filter, displayedBounties, hiveUser?.name]);
+
+  // Sorting logic
+  const sortedBounties = useMemo(() => {
+    let bounties = [...filteredBounties];
+    if (sortBy === 'rewards') {
+      bounties.sort((a: Discussion, b: Discussion) => {
+        const getReward = (bounty: Discussion) => {
+          const match = bounty.body.match(/Reward:\s*([\d.]+)/);
+          return match ? parseFloat(match[1]) : 0;
+        };
+        return getReward(b) - getReward(a);
+      });
+    } else if (sortBy === 'hot') {
+      bounties.sort((a: Discussion, b: Discussion) => {
+        const aCount = a.active_votes ? a.active_votes.length : 0;
+        const bCount = b.active_votes ? b.active_votes.length : 0;
+        return bCount - aCount;
+      });
+    } else if (sortBy === 'ending') {
+      bounties = bounties
+        .filter((bounty: Discussion) => {
+          const deadlineMatch = bounty.body.match(/Deadline:\s*(\d{2}-\d{2}-\d{4})/);
+          if (!deadlineMatch) return false;
+          const [mm, dd, yyyy] = deadlineMatch[1].split('-');
+          const deadline = new Date(`${yyyy}-${mm}-${dd}`);
+          return deadline > new Date();
+        })
+        .sort((a: Discussion, b: Discussion) => {
+          const getDeadline = (bounty: Discussion) => {
+            const match = bounty.body.match(/Deadline:\s*(\d{2}-\d{2}-\d{4})/);
+            if (!match) return new Date(8640000000000000).getTime(); // far future
+            const [mm, dd, yyyy] = match[1].split('-');
+            return new Date(`${yyyy}-${mm}-${dd}`).getTime();
+          };
+          return getDeadline(a) - getDeadline(b);
+        });
+    } else {
+      // Default: newest first
+      bounties.sort((a: Discussion, b: Discussion) => new Date(b.created).getTime() - new Date(a.created).getTime());
+    }
+    return bounties;
+  }, [filteredBounties, sortBy]);
 
   // Map filter state to tab index
   const filterToIndex = (f: typeof filter) => {
     if (f === "active") return 0;
     if (f === "claimed") return 1;
-    if (f === "all") return 2;
-    if (f === "completed") return 3;
+    if (f === "my-claimed") return 2;
+    if (f === "all") return 3;
+    if (f === "completed") return 4;
     return 0;
   };
   const indexToFilter = (idx: number) =>
-    ["active", "claimed", "all", "completed"][idx] as typeof filter;
+    ["active", "claimed", "my-claimed", "all", "completed"][idx] as typeof filter;
 
   useEffect(() => {
     async function fetchPrices() {
@@ -239,7 +259,15 @@ export default function BountyList({
     return () => { cancelled = true; };
   }, [activeBountyPermlinks, activeBounties]);
 
-  if (isLoading || (filter === 'claimed' && isLoadingClaims)) {
+  // Mapping for short labels (button display)
+  const sortByLabels: Record<string, string> = {
+    default: 'Default',
+    rewards: 'Rewards',
+    hot: 'Hot',
+    ending: 'Ending soon',
+  };
+
+  if (isLoading || (filter === 'claimed' && isLoadingGrinders)) {
     return (
       <Box textAlign="center" my={8}>
         <Spinner size="xl" />
@@ -264,7 +292,7 @@ export default function BountyList({
     );
   }
 
-  if (filter === 'claimed' && claimedBounties.length === 0) {
+  if (filter === 'my-claimed' && hiveUser?.name && filteredBounties.length === 0) {
     return (
       <Box textAlign="center" my={8}>
         <Text>You have not claimed any bounties yet. Go upvote a bounty to claim it!</Text>
@@ -329,66 +357,100 @@ export default function BountyList({
           </Box>
         </Flex>
       </Box>
-      <Tabs
-        variant="soft-rounded"
-        colorScheme="primary"
-        mb={4}
-        index={filterToIndex(filter)}
-        onChange={(idx) => setFilter(indexToFilter(idx))}
-      >
-        <TabList>
-          <Tab
-            borderWidth="2px"
-            borderColor="transparent"
-            _selected={{
-              color: "primary",
-              bg: "primary.900",
-              borderColor: "primary",
-              borderWidth: "2px",
+      <Flex align="center" mb={4} gap={4}>
+        <Tabs
+          variant="soft-rounded"
+          colorScheme="primary"
+          index={filterToIndex(filter)}
+          onChange={(idx) => setFilter(indexToFilter(idx))}
+          flex="1"
+        >
+          <TabList>
+            <Tab
+              borderWidth="2px"
+              borderColor="transparent"
+              _selected={{
+                color: "primary",
+                bg: "primary.900",
+                borderColor: "primary",
+                borderWidth: "2px",
+              }}
+            >
+              Active
+            </Tab>
+            <Tab
+              borderWidth="2px"
+              borderColor="transparent"
+              _selected={{
+                color: "primary",
+                bg: "primary.900",
+                borderColor: "primary",
+                borderWidth: "2px",
+              }}
+            >
+              Claimed
+            </Tab>
+            <Tab
+              borderWidth="2px"
+              borderColor="transparent"
+              _selected={{
+                color: "primary",
+                bg: "primary.900",
+                borderColor: "primary",
+                borderWidth: "2px",
+              }}
+            >
+              My Claimed
+            </Tab>
+            <Tab
+              borderWidth="2px"
+              borderColor="transparent"
+              _selected={{
+                color: "primary",
+                bg: "primary.900",
+                borderColor: "primary",
+                borderWidth: "2px",
+              }}
+            >
+              All
+            </Tab>
+            <Tab
+              borderWidth="2px"
+              borderColor="transparent"
+              _selected={{
+                color: "primary",
+                bg: "primary.900",
+                borderColor: "primary",
+                borderWidth: "2px",
+              }}
+            >
+              Completed
+            </Tab>
+          </TabList>
+        </Tabs>
+        <Box textAlign="right">
+          <Select
+            value={sortBy}
+            onChange={e => setSortBy(e.target.value as any)}
+            variant="outline"
+            display="inline-block"
+            width="120px"
+            sx={{
+              '& > option': { color: 'initial' },
             }}
           >
-            Active
-          </Tab>
-          <Tab
-            borderWidth="2px"
-            borderColor="transparent"
-            _selected={{
-              color: "primary",
-              bg: "primary.900",
-              borderColor: "primary",
-              borderWidth: "2px",
-            }}
-          >
-            Claimed
-          </Tab>
-          <Tab
-            borderWidth="2px"
-            borderColor="transparent"
-            _selected={{
-              color: "primary",
-              bg: "primary.900",
-              borderColor: "primary",
-              borderWidth: "2px",
-            }}
-          >
-            All
-          </Tab>
-          <Tab
-            borderWidth="2px"
-            borderColor="transparent"
-            _selected={{
-              color: "primary",
-              bg: "primary.900",
-              borderColor: "primary",
-              borderWidth: "2px",
-            }}
-          >
-            Completed
-          </Tab>
-        </TabList>
-      </Tabs>
+            <option value="default">Default (new)</option>
+            <option value="rewards">Rewards (higher bounty payouts first)</option>
+            <option value="hot">Hot (most unique claims)</option>
+            <option value="ending">Ending soon</option>
+          </Select>
+          <style jsx global>{`
+            select[value="default"] { color: inherit; }
+          `}</style>
+        </Box>
+      </Flex>
       <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing={6} my={8}>
-        {filteredBounties.slice(0, visibleCount).map((bounty) => (
+        {sortedBounties.slice(0, visibleCount).map((bounty) => (
           <BountySnap
             key={bounty.permlink}
             discussion={bounty}
@@ -403,7 +465,7 @@ export default function BountyList({
           />
         ))}
       </SimpleGrid>
-      {visibleCount < filteredBounties.length && (
+      {visibleCount < sortedBounties.length && (
         <Box display="flex" justifyContent="center" my={4}>
           <Button
             onClick={handleLoadMore}

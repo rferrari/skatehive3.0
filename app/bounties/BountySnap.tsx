@@ -357,6 +357,13 @@ const BountySnap = ({
     }
   }
 
+  // Defensive utility to filter out unwanted props for Avatar
+  const safeAvatarProps = (props: any) => {
+    // Add more props to exclude if needed
+    const { showBorder, ...rest } = props;
+    return rest;
+  };
+
   return (
     <Box
       as="div"
@@ -461,10 +468,12 @@ const BountySnap = ({
                 onClick={(e) => e.stopPropagation()}
               >
                 <Avatar
-                  size="xs"
-                  name={discussion.author}
-                  src={`https://images.hive.blog/u/${discussion.author}/avatar/sm`}
-                  ml={0}
+                  {...safeAvatarProps({
+                    size: "xs",
+                    name: discussion.author,
+                    src: `https://images.hive.blog/u/${discussion.author}/avatar/sm`,
+                    ml: 0,
+                  })}
                 />
                 <Text
                   fontWeight="medium"
@@ -689,8 +698,10 @@ const BountySnap = ({
               {uniqueVotes.map((vote) => (
                 <Tooltip label={vote.voter} key={vote.voter} hasArrow>
                   <Avatar
-                    name={vote.voter}
-                    src={`https://images.hive.blog/u/${vote.voter}/avatar/small`}
+                    {...safeAvatarProps({
+                      name: vote.voter,
+                      src: `https://images.hive.blog/u/${vote.voter}/avatar/small`,
+                    })}
                   />
                 </Tooltip>
               ))}
