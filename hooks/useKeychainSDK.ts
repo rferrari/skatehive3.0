@@ -9,7 +9,8 @@ export const useKeychainSDK = () => {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       import('keychain-sdk').then((mod) => {
-        setKeychainSDK(mod.KeychainSDK);
+        // Store the class constructor directly without wrapping in state setter
+        setKeychainSDK(() => mod.KeychainSDK);
         setKeychainTypes({
           KeychainRequestTypes: mod.KeychainRequestTypes,
           KeychainKeyTypes: mod.KeychainKeyTypes,
