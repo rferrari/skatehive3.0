@@ -196,10 +196,10 @@ export async function communitySubscribeKeyChain(username: string) {
 
 export async function checkFollow(follower: string, following: string): Promise<boolean> {
   try {
-    const status = await HiveClient.call('bridge', 'get_relationship_between_accounts', [
-      follower,
-      following
-    ]);
+    const status = await HiveClient.call('bridge', 'get_relationship_between_accounts', {
+      account1: follower,
+      account2: following
+    });
     if (status.follows) {
       return true
     } else {

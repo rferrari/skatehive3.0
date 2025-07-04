@@ -13,9 +13,8 @@ import {
   Image,
 } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
-import { FiBell, FiBook, FiHome, FiUser, FiSettings, FiX } from "react-icons/fi";
-import { FaPen, FaPiggyBank } from "react-icons/fa";
-import { FiMap } from "react-icons/fi";
+import { FiBell, FiBook, FiHome, FiUser, FiSettings, FiX, FiAward, FiMap, FiTarget } from "react-icons/fi";
+import { FaPiggyBank } from "react-icons/fa";
 import { useState } from "react";
 import { KeyTypes } from "@aioha/aioha";
 
@@ -38,10 +37,10 @@ export default function FooterNavigation({ newNotificationCount = 0 }) {
         bottom="0"
         left="0"
         right="0"
-        bg="black" // Terminal-like background
+        bg="black"
         p={2}
         borderTop="1px solid"
-        borderColor="primary" // Terminal green border
+        borderColor="primary"
         display={{ base: "flex", md: "none" }}
         justifyContent="space-around"
         zIndex="999"
@@ -49,25 +48,18 @@ export default function FooterNavigation({ newNotificationCount = 0 }) {
       >
         {user ? (
           <HStack justify="space-around" width="100%">
+            {/* Home */}
             <Tooltip label="Home" aria-label="Home tooltip">
               <Button
                 onClick={() => handleNavigation("/")}
                 variant="ghost"
                 leftIcon={<Icon as={FiHome} boxSize={4} />}
-                color="primary" // Terminal green text
-                _hover={{ bg: "gray.800" }} // Hover effect
-              />
-            </Tooltip>
-            <Tooltip label="Wallet" aria-label="Wallet tooltip">
-              <Button
-                onClick={() => handleNavigation("/@" + user + "/wallet")}
-                variant="ghost"
-                leftIcon={<Icon as={FaPiggyBank} boxSize={5} />}
                 color="primary"
                 _hover={{ bg: "gray.800" }}
               />
             </Tooltip>
-            <Tooltip label="Magazine" aria-label="Blog tooltip">
+            {/* Blog */}
+            <Tooltip label="Blog" aria-label="Blog tooltip">
               <Button
                 onClick={() => handleNavigation("/blog")}
                 variant="ghost"
@@ -76,9 +68,40 @@ export default function FooterNavigation({ newNotificationCount = 0 }) {
                 _hover={{ bg: "gray.800" }}
               />
             </Tooltip>
+            {/* Leaderboard */}
+            <Tooltip label="Leaderboard" aria-label="Leaderboard tooltip">
+              <Button
+                onClick={() => handleNavigation("/leaderboard")}
+                variant="ghost"
+                leftIcon={<Icon as={FiAward} boxSize={4} />}
+                color="primary"
+                _hover={{ bg: "gray.800" }}
+              />
+            </Tooltip>
+            {/* Map */}
+            <Tooltip label="Skatespots" aria-label="Skatespots tooltip">
+              <Button
+                onClick={() => handleNavigation("/skatespots")}
+                variant="ghost"
+                leftIcon={<Icon as={FiMap} boxSize={4} />}
+                color="primary"
+                _hover={{ bg: "gray.800" }}
+              />
+            </Tooltip>
+            {/* Bounties */}
+            <Tooltip label="Bounties" aria-label="Bounties tooltip">
+              <Button
+                onClick={() => handleNavigation("/bounties")}
+                variant="ghost"
+                leftIcon={<Icon as={FiTarget} boxSize={4} />}
+                color="primary"
+                _hover={{ bg: "gray.800" }}
+              />
+            </Tooltip>
+            {/* Notifications */}
             <Tooltip label="Notifications" aria-label="Notifications tooltip">
               <Button
-                onClick={() => handleNavigation("/@" + user + "/notifications")}
+                onClick={() => handleNavigation("/notifications")}
                 variant="ghost"
                 leftIcon={
                   newNotificationCount > 0 ? (
@@ -98,15 +121,17 @@ export default function FooterNavigation({ newNotificationCount = 0 }) {
                 _hover={{ bg: "gray.800" }}
               />
             </Tooltip>
-            <Tooltip label="Skatespots" aria-label="Skatespots tooltip">
+            {/* Wallet */}
+            <Tooltip label="Wallet" aria-label="Wallet tooltip">
               <Button
-                onClick={() => handleNavigation("/skatespots")}
+                onClick={() => handleNavigation("/wallet")}
                 variant="ghost"
-                leftIcon={<Icon as={FiMap} boxSize={4} />}
+                leftIcon={<Icon as={FaPiggyBank} boxSize={5} />}
                 color="primary"
                 _hover={{ bg: "gray.800" }}
               />
             </Tooltip>
+            {/* Profile */}
             <Tooltip label="Profile" aria-label="Profile tooltip">
               <span style={{ display: "inline-block" }}>
                 <Menu>
@@ -131,8 +156,8 @@ export default function FooterNavigation({ newNotificationCount = 0 }) {
                     _active={{ bg: "gray.700" }}
                   />
                   <MenuList
-                    bg="black" // Consistent terminal-like background
-                    borderColor="green.500" // Terminal green border
+                    bg="black"
+                    borderColor="green.500"
                     borderRadius="md"
                     boxShadow="lg"
                   >
@@ -150,18 +175,18 @@ export default function FooterNavigation({ newNotificationCount = 0 }) {
                           <Icon as={FiUser} boxSize={4} />
                         )
                       }
-                      color="primary" // Terminal green text
-                      bg="black" // Consistent background
-                      _hover={{ bg: "gray.800", color: "green.300" }} // Hover effect
+                      color="primary"
+                      bg="black"
+                      _hover={{ bg: "gray.800", color: "green.300" }}
                     >
                       Go to Profile
                     </MenuItem>
                     <MenuItem
                       onClick={() => handleNavigation("/settings")}
                       icon={<Icon as={FiSettings} boxSize={4} />}
-                      color="primary" // Terminal green text
-                      bg="black" // Consistent background
-                      _hover={{ bg: "gray.800", color: "green.300" }} // Hover effect
+                      color="primary"
+                      bg="black"
+                      _hover={{ bg: "gray.800", color: "green.300" }}
                     >
                       Settings
                     </MenuItem>
@@ -172,8 +197,8 @@ export default function FooterNavigation({ newNotificationCount = 0 }) {
                       }}
                       icon={<Icon as={FiX} boxSize={4} />}
                       color="primary"
-                      bg="black" // Consistent background
-                      _hover={{ bg: "gray.800", color: "green.300" }} // Hover effect
+                      bg="black"
+                      _hover={{ bg: "gray.800", color: "green.300" }}
                     >
                       Log out
                     </MenuItem>

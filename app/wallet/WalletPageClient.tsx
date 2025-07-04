@@ -9,6 +9,8 @@ export default function WalletPageClient() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Debug: log user and aioha values
+    console.log("[WalletPageClient] aioha:", aioha, "user:", user);
     // Only set loading to false once authentication state is determined
     // Check if aioha has completed initialization
     if (aioha) {
@@ -25,7 +27,9 @@ export default function WalletPageClient() {
     );
   }
 
-  if (!user) {
+  // Add validation and logging for user
+  if (!user || typeof user !== "string" || user.trim() === "") {
+    console.error("[WalletPageClient] Invalid or missing user:", user);
     return (
       <Center height="200px">
         <Box textAlign="center">

@@ -75,7 +75,6 @@ export default function ProfilePage({ username }: ProfilePageProps) {
   });
   const [posts, setPosts] = useState<any[]>([]);
   const isFetching = useRef(false);
-  const [viewMode, setViewMode] = useState<"grid" | "list" | "magazine" | "videoparts">("grid");
   const [isMobile, setIsMobile] = useState(false);
   const { user } = useAioha();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -104,6 +103,19 @@ export default function ProfilePage({ username }: ProfilePageProps) {
 
   // Memoize derived values
   const isOwner = useMemo(() => user === username, [user, username]);
+
+  // Add a function to get the initial view mode from the URL
+  const getInitialViewMode = () => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const viewParam = params.get("view") ?? '';
+      if (["grid", "list", "magazine", "videoparts"].includes(viewParam)) {
+        return viewParam as "grid" | "list" | "magazine" | "videoparts";
+      }
+    }
+    return "grid";
+  };
+  const [viewMode, setViewMode] = useState<"grid" | "list" | "magazine" | "videoparts">(getInitialViewMode);
 
   // Memoized callbacks
   const handleViewModeChange = useCallback((mode: "grid" | "list" | "magazine" | "videoparts") => {
@@ -134,18 +146,6 @@ export default function ProfilePage({ username }: ProfilePageProps) {
       window.speechSynthesis.speak(utterance);
     }
   }, [profileData.about]);
-
-  // Replace the useEffect that loads the saved view mode
-  useEffect(() => {
-    let initialView = "grid";
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get("view") === "magazine") {
-        initialView = "magazine";
-      }
-    }
-    setViewMode(initialView as 'grid' | 'list' | 'magazine' | 'videoparts');
-  }, []);
 
   // Detect mobile view
   useEffect(() => {
@@ -258,6 +258,25 @@ export default function ProfilePage({ username }: ProfilePageProps) {
     }
   }, [user, username]);
 
+  // When viewMode changes, update the URL
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      params.set('view', viewMode);
+      router.replace(`?${params.toString()}`);
+    }
+  }, [viewMode, router]);
+
+  // Back button handler for modal
+  const closeMagazine = () => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      params.set('view', 'grid');
+      router.replace(`?${params.toString()}`);
+    }
+    setViewMode('grid');
+  };
+
   // Place handleFollowToggle here, before ProfileHeader useMemo
   const handleFollowToggle = useCallback(async () => {
     if (!user || !username || user === username) return;
@@ -303,25 +322,6 @@ export default function ProfilePage({ username }: ProfilePageProps) {
       });
     }
   }, [user, username, isFollowing, toast]);
-
-  // When viewMode changes, update the URL
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      params.set('view', viewMode);
-      router.replace(`?${params.toString()}`);
-    }
-  }, [viewMode, router]);
-
-  // Back button handler for modal
-  const closeMagazine = () => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      params.set('view', 'grid');
-      router.replace(`?${params.toString()}`);
-    }
-    setViewMode('grid');
-  };
 
   const [primary, secondary, background] = useToken('colors', ['primary', 'secondary', 'background']);
   const ProfileHeader = useMemo(
@@ -571,13 +571,16 @@ export default function ProfilePage({ username }: ProfilePageProps) {
               isActive={viewMode === "list"}
               sx={buttonStyle}
             />
-            <IconButton
-              aria-label="Show Magazine"
-              icon={<FaBookOpen />}
-              onClick={() => handleViewModeChange("magazine")}
-              isActive={viewMode === "magazine"}
-              sx={buttonStyle}
-            />
+            {/* Hide Magazine button on mobile */}
+            {!isMobile && (
+              <IconButton
+                aria-label="Show Magazine"
+                icon={<FaBookOpen />}
+                onClick={() => handleViewModeChange("magazine")}
+                isActive={viewMode === "magazine"}
+                sx={buttonStyle}
+              />
+            )}
             <IconButton
               aria-label="Show Videoparts"
               icon={<FaVideo />}
