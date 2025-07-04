@@ -4,7 +4,7 @@ import { FaPiggyBank } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import { useAioha } from "@aioha/react-ui";
 
-export default function FooterNavigation() {
+export default function FooterNavigation({ newNotificationCount = 0 }: { newNotificationCount?: number }) {
   const router = useRouter();
   const { user } = useAioha();
 
@@ -36,7 +36,26 @@ export default function FooterNavigation() {
         <Button variant="ghost" p={0} onClick={() => router.push("/leaderboard") }><Icon as={FiAward} boxSize={6} /></Button>
         <Button variant="ghost" p={0} onClick={() => router.push("/skatespots") }><Icon as={FiMap} boxSize={6} /></Button>
         <Button variant="ghost" p={0} onClick={() => router.push("/bounties") }><Icon as={FiTarget} boxSize={6} /></Button>
-        <Button variant="ghost" p={0} onClick={() => router.push("/notifications") }><Icon as={FiBell} boxSize={6} /></Button>
+        <Button variant="ghost" p={0} onClick={() => router.push("/notifications") }>
+          <Icon as={FiBell} boxSize={6} />
+          {newNotificationCount > 0 && (
+            <Box
+              as="span"
+              position="absolute"
+              top={1}
+              right={1}
+              bg="red.500"
+              color="white"
+              borderRadius="full"
+              fontSize="xs"
+              px={2}
+              py={0.5}
+              zIndex={1}
+            >
+              {newNotificationCount}
+            </Box>
+          )}
+        </Button>
         <Button variant="ghost" p={0} onClick={() => router.push("/wallet") }><Icon as={FaPiggyBank} boxSize={6} /></Button>
         <Menu>
           <MenuButton as={Button} variant="ghost" p={0}>
