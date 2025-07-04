@@ -4,11 +4,41 @@ import { Box, Select, Text, useToast, VStack, Heading, Accordion, AccordionItem,
 import { useTheme, ThemeName, themeMap } from '../themeProvider';
 import LottieAnimation from '@/components/shared/LottieAnimation';
 import UpvoteSnapContainer from '@/components/settings/UpvoteSnapContainer';
+import { useRive, useStateMachineInput } from "@rive-app/react-canvas";
+
+// Reusable FooterNavButton component
+const FooterNavButton = ({ src }: { src: string }) => {
+    const STATE_MACHINE_NAME = "ButtonStateMachine";
+    const TRIGGER_NAME = "click";
+    const { rive, RiveComponent } = useRive({
+        src,
+        stateMachines: STATE_MACHINE_NAME,
+        autoplay: true,
+    });
+    const clickInput = useStateMachineInput(rive, STATE_MACHINE_NAME, TRIGGER_NAME);
+    return (
+        <Box textAlign="center">
+            <Box display="inline-block" cursor="pointer">
+                <RiveComponent style={{ width: 60, height: 60 }} onClick={() => clickInput && clickInput.fire()} />
+            </Box>
+        </Box>
+    );
+};
 
 const Settings = () => {
     const { themeName, setThemeName } = useTheme();
     const [selectedTheme, setSelectedTheme] = useState<ThemeName>(themeName);
     const toast = useToast();
+
+    // Rive animation setup
+    const STATE_MACHINE_NAME = "ButtonStateMachine"; // Update if your state machine is named differently
+    const TRIGGER_NAME = "click"; // Update if your trigger is named differently
+    const { rive, RiveComponent } = useRive({
+        src: "/buttons/blog.riv",
+        stateMachines: STATE_MACHINE_NAME,
+        autoplay: true,
+    });
+    const clickInput = useStateMachineInput(rive, STATE_MACHINE_NAME, TRIGGER_NAME);
 
     useEffect(() => {
         setSelectedTheme(themeName);
@@ -35,6 +65,17 @@ const Settings = () => {
             .join(' ');
     };
 
+    const buttonSources = [
+        "/buttons/home.riv",
+        "/buttons/blog.riv",
+        "/buttons/leaderboard.riv",
+        "/buttons/map.riv",
+        "/buttons/bounties.riv",
+        "/buttons/notif.riv",
+        "/buttons/wallet.riv",
+        "/buttons/profile.riv",
+    ];
+
     return (
         <Box p={8} maxW="container.md" mx="auto">
             <VStack spacing={6} align="stretch">
@@ -42,6 +83,23 @@ const Settings = () => {
                     Settings
                 </Heading>
                 
+                {/* FooterNavButton Rive Test Row */}
+                <Box textAlign="center" mb={4}>
+                  <Text fontWeight="medium" mb={2}>FooterNavButton Rive Test</Text>
+                  <Box display="flex" flexDirection="row" justifyContent="center" alignItems="center">
+                    {buttonSources.map((src, idx) => (
+                      <Box
+                        key={src}
+                        marginLeft={idx === 0 ? 0 : "-8px"}
+                        zIndex={idx}
+                        position="relative"
+                      >
+                        <FooterNavButton src={src} />
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
+
                 <Box>
                     <Text mb={2} fontWeight="medium">Theme Selection</Text>
                     <Select 
