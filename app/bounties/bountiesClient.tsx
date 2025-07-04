@@ -14,12 +14,18 @@ export default function BountiesClient() {
   const [showRules, setShowRules] = useState(false);
 
   return (
-    <Box maxW="900px" mx="auto" py={8} px={4} className="hide-scrollbar" style={{ overflowY: 'auto', height: '100vh' }}>
-      <Box display="flex" alignItems="center" mb={4} gap={4}>
-        <Box display="flex" alignItems="center" gap={4} flex="1">
-          <Image src="/images/ripper.png" alt="Ripper" height={96} width={96} style={{ marginRight: 12 }} />
+    <Box maxW="900px" mx="auto" py={{ base: 4, md: 8 }} px={{ base: 2, md: 4 }} className="hide-scrollbar" style={{ overflowY: 'auto', height: '100vh' }}>
+      <Box
+        display={{ base: "block", md: "flex" }}
+        alignItems="center"
+        mb={4}
+        gap={{ base: 4, md: 8 }}
+        justifyContent={{ base: 'flex-start', md: 'space-between' }}
+      >
+        <Box display="flex" alignItems="center" gap={4} flex="1" mb={{ base: 4, md: 0 }}>
+          <Image src="/images/ripper.png" alt="Ripper" height={120} width={120} style={{ marginRight: 12, height: 'auto', width: 'auto' }} className="ripper-logo" />
           <Text
-            fontSize={{ base: "4xl", md: "7xl" }}
+            fontSize={{ base: "3xl", md: "7xl" }}
             fontWeight="extrabold"
             color="primary"
             letterSpacing="wider"
@@ -30,19 +36,23 @@ export default function BountiesClient() {
             Bounties
           </Text>
         </Box>
-        <Button
-          colorScheme="primary"
-          size="lg"
-          onClick={() => setIsModalOpen(true)}
-          fontWeight="bold"
-          px={8}
-          py={6}
-          borderRadius="xl"
-          boxShadow="md"
-          ml={4}
-        >
-          Create a Bounty
-        </Button>
+        <Box flex={{ base: 'unset', md: '0 0 auto' }} display="flex" justifyContent={{ base: 'flex-start', md: 'flex-end' }} width={{ base: '100%', md: 'auto' }}>
+          <Button
+            colorScheme="primary"
+            size="lg"
+            onClick={() => setIsModalOpen(true)}
+            fontWeight="bold"
+            px={{ base: 4, md: 8 }}
+            py={{ base: 4, md: 6 }}
+            borderRadius="xl"
+            boxShadow="md"
+            ml={{ base: 0, md: 8 }}
+            width={{ base: "100%", md: "auto" }}
+            mt={{ base: 2, md: 0 }}
+          >
+            Create a Bounty
+          </Button>
+        </Box>
       </Box>
       <Box mb={4}>
         <Box display="flex" alignItems="center" gap={2}>

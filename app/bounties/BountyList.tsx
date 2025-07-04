@@ -25,6 +25,7 @@ import BountySnap from "./BountySnap";
 import { parse, isAfter } from "date-fns";
 import HiveClient from "@/lib/hive/hiveclient";
 import { useHiveUser } from "@/contexts/UserContext";
+import { FaBolt, FaCheckCircle, FaUserCheck, FaList, FaFlagCheckered } from "react-icons/fa";
 
 // Manually define the type for get_account_votes response
 interface AccountVote {
@@ -304,149 +305,237 @@ export default function BountyList({
     <>
       {/* Stats Board */}
       <Box
-        mb={6}
-        p={0}
-        borderRadius="lg"
+        mb={{ base: 2, md: 6 }}
+        p={{ base: 0, md: 0 }}
+        borderRadius={{ base: 'none', md: 'lg' }}
         bg="muted"
-        boxShadow="md"
+        boxShadow={{ base: 'none', md: 'md' }}
         maxW="1000px"
         mx="auto"
         overflow="hidden"
       >
         <Flex
-          direction="row"
+          direction={{ base: "row", md: "row" }}
           align="center"
           justify="center"
-          height="80px"
+          height={{ base: "40px", md: "80px" }}
           bg="muted"
+          gap={{ base: 0, md: 0 }}
         >
           {/* Active Bounties */}
-          <Box flex="1" textAlign="center">
-            <Text fontWeight="bold" fontSize="2xl" color="primary.400">
+          <Box flex="1" textAlign="center" py={{ base: 0, md: 3 }} px={{ base: 0, md: 0 }}>
+            <Text fontWeight="bold" fontSize={{ base: "md", md: "2xl" }} color="primary.400" lineHeight={1}>
               {activeBounties.length}
             </Text>
-            <Text fontSize="md" color="text">
+            <Text fontSize={{ base: "xs", md: "md" }} color="text" lineHeight={1}>
               {activeBounties.length === 1 ? 'active bounty' : 'active bounties'}
             </Text>
           </Box>
-          <Divider orientation="vertical" height="60px" />
+          {/* Divider for md+ only */}
+          <Divider orientation="vertical" height="60px" display={{ base: "none", md: "block" }} />
           {/* Rewards Up for Grabs */}
-          <Box flex="1" textAlign="center">
-            <Text fontWeight="bold" fontSize="2xl" color="primary.400">
+          <Box flex="1" textAlign="center" py={{ base: 0, md: 3 }} px={{ base: 0, md: 0 }}>
+            <Text fontWeight="bold" fontSize={{ base: "md", md: "2xl" }} color="primary.400" lineHeight={1}>
               {isPriceLoading || totalActiveRewardsUSD === null
                 ? "Calculating..."
                 : `~$${totalActiveRewardsUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })} USD`}
             </Text>
-            <Text fontSize="md" color="text">
+            <Text fontSize={{ base: "xs", md: "md" }} color="text" lineHeight={1}>
               active rewards
             </Text>
           </Box>
-          <Divider orientation="vertical" height="60px" />
+          {/* Divider for md+ only */}
+          <Divider orientation="vertical" height="60px" display={{ base: "none", md: "block" }} />
           {/* Active Bounty Hunters */}
-          <Box flex="1" textAlign="center">
-            <Text fontWeight="bold" fontSize="2xl" color="primary.400">
+          <Box flex="1" textAlign="center" py={{ base: 0, md: 3 }} px={{ base: 0, md: 0 }}>
+            <Text fontWeight="bold" fontSize={{ base: "md", md: "2xl" }} color="primary.400" lineHeight={1}>
               {isLoadingGrinders
                 ? "..."
                 : activeBounties.length === 0
                 ? "0"
                 : bountyGrinders.length}
             </Text>
-            <Text fontSize="md" color="text">
+            <Text fontSize={{ base: "xs", md: "md" }} color="text" lineHeight={1}>
               {bountyGrinders.length === 1 ? 'active hunter' : 'active hunters'}
             </Text>
           </Box>
         </Flex>
       </Box>
-      <Flex align="center" mb={4} gap={4}>
+      <Flex
+        align="center"
+        mb={{ base: 0, md: 4 }}
+        gap={{ base: 0, md: 4 }}
+        direction={{ base: 'column', md: 'row' }}
+        justifyContent={{ base: 'center', md: 'flex-start' }}
+        alignItems={{ base: 'center', md: 'stretch' }}
+      >
         <Tabs
           variant="soft-rounded"
           colorScheme="primary"
           index={filterToIndex(filter)}
           onChange={(idx) => setFilter(indexToFilter(idx))}
           flex="1"
+          width={{ base: '100%', md: 'auto' }}
+          display="flex"
+          justifyContent={{ base: 'center', md: 'flex-start' }}
         >
-          <TabList>
+          <TabList
+            sx={{
+              overflowX: { base: 'auto', md: 'visible' },
+              whiteSpace: { base: 'nowrap', md: 'normal' },
+              borderBottom: { base: '1px solid', md: 'none' },
+              borderColor: { base: 'gray.700', md: 'none' },
+              boxShadow: { base: '0 2px 4px rgba(0,0,0,0.04)', md: 'none' },
+              pb: { base: 2, md: 0 },
+              mb: { base: 0, md: 0 },
+              justifyContent: { base: 'center', md: 'flex-start' },
+            }}
+          >
             <Tab
               borderWidth="2px"
               borderColor="transparent"
+              minW={0}
+              fontSize={{ base: 'xl', md: 'md' }}
+              px={{ base: 1, md: 2 }}
+              py={{ base: 1, md: 1 }}
+              m={{ base: 0, md: 1 }}
               _selected={{
                 color: "primary",
                 bg: "primary.900",
                 borderColor: "primary",
                 borderWidth: "2px",
               }}
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
             >
-              Active
+              <FaBolt style={{ marginRight: 0, marginBottom: 0 }} />
+              <Box display={{ base: 'none', md: 'inline' }} ml={1}>Active</Box>
             </Tab>
             <Tab
               borderWidth="2px"
               borderColor="transparent"
+              minW={0}
+              fontSize={{ base: 'xl', md: 'md' }}
+              px={{ base: 1, md: 2 }}
+              py={{ base: 1, md: 1 }}
+              m={{ base: 0, md: 1 }}
               _selected={{
                 color: "primary",
                 bg: "primary.900",
                 borderColor: "primary",
                 borderWidth: "2px",
               }}
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
             >
-              Claimed
+              <FaCheckCircle />
+              <Box display={{ base: 'none', md: 'inline' }} ml={1}>Claimed</Box>
             </Tab>
             <Tab
               borderWidth="2px"
               borderColor="transparent"
+              minW={0}
+              fontSize={{ base: 'xl', md: 'md' }}
+              px={{ base: 1, md: 2 }}
+              py={{ base: 1, md: 1 }}
+              m={{ base: 0, md: 1 }}
               _selected={{
                 color: "primary",
                 bg: "primary.900",
                 borderColor: "primary",
                 borderWidth: "2px",
               }}
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
             >
-              My Claimed
+              <FaUserCheck />
+              <Box display={{ base: 'none', md: 'inline' }} ml={1}>My Claimed</Box>
             </Tab>
             <Tab
               borderWidth="2px"
               borderColor="transparent"
+              minW={0}
+              fontSize={{ base: 'xl', md: 'md' }}
+              px={{ base: 1, md: 2 }}
+              py={{ base: 1, md: 1 }}
+              m={{ base: 0, md: 1 }}
               _selected={{
                 color: "primary",
                 bg: "primary.900",
                 borderColor: "primary",
                 borderWidth: "2px",
               }}
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
             >
-              All
+              <FaList />
+              <Box display={{ base: 'none', md: 'inline' }} ml={1}>All</Box>
             </Tab>
             <Tab
               borderWidth="2px"
               borderColor="transparent"
+              minW={0}
+              fontSize={{ base: 'xl', md: 'md' }}
+              px={{ base: 1, md: 2 }}
+              py={{ base: 1, md: 1 }}
+              m={{ base: 0, md: 1 }}
               _selected={{
                 color: "primary",
                 bg: "primary.900",
                 borderColor: "primary",
                 borderWidth: "2px",
               }}
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
             >
-              Completed
+              <FaFlagCheckered />
+              <Box display={{ base: 'none', md: 'inline' }} ml={1}>Completed</Box>
             </Tab>
           </TabList>
         </Tabs>
-        <Box textAlign="right">
+        <Box
+          textAlign="center"
+          width={{ base: '100%', md: 'auto' }}
+          mt={{ base: 0, md: 0 }}
+          mb={{ base: 0, md: 0 }}
+          gap={0}
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+        >
           <Select
             value={sortBy}
             onChange={e => setSortBy(e.target.value as any)}
             variant="outline"
             display="inline-block"
-            width="120px"
+            width={{ base: '90%', md: '180px' }}
+            fontFamily="heading"
+            fontWeight="bold"
+            fontSize={{ base: 'lg', md: 'sm' }}
+            color="primary.900"
+            bg={{ base: 'background', md: 'muted' }}
+            borderColor={{ base: 'primary.400', md: 'gray.300' }}
+            borderWidth="2px"
+            borderRadius="lg"
+            boxShadow={{ base: '0 2px 8px rgba(0,0,0,0.10)', md: 'none' }}
+            py={{ base: 0, md: 2 }}
+            px={{ base: 0, md: 4 }}
+            mb={{ base: 0, md: 0 }}
+            mt={{ base: 0, md: 0 }}
             sx={{
               '& > option': { color: 'initial' },
             }}
           >
-            <option value="default">Default (new)</option>
-            <option value="rewards">Rewards (higher bounty payouts first)</option>
-            <option value="hot">Hot (most unique claims)</option>
-            <option value="ending">Ending soon</option>
+            <option value="default">New</option>
+            <option value="rewards">Rewards</option>
+            <option value="hot">Claims</option>
+            <option value="ending">Ending</option>
           </Select>
-          <style jsx global>{`
-            select[value="default"] { color: inherit; }
-          `}</style>
         </Box>
       </Flex>
       <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing={6} my={8}>

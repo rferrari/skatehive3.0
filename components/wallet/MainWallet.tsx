@@ -181,17 +181,18 @@ export default function MainWallet({ username }: MainWalletProps) {
 
   return (
     <>
-      <Box w="100%">
+      <Box w="100%" maxW="100vw" overflowX="hidden">
         <Grid
           templateColumns={{ base: "1fr", md: "2fr 1fr" }}
-          gap={{ base: 2, md: 6 }}
+          gap={{ base: 4, md: 6 }}
           alignItems="stretch"
-          m={{ base: 1, md: 4 }}
+          m={{ base: 0, md: 4 }}
+          px={{ base: 0, md: 0 }}
           height={{ md: "100%" }}
         >
           {/* Left: Wallet Balances and Actions */}
           <Box
-            p={{ base: 2, md: 4 }}
+            p={{ base: 2, sm: 3, md: 4 }}
             border="none"
             borderRadius="base"
             bg="muted"
@@ -200,12 +201,13 @@ export default function MainWallet({ username }: MainWalletProps) {
             flexDirection="column"
             justifyContent="space-between"
             height="100%"
+            minW={0}
           >
-            <Flex align="center" justify="space-between" mb={6}>
-              <Heading as="h2" size="lg" fontFamily="Joystix" color="primary">
+            <Flex align="center" justify="space-between" mb={6} wrap="wrap">
+              <Heading as="h2" size="lg" fontFamily="Joystix" color="primary" fontSize={{ base: "md", sm: "lg", md: "xl" }}>
                 Skatehive Wallet
               </Heading>
-              <Box>
+              <Box mt={{ base: 2, md: 0 }}>
                 <ConnectButton onOpen={openConnectModal} />
                 <ConnectModal
                   isOpen={isConnectModalOpen}
@@ -237,10 +239,12 @@ export default function MainWallet({ username }: MainWalletProps) {
             spacing={4}
             align="stretch"
             maxW={{ base: "100%", md: "340px" }}
-            mx="auto"
-            mb={{ base: 24, md: 0 }}
+            mx={{ base: 0, md: "auto" }}
+            mt={{ base: 6, md: 0 }}
+            mb={{ base: 4, md: 0 }}
             height="100%"
-            justifyContent="space-between"
+            justifyContent="flex-start"
+            minW={0}
           >
             <MarketPrices
               hivePrice={hivePrice}
