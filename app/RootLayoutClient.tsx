@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Box, Container, Flex, useBreakpointValue } from "@chakra-ui/react";
 import Sidebar from "@/components/layout/Sidebar";
-import FooterNavigation from "@/components/layout/FooterNavigation";
+import FooterNavButtons from "@/components/layout/FooterNavButtons";
 import SplashScreen from "@/components/layout/SplashScreen";
 import { Providers } from "./providers";
 import {
@@ -100,7 +100,7 @@ function InnerLayout({ children }: { children: React.ReactNode }) {
         </Box>
       </Flex>
       {isMobile && (
-        <FooterNavigation newNotificationCount={newNotificationCount} />
+        <FooterNavButtons newNotificationCount={newNotificationCount} />
       )}
     </Container>
   );
