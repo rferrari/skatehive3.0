@@ -78,6 +78,14 @@ const renderMedia = (mediaContent: string) => {
       const srcMatch = item.match(/src=["']([^"']+)["']/i);
       if (srcMatch && srcMatch[1]) {
         const url = srcMatch[1];
+        // Skip YouTube iframes (handled by auto-embed logic)
+        if (
+          url.includes("youtube.com/embed/") ||
+          url.includes("youtube-nocookie.com/embed/") ||
+          url.includes("youtu.be/")
+        ) {
+          return null;
+        }
         if (url.includes("gateway.pinata.cloud/ipfs/")) {
           const ipfsHash = url.match(/\/ipfs\/([\w-]+)/)?.[1];
           if (ipfsHash) {
@@ -559,5 +567,31 @@ export default Snap;
     100% {
       box-shadow: 0 0 0 0 var(--chakra-colors-accent, rgba(72, 255, 128, 0));
     }
+  }
+  /* Responsive YouTube iframe for Hive-rendered markdown in Snap */
+  .markdown-body iframe[src*="youtube.com"],
+  .markdown-body iframe[src*="youtube-nocookie.com"] {
+    width: 100% !important;
+    height: 100% !important;
+    aspect-ratio: 16 / 9;
+    min-height: 200px;
+    max-width: 100%;
+    display: block;
+  }
+  /* Optional: wrap iframes in a responsive container if needed */
+  .markdown-body .responsive-embed {
+    position: relative;
+    width: 100%;
+    padding-bottom: 56.25%; /* 16:9 */
+    height: 0;
+    overflow: hidden;
+    margin: 16px 0;
+  }
+  .markdown-body .responsive-embed iframe {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100% !important;
+    height: 100% !important;
+    border: 0;
   }
 `}</style>;
