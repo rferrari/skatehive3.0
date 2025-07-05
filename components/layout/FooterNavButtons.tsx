@@ -79,7 +79,7 @@ export default function FooterNavButtons({ newNotificationCount = 0 }: { newNoti
           { src: "/buttons/wallet.riv", onClick: () => router.push("/wallet") },
           { src: "/buttons/profile.riv", onClick: () => router.push(`/user/${user}?view=grid`) },
         ].map((btn, idx) => (
-          <Box key={btn.src} marginLeft={idx === 0 ? 0 : "-15px"} zIndex={idx} position="relative">
+          <Box key={btn.src} marginLeft={idx === 0 ? 0 : "-10px"} zIndex={idx} position="relative">
             <FooterNavButton src={btn.src} onClick={btn.onClick} badge={btn.badge} />
           </Box>
         ))}
