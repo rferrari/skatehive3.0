@@ -28,7 +28,7 @@ import {
   ModalContent,
 } from "@chakra-ui/react";
 import useHiveAccount from "@/hooks/useHiveAccount";
-import { FaGlobe, FaTh, FaBars, FaEdit, FaBookOpen, FaVideo } from "react-icons/fa";
+import { FaGlobe, FaTh, FaBars, FaEdit, FaBookOpen, FaVideo, FaCog } from "react-icons/fa";
 import { MdPersonAdd } from "react-icons/md";
 import { TbUserCheck } from "react-icons/tb";
 import { getProfile, findPosts, checkFollow, changeFollow } from "@/lib/hive/client-functions";
@@ -76,7 +76,7 @@ export default function ProfilePage({ username }: ProfilePageProps) {
   const [posts, setPosts] = useState<any[]>([]);
   const isFetching = useRef(false);
   const [isMobile, setIsMobile] = useState(false);
-  const { user } = useAioha();
+  const { user, aioha } = useAioha();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isFollowing, setIsFollowing] = useState<boolean | null>(null);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
@@ -355,6 +355,7 @@ export default function ProfilePage({ username }: ProfilePageProps) {
             display="flex"
             flexDirection="row"
             alignItems="center"
+            justifyContent={{ base: "center", md: "flex-start" }}
             zIndex={2}
             ml={{ base: 0, md: 8 }}
             p={0}
@@ -554,7 +555,30 @@ export default function ProfilePage({ username }: ProfilePageProps) {
           />
         </Box>
         {ProfileHeader}
-        
+        {/* Mobile-only Logout and Settings Buttons for Profile Owner */}
+        {isOwner && isMobile && (
+          <Flex display={{ base: "flex", md: "none" }} justify="center" align="center" my={4} gap={2}>
+            <Button
+              colorScheme="red"
+              variant="solid"
+              size="md"
+              onClick={async () => { await aioha.logout(); }}
+            >
+              Logout
+            </Button>
+            <Button
+              colorScheme="gray"
+              variant="outline"
+              borderColor="gray.300"
+              size="md"
+              onClick={() => router.push("/settings")}
+              leftIcon={<FaCog />}
+              aria-label="Settings"
+            >
+              Settings
+            </Button>
+          </Flex>
+        )}
         <Flex justify="center" align="center" direction="column">
           <ButtonGroup isAttached variant="outline" size="sm" my={4} colorScheme="green">
             <IconButton
