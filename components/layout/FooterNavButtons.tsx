@@ -27,8 +27,8 @@ const FooterNavButton = ({ src, onClick, badge, themeValue }: { src: string, onC
   }, [themeInput, themeValue]);
 
   return (
-    <Box position="relative" display="inline-block" cursor="pointer" mx={1} onClick={() => { clickInput && clickInput.fire(); onClick && onClick(); }}>
-      <RiveComponent style={{ width: 48, height: 48 }} />
+    <Box position="relative" display="inline-block" cursor="pointer" mx={0.5} onClick={() => { clickInput && clickInput.fire(); onClick && onClick(); }}>
+      <RiveComponent style={{ width: 36, height: 36 }} />
       {!!badge && badge > 0 && (
         <Box
           as="span"
@@ -111,7 +111,7 @@ export default function FooterNavButtons({ newNotificationCount = 0 }: { newNoti
               }
             },
           ].map((btn, idx) => (
-            <Box key={btn.src} marginLeft={idx === 0 ? 0 : "-10px"} zIndex={idx} position="relative">
+            <Box key={btn.src} marginLeft={idx === 0 ? 0 : "5px"} zIndex={idx} position="relative">
               <FooterNavButton src={btn.src} onClick={btn.onClick} badge={btn.badge} themeValue={themeValue} />
             </Box>
           ))}
