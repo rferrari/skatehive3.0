@@ -1,28 +1,27 @@
 import { extendTheme } from '@chakra-ui/react';
 
-const skateTheme = extendTheme({
+const hackerRedTheme = extendTheme({
   config: {
     initialColorMode: 'dark',
     useSystemColorMode: false,
   },
   semanticTokens: {
     colors: {
-      _colorScheme: { _light: 'lime', _dark: 'lime' },
+      _colorScheme: { _light: 'orange.400', _dark: 'orange.400' },
       _colorMode: 'dark',
     },
   },
   colors: {
-    background: '#121212',       // Softer than black
-    text: '#A8FF60',             // Muted green for better readability
-    primary: '#a7ff00',
-    'primary-alpha': 'rgba(167, 255, 0, 0.8)',
-    secondary: '#1E1E1E',        // Slight contrast layer
-    accent: '#FFD700',           // Gold for highlights
-    muted: '#202020',            // Muted background
-    border: '#A8FF60',           // Harmonized with primary
-    error: '#FF5C57',
-    success: '#5EFF7E',
-    warning: '#FFBD4A',
+    background: '#1A1A1A',       // Dark gray for a sleek court-like feel
+    text: '#FF6200',             // Vibrant basketball orange
+    primary: '#FF6200',          // Bold orange for primary elements
+    secondary: '#1E3A8A',        // Deep navy blue for contrast
+    accent: '#DC2626',           // Red for highlights, inspired by team jerseys
+    muted: '#2D2D2D',            // Muted dark gray for subtle backgrounds
+    border: '#FF6200',           // Orange border to match primary
+    error: '#EF4444',
+    success: '#22C55E',
+    warning: '#F59E0B',
   },
   fonts: {
     heading: '"Fira Code", monospace',
@@ -52,16 +51,16 @@ const skateTheme = extendTheme({
     tall: 1.75,
   },
   borders: {
-    tb1: '1px solid #A8FF60',
-    tb2: '2px solid #FFD700',
+    tb1: '1px solid #FF6200',
+    tb2: '2px solid #DC2626',
     borderRadius: '6px',
   },
   shadows: {
-    xs: '0 0 2px 0 rgba(168, 255, 96, 0.3)',
-    sm: '0 1px 2px 0 rgba(168, 255, 96, 0.3)',
-    base: '0 1px 3px 0 rgba(168, 255, 96, 0.3), 0 1px 2px 0 rgba(168, 255, 96, 0.2)',
-    md: '0 4px 6px -1px rgba(168, 255, 96, 0.3), 0 2px 4px -1px rgba(168, 255, 96, 0.2)',
-    outline: '0 0 0 2px rgba(168, 255, 96, 0.6)',
+    xs: '0 0 2px 0 rgba(255, 98, 0, 0.3)',
+    sm: '0 1px 2px 0 rgba(255, 98, 0, 0.3)',
+    base: '0 1px 3px 0 rgba(255, 98, 0, 0.3), 0 1px 2px 0 rgba(255, 98, 0, 0.2)',
+    md: '0 4px 6px -1px rgba(255, 98, 0, 0.3), 0 2px 4px -1px rgba(255, 98, 0, 0.2)',
+    outline: '0 0 0 2px rgba(255, 98, 0, 0.6)',
     inner: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.6)',
     none: 'none',
   },
@@ -122,4 +121,4 @@ const skateTheme = extendTheme({
   },
 });
 
-export default skateTheme;
+export default hackerRedTheme;

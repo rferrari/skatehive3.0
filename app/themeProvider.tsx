@@ -5,21 +5,21 @@ import { ChakraProvider, extendTheme } from '@chakra-ui/react';
 import forestTheme from '@/themes/forest';
 import blueSkyTheme from '@/themes/bluesky';
 import hackerTheme from '@/themes/hacker';
-import skateTheme from '@/themes/skatehive';
+import hackerPlusTheme from '@/themes/hackerPlus';
 import nounsDaoTheme from '@/themes/nounish';
 import windows95Theme from '@/themes/windows95';
 import hiveBRTheme from '@/themes/hivebr';
 import cannabisTheme from '@/themes/cannabis';
 import gayTheme from '@/themes/gay';
-import basketballTheme from '@/themes/basketballTheme';
+import hackerRedTheme from '@/themes/hackerRed';
 
 // Available themes map
 export const themeMap = {
     forest: forestTheme,
     bluesky: blueSkyTheme,
     hacker: hackerTheme,
-    skate: skateTheme,
-    basketball: basketballTheme,
+    hackerPlus: hackerPlusTheme,
+    hackerRed: hackerRedTheme,
     nounish: nounsDaoTheme,
     windows95: windows95Theme,
     hiveBR: hiveBRTheme,
