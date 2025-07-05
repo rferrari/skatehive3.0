@@ -5,17 +5,27 @@ import { useAioha } from "@aioha/react-ui";
 import { useRive, useStateMachineInput } from "@rive-app/react-canvas";
 import { AiohaModal } from "@aioha/react-ui";
 import { KeyTypes } from "@aioha/aioha";
+import { useTheme } from '../../app/themeProvider';
 
 // Modular Rive Button
-const FooterNavButton = ({ src, onClick, badge }: { src: string, onClick?: () => void, badge?: number }) => {
+const FooterNavButton = ({ src, onClick, badge, themeValue }: { src: string, onClick?: () => void, badge?: number, themeValue: number }) => {
   const STATE_MACHINE_NAME = "ButtonStateMachine";
   const TRIGGER_NAME = "click";
+  const THEME_INPUT_NAME = "theme";
   const { rive, RiveComponent } = useRive({
     src,
     stateMachines: STATE_MACHINE_NAME,
     autoplay: true,
   });
   const clickInput = useStateMachineInput(rive, STATE_MACHINE_NAME, TRIGGER_NAME);
+  const themeInput = useStateMachineInput(rive, STATE_MACHINE_NAME, THEME_INPUT_NAME);
+
+  React.useEffect(() => {
+    if (themeInput) {
+      themeInput.value = themeValue;
+    }
+  }, [themeInput, themeValue]);
+
   return (
     <Box position="relative" display="inline-block" cursor="pointer" mx={1} onClick={() => { clickInput && clickInput.fire(); onClick && onClick(); }}>
       <RiveComponent style={{ width: 48, height: 48 }} />
@@ -45,6 +55,15 @@ export default function FooterNavButtons({ newNotificationCount = 0 }: { newNoti
   const { user } = useAioha();
   const [menuOpen, setMenuOpen] = useState(false);
   const [modalDisplayed, setModalDisplayed] = useState(false);
+  const { themeName } = useTheme();
+
+  // Map themeName to Rive theme value
+  const getRiveThemeValue = (themeName: string) => {
+    if (themeName === 'hackerPlus') return 0;
+    if (themeName === 'hackerRed') return 1;
+    return 2; // All other themes
+  };
+  const themeValue = getRiveThemeValue(themeName);
 
   // Placeholder logout function
   const handleLogout = () => {
@@ -93,7 +112,7 @@ export default function FooterNavButtons({ newNotificationCount = 0 }: { newNoti
             },
           ].map((btn, idx) => (
             <Box key={btn.src} marginLeft={idx === 0 ? 0 : "-10px"} zIndex={idx} position="relative">
-              <FooterNavButton src={btn.src} onClick={btn.onClick} badge={btn.badge} />
+              <FooterNavButton src={btn.src} onClick={btn.onClick} badge={btn.badge} themeValue={themeValue} />
             </Box>
           ))}
         </Box>
