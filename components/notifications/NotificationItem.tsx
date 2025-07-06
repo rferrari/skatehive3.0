@@ -23,6 +23,7 @@ import {
   vote,
 } from "../../lib/hive/client-functions";
 import SnapComposer from "../homepage/SnapComposer";
+import HiveMarkdown from "../shared/HiveMarkdown";
 
 interface NotificationItemProps {
   notification: Notifications;
@@ -416,7 +417,7 @@ export default function NotificationItem({
                   display="flex"
                   alignItems="center"
                   flexWrap="wrap"
-                  noOfLines={2}
+                  whiteSpace="normal"
                   wordBreak="break-word"
                 >
                   <Link
@@ -440,18 +441,14 @@ export default function NotificationItem({
                     comment
                   </Link>
                   {":"}
-                  {parentPost?.body &&
-                    ` "${parentPost.body.replace(/\n/g, " ").slice(0, 100)}${
-                      parentPost.body.length > 100 ? "…" : ""
-                    }"`}
-                  <Text as="span" fontSize={{ base: "2xs", md: "xs" }} color="gray.400" ml={{ base: 1, md: 2 }}>
-                    {formattedDate}
-                  </Text>
                 </Text>
+                {/* Parent post/comment preview using HiveMarkdown */}
+                {parentPost?.body && (
+                  <HiveMarkdown markdown={parentPost.body} />
+                )}
+                {/* Main reply content using HiveMarkdown */}
                 {reply && (
-                  <Text fontSize={{ base: "xs", md: "sm" }} color="green.300" mt={1}>
-                    {postContent}
-                  </Text>
+                  <HiveMarkdown markdown={postContent} />
                 )}
               </Box>
             ) : notification.type === "mention" ? (
@@ -501,7 +498,7 @@ export default function NotificationItem({
                   display="flex"
                   alignItems="center"
                   flexWrap="wrap"
-                  noOfLines={2}
+                  whiteSpace="normal"
                   wordBreak="break-word"
                 >
                   <Link
@@ -525,18 +522,14 @@ export default function NotificationItem({
                     post
                   </Link>
                   {":"}
-                  {parentPost?.title &&
-                    ` "${parentPost.title.slice(0, 100)}${
-                      parentPost.title.length > 100 ? "…" : ""
-                    }"`}
-                  <Text as="span" fontSize={{ base: "2xs", md: "xs" }} color="gray.400" ml={{ base: 1, md: 2 }}>
-                    {formattedDate}
-                  </Text>
                 </Text>
+                {/* Parent post preview using HiveMarkdown */}
+                {parentPost?.title && (
+                  <HiveMarkdown markdown={parentPost.title} />
+                )}
+                {/* Main reply content using HiveMarkdown */}
                 {reply && (
-                  <Text fontSize={{ base: "xs", md: "sm" }} color="green.300" mt={1}>
-                    {postContent}
-                  </Text>
+                  <HiveMarkdown markdown={postContent} />
                 )}
               </Box>
             ) : (
