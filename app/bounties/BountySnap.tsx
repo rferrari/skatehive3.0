@@ -359,9 +359,13 @@ const BountySnap = ({
 
   // Defensive utility to filter out unwanted props for Avatar
   const safeAvatarProps = (props: any) => {
-    // Add more props to exclude if needed
-    const { showBorder, ...rest } = props;
-    return rest;
+    // List of props to exclude from being passed to Avatar
+    const exclude = ["showBorder", "showborder", "bordered", "customProp"];
+    const filtered = { ...props };
+    exclude.forEach((key) => {
+      if (key in filtered) delete filtered[key];
+    });
+    return filtered;
   };
 
   return (
