@@ -12,6 +12,8 @@ import hiveBRTheme from '@/themes/hivebr';
 import cannabisTheme from '@/themes/cannabis';
 import gayTheme from '@/themes/gay';
 import hackerRedTheme from '@/themes/hackerRed';
+import cyberpunkTheme from '@/themes/cyberpunk';
+import retroPaperTheme from '@/themes/paper';
 
 // Available themes map
 export const themeMap = {
@@ -25,6 +27,8 @@ export const themeMap = {
     hiveBR: hiveBRTheme,
     cannabis: cannabisTheme,
     gay: gayTheme,
+    cyberpunk: cyberpunkTheme,
+    paper: retroPaperTheme,
 };
 
 export type ThemeName = keyof typeof themeMap;

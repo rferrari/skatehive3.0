@@ -65,3 +65,11 @@ body.show-splash #splash-root {
 #splash-root {
   display: none;
 }
+
+@font-face {
+  font-family: 'Mechanical';
+  src: url('/fonts/Mechanical.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
