@@ -8,7 +8,7 @@ import { KeyTypes } from "@aioha/aioha";
 import { useTheme } from '../../app/themeProvider';
 
 // Modular Rive Button
-const FooterNavButton = ({ src, onClick, badge, themeValue }: { src: string, onClick?: () => void, badge?: number, themeValue: number }) => {
+const FooterNavButton = ({ src, onClick, badge, themeValue }: { src: string, onClick?: () => void, badge?: number, themeValue: number | undefined }) => {
   const STATE_MACHINE_NAME = "ButtonStateMachine";
   const TRIGGER_NAME = "click";
   const THEME_INPUT_NAME = "theme";
@@ -21,9 +21,15 @@ const FooterNavButton = ({ src, onClick, badge, themeValue }: { src: string, onC
   const themeInput = useStateMachineInput(rive, STATE_MACHINE_NAME, THEME_INPUT_NAME);
 
   React.useEffect(() => {
-    if (themeInput) {
+    if (
+      themeInput &&
+      typeof themeValue === 'number' &&
+      themeValue >= 0 &&
+      themeValue <= 5
+    ) {
       themeInput.value = themeValue;
     }
+    // else: do nothing, as required
   }, [themeInput, themeValue]);
 
   return (
@@ -58,12 +64,16 @@ export default function FooterNavButtons({ newNotificationCount = 0 }: { newNoti
   const { themeName } = useTheme();
 
   // Map themeName to Rive theme value
-  const getRiveThemeValue = (themeName: string) => {
-    if (themeName === 'hackerPlus') return 0;
-    if (themeName === 'hackerRed') return 1;
-    return 2; // All other themes
+  const themeToRiveValue: Record<string, number> = {
+    hackerPlus: 0,
+    hackerRed: 1,
+    windows95: 2,
+    hacker: 3,
+    gay: 4,
+    paper: 5,
   };
-  const themeValue = getRiveThemeValue(themeName);
+
+  const themeValue = themeToRiveValue[themeName];
 
   // Placeholder logout function
   const handleLogout = () => {
@@ -101,7 +111,7 @@ export default function FooterNavButtons({ newNotificationCount = 0 }: { newNoti
             { src: "/buttons/notif.riv", onClick: () => router.push("/notifications"), badge: newNotificationCount },
             { src: "/buttons/wallet.riv", onClick: () => router.push("/wallet") },
             {
-              src: "/buttons/profile.riv",
+              src: "/buttons/prof.riv",
               onClick: () => {
                 if (user) {
                   router.push(`/user/${user}?view=grid`);
