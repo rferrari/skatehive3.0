@@ -19,7 +19,7 @@ import { CloseIcon } from "@chakra-ui/icons";
 import { FaImage } from "react-icons/fa";
 import { Discussion } from "@hiveio/dhive";
 import { getFileSignature, uploadImage } from "@/lib/hive/client-functions";
-import ImageCompressor, { ImageCompressorRef } from "../../src/components/ImageCompressor";
+import ImageCompressor, { ImageCompressorRef } from "@/utils/ImageCompressor";
 import MatrixOverlay from "../graphics/MatrixOverlay";
 import imageCompression from "browser-image-compression";
 
@@ -28,11 +28,16 @@ interface SpotSnapComposerProps {
   onClose: () => void;
 }
 
-export default function SpotSnapComposer({ onNewComment, onClose }: SpotSnapComposerProps) {
+export default function SpotSnapComposer({
+  onNewComment,
+  onClose,
+}: SpotSnapComposerProps) {
   const { user, aioha } = useAioha();
   const postBodyRef = useRef<HTMLTextAreaElement>(null);
   const imageCompressorRef = useRef<ImageCompressorRef>(null);
-  const [compressedImages, setCompressedImages] = useState<{ url: string; fileName: string; caption: string }[]>([]);
+  const [compressedImages, setCompressedImages] = useState<
+    { url: string; fileName: string; caption: string }[]
+  >([]);
   const [isLoading, setIsLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number[]>([]);
   const [spotName, setSpotName] = useState("");
@@ -42,16 +47,29 @@ export default function SpotSnapComposer({ onNewComment, onClose }: SpotSnapComp
 
   const buttonText = "Post Spot";
 
-  const handleCompressedImageUpload = async (url: string | null, fileName?: string) => {
+  const handleCompressedImageUpload = async (
+    url: string | null,
+    fileName?: string
+  ) => {
     if (!url) return;
     setIsLoading(true);
     try {
-      const blob = await fetch(url).then(res => res.blob());
-      const file = new File([blob], fileName || "compressed.jpg", { type: blob.type });
+      const blob = await fetch(url).then((res) => res.blob());
+      const file = new File([blob], fileName || "compressed.jpg", {
+        type: blob.type,
+      });
       const signature = await getFileSignature(file);
-      const uploadUrl = await uploadImage(file, signature, compressedImages.length, setUploadProgress);
+      const uploadUrl = await uploadImage(
+        file,
+        signature,
+        compressedImages.length,
+        setUploadProgress
+      );
       if (uploadUrl) {
-        setCompressedImages(prev => [...prev, { url: uploadUrl, fileName: file.name, caption: "" }]);
+        setCompressedImages((prev) => [
+          ...prev,
+          { url: uploadUrl, fileName: file.name, caption: "" },
+        ]);
       }
     } catch (error) {
       console.error("Error uploading compressed image:", error);
@@ -63,7 +81,7 @@ export default function SpotSnapComposer({ onNewComment, onClose }: SpotSnapComp
   async function handleComment() {
     let description = postBodyRef.current?.value || "";
     if (!spotName.trim() || !lat.trim() || !lon.trim()) {
-      alert("Please enter a spot name and location (lat/lon)." );
+      alert("Please enter a spot name and location (lat/lon).");
       return;
     }
     if (!description.trim() && compressedImages.length === 0) {
@@ -72,14 +90,22 @@ export default function SpotSnapComposer({ onNewComment, onClose }: SpotSnapComp
     }
     setIsLoading(true);
     setUploadProgress([]);
-    const permlink = new Date().toISOString().replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
-    let validUrls: string[] = compressedImages.map(img => img.url);
+    const permlink = new Date()
+      .toISOString()
+      .replace(/[^a-zA-Z0-9]/g, "")
+      .toLowerCase();
+    let validUrls: string[] = compressedImages.map((img) => img.url);
     // Compose the post body
     let commentBody = `Spot Name: ${spotName}\nLocation: ${lat}, ${lon}\n`;
     if (description) commentBody += `\n${description}`;
     if (validUrls.length > 0) {
       const imageMarkup = validUrls
-        .map((url: string | null, idx: number) => `![${compressedImages[idx]?.caption || spotName}](${url?.toString() || ""})`)
+        .map(
+          (url: string | null, idx: number) =>
+            `![${compressedImages[idx]?.caption || spotName}](${
+              url?.toString() || ""
+            })`
+        )
         .join("\n");
       commentBody += `\n\n${imageMarkup}`;
     }
@@ -154,7 +180,10 @@ export default function SpotSnapComposer({ onNewComment, onClose }: SpotSnapComp
           await handleCompressedImageUpload(url, compressedFile.name);
           URL.revokeObjectURL(url);
         } catch (err) {
-          alert("Error compressing image: " + (err instanceof Error ? err.message : err));
+          alert(
+            "Error compressing image: " +
+              (err instanceof Error ? err.message : err)
+          );
         }
       } else {
         alert("Only image files are supported for drag-and-drop here.");
@@ -174,7 +203,9 @@ export default function SpotSnapComposer({ onNewComment, onClose }: SpotSnapComp
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       style={{
-        border: isDragOver ? "2px dashed var(--chakra-colors-primary)" : undefined,
+        border: isDragOver
+          ? "2px dashed var(--chakra-colors-primary)"
+          : undefined,
         background: isDragOver ? "rgba(0,0,0,0.04)" : undefined,
         transition: "border 0.2s, background 0.2s",
       }}
@@ -207,7 +238,7 @@ export default function SpotSnapComposer({ onNewComment, onClose }: SpotSnapComp
             id="spot-name-field"
             placeholder="Enter spot name"
             value={spotName}
-            onChange={e => setSpotName(e.target.value)}
+            onChange={(e) => setSpotName(e.target.value)}
             isDisabled={isLoading}
           />
         </FormControl>
@@ -216,7 +247,7 @@ export default function SpotSnapComposer({ onNewComment, onClose }: SpotSnapComp
           <Input
             placeholder="Latitude"
             value={lat}
-            onChange={e => setLat(e.target.value)}
+            onChange={(e) => setLat(e.target.value)}
             isDisabled={isLoading}
           />
         </FormControl>
@@ -225,7 +256,7 @@ export default function SpotSnapComposer({ onNewComment, onClose }: SpotSnapComp
           <Input
             placeholder="Longitude"
             value={lon}
-            onChange={e => setLon(e.target.value)}
+            onChange={(e) => setLon(e.target.value)}
             isDisabled={isLoading}
           />
         </FormControl>
@@ -250,7 +281,10 @@ export default function SpotSnapComposer({ onNewComment, onClose }: SpotSnapComp
             isDisabled={isLoading}
             onClick={() => imageCompressorRef.current?.trigger()}
             border="2px solid transparent"
-            _hover={{ borderColor: "primary", boxShadow: "0 0 0 2px var(--chakra-colors-primary)" }}
+            _hover={{
+              borderColor: "primary",
+              boxShadow: "0 0 0 2px var(--chakra-colors-primary)",
+            }}
             _active={{ borderColor: "accent" }}
           >
             Upload Image
@@ -275,7 +309,7 @@ export default function SpotSnapComposer({ onNewComment, onClose }: SpotSnapComp
                 mt={2}
                 placeholder="Enter caption"
                 value={imgObj.caption}
-                onChange={e => {
+                onChange={(e) => {
                   const newImages = [...compressedImages];
                   newImages[index].caption = e.target.value;
                   setCompressedImages(newImages);
@@ -290,7 +324,7 @@ export default function SpotSnapComposer({ onNewComment, onClose }: SpotSnapComp
                 top="0"
                 right="0"
                 onClick={() =>
-                  setCompressedImages(prevImages =>
+                  setCompressedImages((prevImages) =>
                     prevImages.filter((_, i) => i !== index)
                   )
                 }
@@ -322,4 +356,4 @@ export default function SpotSnapComposer({ onNewComment, onClose }: SpotSnapComp
       )}
     </Box>
   );
-} 
+}
