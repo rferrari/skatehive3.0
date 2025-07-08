@@ -27,7 +27,6 @@ const FooterNavButton = ({ src }: { src: string }) => {
 
 const Settings = () => {
     const { themeName, setThemeName } = useTheme();
-    const [selectedTheme, setSelectedTheme] = useState<ThemeName>(themeName);
     const toast = useToast();
 
     // Rive animation setup
@@ -40,13 +39,8 @@ const Settings = () => {
     });
     const clickInput = useStateMachineInput(rive, STATE_MACHINE_NAME, TRIGGER_NAME);
 
-    useEffect(() => {
-        setSelectedTheme(themeName);
-    }, [themeName]);
-
     const handleThemeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const newTheme = event.target.value as ThemeName;
-        setSelectedTheme(newTheme);
         setThemeName(newTheme);
         toast({
             title: 'Theme Updated!',
@@ -83,29 +77,25 @@ const Settings = () => {
                     Settings
                 </Heading>
                 
-                {/* FooterNavButton Rive Test Row */}
-                <Box textAlign="center" mb={4}>
-                  <Text fontWeight="medium" mb={2}>FooterNavButton Rive Test</Text>
-                  <Box display="flex" flexDirection="row" justifyContent="center" alignItems="center">
-                    {buttonSources.map((src, idx) => (
-                      <Box
-                        key={src}
-                        marginLeft={idx === 0 ? 0 : "-8px"}
-                        zIndex={idx}
-                        position="relative"
-                      >
-                        <FooterNavButton src={src} />
-                      </Box>
-                    ))}
-                  </Box>
-                </Box>
-
                 <Box>
                     <Text mb={2} fontWeight="medium">Theme Selection</Text>
-                    <Select 
-                        value={selectedTheme} 
-                        onChange={handleThemeChange} 
+                    <Select
+                        value={themeName}
+                        onChange={handleThemeChange}
                         size="lg"
+                        bg="background"
+                        color="primary"
+                        borderColor="primary"
+                        fontWeight="bold"
+                        fontFamily="inherit"
+                        _focus={{ borderColor: 'accent', boxShadow: '0 0 0 2px var(--chakra-colors-accent)' }}
+                        _hover={{ borderColor: 'accent' }}
+                        sx={{
+                          option: {
+                            background: 'var(--chakra-colors-background)',
+                            color: 'var(--chakra-colors-primary)',
+                          },
+                        }}
                     >
                         {Object.keys(themeMap).map((theme) => (
                             <option key={theme} value={theme}>

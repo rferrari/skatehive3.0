@@ -111,7 +111,7 @@ export default function FooterNavButtons({ newNotificationCount = 0 }: { newNoti
             { src: "/buttons/notif.riv", onClick: () => router.push("/notifications"), badge: newNotificationCount },
             { src: "/buttons/wallet.riv", onClick: () => router.push("/wallet") },
             {
-              src: "/buttons/prof.riv",
+              src: "/buttons/profile.riv",
               onClick: () => {
                 if (user) {
                   router.push(`/user/${user}?view=grid`);
