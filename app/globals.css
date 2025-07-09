@@ -73,3 +73,143 @@ body.show-splash #splash-root {
   font-style: normal;
   font-display: swap;
 }
+
+/* --- Aioha Modal Customization --- */
+#aioha-modal {
+  background: #000 !important;
+  color: #7fff00 !important;
+  border-radius: 18px !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25) !important;
+  padding-top: 120px !important; /* space for image */
+}
+#aioha-modal::before {
+  display: none !important;
+}
+#aioha-modal .aioha-modal-content {
+  background: transparent !important;
+  color: inherit !important;
+}
+#aioha-modal .aioha-modal-header {
+  font-family: 'VT323', monospace;
+  font-size: 2rem;
+  color: #7fff00 !important;
+  margin-top: 36px !important;
+  margin-bottom: 24px !important;
+}
+#aioha-modal .aioha-modal-close {
+  color: #7fff00 !important;
+  top: 16px !important;
+  right: 16px !important;
+}
+#aioha-modal .aioha-modal-footer {
+  border-top: 1px solid #333 !important;
+}
+#aioha-modal .aioha-modal-wallet-option {
+  font-family: 'VT323', monospace;
+  color: #7fff00 !important;
+  margin-bottom: 18px !important;
+  margin-top: 18px !important;
+  font-size: 1.15rem !important;
+}
+#aioha-modal .aioha-modal-description {
+  color: #b0ffb0 !important;
+  margin-bottom: 28px !important;
+  margin-top: 0 !important;
+  line-height: 1.7 !important;
+}
+#aioha-modal .aioha-modal-image {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  z-index: 10;
+}
+#aioha-modal .aioha-modal-content,
+#aioha-modal .aioha-modal-header,
+#aioha-modal .aioha-modal-description,
+#aioha-modal .aioha-modal-wallet-option {
+  padding-left: 48px !important;
+  padding-right: 48px !important;
+}
+
+/* --- Aioha Modal Inner Content Customization --- */
+/* Modal header and close button */
+#aioha-modal .flex.items-center.justify-between.p-4,
+#aioha-modal .flex.items-center.justify-between.p-4.md\:p-5.border-b.rounded-t {
+  background: transparent !important;
+  border-bottom: 1px solid #222 !important;
+  border-radius: 0 !important;
+  padding: 32px 48px 16px 48px !important;
+  position: relative;
+}
+#aioha-modal .flex.items-center.justify-between.p-4.md\:p-5.border-b.rounded-t::after {
+  display: none !important;
+}
+#aioha-modal h3.text-lg.font-semibold {
+  color: #7fff00 !important;
+  font-family: 'VT323', monospace !important;
+  font-size: 2rem !important;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+#aioha-modal h3.text-lg.font-semibold::before {
+  content: "";
+  display: inline-block;
+  width: 60px;
+  height: 60px;
+  background: url('/opengraph-image.png') no-repeat center center / cover;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  margin-right: 8px;
+  vertical-align: middle;
+}
+#aioha-modal button.text-gray-400 {
+  color: #7fff00 !important;
+  background: transparent !important;
+  border-radius: 8px !important;
+  transition: background 0.2s;
+}
+#aioha-modal button.text-gray-400:hover {
+  background: #222 !important;
+  color: #fff !important;
+}
+
+/* Modal body */
+#aioha-modal .p-4.md\:p-5 {
+  background: transparent !important;
+  color: #b0ffb0 !important;
+  padding: 32px 48px 32px 48px !important;
+}
+#aioha-modal p.text-sm.font-normal {
+  color: #b0ffb0 !important;
+  font-size: 1.1rem !important;
+}
+
+/* Wallet provider list */
+#aioha-modal ul.mt-4.mb-2.space-y-3 {
+  margin-top: 32px !important;
+  margin-bottom: 16px !important;
+}
+#aioha-modal a.flex.items-center.p-3 {
+  background: #111 !important;
+  color: #7fff00 !important;
+  border-radius: 10px !important;
+  font-family: 'VT323', monospace !important;
+  font-size: 1.15rem !important;
+  margin-bottom: 8px !important;
+  transition: background 0.2s, color 0.2s;
+}
+#aioha-modal a.flex.items-center.p-3:hover {
+  background: #222 !important;
+  color: #fff !important;
+}
+#aioha-modal span.inline-flex.items-center.justify-center.px-2.py-0\.5 {
+  background: #222 !important;
+  color: #7fff00 !important;
+  border-radius: 4px !important;
+}
