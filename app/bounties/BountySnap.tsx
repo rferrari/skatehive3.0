@@ -393,22 +393,21 @@ const BountySnap = ({
               backgroundPosition: "center",
               borderRadius: "16px",
               overflow: "hidden",
-              transition: "box-shadow 0.2s, background 0.2s",
+              transition: "box-shadow 0.2s, background 0.2s, background-image 0.2s",
               cursor: disableCardClick ? "default" : "pointer",
               ...(disableCardClick
                 ? {}
                 : {
                     ":hover": {
-                      boxShadow:
-                        "0 0 0 3px #ff9800, 0 2px 16px rgba(0,0,0,0.18)",
-                      background: "rgba(0,0,0,0.03)",
+                      backgroundImage: "url(/images/paperOutline.svg)",
+                      // No box shadow
                     },
                   }),
             }
           : {
               borderRadius: "16px",
               overflow: "hidden",
-              transition: "box-shadow 0.2s, background 0.2s",
+              transition: "box-shadow 0.2s, background 0.2s, background-image 0.2s",
               cursor: disableCardClick ? "default" : "pointer",
               ...(disableCardClick
                 ? {}
@@ -416,7 +415,6 @@ const BountySnap = ({
                     ":hover": {
                       boxShadow:
                         "0 0 0 3px #ff9800, 0 2px 16px rgba(0,0,0,0.18)",
-                      background: "rgba(0,0,0,0.03)",
                     },
                   }),
             }),
