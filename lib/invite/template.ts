@@ -8,7 +8,6 @@ export default function getMailTemplate_Invite(
   language: string
 ) {
   const localizedStrings = getLocalizedStrings(language);
-  const MAIL_COMMUNITY_LOGO = '/SKATE_HIVE_VECTOR_FIN.svg';
 
   // Replace placeholder in localized string
   const onboardedMessage = localizedStrings.onboardedMessage.replace('{createdby}', createdby);

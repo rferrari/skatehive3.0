@@ -52,7 +52,6 @@ const VoteListPopover = ({ trigger, votes, post }: VoteListPopoverProps) => {
   const hoverBg = useColorModeValue("gray.100", "gray.800");
   const valueColor = useColorModeValue("green.600", "green.300");
   const emptyColor = useColorModeValue("gray.500", "gray.400");
-  console.log("vote weights", sortedVotes.map(v => v));
   return (
     <Popover placement="auto" isLazy>
       <PopoverTrigger>{trigger}</PopoverTrigger>

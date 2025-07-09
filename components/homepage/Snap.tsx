@@ -25,7 +25,7 @@ import { Discussion } from "@hiveio/dhive";
 import { FaRegComment } from "react-icons/fa";
 import { LuArrowUpRight } from "react-icons/lu";
 import { useAioha } from "@aioha/react-ui";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import {
   getPayoutValue,
   calculateUserVoteValue,

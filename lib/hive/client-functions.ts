@@ -5,6 +5,7 @@ import crypto from 'crypto';
 import { signImageHash } from "./server-functions";
 import { Discussion, Notifications, Operation } from "@hiveio/dhive";
 import { extractNumber } from "../utils/extractNumber";
+import { VideoPart } from "@/types/VideoPart";
 
 
 interface HiveKeychainResponse {
@@ -104,13 +105,13 @@ export async function updateProfile(
   about: string,
   location: string,
   coverImageUrl: string,
-  avatarUrl:string,
+  avatarUrl: string,
   website: string,
-  ethAddress? : string,
-  videoParts? : any[],
-  level? : any
+  ethAddress?: string,
+  videoParts?: VideoPart[],
+  level?: string
 
-  ) {
+) {
   try {
     const keychain = new KeychainSDK(window);
 
@@ -127,10 +128,10 @@ export async function updateProfile(
     };
     const extMetadata: { extensions: any } = {
       extensions: {}
-  };
-  if (ethAddress) extMetadata.extensions.eth_address = ethAddress;
-  if (videoParts) extMetadata.extensions.video_parts = videoParts;
-  if (level) extMetadata.extensions.level = level;
+    };
+    if (ethAddress) extMetadata.extensions.eth_address = ethAddress;
+    if (videoParts) extMetadata.extensions.video_parts = videoParts;
+    if (level) extMetadata.extensions.level = level;
 
     const op: Operation = [
       'account_update2',
@@ -144,7 +145,7 @@ export async function updateProfile(
       username: username,
       operations: [op],
       method: KeychainKeyTypes.active,
-  };
+    };
 
     const broadcast = await keychain.broadcast(broadcastData);
     console.log('Broadcast success:', broadcast);
