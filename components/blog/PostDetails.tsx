@@ -27,12 +27,8 @@ import { FaHeart, FaComment, FaRegHeart, FaRegComment } from "react-icons/fa";
 import { getPostDate } from "@/lib/utils/GetPostDate";
 import { useAioha } from "@aioha/react-ui";
 import { getPayoutValue } from "@/lib/hive/client-functions";
-import markdownRenderer from "@/lib/utils/MarkdownRenderer";
 import useHivePower from "@/hooks/useHivePower";
 import VoteListPopover from "./VoteListModal";
-import ReactMarkdown from 'react-markdown';
-import rehypeMentionLinks from '@/lib/utils/rehypeMentionLinks';
-import rehypeRaw from 'rehype-raw';
 import { processMediaContent } from '@/lib/utils/MarkdownRenderer';
 import HiveMarkdown from "@/components/shared/HiveMarkdown";
 
