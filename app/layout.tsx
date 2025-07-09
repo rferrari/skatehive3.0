@@ -4,7 +4,7 @@ import "./globals.css";
 import { Metadata } from "next";
 import { ColorModeScript } from "@chakra-ui/react";
 import Image from "next/image";
-import '@aioha/react-ui/dist/build.css';
+// import '@aioha/react-ui/dist/build.css';
 
 // Initialize the VT323 font
 const vt323 = VT323({
@@ -128,7 +128,7 @@ export default function RootLayout({
     >
       <head>
         {/* Force reload of global styles for modal overrides */}
-        <style>{`@import url('/app/globals.css');`}</style>
+        {/* <style>{`@import url('/app/globals.css');`}</style> */}
       </head>
       <body className="chakra-ui-dark">
         <div id="splash-root">
