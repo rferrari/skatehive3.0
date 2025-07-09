@@ -427,7 +427,13 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
                 <Button
                   leftIcon={<FaRegComment size={18} />}
                   variant="ghost"
-                  onClick={() => handleReplyButtonClick(discussion.permlink)}
+                  onClick={() => {
+                    if (effectiveDepth > 0) {
+                      handleReplyButtonClick(discussion.permlink);
+                    } else {
+                      handleConversation();
+                    }
+                  }}
                   size="sm"
                 >
                   {discussion.children ?? 0}
