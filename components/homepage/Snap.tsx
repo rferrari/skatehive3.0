@@ -39,20 +39,8 @@ import { FaLink } from "react-icons/fa6";
 import useHivePower from "@/hooks/useHivePower";
 import VoteListPopover from "@/components/blog/VoteListModal";
 import { fetchComments } from "@/lib/hive/fetchComments";
+import { separateContent } from "@/utils/snapUtils";
 
-const separateContent = (body: string) => {
-  const textParts: string[] = [];
-  const mediaParts: string[] = [];
-  const lines = body.split("\n");
-  lines.forEach((line: string) => {
-    if (line.match(/!\[.*?\]\(.*\)/) || line.match(/<iframe.*<\/iframe>/)) {
-      mediaParts.push(line);
-    } else {
-      textParts.push(line);
-    }
-  });
-  return { text: textParts.join("\n"), media: mediaParts.join("\n") };
-};
 
 const renderMedia = (mediaContent: string) => {
   return mediaContent.split("\n").map((item: string, index: number) => {
