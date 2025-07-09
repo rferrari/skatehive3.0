@@ -49,15 +49,14 @@ const VoteListPopover = ({ trigger, votes, post }: VoteListPopoverProps) => {
   const payout = parseFloat(getPayoutValue(post));
 
   // Use theme colors
-  const bg = useColorModeValue("white", "gray.900");
   const hoverBg = useColorModeValue("gray.100", "gray.800");
   const valueColor = useColorModeValue("green.600", "green.300");
   const emptyColor = useColorModeValue("gray.500", "gray.400");
-
+  console.log("vote weights", sortedVotes.map(v => v));
   return (
     <Popover placement="auto" isLazy>
       <PopoverTrigger>{trigger}</PopoverTrigger>
-      <PopoverContent w="320px" maxH="300px" overflowY="auto" bg={bg}>
+      <PopoverContent w="320px" maxH="300px" overflowY="auto" bg={"background"}>
         <PopoverHeader fontWeight="bold">Voters</PopoverHeader>
         <PopoverBody>
           <VStack
@@ -87,6 +86,9 @@ const VoteListPopover = ({ trigger, votes, post }: VoteListPopoverProps) => {
                   >
                     <Avatar size="sm" name={vote.voter} src={`https://images.hive.blog/u/${vote.voter}/avatar/sm`} mr={1} />
                     <Text fontWeight="medium" fontSize="sm" isTruncated>{vote.voter}</Text>
+                    <Text ml={2} fontSize="xs" color="gray.500" isTruncated>
+                      {"("}{vote.percent ? `${vote.percent / 100}%` : "No weight"}{")"}
+                    </Text>
                   </Link>
                   <Text fontFamily="mono" color={valueColor} fontSize="sm">
                     ${dollarValue.toFixed(4)}

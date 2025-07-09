@@ -19,6 +19,7 @@ import {
   PopoverContent,
   PopoverArrow,
   PopoverBody,
+  background,
 } from "@chakra-ui/react";
 import React, { useState, useEffect, useRef } from "react";
 import { Discussion } from "@hiveio/dhive";
@@ -55,21 +56,13 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
   const { hivePower, isLoading: isHivePowerLoading, error: hivePowerError, estimateVoteValue } = useHivePower(user);
   const theme = useTheme();
 
-  // Get theme colors
-  const primary = theme.colors.primary ?? '#38ff8e';
-  const secondary = theme.colors.secondary ?? '#1d211f';
-  const accent = theme.colors.accent ?? '#48BB78';
-  const muted = theme.colors.muted ?? '#276749';
-  const color = theme.colors.color ?? '#F0FFF4';
-  const colorBackground = theme.colors.background ?? '#121212';
-
-  // Compose gradient and box shadows using theme colors
-  const detailsGradient = `linear-gradient(to bottom, ${primary}, ${secondary})`;
-  const boxShadowAccent = `0 0 0 0 ${accent}B3`;
-  const boxShadowAccent10 = `0 0 0 10px ${accent}00`;
+  // Compose gradient and box shadows using theme color names directly
+  const detailsGradient = `linear-gradient(to bottom, var(--chakra-colors-secondary, #1d211f), var(--chakra-colors-primary, #38ff8e))`;
+  const boxShadowAccent = `0 0 0 0 var(--chakra-colors-accent, #48BB78B3)`;
+  const boxShadowAccent10 = `0 0 0 10px var(--chakra-colors-accent, #48BB7800)`;
 
   const pulseGreenStyle = {
-    background: primary,
+    background: "primary",
     color: 'black',
     fontWeight: 'bold',
     border: 'none',
@@ -164,25 +157,36 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
       <Flex
         data-subcomponent="PostDetails/Header"
         direction="column"
-        boxShadow={theme.shadows.md}
-        bg={detailsGradient}
-        p={4}
-        mb={4}
+        bg={"background"}
+        p={2}
+        mb={2}
+        border={"1px solid"}
+        borderColor={"primary"}
       >
-        <Flex direction={["column", "row"]} alignItems={["flex-start", "center"]} w="100%">
-          <Avatar
-            size="sm"
-            name={author}
-            src={`https://images.hive.blog/u/${author}/avatar/sm`}
+        <Flex direction="row" alignItems="center" w="100%" flexWrap={["wrap", "nowrap"]}>
+          <Flex direction={["column", "row"]} alignItems={["center", "center"]}>
+            <Avatar
+              size="sm"
+              name={author}
+              src={`https://images.hive.blog/u/${author}/avatar/sm`}
+            />
+            <Box ml={[0, 2]} mt={[1, 0]} whiteSpace="nowrap" textAlign={["center", "left"]}>
+              <Text fontWeight="medium" fontSize="sm" mb={-2} color="colorBackground">
+                <Link href={`/user/${author}`} color="colorBackground">@{author}</Link>
+              </Text>
+              <Text fontSize="sm" color="colorBackground">
+                {postDate}
+              </Text>
+            </Box>
+          </Flex>
+          <Divider
+            orientation="vertical"
+            h={["34px", "34px"]}
+            borderColor="color"
+            mx={4}
+            display={["block", "none"]}
+            p={1}
           />
-          <Box ml={[0, 3]} mt={[2, 0]} whiteSpace="nowrap">
-            <Text fontWeight="medium" fontSize="sm" mb={-2} color={colorBackground}>
-              <Link href={`/user/${author}`} color={colorBackground}>@{author}</Link>
-            </Text>
-            <Text fontSize="sm" color={colorBackground}>
-              {postDate}
-            </Text>
-          </Box>
           <Divider
             orientation="vertical"
             h="34px"
@@ -190,31 +194,39 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
             mx={4}
             display={["none", "block"]}
           />
-          <Box flexGrow={1} ml={[0, 4]} mt={[2, 0]} textAlign="start" minWidth={0}>
-            <Text fontSize="lg" fontWeight="bold" color={colorBackground}>
+          <Box flexGrow={1} ml={2} mt={0} textAlign="start" minWidth={0} maxW={["60%", "100%"]} overflow="hidden">
+            <Text fontSize="lg" fontWeight="bold" color="colorBackground" isTruncated>
               {title}
             </Text>
           </Box>
-          <Flex alignItems="center" ml={[0, 4]} mt={[2, 0]}>
+          <Flex alignItems="center" ml={[0, 2]} mt={[2, 0]}>
             {voted ? (
               <Icon
                 as={FaHeart}
                 onClick={handleHeartClick}
                 cursor="pointer"
-                color={primary}
+                color={"red"}
               />
             ) : (
               <Icon
                 as={FaRegHeart}
                 onClick={handleHeartClick}
                 cursor="pointer"
-                color={primary}
+                color="primary"
                 opacity={0.5}
               />
             )}
             <VoteListPopover
               trigger={
-                <Button variant="ghost" size="sm" ml={2} p={1} color={primary} _hover={{ textDecoration: 'underline' }}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  ml={0}
+                  p={-2}
+                  _active={{ bg: "transparent" }}
+                  color={voted ? "red" : "primary"}
+                  _hover={{ textDecoration: 'underline' }}
+                >
                   {activeVotes.length}
                 </Button>
               }
@@ -224,7 +236,7 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
             <Popover placement="top" isOpen={isPayoutOpen} onClose={closePayout} closeOnBlur={true}>
               <PopoverTrigger>
                 <span style={{ cursor: "pointer" }} onMouseDown={openPayout} onMouseUp={closePayout}>
-                  <Text ml={3} fontWeight="bold" color={primary} fontSize="md">
+                  <Text ml={3} fontWeight="bold" color="primary" fontSize="md">
                     ${payoutValue.toFixed(2)}
                   </Text>
                 </span>
@@ -272,11 +284,11 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
                 onChange={(val) => setSliderValue(val)}
               >
                 <SliderTrack
-                  bg={muted}
+                  bg="muted"
                   height="8px"
                   boxShadow={boxShadowAccent}
                 >
-                  <SliderFilledTrack bgGradient={`linear(to-r, ${primary}, ${accent}, red.400)`} />
+                  <SliderFilledTrack bgGradient={`linear(to-r, var(--chakra-colors-primary, #38ff8e), var(--chakra-colors-accent, #48BB78), red.400)`} />
                 </SliderTrack>
                 <SliderThumb
                   boxSize="30px"
@@ -323,7 +335,7 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
         }
         .pulse-green {
           animation: pulse-green 1.5s infinite;
-          background: ${primary};
+          background: var(--chakra-colors-primary, #38ff8e);
           color: black;
           font-weight: bold;
           border: none;
