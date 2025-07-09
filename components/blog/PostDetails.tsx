@@ -143,10 +143,12 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
   // Replace video-embed divs with a placeholder
   const processedBodyWithPlaceholders = processedBody.replace(/<div class="video-embed" data-ipfs-hash="([^"]+)">[\s\S]*?<\/div>/g, (_, videoID) => `[[VIDEO:${videoID}]]`);
 
-  // Helper to render body with VideoRenderer components
+  // Helper to render body with VideoRenderer components and Odysee iframes
   function renderBodyWithVideos(body: string) {
-    const parts = body.split(/(\[\[VIDEO:([^\]]+)\]\])/g);
+    // Split on all supported video placeholders
+    const parts = body.split(/(\[\[(VIDEO|ODYSEE|YOUTUBE|VIMEO):([^\]]+)\]\])/g);
     return parts.map((part, idx) => {
+      // Handle IPFS video
       const videoMatch = part.match(/^\[\[VIDEO:([^\]]+)\]\]$/);
       if (videoMatch) {
         const videoID = videoMatch[1];
@@ -154,8 +156,52 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
           <VideoRenderer key={`video-${videoID}-${idx}`} src={`https://ipfs.skatehive.app/ipfs/${videoID}`} />
         );
       }
+      // Handle Odysee iframe and hide the Odysee URL line
+      const odyseeMatch = part.match(/^\[\[ODYSEE:([^\]]+)\]\]$/);
+      if (odyseeMatch) {
+        const odyseeUrl = odyseeMatch[1];
+        return (
+          <iframe
+            key={`odysee-${idx}`}
+            src={odyseeUrl}
+            style={{ width: '100%', aspectRatio: '16 / 9', border: 0 }}
+            allowFullScreen
+            id={`odysee-iframe-${idx}`}
+          />
+        );
+      }
+      // Handle YouTube
+      const youtubeMatch = part.match(/^\[\[YOUTUBE:([^\]]+)\]\]$/);
+      if (youtubeMatch) {
+        const videoId = youtubeMatch[1];
+        return (
+          <iframe
+            key={`youtube-${idx}`}
+            src={`https://www.youtube.com/embed/${videoId}`}
+            style={{ width: '100%', aspectRatio: '16 / 9', border: 0 }}
+            allowFullScreen
+            id={`youtube-iframe-${idx}`}
+          />
+        );
+      }
+      // Handle Vimeo
+      const vimeoMatch = part.match(/^\[\[VIMEO:([^\]]+)\]\]$/);
+      if (vimeoMatch) {
+        const videoId = vimeoMatch[1];
+        return (
+          <iframe
+            key={`vimeo-${idx}`}
+            src={`https://player.vimeo.com/video/${videoId}`}
+            style={{ width: '100%', aspectRatio: '16 / 9', border: 0 }}
+            allowFullScreen
+            id={`vimeo-iframe-${idx}`}
+          />
+        );
+      }
+      // Hide Odysee URLs that appear alone on a line
+      const partWithoutOdyseeUrl = part.replace(/^https?:\/\/(?:www\.)?odysee.com\/[\S]+$/gm, "");
       // Hide plain CIDs (hashes) that appear alone on a line
-      const partWithoutCID = part.replace(/^(Qm[1-9A-HJ-NP-Za-km-z]{44,})$/gm, "");
+      const partWithoutCID = partWithoutOdyseeUrl.replace(/^(Qm[1-9A-HJ-NP-Za-km-z]{44,})$/gm, "");
       return <HiveMarkdown key={`md-${idx}`} markdown={partWithoutCID} />;
     });
   }

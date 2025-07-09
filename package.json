@@ -63,6 +63,7 @@
     "react-pageflip": "^2.0.3",
     "react-select-country-list": "^2.2.3",
     "rehype-raw": "^7.0.0",
+    "remark-gfm": "^4.0.1",
     "stream-browserify": "^3.0.0",
     "swiper": "^11.2.8",
     "unist-util-visit": "^5.0.0",

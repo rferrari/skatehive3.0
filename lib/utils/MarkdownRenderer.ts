@@ -41,6 +41,36 @@ export function processMediaContent(content: string): string {
     if (foundInstagram) {
         content += '\n<!--INSTAGRAM_EMBED_SCRIPT-->';
     }
+    // Odysee iframe or direct link to embed
+    content = content.replace(
+        /<iframe[^>]*src=["'](https?:\/\/odysee.com\/[^"]+)["'][^>]*><\/iframe>/gim,
+        (_match, url) => `[[ODYSEE:${url}]]`
+    );
+    // Odysee direct links (optionally, if you want to support them)
+    content = content.replace(
+        /^https?:\/\/odysee.com\/\$\/embed\/[\w@:%._\+~#=\/-]+/gim,
+        (match) => `[[ODYSEE:${match}]]`
+    );
+    // YouTube iframe embeds
+    content = content.replace(
+        /<iframe[^>]*src=["'](?:https?:)?\/\/(?:www\.)?(?:youtube\.com|youtu.be)\/embed\/([a-zA-Z0-9_-]{11})[^"']*["'][^>]*><\/iframe>/gim,
+        (_match, videoId) => `[[YOUTUBE:${videoId}]]`
+    );
+    // YouTube direct links
+    content = content.replace(
+        /^https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu.be\/)([a-zA-Z0-9_-]{11})[\S]*/gim,
+        (_match, videoId) => `[[YOUTUBE:${videoId}]]`
+    );
+    // Vimeo iframe embeds
+    content = content.replace(
+        /<iframe[^>]*src=["'](?:https?:)?\/\/(?:player\.)?vimeo.com\/video\/([0-9]+)[^"']*["'][^>]*><\/iframe>/gim,
+        (_match, videoId) => `[[VIMEO:${videoId}]]`
+    );
+    // Vimeo direct links
+    content = content.replace(
+        /^https?:\/\/(?:www\.)?(?:vimeo.com\/(?:channels\/[\w]+\/)?|player.vimeo.com\/video\/)([0-9]+)[\S]*/gim,
+        (_match, videoId) => `[[VIMEO:${videoId}]]`
+    );
     return content;
 }
 
