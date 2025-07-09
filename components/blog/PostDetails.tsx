@@ -31,6 +31,7 @@ import useHivePower from "@/hooks/useHivePower";
 import VoteListPopover from "./VoteListModal";
 import { processMediaContent } from '@/lib/utils/MarkdownRenderer';
 import HiveMarkdown from "@/components/shared/HiveMarkdown";
+import VideoRenderer from "@/components/layout/VideoRenderer";
 
 interface PostDetailsProps {
   post: Discussion;
@@ -138,6 +139,26 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
   const [isPayoutOpen, setIsPayoutOpen] = useState(false);
   function openPayout() { setIsPayoutOpen(true); }
   function closePayout() { setIsPayoutOpen(false); }
+
+  // Replace video-embed divs with a placeholder
+  const processedBodyWithPlaceholders = processedBody.replace(/<div class="video-embed" data-ipfs-hash="([^"]+)">[\s\S]*?<\/div>/g, (_, videoID) => `[[VIDEO:${videoID}]]`);
+
+  // Helper to render body with VideoRenderer components
+  function renderBodyWithVideos(body: string) {
+    const parts = body.split(/(\[\[VIDEO:([^\]]+)\]\])/g);
+    return parts.map((part, idx) => {
+      const videoMatch = part.match(/^\[\[VIDEO:([^\]]+)\]\]$/);
+      if (videoMatch) {
+        const videoID = videoMatch[1];
+        return (
+          <VideoRenderer key={`video-${videoID}-${idx}`} src={`https://ipfs.skatehive.app/ipfs/${videoID}`} />
+        );
+      }
+      // Hide plain CIDs (hashes) that appear alone on a line
+      const partWithoutCID = part.replace(/^(Qm[1-9A-HJ-NP-Za-km-z]{44,})$/gm, "");
+      return <HiveMarkdown key={`md-${idx}`} markdown={partWithoutCID} />;
+    });
+  }
 
   return (
     <Box
@@ -317,7 +338,7 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
       <Divider />
 
       <Box mt={4} className="markdown-body" ref={markdownRef}>
-        <HiveMarkdown markdown={processedBody.replace("<!--INSTAGRAM_EMBED_SCRIPT-->", "")} />
+        {renderBodyWithVideos(processedBodyWithPlaceholders)}
       </Box>
 
       <style jsx global>{`

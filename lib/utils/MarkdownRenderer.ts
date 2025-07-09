@@ -84,6 +84,7 @@ function createSimpleVideoTag(videoID: string): string {
             height="auto" 
             controls 
             preload="none" 
+            autoplay
             playsinline 
             webkit-playsinline 
             muted
@@ -102,19 +103,19 @@ function createImageTag(imageID: string): string {
 }
 
 function create3SpeakEmbed(videoID: string): string {
-    
+
     // Ensure videoID is a string and not an object
     const safeVideoID = typeof videoID === 'string' ? videoID : String(videoID);
-    
+
     // Additional validation to prevent [object Object] in URLs
     if (safeVideoID.includes('[object') || safeVideoID === '[object Object]') {
         console.error('create3SpeakEmbed: Invalid videoID detected:', { originalVideoID: videoID, safeVideoID });
         return `<div>Invalid video ID: ${safeVideoID}</div>`;
     }
-    
+
     // Log the final embed URL
     const embedUrl = `https://3speak.tv/embed?v=${safeVideoID}`;
-    
+
     return `<div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; margin: 1rem 0;">
         <iframe
             src="${embedUrl}"
