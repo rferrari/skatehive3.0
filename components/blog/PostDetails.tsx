@@ -396,6 +396,36 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
           margin-bottom: 2rem;
           max-width: 100%;
         }
+        .markdown-body table {
+          border-collapse: collapse;
+          width: 100%;
+          margin: 2rem 0;
+          background: #181c1f;
+          overflow: hidden;
+          box-shadow: 0 2px 16px rgba(0,0,0,0.12);
+          border: 1px solid primary;
+
+        }
+        .markdown-body th, .markdown-body td {
+          border: 1px solid #333;
+          padding: 12px 16px;
+          text-align: left;
+        }
+        .markdown-body th {
+          background: #23272b;
+          color: #38ff8e;
+          font-weight: bold;
+          font-size: 1.1em;
+        }
+        .markdown-body tr:nth-child(even) {
+          background: #202426;
+        }
+        .markdown-body tr:nth-child(odd) {
+          background: #181c1f;
+        }
+        .markdown-body td {
+          color: #e0e0e0;
+        }
         .pulse-green {
           animation: pulse-green 1.5s infinite;
           background: var(--chakra-colors-primary, #38ff8e);

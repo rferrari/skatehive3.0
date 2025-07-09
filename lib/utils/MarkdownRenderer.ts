@@ -13,12 +13,17 @@ export function processMediaContent(content: string): string {
             return create3SpeakEmbed(videoId);
         }
     );
-    // Replace markdown images with IPFS links
+    // Replace markdown images with IPFS links, but only treat as video if the URL ends with a video extension
     content = content.replace(
-        /!\[.*?\]\((https:\/\/(?:gateway\.pinata\.cloud|ipfs\.skatehive\.app)\/ipfs\/([\w-]+)).*?\)/g,
-        (_, url, hash) => isLikelyVideoID(url)
-            ? createSimpleVideoTag(hash)
-            : createImageTag(hash)
+        /!\[.*?\]\((https:\/\/(?:gateway\.pinata\.cloud|ipfs\.skatehive\.app)\/ipfs\/([\w-]+)(\.[a-zA-Z0-9]+)?)[^)]*\)/g,
+        (_, url, hash, ext) => {
+            if (isLikelyVideoID(url)) {
+                return createSimpleVideoTag(hash);
+            } else {
+                // Center the image with a styled div
+                return `<div style="display: flex; justify-content: center; align-items: center; margin: 1.5rem 0;"><img src='${url}' alt='IPFS Image' style='max-width: 100%; height: auto; box-shadow: 0 2px 16px rgba(0,0,0,0.12);'/></div>`;
+            }
+        }
     );
     // Replace iframes with embedded video if an IPFS hash is found
     content = content.replace(
@@ -34,7 +39,7 @@ export function processMediaContent(content: string): string {
         /^https?:\/\/(www\.)?instagram\.com\/p\/([\w-]+)\/?[^\s]*$/gim,
         (match, p1, postId) => {
             foundInstagram = true;
-            return `<blockquote class="instagram-media" data-instgrm-permalink="${match}" data-instgrm-version="14" style=" background:#FFF; border:0; border-radius:3px; box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15); margin: 1px; max-width:658px; min-width:326px; padding:0; width:99.375%; width:-webkit-calc(100% - 2px); width:calc(100% - 2px);"></blockquote>`;
+            return `<blockquote class="instagram-media" data-instgrm-permalink="${match}" data-instgrm-version="14" style=" background:#FFF; border:0; box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15); margin: 1px; max-width:658px; min-width:326px; padding:0; width:99.375%; width:-webkit-calc(100% - 2px); width:calc(100% - 2px);"></blockquote>`;
         }
     );
     // Add the Instagram embed script ONCE if any Instagram post was embedded
