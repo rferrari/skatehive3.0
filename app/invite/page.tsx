@@ -352,7 +352,7 @@ export default function InvitePage() {
               {accountAvailable
                 ? "Yeah!! Account available. Drop it!"
                 : "Please choose another nickname! " +
-                  String(accountInvalid).replace(/'/g, "&apos;")}
+                String(accountInvalid).replace(/'/g, "&apos;")}
             </Text>
           </Flex>
         )}
