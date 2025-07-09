@@ -172,7 +172,7 @@ export default function SnapComposer({
         } catch (err) {
           alert(
             "Error compressing image: " +
-              (err instanceof Error ? err.message : err)
+            (err instanceof Error ? err.message : err)
           );
         }
       } else {
@@ -319,7 +319,7 @@ export default function SnapComposer({
           } catch (err) {
             alert(
               "Error compressing image: " +
-                (err instanceof Error ? err.message : err)
+              (err instanceof Error ? err.message : err)
             );
           }
         }
@@ -343,6 +343,9 @@ export default function SnapComposer({
     }
   };
 
+  // Only render the composer if user is logged in
+  if (!user) return null;
+
   return (
     <Box position="relative">
       {/* Snap Composer UI, blurred and unclickable if not logged in */}
@@ -351,8 +354,6 @@ export default function SnapComposer({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         style={{
-          filter: !user ? "blur(2px)" : "none",
-          pointerEvents: !user ? "none" : "auto",
           border: isDragOver
             ? "2px dashed var(--chakra-colors-primary)"
             : undefined,
@@ -629,7 +630,6 @@ export default function SnapComposer({
       {/* Matrix Overlay and login prompt if not logged in */}
       {!user && (
         <>
-          <MatrixOverlay />
         </>
       )}
     </Box>
