@@ -30,15 +30,20 @@ import { FaImage, FaVideo } from "react-icons/fa";
 import { MdGif, MdMovieCreation } from "react-icons/md";
 import VideoRenderer from "../../components/layout/VideoRenderer";
 import { Components } from "@uiw/react-markdown-preview";
-import ImageCompressor, { ImageCompressorRef } from "../../src/components/ImageCompressor";
-import VideoUploader, { VideoUploaderRef } from "../../components/homepage/VideoUploader";
-import GIFMakerWithSelector, { GIFMakerRef as GIFMakerWithSelectorRef } from "../../components/homepage/GIFMakerWithSelector";
-import { extractImageUrls, extractVideoUrls } from "../../lib/utils/extractImageUrls";
+import ImageCompressor, { ImageCompressorRef } from "@/utils/ImageCompressor";
+import VideoUploader, {
+  VideoUploaderRef,
+} from "../../components/homepage/VideoUploader";
+import GIFMakerWithSelector, {
+  GIFMakerRef as GIFMakerWithSelectorRef,
+} from "../../components/homepage/GIFMakerWithSelector";
+import {
+  extractImageUrls,
+  extractVideoUrls,
+} from "../../lib/utils/extractImageUrls";
 import MatrixOverlay from "../../components/graphics/MatrixOverlay";
 import { Image } from "@chakra-ui/react";
 import imageCompression from "browser-image-compression";
-import rehypeMentionLinks from "../../lib/utils/rehypeMentionLinks";
-import markdownRenderer from "@/lib/utils/MarkdownRenderer";
 import HiveMarkdown from "@/components/shared/HiveMarkdown";
 
 export default function Composer() {
@@ -69,7 +74,9 @@ export default function Composer() {
   const [isDragOver, setIsDragOver] = useState(false);
   const toast = useToast();
   const [gifCaption, setGifCaption] = useState<string>("skatehive-gif");
-  const [previewMode, setPreviewMode] = useState<'edit' | 'preview' | 'live'>('live');
+  const [previewMode, setPreviewMode] = useState<"edit" | "preview" | "live">(
+    "live"
+  );
 
   const placeholders = [
     "Don't forget a title...",
@@ -152,7 +159,9 @@ export default function Composer() {
     if (selectedThumbnail) {
       imageArray = [
         ensureGifFilename(selectedThumbnail),
-        ...allImages.filter((url) => url !== selectedThumbnail).map(ensureGifFilename),
+        ...allImages
+          .filter((url) => url !== selectedThumbnail)
+          .map(ensureGifFilename),
       ];
     } else {
       imageArray = allImages.map(ensureGifFilename);
@@ -160,8 +169,8 @@ export default function Composer() {
     const permlink = title
       .toLowerCase()
       .replace(/[^a-z0-9-]+/g, "-") // replace invalid chars with dash
-      .replace(/^-+|-+$/g, "")      // trim leading/trailing dashes
-      .slice(0, 255);                // max length for Hive permlink
+      .replace(/^-+|-+$/g, "") // trim leading/trailing dashes
+      .slice(0, 255); // max length for Hive permlink
     try {
       const result = await aioha.comment(
         null,
@@ -223,7 +232,7 @@ export default function Composer() {
         const result = await response.json();
         let ipfsUrl = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`;
         // If GIF, append filename param for better frontend compatibility
-        if (fileName && fileName.toLowerCase().endsWith('.gif')) {
+        if (fileName && fileName.toLowerCase().endsWith(".gif")) {
           ipfsUrl += `?filename=${encodeURIComponent(fileName)}`;
         }
         insertAtCursor(`\n![${fileName || "image"}](${ipfsUrl})\n`);
@@ -309,16 +318,13 @@ export default function Composer() {
     setIsUploading(false);
   };
 
-  const {
-    getRootProps,
-    isDragActive
-  } = useDropzone({
+  const { getRootProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
       "image/*": [".png", ".gif", ".jpeg", ".jpg", ".webp"],
-      "video/*": [".mp4", ".mov"]
+      "video/*": [".mp4", ".mov"],
     },
-    multiple: false
+    multiple: false,
   });
 
   const extraCommands: never[] = [];
@@ -331,7 +337,7 @@ export default function Composer() {
       }: React.IframeHTMLAttributes<HTMLIFrameElement> & {
         node?: unknown;
       }) => <VideoRenderer src={props.src} {...props} />,
-      
+
       p: ({ children, ...props }) => {
         // If the paragraph contains only a YouTube URL, embed it
         if (
@@ -348,14 +354,28 @@ export default function Composer() {
             const videoId = ytMatch[2];
             const embedUrl = `https://www.youtube.com/embed/${videoId}`;
             return (
-              <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, overflow: "hidden", margin: "16px 0" }}>
+              <div
+                style={{
+                  position: "relative",
+                  paddingBottom: "56.25%",
+                  height: 0,
+                  overflow: "hidden",
+                  margin: "16px 0",
+                }}
+              >
                 <iframe
                   src={embedUrl}
                   frameBorder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
                   title="YouTube Video"
-                  style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }}
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: "100%",
+                  }}
                 />
               </div>
             );
@@ -373,20 +393,38 @@ export default function Composer() {
           const videoId = ytMatch[2];
           const embedUrl = `https://www.youtube.com/embed/${videoId}`;
           return (
-            <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, overflow: "hidden", margin: "16px 0" }}>
+            <div
+              style={{
+                position: "relative",
+                paddingBottom: "56.25%",
+                height: 0,
+                overflow: "hidden",
+                margin: "16px 0",
+              }}
+            >
               <iframe
                 src={embedUrl}
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
                 title="YouTube Video"
-                style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }}
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "100%",
+                }}
               />
             </div>
           );
         }
         // Default anchor rendering
-        return <a href={href} {...props}>{children}</a>;
+        return (
+          <a href={href} {...props}>
+            {children}
+          </a>
+        );
       },
       text: ({ children }) => {
         if (typeof children === "string") {
@@ -396,7 +434,11 @@ export default function Composer() {
             if (/^@[a-zA-Z0-9._-]+$/.test(part)) {
               const username = part.slice(1);
               return (
-                <a key={i} href={`/@${username}`} style={{ color: '#3182ce', textDecoration: 'underline' }}>
+                <a
+                  key={i}
+                  href={`/@${username}`}
+                  style={{ color: "#3182ce", textDecoration: "underline" }}
+                >
                   {part}
                 </a>
               );
@@ -477,10 +519,11 @@ export default function Composer() {
     name: "header",
     keyCommand: "header",
     buttonProps: { "aria-label": "Insert Header" },
-    icon: (
-      <span style={{ fontWeight: "bold", fontSize: 18 }}>H</span>
-    ),
-    execute: (state: import("@uiw/react-md-editor").TextState, api: import("@uiw/react-md-editor").TextAreaTextApi) => {
+    icon: <span style={{ fontWeight: "bold", fontSize: 18 }}>H</span>,
+    execute: (
+      state: import("@uiw/react-md-editor").TextState,
+      api: import("@uiw/react-md-editor").TextAreaTextApi
+    ) => {
       api.replaceSelection("# Header\n");
     },
   };
@@ -528,7 +571,18 @@ export default function Composer() {
           {/* Overlay for non-logged-in users */}
           {!user && (
             <>
-              <Box position="absolute" top={0} left={0} w="100%" h="100%" zIndex={21} pointerEvents="all" display="flex" alignItems="center" justifyContent="center">
+              <Box
+                position="absolute"
+                top={0}
+                left={0}
+                w="100%"
+                h="100%"
+                zIndex={21}
+                pointerEvents="all"
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+              >
                 <MatrixOverlay />
               </Box>
             </>
@@ -646,7 +700,11 @@ export default function Composer() {
           position="relative"
           width="100%"
           height="100%"
-          border={isDragActive ? "2px dashed var(--chakra-colors-primary, limegreen)" : undefined}
+          border={
+            isDragActive
+              ? "2px dashed var(--chakra-colors-primary, limegreen)"
+              : undefined
+          }
           transition="border 0.2s"
         >
           <MDEditor
@@ -679,9 +737,7 @@ export default function Composer() {
             ]}
           />
           {/* Custom preview using Hive renderer when in preview mode */}
-          {previewMode === 'preview' && (
-            <HiveMarkdown markdown={markdown} />
-          )}
+          {previewMode === "preview" && <HiveMarkdown markdown={markdown} />}
         </Box>
         <ImageCompressor
           ref={imageCompressorRef}
@@ -705,8 +761,8 @@ export default function Composer() {
                 {!gifUrl && (
                   <>
                     <p style={{ marginBottom: 16, color: "#bbb" }}>
-                      Upload a video (3-30 seconds), select a 3-second segment, and
-                      convert it to a GIF!
+                      Upload a video (3-30 seconds), select a 3-second segment,
+                      and convert it to a GIF!
                     </p>
                     {/* Removed the Select Video (3-30s) button here */}
                   </>
@@ -779,7 +835,9 @@ export default function Composer() {
                           );
                           const formData = new FormData();
                           // Use the user-provided caption as the filename, fallback to skatehive-gif.gif
-                          const safeCaption = gifCaption ? gifCaption.replace(/[^a-zA-Z0-9-_]/g, "-") : "skatehive-gif";
+                          const safeCaption = gifCaption
+                            ? gifCaption.replace(/[^a-zA-Z0-9-_]/g, "-")
+                            : "skatehive-gif";
                           const filename = `${safeCaption}.gif`;
                           formData.append("file", blob, filename);
                           const response = await fetch("/api/pinata", {
@@ -789,7 +847,9 @@ export default function Composer() {
                           if (!response.ok)
                             throw new Error("Failed to upload GIF to IPFS");
                           const result = await response.json();
-                          let ipfsUrl = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}?filename=${encodeURIComponent(filename)}`;
+                          let ipfsUrl = `https://ipfs.skatehive.app/ipfs/${
+                            result.IpfsHash
+                          }?filename=${encodeURIComponent(filename)}`;
                           insertAtCursor(`\n![${filename}](${ipfsUrl})\n`);
                           gifMakerWithSelectorRef.current?.reset();
                           setGifUrl(null);

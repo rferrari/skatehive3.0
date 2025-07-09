@@ -16,10 +16,11 @@ import {
 } from "@chakra-ui/react";
 import { useAioha } from "@aioha/react-ui";
 import { Discussion } from "@hiveio/dhive";
-import ImageCompressor, { ImageCompressorRef } from "../../src/components/ImageCompressor";
-import VideoUploader, { VideoUploaderRef } from "@/components/homepage/VideoUploader";
+import ImageCompressor, { ImageCompressorRef } from "@/utils/ImageCompressor";
+import VideoUploader, {
+  VideoUploaderRef,
+} from "@/components/homepage/VideoUploader";
 import { FaImage, FaVideo, FaTimes } from "react-icons/fa";
-import { CloseIcon } from "@chakra-ui/icons";
 import { getFileSignature, uploadImage } from "@/lib/hive/client-functions";
 import imageCompression from "browser-image-compression";
 import { format, isAfter, parseISO } from "date-fns";
@@ -29,7 +30,10 @@ interface BountyComposerProps {
   onClose?: () => void;
 }
 
-export default function BountyComposer({ onNewBounty, onClose }: BountyComposerProps) {
+export default function BountyComposer({
+  onNewBounty,
+  onClose,
+}: BountyComposerProps) {
   const { user, aioha } = useAioha();
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const [trick, setTrick] = useState("");
@@ -38,7 +42,9 @@ export default function BountyComposer({ onNewBounty, onClose }: BountyComposerP
   const [isLoading, setIsLoading] = useState(false);
   const videoUploaderRef = useRef<VideoUploaderRef>(null);
   const imageCompressorRef = useRef<ImageCompressorRef>(null);
-  const [compressedImages, setCompressedImages] = useState<{ url: string; fileName: string; caption: string }[]>([]);
+  const [compressedImages, setCompressedImages] = useState<
+    { url: string; fileName: string; caption: string }[]
+  >([]);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [deadline, setDeadline] = useState("");
@@ -51,7 +57,11 @@ export default function BountyComposer({ onNewBounty, onClose }: BountyComposerP
       alert("Please enter a trick/challenge name.");
       return;
     }
-    if (!rewardAmount.trim() || isNaN(Number(rewardAmount)) || Number(rewardAmount) <= 0) {
+    if (
+      !rewardAmount.trim() ||
+      isNaN(Number(rewardAmount)) ||
+      Number(rewardAmount) <= 0
+    ) {
       alert("Please enter a valid numerical reward amount.");
       return;
     }
@@ -74,7 +84,10 @@ export default function BountyComposer({ onNewBounty, onClose }: BountyComposerP
       return;
     }
     setIsLoading(true);
-    const permlink = new Date().toISOString().replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+    const permlink = new Date()
+      .toISOString()
+      .replace(/[^a-zA-Z0-9]/g, "")
+      .toLowerCase();
     let bountyBody = `Trick/Challenge: ${trick}\n`;
     bountyBody += `Bounty Rules: ${description}\n`;
     bountyBody += `Reward: ${rewardAmount} ${rewardCurrency}`;
@@ -92,17 +105,18 @@ export default function BountyComposer({ onNewBounty, onClose }: BountyComposerP
       bountyBody += `\n\n<iframe src=\"${videoUrl}\" frameborder=\"0\" allowfullscreen></iframe>`;
     }
     try {
-      const tags = [
-        "bounty",
-        user ? `bounty-creator-${user}` : "",
-      ];
+      const tags = ["bounty", user ? `bounty-creator-${user}` : ""];
       const commentResponse = await aioha.comment(
         "skatehive",
         "skatehive-bounties",
         permlink,
         "",
         bountyBody,
-        { app: "Skatehive App 3.0", tags, images: compressedImages.map(img => img.url) }
+        {
+          app: "Skatehive App 3.0",
+          tags,
+          images: compressedImages.map((img) => img.url),
+        }
       );
       if (commentResponse.success) {
         setTrick("");
@@ -134,16 +148,28 @@ export default function BountyComposer({ onNewBounty, onClose }: BountyComposerP
   }
 
   // Handler for compressed image upload
-  const handleCompressedImageUpload = async (url: string | null, fileName?: string) => {
+  const handleCompressedImageUpload = async (
+    url: string | null,
+    fileName?: string
+  ) => {
     if (!url) return;
     setIsLoading(true);
     try {
-      const blob = await fetch(url).then(res => res.blob());
-      const file = new File([blob], fileName || "compressed.jpg", { type: blob.type });
+      const blob = await fetch(url).then((res) => res.blob());
+      const file = new File([blob], fileName || "compressed.jpg", {
+        type: blob.type,
+      });
       const signature = await getFileSignature(file);
-      const uploadUrl = await uploadImage(file, signature, compressedImages.length);
+      const uploadUrl = await uploadImage(
+        file,
+        signature,
+        compressedImages.length
+      );
       if (uploadUrl) {
-        setCompressedImages(prev => [...prev, { url: uploadUrl, fileName: file.name, caption: "" }]);
+        setCompressedImages((prev) => [
+          ...prev,
+          { url: uploadUrl, fileName: file.name, caption: "" },
+        ]);
       }
     } catch (error) {
       console.error("Error uploading compressed image:", error);
@@ -181,7 +207,10 @@ export default function BountyComposer({ onNewBounty, onClose }: BountyComposerP
           await handleCompressedImageUpload(url, compressedFile.name);
           URL.revokeObjectURL(url);
         } catch (err) {
-          alert("Error compressing image: " + (err instanceof Error ? err.message : err));
+          alert(
+            "Error compressing image: " +
+              (err instanceof Error ? err.message : err)
+          );
         }
       } else if (file.type.startsWith("video/")) {
         if (videoUploaderRef.current && videoUploaderRef.current.handleFile) {
@@ -222,7 +251,9 @@ export default function BountyComposer({ onNewBounty, onClose }: BountyComposerP
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       style={{
-        border: isDragOver ? "2px dashed var(--chakra-colors-primary)" : undefined,
+        border: isDragOver
+          ? "2px dashed var(--chakra-colors-primary)"
+          : undefined,
         background: isDragOver ? "rgba(0,0,0,0.04)" : undefined,
         transition: "border 0.2s, background 0.2s",
       }}
@@ -233,7 +264,7 @@ export default function BountyComposer({ onNewBounty, onClose }: BountyComposerP
           <Input
             placeholder="e.g. Kickflip down 5 stair"
             value={trick}
-            onChange={e => setTrick(e.target.value)}
+            onChange={(e) => setTrick(e.target.value)}
             isDisabled={isLoading}
           />
         </FormControl>
@@ -246,14 +277,19 @@ export default function BountyComposer({ onNewBounty, onClose }: BountyComposerP
             minH={24}
           />
           <HStack mt={2} spacing={2}>
-            <Box fontSize="sm" color="muted" minW="60px">Optional:</Box>
+            <Box fontSize="sm" color="muted" minW="60px">
+              Optional:
+            </Box>
             <Button
               leftIcon={<FaImage size={20} />}
               variant="ghost"
               isDisabled={isLoading}
               onClick={() => imageCompressorRef.current?.trigger()}
               border="2px solid transparent"
-              _hover={{ borderColor: "primary", boxShadow: "0 0 0 2px var(--chakra-colors-primary)" }}
+              _hover={{
+                borderColor: "primary",
+                boxShadow: "0 0 0 2px var(--chakra-colors-primary)",
+              }}
               _active={{ borderColor: "accent" }}
             >
               Upload Image
@@ -269,12 +305,19 @@ export default function BountyComposer({ onNewBounty, onClose }: BountyComposerP
               isDisabled={isLoading}
               onClick={() => videoUploaderRef.current?.trigger()}
               border="2px solid transparent"
-              _hover={{ borderColor: "primary", boxShadow: "0 0 0 2px var(--chakra-colors-primary)" }}
+              _hover={{
+                borderColor: "primary",
+                boxShadow: "0 0 0 2px var(--chakra-colors-primary)",
+              }}
               _active={{ borderColor: "accent" }}
             >
               Upload Video
             </Button>
-            <VideoUploader ref={videoUploaderRef} onUpload={handleVideoUpload} isProcessing={isLoading} />
+            <VideoUploader
+              ref={videoUploaderRef}
+              onUpload={handleVideoUpload}
+              isProcessing={isLoading}
+            />
           </HStack>
           {/* Image Previews */}
           {compressedImages.length > 0 && (
@@ -296,7 +339,11 @@ export default function BountyComposer({ onNewBounty, onClose }: BountyComposerP
                     position="absolute"
                     top={1}
                     right={1}
-                    onClick={() => setCompressedImages(prev => prev.filter((_, i) => i !== idx))}
+                    onClick={() =>
+                      setCompressedImages((prev) =>
+                        prev.filter((_, i) => i !== idx)
+                      )
+                    }
                   />
                 </Box>
               ))}
@@ -305,7 +352,11 @@ export default function BountyComposer({ onNewBounty, onClose }: BountyComposerP
           {/* Video Preview */}
           {videoUrl && (
             <Box mt={2}>
-              <video src={videoUrl} controls style={{ maxWidth: "100%", borderRadius: 8 }} />
+              <video
+                src={videoUrl}
+                controls
+                style={{ maxWidth: "100%", borderRadius: 8 }}
+              />
             </Box>
           )}
         </FormControl>
@@ -317,13 +368,13 @@ export default function BountyComposer({ onNewBounty, onClose }: BountyComposerP
               type="number"
               min={0}
               value={rewardAmount}
-              onChange={e => setRewardAmount(e.target.value)}
+              onChange={(e) => setRewardAmount(e.target.value)}
               isDisabled={isLoading}
               width="120px"
             />
             <Select
               value={rewardCurrency}
-              onChange={e => setRewardCurrency(e.target.value)}
+              onChange={(e) => setRewardCurrency(e.target.value)}
               isDisabled={isLoading}
               width="100px"
             >
@@ -338,7 +389,7 @@ export default function BountyComposer({ onNewBounty, onClose }: BountyComposerP
             type="date"
             value={deadline}
             min={format(new Date(), "yyyy-MM-dd")}
-            onChange={e => setDeadline(e.target.value)}
+            onChange={(e) => setDeadline(e.target.value)}
             isDisabled={isLoading}
           />
         </FormControl>
@@ -363,4 +414,4 @@ export default function BountyComposer({ onNewBounty, onClose }: BountyComposerP
       </VStack>
     </Box>
   );
-} 
+}

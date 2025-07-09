@@ -18,18 +18,19 @@
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
+  background: linear-gradient(to bottom,
       transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+      rgb(var(--background-end-rgb))) rgb(var(--background-start-rgb));
   /* Removed overflow-y: hidden !important; to allow scrolling on mobile */
   /* Hide scrollbar for all browsers */
-  scrollbar-width: none; /* Firefox */
+  scrollbar-width: none;
+  /* Firefox */
 }
-html::-webkit-scrollbar, body::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+  /* Chrome, Safari, Opera */
 }
 
 @layer utilities {
@@ -39,17 +40,22 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
 }
 
 @media (min-width: 768px) {
-  html, body {
+
+  html,
+  body {
     overflow: hidden !important;
     height: 100vh;
   }
 }
 
 .hide-scrollbar {
-  scrollbar-width: none; /* Firefox */
+  scrollbar-width: none;
+  /* Firefox */
 }
+
 .hide-scrollbar::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
+  display: none;
+  /* Chrome, Safari, Opera */
 }
 
 .markdown-body p {
@@ -59,9 +65,11 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
 body.show-splash #app-root {
   display: none !important;
 }
+
 body.show-splash #splash-root {
   display: block !important;
 }
+
 #splash-root {
   display: none;
 }
@@ -72,4 +80,198 @@ body.show-splash #splash-root {
   font-weight: normal;
   font-style: normal;
   font-display: swap;
+}
+
+/* --- Aioha Modal Customization --- */
+#aioha-modal {
+  background: #000 !important;
+  color: #7fff00 !important;
+  /* border-radius: 18px !important; */
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25) !important;
+  /* space for image */
+}
+
+#aioha-modal::before {
+  display: none !important;
+}
+
+#aioha-modal .aioha-modal-content {
+  background: transparent !important;
+  color: inherit !important;
+}
+
+#aioha-modal .aioha-modal-header {
+  font-family: 'VT323', monospace;
+  font-size: 2rem;
+  color: #7fff00 !important;
+  margin-top: 36px !important;
+  margin-bottom: 24px !important;
+}
+
+#aioha-modal .aioha-modal-close {
+  color: #7fff00 !important;
+  top: 16px !important;
+  right: 16px !important;
+}
+
+#aioha-modal .aioha-modal-footer {
+  border-top: 1px solid #333 !important;
+}
+
+#aioha-modal .aioha-modal-wallet-option {
+  font-family: 'VT323', monospace;
+  color: #7fff00 !important;
+  margin-bottom: 18px !important;
+  margin-top: 18px !important;
+  font-size: 1.15rem !important;
+}
+
+#aioha-modal .aioha-modal-description {
+  color: #b0ffb0 !important;
+  margin-bottom: 28px !important;
+  margin-top: 0 !important;
+  line-height: 1.7 !important;
+}
+
+#aioha-modal .aioha-modal-image {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+
+#aioha-modal .aioha-modal-content,
+#aioha-modal .aioha-modal-header,
+#aioha-modal .aioha-modal-description,
+#aioha-modal .aioha-modal-wallet-option {
+  padding-left: 48px !important;
+  padding-right: 48px !important;
+}
+
+/* --- Aioha Modal Inner Content Customization --- */
+/* Modal header and close button */
+#aioha-modal .flex.items-center.justify-between.p-4,
+#aioha-modal .flex.items-center.justify-between.p-4.md\:p-5.border-b.rounded-t {
+  background: transparent !important;
+  border-bottom: 1px solid #222 !important;
+  border-radius: 0 !important;
+  padding: 32px 48px 16px 48px !important;
+  position: relative;
+}
+
+#aioha-modal .flex.items-center.justify-between.p-4.md\:p-5.border-b.rounded-t::after {
+  display: none !important;
+}
+
+#aioha-modal h3.text-lg.font-semibold {
+  color: #7fff00 !important;
+  font-family: 'VT323', monospace !important;
+  font-size: 2rem !important;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+#aioha-modal h3.text-lg.font-semibold::before {
+  content: "";
+  display: inline-block;
+  width: 60px;
+  height: 60px;
+  background: url('/opengraph-image.png') no-repeat center center / cover;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+#aioha-modal button.text-gray-400 {
+  color: #7fff00 !important;
+  background: transparent !important;
+  border-radius: 8px !important;
+  transition: background 0.2s;
+}
+
+#aioha-modal button.text-gray-400:hover {
+  background: #222 !important;
+  color: #fff !important;
+}
+
+/* Modal body */
+#aioha-modal .p-4.md\:p-5 {
+  background: transparent !important;
+  color: #b0ffb0 !important;
+  padding: 32px 48px 32px 48px !important;
+}
+
+#aioha-modal p.text-sm.font-normal {
+  color: #b0ffb0 !important;
+  font-size: 1.1rem !important;
+}
+
+/* Wallet provider list */
+#aioha-modal ul.mt-4.mb-2.space-y-3 {
+  margin-top: 32px !important;
+  margin-bottom: 16px !important;
+}
+
+#aioha-modal a.flex.items-center.p-3 {
+  background: #111 !important;
+  color: #7fff00 !important;
+  border-radius: 10px !important;
+  font-family: 'VT323', monospace !important;
+  font-size: 1.15rem !important;
+  margin-bottom: 8px !important;
+  transition: background 0.2s, color 0.2s;
+  box-shadow: none !important;
+}
+
+#aioha-modal a.flex.items-center.p-3:hover {
+  background: #222 !important;
+  color: #fff !important;
+}
+
+#aioha-modal span.inline-flex.items-center.justify-center.px-2.py-0\.5 {
+  background: #222 !important;
+  color: #7fff00 !important;
+  border-radius: 4px !important;
+}
+
+/* --- Aioha Modal Centering Override --- */
+#aioha-modal,
+#aioha-modal[role="dialog"] {
+  /* position: fixed !important; */
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  margin: 0 !important;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: unset !important;
+  min-width: unset !important;
+}
+
+/* Force modal body background to black, override all Tailwind and inline styles */
+#aioha-modal .p-4.md\:p-5,
+#aioha-modal .aioha-modal-content,
+#aioha-modal .flex.flex-col.gap-6 #aioha-modal .flex.items-center.justify-between.p-4,
+#aioha-modal .flex.items-center.justify-between.p-4.md\:p-5.border-b.rounded-t {
+  background: #000 !important;
+  color: #b0ffb0 !important;
+  border: #7fff00 2px solid !important;
+
+}
+
+/* Remove global border-radius and pointer-event-breaking rules for modal and children */
+/* Remove this block to restore modal interactivity */
+#aioha-modal {
+  border-radius: 0 !important;
+}
+
+#aioha-modal .aioha-modal-content,
+#aioha-modal .p-4.md\:p-5 {
+  border-radius: 0 !important;
 }

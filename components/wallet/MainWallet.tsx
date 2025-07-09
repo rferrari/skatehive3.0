@@ -9,7 +9,6 @@ import {
   Text,
   Spinner,
   useDisclosure,
-  Stack,
   Heading,
   VStack,
   Flex,
@@ -37,7 +36,6 @@ export default function MainWallet({ username }: MainWalletProps) {
   const { handleConfirm, handleClaimHbdInterest } = useWalletActions();
   const { isConnected } = useAccount();
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const { theme } = useTheme();
   const {
     isOpen: isConnectModalOpen,
     onOpen: openConnectModal,

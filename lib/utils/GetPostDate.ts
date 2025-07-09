@@ -11,7 +11,6 @@ export function getPostDate(date: string | Date): string {
     const diffDays = Math.floor(diffMs / 86400000);
     const diffHrs = Math.floor(diffMs / 3600000);
     const diffMins = Math.floor(diffMs / 60000);
-    const diffSecs = Math.floor(diffMs / 1000);
 
     if (diffMins < 1) {
         return "just now";

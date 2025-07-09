@@ -75,9 +75,6 @@ export default function EthereumAssetsSection() {
     IdentityResolver.World,
   ];
 
-  // Group tokens by network
-  const groupedTokens = groupTokensByNetwork(portfolio?.tokens);
-
   // Memoize filtered tokens to prevent unnecessary re-computation
   const memoizedGroupedTokens = useMemo(
     () => groupTokensByNetwork(portfolio?.tokens),

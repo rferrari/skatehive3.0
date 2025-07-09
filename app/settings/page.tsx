@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Box, Select, Text, useToast, VStack, Heading, Accordion, AccordionItem, AccordionButton, AccordionPanel, AccordionIcon } from '@chakra-ui/react';
 import { useTheme, ThemeName, themeMap } from '../themeProvider';
 import LottieAnimation from '@/components/shared/LottieAnimation';
@@ -7,23 +7,23 @@ import UpvoteSnapContainer from '@/components/settings/UpvoteSnapContainer';
 import { useRive, useStateMachineInput } from "@rive-app/react-canvas";
 
 // Reusable FooterNavButton component
-const FooterNavButton = ({ src }: { src: string }) => {
-    const STATE_MACHINE_NAME = "ButtonStateMachine";
-    const TRIGGER_NAME = "click";
-    const { rive, RiveComponent } = useRive({
-        src,
-        stateMachines: STATE_MACHINE_NAME,
-        autoplay: true,
-    });
-    const clickInput = useStateMachineInput(rive, STATE_MACHINE_NAME, TRIGGER_NAME);
-    return (
-        <Box textAlign="center">
-            <Box display="inline-block" cursor="pointer">
-                <RiveComponent style={{ width: 60, height: 60 }} onClick={() => clickInput && clickInput.fire()} />
-            </Box>
-        </Box>
-    );
-};
+// const FooterNavButton = ({ src }: { src: string }) => {
+//     const STATE_MACHINE_NAME = "ButtonStateMachine";
+//     const TRIGGER_NAME = "click";
+//     const { rive, RiveComponent } = useRive({
+//         src,
+//         stateMachines: STATE_MACHINE_NAME,
+//         autoplay: true,
+//     });
+//     const clickInput = useStateMachineInput(rive, STATE_MACHINE_NAME, TRIGGER_NAME);
+//     return (
+//         <Box textAlign="center">
+//             <Box display="inline-block" cursor="pointer">
+//                 <RiveComponent style={{ width: 60, height: 60 }} onClick={() => clickInput && clickInput.fire()} />
+//             </Box>
+//         </Box>
+//     );
+// };
 
 const Settings = () => {
     const { themeName, setThemeName } = useTheme();
@@ -76,7 +76,7 @@ const Settings = () => {
                 <Heading size="lg" mb={2}>
                     Settings
                 </Heading>
-                
+
                 <Box>
                     <Text mb={2} fontWeight="medium">Theme Selection</Text>
                     <Select
@@ -91,10 +91,10 @@ const Settings = () => {
                         _focus={{ borderColor: 'accent', boxShadow: '0 0 0 2px var(--chakra-colors-accent)' }}
                         _hover={{ borderColor: 'accent' }}
                         sx={{
-                          option: {
-                            background: 'var(--chakra-colors-background)',
-                            color: 'var(--chakra-colors-primary)',
-                          },
+                            option: {
+                                background: 'var(--chakra-colors-background)',
+                                color: 'var(--chakra-colors-primary)',
+                            },
                         }}
                     >
                         {Object.keys(themeMap).map((theme) => (

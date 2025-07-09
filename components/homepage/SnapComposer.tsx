@@ -7,12 +7,7 @@ import {
   Image,
   IconButton,
   Wrap,
-  Spinner,
   Progress,
-  Menu,
-  MenuButton,
-  MenuList,
-  MenuItem,
   Input,
 } from "@chakra-ui/react";
 import { useAioha } from "@aioha/react-ui";
@@ -29,7 +24,8 @@ import {
 } from "@/lib/hive/client-functions";
 import { FaVideo } from "react-icons/fa6";
 import { FaTimes } from "react-icons/fa";
-import ImageCompressor, { ImageCompressorRef } from "../../src/components/ImageCompressor";
+import ImageCompressor from "@/utils/ImageCompressor";
+import { ImageCompressorRef } from "@/utils/ImageCompressor";
 import MatrixOverlay from "../graphics/MatrixOverlay";
 import imageCompression from "browser-image-compression";
 
@@ -40,7 +36,7 @@ interface SnapComposerProps {
   post?: boolean;
   onClose: () => void;
   submitLabel?: string;
-  buttonSize?: 'sm' | 'md' | 'lg';
+  buttonSize?: "sm" | "md" | "lg";
 }
 
 export default function SnapComposer({
@@ -50,7 +46,7 @@ export default function SnapComposer({
   post = false,
   onClose,
   submitLabel,
-  buttonSize = 'lg',
+  buttonSize = "lg",
 }: SnapComposerProps) {
   const { user, aioha } = useAioha();
   const postBodyRef = useRef<HTMLTextAreaElement>(null);
@@ -61,7 +57,9 @@ export default function SnapComposer({
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const videoUploaderRef = useRef<VideoUploaderRef>(null);
   const imageCompressorRef = useRef<ImageCompressorRef>(null);
-  const [compressedImages, setCompressedImages] = useState<{ url: string; fileName: string; caption: string }[]>([]);
+  const [compressedImages, setCompressedImages] = useState<
+    { url: string; fileName: string; caption: string }[]
+  >([]);
   const gifWebpInputRef = useRef<HTMLInputElement>(null);
   const imageUploadInputRef = useRef<HTMLInputElement>(null);
 
@@ -78,16 +76,29 @@ export default function SnapComposer({
   }
 
   // Handler for compressed image upload
-  const handleCompressedImageUpload = async (url: string | null, fileName?: string) => {
+  const handleCompressedImageUpload = async (
+    url: string | null,
+    fileName?: string
+  ) => {
     if (!url) return;
     setIsLoading(true);
     try {
-      const blob = await fetch(url).then(res => res.blob());
-      const file = new File([blob], fileName || "compressed.jpg", { type: blob.type });
+      const blob = await fetch(url).then((res) => res.blob());
+      const file = new File([blob], fileName || "compressed.jpg", {
+        type: blob.type,
+      });
       const signature = await getFileSignature(file);
-      const uploadUrl = await uploadImage(file, signature, compressedImages.length, setUploadProgress);
+      const uploadUrl = await uploadImage(
+        file,
+        signature,
+        compressedImages.length,
+        setUploadProgress
+      );
       if (uploadUrl) {
-        setCompressedImages(prev => [...prev, { url: uploadUrl, fileName: file.name, caption: "" }]);
+        setCompressedImages((prev) => [
+          ...prev,
+          { url: uploadUrl, fileName: file.name, caption: "" },
+        ]);
       }
     } catch (error) {
       console.error("Error uploading compressed image:", error);
@@ -96,7 +107,9 @@ export default function SnapComposer({
     }
   };
 
-  const handleGifWebpUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleGifWebpUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
     // Check file type
@@ -112,9 +125,17 @@ export default function SnapComposer({
     setIsLoading(true);
     try {
       const signature = await getFileSignature(file);
-      const uploadUrl = await uploadImage(file, signature, compressedImages.length, setUploadProgress);
+      const uploadUrl = await uploadImage(
+        file,
+        signature,
+        compressedImages.length,
+        setUploadProgress
+      );
       if (uploadUrl) {
-        setCompressedImages(prev => [...prev, { url: uploadUrl, fileName: file.name, caption: "" }]);
+        setCompressedImages((prev) => [
+          ...prev,
+          { url: uploadUrl, fileName: file.name, caption: "" },
+        ]);
       }
     } catch (error) {
       console.error("Error uploading GIF/WEBP:", error);
@@ -125,12 +146,16 @@ export default function SnapComposer({
   };
 
   // Unified image upload handler
-  const handleUnifiedImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUnifiedImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const files = Array.from(e.target.files || []);
     for (const file of files) {
       if (file.type === "image/gif" || file.type === "image/webp") {
         // Use GIF/WEBP logic
-        const fakeEvent = { target: { files: [file] } } as unknown as React.ChangeEvent<HTMLInputElement>;
+        const fakeEvent = {
+          target: { files: [file] },
+        } as unknown as React.ChangeEvent<HTMLInputElement>;
         await handleGifWebpUpload(fakeEvent);
       } else if (file.type.startsWith("image/")) {
         // Use image compression logic
@@ -145,7 +170,10 @@ export default function SnapComposer({
           await handleCompressedImageUpload(url, compressedFile.name);
           URL.revokeObjectURL(url);
         } catch (err) {
-          alert("Error compressing image: " + (err instanceof Error ? err.message : err));
+          alert(
+            "Error compressing image: " +
+            (err instanceof Error ? err.message : err)
+          );
         }
       } else {
         alert("Unsupported file type: " + file.type);
@@ -177,7 +205,7 @@ export default function SnapComposer({
       .replace(/[^a-zA-Z0-9]/g, "")
       .toLowerCase();
 
-    let validUrls: string[] = compressedImages.map(img => img.url);
+    let validUrls: string[] = compressedImages.map((img) => img.url);
     if (validUrls.length > 0) {
       const imageMarkup = compressedImages
         .map((img) => `![${img.caption || "image"}](${img.url})`)
@@ -272,7 +300,9 @@ export default function SnapComposer({
         // If GIF or WEBP, use GIF/WEBP upload logic
         if (file.type === "image/gif" || file.type === "image/webp") {
           // Simulate input event for GIF/WEBP
-          const fakeEvent = { target: { files: [file] } } as unknown as React.ChangeEvent<HTMLInputElement>;
+          const fakeEvent = {
+            target: { files: [file] },
+          } as unknown as React.ChangeEvent<HTMLInputElement>;
           await handleGifWebpUpload(fakeEvent);
         } else {
           // For other images, resize and compress before upload
@@ -287,7 +317,10 @@ export default function SnapComposer({
             await handleCompressedImageUpload(url, compressedFile.name);
             URL.revokeObjectURL(url);
           } catch (err) {
-            alert("Error compressing image: " + (err instanceof Error ? err.message : err));
+            alert(
+              "Error compressing image: " +
+              (err instanceof Error ? err.message : err)
+            );
           }
         }
       } else if (file.type.startsWith("video/")) {
@@ -310,6 +343,9 @@ export default function SnapComposer({
     }
   };
 
+  // Only render the composer if user is logged in
+  if (!user) return null;
+
   return (
     <Box position="relative">
       {/* Snap Composer UI, blurred and unclickable if not logged in */}
@@ -318,9 +354,9 @@ export default function SnapComposer({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         style={{
-          filter: !user ? "blur(2px)" : "none",
-          pointerEvents: !user ? "none" : "auto",
-          border: isDragOver ? "2px dashed var(--chakra-colors-primary)" : undefined,
+          border: isDragOver
+            ? "2px dashed var(--chakra-colors-primary)"
+            : undefined,
           background: isDragOver ? "rgba(0,0,0,0.04)" : undefined,
           transition: "border 0.2s, background 0.2s",
         }}
@@ -370,7 +406,9 @@ export default function SnapComposer({
               <Box position="relative">
                 <IconButton
                   aria-label="Upload Image"
-                  icon={<FaImage color="var(--chakra-colors-primary)" size={22} />}
+                  icon={
+                    <FaImage color="var(--chakra-colors-primary)" size={22} />
+                  }
                   variant="ghost"
                   isDisabled={isLoading}
                   border="2px solid transparent"
@@ -381,7 +419,10 @@ export default function SnapComposer({
                   display="flex"
                   alignItems="center"
                   justifyContent="center"
-                  _hover={{ borderColor: "primary", boxShadow: "0 0 0 2px var(--chakra-colors-primary)" }}
+                  _hover={{
+                    borderColor: "primary",
+                    boxShadow: "0 0 0 2px var(--chakra-colors-primary)",
+                  }}
                   _active={{ borderColor: "accent" }}
                   onClick={() => imageUploadInputRef.current?.click()}
                 />
@@ -398,7 +439,9 @@ export default function SnapComposer({
               {post && (
                 <IconButton
                   aria-label="Add GIF from Giphy"
-                  icon={<MdGif size={22} color="var(--chakra-colors-primary)" />}
+                  icon={
+                    <MdGif size={22} color="var(--chakra-colors-primary)" />
+                  }
                   variant="ghost"
                   isDisabled={isLoading}
                   border="2px solid transparent"
@@ -409,7 +452,10 @@ export default function SnapComposer({
                   display="flex"
                   alignItems="center"
                   justifyContent="center"
-                  _hover={{ borderColor: "primary", boxShadow: "0 0 0 2px var(--chakra-colors-primary)" }}
+                  _hover={{
+                    borderColor: "primary",
+                    boxShadow: "0 0 0 2px var(--chakra-colors-primary)",
+                  }}
                   _active={{ borderColor: "accent" }}
                   onClick={() => setGiphyModalOpen((open) => !open)}
                 />
@@ -430,41 +476,48 @@ export default function SnapComposer({
                 display="flex"
                 alignItems="center"
                 justifyContent="center"
-                _hover={{ borderColor: "primary", boxShadow: "0 0 0 2px var(--chakra-colors-primary)" }}
+                _hover={{
+                  borderColor: "primary",
+                  boxShadow: "0 0 0 2px var(--chakra-colors-primary)",
+                }}
                 _active={{ borderColor: "accent" }}
                 onClick={() => videoUploaderRef.current?.trigger()}
               >
                 <FaVideo color="var(--chakra-colors-primary)" size={22} />
               </Button>
             </HStack>
-            <Box display={buttonSize === 'sm' ? 'inline-block' : undefined}>
+            <Box display={buttonSize === "sm" ? "inline-block" : undefined}>
               <Button
                 colorScheme="primary"
                 isLoading={isLoading}
                 onClick={handleComment}
-                borderRadius={buttonSize === 'sm' ? 'sm' : 'base'}
+                borderRadius={buttonSize === "sm" ? "sm" : "base"}
                 fontWeight="bold"
                 size={buttonSize}
-                px={buttonSize === 'sm' ? 1 : 8}
-                py={buttonSize === 'sm' ? 0 : 6}
+                px={buttonSize === "sm" ? 1 : 8}
+                py={buttonSize === "sm" ? 0 : 6}
                 mt={2}
                 mb={1}
-                minWidth={buttonSize === 'sm' ? undefined : '120px'}
-                width={buttonSize === 'sm' ? undefined : '30%'}
-                maxWidth={buttonSize === 'sm' ? undefined : undefined}
-                fontSize={buttonSize === 'sm' ? 'xs' : 'lg'}
-                lineHeight={buttonSize === 'sm' ? '1' : undefined}
-                flex={buttonSize === 'sm' ? 'none' : undefined}
-                alignSelf={buttonSize === 'sm' ? 'flex-start' : undefined}
-                display={buttonSize === 'sm' ? 'inline-flex' : undefined}
-                height={buttonSize === 'sm' ? 'auto' : undefined}
+                minWidth={buttonSize === "sm" ? undefined : "120px"}
+                width={buttonSize === "sm" ? undefined : "30%"}
+                maxWidth={buttonSize === "sm" ? undefined : undefined}
+                fontSize={buttonSize === "sm" ? "xs" : "lg"}
+                lineHeight={buttonSize === "sm" ? "1" : undefined}
+                flex={buttonSize === "sm" ? "none" : undefined}
+                alignSelf={buttonSize === "sm" ? "flex-start" : undefined}
+                display={buttonSize === "sm" ? "inline-flex" : undefined}
+                height={buttonSize === "sm" ? "auto" : undefined}
               >
                 {buttonText}
               </Button>
             </Box>
           </HStack>
           <Box width="100%">
-            <VideoUploader ref={videoUploaderRef} onUpload={setVideoUrl} isProcessing={isLoading} />
+            <VideoUploader
+              ref={videoUploaderRef}
+              onUpload={setVideoUrl}
+              isProcessing={isLoading}
+            />
           </Box>
           <Wrap spacing={4}>
             {compressedImages.map((img, index) => (
@@ -479,7 +532,7 @@ export default function SnapComposer({
                   mt={2}
                   placeholder="Enter caption"
                   value={img.caption}
-                  onChange={e => {
+                  onChange={(e) => {
                     const newImages = [...compressedImages];
                     newImages[index].caption = e.target.value;
                     setCompressedImages(newImages);
@@ -561,7 +614,8 @@ export default function SnapComposer({
             <Box position="relative">
               <GiphySelector
                 apiKey={
-                  process.env.GIPHY_API_KEY || "qXGQXTPKyNJByTFZpW7Kb0tEFeB90faV"
+                  process.env.GIPHY_API_KEY ||
+                  "qXGQXTPKyNJByTFZpW7Kb0tEFeB90faV"
                 }
                 onSelect={(gif, e) => {
                   e.preventDefault();
@@ -576,7 +630,6 @@ export default function SnapComposer({
       {/* Matrix Overlay and login prompt if not logged in */}
       {!user && (
         <>
-          <MatrixOverlay />
         </>
       )}
     </Box>

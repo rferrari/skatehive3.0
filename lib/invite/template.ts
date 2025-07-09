@@ -8,7 +8,6 @@ export default function getMailTemplate_Invite(
   language: string
 ) {
   const localizedStrings = getLocalizedStrings(language);
-  const MAIL_COMMUNITY_LOGO = '/SKATE_HIVE_VECTOR_FIN.svg';
 
   // Replace placeholder in localized string
   const onboardedMessage = localizedStrings.onboardedMessage.replace('{createdby}', createdby);
@@ -19,7 +18,7 @@ export default function getMailTemplate_Invite(
   <div style="max-width: 600px; margin: 30px auto; border-radius: 12px; overflow: hidden; box-shadow: 0 0 30px rgba(0, 0, 0, 0.7);">
     <!-- Header -->
     <div style="background: linear-gradient(135deg, ${localizedStrings.colors.foreground1}, ${localizedStrings.colors.highlightBackground}); padding: 30px; text-align: center;">
-      <img src="https://www.skatehive.app/SKATE_HIVE_VECTOR_FIN.svg" alt="Skate Hive" style="max-width: 80px;">
+      <img src="https://docs.skatehive.app/img/skatehive.png" alt="Skate Hive" style="max-width: 80px;">
       <h1 style="margin: 10px 0 0; font-size: 26px;">${localizedStrings.welcomeMessage}</h1>
     </div>
     <!-- Body -->
@@ -46,7 +45,7 @@ export default function getMailTemplate_Invite(
       <!-- Image Button (CTA) -->
       <div style="text-align: center; margin: 30px 0;">
         <a href="${localizedStrings.ctaLink}" target="_blank">
-          <img src="https://i.ibb.co/ccvgmQyH/image.png" alt="${localizedStrings.ctaAltText}" style="max-width: 100%; border-radius: 10px; box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);">
+          <img src="https://ipfs.skatehive.app/ipfs/QmUkU1BL1yHfk9h33V1BXjBF1FpQKEhAcJxpzV2PixCfLi" alt="${localizedStrings.ctaAltText}" style="max-width: 100%; border-radius: 10px; box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);">
         </a>
         <p style="font-size: 14px; color: ${localizedStrings.colors.helpText}; margin-top: 10px;">${localizedStrings.ctaHelpText}</p>
       </div>

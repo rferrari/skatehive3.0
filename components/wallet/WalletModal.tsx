@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Box, Button, Input, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Text, IconButton, Flex } from '@chakra-ui/react';
-import { ArrowForwardIcon, ArrowBackIcon } from '@chakra-ui/icons';
+import { ArrowForwardIcon } from '@chakra-ui/icons';
 
 interface WalletModalProps {
     isOpen: boolean;
@@ -12,7 +12,7 @@ interface WalletModalProps {
     onConfirm: (amount: number, direction: 'HIVE_TO_HBD' | 'HBD_TO_HIVE', username?: string, memo?: string) => void; // direction is now before optional params
 }
 
-export default function WalletModal ({ isOpen, onClose, title, description, showMemoField = false, showUsernameField = false, onConfirm }: WalletModalProps) {
+export default function WalletModal({ isOpen, onClose, title, description, showMemoField = false, showUsernameField = false, onConfirm }: WalletModalProps) {
     const [amount, setAmount] = useState<string>('');
     const [memo, setMemo] = useState<string>('');
     const [username, setUsername] = useState<string>(''); // State to hold username

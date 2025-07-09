@@ -7,7 +7,7 @@ import React, {
 } from "react";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile } from "@ffmpeg/util";
-import { Box, Input, Button, Text, useBreakpointValue } from "@chakra-ui/react";
+import { Box, Input, Button, Text } from "@chakra-ui/react";
 import { useTheme } from "@/app/themeProvider";
 
 interface GIFMakerWithSelectorProps {

@@ -30,7 +30,7 @@ const SidebarLogo = () => {
       }
       secondContent={
         <Image
-          src={activeAuction?.token?.image || "/SKATE_HIVE_VECTOR_FIN.svg"}
+          src={activeAuction?.token?.image || "https://www.skatehive.app/SKATE_HIVE_VECTOR_FIN.svg"}
           alt="SkateHive Hover Logo"
           style={{ width: "100%", height: "100%", objectFit: "cover" }}
           onClick={() =>

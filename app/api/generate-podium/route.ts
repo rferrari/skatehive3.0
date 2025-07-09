@@ -32,85 +32,85 @@ function generateCircuitTraces(width: number, height: number, count: number): st
   const traceOpacity = 0.3;
 
   for (let i = 0; i < count; i++) {
-      let x = Math.random() * width;
-      let y = Math.random() * height;
-      let pathData = `M ${x} ${y}`;
-      const numSegments = Math.floor(Math.random() * 8) + 5;
-      let isHorizontal = Math.random() > 0.5;
+    const x = Math.random() * width;
+    const y = Math.random() * height;
+    let pathData = `M ${x} ${y}`;
+    const numSegments = Math.floor(Math.random() * 8) + 5;
+    let isHorizontal = Math.random() > 0.5;
 
-      for (let j = 0; j < numSegments; j++) {
-          const length = Math.random() * 50 + 10;
-          if (isHorizontal) {
-              pathData += ` h ${Math.random() > 0.5 ? length : -length}`;
-          } else {
-              pathData += ` v ${Math.random() > 0.5 ? length : -length}`;
-          }
-          isHorizontal = !isHorizontal;
+    for (let j = 0; j < numSegments; j++) {
+      const length = Math.random() * 50 + 10;
+      if (isHorizontal) {
+        pathData += ` h ${Math.random() > 0.5 ? length : -length}`;
+      } else {
+        pathData += ` v ${Math.random() > 0.5 ? length : -length}`;
       }
-      traces += `<path d="${pathData}" stroke="${traceColor}" stroke-width="${Math.random() * 2 + 1}" fill="none" opacity="${traceOpacity}" />`;
-  
-      if (Math.random() > 0.5) {
-          traces += `<rect x="${x - 2}" y="${y - 2}" width="4" height="4" fill="${traceColor}" opacity="${traceOpacity}" />`;
-      }
+      isHorizontal = !isHorizontal;
+    }
+    traces += `<path d="${pathData}" stroke="${traceColor}" stroke-width="${Math.random() * 2 + 1}" fill="none" opacity="${traceOpacity}" />`;
+
+    if (Math.random() > 0.5) {
+      traces += `<rect x="${x - 2}" y="${y - 2}" width="4" height="4" fill="${traceColor}" opacity="${traceOpacity}" />`;
+    }
   }
 
   return traces;
 }
 
 function createServerPodium(x: number, y: number, width: number, height: number, rank: number): string {
-    const baseColors = ['#2d825b', '#3498db', '#c0392b'];
-    const lightColors = ['#38a873', '#5dade2', '#e74c3c'];
-    const darkColors = ['#226144', '#217dbb', '#962d22'];
+  const baseColors = ['#2d825b', '#3498db', '#c0392b'];
+  const lightColors = ['#38a873', '#5dade2', '#e74c3c'];
+  const darkColors = ['#226144', '#217dbb', '#962d22'];
 
-    const podiumColor = baseColors[rank - 1] || baseColors[0];
-    const lightColor = lightColors[rank - 1] || lightColors[0];
-    const darkColor = darkColors[rank - 1] || darkColors[0];
-    
-    const detailColor = '#ecf0f1';
-    const darkDetailColor = '#333';
-    const d = 20; // perspective offset
+  const podiumColor = baseColors[rank - 1] || baseColors[0];
+  const lightColor = lightColors[rank - 1] || lightColors[0];
+  const darkColor = darkColors[rank - 1] || darkColors[0];
 
-    let server = '';
+  const detailColor = '#ecf0f1';
+  const darkDetailColor = '#333';
+  const d = 20; // perspective offset
 
-    // Draw the 3D faces first
-    // Side face
-    server += `<polygon points="${x + width},${y} ${x + width + d},${y - d} ${x + width + d},${y + height - d} ${x + width},${y + height}" fill="${darkColor}" stroke="#111" stroke-width="1"/>`;
+  let server = '';
 
-    // Top face
-    server += `<polygon points="${x},${y} ${x + d},${y - d} ${x + width + d},${y - d} ${x + width},${y}" fill="${lightColor}" stroke="#111" stroke-width="1"/>`;
-    
-    // Front face
-    server += `<rect x="${x}" y="${y}" width="${width}" height="${height}" fill="${podiumColor}" stroke="#111" stroke-width="1"/>`;
-    
-    // Details are drawn on top of the front face
-    const slotHeight = 4;
-    const numSlots = Math.floor(height / 40);
-    for (let i = 0; i < numSlots; i++) {
-        const slotY = y + 30 + (i * 20);
-        if (slotY < y + height - 30) {
-            server += `<rect x="${x + 10}" y="${slotY}" width="${width - 20}" height="${slotHeight}" fill="${darkDetailColor}" rx="1" />`;
-        }
+  // Draw the 3D faces first
+  // Side face
+  server += `<polygon points="${x + width},${y} ${x + width + d},${y - d} ${x + width + d},${y + height - d} ${x + width},${y + height}" fill="${darkColor}" stroke="#111" stroke-width="1"/>`;
+
+  // Top face
+  server += `<polygon points="${x},${y} ${x + d},${y - d} ${x + width + d},${y - d} ${x + width},${y}" fill="${lightColor}" stroke="#111" stroke-width="1"/>`;
+
+  // Front face
+  server += `<rect x="${x}" y="${y}" width="${width}" height="${height}" fill="${podiumColor}" stroke="#111" stroke-width="1"/>`;
+
+  // Details are drawn on top of the front face
+  const slotHeight = 4;
+  const numSlots = Math.floor(height / 40);
+  for (let i = 0; i < numSlots; i++) {
+    const slotY = y + 30 + (i * 20);
+    if (slotY < y + height - 30) {
+      server += `<rect x="${x + 10}" y="${slotY}" width="${width - 20}" height="${slotHeight}" fill="${darkDetailColor}" rx="1" />`;
     }
+  }
 
-    const contactHeight = 8;
-    const contactWidth = 4;
-    const numContacts = Math.floor((width - 20) / (contactWidth + 4));
-    const startX = x + (width - (numContacts * (contactWidth + 4)) + 4) / 2;
-    const contactY = y + height - 20;
+  const contactHeight = 8;
+  const contactWidth = 4;
+  const numContacts = Math.floor((width - 20) / (contactWidth + 4));
+  const startX = x + (width - (numContacts * (contactWidth + 4)) + 4) / 2;
+  const contactY = y + height - 20;
 
-    for (let i = 0; i < numContacts; i++) {
-        server += `<rect x="${startX + i * (contactWidth + 4)}" y="${contactY}" width="${contactWidth}" height="${contactHeight}" fill="${detailColor}" />`;
-    }
+  for (let i = 0; i < numContacts; i++) {
+    server += `<rect x="${startX + i * (contactWidth + 4)}" y="${contactY}" width="${contactWidth}" height="${contactHeight}" fill="${detailColor}" />`;
+  }
 
-    const lightSize = 10;
-    const lightX = x + 15;
-    const lightY = y + 15;
-    server += `<rect x="${lightX}" y="${lightY}" width="${lightSize}" height="${lightSize}" fill="#ff0" stroke="black" stroke-width="1" />`;
-    
-    server += `<circle cx="${x + width - 20}" cy="${y + 18}" r="3" fill="#e74c3c" />`;
-    server += `<circle cx="${x + width - 35}" cy="${y + 18}" r="3" fill="#2ecc71" />`;
+  const lightSize = 10;
+  const lightX = x + 15;
+  const lightY = y + 15;
+  server += `<rect x="${lightX}" y="${lightY}" width="${lightSize}" height="${lightSize}" fill="#ff0" stroke="black" stroke-width="1" />`;
 
-    return server;
+  server += `<circle cx="${x + width - 20}" cy="${y + 18}" r="3" fill="#e74c3c" />`;
+  server += `<circle cx="${x + width - 35}" cy="${y + 18}" r="3" fill="#2ecc71" />`;
+
+  return server;
 }
 
 export async function GET(request: NextRequest) {

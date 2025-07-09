@@ -19,6 +19,7 @@ import {
   PopoverContent,
   PopoverArrow,
   PopoverBody,
+  background,
 } from "@chakra-ui/react";
 import React, { useState, useEffect, useRef } from "react";
 import { Discussion } from "@hiveio/dhive";
@@ -26,14 +27,11 @@ import { FaHeart, FaComment, FaRegHeart, FaRegComment } from "react-icons/fa";
 import { getPostDate } from "@/lib/utils/GetPostDate";
 import { useAioha } from "@aioha/react-ui";
 import { getPayoutValue } from "@/lib/hive/client-functions";
-import markdownRenderer from "@/lib/utils/MarkdownRenderer";
 import useHivePower from "@/hooks/useHivePower";
 import VoteListPopover from "./VoteListModal";
-import ReactMarkdown from 'react-markdown';
-import rehypeMentionLinks from '@/lib/utils/rehypeMentionLinks';
-import rehypeRaw from 'rehype-raw';
 import { processMediaContent } from '@/lib/utils/MarkdownRenderer';
 import HiveMarkdown from "@/components/shared/HiveMarkdown";
+import VideoRenderer from "@/components/layout/VideoRenderer";
 
 interface PostDetailsProps {
   post: Discussion;
@@ -55,21 +53,13 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
   const { hivePower, isLoading: isHivePowerLoading, error: hivePowerError, estimateVoteValue } = useHivePower(user);
   const theme = useTheme();
 
-  // Get theme colors
-  const primary = theme.colors.primary ?? '#38ff8e';
-  const secondary = theme.colors.secondary ?? '#1d211f';
-  const accent = theme.colors.accent ?? '#48BB78';
-  const muted = theme.colors.muted ?? '#276749';
-  const color = theme.colors.color ?? '#F0FFF4';
-  const colorBackground = theme.colors.background ?? '#121212';
-
-  // Compose gradient and box shadows using theme colors
-  const detailsGradient = `linear-gradient(to bottom, ${primary}, ${secondary})`;
-  const boxShadowAccent = `0 0 0 0 ${accent}B3`;
-  const boxShadowAccent10 = `0 0 0 10px ${accent}00`;
+  // Compose gradient and box shadows using theme color names directly
+  const detailsGradient = `linear-gradient(to bottom, var(--chakra-colors-secondary, #1d211f), var(--chakra-colors-primary, #38ff8e))`;
+  const boxShadowAccent = `0 0 0 0 var(--chakra-colors-accent, #48BB78B3)`;
+  const boxShadowAccent10 = `0 0 0 10px var(--chakra-colors-accent, #48BB7800)`;
 
   const pulseGreenStyle = {
-    background: primary,
+    background: "primary",
     color: 'black',
     fontWeight: 'bold',
     border: 'none',
@@ -150,6 +140,72 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
   function openPayout() { setIsPayoutOpen(true); }
   function closePayout() { setIsPayoutOpen(false); }
 
+  // Replace video-embed divs with a placeholder
+  const processedBodyWithPlaceholders = processedBody.replace(/<div class="video-embed" data-ipfs-hash="([^"]+)">[\s\S]*?<\/div>/g, (_, videoID) => `[[VIDEO:${videoID}]]`);
+
+  // Helper to render body with VideoRenderer components and Odysee iframes
+  function renderBodyWithVideos(body: string) {
+    // Split on all supported video placeholders
+    const parts = body.split(/(\[\[(VIDEO|ODYSEE|YOUTUBE|VIMEO):([^\]]+)\]\])/g);
+    return parts.map((part, idx) => {
+      // Handle IPFS video
+      const videoMatch = part.match(/^\[\[VIDEO:([^\]]+)\]\]$/);
+      if (videoMatch) {
+        const videoID = videoMatch[1];
+        return (
+          <VideoRenderer key={`video-${videoID}-${idx}`} src={`https://ipfs.skatehive.app/ipfs/${videoID}`} />
+        );
+      }
+      // Handle Odysee iframe and hide the Odysee URL line
+      const odyseeMatch = part.match(/^\[\[ODYSEE:([^\]]+)\]\]$/);
+      if (odyseeMatch) {
+        const odyseeUrl = odyseeMatch[1];
+        return (
+          <iframe
+            key={`odysee-${idx}`}
+            src={odyseeUrl}
+            style={{ width: '100%', aspectRatio: '16 / 9', border: 0 }}
+            allowFullScreen
+            id={`odysee-iframe-${idx}`}
+          />
+        );
+      }
+      // Handle YouTube
+      const youtubeMatch = part.match(/^\[\[YOUTUBE:([^\]]+)\]\]$/);
+      if (youtubeMatch) {
+        const videoId = youtubeMatch[1];
+        return (
+          <iframe
+            key={`youtube-${idx}`}
+            src={`https://www.youtube.com/embed/${videoId}`}
+            style={{ width: '100%', aspectRatio: '16 / 9', border: 0 }}
+            allowFullScreen
+            id={`youtube-iframe-${idx}`}
+          />
+        );
+      }
+      // Handle Vimeo
+      const vimeoMatch = part.match(/^\[\[VIMEO:([^\]]+)\]\]$/);
+      if (vimeoMatch) {
+        const videoId = vimeoMatch[1];
+        return (
+          <iframe
+            key={`vimeo-${idx}`}
+            src={`https://player.vimeo.com/video/${videoId}`}
+            style={{ width: '100%', aspectRatio: '16 / 9', border: 0 }}
+            allowFullScreen
+            id={`vimeo-iframe-${idx}`}
+          />
+        );
+      }
+      // Hide Odysee URLs that appear alone on a line
+      const partWithoutOdyseeUrl = part.replace(/^https?:\/\/(?:www\.)?odysee.com\/[\S]+$/gm, "");
+      // Hide plain CIDs (hashes) that appear alone on a line
+      const partWithoutCID = partWithoutOdyseeUrl.replace(/^(Qm[1-9A-HJ-NP-Za-km-z]{44,})$/gm, "");
+      return <HiveMarkdown key={`md-${idx}`} markdown={partWithoutCID} />;
+    });
+  }
+
   return (
     <Box
       data-component="PostDetails"
@@ -164,25 +220,36 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
       <Flex
         data-subcomponent="PostDetails/Header"
         direction="column"
-        boxShadow={theme.shadows.md}
-        bg={detailsGradient}
-        p={4}
-        mb={4}
+        bg={"background"}
+        p={2}
+        mb={2}
+        border={"1px solid"}
+        borderColor={"primary"}
       >
-        <Flex direction={["column", "row"]} alignItems={["flex-start", "center"]} w="100%">
-          <Avatar
-            size="sm"
-            name={author}
-            src={`https://images.hive.blog/u/${author}/avatar/sm`}
+        <Flex direction="row" alignItems="center" w="100%" flexWrap={["wrap", "nowrap"]}>
+          <Flex direction={["column", "row"]} alignItems={["center", "center"]}>
+            <Avatar
+              size="sm"
+              name={author}
+              src={`https://images.hive.blog/u/${author}/avatar/sm`}
+            />
+            <Box ml={[0, 2]} mt={[1, 0]} whiteSpace="nowrap" textAlign={["center", "left"]}>
+              <Text fontWeight="medium" fontSize="sm" mb={-2} color="colorBackground">
+                <Link href={`/user/${author}`} color="colorBackground">@{author}</Link>
+              </Text>
+              <Text fontSize="sm" color="colorBackground">
+                {postDate}
+              </Text>
+            </Box>
+          </Flex>
+          <Divider
+            orientation="vertical"
+            h={["34px", "34px"]}
+            borderColor="color"
+            mx={4}
+            display={["block", "none"]}
+            p={1}
           />
-          <Box ml={[0, 3]} mt={[2, 0]} whiteSpace="nowrap">
-            <Text fontWeight="medium" fontSize="sm" mb={-2} color={colorBackground}>
-              <Link href={`/user/${author}`} color={colorBackground}>@{author}</Link>
-            </Text>
-            <Text fontSize="sm" color={colorBackground}>
-              {postDate}
-            </Text>
-          </Box>
           <Divider
             orientation="vertical"
             h="34px"
@@ -190,31 +257,39 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
             mx={4}
             display={["none", "block"]}
           />
-          <Box flexGrow={1} ml={[0, 4]} mt={[2, 0]} textAlign="start" minWidth={0}>
-            <Text fontSize="lg" fontWeight="bold" color={colorBackground}>
+          <Box flexGrow={1} ml={2} mt={0} textAlign="start" minWidth={0} maxW={["60%", "100%"]} overflow="hidden">
+            <Text fontSize="lg" fontWeight="bold" color="colorBackground" isTruncated>
               {title}
             </Text>
           </Box>
-          <Flex alignItems="center" ml={[0, 4]} mt={[2, 0]}>
+          <Flex alignItems="center" ml={[0, 2]} mt={[2, 0]}>
             {voted ? (
               <Icon
                 as={FaHeart}
                 onClick={handleHeartClick}
                 cursor="pointer"
-                color={primary}
+                color={"red"}
               />
             ) : (
               <Icon
                 as={FaRegHeart}
                 onClick={handleHeartClick}
                 cursor="pointer"
-                color={primary}
+                color="primary"
                 opacity={0.5}
               />
             )}
             <VoteListPopover
               trigger={
-                <Button variant="ghost" size="sm" ml={2} p={1} color={primary} _hover={{ textDecoration: 'underline' }}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  ml={0}
+                  p={-2}
+                  _active={{ bg: "transparent" }}
+                  color={voted ? "red" : "primary"}
+                  _hover={{ textDecoration: 'underline' }}
+                >
                   {activeVotes.length}
                 </Button>
               }
@@ -224,7 +299,7 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
             <Popover placement="top" isOpen={isPayoutOpen} onClose={closePayout} closeOnBlur={true}>
               <PopoverTrigger>
                 <span style={{ cursor: "pointer" }} onMouseDown={openPayout} onMouseUp={closePayout}>
-                  <Text ml={3} fontWeight="bold" color={primary} fontSize="md">
+                  <Text ml={3} fontWeight="bold" color="primary" fontSize="md">
                     ${payoutValue.toFixed(2)}
                   </Text>
                 </span>
@@ -272,11 +347,11 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
                 onChange={(val) => setSliderValue(val)}
               >
                 <SliderTrack
-                  bg={muted}
+                  bg="muted"
                   height="8px"
                   boxShadow={boxShadowAccent}
                 >
-                  <SliderFilledTrack bgGradient={`linear(to-r, ${primary}, ${accent}, red.400)`} />
+                  <SliderFilledTrack bgGradient={`linear(to-r, var(--chakra-colors-primary, #38ff8e), var(--chakra-colors-accent, #48BB78), red.400)`} />
                 </SliderTrack>
                 <SliderThumb
                   boxSize="30px"
@@ -309,7 +384,7 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
       <Divider />
 
       <Box mt={4} className="markdown-body" ref={markdownRef}>
-        <HiveMarkdown markdown={processedBody.replace("<!--INSTAGRAM_EMBED_SCRIPT-->", "")} />
+        {renderBodyWithVideos(processedBodyWithPlaceholders)}
       </Box>
 
       <style jsx global>{`
@@ -321,9 +396,39 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
           margin-bottom: 2rem;
           max-width: 100%;
         }
+        .markdown-body table {
+          border-collapse: collapse;
+          width: 100%;
+          margin: 2rem 0;
+          background: #181c1f;
+          overflow: hidden;
+          box-shadow: 0 2px 16px rgba(0,0,0,0.12);
+          border: 1px solid primary;
+
+        }
+        .markdown-body th, .markdown-body td {
+          border: 1px solid #333;
+          padding: 12px 16px;
+          text-align: left;
+        }
+        .markdown-body th {
+          background: #23272b;
+          color: #38ff8e;
+          font-weight: bold;
+          font-size: 1.1em;
+        }
+        .markdown-body tr:nth-child(even) {
+          background: #202426;
+        }
+        .markdown-body tr:nth-child(odd) {
+          background: #181c1f;
+        }
+        .markdown-body td {
+          color: #e0e0e0;
+        }
         .pulse-green {
           animation: pulse-green 1.5s infinite;
-          background: ${primary};
+          background: var(--chakra-colors-primary, #38ff8e);
           color: black;
           font-weight: bold;
           border: none;
