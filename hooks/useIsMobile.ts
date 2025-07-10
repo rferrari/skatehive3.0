@@ -2,19 +2,41 @@
 import { useState, useEffect } from "react";
 
 export default function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(false);
+    const [isMobile, setIsMobile] = useState(() => {
+        // Check if window is available (client-side) and get initial value
+        if (typeof window !== 'undefined') {
+            return window.innerWidth < 768;
+        }
+        // Fallback to false for SSR
+        return false;
+    });
 
-  useEffect(() => {
-    const handleResize = () => {
-      const mobile = window.innerWidth < 768;
-      setIsMobile(mobile);
-    };
-    
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+    useEffect(() => {
+        let debounceTimer: NodeJS.Timeout;
 
-  return isMobile;
+        const handleResize = () => {
+            // Clear the previous timer
+            clearTimeout(debounceTimer);
+
+            // Set a new timer to debounce the resize event
+            debounceTimer = setTimeout(() => {
+                const mobile = window.innerWidth < 768;
+                setIsMobile(mobile);
+            }, 150); // 150ms debounce delay
+        };
+
+        // Set initial value
+        const mobile = window.innerWidth < 768;
+        setIsMobile(mobile);
+
+        window.addEventListener("resize", handleResize);
+
+        return () => {
+            // Clear the debounce timer to prevent memory leaks
+            clearTimeout(debounceTimer);
+            window.removeEventListener("resize", handleResize);
+        };
+    }, []);
+
+    return isMobile;
 }

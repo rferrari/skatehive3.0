@@ -20,6 +20,7 @@ import ProfileHeader from "./ProfileHeader";
 import ProfileActions from "./ProfileActions";
 import ViewModeSelector from "./ViewModeSelector";
 import MagazineModal from "./MagazineModal";
+import SnapsGrid from "./SnapsGrid";
 
 // Import custom hooks
 import useProfileData from "@/hooks/useProfileData";
@@ -49,7 +50,7 @@ export default function ProfilePage({ username }: ProfilePageProps) {
   const { hiveAccount, isLoading, error } = useHiveAccount(username);
   const { user } = useAioha();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  
+
   // Custom hooks
   const { profileData, updateProfileData } = useProfileData(username, hiveAccount);
   const { isFollowing, isFollowLoading, updateFollowing, updateLoading } = useFollowStatus(user, username);
@@ -101,7 +102,7 @@ export default function ProfilePage({ username }: ProfilePageProps) {
         onClose={closeMagazine}
         username={username}
       />
-      
+
       {/* Main Profile Content */}
       <Box
         id="scrollableDiv"
@@ -119,7 +120,7 @@ export default function ProfilePage({ username }: ProfilePageProps) {
       >
         {/* Cover Image */}
         <ProfileCoverImage coverImage={profileData.coverImage} username={username} />
-        
+
         {/* Profile Header */}
         <ProfileHeader
           profileData={profileData}
@@ -132,10 +133,10 @@ export default function ProfilePage({ username }: ProfilePageProps) {
           onLoadingChange={updateLoading}
           onEditModalOpen={handleEditModalOpen}
         />
-        
+
         {/* Mobile-only Logout and Settings Buttons for Profile Owner */}
         <ProfileActions isOwner={isOwner} isMobile={isMobile} />
-        
+
         {/* View Mode Selector */}
         <Flex justify="center" align="center" direction="column">
           <ViewModeSelector
@@ -144,9 +145,9 @@ export default function ProfilePage({ username }: ProfilePageProps) {
             isMobile={isMobile}
           />
         </Flex>
-        
+
         {/* Content Views */}
-        {viewMode !== "magazine" && viewMode !== "videoparts" && (
+        {viewMode !== "magazine" && viewMode !== "videoparts" && viewMode !== "snaps" && (
           <PostInfiniteScroll
             allPosts={posts}
             fetchPosts={fetchPosts}
@@ -158,7 +159,10 @@ export default function ProfilePage({ username }: ProfilePageProps) {
         {viewMode === "videoparts" && (
           <VideoPartsView profileData={profileData} username={username} onProfileUpdate={updateProfileData} />
         )}
-        
+        {viewMode === "snaps" && (
+          <SnapsGrid username={username} />
+        )}
+
         {/* Edit Profile Modal */}
         <EditProfile
           isOpen={isEditModalOpen}
