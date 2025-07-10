@@ -14,7 +14,7 @@ export default function useViewMode() {
                 return viewParam as "grid" | "list" | "magazine" | "videoparts" | "snaps";
             }
         }
-        return "grid";
+        return "snaps";
     };
 
     const [viewMode, setViewMode] = useState<"grid" | "list" | "magazine" | "videoparts" | "snaps">(getInitialViewMode);
