@@ -350,9 +350,24 @@ export default function SpotSnapComposer({
       </VStack>
       {/* Matrix Overlay and login prompt if not logged in */}
       {!user && (
-        <>
-          <MatrixOverlay />
-        </>
+        <Box
+          position="absolute"
+          top={0}
+          left={0}
+          right={0}
+          bottom={0}
+          zIndex={20}
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          bg="rgba(255,255,255,0.85)"
+          borderRadius="base"
+          pointerEvents="all"
+        >
+          <Box color="primary" fontWeight="bold" fontSize="xl" textAlign="center">
+            Please log in to post a spot.
+          </Box>
+        </Box>
       )}
     </Box>
   );
