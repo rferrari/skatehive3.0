@@ -9,156 +9,16 @@ import {
     Icon,
     Spinner,
     VStack,
-    Modal,
-    ModalOverlay,
-    ModalContent,
-    ModalCloseButton,
-    ModalBody,
     useDisclosure,
-    IconButton,
-    HStack,
 } from "@chakra-ui/react";
-import { FaPlay, FaImage, FaChevronLeft, FaChevronRight } from "react-icons/fa";
-import { Discussion } from "@hiveio/dhive";
+import { FaImage } from "react-icons/fa";
 import useUserSnaps from "@/hooks/useUserSnaps";
 import VideoPreview from "./VideoPreview";
-import VideoRenderer from "../layout/VideoRenderer";
+import SnapModal, { type SnapWithMedia } from "./SnapModal";
 
 interface SnapsGridProps {
     username: string;
 }
-
-interface SnapWithMedia extends Discussion {
-    media: {
-        images: string[];
-        videos: string[];
-        hasMedia: boolean;
-    };
-}
-
-interface SnapModalProps {
-    snap: SnapWithMedia;
-    isOpen: boolean;
-    onClose: () => void;
-}
-
-const SnapModal = ({ snap, isOpen, onClose }: SnapModalProps) => {
-    const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
-    const allMedia = [...snap.media.images, ...snap.media.videos];
-    const currentMedia = allMedia[currentMediaIndex];
-    const isVideo = snap.media.videos.includes(currentMedia);
-
-    const nextMedia = () => {
-        setCurrentMediaIndex((prev) => (prev + 1) % allMedia.length);
-    };
-
-    const prevMedia = () => {
-        setCurrentMediaIndex((prev) => (prev - 1 + allMedia.length) % allMedia.length);
-    };
-
-    useEffect(() => {
-        setCurrentMediaIndex(0);
-    }, [snap]);
-
-    return (
-        <Modal isOpen={isOpen} onClose={onClose} size="6xl" isCentered>
-            <ModalOverlay bg="blackAlpha.800" />
-            <ModalContent bg="transparent" boxShadow="none" maxW="90vw" maxH="90vh">
-                <ModalCloseButton color="white" size="lg" top={4} right={4} zIndex={10} />
-                <ModalBody p={0} position="relative">
-                    <VStack spacing={4} align="stretch" h="full">
-                        {/* Media Display */}
-                        <Box position="relative" borderRadius="lg" overflow="hidden" bg="black">
-                            <AspectRatio ratio={1} maxH="70vh">
-                                {isVideo ? (
-                                    <VideoRenderer
-                                        src={currentMedia}
-                                        loop={true}
-                                    />
-                                ) : (
-                                    <Image
-                                        src={currentMedia}
-                                        alt="Snap content"
-                                        objectFit="cover"
-                                        w="100%"
-                                        h="100%"
-                                    />
-                                )}
-                            </AspectRatio>
-
-                            {/* Navigation Arrows */}
-                            {allMedia.length > 1 && (
-                                <>
-                                    <IconButton
-                                        aria-label="Previous media"
-                                        icon={<FaChevronLeft />}
-                                        position="absolute"
-                                        left={2}
-                                        top="50%"
-                                        transform="translateY(-50%)"
-                                        bg="blackAlpha.600"
-                                        color="white"
-                                        _hover={{ bg: "blackAlpha.800" }}
-                                        onClick={prevMedia}
-                                    />
-                                    <IconButton
-                                        aria-label="Next media"
-                                        icon={<FaChevronRight />}
-                                        position="absolute"
-                                        right={2}
-                                        top="50%"
-                                        transform="translateY(-50%)"
-                                        bg="blackAlpha.600"
-                                        color="white"
-                                        _hover={{ bg: "blackAlpha.800" }}
-                                        onClick={nextMedia}
-                                    />
-                                </>
-                            )}
-
-                            {/* Media Counter */}
-                            {allMedia.length > 1 && (
-                                <Box
-                                    position="absolute"
-                                    top={4}
-                                    left="50%"
-                                    transform="translateX(-50%)"
-                                    bg="blackAlpha.700"
-                                    color="white"
-                                    px={3}
-                                    py={1}
-                                    borderRadius="full"
-                                    fontSize="sm"
-                                >
-                                    {currentMediaIndex + 1} / {allMedia.length}
-                                </Box>
-                            )}
-                        </Box>
-
-                        {/* Snap Info */}
-                        <Box bg="background" p={4} borderRadius="lg">
-                            <VStack align="start" spacing={2}>
-                                <HStack>
-                                    <Text fontWeight="bold" color="primary">
-                                        @{snap.author}
-                                    </Text>
-                                    <Text fontSize="sm" color="muted">
-                                        {new Date(snap.created).toLocaleDateString()}
-                                    </Text>
-                                </HStack>
-                                {snap.body && (
-                                    <Text color="text" fontSize="sm">
-                                        {snap.body}
-                                    </Text>
-                                )}
-                            </VStack>
-                        </Box>
-                    </VStack>
-                </ModalBody>
-            </ModalContent>
-        </Modal>
-    );
-};
 
 const SnapGridItem = ({ snap, onClick }: { snap: SnapWithMedia; onClick: () => void }) => {
     const firstImage = snap.media.images[0];
@@ -226,11 +86,15 @@ const SnapGridItem = ({ snap, onClick }: { snap: SnapWithMedia; onClick: () => v
 export default function SnapsGrid({ username }: SnapsGridProps) {
     const { snaps, isLoading, hasMore, loadMoreSnaps } = useUserSnaps(username);
     const { isOpen, onOpen, onClose } = useDisclosure();
-    const [selectedSnap, setSelectedSnap] = useState<SnapWithMedia | null>(null);
+    const [selectedSnapIndex, setSelectedSnapIndex] = useState<number>(0);
 
-    const handleSnapClick = (snap: SnapWithMedia) => {
-        setSelectedSnap(snap);
+    const handleSnapClick = (snapIndex: number) => {
+        setSelectedSnapIndex(snapIndex);
         onOpen();
+    };
+
+    const handleSnapChange = (newSnapIndex: number) => {
+        setSelectedSnapIndex(newSnapIndex);
     };
 
     // Infinite scroll effect with debouncing
@@ -279,17 +143,17 @@ export default function SnapsGrid({ username }: SnapsGridProps) {
             <Grid
                 templateColumns={{
                     base: "repeat(3, 1fr)",
-                    md: "repeat(4, 1fr)",
-                    lg: "repeat(5, 1fr)",
+                    md: "repeat(3, 1fr)",
+                    lg: "repeat(4, 1fr)",
                 }}
                 gap={1}
                 p={0}
             >
-                {snaps.map((snap) => (
+                {snaps.map((snap, index) => (
                     <SnapGridItem
                         key={snap.permlink}
                         snap={snap}
-                        onClick={() => handleSnapClick(snap)}
+                        onClick={() => handleSnapClick(index)}
                     />
                 ))}
             </Grid>
@@ -300,11 +164,14 @@ export default function SnapsGrid({ username }: SnapsGridProps) {
                 </Box>
             )}
 
-            {selectedSnap && (
+            {snaps.length > 0 && (
                 <SnapModal
-                    snap={selectedSnap}
+                    snap={snaps[selectedSnapIndex]}
+                    snaps={snaps}
+                    currentSnapIndex={selectedSnapIndex}
                     isOpen={isOpen}
                     onClose={onClose}
+                    onSnapChange={handleSnapChange}
                 />
             )}
         </>

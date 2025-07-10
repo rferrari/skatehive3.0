@@ -5,6 +5,8 @@ import {
   Alert,
   AlertIcon,
   Flex,
+  Container,
+  Center,
 } from "@chakra-ui/react";
 import useHiveAccount from "@/hooks/useHiveAccount";
 import LoadingComponent from "../homepage/loadingComponent";
@@ -102,76 +104,79 @@ export default function ProfilePage({ username }: ProfilePageProps) {
         onClose={closeMagazine}
         username={username}
       />
+      <Center>
+        <Container maxW="container.md" p={0} m={0}>
+          {/* Main Profile Content */}
+          <Box
+            id="scrollableDiv"
+            color="text"
+            maxW="container.lg"
+            mx="auto"
+            p={0}
+            m={0}
+            maxH="100vh"
+            overflowY="auto"
+            sx={{
+              "&::-webkit-scrollbar": { display: "none" },
+              scrollbarWidth: "none",
+            }}
+          >
+            {/* Cover Image */}
+            <ProfileCoverImage coverImage={profileData.coverImage} username={username} />
 
-      {/* Main Profile Content */}
-      <Box
-        id="scrollableDiv"
-        color="text"
-        maxW="container.lg"
-        mx="auto"
-        p={0}
-        m={0}
-        maxH="100vh"
-        overflowY="auto"
-        sx={{
-          "&::-webkit-scrollbar": { display: "none" },
-          scrollbarWidth: "none",
-        }}
-      >
-        {/* Cover Image */}
-        <ProfileCoverImage coverImage={profileData.coverImage} username={username} />
+            {/* Profile Header */}
+            <ProfileHeader
+              profileData={profileData}
+              username={username}
+              isOwner={isOwner}
+              user={user}
+              isFollowing={isFollowing}
+              isFollowLoading={isFollowLoading}
+              onFollowingChange={updateFollowing}
+              onLoadingChange={updateLoading}
+              onEditModalOpen={handleEditModalOpen}
+            />
 
-        {/* Profile Header */}
-        <ProfileHeader
-          profileData={profileData}
-          username={username}
-          isOwner={isOwner}
-          user={user}
-          isFollowing={isFollowing}
-          isFollowLoading={isFollowLoading}
-          onFollowingChange={updateFollowing}
-          onLoadingChange={updateLoading}
-          onEditModalOpen={handleEditModalOpen}
-        />
+            {/* Mobile-only Logout and Settings Buttons for Profile Owner */}
+            <ProfileActions isOwner={isOwner} isMobile={isMobile} />
 
-        {/* Mobile-only Logout and Settings Buttons for Profile Owner */}
-        <ProfileActions isOwner={isOwner} isMobile={isMobile} />
+            {/* View Mode Selector */}
+            <Flex justify="center" align="center" direction="column">
+              <ViewModeSelector
+                viewMode={viewMode}
+                onViewModeChange={handleViewModeChange}
+                isMobile={isMobile}
+              />
+            </Flex>
 
-        {/* View Mode Selector */}
-        <Flex justify="center" align="center" direction="column">
-          <ViewModeSelector
-            viewMode={viewMode}
-            onViewModeChange={handleViewModeChange}
-            isMobile={isMobile}
-          />
-        </Flex>
+            {/* Content Views */}
+            {viewMode !== "magazine" && viewMode !== "videoparts" && viewMode !== "snaps" && (
+              <PostInfiniteScroll
+                allPosts={posts}
+                fetchPosts={fetchPosts}
+                viewMode={viewMode as "grid" | "list"}
+                context="profile"
+                hideAuthorInfo={true}
+              />
+            )}
+            {viewMode === "videoparts" && (
+              <VideoPartsView profileData={profileData} username={username} onProfileUpdate={updateProfileData} />
+            )}
+            {viewMode === "snaps" && (
+              <SnapsGrid username={username} />
+            )}
 
-        {/* Content Views */}
-        {viewMode !== "magazine" && viewMode !== "videoparts" && viewMode !== "snaps" && (
-          <PostInfiniteScroll
-            allPosts={posts}
-            fetchPosts={fetchPosts}
-            viewMode={viewMode as "grid" | "list"}
-            context="profile"
-            hideAuthorInfo={true}
-          />
-        )}
-        {viewMode === "videoparts" && (
-          <VideoPartsView profileData={profileData} username={username} onProfileUpdate={updateProfileData} />
-        )}
-        {viewMode === "snaps" && (
-          <SnapsGrid username={username} />
-        )}
-
-        {/* Edit Profile Modal */}
-        <EditProfile
-          isOpen={isEditModalOpen}
-          onClose={handleEditModalClose}
-          profileData={profileData}
-          onProfileUpdate={updateProfileData}
-          username={username}
-        />
-      </Box>
+            {/* Edit Profile Modal */}
+            <EditProfile
+              isOpen={isEditModalOpen}
+              onClose={handleEditModalClose}
+              profileData={profileData}
+              onProfileUpdate={updateProfileData}
+              username={username}
+            />
+          </Box>
+        </Container>
+      </Center>
     </>
   );
 }

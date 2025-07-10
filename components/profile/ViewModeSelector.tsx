@@ -23,6 +23,13 @@ export default function ViewModeSelector({ viewMode, onViewModeChange, isMobile 
     return (
         <ButtonGroup isAttached variant="outline" size="sm" my={4} colorScheme="green">
             <IconButton
+                aria-label="Show Snaps"
+                icon={<FaCamera />}
+                onClick={() => onViewModeChange("snaps")}
+                isActive={viewMode === "snaps"}
+                sx={buttonStyle}
+            />
+            <IconButton
                 aria-label="Grid view"
                 icon={<FaTh />}
                 onClick={() => onViewModeChange("grid")}
@@ -53,13 +60,7 @@ export default function ViewModeSelector({ viewMode, onViewModeChange, isMobile 
                 isActive={viewMode === "videoparts"}
                 sx={buttonStyle}
             />
-            <IconButton
-                aria-label="Show Snaps"
-                icon={<FaCamera />}
-                onClick={() => onViewModeChange("snaps")}
-                isActive={viewMode === "snaps"}
-                sx={buttonStyle}
-            />
+
         </ButtonGroup>
     );
 }
