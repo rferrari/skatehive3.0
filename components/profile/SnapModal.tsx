@@ -72,16 +72,16 @@ const SnapModal = ({ snap, snaps, currentSnapIndex, isOpen, onClose, onSnapChang
     // Function to clean body text by removing image and video markdown
     const cleanBodyText = (body: string) => {
         if (!body) return '';
-        
+
         // Remove image markdown: ![alt](url)
         let cleaned = body.replace(/!\[.*?\]\(.*?\)/g, '');
-        
+
         // Remove video iframes: <iframe...></iframe>
         cleaned = cleaned.replace(/<iframe[^>]*>.*?<\/iframe>/gi, '');
-        
+
         // Remove extra whitespace and newlines
         cleaned = cleaned.replace(/\n\s*\n/g, '\n').trim();
-        
+
         return cleaned;
     };
 
@@ -94,7 +94,7 @@ const SnapModal = ({ snap, snaps, currentSnapIndex, isOpen, onClose, onSnapChang
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
             if (!isOpen) return;
-            
+
             switch (event.key) {
                 case 'ArrowLeft':
                     if (event.shiftKey) {
@@ -142,11 +142,11 @@ const SnapModal = ({ snap, snaps, currentSnapIndex, isOpen, onClose, onSnapChang
                 borderRadius={{ base: "0", md: "lg" }}
                 h={{ base: "100vh", md: "auto" }}
             >
-                <ModalCloseButton 
-                    color="white" 
-                    size="lg" 
-                    top={{ base: 2, md: 4 }} 
-                    right={{ base: 2, md: 4 }} 
+                <ModalCloseButton
+                    color="white"
+                    size="lg"
+                    top={{ base: 2, md: 4 }}
+                    right={{ base: 2, md: 4 }}
                     zIndex={20}
                     bg="blackAlpha.600"
                     _hover={{ bg: "blackAlpha.800" }}
