@@ -418,7 +418,7 @@ export default function Sidebar({ newNotificationCount = 0 }) {
                 </Box>
               </Button>
             )}
-            {!user && (
+            {/* {!user && (
               <Button
                 onClick={() => handleNavigation("/join")}
                 variant="ghost"
@@ -447,7 +447,7 @@ export default function Sidebar({ newNotificationCount = 0 }) {
                   Join
                 </Box>
               </Button>
-            )}
+            )} */}
           </VStack>
         </Box>
         <VStack spacing={2} align="stretch" p={4} m={0}>
@@ -478,7 +478,7 @@ export default function Sidebar({ newNotificationCount = 0 }) {
             keyType: KeyTypes.Posting,
             loginTitle: "Login",
           }}
-          onLogin={() => {}}
+          onLogin={() => { }}
           onClose={() => setModalDisplayed(false)}
         />
       </div>
