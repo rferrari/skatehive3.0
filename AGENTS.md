@@ -27,11 +27,6 @@ This repository contains the **Skatehive 3.0** web application. It is a Next.js 
    ```
 4. Run lint checks with `pnpm lint`.
 
-## Conventions
-- Use 2‑space indentation and keep TypeScript `strict` mode on.
-- UI components use Chakra UI; prefer existing patterns from `components/`.
-- When adding new packages, update `pnpm-lock.yaml` via pnpm.
-- Commit clean code and ensure the project still builds with `pnpm build`.
 
 
 ## Providers and dependencies
@@ -48,14 +43,5 @@ Key packages and their roles:
 Keep provider logic modular. New providers should live in their own modules under `app/` or `contexts/`.
 
 When adding a dependency, verify the package and maintainer to avoid typosquatted packages. Check with `pnpm info <pkg>` and inspect its repository. Run `pnpm audit` after install and review subdependencies using `pnpm list <pkg>`.
-## Best practices
-- Keep files small and focused; prefer multiple short modules over a single large file.
-- Limit line length to around 100 characters for readability.
-- Write clear comments for complex logic and keep stateful code in hooks or contexts.
-
-## AI tools
-- **Cursor, Copilot, Claude** or other agents should follow these guidelines.
-- Provide clear commit messages and keep related changes in a single commit.
-- Run lint before committing.
-
-For additional style rules see `RULES.md`.
+  
+For coding rules, file structure, and patterns, see `RULES.md`.
