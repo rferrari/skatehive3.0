@@ -6,6 +6,7 @@ import { useRive, useStateMachineInput } from "@rive-app/react-canvas";
 import { AiohaModal } from "@aioha/react-ui";
 import { KeyTypes } from "@aioha/aioha";
 import { useTheme } from '../../app/themeProvider';
+import { useNotifications } from '@/contexts/NotificationContext';
 import { HamburgerIcon } from '@chakra-ui/icons';
 
 // Modular Rive Button for Menu Items
@@ -37,11 +38,21 @@ const MenuRiveButton = ({ src, themeValue }: { src: string, themeValue: number |
   );
 };
 
-export default function FooterNavButtons({ newNotificationCount = 0 }: { newNotificationCount?: number }) {
+export default function FooterNavButtons() {
   const router = useRouter();
   const { user } = useAioha();
   const [modalDisplayed, setModalDisplayed] = useState(false);
   const { themeName } = useTheme();
+  
+  // Safely get notification count with fallback
+  let newNotificationCount = 0;
+  try {
+    const notificationContext = useNotifications();
+    newNotificationCount = notificationContext.newNotificationCount;
+  } catch (error) {
+    // Context not available yet, use default value
+    newNotificationCount = 0;
+  }
 
   // Map themeName to Rive theme value
   const themeToRiveValue: Record<string, number> = {

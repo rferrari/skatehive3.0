@@ -31,11 +31,12 @@ import "@aioha/react-ui/dist/build.css";
 import { useAccount } from "wagmi";
 import { useDisclosure } from "@chakra-ui/react";
 import { useTheme } from "@/app/themeProvider";
+import { useNotifications } from "@/contexts/NotificationContext";
 import SidebarLogo from "../graphics/SidebarLogo";
 
 const communityTag = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG;
 
-export default function Sidebar({ newNotificationCount = 0 }) {
+export default function Sidebar() {
   const { user, aioha } = useAioha();
   const router = useRouter();
   const pathname = usePathname();
@@ -49,6 +50,16 @@ export default function Sidebar({ newNotificationCount = 0 }) {
     onClose: closeConnectModal,
   } = useDisclosure();
   const { themeName } = useTheme();
+  
+  // Safely get notification count with fallback
+  let newNotificationCount = 0;
+  try {
+    const notificationContext = useNotifications();
+    newNotificationCount = notificationContext.newNotificationCount;
+  } catch (error) {
+    // Context not available yet, use default value
+    newNotificationCount = 0;
+  }
 
   const [primaryBg] = useToken("colors", ["primary"]);
   let hoverTextColor = "black";

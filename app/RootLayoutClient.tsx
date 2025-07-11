@@ -5,12 +5,7 @@ import Sidebar from "@/components/layout/Sidebar";
 import FooterNavButtons from "@/components/layout/FooterNavButtons";
 import SplashScreen from "@/components/layout/SplashScreen";
 import { Providers } from "./providers";
-import {
-  fetchNewNotifications,
-  getLastReadNotificationDate,
-} from "@/lib/hive/client-functions";
-import { useAioha } from "@aioha/react-ui";
-import { Notifications } from "@hiveio/dhive";
+import { NotificationProvider, useNotifications } from "@/contexts/NotificationContext";
 import { Analytics } from "@vercel/analytics/next";
 import InitFrameSDK from "@/hooks/init-frame-sdk";
 
@@ -48,7 +43,9 @@ export default function RootLayoutClient({
       <>
         <Analytics />
         <Providers>
-          <InnerLayout>{children}</InnerLayout>
+          <NotificationProvider>
+            <InnerLayout>{children}</InnerLayout>
+          </NotificationProvider>
         </Providers>
       </>
     );
@@ -61,46 +58,27 @@ export default function RootLayoutClient({
       <InitFrameSDK />
       <Analytics />
       <Providers>
-        <InnerLayout>{children}</InnerLayout>
+        <NotificationProvider>
+          <InnerLayout>{children}</InnerLayout>
+        </NotificationProvider>
       </Providers>
     </>
   );
 }
 
 function InnerLayout({ children }: { children: React.ReactNode }) {
-  const { user } = useAioha();
-  const [notifications, setNotifications] = useState<Notifications[]>([]);
-  const [lastReadDate, setLastReadDate] = useState("1970-01-01T00:00:00Z");
-
-  useEffect(() => {
-    async function load() {
-      if (user) {
-        const notifs = await fetchNewNotifications(user);
-        const lastRead = await getLastReadNotificationDate(user);
-        setNotifications(notifs);
-        setLastReadDate(lastRead);
-      }
-    }
-    load();
-  }, [user]);
-
-  const newNotificationCount = notifications.filter(
-    (n) =>
-      new Date(n.date.endsWith("Z") ? n.date : n.date + "Z") >
-      new Date(lastReadDate)
-  ).length;
-
   const isMobile = useBreakpointValue({ base: true, md: false });
+  
   return (
     <Container maxW={{ base: "100%", md: "container.xl" }} p={0}>
       <Flex direction={{ base: "column", md: "row" }} minH="100vh">
-        <Sidebar newNotificationCount={newNotificationCount} />
+        <Sidebar />
         <Box flex="1" overflowY="auto" height="100vh">
           {children}
         </Box>
       </Flex>
       {isMobile && (
-        <FooterNavButtons newNotificationCount={newNotificationCount} />
+        <FooterNavButtons />
       )}
     </Container>
   );
