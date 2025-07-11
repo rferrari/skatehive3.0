@@ -75,10 +75,28 @@ body.show-splash #splash-root {
 }
 
 @font-face {
+  font-family: 'Joystix';
+  src: url('/fonts/joystix.woff2') format('woff2'),
+    url('/fonts/joystix.woff') format('woff'),
+    url('/fonts/joystix.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
   font-family: 'Mechanical';
   src: url('/fonts/Mechanical.otf') format('opentype');
   font-weight: normal;
   font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Tarrget3D';
+  src: url('/fonts/Tarrget3DItalic.otf') format('opentype');
+  font-weight: normal;
+  font-style: italic;
   font-display: swap;
 }
 

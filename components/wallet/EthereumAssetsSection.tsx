@@ -151,11 +151,10 @@ export default function EthereumAssetsSection() {
   return (
     <Box
       mt={8}
-      p={6}
+      p={2}
       borderRadius="base"
       bg="muted"
       w={"100wh"}
-      mx="4"
       textAlign="left"
     >
       <HStack justify="space-between" align="center" mb={4}>
@@ -168,30 +167,6 @@ export default function EthereumAssetsSection() {
           </Badge>
         )}
       </HStack>
-
-      <Box mb={4}>
-        <Text fontSize="sm" color="primary" mb={2}>
-          Connected Account:
-        </Text>
-
-        {isConnected && address ? (
-          <HStack spacing={3} align="center">
-            <Avatar address={address} size={32} resolverOrder={resolverOrder} />
-            <Box flex={1}>
-              <Box fontSize="md" color="primary" fontWeight="medium">
-                <Name address={address} resolverOrder={resolverOrder} />
-              </Box>
-              <Text fontSize="xs" color="primary" fontFamily="mono" mt={1}>
-                {address}
-              </Text>
-            </Box>
-          </HStack>
-        ) : (
-          <Text fontSize="md" color="muted" fontFamily="mono">
-            Not connected
-          </Text>
-        )}
-      </Box>
 
       {isConnected && address && (
         <Box>
