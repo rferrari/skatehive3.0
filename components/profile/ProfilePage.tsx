@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Box,
   Alert,
@@ -163,7 +163,9 @@ export default function ProfilePage({ username }: ProfilePageProps) {
               <VideoPartsView profileData={profileData} username={username} onProfileUpdate={updateProfileData} />
             )}
             {viewMode === "snaps" && (
-              <SnapsGrid username={username} />
+              <SnapsGrid
+                username={username}
+              />
             )}
 
             {/* Edit Profile Modal */}

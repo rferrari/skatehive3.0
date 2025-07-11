@@ -18,13 +18,14 @@ import {
     Button,
     useBreakpointValue,
     Avatar,
-    Link,
+    useToast,
 } from "@chakra-ui/react";
-import { FaChevronLeft, FaChevronRight, FaDownload, FaReply, FaComments } from "react-icons/fa";
+import { FaChevronLeft, FaChevronRight, FaDownload, FaReply, FaComments, FaShare } from "react-icons/fa";
 import { Discussion } from "@hiveio/dhive";
 import VideoRenderer from "../layout/VideoRenderer";
 import SnapComposer from "../homepage/SnapComposer";
 import Snap from "../homepage/Snap";
+import VoteSlider from "../shared/VoteSlider";
 import { useComments } from "@/hooks/useComments";
 import HiveMarkdown from "../shared/HiveMarkdown";
 
@@ -56,6 +57,16 @@ const SnapModal = ({
 }: SnapModalProps) => {
     const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
     const modalSize = useBreakpointValue({ base: "full", md: "5xl" });
+    const toast = useToast();
+
+    // Voting state
+    const [voted, setVoted] = useState(
+        snap.active_votes?.some(
+            (item: { voter: string }) => item.voter === snap.author
+        ) || false
+    );
+    const [activeVotes, setActiveVotes] = useState(snap.active_votes || []);
+    const [showSlider, setShowSlider] = useState(false);
 
     // Use the useComments hook to fetch comments for the current snap
     const { comments, isLoading: commentsLoading, error: commentsError } = useComments(
@@ -119,15 +130,42 @@ const SnapModal = ({
         window.open(snapUrl, '_blank');
     };
 
-    // Function to redirect to a specific comment's page
-    const goToCommentPage = (comment: Discussion) => {
-        const commentUrl = `/post/${comment.author}/${comment.permlink}`;
-        window.open(commentUrl, '_blank');
+    // Function to share the current snap modal URL
+    const handleShareSnap = async () => {
+        try {
+            const currentUrl = window.location.href;
+            await navigator.clipboard.writeText(currentUrl);
+            toast({
+                title: "Link copied!",
+                description: "Snap link has been copied to your clipboard",
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+            });
+        } catch (error) {
+            console.error('Failed to copy link:', error);
+            toast({
+                title: "Failed to copy link",
+                description: "Please try again",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+        }
     };
+
 
     useEffect(() => {
         setCurrentMediaIndex(0);
         setOptimisticComments([]);
+        // Reset voting state when snap changes
+        setVoted(
+            snap.active_votes?.some(
+                (item: { voter: string }) => item.voter === snap.author
+            ) || false
+        );
+        setActiveVotes(snap.active_votes || []);
+        setShowSlider(false);
     }, [snap]);
 
     useEffect(() => {
@@ -333,14 +371,14 @@ const SnapModal = ({
                                     position="absolute"
                                     left={{ base: 1, md: 2 }}
                                     bottom={{ base: 20, md: 10 }}
-                                    bg="primary"
-                                    color="white"
-                                    _hover={{ bg: "primary" }}
+                                    bg="back"
+                                    color="primary"
+                                    _hover={{ color: "primary", bg: "black" }}
                                     onClick={prevSnap}
                                     zIndex={15}
                                     size={{ base: "sm", md: "md" }}
                                     isDisabled={currentSnapIndex === 0}
-                                    opacity={currentSnapIndex === 0 ? 0.5 : 1}
+                                    opacity={0.4}
                                 />
                                 <IconButton
                                     aria-label="Next snap"
@@ -348,14 +386,14 @@ const SnapModal = ({
                                     position="absolute"
                                     right={{ base: 1, md: 2 }}
                                     bottom={{ base: 20, md: 10 }}
-                                    bg="primary"
-                                    color="white"
-                                    _hover={{ bg: "primary" }}
+                                    bg="background"
+                                    color="primary"
+                                    _hover={{ color: "primary", bg: "black" }}
                                     onClick={nextSnap}
                                     zIndex={15}
                                     size={{ base: "sm", md: "md" }}
                                     isDisabled={currentSnapIndex === snaps.length - 1}
-                                    opacity={currentSnapIndex === snaps.length - 1 ? 0.5 : 1}
+                                    opacity={0.4}
                                 />
                             </>
                         )}
@@ -364,16 +402,17 @@ const SnapModal = ({
                         {snaps.length > 1 && (
                             <Box
                                 position="absolute"
-                                bottom={{ base: 2, md: 4 }}
+                                top={{ base: 2, md: 4 }}
                                 left="50%"
                                 transform="translateX(-50%)"
-                                bg="primary"
-                                color="white"
+                                bg="background"
+                                color="primary"
                                 px={3}
                                 py={1}
                                 borderRadius="full"
                                 fontSize="sm"
                                 zIndex={10}
+                                opacity={0.4}
                             >
                                 Snap {currentSnapIndex + 1} / {snaps.length}
                             </Box>
@@ -392,20 +431,24 @@ const SnapModal = ({
                     >
                         {/* Snap Info */}
                         <Box mb={4}>
-                            <HStack spacing={3} align="start">
-                                <Avatar
-                                    src={getProfileImageUrl(snap.author)}
-                                    name={snap.author}
-                                    size="md"
-                                />
-                                <Box>
-                                    <Text fontWeight="bold" color="primary">
-                                        @{snap.author}
-                                    </Text>
-                                    <Text fontSize="sm" color="muted">
-                                        {new Date(snap.created).toLocaleDateString()}
-                                    </Text>
-                                </Box>
+                            <HStack spacing={3} align="start" justify="space-between">
+                                <HStack spacing={3} align="start">
+                                    <Avatar
+                                        src={getProfileImageUrl(snap.author)}
+                                        name={snap.author}
+                                        size="md"
+                                    />
+                                    <Box>
+                                        <Text fontWeight="bold" color="primary">
+                                            @{snap.author}
+                                        </Text>
+                                        <Text fontSize="sm" color="muted">
+                                            {new Date(snap.created).toLocaleDateString()}
+                                        </Text>
+                                    </Box>
+                                </HStack>
+
+
                             </HStack>
                             {cleanBodyText(snap.body) && (
                                 <Box color="text" fontSize="sm" mt={2} lineHeight="1.5">
@@ -419,15 +462,25 @@ const SnapModal = ({
                                     />
                                 </Box>
                             )}
+
+                            {/* Voting Section */}
+                            <VoteSlider
+                                discussion={snap}
+                                voted={voted}
+                                setVoted={setVoted}
+                                activeVotes={activeVotes}
+                                setActiveVotes={setActiveVotes}
+                                showSlider={showSlider}
+                                setShowSlider={setShowSlider}
+                                variant="modal"
+                                size="sm"
+                            />
                         </Box>
 
                         {/* Comments Section */}
                         <Box flex="1" overflow="hidden" minH="0">
                             {/* Comments Header */}
                             <Flex justify="space-between" align="center" mb={3}>
-                                <Text fontSize="md" fontWeight="bold" color="primary">
-                                    Comments
-                                </Text>
                                 <Button
                                     size="sm"
                                     variant="ghost"
@@ -436,8 +489,18 @@ const SnapModal = ({
                                     color="primary"
                                     _hover={{ bg: "blackAlpha.300" }}
                                 >
-                                    View Full Discussion
+                                    Snap Page
                                 </Button>
+                                {/* Share Button */}
+                                <IconButton
+                                    aria-label="Share snap"
+                                    icon={<FaShare />}
+                                    size="sm"
+                                    variant="ghost"
+                                    colorScheme="gray"
+                                    onClick={handleShareSnap}
+                                    _hover={{ bg: "gray.700" }}
+                                />
                             </Flex>
 
                             <Box

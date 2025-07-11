@@ -93,13 +93,56 @@ export default function SnapsGrid({ username }: SnapsGridProps) {
     const { isOpen, onOpen, onClose } = useDisclosure();
     const [selectedSnapIndex, setSelectedSnapIndex] = useState<number>(0);
 
+    // Check for snap parameter in URL on component mount
+    useEffect(() => {
+        // Parse URL path: /user/username/snap/permlink
+        const pathParts = window.location.pathname.split('/');
+        const snapIndex = pathParts.indexOf('snap');
+
+        if (snapIndex !== -1 && pathParts.length >= snapIndex + 2) {
+            const permlink = pathParts[snapIndex + 1];
+
+            if (permlink && snaps.length > 0) {
+                // Find the snap index by permlink (author is inferred from username context)
+                const foundSnapIndex = snaps.findIndex(snap =>
+                    snap.permlink === permlink
+                );
+                if (foundSnapIndex !== -1) {
+                    setSelectedSnapIndex(foundSnapIndex);
+                    onOpen();
+                }
+            }
+        }
+    }, [snaps, onOpen]);
+
     const handleSnapClick = (snapIndex: number) => {
+        const snap = snaps[snapIndex];
         setSelectedSnapIndex(snapIndex);
+
+        // Create clean URL: /user/snap-author/snap/permlink 
+        // Use the snap's actual author for the URL to ensure correct context
+        const cleanUrl = `/user/${snap.author}/snap/${snap.permlink}`;
+        window.history.pushState({}, '', cleanUrl);
+
         onOpen();
     };
 
     const handleSnapChange = (newSnapIndex: number) => {
+        const snap = snaps[newSnapIndex];
         setSelectedSnapIndex(newSnapIndex);
+
+        // Update URL with clean format using snap's author
+        const cleanUrl = `/user/${snap.author}/snap/${snap.permlink}`;
+        window.history.pushState({}, '', cleanUrl);
+    };
+
+    const handleModalClose = () => {
+        // Return to clean profile URL with snaps view
+        // Use the original username from props for consistency
+        const baseUrl = `/user/${username}?view=snaps`;
+        window.history.pushState({}, '', baseUrl);
+
+        onClose();
     };
 
     // Infinite scroll effect with debouncing
@@ -175,7 +218,7 @@ export default function SnapsGrid({ username }: SnapsGridProps) {
                     snaps={snaps}
                     currentSnapIndex={selectedSnapIndex}
                     isOpen={isOpen}
-                    onClose={onClose}
+                    onClose={handleModalClose}
                     onSnapChange={handleSnapChange}
                 />
             )}
