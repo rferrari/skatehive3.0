@@ -19,7 +19,7 @@ const MenuRiveButton = ({ src, themeValue }: { src: string, themeValue: number |
     autoplay: true,
   });
   const themeInput = useStateMachineInput(rive, STATE_MACHINE_NAME, THEME_INPUT_NAME);
-
+  const { user } = useAioha();
   React.useEffect(() => {
     if (
       themeInput &&
@@ -84,12 +84,12 @@ export default function FooterNavButtons() {
       src: "/buttons/profile.riv",
       onClick: () => {
         if (user) {
-          router.push(`/user/${user}?view=grid`);
+          router.push(`/user/${user}?view=snaps`);
         } else {
           setModalDisplayed(true);
         }
       },
-      name: "Profile"
+      name: user ? "Profile" : "Login"
     },
   ];
 
