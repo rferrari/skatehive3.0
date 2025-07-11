@@ -32,6 +32,7 @@ import useHivePower from "@/hooks/useHivePower";
 import VoteListPopover from "@/components/blog/VoteListModal";
 import { parse, isAfter, isBefore, isEqual } from "date-fns";
 import spitfire from "/public/images/spitfire.png";
+import { useTheme } from "@/app/themeProvider";
 
 const separateContent = (body: string) => {
   const textParts: string[] = [];
@@ -142,6 +143,7 @@ const BountySnap = ({
 }: BountySnapProps) => {
   const { aioha, user } = useAioha();
   const { hiveAccount } = useHiveAccount(user || "");
+  const theme = useTheme();
   const {
     hivePower,
     isLoading: isHivePowerLoading,
@@ -357,17 +359,6 @@ const BountySnap = ({
     }
   }
 
-  // Defensive utility to filter out unwanted props for Avatar
-  const safeAvatarProps = (props: any) => {
-    // List of props to exclude from being passed to Avatar
-    const exclude = ["showBorder", "showborder", "bordered", "customProp"];
-    const filtered = { ...props };
-    exclude.forEach((key) => {
-      if (key in filtered) delete filtered[key];
-    });
-    return filtered;
-  };
-
   return (
     <Box
       as="div"
@@ -387,34 +378,47 @@ const BountySnap = ({
       sx={{
         ...(showPosterBackground
           ? {
-              backgroundImage: "url(/images/paper.svg)",
-              backgroundRepeat: "no-repeat",
-              backgroundSize: "100% 100%",
-              backgroundPosition: "center",
-              borderRadius: "16px",
-              overflow: "hidden",
-              transition: "box-shadow 0.2s, background 0.2s, background-image 0.2s",
-              cursor: disableCardClick ? "default" : "pointer",
-              ...(disableCardClick
-                ? {}
-                : {
-                    ":hover": {
-                      backgroundImage: "url(/images/paperOutline.svg)",
-                      // No box shadow
-                    },
-                  }),
+              // Responsive background for desktop/mobile
+              '@media (max-width: 767px)': {
+                backgroundImage: 'none',
+                backgroundColor: theme.theme.colors.muted,
+                border: '1px solid',
+                borderColor: theme.theme.colors.border,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+                borderRadius: '16px',
+                overflow: 'hidden',
+                transition: 'box-shadow 0.2s, background 0.2s, background-image 0.2s',
+                cursor: disableCardClick ? 'default' : 'pointer',
+              },
+              '@media (min-width: 768px)': {
+                backgroundImage: 'url(/images/paper.svg)',
+                backgroundRepeat: 'no-repeat',
+                backgroundSize: '100% 100%',
+                backgroundPosition: 'center',
+                borderRadius: '16px',
+                overflow: 'hidden',
+                transition: 'box-shadow 0.2s, background 0.2s, background-image 0.2s',
+                cursor: disableCardClick ? 'default' : 'pointer',
+                ...(disableCardClick
+                  ? {}
+                  : {
+                      ':hover': {
+                        backgroundImage: 'url(/images/paperOutline.svg)',
+                      },
+                    }),
+              },
             }
           : {
-              borderRadius: "16px",
-              overflow: "hidden",
-              transition: "box-shadow 0.2s, background 0.2s, background-image 0.2s",
-              cursor: disableCardClick ? "default" : "pointer",
+              borderRadius: '16px',
+              overflow: 'hidden',
+              transition: 'box-shadow 0.2s, background 0.2s, background-image 0.2s',
+              cursor: disableCardClick ? 'default' : 'pointer',
               ...(disableCardClick
                 ? {}
                 : {
-                    ":hover": {
+                    ':hover': {
                       boxShadow:
-                        "0 0 0 3px #ff9800, 0 2px 16px rgba(0,0,0,0.18)",
+                        '0 0 0 3px #ff9800, 0 2px 16px rgba(0,0,0,0.18)',
                     },
                   }),
             }),
@@ -470,12 +474,10 @@ const BountySnap = ({
                 onClick={(e) => e.stopPropagation()}
               >
                 <Avatar
-                  {...safeAvatarProps({
-                    size: "xs",
-                    name: discussion.author,
-                    src: `https://images.hive.blog/u/${discussion.author}/avatar/sm`,
-                    ml: 0,
-                  })}
+                  size="xs"
+                  name={discussion.author}
+                  src={`https://images.hive.blog/u/${discussion.author}/avatar/sm`}
+                  ml={0}
                 />
                 <Text
                   fontWeight="medium"
@@ -520,17 +522,76 @@ const BountySnap = ({
         </Box>
       </Box>
 
-      {/* Footer (absolute) */}
+      {/* Main scrollable content area (description + avatars + media) */}
+      <Box
+        position="relative"
+        flex="1 1 auto"
+        overflowY="auto"
+        px={4}
+        pt="0px"
+        pb={0}
+        zIndex={1}
+        minHeight={0}
+        sx={{
+          "::-webkit-scrollbar": { display: "none" }, // Hide scrollbar for Chrome, Safari
+          scrollbarWidth: "none", // Hide scrollbar for Firefox
+        }}
+      >
+        {/* Rules (5 lines, clamp) */}
+        {text && (
+          <Box mb={2} lineHeight="1.1em" wordBreak="break-word">
+            <Text fontSize="md" lineHeight="1.1" display="block">
+              {/* Only show rules part of text */}
+              {(() => {
+                const rulesMatch = discussion.body.match(
+                  /Bounty Rules:\s*([\s\S]*?)(?:\n|$)/
+                );
+                return rulesMatch && rulesMatch[1] ? rulesMatch[1].trim() : "";
+              })()}
+            </Text>
+          </Box>
+        )}
+        {/* Claimants Avatars */}
+        {uniqueVotes && uniqueVotes.length > 0 && (
+          <Flex justify="center" mt={4} mb={2}>
+            <AvatarGroup size="xs" max={5}>
+              {uniqueVotes.map((vote) => (
+                <Tooltip label={vote.voter} key={vote.voter} hasArrow>
+                  <Avatar
+                    name={vote.voter}
+                    src={`https://images.hive.blog/u/${vote.voter}/avatar/small`}
+                  />
+                </Tooltip>
+              ))}
+            </AvatarGroup>
+          </Flex>
+        )}
+        {/* Media and rest of content */}
+        {showMedia && <Box>{renderedMedia}</Box>}
+        {/* Inline composer, replies, etc. remain unchanged and can be added here if needed */}
+      </Box>
+      {/* Time Remaining Footer (always visible, above the main footer) */}
+      {deadlineCountdown && (
+        <Box
+          px={4}
+          pb={2}
+          zIndex={2}
+          textAlign="center"
+          flexShrink={0}
+        >
+          <Text fontSize="md" fontWeight="bold">
+            {deadlineCountdown}
+          </Text>
+        </Box>
+      )}
+      {/* Footer (always visible at the bottom) */}
       {!disableFooter && (
         <Box
-          position="absolute"
-          left={0}
-          right={0}
-          bottom={0}
           px={4}
           pb={4}
           zIndex={1}
           height="70px"
+          flexShrink={0}
           pointerEvents={disableCardClick ? "auto" : undefined}
         >
           <HStack justify="center" spacing={8} height="100%">
@@ -646,74 +707,6 @@ const BountySnap = ({
           </HStack>
         </Box>
       )}
-      {/* Time Remaining Footer */}
-      {deadlineCountdown && (
-        <Box
-          position="absolute"
-          left={0}
-          right={0}
-          bottom={disableFooter ? 0 : "70px"}
-          px={4}
-          pb={2}
-          zIndex={2}
-          textAlign="center"
-        >
-          <Text fontSize="md" fontWeight="bold">
-            {deadlineCountdown}
-          </Text>
-        </Box>
-      )}
-      {/* Content area (between header and footer, scrollable but no visible scrollbar) */}
-      <Box
-        position="relative"
-        flex="1 1 auto"
-        overflowY="auto"
-        px={4}
-        pt="0px"
-        pb="80px" // footer height + spacing
-        zIndex={1}
-        height="100%"
-        minHeight="0"
-        sx={{
-          "::-webkit-scrollbar": { display: "none" }, // Hide scrollbar for Chrome, Safari
-          scrollbarWidth: "none", // Hide scrollbar for Firefox
-        }}
-      >
-        {/* Rules (5 lines, clamp) */}
-        {text && (
-          <Box mb={2} lineHeight="1.1em" wordBreak="break-word">
-            <Text fontSize="md" lineHeight="1.1" display="block">
-              {/* Only show rules part of text */}
-              {(() => {
-                const rulesMatch = discussion.body.match(
-                  /Bounty Rules:\s*([\s\S]*?)(?:\n|$)/
-                );
-                return rulesMatch && rulesMatch[1] ? rulesMatch[1].trim() : "";
-              })()}
-            </Text>
-          </Box>
-        )}
-        {/* Claimants Avatars */}
-        {uniqueVotes && uniqueVotes.length > 0 && (
-          <Flex justify="center" mt={4} mb={2}>
-            <AvatarGroup size="xs" max={5}>
-              {uniqueVotes.map((vote) => (
-                <Tooltip label={vote.voter} key={vote.voter} hasArrow>
-                  <Avatar
-                    {...safeAvatarProps({
-                      name: vote.voter,
-                      src: `https://images.hive.blog/u/${vote.voter}/avatar/small`,
-                    })}
-                  />
-                </Tooltip>
-              ))}
-            </AvatarGroup>
-          </Flex>
-        )}
-        {/* Media and rest of content */}
-        {showMedia && <Box>{renderedMedia}</Box>}
-        {/* Inline composer, replies, etc. remain unchanged and can be added here if needed */}
-      </Box>
     </Box>
   );
 };
