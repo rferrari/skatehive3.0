@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
     Box,
     Image,
@@ -18,7 +18,7 @@ interface SnapsGridProps {
     username: string;
 }
 
-const SnapGridItem = ({
+const SnapGridItem = React.memo(({
     snap,
     onClick,
 }: {
@@ -86,36 +86,56 @@ const SnapGridItem = ({
             )}
         </Box>
     );
-};
+});
+
+SnapGridItem.displayName = 'SnapGridItem';
 
 export default function SnapsGrid({ username }: SnapsGridProps) {
     const { snaps, isLoading, hasMore, loadMoreSnaps } = useUserSnaps(username);
     const { isOpen, onOpen, onClose } = useDisclosure();
     const [selectedSnapIndex, setSelectedSnapIndex] = useState<number>(0);
+    const [hasCheckedUrl, setHasCheckedUrl] = useState<boolean>(false);
 
-    // Check for snap parameter in URL on component mount
-    useEffect(() => {
-        // Parse URL path: /user/username/snap/permlink
+    // Memoize URL parsing to avoid repeated calculations
+    const urlPermlink = useMemo(() => {
+        if (typeof window === 'undefined') return null; // SSR safety
+
+        // First check URL search params (for redirected URLs like ?view=snaps&snap=permlink)
+        const searchParams = new URLSearchParams(window.location.search);
+        const snapParam = searchParams.get('snap');
+        if (snapParam) {
+            return snapParam;
+        }
+
+        // Then check path-based URLs (/user/username/snap/permlink)
         const pathParts = window.location.pathname.split('/');
         const snapIndex = pathParts.indexOf('snap');
+        return snapIndex !== -1 && pathParts.length >= snapIndex + 2
+            ? pathParts[snapIndex + 1]
+            : null;
+    }, []);
 
-        if (snapIndex !== -1 && pathParts.length >= snapIndex + 2) {
-            const permlink = pathParts[snapIndex + 1];
-
-            if (permlink && snaps.length > 0) {
-                // Find the snap index by permlink (author is inferred from username context)
-                const foundSnapIndex = snaps.findIndex(snap =>
-                    snap.permlink === permlink
-                );
-                if (foundSnapIndex !== -1) {
-                    setSelectedSnapIndex(foundSnapIndex);
-                    onOpen();
-                }
+    // Check for snap parameter in URL on component mount and when snaps load
+    // Only run this when modal is closed to prevent reopening during navigation
+    useEffect(() => {
+        // Only open modal if it's not already open and we have a URL permlink and haven't checked yet
+        if (urlPermlink && snaps.length > 0 && !isLoading && !isOpen && !hasCheckedUrl) {
+            // Find the snap index by permlink (author is inferred from username context)
+            const foundSnapIndex = snaps.findIndex(snap =>
+                snap.permlink === urlPermlink
+            );
+            if (foundSnapIndex !== -1) {
+                setSelectedSnapIndex(foundSnapIndex);
+                setHasCheckedUrl(true);
+                // Small delay to ensure state is set before opening modal
+                setTimeout(() => onOpen(), 50);
+            } else {
+                setHasCheckedUrl(true); // Mark as checked even if not found
             }
         }
-    }, [snaps, onOpen]);
+    }, [snaps, isLoading, onOpen, urlPermlink, isOpen, hasCheckedUrl]);
 
-    const handleSnapClick = (snapIndex: number) => {
+    const handleSnapClick = useCallback((snapIndex: number) => {
         const snap = snaps[snapIndex];
         setSelectedSnapIndex(snapIndex);
 
@@ -125,50 +145,65 @@ export default function SnapsGrid({ username }: SnapsGridProps) {
         window.history.pushState({}, '', cleanUrl);
 
         onOpen();
-    };
+    }, [snaps, onOpen]);
 
-    const handleSnapChange = (newSnapIndex: number) => {
+    const handleSnapChange = useCallback((newSnapIndex: number) => {
         const snap = snaps[newSnapIndex];
         setSelectedSnapIndex(newSnapIndex);
 
         // Update URL with clean format using snap's author
         const cleanUrl = `/user/${snap.author}/snap/${snap.permlink}`;
         window.history.pushState({}, '', cleanUrl);
-    };
+    }, [snaps]);
 
-    const handleModalClose = () => {
-        // Return to clean profile URL with snaps view
-        // Use the original username from props for consistency
-        const baseUrl = `/user/${username}?view=snaps`;
-        window.history.pushState({}, '', baseUrl);
-
+    const handleModalClose = useCallback(() => {
+        // Close the modal first
         onClose();
-    };
 
-    // Infinite scroll effect with debouncing
+        // Then update the URL
+        const searchParams = new URLSearchParams(window.location.search);
+        const hasSnapParam = searchParams.has('snap');
+
+        if (hasSnapParam) {
+            // Remove snap parameter and update URL
+            searchParams.delete('snap');
+            const baseUrl = `/user/${username}?${searchParams.toString()}`;
+            window.history.pushState({}, '', baseUrl);
+        } else {
+            // Return to clean profile URL with snaps view
+            // Use the original username from props for consistency
+            const baseUrl = `/user/${username}?view=snaps`;
+            window.history.pushState({}, '', baseUrl);
+        }
+    }, [username, onClose]);
+
+    // Optimized infinite scroll with better debouncing and throttling
     useEffect(() => {
-        let debounceTimer: NodeJS.Timeout;
+        if (!hasMore || isLoading) return;
+
+        let ticking = false;
 
         const handleScroll = () => {
-            clearTimeout(debounceTimer);
+            if (!ticking) {
+                requestAnimationFrame(() => {
+                    const scrollPosition = window.innerHeight + document.documentElement.scrollTop;
+                    const documentHeight = document.documentElement.offsetHeight;
 
-            debounceTimer = setTimeout(() => {
-                if (
-                    window.innerHeight + document.documentElement.scrollTop >=
-                    document.documentElement.offsetHeight - 300
-                ) {
-                    if (hasMore && !isLoading) {
-                        loadMoreSnaps();
+                    if (scrollPosition >= documentHeight - 500) { // Increased threshold for better UX
+                        if (hasMore && !isLoading) {
+                            loadMoreSnaps();
+                        }
                     }
-                }
-            }, 100);
+                    ticking = false;
+                });
+                ticking = true;
+            }
         };
 
-        window.addEventListener("scroll", handleScroll);
+        window.addEventListener('scroll', handleScroll, { passive: true });
 
         return () => {
-            clearTimeout(debounceTimer);
-            window.removeEventListener("scroll", handleScroll);
+            window.removeEventListener('scroll', handleScroll);
         };
     }, [hasMore, isLoading, loadMoreSnaps]);
 
@@ -194,7 +229,7 @@ export default function SnapsGrid({ username }: SnapsGridProps) {
             >
                 {snaps.map((snap, index) => (
                     <Box
-                        key={snap.permlink}
+                        key={`${snap.author}-${snap.permlink}`} // More specific key
                         mb="0px"
                         sx={{ breakInside: "avoid" }}
                     >
@@ -212,7 +247,7 @@ export default function SnapsGrid({ username }: SnapsGridProps) {
                 </Box>
             )}
 
-            {snaps.length > 0 && (
+            {isOpen && snaps.length > 0 && selectedSnapIndex >= 0 && selectedSnapIndex < snaps.length && (
                 <SnapModal
                     snap={snaps[selectedSnapIndex]}
                     snaps={snaps}

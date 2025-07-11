@@ -4,25 +4,23 @@ import HiveClient from '@/lib/hive/hiveclient';
 import { Discussion } from '@hiveio/dhive';
 
 interface Props {
-    params: {
+    params: Promise<{
         username: string;
         permlink: string;
-    };
+    }>;
 }
 
-// Server-side function to fetch post data
-// We'll try to find the post by permlink, prioritizing the username as author
+// Server-side function to fetch post data with caching
 async function fetchPostData(username: string, permlink: string): Promise<Discussion | null> {
     try {
-        // First try with username as author (most likely case)
-        let postContent = await HiveClient.database.call('get_content', [username, permlink]);
+        // Try with username as author (most likely case for clean URLs)
+        const postContent = await HiveClient.database.call('get_content', [username, permlink]);
 
-        if (postContent && postContent.permlink) {
+        // Check if we got a valid post back
+        if (postContent && postContent.permlink === permlink) {
             return postContent as Discussion;
         }
 
-        // If not found, we could implement a search by permlink across the community
-        // For now, return null if not found with username as author
         return null;
     } catch (error) {
         console.error('Error fetching post:', error);
@@ -32,7 +30,7 @@ async function fetchPostData(username: string, permlink: string): Promise<Discus
 
 // Server-side metadata generation
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-    const { username, permlink } = params;
+    const { username, permlink } = await params;
 
     try {
         // Fetch the post/snap data from Hive blockchain
@@ -102,9 +100,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 // This page component redirects to the profile with modal open
 export default async function SnapPage({ params }: Props) {
-    const { username, permlink } = params;
+    const { username, permlink } = await params;
 
-    // Redirect to the profile page with view=snaps
+    // Redirect to the profile page with view=snaps and snap parameter
     // The client-side code will detect the URL structure and open the modal
-    redirect(`/user/${username}?view=snaps`);
+    redirect(`/user/${username}?view=snaps&snap=${permlink}`);
 }

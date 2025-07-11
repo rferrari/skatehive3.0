@@ -22,6 +22,7 @@ import {
 } from "@chakra-ui/react";
 import { FaChevronLeft, FaChevronRight, FaDownload, FaReply, FaComments, FaShare } from "react-icons/fa";
 import { Discussion } from "@hiveio/dhive";
+import { useAioha } from "@aioha/react-ui";
 import VideoRenderer from "../layout/VideoRenderer";
 import SnapComposer from "../homepage/SnapComposer";
 import Snap from "../homepage/Snap";
@@ -58,20 +59,29 @@ const SnapModal = ({
     const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
     const modalSize = useBreakpointValue({ base: "full", md: "5xl" });
     const toast = useToast();
+    const { user } = useAioha();
+
+    // Always use the snap from the current index to ensure consistency
+    const currentSnap = useMemo(() => {
+        if (snaps.length > 0 && currentSnapIndex >= 0 && currentSnapIndex < snaps.length) {
+            return snaps[currentSnapIndex];
+        }
+        return snap; // Fallback to prop
+    }, [snaps, currentSnapIndex, snap]);
 
     // Voting state
     const [voted, setVoted] = useState(
-        snap.active_votes?.some(
-            (item: { voter: string }) => item.voter === snap.author
+        currentSnap.active_votes?.some(
+            (item: { voter: string }) => item.voter === currentSnap.author
         ) || false
     );
-    const [activeVotes, setActiveVotes] = useState(snap.active_votes || []);
+    const [activeVotes, setActiveVotes] = useState(currentSnap.active_votes || []);
     const [showSlider, setShowSlider] = useState(false);
 
     // Use the useComments hook to fetch comments for the current snap
     const { comments, isLoading: commentsLoading, error: commentsError } = useComments(
-        snap.author,
-        snap.permlink,
+        currentSnap.author,
+        currentSnap.permlink,
         false // Set to true if you want nested replies
     );
 
@@ -79,11 +89,11 @@ const SnapModal = ({
     const [optimisticComments, setOptimisticComments] = useState<Discussion[]>([]);
 
     const allMedia = useMemo(
-        () => [...snap.media.images, ...snap.media.videos],
-        [snap]
+        () => [...currentSnap.media.images, ...currentSnap.media.videos],
+        [currentSnap]
     );
     const currentMedia = allMedia[currentMediaIndex];
-    const isVideo = snap.media.videos.includes(currentMedia);
+    const isVideo = currentSnap.media.videos.includes(currentMedia);
 
     const nextMedia = () => {
         setCurrentMediaIndex((prev) => (prev + 1) % allMedia.length);
@@ -96,13 +106,13 @@ const SnapModal = ({
     };
 
     const nextSnap = () => {
-        if (currentSnapIndex < snaps.length - 1) {
+        if (snaps.length > 0 && currentSnapIndex >= 0 && currentSnapIndex < snaps.length - 1) {
             onSnapChange(currentSnapIndex + 1);
         }
     };
 
     const prevSnap = () => {
-        if (currentSnapIndex > 0) {
+        if (snaps.length > 0 && currentSnapIndex > 0 && currentSnapIndex < snaps.length) {
             onSnapChange(currentSnapIndex - 1);
         }
     };
@@ -126,7 +136,7 @@ const SnapModal = ({
 
     // Function to redirect to the snap's dedicated page for deeper discussion
     const goToSnapPage = () => {
-        const snapUrl = `/post/${snap.author}/${snap.permlink}`;
+        const snapUrl = `/post/${currentSnap.author}/${currentSnap.permlink}`;
         window.open(snapUrl, '_blank');
     };
 
@@ -160,24 +170,32 @@ const SnapModal = ({
         setOptimisticComments([]);
         // Reset voting state when snap changes
         setVoted(
-            snap.active_votes?.some(
-                (item: { voter: string }) => item.voter === snap.author
+            currentSnap.active_votes?.some(
+                (item: { voter: string }) => item.voter === user
             ) || false
         );
-        setActiveVotes(snap.active_votes || []);
+        setActiveVotes(currentSnap.active_votes || []);
         setShowSlider(false);
-    }, [snap]);
+    }, [currentSnap, user]);
 
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
             if (!isOpen) return;
 
+            // Prevent handling if user is typing in an input/textarea
+            const target = event.target as HTMLElement;
+            if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+                return;
+            }
+
             switch (event.key) {
                 case "ArrowLeft":
+                    event.preventDefault();
                     if (event.shiftKey) prevSnap();
                     else if (allMedia.length > 1 && currentMediaIndex > 0) prevMedia();
                     break;
                 case "ArrowRight":
+                    event.preventDefault();
                     if (event.shiftKey) nextSnap();
                     else if (
                         allMedia.length > 1 &&
@@ -186,12 +204,15 @@ const SnapModal = ({
                         nextMedia();
                     break;
                 case "ArrowUp":
+                    event.preventDefault();
                     prevSnap();
                     break;
                 case "ArrowDown":
+                    event.preventDefault();
                     nextSnap();
                     break;
                 case "Escape":
+                    // Let the modal handle this - don't prevent default
                     onClose();
                     break;
             }
@@ -199,10 +220,17 @@ const SnapModal = ({
 
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [isOpen, currentMediaIndex, allMedia.length, currentSnapIndex, snaps.length]);
+    }, [isOpen, currentMediaIndex, allMedia.length, currentSnapIndex, snaps.length, onClose]);
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} size={modalSize} isCentered>
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
+            size={modalSize}
+            isCentered
+            closeOnOverlayClick={true}
+            closeOnEsc={true}
+        >
             <ModalOverlay bg="blackAlpha.900" />
             <ModalContent
                 bg="rgb(24, 24, 24)"
@@ -210,7 +238,7 @@ const SnapModal = ({
                 h={{ base: "100vh", md: "85vh" }}
                 borderRadius={{ base: 0, md: "lg" }}
             >
-                <ModalCloseButton />
+                <ModalCloseButton zIndex={20} />
 
                 <ModalBody
                     p={0}
@@ -363,7 +391,7 @@ const SnapModal = ({
                         )}
 
                         {/* Snap Navigation Arrows */}
-                        {snaps.length > 1 && (
+                        {snaps.length > 1 && currentSnapIndex >= 0 && (
                             <>
                                 <IconButton
                                     aria-label="Previous snap"
@@ -371,14 +399,14 @@ const SnapModal = ({
                                     position="absolute"
                                     left={{ base: 1, md: 2 }}
                                     bottom={{ base: 20, md: 10 }}
-                                    bg="back"
+                                    bg="background"
                                     color="primary"
                                     _hover={{ color: "primary", bg: "black" }}
                                     onClick={prevSnap}
                                     zIndex={15}
                                     size={{ base: "sm", md: "md" }}
-                                    isDisabled={currentSnapIndex === 0}
-                                    opacity={0.4}
+                                    isDisabled={currentSnapIndex <= 0}
+                                    opacity={currentSnapIndex <= 0 ? 0.2 : 0.4}
                                 />
                                 <IconButton
                                     aria-label="Next snap"
@@ -392,14 +420,14 @@ const SnapModal = ({
                                     onClick={nextSnap}
                                     zIndex={15}
                                     size={{ base: "sm", md: "md" }}
-                                    isDisabled={currentSnapIndex === snaps.length - 1}
-                                    opacity={0.4}
+                                    isDisabled={currentSnapIndex >= snaps.length - 1}
+                                    opacity={currentSnapIndex >= snaps.length - 1 ? 0.2 : 0.4}
                                 />
                             </>
                         )}
 
                         {/* Snap Counter */}
-                        {snaps.length > 1 && (
+                        {snaps.length > 1 && currentSnapIndex >= 0 && (
                             <Box
                                 position="absolute"
                                 top={{ base: 2, md: 4 }}
@@ -414,7 +442,7 @@ const SnapModal = ({
                                 zIndex={10}
                                 opacity={0.4}
                             >
-                                Snap {currentSnapIndex + 1} / {snaps.length}
+                                Snap {Math.max(1, currentSnapIndex + 1)} / {snaps.length}
                             </Box>
                         )}
                     </Box>
@@ -434,26 +462,26 @@ const SnapModal = ({
                             <HStack spacing={3} align="start" justify="space-between">
                                 <HStack spacing={3} align="start">
                                     <Avatar
-                                        src={getProfileImageUrl(snap.author)}
-                                        name={snap.author}
+                                        src={getProfileImageUrl(currentSnap.author)}
+                                        name={currentSnap.author}
                                         size="md"
                                     />
                                     <Box>
                                         <Text fontWeight="bold" color="primary">
-                                            @{snap.author}
+                                            @{currentSnap.author}
                                         </Text>
                                         <Text fontSize="sm" color="muted">
-                                            {new Date(snap.created).toLocaleDateString()}
+                                            {new Date(currentSnap.created).toLocaleDateString()}
                                         </Text>
                                     </Box>
                                 </HStack>
 
 
                             </HStack>
-                            {cleanBodyText(snap.body) && (
+                            {cleanBodyText(currentSnap.body) && (
                                 <Box color="text" fontSize="sm" mt={2} lineHeight="1.5">
                                     <HiveMarkdown
-                                        markdown={cleanBodyText(snap.body)}
+                                        markdown={cleanBodyText(currentSnap.body)}
                                         style={{
                                             fontSize: '14px',
                                             lineHeight: '1.5',
@@ -465,7 +493,7 @@ const SnapModal = ({
 
                             {/* Voting Section */}
                             <VoteSlider
-                                discussion={snap}
+                                discussion={currentSnap}
                                 voted={voted}
                                 setVoted={setVoted}
                                 activeVotes={activeVotes}
@@ -579,8 +607,8 @@ const SnapModal = ({
                         {/* Comment Composer */}
                         <Box>
                             <SnapComposer
-                                pa={snap.author}
-                                pp={snap.permlink}
+                                pa={currentSnap.author}
+                                pp={currentSnap.permlink}
                                 onNewComment={handleNewComment}
                                 post={false}
                                 onClose={() => { }}
