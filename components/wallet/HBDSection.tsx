@@ -18,6 +18,7 @@ import { useTheme } from "@/app/themeProvider";
 interface HBDSectionProps {
     hbdBalance: string;
     hbdSavingsBalance: string;
+    hbdPrice: number | null;
     estimatedClaimableInterest: number;
     daysUntilClaim: number;
     lastInterestPayment?: string;
@@ -44,6 +45,7 @@ function daysAgo(dateString: string) {
 export default function HBDSection({
     hbdBalance,
     hbdSavingsBalance,
+    hbdPrice,
     estimatedClaimableInterest,
     daysUntilClaim,
     lastInterestPayment,
@@ -58,67 +60,91 @@ export default function HBDSection({
     // Wallet view: Only show liquid HBD
     if (isWalletView) {
         return (
-            <Box mb={3}>
-                <HStack align="center" mb={2} spacing={2} width="100%">
-                    <CustomHiveIcon color="lime" />
-                    <Text fontSize={{ base: "lg", md: "2xl" }} fontWeight="bold">
-                        HBD
-                    </Text>
-                    <IconButton
-                        aria-label="Info about HBD"
-                        icon={<FaQuestionCircle />}
-                        size="xs"
-                        variant="ghost"
-                        color="gray.400"
-                        onClick={() => setShowInfo(!showInfo)}
-                    />
-                    <Box flex={1} />
-                    <Text fontSize={{ base: "lg", md: "2xl" }} fontWeight="bold">
-                        {hbdBalance}
-                    </Text>
-                    <HStack spacing={1}>
-                        <Tooltip label="Send HBD" hasArrow>
-                            <IconButton
-                                aria-label="Send HBD"
-                                icon={<FaPaperPlane />}
-                                size="sm"
-                                bg="primary"
-                                color="background"
-                                _hover={{ bg: "accent" }}
-                                onClick={() =>
-                                    onModalOpen(
-                                        "Send HBD",
-                                        "Send HBD to another account",
-                                        true,
-                                        true
-                                    )
-                                }
-                            />
-                        </Tooltip>
-                        <Tooltip label="Convert to Savings" hasArrow>
-                            <IconButton
-                                aria-label="Convert to Savings"
-                                icon={<FaArrowDown />}
-                                size="sm"
-                                bg="accent"
-                                color="background"
-                                _hover={{ bg: "primary" }}
-                                onClick={() => onModalOpen("HBD Savings", "Convert HBD to Savings (15% APR)")}
-                            />
-                        </Tooltip>
+            <Box
+                p={4}
+                bg="background"
+                borderRadius="md"
+                border="1px solid"
+                borderColor="gray.200"
+            >
+                <HStack justify="space-between" align="center">
+                    <HStack spacing={3}>
+                        <CustomHiveIcon color="lime" />
+                        <Box>
+                            <HStack spacing={2} align="center">
+                                <Text fontSize="lg" fontWeight="bold" color="primary">
+                                    HBD
+                                </Text>
+                                <IconButton
+                                    aria-label="Info about HBD"
+                                    icon={<FaQuestionCircle />}
+                                    size="xs"
+                                    variant="ghost"
+                                    color="gray.400"
+                                    onClick={() => setShowInfo(!showInfo)}
+                                />
+                            </HStack>
+                            <Text fontSize="sm" color="gray.400">
+                                Liquid HBD ready for transactions
+                            </Text>
+                        </Box>
+                    </HStack>
+
+                    <HStack spacing={3} align="center">
+                        <Box textAlign="right">
+                            <Text fontSize="2xl" fontWeight="bold" color="primary">
+                                {hbdBalance}
+                            </Text>
+                            {hbdBalance !== "N/A" && hbdPrice && parseFloat(hbdBalance) > 0 && (
+                                <Text fontSize="sm" color="gray.400">
+                                    (${(parseFloat(hbdBalance) * hbdPrice).toFixed(2)})
+                                </Text>
+                            )}
+                        </Box>
+                        <HStack spacing={1}>
+                            <Tooltip label="Send HBD" hasArrow>
+                                <IconButton
+                                    aria-label="Send HBD"
+                                    icon={<FaPaperPlane />}
+                                    size="sm"
+                                    colorScheme="blue"
+                                    variant="outline"
+                                    onClick={() =>
+                                        onModalOpen(
+                                            "Send HBD",
+                                            "Send HBD to another account",
+                                            true,
+                                            true
+                                        )
+                                    }
+                                />
+                            </Tooltip>
+                            <Tooltip label="Convert to Savings" hasArrow>
+                                <IconButton
+                                    aria-label="Convert to Savings"
+                                    icon={<FaArrowDown />}
+                                    size="sm"
+                                    colorScheme="green"
+                                    variant="outline"
+                                    onClick={() => onModalOpen("HBD Savings", "Convert HBD to Savings (15% APR)")}
+                                />
+                            </Tooltip>
+                        </HStack>
                     </HStack>
                 </HStack>
 
                 {showInfo && (
-                    <Text color="gray.400" fontSize="sm" mb={2} pl={8}>
-                        Liquid HBD ready for transactions. Convert to Savings in SkateBank to earn 15% APR!
-                    </Text>
+                    <Box mt={3} p={3} bg="muted" borderRadius="md">
+                        <Text color="gray.400" fontSize="sm">
+                            Liquid HBD ready for transactions. Convert to Savings in SkateBank to earn 15% APR!
+                        </Text>
+                    </Box>
                 )}
             </Box>
         );
     }
 
-    // Bank view: Show savings and investment options
+    // Bank view: Show savings and investment options  
     if (isBankView) {
         return (
             <Box mb={3}>
@@ -134,13 +160,20 @@ export default function HBDSection({
                         Current Savings
                     </Text>
                     <Box flex={1} />
-                    <Text
-                        fontSize={{ base: "xl", md: "2xl" }}
-                        fontWeight="extrabold"
-                        color="lime"
-                    >
-                        {hbdSavingsBalance} HBD
-                    </Text>
+                    <VStack spacing={0} align="end">
+                        <Text
+                            fontSize={{ base: "xl", md: "2xl" }}
+                            fontWeight="extrabold"
+                            color="lime"
+                        >
+                            {hbdSavingsBalance} HBD
+                        </Text>
+                        {hbdSavingsBalance !== "N/A" && hbdPrice && parseFloat(hbdSavingsBalance) > 0 && (
+                            <Text fontSize="sm" color="gray.400">
+                                (${(parseFloat(hbdSavingsBalance) * hbdPrice).toFixed(2)})
+                            </Text>
+                        )}
+                    </VStack>
                 </HStack>
 
                 {/* Investment Actions */}
@@ -326,13 +359,20 @@ export default function HBDSection({
                     </Text>
                     <Badge colorScheme="green" fontSize="xs">15% APR</Badge>
                     <Box flex={1} />
-                    <Text
-                        fontSize={{ base: "xl", md: "2xl" }}
-                        fontWeight="extrabold"
-                        color="lime"
-                    >
-                        {hbdSavingsBalance}
-                    </Text>
+                    <VStack spacing={0} align="end">
+                        <Text
+                            fontSize={{ base: "xl", md: "2xl" }}
+                            fontWeight="extrabold"
+                            color="lime"
+                        >
+                            {hbdSavingsBalance}
+                        </Text>
+                        {hbdSavingsBalance !== "N/A" && hbdPrice && parseFloat(hbdSavingsBalance) > 0 && (
+                            <Text fontSize="sm" color="gray.400">
+                                (${(parseFloat(hbdSavingsBalance) * hbdPrice).toFixed(2)})
+                            </Text>
+                        )}
+                    </VStack>
                     <Tooltip label="Unstake HBD" hasArrow>
                         <IconButton
                             aria-label="Unstake HBD"

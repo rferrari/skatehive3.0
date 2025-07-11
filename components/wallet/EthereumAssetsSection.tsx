@@ -22,7 +22,7 @@ import {
   IconButton,
 } from "@chakra-ui/react";
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { useAccount } from "wagmi";
+import { useAccount, useDisconnect } from "wagmi";
 import { FaPaperPlane } from "react-icons/fa";
 import {
   Name,
@@ -51,6 +51,7 @@ import SendTokenModal from "./SendTokenModal";
 
 export default function EthereumAssetsSection() {
   const { isConnected, address } = useAccount();
+  const { disconnect } = useDisconnect();
   const { portfolio, isLoading, error } = usePortfolio(address);
   const [hideSmallBalances, setHideSmallBalances] = useState(true);
   const minBalanceThreshold = 5;
@@ -157,84 +158,133 @@ export default function EthereumAssetsSection() {
       w={"100wh"}
       textAlign="left"
     >
-      <HStack justify="space-between" align="center" mb={4}>
-        <Text fontFamily="Joystix" fontSize="2xl" color="primary">
-          ETH Assets
+
+      <Box
+        p={4}
+        bg="background"
+        borderRadius="md"
+        mb={4}
+        border="2px solid"
+        borderColor="blue.200"
+        textAlign="center"
+      >
+        <Text fontSize="sm" color="blue.200" mb={1}>
+          Ethereum Assets
         </Text>
-        {portfolio && (
-          <Badge fontSize="3xl" fontWeight="bold" colorScheme="green">
-            {formatValue(portfolio.totalNetWorth)}
-          </Badge>
-        )}
-      </HStack>
+
+      </Box>
+
 
       {isConnected && address && (
         <Box>
+
           {/* HIGHER Token Display - Always visible */}
-          {higherToken && (
-            <Box
-              p={4}
-              bg="background"
-              borderRadius="md"
-              mb={6}
-              border="2px solid"
-              borderColor="primary"
-            >
-              <Text fontSize="sm" color="primary" mb={2}>
-                HIGHER Token Balance:
-              </Text>
-              <HStack justify="space-between" align="center">
-                <HStack spacing={4}>
-                  <Image
-                    src="/logos/higher.png"
-                    alt={higherToken.token.symbol}
-                    w="32px"
-                    h="32px"
-                    borderRadius="full"
-                    fallback={
-                      <Text fontSize="lg" fontWeight="bold" color="primary">
-                        {higherToken.token.symbol.charAt(0)}
+          {higherToken && (() => {
+            // Get enhanced data from GeckoTerminal cache
+            const { marketCap, priceChange } = getEnhancedTokenData(higherToken);
+
+            // Fallback to token's own marketCap if enhanced data is not available
+            // Special handling for HIGHER token with manual override if needed
+            let displayMarketCap = marketCap || higherToken.token.marketCap;
+
+            // If HIGHER token still has no market cap data, provide a reasonable fallback
+            if (!displayMarketCap && higherToken.token.symbol.toLowerCase() === "higher") {
+              // Calculate rough market cap based on token price and known supply
+              const tokenPrice = higherToken.token.price;
+              if (tokenPrice && tokenPrice > 0) {
+                // Rough estimate - this would need to be updated with actual supply data
+                displayMarketCap = tokenPrice * 1000000000; // Example calculation
+              }
+            }
+
+            return (
+              <Box
+                p={4}
+                bg="background"
+                borderRadius="md"
+                mb={6}
+                border="2px solid"
+                borderColor="primary"
+              >
+                <HStack justify="space-between" align="center">
+                  <HStack spacing={4}>
+                    <Box position="relative" display="inline-block">
+                      <Image
+                        src="/logos/higher.png"
+                        alt={higherToken.token.symbol}
+                        w="32px"
+                        h="32px"
+                        borderRadius="full"
+                        fallback={
+                          <Text fontSize="lg" fontWeight="bold" color="primary">
+                            {higherToken.token.symbol.charAt(0)}
+                          </Text>
+                        }
+                      />
+                      {blockchainDictionary[higherToken.network]?.logo && (
+                        <Image
+                          src={blockchainDictionary[higherToken.network].logo}
+                          alt={blockchainDictionary[higherToken.network]?.alias || higherToken.network}
+                          w="12px"
+                          h="12px"
+                          borderRadius="full"
+                          position="absolute"
+                          bottom="-2px"
+                          right="-2px"
+                          border="1px solid"
+                          borderColor="background"
+                          bg="background"
+                        />
+                      )}
+                    </Box>
+                    <VStack spacing={0} align="start">
+                      <HStack spacing={2} align="center">
+                        <Text fontSize="xl" fontWeight="bold" color="primary">
+                          {higherToken.token.symbol}
+                        </Text>
+                        {/* Price Change Badge using GeckoTerminal data */}
+                        {priceChange !== null && (
+                          <Badge
+                            colorScheme={priceChange >= 0 ? "green" : "red"}
+                            fontSize="xs"
+                            variant="solid"
+                          >
+                            {priceChange >= 0 ? "+" : ""}
+                            {formatPriceChange(priceChange)}%
+                          </Badge>
+                        )}
+                      </HStack>
+                      <Text fontSize="md" color="primary">
+                        {formatBalance(higherToken.token.balance)}
                       </Text>
-                    }
-                  />
-                  <Box>
-                    <Text fontSize="xl" fontWeight="bold" color="primary">
-                      {higherToken.token.symbol}
+                      {/* Market cap using GeckoTerminal data */}
+                      <Text fontSize="xs" color="gray.400">
+                        MCap: {formatMarketCap(displayMarketCap)}
+                      </Text>
+                    </VStack>
+                  </HStack>
+                  <VStack spacing={2} align="end">
+                    <Text fontSize="2xl" fontWeight="bold" color="primary">
+                      {formatValue(higherToken.token.balanceUSD)}
                     </Text>
-                    <Text fontSize="md" color="primary">
-                      {formatBalance(higherToken.token.balance)}
+                    <Text fontSize="sm" color="primary">
+                      {formatPrice(higherToken.token.price)}
                     </Text>
-                    <Text
-                      fontSize="xs"
-                      color="primary"
-                      textTransform="uppercase"
+                    <Button
+                      size="sm"
+                      colorScheme="blue"
+                      leftIcon={<FaPaperPlane />}
+                      onClick={() =>
+                        handleSendToken(higherToken, "/logos/higher.png")
+                      }
                     >
-                      {blockchainDictionary[higherToken.network]?.alias ||
-                        higherToken.network}
-                    </Text>
-                  </Box>
+                      Send
+                    </Button>
+                  </VStack>
                 </HStack>
-                <VStack spacing={2} align="end">
-                  <Text fontSize="2xl" fontWeight="bold" color="primary">
-                    {formatValue(higherToken.token.balanceUSD)}
-                  </Text>
-                  <Text fontSize="sm" color="primary">
-                    {formatPrice(higherToken.token.price)}
-                  </Text>
-                  <Button
-                    size="sm"
-                    colorScheme="blue"
-                    leftIcon={<FaPaperPlane />}
-                    onClick={() =>
-                      handleSendToken(higherToken, "/logos/higher.png")
-                    }
-                  >
-                    Send
-                  </Button>
-                </VStack>
-              </HStack>
-            </Box>
-          )}
+              </Box>
+            );
+          })()}
 
           {/* Show More Button */}
           <Box textAlign="center" mb={4}>

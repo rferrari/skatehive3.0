@@ -29,6 +29,8 @@ export default function ConnectButton({ onOpen }: { onOpen: () => void }) {
       variant="outline"
       height="auto"
       py={3}
+      border={"none"}
+      bg={"muted"}
     >
       <HStack spacing={3} w="full" justify="space-between">
         <HStack spacing={2}>

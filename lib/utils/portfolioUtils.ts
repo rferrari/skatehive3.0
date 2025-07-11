@@ -246,9 +246,9 @@ export async function fetchTokenData(
       if (!response.ok) {
         if (response.status === 429) {
           console.log(`⏰ Rate limited for ${cacheKey}`);
-          // Set global rate limit
+          // Set global rate limit for longer duration
           globalRateLimited = true;
-          globalRateLimitExpiry = Date.now() + 5 * 60 * 1000; // 5 minutes
+          globalRateLimitExpiry = Date.now() + 15 * 60 * 1000; // 15 minutes instead of 5
 
           incrementFailureCount(cacheKey);
           tokenDataCache.set(cacheKey, null);
@@ -354,6 +354,12 @@ export const filterTokensByBalance = (
     );
   }
 
+  // Don't try to fetch if globally rate limited - this prevents the infinite loop
+  if (globalRateLimited && Date.now() < globalRateLimitExpiry) {
+    console.log(`🚫 Globally rate limited, skipping all fetches until ${new Date(globalRateLimitExpiry).toLocaleTimeString()}`);
+    return filteredTokens;
+  }
+
   // Only fetch data for tokens that don't have cached data, aren't blacklisted, and limit batch size
   const tokensNeedingFetch = filteredTokens
     .filter(token => {
@@ -361,8 +367,8 @@ export const filterTokensByBalance = (
       const cachedData = tokenDataCache.get(cacheKey);
       const cacheTime = cacheExpiry.get(cacheKey);
 
-      // Don't fetch if blacklisted or globally rate limited
-      if (isTokenBlacklisted(cacheKey) || (globalRateLimited && Date.now() < globalRateLimitExpiry)) {
+      // Don't fetch if blacklisted
+      if (isTokenBlacklisted(cacheKey)) {
         return false;
       }
 
@@ -371,12 +377,19 @@ export const filterTokensByBalance = (
     })
     .slice(0, 1); // Reduce to 1 token at a time to be very gentle
 
-  if (tokensNeedingFetch.length > 0 && !globalRateLimited) {
+  // Only fetch if we're not rate limited and there are tokens to fetch
+  if (tokensNeedingFetch.length > 0) {
     console.log(`🔍 Fetching data for ${tokensNeedingFetch.length} token (limited batch)`);
 
     // Only fetch one at a time with longer delays
     tokensNeedingFetch.forEach((token, index) => {
       setTimeout(() => {
+        // Double-check rate limit before making the request
+        if (globalRateLimited && Date.now() < globalRateLimitExpiry) {
+          console.log(`🚫 Rate limit check: skipping ${token.token.symbol}`);
+          return;
+        }
+
         fetchTokenData(token.token.address, null, token.network)
           .then(result => {
             if (result) {
@@ -387,7 +400,7 @@ export const filterTokensByBalance = (
           .catch(error => {
             console.log(`⚠️ Could not fetch data for ${token.token.symbol}: ${error.message}`);
           });
-      }, index * 2000); // Increase delay to 2 seconds between requests
+      }, index * 3000); // Increase delay to 3 seconds between requests
     });
   }
 
@@ -408,10 +421,18 @@ const notifyLogoUpdates = () => {
 
 // Function to preload token logos for better UX - more conservative approach
 export const preloadTokenLogos = async (tokens: TokenDetail[]): Promise<void> => {
-  // Only preload a few high-value tokens to avoid hitting rate limits immediately
-  const tokensToFetch = tokens
-    .sort((a, b) => (b.token.balanceUSD || 0) - (a.token.balanceUSD || 0)) // Sort by balance
-    .slice(0, 5); // Only preload top 5 tokens
+  // Always include HIGHER token for special handling
+  const higherToken = tokens.find(t => t.token.symbol.toLowerCase() === "higher");
+
+  // Get top 5 tokens by balance
+  const topTokens = tokens
+    .sort((a, b) => (b.token.balanceUSD || 0) - (a.token.balanceUSD || 0))
+    .slice(0, 5);
+
+  // Combine HIGHER token with top tokens, removing duplicates
+  const tokensToFetch = higherToken
+    ? [higherToken, ...topTokens.filter(t => t.token.address !== higherToken.token.address)].slice(0, 6)
+    : topTokens;
 
   for (let i = 0; i < tokensToFetch.length; i++) {
     const tokenDetail = tokensToFetch[i];

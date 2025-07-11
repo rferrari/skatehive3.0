@@ -21,7 +21,6 @@ import {
 import { convertVestToHive } from "@/lib/hive/client-functions";
 import { extractNumber } from "@/lib/utils/extractNumber";
 import WalletModal from "@/components/wallet/WalletModal";
-import ConnectButton from "../wallet/ConnectButton";
 import ConnectModal from "../wallet/ConnectModal";
 import { Asset } from "@hiveio/dhive";
 import HivePowerSection from "./HivePowerSection";
@@ -30,6 +29,7 @@ import HBDSection from "./HBDSection";
 import MarketPrices from "./MarketPrices";
 import SwapSection from "./SwapSection";
 import EthereumAssetsSection from "./EthereumAssetsSection";
+import WalletSummary from "./WalletSummary";
 
 interface MainWalletProps {
   username: string;
@@ -109,6 +109,13 @@ export default function MainWallet({ username }: MainWalletProps) {
     onOpen();
   };
 
+  const handleConnectHive = () => {
+    // TODO: Implement Hive connection logic
+    // This could open a modal to enter username or connect via Keychain
+    // For now, we could redirect to a login page or show a modal
+    alert("Hive connection coming soon! For now, the app uses the URL username parameter.");
+  };
+
   const onConfirm = async (
     amount: number,
     direction?: "HIVE_TO_HBD" | "HBD_TO_HIVE",
@@ -181,6 +188,23 @@ export default function MainWallet({ username }: MainWalletProps) {
     ? String(extractNumber(assetToString(hiveAccount.savings_hbd_balance)))
     : "N/A";
 
+  // Calculate total Hive assets value in USD
+  const calculateTotalHiveAssetsValue = () => {
+    if (!hivePrice || !hbdPrice) return 0;
+
+    const hiveBalance = parseFloat(balance === "N/A" ? "0" : balance);
+    const hivePowerBalance = parseFloat(hivePower || "0");
+    const hbdLiquidBalance = parseFloat(hbdBalance === "N/A" ? "0" : hbdBalance);
+    const hbdSavingsBalanceNum = parseFloat(hbdSavingsBalance === "N/A" ? "0" : hbdSavingsBalance);
+
+    const totalHiveValue = (hiveBalance + hivePowerBalance) * hivePrice;
+    const totalHbdValue = (hbdLiquidBalance + hbdSavingsBalanceNum) * hbdPrice;
+
+    return totalHiveValue + totalHbdValue;
+  };
+
+  const totalHiveAssetsValue = calculateTotalHiveAssetsValue();
+
   return (
     <>
       <Box w="100%" maxW="100vw" overflowX="hidden">
@@ -229,15 +253,21 @@ export default function MainWallet({ username }: MainWalletProps) {
               <TabPanels flex={1}>
                 {/* Wallet Tab - Token Information */}
                 <TabPanel p={0}>
-                  <Box w="100%" display="flex" flexDirection="column" gap={3}>
+                  <Box w="100%" display="flex" flexDirection="column" gap={3} p={2}>
                     <HivePowerSection
                       hivePower={hivePower}
+                      hivePrice={hivePrice}
                       onModalOpen={handleModalOpen}
                     />
-                    <HiveSection balance={balance} onModalOpen={handleModalOpen} />
+                    <HiveSection
+                      balance={balance}
+                      hivePrice={hivePrice}
+                      onModalOpen={handleModalOpen}
+                    />
                     <HBDSection
                       hbdBalance={hbdBalance}
                       hbdSavingsBalance="0.000" // Only show liquid HBD in wallet tab
+                      hbdPrice={hbdPrice}
                       estimatedClaimableInterest={0}
                       daysUntilClaim={0}
                       lastInterestPayment={lastInterestPayment}
@@ -279,6 +309,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                       <HBDSection
                         hbdBalance={hbdBalance}
                         hbdSavingsBalance={hbdSavingsBalance}
+                        hbdPrice={hbdPrice}
                         estimatedClaimableInterest={estimatedClaimableInterest}
                         daysUntilClaim={daysUntilClaim}
                         lastInterestPayment={lastInterestPayment}
@@ -305,13 +336,17 @@ export default function MainWallet({ username }: MainWalletProps) {
             justifyContent="flex-start"
             minW={0}
           >
-            <Box mt={{ base: 2, md: 0 }}>
-              <ConnectButton onOpen={openConnectModal} />
-              <ConnectModal
-                isOpen={isConnectModalOpen}
-                onClose={closeConnectModal}
-              />
-            </Box>
+            <WalletSummary
+              hiveUsername={username}
+              totalHiveValue={totalHiveAssetsValue}
+              isPriceLoading={isPriceLoading}
+              onConnectEthereum={openConnectModal}
+              onConnectHive={handleConnectHive}
+            />
+            <ConnectModal
+              isOpen={isConnectModalOpen}
+              onClose={closeConnectModal}
+            />
             <MarketPrices
               hivePrice={hivePrice}
               hbdPrice={hbdPrice}
