@@ -492,42 +492,45 @@ const VideoRenderer = ({ src, ...props }: RendererProps) => {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <picture
-        style={{ position: "relative", width: "100%", height: "100%" }}
-        ref={setVideoRef}
-      >
-        <video
-          {...props}
-          ref={videoRef}
-          src={src}
-          muted={volume === 0}
-          controls={false}
-          playsInline={true}
-          autoPlay={true}
-          loop={shouldLoop}
-          preload="metadata"
-          onLoadedData={handleLoadedData}
-          onEnded={handleVideoEnded}
-          onClick={(e) => e.stopPropagation()}
-          style={VIDEO_STYLE}
-        />
-        {!isVideoLoaded && (
-          <Box
-            position="absolute"
-            top={0}
-            left={0}
-            width="100%"
-            height="100%"
-            zIndex={3}
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            overflow="hidden"
-          >
-            <MemoizedLoadingComponent />
-          </Box>
-        )}
-      </picture>
+      <Box width="100%" aspectRatio="16/9" position="relative">
+        <picture
+          style={{ position: "relative", width: "100%", height: "100%" }}
+          ref={setVideoRef}
+        >
+          <video
+            {...props}
+            ref={videoRef}
+            src={src}
+            muted={volume === 0}
+            controls={false}
+            playsInline={true}
+            autoPlay={false}
+            loop={shouldLoop}
+            preload="metadata"
+            onLoadedData={handleLoadedData}
+            onEnded={handleVideoEnded}
+            onClick={(e) => e.stopPropagation()}
+            style={VIDEO_STYLE}
+          />
+          {!isVideoLoaded && (
+            <Box
+              position="absolute"
+              top={0}
+              left={0}
+              width="100%"
+              height="100%"
+              bg="black"
+              zIndex={3}
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              overflow="hidden"
+            >
+              <MemoizedLoadingComponent />
+            </Box>
+          )}
+        </picture>
+      </Box>
       {isHovered && (
         <VideoControls
           isPlaying={isPlaying}

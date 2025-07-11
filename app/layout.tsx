@@ -127,6 +127,8 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
+        {/* Preconnect to IPFS gateway for faster video loading */}
+        <link rel="preconnect" href="https://ipfs.skatehive.app" />
         {/* Force reload of global styles for modal overrides */}
         {/* <style>{`@import url('/app/globals.css');`}</style> */}
       </head>
