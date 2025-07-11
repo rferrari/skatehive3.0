@@ -33,6 +33,7 @@ import VoteListPopover from "@/components/blog/VoteListModal";
 import { parse, isAfter, isBefore, isEqual } from "date-fns";
 import spitfire from "/public/images/spitfire.png";
 import { useTheme } from "@/app/themeProvider";
+import PaperOutline from "@/components/graphics/PaperOutline";
 
 const separateContent = (body: string) => {
   const textParts: string[] = [];
@@ -164,6 +165,7 @@ const BountySnap = ({
   const [inlineComposerStates, setInlineComposerStates] = useState<
     Record<string, boolean>
   >({});
+  const [isHovered, setIsHovered] = useState(false);
 
   const effectiveDepth = discussion.depth || 0;
 
@@ -375,6 +377,8 @@ const BountySnap = ({
       flexDirection="column"
       minHeight="370px"
       maxHeight="370px"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       sx={{
         ...(showPosterBackground
           ? {
@@ -399,13 +403,6 @@ const BountySnap = ({
                 overflow: 'hidden',
                 transition: 'box-shadow 0.2s, background 0.2s, background-image 0.2s',
                 cursor: disableCardClick ? 'default' : 'pointer',
-                ...(disableCardClick
-                  ? {}
-                  : {
-                      ':hover': {
-                        backgroundImage: 'url(/images/paperOutline.svg)',
-                      },
-                    }),
               },
             }
           : {
@@ -437,6 +434,30 @@ const BountySnap = ({
           zIndex={0}
           borderRadius="16px"
         />
+      )}
+      {/* PaperOutline SVG on hover (desktop only) */}
+      {showPosterBackground && (
+        <Box
+          display={{ base: "none", md: "block" }}
+          position="absolute"
+          top={0}
+          left={0}
+          right={0}
+          bottom={0}
+          zIndex={1}
+          pointerEvents="none"
+          opacity={isHovered ? 1 : 0}
+          transition="opacity 0.2s"
+        >
+          <PaperOutline
+            stroke={theme.theme.colors.border || theme.theme.colors.accent || "#000"}
+            width="100%"
+            height="100%"
+            verticalScale={1.08}
+            verticalOffset={-50}
+            style={{ display: "block", width: "100%", height: "100%" }}
+          />
+        </Box>
       )}
       {/* Title at the very top */}
       <Box px={4} pt={3} zIndex={1}>
