@@ -106,7 +106,7 @@ export default function FooterNavButtons() {
           <MenuButton
             as={IconButton}
             aria-label="Navigation Menu"
-            icon={<Image src="/logos/SKATE_HIVE_CIRCLE.svg" />}
+            icon={<Image src="/logos/SKATE_HIVE_CIRCLE.svg" alt="SkateHive Navigation Menu" />}
             bg="primary"
             color="background"
             borderRadius="full"
