@@ -9,6 +9,7 @@ import {
 import { FaArrowDown, FaQuestionCircle } from "react-icons/fa";
 import { useState } from "react";
 import { useTheme } from "@/app/themeProvider";
+import useIsMobile from "@/hooks/useIsMobile";
 
 interface HivePowerSectionProps {
   hivePower: string | undefined;
@@ -23,6 +24,7 @@ export default function HivePowerSection({
 }: HivePowerSectionProps) {
   const { theme } = useTheme();
   const [showInfo, setShowInfo] = useState(false);
+  const isMobile = useIsMobile();
 
   return (
     <Box
@@ -55,9 +57,11 @@ export default function HivePowerSection({
                 onClick={() => setShowInfo(!showInfo)}
               />
             </HStack>
-            <Text fontSize="sm" color="gray.400">
-              Staked Hive for governance and curation
-            </Text>
+            {!isMobile && (
+              <Text fontSize="sm" color="gray.400">
+                Staked Hive for governance and curation
+              </Text>
+            )}
           </Box>
         </HStack>
 

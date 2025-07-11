@@ -10,6 +10,7 @@ import { FaPaperPlane, FaArrowUp, FaQuestionCircle } from "react-icons/fa";
 import { useState } from "react";
 import { CustomHiveIcon } from "./CustomHiveIcon";
 import { useTheme } from "@/app/themeProvider";
+import useIsMobile from "@/hooks/useIsMobile";
 
 interface HiveSectionProps {
   balance: string;
@@ -29,6 +30,7 @@ export default function HiveSection({
 }: HiveSectionProps) {
   const { theme } = useTheme();
   const [showInfo, setShowInfo] = useState(false);
+  const isMobile = useIsMobile();
 
   return (
     <Box
@@ -55,9 +57,11 @@ export default function HiveSection({
                 onClick={() => setShowInfo(!showInfo)}
               />
             </HStack>
-            <Text fontSize="sm" color="gray.400">
-              The primary token of the Hive Blockchain
-            </Text>
+            {!isMobile && (
+              <Text fontSize="sm" color="gray.400">
+                The primary token of the Hive Blockchain
+              </Text>
+            )}
           </Box>
         </HStack>
 

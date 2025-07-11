@@ -14,6 +14,7 @@ import { FaPaperPlane, FaArrowDown, FaArrowUp, FaQuestionCircle } from "react-ic
 import { useState } from "react";
 import { CustomHiveIcon } from "./CustomHiveIcon";
 import { useTheme } from "@/app/themeProvider";
+import useIsMobile from "@/hooks/useIsMobile";
 
 interface HBDSectionProps {
     hbdBalance: string;
@@ -56,6 +57,7 @@ export default function HBDSection({
 }: HBDSectionProps) {
     const { theme } = useTheme();
     const [showInfo, setShowInfo] = useState(false);
+    const isMobile = useIsMobile();
 
     // Wallet view: Only show liquid HBD
     if (isWalletView) {
@@ -84,9 +86,11 @@ export default function HBDSection({
                                     onClick={() => setShowInfo(!showInfo)}
                                 />
                             </HStack>
-                            <Text fontSize="sm" color="gray.400">
-                                Liquid HBD ready for transactions
-                            </Text>
+                            {!isMobile && (
+                                <Text fontSize="sm" color="gray.400">
+                                    Liquid HBD ready for transactions
+                                </Text>
+                            )}
                         </Box>
                     </HStack>
 
