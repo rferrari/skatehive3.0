@@ -517,6 +517,7 @@ export default function SnapComposer({
               ref={videoUploaderRef}
               onUpload={setVideoUrl}
               isProcessing={isLoading}
+              username={user || undefined}
             />
           </Box>
           <Wrap spacing={4}>

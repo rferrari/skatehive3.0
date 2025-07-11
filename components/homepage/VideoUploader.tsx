@@ -5,6 +5,7 @@ import { fetchFile } from "@ffmpeg/util";
 interface VideoUploaderProps {
   onUpload: (url: string | null) => void;
   isProcessing?: boolean;
+  username?: string; // Add username prop for metadata
 }
 
 export interface VideoUploaderRef {
@@ -13,7 +14,7 @@ export interface VideoUploaderRef {
 }
 
 const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
-  ({ onUpload, isProcessing = false }, ref) => {
+  ({ onUpload, isProcessing = false, username }, ref) => {
     const inputRef = useRef<HTMLInputElement>(null);
     const ffmpegRef = useRef<any>(null);
     const [status, setStatus] = useState<string>("");
@@ -38,7 +39,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         setCompressionProgress(Math.round(progress * 100));
       });
       await ffmpeg.writeFile(file.name, await fetchFile(file));
-      
+
       const ffmpegArgs = [
         "-i", file.name,
         "-c:v", "libx264",
@@ -57,6 +58,66 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
       const data = await ffmpeg.readFile("output.mp4");
       setCompressionProgress(100);
       return new Blob([data.buffer], { type: "video/mp4" });
+    };
+
+    const generateThumbnail = async (file: File): Promise<string | null> => {
+      try {
+        setStatus("Generating thumbnail...");
+
+        if (!ffmpegRef.current) {
+          ffmpegRef.current = new FFmpeg();
+          await ffmpegRef.current.load();
+        }
+        const ffmpeg = ffmpegRef.current;
+
+        // Write the original file for thumbnail generation
+        await ffmpeg.writeFile("input_thumb.mp4", await fetchFile(file));
+
+        // Generate thumbnail at 2 second mark
+        await ffmpeg.exec([
+          "-i", "input_thumb.mp4",
+          "-ss", "00:00:02",
+          "-frames:v", "1",
+          "-vf", "scale=320:240:force_original_aspect_ratio=decrease,pad=320:240:(ow-iw)/2:(oh-ih)/2",
+          "-f", "webp",
+          "thumbnail.webp"
+        ]);
+
+        const thumbnailData = await ffmpeg.readFile("thumbnail.webp");
+        const thumbnailBlob = new Blob([thumbnailData.buffer], { type: "image/webp" });
+
+        // Upload thumbnail to IPFS first
+        const thumbnailFormData = new FormData();
+        thumbnailFormData.append("file", thumbnailBlob, "thumbnail.webp");
+        if (username) {
+          thumbnailFormData.append("creator", username);
+        }
+
+        const thumbnailResponse = await fetch("/api/pinata", {
+          method: "POST",
+          body: thumbnailFormData,
+        });
+
+        if (!thumbnailResponse.ok) {
+          throw new Error("Failed to upload thumbnail");
+        }
+
+        const thumbnailResult = await thumbnailResponse.json();
+        const thumbnailUrl = `https://ipfs.skatehive.app/ipfs/${thumbnailResult.IpfsHash}`;
+
+        // Clean up FFmpeg files
+        try {
+          await ffmpeg.deleteFile("input_thumb.mp4");
+          await ffmpeg.deleteFile("thumbnail.webp");
+        } catch (e) {
+          console.warn("Failed to clean up thumbnail files:", e);
+        }
+
+        return thumbnailUrl;
+      } catch (error) {
+        console.error("Thumbnail generation failed:", error);
+        return null;
+      }
     };
 
     const uploadWithProgress = (formData: FormData): Promise<any> => {
@@ -103,6 +164,9 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
           console.log("File is smaller than 12MB, converting to MP4 without resize.");
         }
 
+        // Generate thumbnail first
+        const thumbnailUrl = await generateThumbnail(file);
+
         const compressedBlob = await compressVideo(file, shouldResize);
 
         console.log(`Original file size: ${file.size} bytes`);
@@ -124,6 +188,12 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         });
         const formData = new FormData();
         formData.append("file", compressedFile);
+        if (username) {
+          formData.append("creator", username);
+        }
+        if (thumbnailUrl) {
+          formData.append("thumbnailUrl", thumbnailUrl);
+        }
         setStatus("Uploading video...");
         setUploadProgress(0);
         // Upload to Pinata with progress

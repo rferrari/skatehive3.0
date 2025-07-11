@@ -5,40 +5,68 @@ export async function POST(request: Request) {
     const pinataSecretApiKey = process.env.PINATA_SECRET_API_KEY;
 
     if (!pinataApiKey || !pinataSecretApiKey) {
-        return NextResponse.json({ error: 'Pinata API keys are missing' }, { status: 500 });
+        return NextResponse.json({ error: 'Pinata API credentials are missing' }, { status: 500 });
     }
 
     try {
-        const formData = await request.formData();
-        const file = formData.get('file') as File;
+        const requestFormData = await request.formData();
+        const file = requestFormData.get('file') as File;
+        const creator = requestFormData.get('creator') as string; // Username from client
+        const thumbnailUrl = requestFormData.get('thumbnailUrl') as string; // Thumbnail URL from client
 
         if (!file) {
             return NextResponse.json({ error: 'No file provided' }, { status: 400 });
         }
 
-        // Don't restrict to only video files to keep the API route more flexible
-        console.log('File received:', file.name, 'Type:', file.type);
+        console.log('File received:', file.name, 'Type:', file.type, 'Creator:', creator);
 
-        const pinataUrl = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
-        const data = new FormData();
-        data.append('file', file);
+        // Upload file using legacy Pinata API
+        const uploadFormData = new FormData();
+        uploadFormData.append('file', file);
 
-        const response = await fetch(pinataUrl, {
+        // Add pinataMetadata with keyvalues
+        const pinataMetadata = JSON.stringify({
+            name: file.name,
+            keyvalues: {
+                creator: creator || 'anonymous',
+                fileType: file.type,
+                uploadDate: new Date().toISOString(),
+                ...(thumbnailUrl && { thumbnailUrl: thumbnailUrl }),
+            }
+        });
+
+        uploadFormData.append('pinataMetadata', pinataMetadata);
+
+        // Add pinataOptions for making it public
+        const pinataOptions = JSON.stringify({
+            cidVersion: 1,
+        });
+        uploadFormData.append('pinataOptions', pinataOptions);
+
+        const uploadResponse = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
             method: 'POST',
             headers: {
                 'pinata_api_key': pinataApiKey,
                 'pinata_secret_api_key': pinataSecretApiKey,
             },
-            body: data,
+            body: uploadFormData,
         });
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Error from Pinata:', errorText);
-            return NextResponse.json({ error: 'Failed to upload file to Pinata', details: errorText }, { status: response.status });
+        if (!uploadResponse.ok) {
+            const errorText = await uploadResponse.text();
+            console.error('Pinata upload failed:', errorText);
+            throw new Error(`Pinata upload failed: ${uploadResponse.status}`);
         }
 
-        const result = await response.json();
+        const upload = await uploadResponse.json();
+
+        // Return the result in the same format for compatibility
+        const result = {
+            IpfsHash: upload.IpfsHash,
+            PinSize: upload.PinSize,
+            Timestamp: upload.Timestamp || new Date().toISOString(),
+        };
+
         return NextResponse.json(result);
     } catch (error) {
         console.error('Failed to process upload:', error);

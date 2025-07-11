@@ -12,6 +12,7 @@ import React, {
 import { FiMaximize, FiMinimize, FiVolume2, FiVolumeX } from "react-icons/fi";
 import { LuPause, LuPlay, LuRotateCw } from "react-icons/lu";
 import LoadingComponent from "../homepage/loadingComponent";
+import { getVideoThumbnail, extractIPFSHash } from "@/lib/utils/ipfsMetadata";
 
 // Add useInView hook for detecting visibility
 interface IntersectionOptions {
@@ -274,9 +275,34 @@ const VideoRenderer = ({ src, ...props }: RendererProps) => {
   const [hoverTime, setHoverTime] = useState<number | null>(null);
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const [shouldLoop, setShouldLoop] = useState(false);
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
+  const [showPoster, setShowPoster] = useState(true);
 
   // Use Intersection Observer to detect visibility
   const { ref: setVideoRef, isInView } = useInView({ threshold: 0.5 });
+
+  // Extract IPFS hash from video src and fetch thumbnail
+  useEffect(() => {
+    const loadThumbnail = async () => {
+      if (src) {
+        try {
+          const hash = extractIPFSHash(src);
+          if (hash) {
+            console.log('🔍 Fetching thumbnail for video hash:', hash);
+            const thumbnail = await getVideoThumbnail(hash);
+            if (thumbnail) {
+              setThumbnailUrl(thumbnail);
+              console.log('🖼️ Thumbnail loaded:', thumbnail);
+            }
+          }
+        } catch (error) {
+          console.error('❌ Failed to load thumbnail:', error);
+        }
+      }
+    };
+
+    loadThumbnail();
+  }, [src]);
 
   const handleLoadedData = useCallback(() => {
     setIsVideoLoaded(true);
@@ -295,6 +321,7 @@ const VideoRenderer = ({ src, ...props }: RendererProps) => {
         try {
           await videoRef.current.play();
           setIsPlaying(true);
+          setShowPoster(false); // Hide poster when playing
         } catch (err) {
           // Optionally log: console.debug("Video play error:", err);
         }
@@ -306,6 +333,7 @@ const VideoRenderer = ({ src, ...props }: RendererProps) => {
           try {
             await videoRef.current.play();
             setIsPlaying(true);
+            setShowPoster(false); // Hide poster when playing
           } catch (err) {
             // Optionally log: console.debug("Video play error:", err);
           }
@@ -397,12 +425,18 @@ const VideoRenderer = ({ src, ...props }: RendererProps) => {
   const handleVideoEnded = useCallback(() => {
     if (isInView && videoRef.current) {
       videoRef.current.currentTime = 0;
+      setShowPoster(true); // Show poster again when video ends
       videoRef.current
         .play()
-        .then(() => setIsPlaying(true))
+        .then(() => {
+          setIsPlaying(true);
+          setShowPoster(false); // Hide poster when restarting
+        })
         .catch((err) => {
           // Optionally log: console.debug("Video play error:", err);
         });
+    } else {
+      setShowPoster(true); // Show poster when video ends and not in view
     }
   }, [isInView]);
 
@@ -425,6 +459,7 @@ const VideoRenderer = ({ src, ...props }: RendererProps) => {
             .play()
             .then(() => {
               setIsPlaying(true);
+              setShowPoster(false); // Hide poster when autoplaying
               setShouldLoop(true);
             })
             .catch((err) => {
@@ -433,6 +468,7 @@ const VideoRenderer = ({ src, ...props }: RendererProps) => {
             });
         } else {
           setIsPlaying(true);
+          setShowPoster(false); // Hide poster when already playing
           setShouldLoop(true);
         }
       } else {
@@ -512,7 +548,40 @@ const VideoRenderer = ({ src, ...props }: RendererProps) => {
             onClick={(e) => e.stopPropagation()}
             style={VIDEO_STYLE}
           />
-          {!isVideoLoaded && (
+
+          {/* Thumbnail Poster Overlay */}
+          {showPoster && thumbnailUrl && (
+            <Box
+              position="absolute"
+              top={0}
+              left={0}
+              width="100%"
+              height="100%"
+              backgroundImage={`url(${thumbnailUrl})`}
+              backgroundSize="cover"
+              backgroundPosition="center"
+              backgroundRepeat="no-repeat"
+              zIndex={2}
+              cursor="pointer"
+              onClick={handlePlayPause}
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+            >
+              {/* Play button overlay */}
+              <Box
+                bg="rgba(0,0,0,0.6)"
+                borderRadius="50%"
+                p={4}
+                _hover={{ bg: "rgba(0,0,0,0.8)" }}
+                transition="background 0.2s"
+              >
+                <LuPlay size={32} color="white" />
+              </Box>
+            </Box>
+          )}
+
+          {!isVideoLoaded && !thumbnailUrl && (
             <Box
               position="absolute"
               top={0}
