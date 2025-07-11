@@ -17,7 +17,11 @@ import {
   TabPanels,
   Tab,
   TabPanel,
+  useColorMode,
 } from "@chakra-ui/react";
+import { AiohaModal, useAioha } from "@aioha/react-ui";
+import { KeyTypes } from "@aioha/aioha";
+import "@aioha/react-ui/dist/build.css";
 import { convertVestToHive } from "@/lib/hive/client-functions";
 import { extractNumber } from "@/lib/utils/extractNumber";
 import WalletModal from "@/components/wallet/WalletModal";
@@ -31,20 +35,34 @@ import SwapSection from "./SwapSection";
 import EthereumAssetsSection from "./EthereumAssetsSection";
 import NFTSection from "./NFTSection";
 import WalletSummary from "./WalletSummary";
+import ConnectHiveSection from "./ConnectHiveSection";
+import { PortfolioProvider } from "@/contexts/PortfolioContext";
 
 interface MainWalletProps {
-  username: string;
+  username?: string;
 }
 
 export default function MainWallet({ username }: MainWalletProps) {
-  const { hiveAccount, isLoading, error } = useHiveAccount(username);
+  // Use the connected user from Aioha for Hive account data
+  const { user, aioha } = useAioha();
+  const { hiveAccount, isLoading, error } = useHiveAccount(user || "");
   const { handleConfirm, handleClaimHbdInterest } = useWalletActions();
-  const { isConnected } = useAccount();
+  const { isConnected, address } = useAccount();
+  const { colorMode } = useColorMode();
+  
+  // Prevent hydration mismatch by tracking if component is mounted
+  const [isMounted, setIsMounted] = useState(false);
+  
   const { isOpen, onOpen, onClose } = useDisclosure();
   const {
     isOpen: isConnectModalOpen,
     onOpen: openConnectModal,
     onClose: closeConnectModal,
+  } = useDisclosure();
+  const {
+    isOpen: isHiveModalOpen,
+    onOpen: openHiveModal,
+    onClose: closeHiveModal,
   } = useDisclosure();
 
   const [modalContent, setModalContent] = useState<{
@@ -57,6 +75,11 @@ export default function MainWallet({ username }: MainWalletProps) {
   const [hivePrice, setHivePrice] = useState<number | null>(null);
   const [hbdPrice, setHbdPrice] = useState<number | null>(null);
   const [isPriceLoading, setIsPriceLoading] = useState(true);
+
+  // Set mounted state to prevent hydration mismatch
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   function assetToString(val: string | Asset): string {
     return typeof val === "string" ? val : val.toString();
@@ -111,10 +134,13 @@ export default function MainWallet({ username }: MainWalletProps) {
   };
 
   const handleConnectHive = () => {
-    // TODO: Implement Hive connection logic
-    // This could open a modal to enter username or connect via Keychain
-    // For now, we could redirect to a login page or show a modal
-    alert("Hive connection coming soon! For now, the app uses the URL username parameter.");
+    if (user) {
+      // User is already connected to Hive
+      return;
+    } else {
+      // User is not connected, open the Aioha modal
+      openHiveModal();
+    }
   };
 
   const onConfirm = async (
@@ -135,14 +161,14 @@ export default function MainWallet({ username }: MainWalletProps) {
     onClose();
   };
 
-  // Calculate HBD interest data
-  const savingsHbdBalance = parseFloat(
+  // Calculate HBD interest data - only if user is connected to Hive
+  const savingsHbdBalance = user ? parseFloat(
     String(hiveAccount?.savings_hbd_balance || "0.000")
-  );
-  const lastInterestPayment = hiveAccount?.savings_hbd_last_interest_payment;
+  ) : 0;
+  const lastInterestPayment = user ? hiveAccount?.savings_hbd_last_interest_payment : undefined;
   const APR = 0.15;
   let daysSinceLastPayment = 0;
-  if (lastInterestPayment) {
+  if (user && lastInterestPayment) {
     const last = new Date(lastInterestPayment);
     const now = new Date();
     daysSinceLastPayment = Math.max(
@@ -150,10 +176,10 @@ export default function MainWallet({ username }: MainWalletProps) {
       Math.floor((now.getTime() - last.getTime()) / (1000 * 60 * 60 * 24))
     );
   }
-  const estimatedClaimableInterest =
-    savingsHbdBalance * APR * (daysSinceLastPayment / 365);
+  const estimatedClaimableInterest = user ?
+    savingsHbdBalance * APR * (daysSinceLastPayment / 365) : 0;
   let daysUntilClaim = 0;
-  if (lastInterestPayment) {
+  if (user && lastInterestPayment) {
     const last = new Date(lastInterestPayment);
     const nextClaimDate = new Date(last.getTime() + 30 * 24 * 60 * 60 * 1000);
     daysUntilClaim = Math.max(
@@ -162,7 +188,8 @@ export default function MainWallet({ username }: MainWalletProps) {
     );
   }
 
-  if (isLoading) {
+  // Only show loading if user is trying to access Hive data
+  if ((isLoading && user) || !isMounted) {
     return (
       <Box
         display="flex"
@@ -175,23 +202,24 @@ export default function MainWallet({ username }: MainWalletProps) {
     );
   }
 
-  if (error) {
+  if (error && user) {
     return <Text color="warning">Failed to load account information.</Text>;
   }
 
-  const balance = hiveAccount?.balance
+  // Only calculate Hive balances if user is connected to Hive
+  const balance = user && hiveAccount?.balance
     ? String(extractNumber(assetToString(hiveAccount.balance)))
     : "N/A";
-  const hbdBalance = hiveAccount?.hbd_balance
+  const hbdBalance = user && hiveAccount?.hbd_balance
     ? String(extractNumber(assetToString(hiveAccount.hbd_balance)))
     : "N/A";
-  const hbdSavingsBalance = hiveAccount?.savings_hbd_balance
+  const hbdSavingsBalance = user && hiveAccount?.savings_hbd_balance
     ? String(extractNumber(assetToString(hiveAccount.savings_hbd_balance)))
     : "N/A";
 
-  // Calculate total Hive assets value in USD
+  // Calculate total Hive assets value in USD - only if user is connected to Hive
   const calculateTotalHiveAssetsValue = () => {
-    if (!hivePrice || !hbdPrice) return 0;
+    if (!user || !hivePrice || !hbdPrice) return 0;
 
     const hiveBalance = parseFloat(balance === "N/A" ? "0" : balance);
     const hivePowerBalance = parseFloat(hivePower || "0");
@@ -208,171 +236,202 @@ export default function MainWallet({ username }: MainWalletProps) {
 
   return (
     <>
-      <Box w="100%" maxW="100vw" overflowX="hidden">
-        <Grid
-          templateColumns={{ base: "1fr", md: "2fr 1fr" }}
-          gap={{ base: 4, md: 6 }}
-          alignItems="stretch"
-          m={{ base: 0, md: 4 }}
-          px={{ base: 0, md: 0 }}
-          height={{ md: "100%" }}
-        >
-          {/* Left: Tabbed Wallet Interface */}
-          <Box
-            p={{ base: 2, sm: 3, md: 4 }}
-            border="none"
-            borderRadius="base"
-            bg="muted"
-            boxShadow="none"
-            display="flex"
-            flexDirection="column"
-            height="100%"
-            minW={0}
+      <PortfolioProvider address={isConnected ? address : undefined}>
+        <Box w="100%" maxW="100vw" overflowX="hidden">
+          <Grid
+            templateColumns={{ base: "1fr", md: "2fr 1fr" }}
+            gap={{ base: 4, md: 6 }}
+            alignItems="stretch"
+            m={{ base: 0, md: 4 }}
+            px={{ base: 0, md: 0 }}
+            height={{ md: "100%" }}
           >
-            <Tabs variant="soft-rounded" colorScheme="blue" size="md" flex={1}>
-              <TabList mb={4} bg="background" p={1} borderRadius="lg">
-                <Tab
-                  _selected={{ bg: "primary", color: "background" }}
-                  _hover={{ bg: "primary", opacity: 0.8 }}
-                  fontWeight="bold"
-                  fontSize={{ base: "sm", md: "md" }}
-                  flex={1}
-                >
-                  💰 Wallet
-                </Tab>
-                <Tab
-                  _selected={{ bg: "primary", color: "background" }}
-                  _hover={{ bg: "primary", opacity: 0.8 }}
-                  fontWeight="bold"
-                  fontSize={{ base: "sm", md: "md" }}
-                  flex={1}
-                >
-                  🏦 SkateBank
-                </Tab>
-              </TabList>
-
-              <TabPanels flex={1}>
-                {/* Wallet Tab - Token Information */}
-                <TabPanel p={0}>
-                  <Box w="100%" display="flex" flexDirection="column" gap={3} p={2}>
-                    <HivePowerSection
-                      hivePower={hivePower}
-                      hivePrice={hivePrice}
-                      onModalOpen={handleModalOpen}
-                    />
-                    <HiveSection
-                      balance={balance}
-                      hivePrice={hivePrice}
-                      onModalOpen={handleModalOpen}
-                    />
-                    <HBDSection
-                      hbdBalance={hbdBalance}
-                      hbdSavingsBalance="0.000" // Only show liquid HBD in wallet tab
-                      hbdPrice={hbdPrice}
-                      estimatedClaimableInterest={0}
-                      daysUntilClaim={0}
-                      lastInterestPayment={lastInterestPayment}
-                      onModalOpen={handleModalOpen}
-                      onClaimInterest={handleClaimHbdInterest}
-                      isWalletView={true}
-                    />
-                  </Box>
-                  {/* Ethereum Assets Section - Outside tabs */}
-                  {isConnected && <EthereumAssetsSection />}
-                  {/* NFT Section - Outside tabs */}
-                  {isConnected && <NFTSection />}
-                </TabPanel>
-
-                {/* SkateBank Tab - Investment Options */}
-                <TabPanel p={0}>
-                  <VStack spacing={4} align="stretch">
-                    <Box>
-                      <Heading size="md" mb={3} color="primary" fontFamily="Joystix">
-                        💎 Investment Portfolio
-                      </Heading>
-                      <Text fontSize="sm" color="text" mb={4}>
-                        Grow your tokens with SkateHive&apos;s investment options. Earn passive income and build your skateboarding empire!
-                      </Text>
-                    </Box>
-
-                    {/* HBD Savings Investment */}
-                    <Box
-                      p={4}
-                      bg="background"
-                      borderRadius="lg"
-                      border="1px solid"
-                      borderColor="muted"
+            {/* Left: Tabbed Wallet Interface */}
+            <Box
+              p={{ base: 2, sm: 3, md: 4 }}
+              border="none"
+              borderRadius="base"
+              bg="muted"
+              boxShadow="none"
+              display="flex"
+              flexDirection="column"
+              height="100%"
+              minW={0}
+            >
+              <Tabs variant="soft-rounded" colorScheme="blue" size="md" flex={1}>
+                <TabList mb={4} bg="background" p={1} borderRadius="lg">
+                  <Tab
+                    _selected={{ bg: "primary", color: "background" }}
+                    _hover={{ bg: "primary", opacity: 0.8 }}
+                    fontWeight="bold"
+                    fontSize={{ base: "sm", md: "md" }}
+                    flex={1}
+                  >
+                    💰 Wallet
+                  </Tab>
+                  {/* Only show SkateBank tab if user is connected to Hive */}
+                  {user && (
+                    <Tab
+                      _selected={{ bg: "primary", color: "background" }}
+                      _hover={{ bg: "primary", opacity: 0.8 }}
+                      fontWeight="bold"
+                      fontSize={{ base: "sm", md: "md" }}
+                      flex={1}
                     >
-                      <Heading size="sm" mb={2} color="primary">
-                        🏛️ Dollar Savings (15% APR)
-                      </Heading>
-                      <Text fontSize="sm" color="text" mb={3}>
-                        Earn guaranteed 15% annual interest on your Dollar Savings. Perfect for long-term hodlers!
-                      </Text>
-                      <HBDSection
-                        hbdBalance={hbdBalance}
-                        hbdSavingsBalance={hbdSavingsBalance}
-                        hbdPrice={hbdPrice}
-                        estimatedClaimableInterest={estimatedClaimableInterest}
-                        daysUntilClaim={daysUntilClaim}
-                        lastInterestPayment={lastInterestPayment}
-                        onModalOpen={handleModalOpen}
-                        onClaimInterest={handleClaimHbdInterest}
-                        isBankView={true}
-                      />
+                      🏦 SkateBank
+                    </Tab>
+                  )}
+                </TabList>
+
+                <TabPanels flex={1}>
+                  {/* Wallet Tab - Token Information */}
+                  <TabPanel p={0}>
+                    <Box w="100%" display="flex" flexDirection="column" gap={3} p={2}>
+                      {/* Hive Sections - Show if user is connected to Hive */}
+                      {user ? (
+                        <>
+                          <HivePowerSection
+                            hivePower={hivePower}
+                            hivePrice={hivePrice}
+                            onModalOpen={handleModalOpen}
+                          />
+                          <HiveSection
+                            balance={balance}
+                            hivePrice={hivePrice}
+                            onModalOpen={handleModalOpen}
+                          />
+                          <HBDSection
+                            hbdBalance={hbdBalance}
+                            hbdSavingsBalance="0.000" // Only show liquid HBD in wallet tab
+                            hbdPrice={hbdPrice}
+                            estimatedClaimableInterest={0}
+                            daysUntilClaim={0}
+                            lastInterestPayment={lastInterestPayment}
+                            onModalOpen={handleModalOpen}
+                            onClaimInterest={handleClaimHbdInterest}
+                            isWalletView={true}
+                          />
+                        </>
+                      ) : (
+                        /* Show Connect Hive Section if not connected */
+                        <ConnectHiveSection onConnectHive={handleConnectHive} />
+                      )}
                     </Box>
-                  </VStack>
-                </TabPanel>
-              </TabPanels>
-            </Tabs>
-          </Box>
+                    {/* Ethereum Assets Section - Show if connected to Ethereum */}
+                    {isMounted && isConnected && <EthereumAssetsSection />}
+                    {/* NFT Section - Show if connected to Ethereum */}
+                    {isMounted && isConnected && <NFTSection />}
+                  </TabPanel>
 
-          {/* Right: Market Stats and Swap */}
-          <VStack
-            spacing={4}
-            align="stretch"
-            maxW={{ base: "100%", md: "340px" }}
-            mx={{ base: 0, md: "auto" }}
-            mt={{ base: 6, md: 0 }}
-            mb={{ base: 4, md: 0 }}
-            height="100%"
-            justifyContent="flex-start"
-            minW={0}
-          >
-            <WalletSummary
-              hiveUsername={username}
-              totalHiveValue={totalHiveAssetsValue}
-              isPriceLoading={isPriceLoading}
-              onConnectEthereum={openConnectModal}
-              onConnectHive={handleConnectHive}
+                  {/* SkateBank Tab - Investment Options - Only show if connected to Hive */}
+                  {user && (
+                    <TabPanel p={0}>
+                      <VStack spacing={4} align="stretch">
+                        <Box>
+                          <Heading size="md" mb={3} color="primary" fontFamily="Joystix">
+                            💎 Investment Portfolio
+                          </Heading>
+                          <Text fontSize="sm" color="text" mb={4}>
+                            Grow your tokens with SkateHive&apos;s investment options. Earn passive income and build your skateboarding empire!
+                          </Text>
+                        </Box>
+
+                        {/* HBD Savings Investment */}
+                        <Box
+                          p={4}
+                          bg="background"
+                          borderRadius="lg"
+                          border="1px solid"
+                          borderColor="muted"
+                        >
+                          <Heading size="sm" mb={2} color="primary">
+                            🏛️ Dollar Savings (15% APR)
+                          </Heading>
+                          <Text fontSize="sm" color="text" mb={3}>
+                            Earn guaranteed 15% annual interest on your Dollar Savings. Perfect for long-term hodlers!
+                          </Text>
+                          <HBDSection
+                            hbdBalance={hbdBalance}
+                            hbdSavingsBalance={hbdSavingsBalance}
+                            hbdPrice={hbdPrice}
+                            estimatedClaimableInterest={estimatedClaimableInterest}
+                            daysUntilClaim={daysUntilClaim}
+                            lastInterestPayment={lastInterestPayment}
+                            onModalOpen={handleModalOpen}
+                            onClaimInterest={handleClaimHbdInterest}
+                            isBankView={true}
+                          />
+                        </Box>
+                      </VStack>
+                    </TabPanel>
+                  )}
+                </TabPanels>
+              </Tabs>
+            </Box>
+
+            {/* Right: Market Stats and Swap */}
+            <VStack
+              spacing={4}
+              align="stretch"
+              maxW={{ base: "100%", md: "340px" }}
+              mx={{ base: 0, md: "auto" }}
+              mt={{ base: 6, md: 0 }}
+              mb={{ base: 4, md: 0 }}
+              height="100%"
+              justifyContent="flex-start"
+              minW={0}
+            >
+              <WalletSummary
+                hiveUsername={user}
+                totalHiveValue={totalHiveAssetsValue}
+                isPriceLoading={isPriceLoading}
+                onConnectEthereum={openConnectModal}
+                onConnectHive={handleConnectHive}
+              />
+              <ConnectModal
+                isOpen={isConnectModalOpen}
+                onClose={closeConnectModal}
+              />
+              <MarketPrices
+                hivePrice={hivePrice}
+                hbdPrice={hbdPrice}
+                isPriceLoading={isPriceLoading}
+              />
+              <SwapSection onModalOpen={handleModalOpen} />
+            </VStack>
+          </Grid>
+
+
+
+          {modalContent && (
+            <WalletModal
+              isOpen={isOpen}
+              onClose={onClose}
+              title={modalContent.title}
+              description={modalContent.description}
+              showMemoField={modalContent.showMemoField}
+              showUsernameField={modalContent.showUsernameField}
+              onConfirm={onConfirm}
             />
-            <ConnectModal
-              isOpen={isConnectModalOpen}
-              onClose={closeConnectModal}
+          )}
+
+          {/* Aioha Modal for Hive Connection */}
+          <div className={colorMode}>
+            <AiohaModal
+              displayed={isHiveModalOpen}
+              loginOptions={{
+                msg: "Connect to Hive",
+                keyType: KeyTypes.Posting,
+                loginTitle: "Connect Your Hive Account",
+              }}
+              onLogin={() => {
+                closeHiveModal();
+              }}
+              onClose={() => closeHiveModal()}
             />
-            <MarketPrices
-              hivePrice={hivePrice}
-              hbdPrice={hbdPrice}
-              isPriceLoading={isPriceLoading}
-            />
-            <SwapSection onModalOpen={handleModalOpen} />
-          </VStack>
-        </Grid>
-
-
-
-        {modalContent && (
-          <WalletModal
-            isOpen={isOpen}
-            onClose={onClose}
-            title={modalContent.title}
-            description={modalContent.description}
-            showMemoField={modalContent.showMemoField}
-            showUsernameField={modalContent.showUsernameField}
-            onConfirm={onConfirm}
-          />
-        )}
-      </Box>
+          </div>
+        </Box>
+      </PortfolioProvider>
     </>
   );
 }

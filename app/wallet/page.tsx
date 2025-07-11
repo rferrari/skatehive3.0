@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import WalletPageClient from "./WalletPageClient";
+import MainWallet from "@/components/wallet/MainWallet";
 
 export const metadata: Metadata = {
   title: "Wallet | Skatehive",
@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function WalletPage() {
-  return <WalletPageClient />;
+  return <MainWallet />;
 }

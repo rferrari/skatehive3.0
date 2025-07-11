@@ -15,7 +15,7 @@ import {
     Avatar,
     IdentityResolver,
 } from "@paperclip-labs/whisk-sdk/identity";
-import { usePortfolio } from "../../hooks/usePortfolio";
+import { usePortfolioContext } from "../../contexts/PortfolioContext";
 import { formatValue } from "../../lib/utils/portfolioUtils";
 import { IoLogOutSharp } from "react-icons/io5";
 
@@ -35,7 +35,7 @@ export default function WalletSummary({
     onConnectHive,
 }: WalletSummaryProps) {
     const { isConnected: isEthConnected, address } = useAccount();
-    const { portfolio } = usePortfolio(address);
+    const { portfolio } = usePortfolioContext();
     const { disconnect } = useDisconnect();
 
     const resolverOrder = [

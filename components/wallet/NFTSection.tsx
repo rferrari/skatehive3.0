@@ -25,19 +25,25 @@ import {
     IconButton,
     Tooltip,
 } from "@chakra-ui/react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useAccount } from "wagmi";
 import { FaEye, FaEyeSlash, FaExternalLinkAlt } from "react-icons/fa";
-import { usePortfolio } from "../../hooks/usePortfolio";
+import { usePortfolioContext } from "../../contexts/PortfolioContext";
 import { NFT, blockchainDictionary } from "../../types/portfolio";
 import useIsMobile from "@/hooks/useIsMobile";
 
 export default function NFTSection() {
     const { isConnected, address } = useAccount();
-    const { portfolio, isLoading, error } = usePortfolio(address);
+    const { portfolio, isLoading, error, refetch } = usePortfolioContext();
     const [showNFTs, setShowNFTs] = useState(false);
     const [hideFloorless, setHideFloorless] = useState(true);
+    const [isMounted, setIsMounted] = useState(false);
     const isMobile = useIsMobile();
+
+    // Prevent hydration mismatch
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     // Memoize filtered NFTs
     const filteredNFTs = useMemo(() => {
@@ -245,7 +251,7 @@ export default function NFTSection() {
                 </Box>
             </HStack>
 
-            {isConnected && address && (
+            {isMounted && isConnected && address && (
                 <Box>
                     {/* NFT Section - only display if showNFTs is true */}
                     {showNFTs && (

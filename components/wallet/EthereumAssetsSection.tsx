@@ -37,7 +37,7 @@ import {
   Avatar,
   IdentityResolver,
 } from "@paperclip-labs/whisk-sdk/identity";
-import { usePortfolio } from "../../hooks/usePortfolio";
+import { usePortfolioContext } from "../../contexts/PortfolioContext";
 import { TokenDetail, blockchainDictionary } from "../../types/portfolio";
 import {
   formatBalance,
@@ -60,7 +60,7 @@ import SendTokenModal from "./SendTokenModal";
 export default function EthereumAssetsSection() {
   const { isConnected, address } = useAccount();
   const { disconnect } = useDisconnect();
-  const { portfolio, isLoading, error } = usePortfolio(address);
+  const { portfolio, isLoading, error, refetch } = usePortfolioContext();
   const [hideSmallBalances, setHideSmallBalances] = useState(true);
   const minBalanceThreshold = 5;
   const [logoUpdateTrigger, setLogoUpdateTrigger] = useState(0);
@@ -68,11 +68,17 @@ export default function EthereumAssetsSection() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedToken, setSelectedToken] = useState<TokenDetail | null>(null);
   const [selectedTokenLogo, setSelectedTokenLogo] = useState<string>("");
+  const [isMounted, setIsMounted] = useState(false);
   const {
     isOpen: isSendModalOpen,
     onOpen: onSendModalOpen,
     onClose: onSendModalClose,
   } = useDisclosure();
+
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Responsive breakpoint for mobile/desktop layout
   const isMobile = useBreakpointValue({ base: true, md: false });
@@ -124,19 +130,21 @@ export default function EthereumAssetsSection() {
   }, [portfolio?.tokens]);
 
   const handleForceRefresh = useCallback(async () => {
-    if (!portfolio?.tokens) return;
-
     setIsRefreshing(true);
     try {
-      await forceRefreshTokenData(portfolio.tokens);
-      // Clear the portfolio hash to allow fresh preloading
-      sessionStorage.removeItem("lastPortfolioHash");
+      if (portfolio?.tokens) {
+        await forceRefreshTokenData(portfolio.tokens);
+        // Clear the portfolio hash to allow fresh preloading
+        sessionStorage.removeItem("lastPortfolioHash");
+      }
+      // Refetch portfolio data from API
+      refetch();
     } catch (error) {
       console.error("Failed to refresh token data:", error);
     } finally {
       setIsRefreshing(false);
     }
-  }, [portfolio?.tokens]);
+  }, [portfolio?.tokens, refetch]);
 
   const handleSendToken = (tokenDetail: TokenDetail, logoUrl?: string) => {
     setSelectedToken(tokenDetail);
@@ -419,7 +427,7 @@ export default function EthereumAssetsSection() {
         </Box>
       </HStack>
 
-      {isConnected && address && (
+      {isMounted && isConnected && address && (
         <Box>
 
           {/* Token Balances Section - only display if showTokenBalances is true */}
