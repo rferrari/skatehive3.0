@@ -68,7 +68,7 @@ export default function RootLayoutClient({
 
 function InnerLayout({ children }: { children: React.ReactNode }) {
   const isMobile = useBreakpointValue({ base: true, md: false });
-  
+
   return (
     <Container maxW={{ base: "100%", md: "container.xl" }} p={0}>
       <Flex direction={{ base: "column", md: "row" }} minH="100vh">

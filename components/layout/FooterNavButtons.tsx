@@ -43,7 +43,7 @@ export default function FooterNavButtons() {
   const { user } = useAioha();
   const [modalDisplayed, setModalDisplayed] = useState(false);
   const { themeName } = useTheme();
-  
+
   // Safely get notification count with fallback
   let newNotificationCount = 0;
   try {

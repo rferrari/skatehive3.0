@@ -50,7 +50,7 @@ export default function Sidebar() {
     onClose: closeConnectModal,
   } = useDisclosure();
   const { themeName } = useTheme();
-  
+
   // Safely get notification count with fallback
   let newNotificationCount = 0;
   try {
