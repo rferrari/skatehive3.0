@@ -14,24 +14,7 @@ export default function VideoPreview({ src, onClick }: VideoPreviewProps) {
     const [hasError, setHasError] = useState(false);
     const [isVisible, setIsVisible] = useState(false);
 
-    // Process video URL for better compatibility
-    const getProcessedVideoUrl = (url: string) => {
-        // Handle IPFS URLs
-        if (url.includes('ipfs.skatehive.app')) {
-            // Ensure proper IPFS gateway format
-            return url.replace(/\/ipfs\//, '/ipfs/');
-        }
 
-        // Handle iframe embed URLs - these might need special processing
-        if (url.includes('iframe') || url.includes('embed')) {
-            // For now, return as-is, but we might need to extract the actual video URL
-            console.log('Iframe video URL detected:', url);
-        }
-
-        return url;
-    };
-
-    const processedSrc = getProcessedVideoUrl(src);
 
     // Intersection Observer for auto-play when visible
     useEffect(() => {
@@ -69,13 +52,11 @@ export default function VideoPreview({ src, onClick }: VideoPreviewProps) {
     const handleLoadedData = () => {
         setIsLoaded(true);
         setHasError(false);
-        console.log('Video loaded successfully:', processedSrc);
     };
 
     const handleError = (event: React.SyntheticEvent<HTMLVideoElement, Event>) => {
         setHasError(true);
         setIsLoaded(false);
-        console.error('Video failed to load:', processedSrc, event);
     };
 
     return (
@@ -92,7 +73,7 @@ export default function VideoPreview({ src, onClick }: VideoPreviewProps) {
         >
             <video
                 ref={videoRef}
-                src={processedSrc}
+                src={src}
                 muted
                 loop
                 playsInline
