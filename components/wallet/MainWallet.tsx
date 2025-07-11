@@ -29,6 +29,7 @@ import HBDSection from "./HBDSection";
 import MarketPrices from "./MarketPrices";
 import SwapSection from "./SwapSection";
 import EthereumAssetsSection from "./EthereumAssetsSection";
+import NFTSection from "./NFTSection";
 import WalletSummary from "./WalletSummary";
 
 interface MainWalletProps {
@@ -278,6 +279,8 @@ export default function MainWallet({ username }: MainWalletProps) {
                   </Box>
                   {/* Ethereum Assets Section - Outside tabs */}
                   {isConnected && <EthereumAssetsSection />}
+                  {/* NFT Section - Outside tabs */}
+                  {isConnected && <NFTSection />}
                 </TabPanel>
 
                 {/* SkateBank Tab - Investment Options */}
@@ -288,7 +291,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                         💎 Investment Portfolio
                       </Heading>
                       <Text fontSize="sm" color="text" mb={4}>
-                        Grow your tokens with SkateHive's investment options. Earn passive income and build your skateboarding empire!
+                        Grow your tokens with SkateHive&apos;s investment options. Earn passive income and build your skateboarding empire!
                       </Text>
                     </Box>
 
