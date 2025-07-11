@@ -7,7 +7,7 @@ import {
   IconButton,
 } from "@chakra-ui/react";
 import { FaArrowDown, FaQuestionCircle } from "react-icons/fa";
-import { useState } from "react";
+import { useState, useCallback, useMemo, memo } from "react";
 import { useTheme } from "@/app/themeProvider";
 import useIsMobile from "@/hooks/useIsMobile";
 
@@ -17,7 +17,7 @@ interface HivePowerSectionProps {
   onModalOpen: (title: string, description?: string) => void;
 }
 
-export default function HivePowerSection({
+const HivePowerSection = memo(function HivePowerSection({
   hivePower,
   hivePrice,
   onModalOpen,
@@ -25,6 +25,26 @@ export default function HivePowerSection({
   const { theme } = useTheme();
   const [showInfo, setShowInfo] = useState(false);
   const isMobile = useIsMobile();
+
+  // Memoize USD value calculation
+  const usdValue = useMemo(() => {
+    if (hivePower === undefined || !hivePrice || parseFloat(hivePower) <= 0) {
+      return null;
+    }
+    return (parseFloat(hivePower) * hivePrice).toFixed(2);
+  }, [hivePower, hivePrice]);
+
+  // Memoize event handlers
+  const handleInfoToggle = useCallback(() => {
+    setShowInfo(prev => !prev);
+  }, []);
+
+  const handlePowerDown = useCallback(() => {
+    onModalOpen(
+      "Power Down",
+      "Create a Hive Power unstake request. The request is fulfilled once a week over the next 13 weeks."
+    );
+  }, [onModalOpen]);
 
   return (
     <Box
@@ -54,7 +74,7 @@ export default function HivePowerSection({
                 size="xs"
                 variant="ghost"
                 color="gray.400"
-                onClick={() => setShowInfo(!showInfo)}
+                onClick={handleInfoToggle}
               />
             </HStack>
             {!isMobile && (
@@ -70,9 +90,9 @@ export default function HivePowerSection({
             <Text fontSize="2xl" fontWeight="bold" color="primary">
               {hivePower !== undefined ? hivePower : "Loading..."}
             </Text>
-            {hivePower !== undefined && hivePrice && parseFloat(hivePower) > 0 && (
+            {usdValue && (
               <Text fontSize="sm" color="gray.400">
-                (${(parseFloat(hivePower) * hivePrice).toFixed(2)})
+                (${usdValue})
               </Text>
             )}
           </Box>
@@ -83,12 +103,7 @@ export default function HivePowerSection({
               size="sm"
               colorScheme="blue"
               variant="outline"
-              onClick={() =>
-                onModalOpen(
-                  "Power Down",
-                  "Create a Hive Power unstake request. The request is fulfilled once a week over the next 13 weeks."
-                )
-              }
+              onClick={handlePowerDown}
             />
           </Tooltip>
         </HStack>
@@ -103,4 +118,6 @@ export default function HivePowerSection({
       )}
     </Box>
   );
-}
+});
+
+export default HivePowerSection;

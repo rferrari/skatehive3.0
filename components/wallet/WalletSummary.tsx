@@ -18,6 +18,7 @@ import {
 import { usePortfolioContext } from "../../contexts/PortfolioContext";
 import { formatValue } from "../../lib/utils/portfolioUtils";
 import { IoLogOutSharp } from "react-icons/io5";
+import { memo, useCallback, useMemo } from "react";
 
 interface WalletSummaryProps {
     hiveUsername?: string;
@@ -27,7 +28,7 @@ interface WalletSummaryProps {
     onConnectHive: () => void;
 }
 
-export default function WalletSummary({
+const WalletSummary = memo(function WalletSummary({
     hiveUsername,
     totalHiveValue,
     isPriceLoading,
@@ -38,7 +39,8 @@ export default function WalletSummary({
     const { portfolio } = usePortfolioContext();
     const { disconnect } = useDisconnect();
 
-    const resolverOrder = [
+    // Memoize constants
+    const resolverOrder = useMemo(() => [
         IdentityResolver.Nns,
         IdentityResolver.Farcaster,
         IdentityResolver.Ens,
@@ -46,13 +48,32 @@ export default function WalletSummary({
         IdentityResolver.Lens,
         IdentityResolver.Uni,
         IdentityResolver.World,
-    ];
+    ], []);
 
-    const ethValue = portfolio?.totalNetWorth || 0;
-    const totalValue = totalHiveValue + ethValue;
+    // Memoize calculations
+    const calculations = useMemo(() => {
+        const ethValue = portfolio?.totalNetWorth || 0;
+        const totalValue = totalHiveValue + ethValue;
+        return { ethValue, totalValue };
+    }, [portfolio?.totalNetWorth, totalHiveValue]);
+
+    // Memoize connection status
+    const connectionStatus = useMemo(() => ({
+        hasWallets: isEthConnected || !!hiveUsername,
+        needsEthereum: !isEthConnected,
+        needsHive: !hiveUsername,
+    }), [isEthConnected, hiveUsername]);
+
+    // Memoized event handlers
+    const handleDisconnect = useCallback(() => {
+        disconnect();
+    }, [disconnect]);
+
+    const ethValue = calculations.ethValue;
+    const totalValue = calculations.totalValue;
 
     // Case 1: No wallets connected
-    if (!isEthConnected && !hiveUsername) {
+    if (!connectionStatus.hasWallets) {
         return (
             <Box
                 p={4}
@@ -158,7 +179,7 @@ export default function WalletSummary({
                                 size="sm"
                                 variant="ghost"
                                 colorScheme="red"
-                                onClick={() => disconnect()}
+                                onClick={handleDisconnect}
                                 aria-label="Disconnect Ethereum"
                             />
 
@@ -167,11 +188,11 @@ export default function WalletSummary({
                 )}
 
                 {/* Show connect buttons for missing wallets */}
-                {(isEthConnected || hiveUsername) && (
+                {connectionStatus.hasWallets && (
                     <>
                         {hiveUsername && isEthConnected && <Divider />}
 
-                        {!isEthConnected && (
+                        {connectionStatus.needsEthereum && (
                             <Button
                                 leftIcon={<FaEthereum size={14} />}
                                 onClick={onConnectEthereum}
@@ -183,7 +204,7 @@ export default function WalletSummary({
                             </Button>
                         )}
 
-                        {!hiveUsername && (
+                        {connectionStatus.needsHive && (
                             <Button
                                 onClick={onConnectHive}
                                 size="sm"
@@ -198,4 +219,6 @@ export default function WalletSummary({
             </VStack>
         </Box>
     );
-}
+});
+
+export default WalletSummary;

@@ -7,7 +7,7 @@ import {
   IconButton
 } from "@chakra-ui/react";
 import { FaPaperPlane, FaArrowUp, FaQuestionCircle } from "react-icons/fa";
-import { useState } from "react";
+import { useState, useCallback, useMemo, memo } from "react";
 import { CustomHiveIcon } from "./CustomHiveIcon";
 import { useTheme } from "@/app/themeProvider";
 import useIsMobile from "@/hooks/useIsMobile";
@@ -23,7 +23,7 @@ interface HiveSectionProps {
   ) => void;
 }
 
-export default function HiveSection({
+const HiveSection = memo(function HiveSection({
   balance,
   hivePrice,
   onModalOpen,
@@ -31,6 +31,32 @@ export default function HiveSection({
   const { theme } = useTheme();
   const [showInfo, setShowInfo] = useState(false);
   const isMobile = useIsMobile();
+
+  // Memoize USD value calculation
+  const usdValue = useMemo(() => {
+    if (balance === "N/A" || !hivePrice || parseFloat(balance) <= 0) {
+      return null;
+    }
+    return (parseFloat(balance) * hivePrice).toFixed(2);
+  }, [balance, hivePrice]);
+
+  // Memoize event handlers
+  const handleInfoToggle = useCallback(() => {
+    setShowInfo(prev => !prev);
+  }, []);
+
+  const handleSendClick = useCallback(() => {
+    onModalOpen(
+      "Send HIVE",
+      "Send Hive to another account",
+      true,
+      true
+    );
+  }, [onModalOpen]);
+
+  const handlePowerUpClick = useCallback(() => {
+    onModalOpen("Power Up", "Power Up your HIVE to HP");
+  }, [onModalOpen]);
 
   return (
     <Box
@@ -54,7 +80,7 @@ export default function HiveSection({
                 size="xs"
                 variant="ghost"
                 color="gray.400"
-                onClick={() => setShowInfo(!showInfo)}
+                onClick={handleInfoToggle}
               />
             </HStack>
             {!isMobile && (
@@ -70,9 +96,9 @@ export default function HiveSection({
             <Text fontSize="2xl" fontWeight="bold" color="primary">
               {balance}
             </Text>
-            {balance !== "N/A" && hivePrice && parseFloat(balance) > 0 && (
+            {usdValue && (
               <Text fontSize="sm" color="gray.400">
-                (${(parseFloat(balance) * hivePrice).toFixed(2)})
+                (${usdValue})
               </Text>
             )}
           </Box>
@@ -84,14 +110,7 @@ export default function HiveSection({
                 size="sm"
                 colorScheme="blue"
                 variant="outline"
-                onClick={() =>
-                  onModalOpen(
-                    "Send HIVE",
-                    "Send Hive to another account",
-                    true,
-                    true
-                  )
-                }
+                onClick={handleSendClick}
               />
             </Tooltip>
             <Tooltip label="Power Up" hasArrow>
@@ -101,9 +120,7 @@ export default function HiveSection({
                 size="sm"
                 colorScheme="blue"
                 variant="outline"
-                onClick={() =>
-                  onModalOpen("Power Up", "Power Up your HIVE to HP")
-                }
+                onClick={handlePowerUpClick}
               />
             </Tooltip>
           </HStack>
@@ -119,4 +136,6 @@ export default function HiveSection({
       )}
     </Box>
   );
-}
+});
+
+export default HiveSection;

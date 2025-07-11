@@ -1,5 +1,5 @@
 'use client';
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
 import { PortfolioData } from '../types/portfolio';
 
 interface PortfolioContextType {
@@ -21,7 +21,7 @@ export function PortfolioProvider({ children, address }: PortfolioProviderProps)
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const fetchPortfolio = async () => {
+    const fetchPortfolio = useCallback(async () => {
         if (!address) {
             setPortfolio(null);
             return;
@@ -44,18 +44,22 @@ export function PortfolioProvider({ children, address }: PortfolioProviderProps)
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [address]);
 
     useEffect(() => {
         fetchPortfolio();
-    }, [address]);
+    }, [fetchPortfolio]);
 
-    const refetch = () => {
-        fetchPortfolio();
-    };
+    // Memoize the context value to prevent unnecessary re-renders
+    const contextValue = useMemo(() => ({
+        portfolio,
+        isLoading,
+        error,
+        refetch: fetchPortfolio
+    }), [portfolio, isLoading, error, fetchPortfolio]);
 
     return (
-        <PortfolioContext.Provider value={{ portfolio, isLoading, error, refetch }}>
+        <PortfolioContext.Provider value={contextValue}>
             {children}
         </PortfolioContext.Provider>
     );

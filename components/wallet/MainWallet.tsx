@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import useHiveAccount from "@/hooks/useHiveAccount";
 import { useWalletActions } from "@/hooks/useWalletActions";
 import { useAccount } from "wagmi";
@@ -11,7 +11,6 @@ import {
   useDisclosure,
   Heading,
   VStack,
-  Flex,
   Tabs,
   TabList,
   TabPanels,
@@ -49,10 +48,10 @@ export default function MainWallet({ username }: MainWalletProps) {
   const { handleConfirm, handleClaimHbdInterest } = useWalletActions();
   const { isConnected, address } = useAccount();
   const { colorMode } = useColorMode();
-  
+
   // Prevent hydration mismatch by tracking if component is mounted
   const [isMounted, setIsMounted] = useState(false);
-  
+
   const { isOpen, onOpen, onClose } = useDisclosure();
   const {
     isOpen: isConnectModalOpen,
@@ -123,7 +122,7 @@ export default function MainWallet({ username }: MainWalletProps) {
     fetchPrices();
   }, []);
 
-  const handleModalOpen = (
+  const handleModalOpen = useCallback((
     title: string,
     description?: string,
     showMemoField?: boolean,
@@ -131,9 +130,9 @@ export default function MainWallet({ username }: MainWalletProps) {
   ) => {
     setModalContent({ title, description, showMemoField, showUsernameField });
     onOpen();
-  };
+  }, [onOpen]);
 
-  const handleConnectHive = () => {
+  const handleConnectHive = useCallback(() => {
     if (user) {
       // User is already connected to Hive
       return;
@@ -141,9 +140,9 @@ export default function MainWallet({ username }: MainWalletProps) {
       // User is not connected, open the Aioha modal
       openHiveModal();
     }
-  };
+  }, [user, openHiveModal]);
 
-  const onConfirm = async (
+  const onConfirm = useCallback(async (
     amount: number,
     direction?: "HIVE_TO_HBD" | "HBD_TO_HIVE",
     username?: string,
@@ -159,34 +158,82 @@ export default function MainWallet({ username }: MainWalletProps) {
       );
     }
     onClose();
-  };
+  }, [modalContent, handleConfirm, onClose]);
 
-  // Calculate HBD interest data - only if user is connected to Hive
-  const savingsHbdBalance = user ? parseFloat(
-    String(hiveAccount?.savings_hbd_balance || "0.000")
-  ) : 0;
-  const lastInterestPayment = user ? hiveAccount?.savings_hbd_last_interest_payment : undefined;
-  const APR = 0.15;
-  let daysSinceLastPayment = 0;
-  if (user && lastInterestPayment) {
-    const last = new Date(lastInterestPayment);
-    const now = new Date();
-    daysSinceLastPayment = Math.max(
-      0,
-      Math.floor((now.getTime() - last.getTime()) / (1000 * 60 * 60 * 24))
-    );
-  }
-  const estimatedClaimableInterest = user ?
-    savingsHbdBalance * APR * (daysSinceLastPayment / 365) : 0;
-  let daysUntilClaim = 0;
-  if (user && lastInterestPayment) {
-    const last = new Date(lastInterestPayment);
-    const nextClaimDate = new Date(last.getTime() + 30 * 24 * 60 * 60 * 1000);
-    daysUntilClaim = Math.max(
-      0,
-      Math.ceil((nextClaimDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-    );
-  }
+  // Memoize balance calculations - only if user is connected to Hive
+  const hiveBalances = useMemo(() => {
+    const balance = user && hiveAccount?.balance
+      ? String(extractNumber(assetToString(hiveAccount.balance)))
+      : "N/A";
+    const hbdBalance = user && hiveAccount?.hbd_balance
+      ? String(extractNumber(assetToString(hiveAccount.hbd_balance)))
+      : "N/A";
+    const hbdSavingsBalance = user && hiveAccount?.savings_hbd_balance
+      ? String(extractNumber(assetToString(hiveAccount.savings_hbd_balance)))
+      : "N/A";
+
+    return { balance, hbdBalance, hbdSavingsBalance };
+  }, [user, hiveAccount?.balance, hiveAccount?.hbd_balance, hiveAccount?.savings_hbd_balance]);
+
+  // Memoize HBD interest calculations
+  const hbdInterestData = useMemo(() => {
+    if (!user || !hiveAccount?.savings_hbd_balance) {
+      return {
+        savingsHbdBalance: 0,
+        estimatedClaimableInterest: 0,
+        daysUntilClaim: 0,
+        lastInterestPayment: undefined
+      };
+    }
+
+    const savingsHbdBalance = parseFloat(String(hiveAccount.savings_hbd_balance || "0.000"));
+    const lastInterestPayment = hiveAccount.savings_hbd_last_interest_payment;
+    const APR = 0.15;
+
+    let daysSinceLastPayment = 0;
+    if (lastInterestPayment) {
+      const last = new Date(lastInterestPayment);
+      const now = new Date();
+      daysSinceLastPayment = Math.max(
+        0,
+        Math.floor((now.getTime() - last.getTime()) / (1000 * 60 * 60 * 24))
+      );
+    }
+
+    const estimatedClaimableInterest = savingsHbdBalance * APR * (daysSinceLastPayment / 365);
+
+    let daysUntilClaim = 0;
+    if (lastInterestPayment) {
+      const last = new Date(lastInterestPayment);
+      const nextClaimDate = new Date(last.getTime() + 30 * 24 * 60 * 60 * 1000);
+      daysUntilClaim = Math.max(
+        0,
+        Math.ceil((nextClaimDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+      );
+    }
+
+    return {
+      savingsHbdBalance,
+      estimatedClaimableInterest,
+      daysUntilClaim,
+      lastInterestPayment
+    };
+  }, [user, hiveAccount?.savings_hbd_balance, hiveAccount?.savings_hbd_last_interest_payment]);
+
+  // Memoize total Hive assets value calculation
+  const totalHiveAssetsValue = useMemo(() => {
+    if (!user || !hivePrice || !hbdPrice) return 0;
+
+    const hiveBalance = parseFloat(hiveBalances.balance === "N/A" ? "0" : hiveBalances.balance);
+    const hivePowerBalance = parseFloat(hivePower || "0");
+    const hbdLiquidBalance = parseFloat(hiveBalances.hbdBalance === "N/A" ? "0" : hiveBalances.hbdBalance);
+    const hbdSavingsBalanceNum = parseFloat(hiveBalances.hbdSavingsBalance === "N/A" ? "0" : hiveBalances.hbdSavingsBalance);
+
+    const totalHiveValue = (hiveBalance + hivePowerBalance) * hivePrice;
+    const totalHbdValue = (hbdLiquidBalance + hbdSavingsBalanceNum) * hbdPrice;
+
+    return totalHiveValue + totalHbdValue;
+  }, [user, hivePrice, hbdPrice, hiveBalances, hivePower]);
 
   // Only show loading if user is trying to access Hive data
   if ((isLoading && user) || !isMounted) {
@@ -202,37 +249,7 @@ export default function MainWallet({ username }: MainWalletProps) {
     );
   }
 
-  if (error && user) {
-    return <Text color="warning">Failed to load account information.</Text>;
-  }
-
-  // Only calculate Hive balances if user is connected to Hive
-  const balance = user && hiveAccount?.balance
-    ? String(extractNumber(assetToString(hiveAccount.balance)))
-    : "N/A";
-  const hbdBalance = user && hiveAccount?.hbd_balance
-    ? String(extractNumber(assetToString(hiveAccount.hbd_balance)))
-    : "N/A";
-  const hbdSavingsBalance = user && hiveAccount?.savings_hbd_balance
-    ? String(extractNumber(assetToString(hiveAccount.savings_hbd_balance)))
-    : "N/A";
-
-  // Calculate total Hive assets value in USD - only if user is connected to Hive
-  const calculateTotalHiveAssetsValue = () => {
-    if (!user || !hivePrice || !hbdPrice) return 0;
-
-    const hiveBalance = parseFloat(balance === "N/A" ? "0" : balance);
-    const hivePowerBalance = parseFloat(hivePower || "0");
-    const hbdLiquidBalance = parseFloat(hbdBalance === "N/A" ? "0" : hbdBalance);
-    const hbdSavingsBalanceNum = parseFloat(hbdSavingsBalance === "N/A" ? "0" : hbdSavingsBalance);
-
-    const totalHiveValue = (hiveBalance + hivePowerBalance) * hivePrice;
-    const totalHbdValue = (hbdLiquidBalance + hbdSavingsBalanceNum) * hbdPrice;
-
-    return totalHiveValue + totalHbdValue;
-  };
-
-  const totalHiveAssetsValue = calculateTotalHiveAssetsValue();
+  // Only calculate Hive balances if user is connected to Hive - using the new memoized version above
 
   return (
     <>
@@ -296,17 +313,17 @@ export default function MainWallet({ username }: MainWalletProps) {
                             onModalOpen={handleModalOpen}
                           />
                           <HiveSection
-                            balance={balance}
+                            balance={hiveBalances.balance}
                             hivePrice={hivePrice}
                             onModalOpen={handleModalOpen}
                           />
                           <HBDSection
-                            hbdBalance={hbdBalance}
+                            hbdBalance={hiveBalances.hbdBalance}
                             hbdSavingsBalance="0.000" // Only show liquid HBD in wallet tab
                             hbdPrice={hbdPrice}
                             estimatedClaimableInterest={0}
                             daysUntilClaim={0}
-                            lastInterestPayment={lastInterestPayment}
+                            lastInterestPayment={hbdInterestData.lastInterestPayment}
                             onModalOpen={handleModalOpen}
                             onClaimInterest={handleClaimHbdInterest}
                             isWalletView={true}
@@ -351,12 +368,12 @@ export default function MainWallet({ username }: MainWalletProps) {
                             Earn guaranteed 15% annual interest on your Dollar Savings. Perfect for long-term hodlers!
                           </Text>
                           <HBDSection
-                            hbdBalance={hbdBalance}
-                            hbdSavingsBalance={hbdSavingsBalance}
+                            hbdBalance={hiveBalances.hbdBalance}
+                            hbdSavingsBalance={hiveBalances.hbdSavingsBalance}
                             hbdPrice={hbdPrice}
-                            estimatedClaimableInterest={estimatedClaimableInterest}
-                            daysUntilClaim={daysUntilClaim}
-                            lastInterestPayment={lastInterestPayment}
+                            estimatedClaimableInterest={hbdInterestData.estimatedClaimableInterest}
+                            daysUntilClaim={hbdInterestData.daysUntilClaim}
+                            lastInterestPayment={hbdInterestData.lastInterestPayment}
                             onModalOpen={handleModalOpen}
                             onClaimInterest={handleClaimHbdInterest}
                             isBankView={true}
