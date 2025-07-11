@@ -39,10 +39,6 @@ export default function NFTSection() {
     const [hideFloorless, setHideFloorless] = useState(true);
     const isMobile = useIsMobile();
 
-    // Console log the portfolio to understand the structure
-    console.log("Portfolio object:", portfolio);
-    console.log("Portfolio NFTs:", portfolio?.nfts);
-
     // Memoize filtered NFTs
     const filteredNFTs = useMemo(() => {
         if (!portfolio?.nfts) return [];
@@ -54,14 +50,6 @@ export default function NFTSection() {
             const collectionName = nft.token?.collection?.name?.toLowerCase() || "";
             const collectionAddress = nft.token?.collection?.address?.toLowerCase() || "";
             const network = nft.token?.collection?.network?.toLowerCase() || "";
-
-            // Log each NFT for debugging
-            console.log("NFT Collection:", {
-                name: nft.token?.collection?.name,
-                address: nft.token?.collection?.address,
-                network: nft.token?.collection?.network,
-                fullNFT: nft
-            });
 
             // Check for Gnars NFTs (Gnars contract on Base network)
             const isGnars = (collectionName.includes("gnars") || collectionName.includes("gnar")) ||

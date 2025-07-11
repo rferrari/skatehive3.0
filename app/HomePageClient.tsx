@@ -30,11 +30,12 @@ export default function HomePageClient() {
   const snaps = useSnaps();
 
   return (
-    <Flex direction={{ base: "column", md: "row" }}>
+    <Flex direction={{ base: "column", md: "row" }} justifyContent="center">
       <Box
         maxH="100vh"
         overflowY="auto"
-        flex="1"
+        width={{ base: "100%", md: "600px", lg: "600px" }}
+        maxWidth="600px"
         borderLeft="1px"
         borderRight="1px"
         borderColor="muted"
