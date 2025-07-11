@@ -133,10 +133,7 @@ export default function UpvoteSnapContainer({ hideIfVoted = false }: UpvoteSnapC
 
   if (isLoading) {
     return (
-      <Box>
-        <Spinner />
-        <Text>Loading Snap Container info...</Text>
-      </Box>
+      <></>
     );
   }
 
