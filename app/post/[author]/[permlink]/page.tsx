@@ -74,6 +74,49 @@ function extractImageFromMarkdown(markdownContent: string): string | null {
   return null;
 }
 
+// Function to clean markdown and HTML syntax from text
+function cleanTextForDescription(text: string): string {
+  if (!text) return "";
+
+  let cleaned = text;
+
+  // Remove HTML tags
+  cleaned = cleaned.replace(/<[^>]*>/g, "");
+
+  // Remove markdown syntax
+  cleaned = cleaned
+    // Remove headers (# ## ### etc.)
+    .replace(/^#{1,6}\s+/gm, "")
+    // Remove bold/italic (**text** *text* __text__ _text_)
+    .replace(/\*{1,2}([^*]+)\*{1,2}/g, "$1")
+    .replace(/_{1,2}([^_]+)_{1,2}/g, "$1")
+    // Remove strikethrough (~~text~~)
+    .replace(/~~([^~]+)~~/g, "$1")
+    // Remove inline code (`code`)
+    .replace(/`([^`]+)`/g, "$1")
+    // Remove code blocks (```code```)
+    .replace(/```[\s\S]*?```/g, "")
+    // Remove images ![alt](url)
+    .replace(/!\[.*?\]\([^)]*\)/g, "")
+    // Remove links [text](url) but keep the text
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    // Remove reference-style links [text][ref]
+    .replace(/\[([^\]]+)\]\[[^\]]*\]/g, "$1")
+    // Remove horizontal rules (--- or ***)
+    .replace(/^[-*]{3,}$/gm, "")
+    // Remove blockquotes (> text)
+    .replace(/^>\s*/gm, "")
+    // Remove list markers (- * + 1.)
+    .replace(/^[\s]*[-*+]\s+/gm, "")
+    .replace(/^[\s]*\d+\.\s+/gm, "")
+    // Remove extra whitespace and newlines
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
+  return cleaned;
+}
+
 // Check for object permlinks only
 function validatePermlink(permlink: any, source: string) {
   if (
@@ -150,8 +193,11 @@ export async function generateMetadata({
     const post = await getData(decodedAuthor, permlink);
     const cleanedAuthor = cleanUsername(post.author);
     const title = post.title || "Untitled Post";
-    const description = post.body
-      ? `${String(post.body).slice(0, 128)}...`
+
+    // Clean the post body of markdown and HTML syntax before creating description
+    const cleanedBody = cleanTextForDescription(post.body || "");
+    const description = cleanedBody
+      ? `${cleanedBody.slice(0, 128)}...`
       : "No description available";
 
     // Extract images from markdown using regex (similar to old approach)
