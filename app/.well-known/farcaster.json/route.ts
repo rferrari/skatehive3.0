@@ -28,7 +28,7 @@ export async function GET() {
         `${appUrl}/screenshots/profile.png`
       ],
       primaryCategory: 'Social',
-      tags: ['skateboarding', 'social', 'web3', 'community', 'sports'],
+      tags: ['skateboarding', 'social', 'web3', 'community', 'dao'],
       heroImageUrl: `${appUrl}/opengraph-image.png`, // TODO: Create custom hero image (1200x630px)
       tagline: 'Skateboarding meets Web3',
       ogTitle: 'SkateHive - Skateboarding Social Network',
