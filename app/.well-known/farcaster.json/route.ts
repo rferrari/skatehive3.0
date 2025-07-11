@@ -20,6 +20,21 @@ export async function GET() {
       iconUrl: `https://ipfs.skatehive.app/ipfs/QmXTZqirogp735AaPFcpzAjmwS57mPYsJhktJMuRuSV5Rm`,
       splashImageUrl: `https://ipfs.skatehive.app/ipfs/QmXTZqirogp735AaPFcpzAjmwS57mPYsJhktJMuRuSV5Rm`,
       splashBackgroundColor: '#000000',
+      subtitle: 'Skateboarding Social Network',
+      description: 'Connect with skaters worldwide, share your tricks, and build the skateboarding community on Web3',
+      screenshotUrls: [
+        `${appUrl}/screenshots/home.png`,
+        `${appUrl}/screenshots/feed.png`,
+        `${appUrl}/screenshots/profile.png`
+      ],
+      primaryCategory: 'Social',
+      tags: ['skateboarding', 'social', 'web3', 'community', 'sports'],
+      heroImageUrl: `${appUrl}/opengraph-image.png`, // TODO: Create custom hero image (1200x630px)
+      tagline: 'Skateboarding meets Web3',
+      ogTitle: 'SkateHive - Skateboarding Social Network',
+      ogDescription: 'Join the global skateboarding community on Web3. Share tricks, connect with skaters, and earn rewards.',
+      ogImageUrl: `${appUrl}/opengraph-image.png`,
+      castShareUrl: `${appUrl}/share`
     },
   };
 
