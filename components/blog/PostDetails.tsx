@@ -20,10 +20,15 @@ import {
   PopoverArrow,
   PopoverBody,
   background,
+  useToast,
+  IconButton,
+  HStack,
 } from "@chakra-ui/react";
 import React, { useState, useEffect, useRef } from "react";
 import { Discussion } from "@hiveio/dhive";
-import { FaHeart, FaComment, FaRegHeart, FaRegComment } from "react-icons/fa";
+import {
+  FaHeart, FaComment, FaRegHeart, FaRegComment, FaShare, FaCopy, FaShareSquare
+} from "react-icons/fa";
 import { getPostDate } from "@/lib/utils/GetPostDate";
 import { useAioha } from "@aioha/react-ui";
 import { getPayoutValue } from "@/lib/hive/client-functions";
@@ -49,6 +54,7 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
   const [voted, setVoted] = useState(
     post.active_votes?.some((item) => item.voter.toLowerCase() === user?.toLowerCase())
   );
+  const toast = useToast();
 
   const { hivePower, isLoading: isHivePowerLoading, error: hivePowerError, estimateVoteValue } = useHivePower(user);
   const theme = useTheme();
@@ -90,6 +96,29 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
   function handleHeartClick() {
     setShowSlider(!showSlider);
   }
+
+  const handleShare = async () => {
+    const postUrl = `${window.location.origin}/post/${author}/${post.permlink}`;
+
+    try {
+      await navigator.clipboard.writeText(postUrl);
+      toast({
+        title: "Link copied!",
+        description: "Post URL has been copied to clipboard",
+        status: "success",
+        duration: 2000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to copy",
+        description: "Could not copy URL to clipboard",
+        status: "error",
+        duration: 2000,
+        isClosable: true,
+      });
+    }
+  };
 
   async function handleVote() {
     const vote = await aioha.vote(
@@ -226,80 +255,150 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
         border={"1px solid"}
         borderColor={"primary"}
       >
-        <Flex direction="row" alignItems="center" w="100%" flexWrap={["wrap", "nowrap"]}>
-          <Flex direction={["column", "row"]} alignItems={["center", "center"]}>
+        {/* Mobile and Desktop layouts */}
+        <Box display={["block", "none"]}>
+          {/* Mobile Layout - Two rows */}
+          <Flex direction="row" alignItems="center" w="100%" justifyContent="space-between" mb={2}>
+            <Flex direction="row" alignItems="center" flex="0 0 auto" minW="0">
+              <Avatar
+                size="sm"
+                name={author}
+                src={`https://images.hive.blog/u/${author}/avatar/sm`}
+              />
+              <Box ml={2} minW="0">
+                <Text fontWeight="medium" fontSize="sm" mb={-1} color="colorBackground" isTruncated>
+                  <Link href={`/user/${author}`} color="colorBackground">@{author}</Link>
+                </Text>
+              </Box>
+            </Flex>
+
+            <Flex alignItems="center" gap={1} flex="0 0 auto" justifyContent="flex-end">
+              <Popover placement="top" isOpen={isPayoutOpen} onClose={closePayout} closeOnBlur={true}>
+                <PopoverTrigger>
+                  <span style={{ cursor: "pointer" }} onMouseDown={openPayout} onMouseUp={closePayout}>
+                    <Text fontWeight="bold" color="primary" fontSize="sm">
+                      ${payoutValue.toFixed(2)}
+                    </Text>
+                  </span>
+                </PopoverTrigger>
+                <PopoverContent w="auto" bg="gray.800" color="white" borderRadius="md" boxShadow="lg" p={2}>
+                  <PopoverArrow />
+                  <PopoverBody>
+                    {isPending ? (
+                      <div>
+                        <div>
+                          <b>Pending</b>
+                        </div>
+                        <div>
+                          {daysRemaining} day{daysRemaining !== 1 ? "s" : ""} until payout
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div>
+                          Author: <b>${authorPayout.toFixed(3)}</b>
+                        </div>
+                        <div>
+                          Curators: <b>${curatorPayout.toFixed(3)}</b>
+                        </div>
+                      </>
+                    )}
+                  </PopoverBody>
+                </PopoverContent>
+              </Popover>
+              <Divider orientation="vertical" h="20px" mx={2} />
+              <IconButton
+                aria-label="Share post"
+                icon={<FaShareSquare />}
+                size="sm"
+                variant="ghost"
+                color="primary"
+                onClick={handleShare}
+                _hover={{ bg: "transparent", color: "accent" }}
+                fontSize="14px"
+                minW="auto"
+                h="auto"
+                p={1}
+              />
+              {voted ? (
+                <Icon
+                  as={FaHeart}
+                  onClick={handleHeartClick}
+                  cursor="pointer"
+                  color={"red"}
+                  boxSize="14px"
+                />
+              ) : (
+                <Icon
+                  as={FaRegHeart}
+                  onClick={handleHeartClick}
+                  cursor="pointer"
+                  color="primary"
+                  opacity={0.5}
+                  boxSize="14px"
+                />
+              )}
+              <VoteListPopover
+                trigger={
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    minW="auto"
+                    px={1}
+                    _active={{ bg: "transparent" }}
+                    color={voted ? "red" : "primary"}
+                    _hover={{ textDecoration: 'underline' }}
+                    fontSize="sm"
+                    h="auto"
+                    p={1}
+                  >
+                    {activeVotes.length}
+                  </Button>
+                }
+                votes={activeVotes}
+                post={post}
+              />
+
+            </Flex>
+          </Flex>
+
+          {/* Mobile Title Row */}
+          <Box w="100%" mt={1}>
+            <Text
+              fontSize="lg"
+              fontWeight="bold"
+              color="colorBackground"
+              lineHeight="1.3"
+              noOfLines={2}
+            >
+              {title}
+            </Text>
+          </Box>
+        </Box>
+
+        {/* Desktop Layout - Two rows like mobile */}
+        <Flex direction="row" alignItems="center" w="100%" justifyContent="space-between" display={["none", "flex"]} mb={2}>
+          <Flex direction="row" alignItems="center" flex="0 0 auto" minW="0">
             <Avatar
               size="sm"
               name={author}
               src={`https://images.hive.blog/u/${author}/avatar/sm`}
             />
-            <Box ml={[0, 2]} mt={[1, 0]} whiteSpace="nowrap" textAlign={["center", "left"]}>
-              <Text fontWeight="medium" fontSize="sm" mb={-2} color="colorBackground">
+            <HStack ml={2} minW="0">
+              <Text fontWeight="medium" fontSize="sm" color="colorBackground" isTruncated>
                 <Link href={`/user/${author}`} color="colorBackground">@{author}</Link>
               </Text>
               <Text fontSize="sm" color="colorBackground">
-                {postDate}
+                - {postDate} ago
               </Text>
-            </Box>
+            </HStack>
           </Flex>
-          <Divider
-            orientation="vertical"
-            h={["34px", "34px"]}
-            borderColor="color"
-            mx={4}
-            display={["block", "none"]}
-            p={1}
-          />
-          <Divider
-            orientation="vertical"
-            h="34px"
-            borderColor="color"
-            mx={4}
-            display={["none", "block"]}
-          />
-          <Box flexGrow={1} ml={2} mt={0} textAlign="start" minWidth={0} maxW={["60%", "100%"]} overflow="hidden">
-            <Text fontSize="lg" fontWeight="bold" color="colorBackground" isTruncated>
-              {title}
-            </Text>
-          </Box>
-          <Flex alignItems="center" ml={[0, 2]} mt={[2, 0]}>
-            {voted ? (
-              <Icon
-                as={FaHeart}
-                onClick={handleHeartClick}
-                cursor="pointer"
-                color={"red"}
-              />
-            ) : (
-              <Icon
-                as={FaRegHeart}
-                onClick={handleHeartClick}
-                cursor="pointer"
-                color="primary"
-                opacity={0.5}
-              />
-            )}
-            <VoteListPopover
-              trigger={
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  ml={0}
-                  p={-2}
-                  _active={{ bg: "transparent" }}
-                  color={voted ? "red" : "primary"}
-                  _hover={{ textDecoration: 'underline' }}
-                >
-                  {activeVotes.length}
-                </Button>
-              }
-              votes={activeVotes}
-              post={post}
-            />
-            <Popover placement="top" isOpen={isPayoutOpen} onClose={closePayout} closeOnBlur={true}>
+
+          <Flex alignItems="center" gap={2} flex="0 0 auto" justifyContent="flex-end">
+            <Popover placement="top" isOpen={isPayoutOpen} onClose={closePayout} >
               <PopoverTrigger>
                 <span style={{ cursor: "pointer" }} onMouseDown={openPayout} onMouseUp={closePayout}>
-                  <Text ml={3} fontWeight="bold" color="primary" fontSize="md">
+                  <Text fontWeight="bold" color="primary" fontSize="xs" mt={1}>
                     ${payoutValue.toFixed(2)}
                   </Text>
                 </span>
@@ -329,8 +428,72 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
                 </PopoverBody>
               </PopoverContent>
             </Popover>
+            <Divider orientation="vertical" h="20px" mx={2} />
+            <IconButton
+              aria-label="Share post"
+              icon={<FaShareSquare />}
+              size="sm"
+              variant="ghost"
+              color="primary"
+              onClick={handleShare}
+              _hover={{ bg: "transparent", color: "accent" }}
+              fontSize="14px"
+              minW="auto"
+              h="auto"
+              p={1}
+            />
+            <IconButton
+              aria-label={voted ? "Unvote" : "Vote"}
+              icon={voted ? <FaHeart /> : <FaRegHeart />}
+              size="sm"
+              variant="ghost"
+              color={voted ? "red" : "primary"}
+              opacity={voted ? 1 : 0.5}
+              onClick={handleHeartClick}
+              _hover={{ bg: "transparent", color: "accent" }}
+              fontSize="14px"
+              minW="auto"
+              h="auto"
+              p={1}
+              mr={-2}
+            />
+
+            <VoteListPopover
+              trigger={
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  minW="auto"
+                  px={1}
+                  _active={{ bg: "transparent" }}
+                  color={voted ? "red" : "primary"}
+                  _hover={{ textDecoration: 'underline' }}
+                  fontSize="xs"
+                  h="auto"
+                  p={1}
+                >
+                  {activeVotes.length}
+                </Button>
+              }
+              votes={activeVotes}
+              post={post}
+            />
+
           </Flex>
         </Flex>
+
+        {/* Desktop Title Row */}
+        <Box w="100%" display={["none", "block"]}>
+          <Text
+            fontSize="lg"
+            fontWeight="bold"
+            color="colorBackground"
+            lineHeight="1.3"
+            noOfLines={2}
+          >
+            {title}
+          </Text>
+        </Box>
         {showSlider ? (
           <Flex
             data-subcomponent="PostDetails/VoteControls"
