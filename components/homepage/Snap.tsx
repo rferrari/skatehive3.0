@@ -35,11 +35,12 @@ import { getPostDate } from "@/lib/utils/GetPostDate";
 import useHiveAccount from "@/hooks/useHiveAccount";
 import VideoRenderer from "../layout/VideoRenderer";
 import SnapComposer from "./SnapComposer";
+import VoteSlider from "../shared/VoteSlider";
 import { FaLink } from "react-icons/fa6";
 import useHivePower from "@/hooks/useHivePower";
 import VoteListPopover from "@/components/blog/VoteListModal";
 import { fetchComments } from "@/lib/hive/fetchComments";
-import { separateContent } from "@/utils/snapUtils";
+import { separateContent } from "@/lib/utils/snapUtils";
 
 
 const renderMedia = (mediaContent: string) => {
@@ -166,38 +167,10 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
     ) || false
   );
 
-  function handleHeartClick() {
-    setShowSlider(!showSlider);
-  }
-
   function handleConversation() {
     if (setConversation) {
       setConversation(discussion);
     }
-  }
-
-  async function handleVote() {
-    const vote = await aioha.vote(
-      discussion.author,
-      discussion.permlink,
-      sliderValue * 100
-    );
-    if (vote.success) {
-      setVoted(true);
-      setActiveVotes([...activeVotes, { voter: user }]);
-      // Estimate the value and optimistically update payout
-      if (estimateVoteValue) {
-        try {
-          const estimatedValue = await estimateVoteValue(sliderValue);
-          setRewardAmount((prev) =>
-            parseFloat((prev + estimatedValue).toFixed(3))
-          );
-        } catch (e) {
-          // fallback: do not update payout
-        }
-      }
-    }
-    handleHeartClick();
   }
 
   const handleSharePost = async () => {
@@ -339,89 +312,27 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
           <Box>{renderedMedia}</Box>
         </Box>
 
-        {showSlider ? (
-          <Flex mt={4} alignItems="center">
-            <Box width="100%" mr={2}>
-              <Slider
-                aria-label="slider-ex-1"
-                min={0}
-                max={100}
-                value={sliderValue}
-                onChange={(val) => setSliderValue(val)}
-              >
-                <SliderTrack
-                  bg="gray.700"
-                  height="8px"
-                  boxShadow="0 0 10px rgba(255, 255, 0, 0.8)"
-                >
-                  <SliderFilledTrack bgGradient="linear(to-r, green.400, limegreen, red.400)" />
-                </SliderTrack>
-                <SliderThumb
-                  boxSize="30px"
-                  bg="transparent"
-                  boxShadow={"none"}
-                  _focus={{ boxShadow: "none" }}
-                  zIndex={1}
-                >
-                  <Image
-                    src="/images/spitfire.png"
-                    alt="thumb"
-                    w="100%"
-                    h="auto"
-                    mr={2}
-                    mb={1}
-                  />
-                </SliderThumb>
-              </Slider>
-            </Box>
-            <Button
-              size="xs"
-              onClick={handleVote}
-              ml={2}
-              className="pulse-green"
-            >
-              &nbsp;&nbsp;&nbsp;Vote {sliderValue} %&nbsp;&nbsp;&nbsp;
-            </Button>
-            <Button size="xs" onClick={handleHeartClick} ml={2}>
-              X
-            </Button>
-          </Flex>
-        ) : (
+        {!showSlider && (
           <HStack justify="center" spacing={8} mt={3}>
-            <HStack>
-              <Tooltip label="upvote" hasArrow openDelay={1000}>
-                <Button
-                  leftIcon={
-                    <LuArrowUpRight
-                      size={24}
-                      color={voted ? undefined : "rgb(75, 72, 72)"}
-                      style={{ opacity: voted ? 1 : 0.5 }}
-                    />
-                  }
-                  variant="ghost"
-                  onClick={handleHeartClick}
-                  size="sm"
-                  p={2}
-                  _hover={{ bg: "gray.700", borderRadius: "full" }}
-                />
-              </Tooltip>
-              <VoteListPopover
-                trigger={
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    ml={1}
-                    p={1}
-                    _hover={{ textDecoration: "underline" }}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {uniqueVotes.length}
-                  </Button>
+            <VoteSlider
+              discussion={discussion}
+              voted={voted}
+              setVoted={setVoted}
+              activeVotes={activeVotes}
+              setActiveVotes={setActiveVotes}
+              showSlider={showSlider}
+              setShowSlider={setShowSlider}
+              onVoteSuccess={(estimatedValue) => {
+                if (estimatedValue) {
+                  setRewardAmount((prev) =>
+                    parseFloat((prev + estimatedValue).toFixed(3))
+                  );
                 }
-                votes={activeVotes}
-                post={discussion}
-              />
-            </HStack>
+              }}
+              estimateVoteValue={estimateVoteValue}
+              variant="feed"
+              size="sm"
+            />
             <HStack>
               <Tooltip label="comments" hasArrow openDelay={1000}>
                 <Button
@@ -493,6 +404,28 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
               </Popover>
             </Tooltip>
           </HStack>
+        )}
+
+        {showSlider && (
+          <VoteSlider
+            discussion={discussion}
+            voted={voted}
+            setVoted={setVoted}
+            activeVotes={activeVotes}
+            setActiveVotes={setActiveVotes}
+            showSlider={showSlider}
+            setShowSlider={setShowSlider}
+            onVoteSuccess={(estimatedValue) => {
+              if (estimatedValue) {
+                setRewardAmount((prev) =>
+                  parseFloat((prev + estimatedValue).toFixed(3))
+                );
+              }
+            }}
+            estimateVoteValue={estimateVoteValue}
+            variant="feed"
+            size="sm"
+          />
         )}
         {inlineComposerStates[discussion.permlink] && (
           <Box mt={2}>

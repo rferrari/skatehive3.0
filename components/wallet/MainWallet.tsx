@@ -12,12 +12,15 @@ import {
   Heading,
   VStack,
   Flex,
+  Tabs,
+  TabList,
+  TabPanels,
+  Tab,
+  TabPanel,
 } from "@chakra-ui/react";
 import { convertVestToHive } from "@/lib/hive/client-functions";
 import { extractNumber } from "@/lib/utils/extractNumber";
 import WalletModal from "@/components/wallet/WalletModal";
-import { useTheme } from "../../app/themeProvider";
-import ConnectButton from "../wallet/ConnectButton";
 import ConnectModal from "../wallet/ConnectModal";
 import { Asset } from "@hiveio/dhive";
 import HivePowerSection from "./HivePowerSection";
@@ -26,6 +29,8 @@ import HBDSection from "./HBDSection";
 import MarketPrices from "./MarketPrices";
 import SwapSection from "./SwapSection";
 import EthereumAssetsSection from "./EthereumAssetsSection";
+import NFTSection from "./NFTSection";
+import WalletSummary from "./WalletSummary";
 
 interface MainWalletProps {
   username: string;
@@ -105,6 +110,13 @@ export default function MainWallet({ username }: MainWalletProps) {
     onOpen();
   };
 
+  const handleConnectHive = () => {
+    // TODO: Implement Hive connection logic
+    // This could open a modal to enter username or connect via Keychain
+    // For now, we could redirect to a login page or show a modal
+    alert("Hive connection coming soon! For now, the app uses the URL username parameter.");
+  };
+
   const onConfirm = async (
     amount: number,
     direction?: "HIVE_TO_HBD" | "HBD_TO_HIVE",
@@ -177,6 +189,23 @@ export default function MainWallet({ username }: MainWalletProps) {
     ? String(extractNumber(assetToString(hiveAccount.savings_hbd_balance)))
     : "N/A";
 
+  // Calculate total Hive assets value in USD
+  const calculateTotalHiveAssetsValue = () => {
+    if (!hivePrice || !hbdPrice) return 0;
+
+    const hiveBalance = parseFloat(balance === "N/A" ? "0" : balance);
+    const hivePowerBalance = parseFloat(hivePower || "0");
+    const hbdLiquidBalance = parseFloat(hbdBalance === "N/A" ? "0" : hbdBalance);
+    const hbdSavingsBalanceNum = parseFloat(hbdSavingsBalance === "N/A" ? "0" : hbdSavingsBalance);
+
+    const totalHiveValue = (hiveBalance + hivePowerBalance) * hivePrice;
+    const totalHbdValue = (hbdLiquidBalance + hbdSavingsBalanceNum) * hbdPrice;
+
+    return totalHiveValue + totalHbdValue;
+  };
+
+  const totalHiveAssetsValue = calculateTotalHiveAssetsValue();
+
   return (
     <>
       <Box w="100%" maxW="100vw" overflowX="hidden">
@@ -188,7 +217,7 @@ export default function MainWallet({ username }: MainWalletProps) {
           px={{ base: 0, md: 0 }}
           height={{ md: "100%" }}
         >
-          {/* Left: Wallet Balances and Actions */}
+          {/* Left: Tabbed Wallet Interface */}
           <Box
             p={{ base: 2, sm: 3, md: 4 }}
             border="none"
@@ -197,39 +226,105 @@ export default function MainWallet({ username }: MainWalletProps) {
             boxShadow="none"
             display="flex"
             flexDirection="column"
-            justifyContent="space-between"
             height="100%"
             minW={0}
           >
-            <Flex align="center" justify="space-between" mb={6} wrap="wrap">
-              <Heading as="h2" size="lg" fontFamily="Joystix" color="primary" fontSize={{ base: "md", sm: "lg", md: "xl" }}>
-                Skatehive Wallet
-              </Heading>
-              <Box mt={{ base: 2, md: 0 }}>
-                <ConnectButton onOpen={openConnectModal} />
-                <ConnectModal
-                  isOpen={isConnectModalOpen}
-                  onClose={closeConnectModal}
-                />
-              </Box>
-            </Flex>
+            <Tabs variant="soft-rounded" colorScheme="blue" size="md" flex={1}>
+              <TabList mb={4} bg="background" p={1} borderRadius="lg">
+                <Tab
+                  _selected={{ bg: "primary", color: "background" }}
+                  _hover={{ bg: "primary", opacity: 0.8 }}
+                  fontWeight="bold"
+                  fontSize={{ base: "sm", md: "md" }}
+                  flex={1}
+                >
+                  💰 Wallet
+                </Tab>
+                <Tab
+                  _selected={{ bg: "primary", color: "background" }}
+                  _hover={{ bg: "primary", opacity: 0.8 }}
+                  fontWeight="bold"
+                  fontSize={{ base: "sm", md: "md" }}
+                  flex={1}
+                >
+                  🏦 SkateBank
+                </Tab>
+              </TabList>
 
-            <Box w="100%" display="flex" flexDirection="column" gap={3} mb={0}>
-              <HivePowerSection
-                hivePower={hivePower}
-                onModalOpen={handleModalOpen}
-              />
-              <HiveSection balance={balance} onModalOpen={handleModalOpen} />
-              <HBDSection
-                hbdBalance={hbdBalance}
-                hbdSavingsBalance={hbdSavingsBalance}
-                estimatedClaimableInterest={estimatedClaimableInterest}
-                daysUntilClaim={daysUntilClaim}
-                lastInterestPayment={lastInterestPayment}
-                onModalOpen={handleModalOpen}
-                onClaimInterest={handleClaimHbdInterest}
-              />
-            </Box>
+              <TabPanels flex={1}>
+                {/* Wallet Tab - Token Information */}
+                <TabPanel p={0}>
+                  <Box w="100%" display="flex" flexDirection="column" gap={3} p={2}>
+                    <HivePowerSection
+                      hivePower={hivePower}
+                      hivePrice={hivePrice}
+                      onModalOpen={handleModalOpen}
+                    />
+                    <HiveSection
+                      balance={balance}
+                      hivePrice={hivePrice}
+                      onModalOpen={handleModalOpen}
+                    />
+                    <HBDSection
+                      hbdBalance={hbdBalance}
+                      hbdSavingsBalance="0.000" // Only show liquid HBD in wallet tab
+                      hbdPrice={hbdPrice}
+                      estimatedClaimableInterest={0}
+                      daysUntilClaim={0}
+                      lastInterestPayment={lastInterestPayment}
+                      onModalOpen={handleModalOpen}
+                      onClaimInterest={handleClaimHbdInterest}
+                      isWalletView={true}
+                    />
+                  </Box>
+                  {/* Ethereum Assets Section - Outside tabs */}
+                  {isConnected && <EthereumAssetsSection />}
+                  {/* NFT Section - Outside tabs */}
+                  {isConnected && <NFTSection />}
+                </TabPanel>
+
+                {/* SkateBank Tab - Investment Options */}
+                <TabPanel p={0}>
+                  <VStack spacing={4} align="stretch">
+                    <Box>
+                      <Heading size="md" mb={3} color="primary" fontFamily="Joystix">
+                        💎 Investment Portfolio
+                      </Heading>
+                      <Text fontSize="sm" color="text" mb={4}>
+                        Grow your tokens with SkateHive&apos;s investment options. Earn passive income and build your skateboarding empire!
+                      </Text>
+                    </Box>
+
+                    {/* HBD Savings Investment */}
+                    <Box
+                      p={4}
+                      bg="background"
+                      borderRadius="lg"
+                      border="1px solid"
+                      borderColor="muted"
+                    >
+                      <Heading size="sm" mb={2} color="primary">
+                        🏛️ Dollar Savings (15% APR)
+                      </Heading>
+                      <Text fontSize="sm" color="text" mb={3}>
+                        Earn guaranteed 15% annual interest on your Dollar Savings. Perfect for long-term hodlers!
+                      </Text>
+                      <HBDSection
+                        hbdBalance={hbdBalance}
+                        hbdSavingsBalance={hbdSavingsBalance}
+                        hbdPrice={hbdPrice}
+                        estimatedClaimableInterest={estimatedClaimableInterest}
+                        daysUntilClaim={daysUntilClaim}
+                        lastInterestPayment={lastInterestPayment}
+                        onModalOpen={handleModalOpen}
+                        onClaimInterest={handleClaimHbdInterest}
+                        isBankView={true}
+                      />
+                    </Box>
+                  </VStack>
+                </TabPanel>
+              </TabPanels>
+            </Tabs>
           </Box>
 
           {/* Right: Market Stats and Swap */}
@@ -244,6 +339,17 @@ export default function MainWallet({ username }: MainWalletProps) {
             justifyContent="flex-start"
             minW={0}
           >
+            <WalletSummary
+              hiveUsername={username}
+              totalHiveValue={totalHiveAssetsValue}
+              isPriceLoading={isPriceLoading}
+              onConnectEthereum={openConnectModal}
+              onConnectHive={handleConnectHive}
+            />
+            <ConnectModal
+              isOpen={isConnectModalOpen}
+              onClose={closeConnectModal}
+            />
             <MarketPrices
               hivePrice={hivePrice}
               hbdPrice={hbdPrice}
@@ -252,6 +358,8 @@ export default function MainWallet({ username }: MainWalletProps) {
             <SwapSection onModalOpen={handleModalOpen} />
           </VStack>
         </Grid>
+
+
 
         {modalContent && (
           <WalletModal
@@ -265,8 +373,6 @@ export default function MainWallet({ username }: MainWalletProps) {
           />
         )}
       </Box>
-
-      {isConnected && <EthereumAssetsSection />}
     </>
   );
 }

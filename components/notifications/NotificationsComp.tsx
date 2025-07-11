@@ -1,10 +1,9 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { fetchNewNotifications, getLastReadNotificationDate } from '@/lib/hive/client-functions';
-import { Box, Text, Stack, Spinner, Button, HStack, Tabs, TabList, TabPanels, Tab, TabPanel, Center, Flex, Select, Skeleton, SkeletonText, SkeletonCircle } from '@chakra-ui/react';
+import { useState } from 'react';
+import { Box, Text, Stack, Button, HStack, Tabs, TabList, TabPanels, Tab, TabPanel, Center, Flex, Select, Skeleton, SkeletonText, SkeletonCircle } from '@chakra-ui/react';
 import { useAioha } from '@aioha/react-ui';
 import { KeyTypes } from '@aioha/aioha';
-import { Notifications } from '@hiveio/dhive';
+import { useNotifications } from '@/contexts/NotificationContext';
 import NotificationItem from './NotificationItem';
 
 interface NotificationCompProps {
@@ -13,31 +12,8 @@ interface NotificationCompProps {
 
 export default function NotificationsComp({ username }: NotificationCompProps) {
   const { user, aioha } = useAioha();
-  const [notifications, setNotifications] = useState<Notifications[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [lastReadDate, setLastReadDate] = useState<string>('1970-01-01T00:00:00Z');
+  const { notifications, isLoading, lastReadDate, refreshNotifications, markNotificationsAsRead } = useNotifications();
   const [filter, setFilter] = useState<string>('all');
-
-  useEffect(() => {
-    const loadNotifications = async () => {
-      if (user) {
-        try {
-          setIsLoading(true);
-          const newNotifications = await fetchNewNotifications(username);
-          const lastRead = await getLastReadNotificationDate(username);
-
-          setNotifications(newNotifications);
-          setLastReadDate(lastRead);
-        } catch (error) {
-          console.error("Failed to fetch notifications:", error);
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    loadNotifications();
-  }, [user, username]);
 
   async function handleMarkAsRead() {
     const now = new Date().toISOString();
@@ -50,7 +26,10 @@ export default function NotificationsComp({ username }: NotificationCompProps) {
         json: json,
       }]
     ], KeyTypes.Posting);
-    setLastReadDate(now);
+    // Update the context with the new read date
+    markNotificationsAsRead();
+    // Refresh notifications to get the latest state
+    await refreshNotifications();
   };
 
   // Sort notifications by date descending

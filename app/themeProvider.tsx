@@ -71,12 +71,19 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
         localStorage.setItem('theme', newThemeName);
     };
 
-    // Extended theme with consistent dark mode
+    // Extended theme with consistent dark mode and custom fonts
     const extendedTheme = extendTheme({
         ...theme,
         config: {
             initialColorMode: 'dark',
             useSystemColorMode: false,
+        },
+        fonts: {
+            ...theme.fonts,
+            // Add Joystix as a custom font family that can be used with fontFamily="Joystix"
+            Joystix: "'Joystix', 'VT323', 'Fira Mono', monospace",
+            Mechanical: "'Mechanical', sans-serif",
+            Tarrget3D: "'Tarrget3D', sans-serif",
         },
         styles: {
             global: {

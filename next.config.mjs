@@ -62,6 +62,12 @@ const nextConfig = {
                 destination: '/post/:author/:permlink',
                 permanent: true,
             }
+            ,
+            {
+                source: '/post/hive-173115/@:author/:permlink',
+                destination: '/post/:author/:permlink',
+                permanent: true,
+            }
         ];
     },
 }

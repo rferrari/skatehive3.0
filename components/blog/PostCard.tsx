@@ -233,6 +233,8 @@ export default function PostCard({
       /https?:\/\/[\w\-._~:/?#[\]@!$&'()*+,;=%]+/g,
       ""
     );
+    // Remove HTML tags
+    summarySource = summarySource.replace(/<[^>]+>/g, "");
   }
   // For listView, do not slice to a char limit; let noOfLines handle truncation
   const summary = summarySource
@@ -267,60 +269,89 @@ export default function PostCard({
   if (listView) {
     return (
       <Box
-        borderBottom="1px solid"
-        borderColor="muted"
         overflow="hidden"
         height="200px"
         display="flex"
         flexDirection="row"
         bg="background"
-        borderRadius="md"
-        boxShadow="sm"
+        border={"1px solid"}
+        borderColor="primary"
       >
-        {/* Thumbnail and icons */}
-        <Flex
-          direction="column"
+        {/* Thumbnail */}
+        <Box
           w="160px"
           h="100%"
           flexShrink={0}
+          display="flex"
           alignItems="center"
-          justifyContent="flex-start"
+          justifyContent="center"
           bg="muted"
-          py={2}
         >
-          <Box
-            w="160px"
-            h="160px"
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-          >
-            {imageUrls.length > 0 ? (
-              <Image
-                src={imageUrls[0]}
-                alt={title}
-                borderRadius="base"
-                objectFit="cover"
-                w="100%"
-                h="100%"
-                loading="lazy"
-                onError={handleImageError}
-              />
-            ) : (
-              <Image
-                src={default_thumbnail}
-                alt="default thumbnail"
-                borderRadius="base"
-                objectFit="cover"
-                w="100%"
-                h="100%"
-                loading="lazy"
-                onError={handleImageError}
-              />
-            )}
+          {imageUrls.length > 0 ? (
+            <Image
+              src={imageUrls[0]}
+              alt={title}
+              borderRadius="base"
+              objectFit="cover"
+              w="100%"
+              h="100%"
+              loading="lazy"
+              onError={handleImageError}
+            />
+          ) : (
+            <Image
+              src={default_thumbnail}
+              alt="default thumbnail"
+              borderRadius="base"
+              objectFit="cover"
+              w="100%"
+              h="100%"
+              loading="lazy"
+              onError={handleImageError}
+            />
+          )}
+        </Box>
+        {/* Content */}
+        <Flex direction="column" flex={1} p={4} minW={0}>
+          <Box flex={1} overflow="hidden">
+            <Link
+              href={`/post/${author}/${post.permlink}`}
+              _hover={{ textDecoration: "underline" }}
+            >
+              <Text
+                fontWeight="bold"
+                fontSize={listView ? "xl" : "lg"}
+                mb={1}
+                isTruncated={false}
+                whiteSpace="normal"
+                wordBreak="break-word"
+                noOfLines={2}
+              >
+                {title}
+              </Text>
+            </Link>
+            <Text fontSize="xs" color="gray.500" mb={2} textAlign="right">
+              {postDate}
+            </Text>
+            <Text
+              fontSize="sm"
+              color="gray.400"
+              mb={2}
+              noOfLines={3}
+              overflow="hidden"
+              textOverflow="ellipsis"
+            >
+              {summary}
+            </Text>
           </Box>
-          {/* Icons below thumbnail */}
-          <Flex alignItems="center" gap={4} mt={2}>
+          {/* Horizontal buttons at bottom right - always visible */}
+          <Flex
+            alignItems="center"
+            justifyContent="flex-end"
+            gap={4}
+            mt={2}
+            flexShrink={0}
+          >
             <Flex alignItems="center">
               <Icon
                 as={LuArrowUpRight}
@@ -398,42 +429,12 @@ export default function PostCard({
               </PopoverContent>
             </Popover>
             <Flex alignItems="center">
-              <Icon as={FaComment} />
+              <Icon as={FaComment} boxSize={4} />
               <Text ml={1} fontSize="sm">
                 {post.children}
               </Text>
             </Flex>
           </Flex>
-        </Flex>
-        {/* Content */}
-        <Flex direction="column" flex={1} p={4} justify="center" minW={0}>
-          <Link
-            href={`/post/${author}/${post.permlink}`}
-            _hover={{ textDecoration: "underline" }}
-          >
-            <Text
-              fontWeight="bold"
-              fontSize={listView ? "xl" : "lg"}
-              mb={1}
-              isTruncated={false}
-              whiteSpace="normal"
-              wordBreak="break-word"
-              noOfLines={2}
-            >
-              {title}
-            </Text>
-          </Link>
-          <Text fontSize="xs" color="gray.500" mb={2} textAlign="right">
-            {postDate}
-          </Text>
-          <Text
-            fontSize="sm"
-            color="gray.400"
-            mb={2}
-            noOfLines={listView ? 3 : 5}
-          >
-            {summary}
-          </Text>
         </Flex>
       </Box>
     );

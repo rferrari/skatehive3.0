@@ -2,13 +2,13 @@ export async function GET() {
   const appUrl =
     process.env.NEXT_PUBLIC_NODE_ENV === 'development'
       ? 'http://localhost:3000'
-      : 'https://my.skatehive.app'; 
-  
+      : 'https://skatehive.app';
+
   const config = {
     accountAssociation: {
-      header: "eyJmaWQiOjIwNzIxLCJ0eXBlIjoiY3VzdG9keSIsImtleSI6IjB4MzVmNzA2QjY5NGFjZjllNjYxMGM3NjhiMjFDRjdiNWI4QWZhMzQ3RSJ9",
-      payload: "eyJkb21haW4iOiJteS5za2F0ZWhpdmUuYXBwIn0", 
-      signature: "MHg1MDcxYTNmZDFmMjhiMDEwY2JhYzRhM2FmNGU1NmUxZGFkYjYxMmI3OGM0OGNlMWUxZDMyN2M5YTU0ZWIxYmJkNDFkYmFhZTRhMzAyMmFmYTgyMjA5ZDY4OWUxM2JkMzU1YTU2MmUxNTkwMjUyNWFlMzI5OWRmMmZkYjdkOGQwOTFj"
+      header: "eyJmaWQiOjIwNzIxLCJ0eXBlIjoiYXV0aCIsImtleSI6IjB4MmQxODgyMzA0YzlBNkZhN0Y5ODdDMUI0MWM5ZkQ1RThDRjA1MTZlMiJ9",
+      payload: "eyJkb21haW4iOiJza2F0ZWhpdmUuYXBwIn0",
+      signature: "Who5bMkXiJ0h5b9eE5R0+gipGNRkRh/szPmanokuuwIeIhMer5QFkuhEvNWRfvGOf5gPn5vMzTUtfy7lGMrm9Rw="
     },
     frame: {
       version: '1',
@@ -20,6 +20,21 @@ export async function GET() {
       iconUrl: `https://ipfs.skatehive.app/ipfs/QmXTZqirogp735AaPFcpzAjmwS57mPYsJhktJMuRuSV5Rm`,
       splashImageUrl: `https://ipfs.skatehive.app/ipfs/QmXTZqirogp735AaPFcpzAjmwS57mPYsJhktJMuRuSV5Rm`,
       splashBackgroundColor: '#000000',
+      subtitle: 'Skateboarding Social Network',
+      description: 'Connect with skaters worldwide, share your tricks, and build the skateboarding community on Web3',
+      screenshotUrls: [
+        `${appUrl}/screenshots/home.png`,
+        `${appUrl}/screenshots/feed.png`,
+        `${appUrl}/screenshots/profile.png`
+      ],
+      primaryCategory: 'social',
+      tags: ['skateboarding', 'social', 'web3', 'community', 'dao'],
+      heroImageUrl: `${appUrl}/opengraph-image.png`, // TODO: Create custom hero image (1200x630px)
+      tagline: 'Skateboarding meets Web3',
+      ogTitle: 'SkateHive Web3 Skateboarding',
+      ogDescription: 'Join the global skateboarding community on Web3. Share tricks and earn rewards.',
+      ogImageUrl: `${appUrl}/opengraph-image.png`,
+      castShareUrl: `${appUrl}/share`
     },
   };
 

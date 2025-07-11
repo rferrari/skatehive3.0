@@ -1,23 +1,23 @@
 import React, { useState } from 'react';
-import { Box, Menu, MenuButton, MenuList, MenuItem } from "@chakra-ui/react";
+import { Box, Menu, MenuButton, MenuList, MenuItem, Text, HStack, IconButton, Image } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
 import { useAioha } from "@aioha/react-ui";
 import { useRive, useStateMachineInput } from "@rive-app/react-canvas";
 import { AiohaModal } from "@aioha/react-ui";
 import { KeyTypes } from "@aioha/aioha";
 import { useTheme } from '../../app/themeProvider';
+import { useNotifications } from '@/contexts/NotificationContext';
+import { HamburgerIcon } from '@chakra-ui/icons';
 
-// Modular Rive Button
-const FooterNavButton = ({ src, onClick, badge, themeValue }: { src: string, onClick?: () => void, badge?: number, themeValue: number | undefined }) => {
+// Modular Rive Button for Menu Items
+const MenuRiveButton = ({ src, themeValue }: { src: string, themeValue: number | undefined }) => {
   const STATE_MACHINE_NAME = "ButtonStateMachine";
-  const TRIGGER_NAME = "click";
   const THEME_INPUT_NAME = "theme";
   const { rive, RiveComponent } = useRive({
     src,
     stateMachines: STATE_MACHINE_NAME,
     autoplay: true,
   });
-  const clickInput = useStateMachineInput(rive, STATE_MACHINE_NAME, TRIGGER_NAME);
   const themeInput = useStateMachineInput(rive, STATE_MACHINE_NAME, THEME_INPUT_NAME);
 
   React.useEffect(() => {
@@ -29,39 +29,30 @@ const FooterNavButton = ({ src, onClick, badge, themeValue }: { src: string, onC
     ) {
       themeInput.value = themeValue;
     }
-    // else: do nothing, as required
   }, [themeInput, themeValue]);
 
   return (
-    <Box position="relative" display="inline-block" cursor="pointer" mx={0.5} onClick={() => { clickInput && clickInput.fire(); onClick && onClick(); }}>
-      <RiveComponent style={{ width: 36, height: 36 }} />
-      {!!badge && badge > 0 && (
-        <Box
-          as="span"
-          position="absolute"
-          top={0}
-          right={0}
-          bg="red.500"
-          color="white"
-          borderRadius="full"
-          fontSize="xs"
-          px={2}
-          py={0.5}
-          zIndex={1}
-        >
-          {badge}
-        </Box>
-      )}
+    <Box display="inline-block">
+      <RiveComponent style={{ width: 24, height: 24 }} />
     </Box>
   );
 };
 
-export default function FooterNavButtons({ newNotificationCount = 0 }: { newNotificationCount?: number }) {
+export default function FooterNavButtons() {
   const router = useRouter();
   const { user } = useAioha();
-  const [menuOpen, setMenuOpen] = useState(false);
   const [modalDisplayed, setModalDisplayed] = useState(false);
   const { themeName } = useTheme();
+
+  // Safely get notification count with fallback
+  let newNotificationCount = 0;
+  try {
+    const notificationContext = useNotifications();
+    newNotificationCount = notificationContext.newNotificationCount;
+  } catch (error) {
+    // Context not available yet, use default value
+    newNotificationCount = 0;
+  }
 
   // Map themeName to Rive theme value
   const themeToRiveValue: Record<string, number> = {
@@ -75,57 +66,130 @@ export default function FooterNavButtons({ newNotificationCount = 0 }: { newNoti
 
   const themeValue = themeToRiveValue[themeName];
 
-  // Placeholder logout function
-  const handleLogout = () => {
-    // TODO: Replace with actual logout logic
-    alert("Logged out!");
-  };
+  // Navigation items with their routes and names
+  const navigationItems = [
+    { src: "/buttons/home.riv", onClick: () => router.push("/"), name: "Home" },
+    { src: "/buttons/blog.riv", onClick: () => router.push("/blog"), name: "Blog" },
+    { src: "/buttons/leaderboard.riv", onClick: () => router.push("/leaderboard"), name: "Leaderboard" },
+    { src: "/buttons/map.riv", onClick: () => router.push("/skatespots"), name: "Skate Spots" },
+    { src: "/buttons/bounties.riv", onClick: () => router.push("/bounties"), name: "Bounties" },
+    {
+      src: "/buttons/notif.riv",
+      onClick: () => router.push("/notifications"),
+      name: "Notifications",
+      badge: newNotificationCount
+    },
+    { src: "/buttons/wallet.riv", onClick: () => router.push("/wallet"), name: "Wallet" },
+    {
+      src: "/buttons/profile.riv",
+      onClick: () => {
+        if (user) {
+          router.push(`/user/${user}?view=grid`);
+        } else {
+          setModalDisplayed(true);
+        }
+      },
+      name: "Profile"
+    },
+  ];
 
   return (
     <>
       <Box
-        as="nav"
         position="fixed"
-        bottom="0"
-        left="0"
-        right="0"
-        bg="background"
-        p={0}
-        borderTop="1px solid"
-        borderColor="primary"
-        display={{ base: "flex", md: "none" }}
-        justifyContent="center"
+        bottom="20px"
+        right="20px"
         zIndex="999"
-        height="40px"
-        m={0}
-        mb={0}
-        pb={0}
+        display={{ base: "block", md: "none" }}
       >
-        <Box display="flex" flexDirection="row" justifyContent="center" alignItems="center" p={0}>
-          {[
-            { src: "/buttons/home.riv", onClick: () => router.push("/") },
-            { src: "/buttons/blog.riv", onClick: () => router.push("/blog") },
-            { src: "/buttons/leaderboard.riv", onClick: () => router.push("/leaderboard") },
-            { src: "/buttons/map.riv", onClick: () => router.push("/skatespots") },
-            { src: "/buttons/bounties.riv", onClick: () => router.push("/bounties") },
-            { src: "/buttons/notif.riv", onClick: () => router.push("/notifications"), badge: newNotificationCount },
-            { src: "/buttons/wallet.riv", onClick: () => router.push("/wallet") },
-            {
-              src: "/buttons/profile.riv",
-              onClick: () => {
-                if (user) {
-                  router.push(`/user/${user}?view=grid`);
-                } else {
-                  setModalDisplayed(true);
-                }
-              }
-            },
-          ].map((btn, idx) => (
-            <Box key={btn.src} marginLeft={idx === 0 ? 0 : "5px"} zIndex={idx} position="relative">
-              <FooterNavButton src={btn.src} onClick={btn.onClick} badge={btn.badge} themeValue={themeValue} />
-            </Box>
-          ))}
-        </Box>
+        <Menu placement="top-end">
+          <MenuButton
+            as={IconButton}
+            aria-label="Navigation Menu"
+            icon={<Image src="/logos/SKATE_HIVE_CIRCLE.svg" alt="SkateHive Navigation Menu" />}
+            bg="primary"
+            color="background"
+            borderRadius="full"
+            size="xl"
+            boxShadow="0 0 4px 4px var(--chakra-colors-primary)" // Glow shadow
+            _hover={{
+              bg: "primary",
+              transform: "scale(1.10)",
+              boxShadow: "0 0 32px 16px var(--chakra-colors-primary)", // Stronger glow on hover
+            }}
+            _active={{ bg: "primary" }}
+            position="relative"
+            minW="64px"
+            minH="64px"
+            sx={{
+              animation: "glowPump 2.2s infinite",
+              "@keyframes glowPump": {
+                "0%": { boxShadow: "0 0 2px 2px var(--chakra-colors-primary)" },
+                "50%": { boxShadow: "0 0 4px 4px var(--chakra-colors-primary)" },
+                "100%": { boxShadow: "0 0 2px 2px var(--chakra-colors-primary)" },
+              },
+            }}
+          >
+            {newNotificationCount > 0 && (
+              <Box
+                position="absolute"
+                top="-8px"
+                right="-8px"
+                bg="red.500"
+                color="white"
+                borderRadius="full"
+                fontSize="md"
+                minW="28px"
+                h="28px"
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+                fontWeight="bold"
+              >
+                {newNotificationCount}
+              </Box>
+            )}
+          </MenuButton>
+          <MenuList
+            bg="background"
+            border="1px solid"
+            borderColor="primary"
+            boxShadow="xl"
+            maxH="400px"
+            overflowY="auto"
+          >
+            {navigationItems.map((item, index) => (
+              <MenuItem
+                key={index}
+                onClick={item.onClick}
+                _hover={{ bg: "muted", color: "secondary" }}
+                display="flex"
+                alignItems="center"
+                position="relative"
+                color="primary"
+                bg={"background"}
+              >
+                <HStack spacing={3} w="full">
+                  <MenuRiveButton src={item.src} themeValue={themeValue} />
+                  <Text fontWeight="medium">{item.name}</Text>
+                  {item.badge && item.badge > 0 && (
+                    <Box
+                      bg="red.500"
+                      color="white"
+                      borderRadius="full"
+                      fontSize="xs"
+                      px={2}
+                      py={0.5}
+                      ml="auto"
+                    >
+                      {item.badge}
+                    </Box>
+                  )}
+                </HStack>
+              </MenuItem>
+            ))}
+          </MenuList>
+        </Menu>
       </Box>
       <AiohaModal
         displayed={modalDisplayed}
@@ -134,7 +198,7 @@ export default function FooterNavButtons({ newNotificationCount = 0 }: { newNoti
           keyType: KeyTypes.Posting,
           loginTitle: "Login",
         }}
-        onLogin={() => {}}
+        onLogin={() => { }}
         onClose={() => setModalDisplayed(false)}
       />
     </>

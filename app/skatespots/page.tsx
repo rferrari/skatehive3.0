@@ -18,10 +18,10 @@ export const metadata: Metadata = {
     title: "Skate Map | Global Skatespot Finder",
     description:
       "Explore skateparks and street spots submitted by skaters worldwide.",
-    url: "https://my.skatehive.app/map",
+    url: "https://skatehive.app/map",
     images: [
       {
-        url: "https://my.skatehive.app/og-map.png",
+        url: "https://skatehive.app/og-map.png",
         width: 1200,
         height: 630,
         alt: "Skatehive Map Open Graph Image",
@@ -35,10 +35,10 @@ export const metadata: Metadata = {
     title: "Skate Map | Global Skatespot Finder",
     description:
       "Explore skateparks and street spots submitted by skaters worldwide.",
-    images: ["https://my.skatehive.app/og-map.png"],
+    images: ["https://skatehive.app/og-map.png"],
   },
   alternates: {
-    canonical: "https://my.skatehive.app/map",
+    canonical: "https://skatehive.app/map",
   },
 };
 

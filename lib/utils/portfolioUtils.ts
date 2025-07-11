@@ -1,4 +1,4 @@
-import { TokenDetail } from "../types/portfolio";
+import { TokenDetail } from "../../types/portfolio";
 
 export const formatBalance = (balance: number): string => {
   return balance.toFixed(4).replace(/\.?0+$/, "");
@@ -20,7 +20,7 @@ export const formatPrice = (price: number | undefined | null): string => {
 
 export const formatMarketCap = (marketCap: number | string | undefined | null): string => {
   let numericMarketCap: number;
-  
+
   if (typeof marketCap === "string") {
     numericMarketCap = parseFloat(marketCap);
   } else if (typeof marketCap === "number") {
@@ -28,11 +28,11 @@ export const formatMarketCap = (marketCap: number | string | undefined | null): 
   } else {
     return "N/A";
   }
-  
+
   if (isNaN(numericMarketCap)) {
     return "N/A";
   }
-  
+
   if (numericMarketCap >= 1000000000) {
     return `$${(numericMarketCap / 1000000000).toFixed(2)}B`;
   } else if (numericMarketCap >= 1000000) {
@@ -66,8 +66,95 @@ export const getNetworkTotal = (tokens: TokenDetail[]): number => {
   );
 };
 
-// Remove hardcoded logos since they're being denied access
-// const HARDCODED_LOGOS: Record<string, string> = { ... };
+// New consolidated token interface
+export interface ConsolidatedToken {
+  symbol: string;
+  name: string;
+  totalBalanceUSD: number;
+  chains: TokenDetail[];
+  primaryChain: TokenDetail; // The chain with the highest balance
+}
+
+// Group tokens by symbol and consolidate across chains
+export const consolidateTokensBySymbol = (
+  tokens: TokenDetail[] | undefined
+): ConsolidatedToken[] => {
+  if (!tokens || tokens.length === 0) return [];
+
+  const tokenGroups: Record<string, TokenDetail[]> = {};
+
+  // Group tokens by symbol
+  tokens.forEach((tokenDetail) => {
+    const symbol = tokenDetail.token.symbol.toLowerCase();
+    if (!tokenGroups[symbol]) {
+      tokenGroups[symbol] = [];
+    }
+    tokenGroups[symbol].push(tokenDetail);
+  });
+
+  // Convert groups to ConsolidatedToken objects
+  return Object.entries(tokenGroups).map(([symbol, tokenDetails]) => {
+    // Calculate total balance across all chains
+    const totalBalanceUSD = tokenDetails.reduce(
+      (sum, token) => sum + (token.token.balanceUSD || 0),
+      0
+    );
+
+    // Find primary chain (highest balance)
+    const primaryChain = tokenDetails.reduce((primary, current) => {
+      return (current.token.balanceUSD || 0) > (primary.token.balanceUSD || 0)
+        ? current
+        : primary;
+    });
+
+    // Sort chains by balance (highest first)
+    const sortedChains = [...tokenDetails].sort(
+      (a, b) => (b.token.balanceUSD || 0) - (a.token.balanceUSD || 0)
+    );
+
+    return {
+      symbol: primaryChain.token.symbol,
+      name: primaryChain.token.name,
+      totalBalanceUSD,
+      chains: sortedChains,
+      primaryChain,
+    };
+  });
+};
+
+// Filter consolidated tokens by balance, but always include HIGHER token
+export const filterConsolidatedTokensByBalance = (
+  consolidatedTokens: ConsolidatedToken[],
+  hideSmallBalances: boolean,
+  minThreshold: number = 1
+): ConsolidatedToken[] => {
+  if (!hideSmallBalances) return consolidatedTokens;
+
+  return consolidatedTokens.filter(
+    (token) => token.totalBalanceUSD >= minThreshold || token.symbol.toLowerCase() === 'higher'
+  );
+};
+
+// Sort consolidated tokens by total balance, with HIGHER token always first
+export const sortConsolidatedTokensByBalance = (
+  consolidatedTokens: ConsolidatedToken[]
+): ConsolidatedToken[] => {
+  const sorted = [...consolidatedTokens].sort(
+    (a, b) => b.totalBalanceUSD - a.totalBalanceUSD
+  );
+
+  // Find HIGHER token and move it to first position
+  const higherIndex = sorted.findIndex(
+    token => token.symbol.toLowerCase() === 'higher'
+  );
+
+  if (higherIndex > 0) {
+    const higherToken = sorted.splice(higherIndex, 1)[0];
+    sorted.unshift(higherToken);
+  }
+
+  return sorted;
+};
 
 // GeckoTerminal API types
 export interface GeckoTokenAttribute {
@@ -160,13 +247,13 @@ const isTokenBlacklisted = (cacheKey: string): boolean => {
   const failures = failureCount.get(cacheKey) || 0;
   const lastFailure = lastFailureTime.get(cacheKey) || 0;
   const now = Date.now();
-  
+
   // If max failures reached and not enough time has passed, blacklist
   if (failures >= MAX_FAILURES_PER_TOKEN) {
     const backoffTime = FAILURE_CACHE_DURATION * Math.pow(EXPONENTIAL_BACKOFF_BASE, failures - MAX_FAILURES_PER_TOKEN);
     return (now - lastFailure) < backoffTime;
   }
-  
+
   return false;
 };
 
@@ -187,24 +274,24 @@ export async function fetchTokenData(
   networkName: string,
 ): Promise<GeckoTokenAttribute | null> {
   const cacheKey = `${networkName}-${tokenAddress}`;
-  
+
   // Check if globally rate limited
   if (globalRateLimited && Date.now() < globalRateLimitExpiry) {
     console.log(`🚫 Globally rate limited, skipping ${cacheKey}`);
     return null;
   }
-  
+
   // Check if token is blacklisted due to repeated failures
   if (isTokenBlacklisted(cacheKey)) {
     console.log(`🚫 Token blacklisted due to repeated failures: ${cacheKey}`);
     return null;
   }
-  
+
   // Check cache first
   const now = Date.now();
   const cachedData = tokenDataCache.get(cacheKey);
   const cacheTime = cacheExpiry.get(cacheKey);
-  
+
   if (cachedData !== undefined && cacheTime && now - cacheTime < CACHE_DURATION) {
     return cachedData;
   }
@@ -225,7 +312,7 @@ export async function fetchTokenData(
   const requestPromise = (async () => {
     try {
       activeRequests++;
-      
+
       // Enhanced throttling
       const timeSinceLastRequest = now - lastRequestTime;
       if (timeSinceLastRequest < REQUEST_DELAY) {
@@ -246,10 +333,10 @@ export async function fetchTokenData(
       if (!response.ok) {
         if (response.status === 429) {
           console.log(`⏰ Rate limited for ${cacheKey}`);
-          // Set global rate limit
+          // Set global rate limit for longer duration
           globalRateLimited = true;
-          globalRateLimitExpiry = Date.now() + 5 * 60 * 1000; // 5 minutes
-          
+          globalRateLimitExpiry = Date.now() + 15 * 60 * 1000; // 15 minutes instead of 5
+
           incrementFailureCount(cacheKey);
           tokenDataCache.set(cacheKey, null);
           cacheExpiry.set(cacheKey, Date.now() + FAILURE_CACHE_DURATION);
@@ -318,11 +405,11 @@ export async function fetchTokenData(
         market_cap_usd: marketCap,
         priceChange,
       };
-      
+
       // Cache the result
       tokenDataCache.set(cacheKey, enhancedToken);
       cacheExpiry.set(cacheKey, Date.now());
-      
+
       return enhancedToken;
     } catch (error) {
       console.error(`💥 Error fetching token data for ${cacheKey}:`, error);
@@ -347,36 +434,49 @@ export const filterTokensByBalance = (
   minMarketCap?: number
 ): TokenDetail[] => {
   let filteredTokens = tokens;
-  
+
   if (hideSmallBalances) {
     filteredTokens = filteredTokens.filter(
       (token) => (token.token.balanceUSD || 0) >= minThreshold
     );
   }
-  
+
+  // Don't try to fetch if globally rate limited - this prevents the infinite loop
+  if (globalRateLimited && Date.now() < globalRateLimitExpiry) {
+    console.log(`🚫 Globally rate limited, skipping all fetches until ${new Date(globalRateLimitExpiry).toLocaleTimeString()}`);
+    return filteredTokens;
+  }
+
   // Only fetch data for tokens that don't have cached data, aren't blacklisted, and limit batch size
   const tokensNeedingFetch = filteredTokens
     .filter(token => {
       const cacheKey = `${token.network}-${token.token.address}`;
       const cachedData = tokenDataCache.get(cacheKey);
       const cacheTime = cacheExpiry.get(cacheKey);
-      
-      // Don't fetch if blacklisted or globally rate limited
-      if (isTokenBlacklisted(cacheKey) || (globalRateLimited && Date.now() < globalRateLimitExpiry)) {
+
+      // Don't fetch if blacklisted
+      if (isTokenBlacklisted(cacheKey)) {
         return false;
       }
-      
+
       // Check if cache is expired or doesn't exist
       return !cachedData || !cacheTime || (Date.now() - cacheTime > CACHE_DURATION);
     })
     .slice(0, 1); // Reduce to 1 token at a time to be very gentle
-  
-  if (tokensNeedingFetch.length > 0 && !globalRateLimited) {
+
+  // Only fetch if we're not rate limited and there are tokens to fetch
+  if (tokensNeedingFetch.length > 0) {
     console.log(`🔍 Fetching data for ${tokensNeedingFetch.length} token (limited batch)`);
-    
+
     // Only fetch one at a time with longer delays
     tokensNeedingFetch.forEach((token, index) => {
       setTimeout(() => {
+        // Double-check rate limit before making the request
+        if (globalRateLimited && Date.now() < globalRateLimitExpiry) {
+          console.log(`🚫 Rate limit check: skipping ${token.token.symbol}`);
+          return;
+        }
+
         fetchTokenData(token.token.address, null, token.network)
           .then(result => {
             if (result) {
@@ -387,10 +487,10 @@ export const filterTokensByBalance = (
           .catch(error => {
             console.log(`⚠️ Could not fetch data for ${token.token.symbol}: ${error.message}`);
           });
-      }, index * 2000); // Increase delay to 2 seconds between requests
+      }, index * 3000); // Increase delay to 3 seconds between requests
     });
   }
-  
+
   return filteredTokens;
 };
 
@@ -408,10 +508,18 @@ const notifyLogoUpdates = () => {
 
 // Function to preload token logos for better UX - more conservative approach
 export const preloadTokenLogos = async (tokens: TokenDetail[]): Promise<void> => {
-  // Only preload a few high-value tokens to avoid hitting rate limits immediately
-  const tokensToFetch = tokens
-    .sort((a, b) => (b.token.balanceUSD || 0) - (a.token.balanceUSD || 0)) // Sort by balance
-    .slice(0, 5); // Only preload top 5 tokens
+  // Always include HIGHER token for special handling
+  const higherToken = tokens.find(t => t.token.symbol.toLowerCase() === "higher");
+
+  // Get top 5 tokens by balance
+  const topTokens = tokens
+    .sort((a, b) => (b.token.balanceUSD || 0) - (a.token.balanceUSD || 0))
+    .slice(0, 5);
+
+  // Combine HIGHER token with top tokens, removing duplicates
+  const tokensToFetch = higherToken
+    ? [higherToken, ...topTokens.filter(t => t.token.address !== higherToken.token.address)].slice(0, 6)
+    : topTokens;
 
   for (let i = 0; i < tokensToFetch.length; i++) {
     const tokenDetail = tokensToFetch[i];
@@ -449,62 +557,62 @@ export const getEnhancedTokenData = (tokenDetail: TokenDetail): {
 } => {
   const cacheKey = `${tokenDetail.network}-${tokenDetail.token.address}`;
   const cachedData = tokenDataCache.get(cacheKey);
-  
-  const marketCap = tokenDetail.token.marketCap || 
+
+  const marketCap = tokenDetail.token.marketCap ||
     (cachedData?.market_cap_usd ? parseFloat(cachedData.market_cap_usd) : null);
-  
-  const priceChange = (tokenDetail.token as any).priceChange || 
+
+  const priceChange = (tokenDetail.token as any).priceChange ||
     (cachedData?.priceChange ? parseFloat(cachedData.priceChange) : null);
-  
+
   return { marketCap, priceChange };
 };
 
 
 export const getTokenLogoSync = (
-    token: any, 
-    networkInfo: any, 
-    networkName: string
-  ): string | null => {
-    const cacheKey = `${networkName}-${token.address}`;
-    const cachedData = tokenDataCache.get(cacheKey);
-    
-    if (cachedData?.image_url && cachedData.image_url !== "missing.png") {
-      return cachedData.image_url;
+  token: any,
+  networkInfo: any,
+  networkName: string
+): string | null => {
+  const cacheKey = `${networkName}-${token.address}`;
+  const cachedData = tokenDataCache.get(cacheKey);
+
+  if (cachedData?.image_url && cachedData.image_url !== "missing.png") {
+    return cachedData.image_url;
+  }
+
+  if (token.image_url && token.image_url !== "missing.png") {
+    return token.image_url;
+  }
+
+  if (networkInfo?.logo) {
+    return networkInfo.logo;
+  }
+
+  return null;
+};
+
+export const forceRefreshTokenData = async (tokens: TokenDetail[]): Promise<void> => {
+  console.log('🔄 Force refreshing token data...');
+
+  tokenDataCache.clear();
+  cacheExpiry.clear();
+  failureCount.clear();
+  lastFailureTime.clear();
+  globalRateLimited = false;
+  globalRateLimitExpiry = 0;
+
+  const promises = tokens.map(async (tokenDetail, index) => {
+    await new Promise(resolve => setTimeout(resolve, index * 300));
+
+    const result = await fetchTokenData(tokenDetail.token.address, null, tokenDetail.network);
+    if (result) {
+      console.log(`✅ Refreshed data for ${tokenDetail.token.symbol}`);
     }
-  
-    if (token.image_url && token.image_url !== "missing.png") {
-      return token.image_url;
-    }
-  
-    if (networkInfo?.logo) {
-      return networkInfo.logo;
-    }
-    
-    return null;
-  };
-  
-  export const forceRefreshTokenData = async (tokens: TokenDetail[]): Promise<void> => {
-    console.log('🔄 Force refreshing token data...');
-    
-    tokenDataCache.clear();
-    cacheExpiry.clear();
-    failureCount.clear();
-    lastFailureTime.clear();
-    globalRateLimited = false;
-    globalRateLimitExpiry = 0;
-    
-    const promises = tokens.map(async (tokenDetail, index) => {
-      await new Promise(resolve => setTimeout(resolve, index * 300));
-      
-      const result = await fetchTokenData(tokenDetail.token.address, null, tokenDetail.network);
-      if (result) {
-        console.log(`✅ Refreshed data for ${tokenDetail.token.symbol}`);
-      }
-      return result;
-    });
-    
-    await Promise.allSettled(promises);
-    
-    notifyLogoUpdates();
-    console.log('🔄 Force refresh completed');
-  };
+    return result;
+  });
+
+  await Promise.allSettled(promises);
+
+  notifyLogoUpdates();
+  console.log('🔄 Force refresh completed');
+};
