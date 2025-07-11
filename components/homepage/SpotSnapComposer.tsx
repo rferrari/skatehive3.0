@@ -19,7 +19,7 @@ import { CloseIcon } from "@chakra-ui/icons";
 import { FaImage } from "react-icons/fa";
 import { Discussion } from "@hiveio/dhive";
 import { getFileSignature, uploadImage } from "@/lib/hive/client-functions";
-import ImageCompressor, { ImageCompressorRef } from "@/utils/ImageCompressor";
+import ImageCompressor, { ImageCompressorRef } from "@/lib/utils/ImageCompressor";
 import MatrixOverlay from "../graphics/MatrixOverlay";
 import imageCompression from "browser-image-compression";
 
@@ -102,8 +102,7 @@ export default function SpotSnapComposer({
       const imageMarkup = validUrls
         .map(
           (url: string | null, idx: number) =>
-            `![${compressedImages[idx]?.caption || spotName}](${
-              url?.toString() || ""
+            `![${compressedImages[idx]?.caption || spotName}](${url?.toString() || ""
             })`
         )
         .join("\n");
@@ -182,7 +181,7 @@ export default function SpotSnapComposer({
         } catch (err) {
           alert(
             "Error compressing image: " +
-              (err instanceof Error ? err.message : err)
+            (err instanceof Error ? err.message : err)
           );
         }
       } else {

@@ -28,7 +28,7 @@ import {
 } from "wagmi";
 import { parseUnits, isAddress } from "viem";
 import { TokenDetail } from "../../types/portfolio";
-import { formatBalance } from "../../utils/portfolioUtils";
+import { formatBalance } from "../../lib/utils/portfolioUtils";
 
 interface SendTokenModalProps {
   isOpen: boolean;

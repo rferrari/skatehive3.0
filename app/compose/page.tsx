@@ -9,7 +9,7 @@ import {
   Spinner,
   Box,
 } from "@chakra-ui/react";
-import ImageCompressor, { ImageCompressorRef } from "@/utils/ImageCompressor";
+import ImageCompressor, { ImageCompressorRef } from "@/lib/utils/ImageCompressor";
 import VideoUploader, {
   VideoUploaderRef,
 } from "../../components/homepage/VideoUploader";
@@ -228,9 +228,9 @@ export default function Composer() {
         >
           Thumbnail
         </Button>
-        <Button 
-          size="sm" 
-          colorScheme="blue" 
+        <Button
+          size="sm"
+          colorScheme="blue"
           onClick={handleSubmit}
           isLoading={isSubmitting}
           loadingText="Publishing..."

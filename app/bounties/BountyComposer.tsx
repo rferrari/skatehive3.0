@@ -16,7 +16,7 @@ import {
 } from "@chakra-ui/react";
 import { useAioha } from "@aioha/react-ui";
 import { Discussion } from "@hiveio/dhive";
-import ImageCompressor, { ImageCompressorRef } from "@/utils/ImageCompressor";
+import ImageCompressor, { ImageCompressorRef } from "@/lib/utils/ImageCompressor";
 import VideoUploader, {
   VideoUploaderRef,
 } from "@/components/homepage/VideoUploader";
@@ -209,7 +209,7 @@ export default function BountyComposer({
         } catch (err) {
           alert(
             "Error compressing image: " +
-              (err instanceof Error ? err.message : err)
+            (err instanceof Error ? err.message : err)
           );
         }
       } else if (file.type.startsWith("video/")) {

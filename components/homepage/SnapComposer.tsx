@@ -24,8 +24,8 @@ import {
 } from "@/lib/hive/client-functions";
 import { FaVideo } from "react-icons/fa6";
 import { FaTimes } from "react-icons/fa";
-import ImageCompressor from "@/utils/ImageCompressor";
-import { ImageCompressorRef } from "@/utils/ImageCompressor";
+import ImageCompressor from "@/lib/utils/ImageCompressor";
+import { ImageCompressorRef } from "@/lib/utils/ImageCompressor";
 import MatrixOverlay from "../graphics/MatrixOverlay";
 import imageCompression from "browser-image-compression";
 

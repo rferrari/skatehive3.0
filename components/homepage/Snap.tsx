@@ -40,7 +40,7 @@ import { FaLink } from "react-icons/fa6";
 import useHivePower from "@/hooks/useHivePower";
 import VoteListPopover from "@/components/blog/VoteListModal";
 import { fetchComments } from "@/lib/hive/fetchComments";
-import { separateContent } from "@/utils/snapUtils";
+import { separateContent } from "@/lib/utils/snapUtils";
 
 
 const renderMedia = (mediaContent: string) => {

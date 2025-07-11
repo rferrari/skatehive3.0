@@ -1,7 +1,7 @@
 import { Auction, fetchAuction } from '@/services/auction';
-import AUCTION_ABI from '@/utils/abis/auction';
-import { DAO_ADDRESSES } from '@/utils/constants';
-import { getConfig } from '@/utils/wagmi';
+import AUCTION_ABI from '@/lib/utils/abis/auction';
+import { DAO_ADDRESSES } from '@/lib/utils/constants';
+import { getConfig } from '@/lib/utils/wagmi';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { readContract } from 'wagmi/actions';

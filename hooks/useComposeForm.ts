@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@chakra-ui/react";
 import { useAioha } from "@aioha/react-ui";
-import { generatePermlink, prepareImageArray, insertAtCursor } from "@/utils/composeUtils";
+import { generatePermlink, prepareImageArray, insertAtCursor } from "@/lib/utils/composeUtils";
 
 export const useComposeForm = () => {
     const [markdown, setMarkdown] = useState("");
@@ -119,7 +119,7 @@ export const useComposeForm = () => {
             }
         } catch (error: any) {
             console.error("Failed to submit post:", error);
-            
+
             // Check if the error is due to user cancellation
             if (error?.message?.includes("canceled") || error?.message?.includes("rejected")) {
                 toast({

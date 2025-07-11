@@ -1,4 +1,4 @@
-import { noCacheApolloClient } from '@/utils/apollo';
+import { noCacheApolloClient } from '@/lib/utils/apollo';
 import { gql } from '@apollo/client';
 import { Address } from 'viem';
 

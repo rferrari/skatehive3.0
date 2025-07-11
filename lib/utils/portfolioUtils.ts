@@ -1,4 +1,4 @@
-import { TokenDetail } from "../types/portfolio";
+import { TokenDetail } from "../../types/portfolio";
 
 export const formatBalance = (balance: number): string => {
   return balance.toFixed(4).replace(/\.?0+$/, "");
@@ -20,7 +20,7 @@ export const formatPrice = (price: number | undefined | null): string => {
 
 export const formatMarketCap = (marketCap: number | string | undefined | null): string => {
   let numericMarketCap: number;
-  
+
   if (typeof marketCap === "string") {
     numericMarketCap = parseFloat(marketCap);
   } else if (typeof marketCap === "number") {
@@ -28,11 +28,11 @@ export const formatMarketCap = (marketCap: number | string | undefined | null): 
   } else {
     return "N/A";
   }
-  
+
   if (isNaN(numericMarketCap)) {
     return "N/A";
   }
-  
+
   if (numericMarketCap >= 1000000000) {
     return `$${(numericMarketCap / 1000000000).toFixed(2)}B`;
   } else if (numericMarketCap >= 1000000) {
@@ -160,13 +160,13 @@ const isTokenBlacklisted = (cacheKey: string): boolean => {
   const failures = failureCount.get(cacheKey) || 0;
   const lastFailure = lastFailureTime.get(cacheKey) || 0;
   const now = Date.now();
-  
+
   // If max failures reached and not enough time has passed, blacklist
   if (failures >= MAX_FAILURES_PER_TOKEN) {
     const backoffTime = FAILURE_CACHE_DURATION * Math.pow(EXPONENTIAL_BACKOFF_BASE, failures - MAX_FAILURES_PER_TOKEN);
     return (now - lastFailure) < backoffTime;
   }
-  
+
   return false;
 };
 
@@ -187,24 +187,24 @@ export async function fetchTokenData(
   networkName: string,
 ): Promise<GeckoTokenAttribute | null> {
   const cacheKey = `${networkName}-${tokenAddress}`;
-  
+
   // Check if globally rate limited
   if (globalRateLimited && Date.now() < globalRateLimitExpiry) {
     console.log(`🚫 Globally rate limited, skipping ${cacheKey}`);
     return null;
   }
-  
+
   // Check if token is blacklisted due to repeated failures
   if (isTokenBlacklisted(cacheKey)) {
     console.log(`🚫 Token blacklisted due to repeated failures: ${cacheKey}`);
     return null;
   }
-  
+
   // Check cache first
   const now = Date.now();
   const cachedData = tokenDataCache.get(cacheKey);
   const cacheTime = cacheExpiry.get(cacheKey);
-  
+
   if (cachedData !== undefined && cacheTime && now - cacheTime < CACHE_DURATION) {
     return cachedData;
   }
@@ -225,7 +225,7 @@ export async function fetchTokenData(
   const requestPromise = (async () => {
     try {
       activeRequests++;
-      
+
       // Enhanced throttling
       const timeSinceLastRequest = now - lastRequestTime;
       if (timeSinceLastRequest < REQUEST_DELAY) {
@@ -249,7 +249,7 @@ export async function fetchTokenData(
           // Set global rate limit
           globalRateLimited = true;
           globalRateLimitExpiry = Date.now() + 5 * 60 * 1000; // 5 minutes
-          
+
           incrementFailureCount(cacheKey);
           tokenDataCache.set(cacheKey, null);
           cacheExpiry.set(cacheKey, Date.now() + FAILURE_CACHE_DURATION);
@@ -318,11 +318,11 @@ export async function fetchTokenData(
         market_cap_usd: marketCap,
         priceChange,
       };
-      
+
       // Cache the result
       tokenDataCache.set(cacheKey, enhancedToken);
       cacheExpiry.set(cacheKey, Date.now());
-      
+
       return enhancedToken;
     } catch (error) {
       console.error(`💥 Error fetching token data for ${cacheKey}:`, error);
@@ -347,33 +347,33 @@ export const filterTokensByBalance = (
   minMarketCap?: number
 ): TokenDetail[] => {
   let filteredTokens = tokens;
-  
+
   if (hideSmallBalances) {
     filteredTokens = filteredTokens.filter(
       (token) => (token.token.balanceUSD || 0) >= minThreshold
     );
   }
-  
+
   // Only fetch data for tokens that don't have cached data, aren't blacklisted, and limit batch size
   const tokensNeedingFetch = filteredTokens
     .filter(token => {
       const cacheKey = `${token.network}-${token.token.address}`;
       const cachedData = tokenDataCache.get(cacheKey);
       const cacheTime = cacheExpiry.get(cacheKey);
-      
+
       // Don't fetch if blacklisted or globally rate limited
       if (isTokenBlacklisted(cacheKey) || (globalRateLimited && Date.now() < globalRateLimitExpiry)) {
         return false;
       }
-      
+
       // Check if cache is expired or doesn't exist
       return !cachedData || !cacheTime || (Date.now() - cacheTime > CACHE_DURATION);
     })
     .slice(0, 1); // Reduce to 1 token at a time to be very gentle
-  
+
   if (tokensNeedingFetch.length > 0 && !globalRateLimited) {
     console.log(`🔍 Fetching data for ${tokensNeedingFetch.length} token (limited batch)`);
-    
+
     // Only fetch one at a time with longer delays
     tokensNeedingFetch.forEach((token, index) => {
       setTimeout(() => {
@@ -390,7 +390,7 @@ export const filterTokensByBalance = (
       }, index * 2000); // Increase delay to 2 seconds between requests
     });
   }
-  
+
   return filteredTokens;
 };
 
@@ -449,62 +449,62 @@ export const getEnhancedTokenData = (tokenDetail: TokenDetail): {
 } => {
   const cacheKey = `${tokenDetail.network}-${tokenDetail.token.address}`;
   const cachedData = tokenDataCache.get(cacheKey);
-  
-  const marketCap = tokenDetail.token.marketCap || 
+
+  const marketCap = tokenDetail.token.marketCap ||
     (cachedData?.market_cap_usd ? parseFloat(cachedData.market_cap_usd) : null);
-  
-  const priceChange = (tokenDetail.token as any).priceChange || 
+
+  const priceChange = (tokenDetail.token as any).priceChange ||
     (cachedData?.priceChange ? parseFloat(cachedData.priceChange) : null);
-  
+
   return { marketCap, priceChange };
 };
 
 
 export const getTokenLogoSync = (
-    token: any, 
-    networkInfo: any, 
-    networkName: string
-  ): string | null => {
-    const cacheKey = `${networkName}-${token.address}`;
-    const cachedData = tokenDataCache.get(cacheKey);
-    
-    if (cachedData?.image_url && cachedData.image_url !== "missing.png") {
-      return cachedData.image_url;
+  token: any,
+  networkInfo: any,
+  networkName: string
+): string | null => {
+  const cacheKey = `${networkName}-${token.address}`;
+  const cachedData = tokenDataCache.get(cacheKey);
+
+  if (cachedData?.image_url && cachedData.image_url !== "missing.png") {
+    return cachedData.image_url;
+  }
+
+  if (token.image_url && token.image_url !== "missing.png") {
+    return token.image_url;
+  }
+
+  if (networkInfo?.logo) {
+    return networkInfo.logo;
+  }
+
+  return null;
+};
+
+export const forceRefreshTokenData = async (tokens: TokenDetail[]): Promise<void> => {
+  console.log('🔄 Force refreshing token data...');
+
+  tokenDataCache.clear();
+  cacheExpiry.clear();
+  failureCount.clear();
+  lastFailureTime.clear();
+  globalRateLimited = false;
+  globalRateLimitExpiry = 0;
+
+  const promises = tokens.map(async (tokenDetail, index) => {
+    await new Promise(resolve => setTimeout(resolve, index * 300));
+
+    const result = await fetchTokenData(tokenDetail.token.address, null, tokenDetail.network);
+    if (result) {
+      console.log(`✅ Refreshed data for ${tokenDetail.token.symbol}`);
     }
-  
-    if (token.image_url && token.image_url !== "missing.png") {
-      return token.image_url;
-    }
-  
-    if (networkInfo?.logo) {
-      return networkInfo.logo;
-    }
-    
-    return null;
-  };
-  
-  export const forceRefreshTokenData = async (tokens: TokenDetail[]): Promise<void> => {
-    console.log('🔄 Force refreshing token data...');
-    
-    tokenDataCache.clear();
-    cacheExpiry.clear();
-    failureCount.clear();
-    lastFailureTime.clear();
-    globalRateLimited = false;
-    globalRateLimitExpiry = 0;
-    
-    const promises = tokens.map(async (tokenDetail, index) => {
-      await new Promise(resolve => setTimeout(resolve, index * 300));
-      
-      const result = await fetchTokenData(tokenDetail.token.address, null, tokenDetail.network);
-      if (result) {
-        console.log(`✅ Refreshed data for ${tokenDetail.token.symbol}`);
-      }
-      return result;
-    });
-    
-    await Promise.allSettled(promises);
-    
-    notifyLogoUpdates();
-    console.log('🔄 Force refresh completed');
-  };
+    return result;
+  });
+
+  await Promise.allSettled(promises);
+
+  notifyLogoUpdates();
+  console.log('🔄 Force refresh completed');
+};

@@ -46,7 +46,7 @@ import {
   preloadTokenLogos,
   subscribeToLogoUpdates,
   forceRefreshTokenData,
-} from "../../utils/portfolioUtils";
+} from "../../lib/utils/portfolioUtils";
 import SendTokenModal from "./SendTokenModal";
 
 export default function EthereumAssetsSection() {
