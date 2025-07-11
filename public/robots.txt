@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://my.skatehive.app/sitemap.xml
+Sitemap: https://skatehive.app/sitemap.xml

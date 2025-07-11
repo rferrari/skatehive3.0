@@ -4,8 +4,8 @@ import { cleanUsername } from "@/lib/utils/cleanUsername";
 import { Metadata } from "next";
 
 // Constants
-const DOMAIN_URL = "https://my.skatehive.app";
-const FALLBACK_IMAGE = "https://my.skatehive.app/ogimage.png";
+const DOMAIN_URL = "https://skatehive.app";
+const FALLBACK_IMAGE = "https://skatehive.app/ogimage.png";
 
 // Function to safely parse JSON metadata that might be double-encoded
 function parseJsonMetadata(
@@ -158,9 +158,9 @@ export async function generateMetadata({
     const images = post.body ? post.body.match(/!\[.*?\]\((.*?)\)/g) : [];
     const imageUrls = images
       ? images.map((img: string) => {
-          const match = img.match(/\((.*?)\)/);
-          return match ? match[1] : "";
-        })
+        const match = img.match(/\((.*?)\)/);
+        return match ? match[1] : "";
+      })
       : [];
 
     // Parse JSON metadata for additional images

@@ -43,7 +43,7 @@ async function getLeaderboardData(): Promise<SkaterData[]> {
 // Generate podium image URL with top 3 skaters
 function generatePodiumImageUrl(top3: SkaterData[]): string {
   const baseUrl =
-    process.env.NEXT_PUBLIC_BASE_URL || "https://my.skatehive.app";
+    process.env.NEXT_PUBLIC_BASE_URL || "https://skatehive.app";
   const avatarUrls = top3
     .map(
       (skater) =>
@@ -90,9 +90,8 @@ export async function generateMetadata(): Promise<Metadata> {
       : "Discover the top performers in the Skatehive community. View rankings based on HIVE power, posts, NFTs, and community contributions.";
 
   return {
-    title: `Skatehive Leaderboard | Top Skaters - ${
-      top3[0]?.hive_author || "Champions"
-    } Leading`,
+    title: `Skatehive Leaderboard | Top Skaters - ${top3[0]?.hive_author || "Champions"
+      } Leading`,
     description: dynamicDescription,
     keywords: [
       "skatehive",
@@ -104,9 +103,8 @@ export async function generateMetadata(): Promise<Metadata> {
       ...top3.map((skater) => skater.hive_author),
     ],
     openGraph: {
-      title: `🏆 Skatehive Leaderboard - ${
-        top3[0]?.hive_author || "Champions"
-      } on Top!`,
+      title: `🏆 Skatehive Leaderboard - ${top3[0]?.hive_author || "Champions"
+        } on Top!`,
       description: dynamicDescription,
       type: "website",
       images: [
@@ -120,9 +118,8 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     twitter: {
       card: "summary_large_image",
-      title: `🏆 Skatehive Leaderboard - ${
-        top3[0]?.hive_author || "Champions"
-      } Leading!`,
+      title: `🏆 Skatehive Leaderboard - ${top3[0]?.hive_author || "Champions"
+        } Leading!`,
       description: dynamicDescription,
       images: [podiumImageUrl],
     },

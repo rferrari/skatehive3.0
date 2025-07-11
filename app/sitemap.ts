@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next';
 import HiveClient from '@/lib/hive/hiveclient';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://my.skatehive.app';
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://skatehive.app';
 
     // Static pages with proper priorities
     const staticPages: MetadataRoute.Sitemap = [

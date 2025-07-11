@@ -14,7 +14,7 @@ const vt323 = VT323({
   variable: "--font-vt323",
 });
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://my.skatehive.app";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://skatehive.app";
 
 const frameObject = {
   version: "next",
