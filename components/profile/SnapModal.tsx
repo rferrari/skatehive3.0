@@ -95,27 +95,27 @@ const SnapModal = ({
     const currentMedia = allMedia[currentMediaIndex];
     const isVideo = currentSnap.media.videos.includes(currentMedia);
 
-    const nextMedia = () => {
+    const nextMedia = useCallback(() => {
         setCurrentMediaIndex((prev) => (prev + 1) % allMedia.length);
-    };
+    }, [allMedia.length]);
 
-    const prevMedia = () => {
+    const prevMedia = useCallback(() => {
         setCurrentMediaIndex((prev) =>
             (prev - 1 + allMedia.length) % allMedia.length
         );
-    };
+    }, [allMedia.length]);
 
-    const nextSnap = () => {
+    const nextSnap = useCallback(() => {
         if (snaps.length > 0 && currentSnapIndex >= 0 && currentSnapIndex < snaps.length - 1) {
             onSnapChange(currentSnapIndex + 1);
         }
-    };
+    }, [snaps.length, currentSnapIndex, onSnapChange]);
 
-    const prevSnap = () => {
+    const prevSnap = useCallback(() => {
         if (snaps.length > 0 && currentSnapIndex > 0 && currentSnapIndex < snaps.length) {
             onSnapChange(currentSnapIndex - 1);
         }
-    };
+    }, [snaps.length, currentSnapIndex, onSnapChange]);
 
     const handleNewComment = (newComment: Partial<Discussion>) => {
         setOptimisticComments((prev) => [newComment as Discussion, ...prev]);
@@ -191,13 +191,13 @@ const SnapModal = ({
             switch (event.key) {
                 case "ArrowLeft":
                     event.preventDefault();
-                    if (event.shiftKey) prevSnap();
-                    else if (allMedia.length > 1 && currentMediaIndex > 0) prevMedia();
+                    prevSnap();
+                    if (allMedia.length > 1 && currentMediaIndex > 0) prevMedia();
                     break;
                 case "ArrowRight":
                     event.preventDefault();
-                    if (event.shiftKey) nextSnap();
-                    else if (
+                    nextSnap();
+                    if (
                         allMedia.length > 1 &&
                         currentMediaIndex < allMedia.length - 1
                     )
@@ -220,7 +220,7 @@ const SnapModal = ({
 
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [isOpen, currentMediaIndex, allMedia.length, currentSnapIndex, snaps.length, onClose]);
+    }, [isOpen, currentMediaIndex, allMedia.length, nextMedia, nextSnap, prevMedia, prevSnap, onClose]);
 
     return (
         <Modal
