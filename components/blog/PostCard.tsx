@@ -274,7 +274,8 @@ export default function PostCard({
         display="flex"
         flexDirection="row"
         bg="background"
-        border={"1px solid limegreen"}
+        border={"1px solid"}
+        borderColor="primary"
       >
         {/* Thumbnail */}
         <Box
@@ -311,8 +312,8 @@ export default function PostCard({
           )}
         </Box>
         {/* Content */}
-        <Flex direction="column" flex={1} p={4} justify="space-between" minW={0}>
-          <Box>
+        <Flex direction="column" flex={1} p={4} minW={0}>
+          <Box flex={1} overflow="hidden">
             <Link
               href={`/post/${author}/${post.permlink}`}
               _hover={{ textDecoration: "underline" }}
@@ -336,16 +337,20 @@ export default function PostCard({
               fontSize="sm"
               color="gray.400"
               mb={2}
-              noOfLines={listView ? 3 : 5}
+              noOfLines={3}
+              overflow="hidden"
+              textOverflow="ellipsis"
             >
               {summary}
             </Text>
           </Box>
-          {/* Horizontal buttons at bottom right */}
+          {/* Horizontal buttons at bottom right - always visible */}
           <Flex
             alignItems="center"
             justifyContent="flex-end"
             gap={4}
+            mt={2}
+            flexShrink={0}
           >
             <Flex alignItems="center">
               <Icon
