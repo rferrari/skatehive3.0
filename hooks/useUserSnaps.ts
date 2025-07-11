@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import HiveClient from '@/lib/hive/hiveclient';
 import { Discussion } from '@hiveio/dhive';
 
 // Debug utility that only logs in development mode
