@@ -524,7 +524,8 @@ export default function BountyList({
             borderRadius="lg"
             boxShadow={{ base: '0 2px 8px rgba(0,0,0,0.10)', md: 'none' }}
             py={{ base: 0, md: 2 }}
-            px={{ base: 0, md: 4 }}
+            px={3}
+            pr={8}
             mb={{ base: 0, md: 0 }}
             mt={{ base: 0, md: 0 }}
             sx={{
@@ -533,8 +534,8 @@ export default function BountyList({
           >
             <option value="default">New</option>
             <option value="rewards">Rewards</option>
-            <option value="hot">Claims</option>
-            <option value="ending">Ending</option>
+            <option value="hot">Popular</option>
+            <option value="ending">Time</option>
           </Select>
         </Box>
       </Flex>

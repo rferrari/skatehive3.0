@@ -450,11 +450,9 @@ const BountySnap = ({
         >
           <PaperOutline
             stroke={theme.theme.colors.border || theme.theme.colors.accent || "#000"}
-            width="100%"
+            width="105%"
             height="100%"
-            verticalScale={1.08}
-            verticalOffset={-50}
-            style={{ display: "block", width: "100%", height: "100%" }}
+            style={{ display: "block", width: "105%", height: "100%", position: "absolute", left: "-2.5%", top: 0 }}
           />
         </Box>
       )}

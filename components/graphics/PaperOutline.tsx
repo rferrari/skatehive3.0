@@ -23,12 +23,12 @@ const PaperOutline: React.FC<PaperOutlineProps> = ({
     version="1.1"
     width={width}
     height={height}
-    viewBox="0 0 876 1273"
+    viewBox="4 4 868 1265"
     xmlns="http://www.w3.org/2000/svg"
     className={className}
     style={style}
   >
-    <g transform={`translate(0, ${verticalOffset}) scale(1, ${verticalScale})`}>
+    <g transform={`translate(0, ${verticalOffset}) scale(1.05, ${verticalScale}) translate(-20.7, -1)`}>
       <path
         style={{
           fill: "none",

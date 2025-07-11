@@ -168,7 +168,7 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
       }
       // Post a comment announcing the winners
       const winnersList = selectedWinners.map((w) => `@${w}`).join(", ");
-      const commentBody = `🏆 Bounty Winners! 🏆\n\nCongratulations to: ${winnersList}\n\nEach receives: ${rewardPerWinner} ${rewardInfo.currency}\n\nThank you for participating!`;
+      const commentBody = `🏆 Bounty Winners! 🏆\n\nCongratulations to: ${winnersList}\n\nReward: ${rewardPerWinner} ${rewardInfo.currency}\n\nThank you for participating!`;
       const permlink = `bounty-winners-${Date.now()}`;
       // Validation: ensure all required fields are present
       if (
@@ -188,26 +188,24 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
         setIsRewarding(false);
         return;
       }
-      const jsonMeta = { app: "skatehive-bounties/1.0" };
       const postObj = {
         username: String(hiveUser?.name),
-        title: "Bounty Winners!",
         body: commentBody,
-        parent_author: post.author,
+        parent_username: post.author,
         parent_perm: post.permlink,
         permlink,
-        json_metadata: JSON.stringify(jsonMeta) || '{}',
-        comment_options: JSON.stringify({
-          max_accepted_payout: "1000000.000 HBD",
-          percent_hbd: 10000,
-          allow_votes: true,
-          allow_curation_rewards: true,
-          extensions: [],
-        }),
+        json_metadata: JSON.stringify({}),
+        comment_options: '',
       };
-      console.log("Minimal postObj:", postObj);
-      console.log("parent_author:", postObj.parent_author);
-      console.log("parent_perm:", postObj.parent_perm);
+      console.log("Prepared minimal comment postObj:", postObj);
+      // Validate all fields are present and not undefined
+      for (const [key, value] of Object.entries(postObj)) {
+        if (value === undefined || value === null || value === "undefined") {
+          setRewardError(`Field ${key} is missing or undefined.`);
+          setIsRewarding(false);
+          return;
+        }
+      }
       try {
         const keychain = new KeychainSDK(window);
         const commentResult = await keychain.post(postObj);
@@ -226,7 +224,7 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
       // Only close the modal after success
       setTimeout(() => {
         onClose();
-      }, 1200);
+      }, 2000);
     } catch (err: any) {
       setRewardError(err.message || "Failed to reward bounty hunters.");
     } finally {
@@ -476,7 +474,7 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
             <Button colorScheme="orange" mr={3} isDisabled={selectedWinners.length === 0 || isRewarding} onClick={handleRewardBountyHunters} isLoading={isRewarding}>
               Reward Bounty Hunters
             </Button>
-            <Button variant="ghost" onClick={onClose} isDisabled={isRewarding}>Cancel</Button>
+            <Button variant="ghost" onClick={onClose} isDisabled={isRewarding}>Close</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
