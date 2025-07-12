@@ -33,6 +33,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid event in Farcaster payload' }, { status: 400 });
     }
 
+    // Verify Farcaster signature before processing
+    try {
+      const { verifyFarcasterSignature } = await import('@/lib/farcaster/token-store');
+      const isValid = await verifyFarcasterSignature({
+        header: body.header,
+        payload: body.payload,
+        signature: body.signature
+      });
+      if (!isValid) {
+        console.warn('[FARCASTER WEBHOOK] Invalid Farcaster signature:', body);
+        return NextResponse.json({ error: 'Invalid Farcaster signature' }, { status: 401 });
+      }
+    } catch (err) {
+      console.error('[FARCASTER WEBHOOK] Signature verification error:', err);
+      return NextResponse.json({ error: 'Signature verification error' }, { status: 500 });
+    }
+
     // Detailed logging for debugging webhook delivery
     console.log('[FARCASTER WEBHOOK] Received event:', {
       event: decodedPayload.event,

@@ -71,6 +71,9 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.79.2
         version: 5.79.2(react@18.3.1)
+      '@types/pg':
+        specifier: ^8.15.4
+        version: 8.15.4
       '@types/unist':
         specifier: ^3.0.3
         version: 3.0.3
@@ -1266,6 +1269,9 @@ packages:
 
   '@types/pg@8.11.6':
     resolution: {integrity: sha512-/2WmmBXHLsfRqzfHW7BNZ8SbYzE8OSk7i3WjFYvfgRHj7S1xj+16Je5fUKv3lVdVzk/zn9TXOqf+avFCFIE0yQ==}
+
+  '@types/pg@8.15.4':
+    resolution: {integrity: sha512-I6UNVBAoYbvuWkkU3oosC8yxqH21f4/Jc4DK71JLG3dT2mdlGe1z+ep/LQGXaKaOgcvUrsQoPRqfgtMcvZiJhg==}
 
   '@types/prismjs@1.26.5':
     resolution: {integrity: sha512-AUZTa7hQ2KY5L7AmtSiqxlhWxb4ina0yd8hNbl4TWuqnv/pFP0nDMb3YrfSBf4hJVGLh2YEIBfKaBW/9UEl6IQ==}
@@ -6639,6 +6645,12 @@ snapshots:
       '@types/node': 22.15.29
       pg-protocol: 1.10.3
       pg-types: 4.0.2
+
+  '@types/pg@8.15.4':
+    dependencies:
+      '@types/node': 22.15.29
+      pg-protocol: 1.10.3
+      pg-types: 2.2.0
 
   '@types/prismjs@1.26.5': {}
 

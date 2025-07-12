@@ -30,6 +30,7 @@
     "@paperclip-labs/whisk-sdk": "^0.1.1",
     "@rive-app/react-canvas": "^4.21.4",
     "@tanstack/react-query": "^5.79.2",
+    "@types/pg": "^8.15.4",
     "@types/unist": "^3.0.3",
     "@uiw/react-markdown-preview": "^5.1.4",
     "@uiw/react-md-editor": "^4.0.7",
