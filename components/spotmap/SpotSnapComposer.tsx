@@ -19,6 +19,7 @@ import { CloseIcon } from "@chakra-ui/icons";
 import { FaImage } from "react-icons/fa";
 import { Discussion } from "@hiveio/dhive";
 import { getFileSignature, uploadImage } from "@/lib/hive/client-functions";
+import { getLastSnapsContainer } from "@/lib/hive/client-functions";
 import ImageCompressor, { ImageCompressorRef } from "@/lib/utils/ImageCompressor";
 import MatrixOverlay from "../graphics/MatrixOverlay";
 import imageCompression from "browser-image-compression";
@@ -121,13 +122,17 @@ export default function SpotSnapComposer({
       commentBody += `\n\n${imageMarkup}`;
     }
     try {
+      // Get the current main snaps container
+      const container = await getLastSnapsContainer();
+      const parentAuthor = container.author;
+      const parentPermlink = container.permlink;
       const commentResponse = await aioha.comment(
-        "web-gnar",
-        "about-the-skatehive-spotbook",
+        parentAuthor,
+        parentPermlink,
         permlink,
         "",
         commentBody,
-        { app: "Skatehive App 3.0", tags: ["skatespot"] }
+        { app: "Skatehive App 3.0", tags: ["hive-173115", "skatespot"] }
       );
       if (commentResponse.success) {
         postBodyRef.current!.value = "";

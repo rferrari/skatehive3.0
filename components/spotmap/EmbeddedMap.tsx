@@ -12,6 +12,8 @@ import {
 import { Global } from "@emotion/react";
 import SpotSnapComposer from "@/components/spotmap/SpotSnapComposer";
 import SpotList from "@/components/spotmap/SpotList";
+import { useSnaps } from "@/hooks/useSnaps";
+import { useComments } from "@/hooks/useComments";
 import { Discussion } from "@hiveio/dhive";
 import { useAioha } from "@aioha/react-ui";
 
@@ -27,13 +29,27 @@ export default function EmbeddedMap() {
   });
   const paddingX = useBreakpointValue({ base: 2, sm: 4, md: 6 });
   const isMobile = useBreakpointValue({ base: true, md: false });
-  const [newSpot, setNewSpot] = useState<Discussion | null>(null);
+  const [newSpot, setNewSpot] = useState(null);
   const [composerKey, setComposerKey] = useState<number>(0);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const { user } = useAioha();
 
-  const handleNewComment = (comment: Partial<Discussion>) => {
-    setNewSpot(comment as Discussion);
+  const { comments: mainSnaps } = useSnaps();
+  // Only show snaps from the main container with BOTH skatespot and hive-173115 tags
+  const allSpots = mainSnaps
+    .filter(snap => {
+      try {
+        const tags = JSON.parse(snap.json_metadata || "{}" ).tags || [];
+        return tags.includes("skatespot") && tags.includes("hive-173115");
+      } catch {
+        return false;
+      }
+    })
+    .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime());
+
+  // Handler to accept Partial<Discussion> and cast to Discussion
+  const handleNewSpot = (newComment: Partial<Discussion>) => {
+    setNewSpot(newComment as any); // Optimistic update, safe for UI
   };
 
   const handleClose = () => {
@@ -186,11 +202,8 @@ export default function EmbeddedMap() {
               scrollbarWidth: "none",
             }}
           >
-            <SpotSnapComposer
-              onNewComment={handleNewComment}
-              onClose={handleClose}
-            />
-            <SpotList newSpot={newSpot} />
+            <SpotSnapComposer onNewComment={handleNewSpot} onClose={handleClose} />
+            <SpotList spots={allSpots} newSpot={newSpot} />
           </Box>
         </Flex>
       </Box>

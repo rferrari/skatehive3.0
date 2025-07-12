@@ -16,9 +16,10 @@ import Conversation from "@/components/homepage/Conversation";
 
 interface SpotListProps {
   newSpot?: Discussion | null;
+  spots?: Discussion[];
 }
 
-export default function SpotList({ newSpot }: SpotListProps) {
+export default function SpotList({ newSpot, spots }: SpotListProps) {
   const { comments, isLoading, error } = useComments(
     "web-gnar",
     "about-the-skatehive-spotbook",
@@ -31,20 +32,20 @@ export default function SpotList({ newSpot }: SpotListProps) {
 
   // Update displayed spots when comments or newSpot changes
   useEffect(() => {
-    let spots = [...comments];
+    let baseSpots = spots ? [...spots] : [...comments];
     if (newSpot) {
       // Prepend new spot if not already in the list
-      const exists = spots.some((c) => c.permlink === newSpot.permlink);
+      const exists = baseSpots.some((c) => c.permlink === newSpot.permlink);
       if (!exists) {
-        spots = [newSpot, ...spots];
+        baseSpots = [newSpot, ...baseSpots];
       }
     }
     // Sort by created date, newest first
-    spots.sort(
+    baseSpots.sort(
       (a, b) => new Date(b.created).getTime() - new Date(a.created).getTime()
     );
-    setDisplayedSpots(spots);
-  }, [comments, newSpot]);
+    setDisplayedSpots(baseSpots);
+  }, [comments, newSpot, spots]);
 
   const handleLoadMore = () => {
     setVisibleCount((prev) => prev + 10);
