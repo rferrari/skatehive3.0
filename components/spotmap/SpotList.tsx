@@ -123,4 +123,4 @@ export default function SpotList({ newSpot }: SpotListProps) {
       </Modal>
     </>
   );
-}
+} 

@@ -10,8 +10,8 @@ import {
   useBreakpointValue,
 } from "@chakra-ui/react";
 import { Global } from "@emotion/react";
-import SpotSnapComposer from "@/components/homepage/SpotSnapComposer";
-import SpotList from "@/components/homepage/SpotList";
+import SpotSnapComposer from "@/components/spotmap/SpotSnapComposer";
+import SpotList from "@/components/spotmap/SpotList";
 import { Discussion } from "@hiveio/dhive";
 import { useAioha } from "@aioha/react-ui";
 
@@ -196,4 +196,4 @@ export default function EmbeddedMap() {
       </Box>
     </>
   );
-}
+} 

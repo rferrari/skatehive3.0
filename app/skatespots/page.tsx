@@ -42,7 +42,7 @@ export const metadata: Metadata = {
   },
 };
 
-const EmbeddedMap = dynamic(() => import("./EmbeddedMap"), { ssr: true });
+const EmbeddedMap = dynamic(() => import("@/components/spotmap/EmbeddedMap"), { ssr: true });
 
 export default function MapPage() {
   return <EmbeddedMap />;

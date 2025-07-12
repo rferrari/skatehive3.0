@@ -43,6 +43,7 @@ export default function SpotSnapComposer({
   const [spotName, setSpotName] = useState("");
   const [lat, setLat] = useState("");
   const [lon, setLon] = useState("");
+  const [address, setAddress] = useState("");
   const [isDragOver, setIsDragOver] = useState(false);
 
   const buttonText = "Post Spot";
@@ -80,8 +81,11 @@ export default function SpotSnapComposer({
 
   async function handleComment() {
     let description = postBodyRef.current?.value || "";
-    if (!spotName.trim() || !lat.trim() || !lon.trim()) {
-      alert("Please enter a spot name and location (lat/lon).");
+    // Require either (lat & lon) or address
+    const hasCoords = lat.trim() && lon.trim();
+    const hasAddress = address.trim();
+    if (!spotName.trim() || (!hasCoords && !hasAddress)) {
+      alert("Please enter a spot name and either coordinates (lat/lon) or an address.");
       return;
     }
     if (!description.trim() && compressedImages.length === 0) {
@@ -96,7 +100,15 @@ export default function SpotSnapComposer({
       .toLowerCase();
     let validUrls: string[] = compressedImages.map((img) => img.url);
     // Compose the post body
-    let commentBody = `Spot Name: ${spotName}\nLocation: ${lat}, ${lon}\n`;
+    let locationLine = "";
+    if (hasCoords && hasAddress) {
+      locationLine = `Location: ${lat}, ${lon} (${address})`;
+    } else if (hasCoords) {
+      locationLine = `Location: ${lat}, ${lon}`;
+    } else if (hasAddress) {
+      locationLine = `Location: ${address}`;
+    }
+    let commentBody = `Spot Name: ${spotName}\n${locationLine}\n`;
     if (description) commentBody += `\n${description}`;
     if (validUrls.length > 0) {
       const imageMarkup = validUrls
@@ -123,6 +135,7 @@ export default function SpotSnapComposer({
         setSpotName("");
         setLat("");
         setLon("");
+        setAddress("");
         // Set created to "just now" for optimistic update
         const newComment: Partial<Discussion> = {
           author: user,
@@ -241,21 +254,30 @@ export default function SpotSnapComposer({
             isDisabled={isLoading}
           />
         </FormControl>
-        <FormControl isRequired>
+        <FormControl>
           <FormLabel>Latitude</FormLabel>
           <Input
-            placeholder="Latitude"
+            placeholder="e.g. 40.7128"
             value={lat}
             onChange={(e) => setLat(e.target.value)}
             isDisabled={isLoading}
           />
         </FormControl>
-        <FormControl isRequired>
+        <FormControl>
           <FormLabel>Longitude</FormLabel>
           <Input
-            placeholder="Longitude"
+            placeholder="e.g. -74.0060"
             value={lon}
             onChange={(e) => setLon(e.target.value)}
+            isDisabled={isLoading}
+          />
+        </FormControl>
+        <FormControl>
+          <FormLabel>Address</FormLabel>
+          <Input
+            placeholder="e.g. 123 Skate St, New York, NY"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
             isDisabled={isLoading}
           />
         </FormControl>
@@ -274,20 +296,23 @@ export default function SpotSnapComposer({
           />
         </FormControl>
         <HStack>
-          <Button
-            leftIcon={<FaImage size={22} />}
-            variant="ghost"
-            isDisabled={isLoading}
-            onClick={() => imageCompressorRef.current?.trigger()}
-            border="2px solid transparent"
-            _hover={{
-              borderColor: "primary",
-              boxShadow: "0 0 0 2px var(--chakra-colors-primary)",
-            }}
-            _active={{ borderColor: "accent" }}
-          >
-            Upload Image
-          </Button>
+          <FormControl>
+            <FormLabel>Upload Image</FormLabel>
+            <Button
+              leftIcon={<FaImage size={22} />}
+              variant="ghost"
+              isDisabled={isLoading}
+              onClick={() => imageCompressorRef.current?.trigger()}
+              border="2px solid transparent"
+              _hover={{
+                borderColor: "primary",
+                boxShadow: "0 0 0 2px var(--chakra-colors-primary)",
+              }}
+              _active={{ borderColor: "accent" }}
+            >
+              Upload Image <Box as="span" color="red.500" ml={1}>*</Box>
+            </Button>
+          </FormControl>
           <ImageCompressor
             ref={imageCompressorRef}
             onUpload={handleCompressedImageUpload}
@@ -370,4 +395,4 @@ export default function SpotSnapComposer({
       )}
     </Box>
   );
-}
+} 
