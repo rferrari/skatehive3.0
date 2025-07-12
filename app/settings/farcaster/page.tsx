@@ -373,7 +373,7 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
                                                 <Text fontWeight="medium">Notification Frequency</Text>
                                                 <Text fontSize="sm" color="gray.400">How often to receive notifications</Text>
                                             </Box>
-<Select value={preferences.notificationFrequency} onChange={e => updatePreferences({ notificationFrequency: e.target.value as "instant" | "hourly" | "daily" })} bg="gray.700" color="white" maxW={40}>
+                                            <Select value={preferences.notificationFrequency} onChange={e => updatePreferences({ notificationFrequency: e.target.value as "instant" | "hourly" | "daily" })} bg="gray.700" color="white" maxW={40}>
                                                 <option value="instant">Instant</option>
                                                 <option value="hourly">Hourly</option>
                                                 <option value="daily">Daily</option>
