@@ -79,14 +79,21 @@ export async function POST(request: NextRequest) {
           try {
             const { getTokenStore } = await import('@/lib/farcaster/token-store-factory');
             const tokenStore = getTokenStore();
-            await tokenStore.addToken(
-              fid || '',
-              username || '',
-              notificationDetails.token,
-              notificationDetails.url
-            );
-            dbSuccess = true;
-            console.log('[FARCASTER WEBHOOK] Stored token for user:', { fid, username, notificationDetails });
+            // Deduplicate: check if token already exists for this FID
+            const existingToken = tokenStore.getTokenByFid ? await tokenStore.getTokenByFid(fid || '') : null;
+            if (!existingToken || existingToken.token !== notificationDetails.token) {
+              await tokenStore.addToken(
+                fid || '',
+                username || '',
+                notificationDetails.token,
+                notificationDetails.url
+              );
+              dbSuccess = true;
+              console.log('[FARCASTER WEBHOOK] Stored token for user:', { fid, username, notificationDetails });
+            } else {
+              dbSuccess = true;
+              console.log('[FARCASTER WEBHOOK] Token already exists for FID:', fid);
+            }
           } catch (err) {
             dbError = err instanceof Error ? err.message : String(err);
             console.error('[FARCASTER WEBHOOK] DB error:', dbError);
