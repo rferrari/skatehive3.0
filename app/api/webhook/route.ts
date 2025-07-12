@@ -47,38 +47,94 @@ export async function POST(request: NextRequest) {
       case 'notifications_enabled': {
         // Store Farcaster token and notification URL in DB
         const notificationDetails = decodedPayload.notificationDetails;
+        let fid = null;
+        let username = null;
+        try {
+          const headerJson = JSON.parse(Buffer.from(body.header, 'base64').toString('utf8'));
+          fid = headerJson.fid || null;
+          username = headerJson.username || null;
+        } catch (err) {
+          console.warn('[FARCASTER WEBHOOK] Failed to decode header for FID/username:', err);
+        }
+        let dbSuccess = false;
+        let dbError = null;
         if (notificationDetails && notificationDetails.token && notificationDetails.url) {
-          // Try to extract FID and username from header if available
-          let fid = null;
-          let username = null;
           try {
-            const headerJson = JSON.parse(Buffer.from(body.header, 'base64').toString('utf8'));
-            fid = headerJson.fid || null;
-            username = headerJson.username || null;
+            const { getTokenStore } = await import('@/lib/farcaster/token-store-factory');
+            const tokenStore = getTokenStore();
+            await tokenStore.addToken(
+              fid || '',
+              username || '',
+              notificationDetails.token,
+              notificationDetails.url
+            );
+            dbSuccess = true;
+            console.log('[FARCASTER WEBHOOK] Stored token for user:', { fid, username, notificationDetails });
           } catch (err) {
-            console.warn('[FARCASTER WEBHOOK] Failed to decode header for FID/username:', err);
+            dbError = err instanceof Error ? err.message : String(err);
+            console.error('[FARCASTER WEBHOOK] DB error:', dbError);
           }
-          // Import token store factory
-          const { getTokenStore } = await import('@/lib/farcaster/token-store-factory');
-          const tokenStore = getTokenStore();
-          await tokenStore.addToken(
-            fid || '',
-            username || '',
-            notificationDetails.token,
-            notificationDetails.url
-          );
-          console.log('[FARCASTER WEBHOOK] Stored token for user:', { fid, username, notificationDetails });
         } else {
+          dbError = 'Missing notificationDetails';
           console.warn('[FARCASTER WEBHOOK] Missing notificationDetails for event:', decodedPayload);
+        }
+        // Log event in farcaster_notification_logs
+        try {
+          const { Pool } = await import('pg');
+          const pool = new Pool({ connectionString: process.env.STORAGE_POSTGRES_URL || process.env.POSTGRES_URL });
+          await pool.query(
+            `INSERT INTO farcaster_notification_logs (fid, notification_type, title, body, target_url, success, error_message) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+            [
+              fid || '',
+              decodedPayload.event,
+              notificationDetails?.token || '',
+              JSON.stringify(decodedPayload),
+              notificationDetails?.url || '',
+              dbSuccess,
+              dbError
+            ]
+          );
+        } catch (err) {
+          console.warn('[FARCASTER WEBHOOK] Failed to log event:', err);
         }
         break;
       }
-      case 'frame_removed':
+      case 'frame_removed': {
+        // Remove user's token from DB
+        let fid = null;
+        try {
+          const headerJson = JSON.parse(Buffer.from(body.header, 'base64').toString('utf8'));
+          fid = headerJson.fid || null;
+        } catch (err) {
+          console.warn('[FARCASTER WEBHOOK] Failed to decode header for FID:', err);
+        }
+        if (fid) {
+          const { getTokenStore } = await import('@/lib/farcaster/token-store-factory');
+          const tokenStore = getTokenStore();
+          await tokenStore.removeToken(fid);
+          console.log('[FARCASTER WEBHOOK] Removed token for FID:', fid);
+        }
         console.log('[FARCASTER WEBHOOK] User removed Mini App:', decodedPayload);
         break;
-      case 'notifications_disabled':
+      }
+      case 'notifications_disabled': {
+        // Disable user's notifications in DB
+        let fid = null;
+        try {
+          const headerJson = JSON.parse(Buffer.from(body.header, 'base64').toString('utf8'));
+          fid = headerJson.fid || null;
+        } catch (err) {
+          console.warn('[FARCASTER WEBHOOK] Failed to decode header for FID:', err);
+        }
+        if (fid) {
+          const { getTokenStore } = await import('@/lib/farcaster/token-store-factory');
+          const tokenStore = getTokenStore();
+          await tokenStore.disableNotifications(fid);
+          console.log('[FARCASTER WEBHOOK] Disabled notifications for FID:', fid);
+        }
         console.log('[FARCASTER WEBHOOK] Notifications disabled:', decodedPayload);
         break;
+      }
       default:
         console.log('[FARCASTER WEBHOOK] Unknown event:', decodedPayload.event, decodedPayload);
     }
