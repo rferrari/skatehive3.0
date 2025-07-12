@@ -56,11 +56,10 @@ export function FarcasterIntegrationButton({ hiveUsername }: FarcasterIntegratio
                 <button
                     onClick={() => toggleNotifications(!status.notificationsEnabled)}
                     disabled={loading}
-                    className={`px-4 py-2 rounded text-sm ${
-                        status.notificationsEnabled
+                    className={`px-4 py-2 rounded text-sm ${status.notificationsEnabled
                             ? 'bg-red-600 hover:bg-red-700'
                             : 'bg-green-600 hover:bg-green-700'
-                    } disabled:opacity-50`}
+                        } disabled:opacity-50`}
                 >
                     {status.notificationsEnabled ? 'Disable' : 'Enable'} Notifications
                 </button>

@@ -11,7 +11,7 @@ export async function handleVote(
     voteWeight: number
 ) {
     // Your existing vote logic here...
-    
+
     // Add Farcaster notification
     if (voteWeight > 0 && voterUsername !== postAuthor) {
         try {
@@ -38,7 +38,7 @@ export async function handleComment(
     comment: string
 ) {
     // Your existing comment logic here...
-    
+
     // Add Farcaster notification
     if (commenterUsername !== postAuthor) {
         try {
@@ -61,7 +61,7 @@ export async function handleFollow(
     followedUsername: string
 ) {
     // Your existing follow logic here...
-    
+
     // Add Farcaster notification
     try {
         await SkateHiveNotifications.notifyNewFollower(

@@ -80,7 +80,7 @@ export default function TestFarcasterPage() {
         <div className="min-h-screen bg-gray-900 text-white p-8">
             <div className="max-w-2xl mx-auto">
                 <h1 className="text-3xl font-bold mb-8">🛹 Farcaster Notifications Test</h1>
-                
+
                 {/* Link User Section */}
                 <div className="bg-gray-800 p-6 rounded-lg mb-6">
                     <h2 className="text-xl font-semibold mb-4">1. Link Farcaster to Hive User</h2>

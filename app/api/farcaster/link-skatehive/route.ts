@@ -4,13 +4,13 @@ import { HiveProfileService } from '@/lib/hive/profile-service';
 
 export async function POST(request: NextRequest) {
     try {
-        const { 
-            hiveUsername, 
-            fid, 
-            farcasterUsername, 
+        const {
+            hiveUsername,
+            fid,
+            farcasterUsername,
             preferences,
             updateHiveProfile,
-            postingKey 
+            postingKey
         } = await request.json();
 
         if (!hiveUsername || !fid || !farcasterUsername) {

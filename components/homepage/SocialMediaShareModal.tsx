@@ -24,9 +24,8 @@ const SocialMediaShareModal = ({
   onClose,
   comment,
 }: SocialMediaShareModalProps) => {
-  const postLink = `${
-    typeof window !== "undefined" ? window.location.origin : ""
-  }/post/${comment.author}/${comment.permlink}`;
+  const postLink = `${typeof window !== "undefined" ? window.location.origin : ""
+    }/post/${comment.author}/${comment.permlink}`;
   const { onCopy } = useClipboard(postLink);
 
   // Validate permlink to prevent [object Object] URLs
@@ -49,7 +48,7 @@ const SocialMediaShareModal = ({
         postLink
       )}`;
     } else if (platform === "farcaster") {
-      shareUrl = `https://warpcast.com/share?text=${encodeURIComponent(
+      shareUrl = `https://farcaster.xyz/share?text=${encodeURIComponent(
         postLink
       )}`; // Hypothetical URL
     }

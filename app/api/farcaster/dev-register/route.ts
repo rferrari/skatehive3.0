@@ -22,13 +22,13 @@ export async function POST(request: NextRequest) {
         }
 
         const tokenStore = getTokenStore();
-        
+
         // Add token to store (simulating what the webhook would do)
         await tokenStore.addToken(
             fid,
             username,
             token || `dev_token_${fid}_${Date.now()}`,
-            notificationUrl || 'https://warpcast.com/~/miniapp/skatehive'
+            notificationUrl || 'https://farcaster.xyz/~/miniapp/skatehive'
         );
 
         return NextResponse.json({
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
                 fid,
                 username,
                 token: token || `dev_token_${fid}_${Date.now()}`,
-                notificationUrl: notificationUrl || 'https://warpcast.com/~/miniapp/skatehive'
+                notificationUrl: notificationUrl || 'https://farcaster.xyz/~/miniapp/skatehive'
             }
         });
 

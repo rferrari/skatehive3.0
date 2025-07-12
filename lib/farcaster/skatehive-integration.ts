@@ -1,5 +1,18 @@
 import { sql } from '@vercel/postgres';
 
+// Configure the database connection
+const getDatabaseUrl = () => {
+    return process.env.STORAGE_POSTGRES_URL || process.env.POSTGRES_URL;
+};
+
+// Ensure we have a database connection
+if (getDatabaseUrl()) {
+    // Set the URL for Vercel Postgres if using STORAGE_ prefix
+    if (process.env.STORAGE_POSTGRES_URL && !process.env.POSTGRES_URL) {
+        process.env.POSTGRES_URL = process.env.STORAGE_POSTGRES_URL;
+    }
+}
+
 export interface FarcasterPreferences {
     hiveUsername: string;
     fid?: string;
@@ -11,6 +24,15 @@ export interface FarcasterPreferences {
     notifyMentions: boolean;
     notifyPosts: boolean;
     notificationFrequency: 'instant' | 'hourly' | 'daily';
+    // Scheduled notification preferences
+    scheduledNotificationsEnabled: boolean;
+    scheduledTimeHour: number; // 0-23
+    scheduledTimeMinute: number; // 0-59
+    timezone: string;
+    maxNotificationsPerBatch: number; // 1-20
+    lastScheduledCheck?: Date;
+    lastScheduledNotificationId: number;
+    // Existing fields
     linkedAt: Date;
     lastNotificationAt?: Date;
     hiveProfileUpdated: boolean;
@@ -45,6 +67,13 @@ export class SkateHiveFarcasterService {
                     notify_mentions,
                     notify_posts,
                     notification_frequency,
+                    scheduled_notifications_enabled,
+                    scheduled_time_hour,
+                    scheduled_time_minute,
+                    timezone,
+                    max_notifications_per_batch,
+                    last_scheduled_check,
+                    last_scheduled_notification_id,
                     linked_at,
                     last_notification_at,
                     hive_profile_updated
@@ -67,6 +96,13 @@ export class SkateHiveFarcasterService {
                 notifyMentions: row.notify_mentions,
                 notifyPosts: row.notify_posts,
                 notificationFrequency: row.notification_frequency as 'instant' | 'hourly' | 'daily',
+                scheduledNotificationsEnabled: row.scheduled_notifications_enabled || false,
+                scheduledTimeHour: row.scheduled_time_hour || 9,
+                scheduledTimeMinute: row.scheduled_time_minute || 0,
+                timezone: row.timezone || 'UTC',
+                maxNotificationsPerBatch: row.max_notifications_per_batch || 5,
+                lastScheduledCheck: row.last_scheduled_check ? new Date(row.last_scheduled_check) : undefined,
+                lastScheduledNotificationId: row.last_scheduled_notification_id || 0,
                 linkedAt: new Date(row.linked_at),
                 lastNotificationAt: row.last_notification_at ? new Date(row.last_notification_at) : undefined,
                 hiveProfileUpdated: row.hive_profile_updated
@@ -208,7 +244,7 @@ export class SkateHiveFarcasterService {
             }
 
             values.push(hiveUsername);
-            
+
             await sql.query(
                 `UPDATE skatehive_farcaster_preferences 
                  SET ${updates.join(', ')} 
@@ -234,7 +270,7 @@ export class SkateHiveFarcasterService {
      * Check if user should receive a specific type of notification
      */
     static async shouldNotify(
-        hiveUsername: string, 
+        hiveUsername: string,
         notificationType: 'votes' | 'comments' | 'follows' | 'mentions' | 'posts'
     ): Promise<boolean> {
         try {
@@ -269,7 +305,7 @@ export class SkateHiveFarcasterService {
     ): Promise<void> {
         try {
             const preferences = await this.getUserPreferences(hiveUsername);
-            
+
             await sql`
                 INSERT INTO farcaster_notification_logs (
                     hive_username,
@@ -313,7 +349,7 @@ export class SkateHiveFarcasterService {
     ): Promise<{ fid: string; hiveUsername: string; farcasterUsername: string }[]> {
         try {
             const typeColumn = `notify_${notificationType}`;
-            
+
             const result = await sql.query(`
                 SELECT p.fid, p.hive_username, p.farcaster_username
                 FROM skatehive_farcaster_preferences p
@@ -347,27 +383,27 @@ export class SkateHiveFarcasterService {
     }> {
         try {
             const whereClause = hiveUsername ? `WHERE hive_username = '${hiveUsername}'` : '';
-            
+
             const totalResult = await sql.query(`
                 SELECT COUNT(*) as total FROM farcaster_notification_logs ${whereClause}
             `);
-            
+
             const successResult = await sql.query(`
                 SELECT COUNT(*) as successful FROM farcaster_notification_logs 
                 ${whereClause} ${hiveUsername ? 'AND' : 'WHERE'} success = true
             `);
-            
+
             const failedResult = await sql.query(`
                 SELECT COUNT(*) as failed FROM farcaster_notification_logs 
                 ${whereClause} ${hiveUsername ? 'AND' : 'WHERE'} success = false
             `);
-            
+
             const typeResult = await sql.query(`
                 SELECT notification_type, COUNT(*) as count 
                 FROM farcaster_notification_logs ${whereClause}
                 GROUP BY notification_type
             `);
-            
+
             const recentResult = await sql.query(`
                 SELECT notification_type, title, body, success, sent_at, error_message
                 FROM farcaster_notification_logs ${whereClause}

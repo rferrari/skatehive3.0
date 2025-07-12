@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     try {
         const tokenStore = getTokenStore();
         const tokens = await tokenStore.getTokensForHiveUsers([hiveUsername]);
-        
+
         if (tokens.length === 0) {
             return NextResponse.json({
                 isLinked: false,

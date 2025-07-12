@@ -37,8 +37,12 @@ export interface ITokenStore {
 
 // Factory function to create appropriate token store
 export function createTokenStore(): ITokenStore {
-    // Use database store in production, in-memory for development
-    if (process.env.NODE_ENV === 'production' || process.env.POSTGRES_URL) {
+    // Use database store in production or when database URL is available
+    const hasDatabase = process.env.NODE_ENV === 'production' ||
+        process.env.POSTGRES_URL ||
+        process.env.STORAGE_POSTGRES_URL;
+
+    if (hasDatabase) {
         return new DatabaseTokenStore();
     } else {
         console.warn('Using in-memory token store - tokens will not persist across restarts');

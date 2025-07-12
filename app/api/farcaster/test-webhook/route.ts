@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
         const {
             fid,
             event = 'miniapp_added',
-            notificationUrl = 'https://api.warpcast.com/v1/frame-notifications',
+            notificationUrl = 'https://api.farcaster.com/v1/frame-notifications',
             token = `test_token_${Date.now()}`
         } = await request.json();
 

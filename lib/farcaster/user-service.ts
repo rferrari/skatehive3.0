@@ -5,7 +5,7 @@ import { getTokenStore } from '@/lib/farcaster/token-store-factory';
  * This integrates with your existing user authentication system
  */
 export class FarcasterUserService {
-    
+
     /**
      * Link a Farcaster FID to a Hive username
      * Call this when a user connects their Farcaster account
@@ -17,10 +17,10 @@ export class FarcasterUserService {
     ): Promise<{ success: boolean; message: string }> {
         try {
             const tokenStore = getTokenStore();
-            
+
             // Check if user already exists
             const existingToken = await tokenStore.getTokenByFid(fid);
-            
+
             if (existingToken) {
                 // Update existing mapping
                 await tokenStore.addToken(
@@ -30,7 +30,7 @@ export class FarcasterUserService {
                     existingToken.notificationUrl,
                     hiveUsername
                 );
-                
+
                 return {
                     success: true,
                     message: `Updated Farcaster FID ${fid} to link with Hive user @${hiveUsername}`
@@ -62,7 +62,7 @@ export class FarcasterUserService {
         try {
             const tokenStore = getTokenStore();
             const tokens = await tokenStore.getTokensForHiveUsers(hiveUsernames);
-            
+
             return tokens
                 .filter(token => token.hiveUsername)
                 .map(token => ({
@@ -118,7 +118,7 @@ export class FarcasterUserService {
         try {
             const tokenStore = getTokenStore();
             const tokens = await tokenStore.getAllTokens();
-            
+
             return tokens
                 .filter(token => token.hiveUsername)
                 .map(token => ({
@@ -139,7 +139,7 @@ export class FarcasterUserService {
  * Integration helpers for your existing SkateHive features
  */
 export class SkateHiveNotifications {
-    
+
     /**
      * Send notification when someone votes on a user's post
      */
@@ -154,7 +154,7 @@ export class SkateHiveNotifications {
 
         const voteType = voteValue > 0 ? 'upvoted' : 'downvoted';
         const emoji = voteValue > 0 ? '🔥' : '👎';
-        
+
         return fetch('/api/farcaster/notify', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -176,7 +176,7 @@ export class SkateHiveNotifications {
         postTitle: string
     ) {
         if (commenterHiveUsername === postAuthorHiveUsername) return; // Don't notify self
-        
+
         const hasNotifications = await FarcasterUserService.hasNotificationsEnabled(postAuthorHiveUsername);
         if (!hasNotifications) return;
 

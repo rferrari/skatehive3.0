@@ -76,19 +76,19 @@ export class HiveProfileService {
 
             // Create the account update operation
             const privateKey = PrivateKey.fromString(postingKey);
-            
+
             const operation: ['account_update2', {
                 account: string;
                 posting_json_metadata: string;
                 extensions: never[];
             }] = [
-                'account_update2',
-                {
-                    account: hiveUsername,
-                    posting_json_metadata: JSON.stringify(currentProfile),
-                    extensions: []
-                }
-            ];
+                    'account_update2',
+                    {
+                        account: hiveUsername,
+                        posting_json_metadata: JSON.stringify(currentProfile),
+                        extensions: []
+                    }
+                ];
 
             // Broadcast the transaction
             const result = await hiveClient.broadcast.sendOperations([operation], privateKey);
@@ -176,19 +176,19 @@ export class HiveProfileService {
             }
 
             const privateKey = PrivateKey.fromString(postingKey);
-            
+
             const operation: ['account_update2', {
                 account: string;
                 posting_json_metadata: string;
                 extensions: never[];
             }] = [
-                'account_update2',
-                {
-                    account: hiveUsername,
-                    posting_json_metadata: JSON.stringify(currentProfile),
-                    extensions: []
-                }
-            ];
+                    'account_update2',
+                    {
+                        account: hiveUsername,
+                        posting_json_metadata: JSON.stringify(currentProfile),
+                        extensions: []
+                    }
+                ];
 
             const result = await hiveClient.broadcast.sendOperations([operation], privateKey);
 
@@ -219,7 +219,7 @@ export class HiveProfileService {
         try {
             // Import here to avoid circular dependency
             const { SkateHiveFarcasterService } = await import('../farcaster/skatehive-integration');
-            
+
             // Get info from both sources
             const [hiveProfile, databasePrefs] = await Promise.all([
                 this.getFarcasterFromHiveProfile(hiveUsername),

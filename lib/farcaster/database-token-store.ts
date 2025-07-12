@@ -1,6 +1,19 @@
 import { sql } from '@vercel/postgres';
 import { FarcasterUserToken } from '@/types/farcaster';
 
+// Configure the database connection
+const getDatabaseUrl = () => {
+    return process.env.STORAGE_POSTGRES_URL || process.env.POSTGRES_URL;
+};
+
+// Ensure we have a database connection
+if (getDatabaseUrl()) {
+    // Set the URL for Vercel Postgres if using STORAGE_ prefix
+    if (process.env.STORAGE_POSTGRES_URL && !process.env.POSTGRES_URL) {
+        process.env.POSTGRES_URL = process.env.STORAGE_POSTGRES_URL;
+    }
+}
+
 // Database row interface
 interface TokenRow {
     fid: string;
@@ -224,11 +237,56 @@ export class DatabaseTokenStore {
           notify_mentions BOOLEAN DEFAULT TRUE,
           notify_posts BOOLEAN DEFAULT FALSE,
           notification_frequency VARCHAR(20) DEFAULT 'instant',
+          -- Scheduled notification preferences
+          scheduled_notifications_enabled BOOLEAN DEFAULT FALSE,
+          scheduled_time_hour INTEGER DEFAULT 9 CHECK (scheduled_time_hour >= 0 AND scheduled_time_hour <= 23),
+          scheduled_time_minute INTEGER DEFAULT 0 CHECK (scheduled_time_minute >= 0 AND scheduled_time_minute <= 59),
+          timezone VARCHAR(50) DEFAULT 'UTC',
+          max_notifications_per_batch INTEGER DEFAULT 5 CHECK (max_notifications_per_batch > 0 AND max_notifications_per_batch <= 20),
+          last_scheduled_check TIMESTAMP,
+          last_scheduled_notification_id BIGINT DEFAULT 0,
+          -- Existing fields
           linked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           last_notification_at TIMESTAMP,
           hive_profile_updated BOOLEAN DEFAULT FALSE,
           FOREIGN KEY (fid) REFERENCES farcaster_tokens(fid) ON DELETE SET NULL
         )
+      `;
+
+            // Add the new scheduled notification columns if they don't exist (for existing tables)
+            await sql`
+        ALTER TABLE skatehive_farcaster_preferences 
+        ADD COLUMN IF NOT EXISTS scheduled_notifications_enabled BOOLEAN DEFAULT FALSE
+      `;
+
+            await sql`
+        ALTER TABLE skatehive_farcaster_preferences 
+        ADD COLUMN IF NOT EXISTS scheduled_time_hour INTEGER DEFAULT 9
+      `;
+
+            await sql`
+        ALTER TABLE skatehive_farcaster_preferences 
+        ADD COLUMN IF NOT EXISTS scheduled_time_minute INTEGER DEFAULT 0
+      `;
+
+            await sql`
+        ALTER TABLE skatehive_farcaster_preferences 
+        ADD COLUMN IF NOT EXISTS timezone VARCHAR(50) DEFAULT 'UTC'
+      `;
+
+            await sql`
+        ALTER TABLE skatehive_farcaster_preferences 
+        ADD COLUMN IF NOT EXISTS max_notifications_per_batch INTEGER DEFAULT 5
+      `;
+
+            await sql`
+        ALTER TABLE skatehive_farcaster_preferences 
+        ADD COLUMN IF NOT EXISTS last_scheduled_check TIMESTAMP
+      `;
+
+            await sql`
+        ALTER TABLE skatehive_farcaster_preferences 
+        ADD COLUMN IF NOT EXISTS last_scheduled_notification_id BIGINT DEFAULT 0
       `;
 
             // Notification logs for analytics
@@ -251,11 +309,11 @@ export class DatabaseTokenStore {
             await sql`CREATE INDEX IF NOT EXISTS idx_farcaster_tokens_fid ON farcaster_tokens(fid)`;
             await sql`CREATE INDEX IF NOT EXISTS idx_farcaster_tokens_hive_username ON farcaster_tokens(hive_username)`;
             await sql`CREATE INDEX IF NOT EXISTS idx_farcaster_tokens_active ON farcaster_tokens(is_active)`;
-            
+
             await sql`CREATE INDEX IF NOT EXISTS idx_skatehive_preferences_hive_username ON skatehive_farcaster_preferences(hive_username)`;
             await sql`CREATE INDEX IF NOT EXISTS idx_skatehive_preferences_fid ON skatehive_farcaster_preferences(fid)`;
             await sql`CREATE INDEX IF NOT EXISTS idx_skatehive_preferences_enabled ON skatehive_farcaster_preferences(notifications_enabled)`;
-            
+
             await sql`CREATE INDEX IF NOT EXISTS idx_notification_logs_hive_username ON farcaster_notification_logs(hive_username)`;
             await sql`CREATE INDEX IF NOT EXISTS idx_notification_logs_type ON farcaster_notification_logs(notification_type)`;
             await sql`CREATE INDEX IF NOT EXISTS idx_notification_logs_sent_at ON farcaster_notification_logs(sent_at)`;
