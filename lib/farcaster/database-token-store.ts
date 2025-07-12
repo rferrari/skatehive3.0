@@ -195,6 +195,7 @@ export class DatabaseTokenStore {
     // Initialize database tables if they don't exist
     async initializeDatabase(): Promise<void> {
         try {
+            // Main farcaster_tokens table
             await sql`
         CREATE TABLE IF NOT EXISTS farcaster_tokens (
           id SERIAL PRIMARY KEY,
@@ -209,19 +210,57 @@ export class DatabaseTokenStore {
         )
       `;
 
+            // Enhanced user preferences table for SkateHive integration
             await sql`
-        CREATE INDEX IF NOT EXISTS idx_farcaster_tokens_fid ON farcaster_tokens(fid)
+        CREATE TABLE IF NOT EXISTS skatehive_farcaster_preferences (
+          id SERIAL PRIMARY KEY,
+          hive_username VARCHAR(255) NOT NULL UNIQUE,
+          fid VARCHAR(50),
+          farcaster_username VARCHAR(255),
+          notifications_enabled BOOLEAN DEFAULT TRUE,
+          notify_votes BOOLEAN DEFAULT TRUE,
+          notify_comments BOOLEAN DEFAULT TRUE,
+          notify_follows BOOLEAN DEFAULT TRUE,
+          notify_mentions BOOLEAN DEFAULT TRUE,
+          notify_posts BOOLEAN DEFAULT FALSE,
+          notification_frequency VARCHAR(20) DEFAULT 'instant',
+          linked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          last_notification_at TIMESTAMP,
+          hive_profile_updated BOOLEAN DEFAULT FALSE,
+          FOREIGN KEY (fid) REFERENCES farcaster_tokens(fid) ON DELETE SET NULL
+        )
       `;
 
+            // Notification logs for analytics
             await sql`
-        CREATE INDEX IF NOT EXISTS idx_farcaster_tokens_hive_username ON farcaster_tokens(hive_username)
+        CREATE TABLE IF NOT EXISTS farcaster_notification_logs (
+          id SERIAL PRIMARY KEY,
+          hive_username VARCHAR(255) NOT NULL,
+          fid VARCHAR(50),
+          notification_type VARCHAR(50) NOT NULL,
+          title VARCHAR(32) NOT NULL,
+          body VARCHAR(128) NOT NULL,
+          target_url TEXT,
+          success BOOLEAN NOT NULL,
+          error_message TEXT,
+          sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
       `;
 
-            await sql`
-        CREATE INDEX IF NOT EXISTS idx_farcaster_tokens_active ON farcaster_tokens(is_active)
-      `;
+            // Create indexes
+            await sql`CREATE INDEX IF NOT EXISTS idx_farcaster_tokens_fid ON farcaster_tokens(fid)`;
+            await sql`CREATE INDEX IF NOT EXISTS idx_farcaster_tokens_hive_username ON farcaster_tokens(hive_username)`;
+            await sql`CREATE INDEX IF NOT EXISTS idx_farcaster_tokens_active ON farcaster_tokens(is_active)`;
+            
+            await sql`CREATE INDEX IF NOT EXISTS idx_skatehive_preferences_hive_username ON skatehive_farcaster_preferences(hive_username)`;
+            await sql`CREATE INDEX IF NOT EXISTS idx_skatehive_preferences_fid ON skatehive_farcaster_preferences(fid)`;
+            await sql`CREATE INDEX IF NOT EXISTS idx_skatehive_preferences_enabled ON skatehive_farcaster_preferences(notifications_enabled)`;
+            
+            await sql`CREATE INDEX IF NOT EXISTS idx_notification_logs_hive_username ON farcaster_notification_logs(hive_username)`;
+            await sql`CREATE INDEX IF NOT EXISTS idx_notification_logs_type ON farcaster_notification_logs(notification_type)`;
+            await sql`CREATE INDEX IF NOT EXISTS idx_notification_logs_sent_at ON farcaster_notification_logs(sent_at)`;
 
-            console.log('Database tables initialized successfully');
+            console.log('Enhanced SkateHive Farcaster database tables initialized successfully');
         } catch (error) {
             console.error('Failed to initialize database:', error);
             throw error;
