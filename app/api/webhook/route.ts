@@ -44,13 +44,37 @@ export async function POST(request: NextRequest) {
     // Handle different webhook events
     switch (decodedPayload.event) {
       case 'frame_added':
-        console.log('[FARCASTER WEBHOOK] User added Mini App:', decodedPayload);
+      case 'notifications_enabled': {
+        // Store Farcaster token and notification URL in DB
+        const notificationDetails = decodedPayload.notificationDetails;
+        if (notificationDetails && notificationDetails.token && notificationDetails.url) {
+          // Try to extract FID and username from header if available
+          let fid = null;
+          let username = null;
+          try {
+            const headerJson = JSON.parse(Buffer.from(body.header, 'base64').toString('utf8'));
+            fid = headerJson.fid || null;
+            username = headerJson.username || null;
+          } catch (err) {
+            console.warn('[FARCASTER WEBHOOK] Failed to decode header for FID/username:', err);
+          }
+          // Import token store factory
+          const { getTokenStore } = await import('@/lib/farcaster/token-store-factory');
+          const tokenStore = getTokenStore();
+          await tokenStore.addToken(
+            fid || '',
+            username || '',
+            notificationDetails.token,
+            notificationDetails.url
+          );
+          console.log('[FARCASTER WEBHOOK] Stored token for user:', { fid, username, notificationDetails });
+        } else {
+          console.warn('[FARCASTER WEBHOOK] Missing notificationDetails for event:', decodedPayload);
+        }
         break;
+      }
       case 'frame_removed':
         console.log('[FARCASTER WEBHOOK] User removed Mini App:', decodedPayload);
-        break;
-      case 'notifications_enabled':
-        console.log('[FARCASTER WEBHOOK] Notifications enabled:', decodedPayload);
         break;
       case 'notifications_disabled':
         console.log('[FARCASTER WEBHOOK] Notifications disabled:', decodedPayload);
