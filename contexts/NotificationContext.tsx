@@ -13,6 +13,9 @@ interface NotificationContextProps {
     refreshNotifications: () => Promise<void>;
     markNotificationsAsRead: () => Promise<void>;
     isLoading: boolean;
+    farcasterEnabled: boolean;
+    enableFarcasterNotifications: () => void;
+    disableFarcasterNotifications: () => void;
 }
 
 const NotificationContext = createContext<NotificationContextProps | undefined>(
@@ -24,6 +27,7 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
     const [notifications, setNotifications] = useState<Notifications[]>([]);
     const [lastReadDate, setLastReadDate] = useState("1970-01-01T00:00:00Z");
     const [isLoading, setIsLoading] = useState(false);
+    const [farcasterEnabled, setFarcasterEnabled] = useState(false);
 
     const refreshNotifications = useCallback(async () => {
         if (!user) {
@@ -57,6 +61,16 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
         // Here you could also make an API call to persist this on the server
         // For now, this will just update the local state
     }, [user]);
+
+    const enableFarcasterNotifications = useCallback(() => {
+        setFarcasterEnabled(true);
+        console.log('Farcaster notifications enabled');
+    }, []);
+
+    const disableFarcasterNotifications = useCallback(() => {
+        setFarcasterEnabled(false);
+        console.log('Farcaster notifications disabled');
+    }, []);
 
     // Helper function to safely parse dates
     const parseNotificationDate = useCallback((dateString: string): Date => {
@@ -98,6 +112,9 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
         refreshNotifications,
         markNotificationsAsRead,
         isLoading,
+        farcasterEnabled,
+        enableFarcasterNotifications,
+        disableFarcasterNotifications,
     };
 
     return (
