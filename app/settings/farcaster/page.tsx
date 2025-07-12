@@ -1,6 +1,6 @@
 
 "use client";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useAioha } from "@aioha/react-ui";
 import { FarcasterPreferences } from "@/lib/farcaster/skatehive-integration";
 import {
@@ -55,29 +55,95 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
     const [fid, setFid] = useState("");
     const [farcasterUsername, setFarcasterUsername] = useState("");
     const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
-    const [stats, setStats] = useState<any>(null);
+    const [notificationsQueue, setNotificationsQueue] = useState<any[]>([]);
+    const [eventLogs, setEventLogs] = useState<string[]>([]);
     const toast = useToast();
 
-    useEffect(() => {
-        loadUserData();
-        // eslint-disable-next-line
-    }, [hiveUsername]);
-
+    // Load user data function (move to top for scope)
     const loadUserData = async () => {
         setLoading(true);
         try {
-            const [userPrefs, notificationStats] = await Promise.all([
-                fetch(`/api/farcaster/user-preferences?hiveUsername=${hiveUsername}`).then((r) => r.json()),
-                fetch(`/api/farcaster/notification-stats?hiveUsername=${hiveUsername}`).then((r) => r.json()),
-            ]);
+            const userPrefs = await fetch(`/api/farcaster/user-preferences?hiveUsername=${hiveUsername}`).then((r) => r.json());
             if (userPrefs.success) setPreferences(userPrefs.data);
-            if (notificationStats.success) setStats(notificationStats.data);
+            // Fetch notifications in queue (unread)
+            const queueRes = await fetch(`/api/farcaster/notifications-queue?hiveUsername=${hiveUsername}`);
+            const queueData = await queueRes.json();
+            if (queueData.success && Array.isArray(queueData.notifications)) {
+                // Display last 5 unread notifications (no source filter)
+                setNotificationsQueue(queueData.notifications.slice(-5).reverse());
+            } else {
+                setNotificationsQueue([]);
+            }
         } catch (error) {
             // silent fail
         } finally {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        loadUserData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // Button handlers for notifications
+    const handleTestNotification = async () => {
+        setSaving(true);
+        setEventLogs(logs => [...logs, `Test notification requested at ${new Date().toLocaleTimeString()}`]);
+        try {
+            const response = await fetch("/api/farcaster/notify", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    type: "test",
+                    title: "Test Notification",
+                    body: "This is a test notification from SkateHive.",
+                    sourceUrl: "https://skatehive.app"
+                }),
+            });
+            const result = await response.json();
+            if (result.success) {
+                toast({ status: "success", title: `Test notification sent! (${result.results?.length || 0})` });
+                setEventLogs(logs => [...logs, `Test notification sent: ${result.results?.length || 0}`]);
+            } else {
+                toast({ status: "error", title: result.message });
+                setEventLogs(logs => [...logs, `Test notification failed: ${result.message}`]);
+            }
+        } catch {
+            toast({ status: "error", title: "Failed to send test notification" });
+            setEventLogs(logs => [...logs, `Test notification error`]);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleSendUnreadNotifications = async () => {
+        setSaving(true);
+        setEventLogs(logs => [...logs, `Send unread notifications requested at ${new Date().toLocaleTimeString()}`]);
+        try {
+            // Call the new API to send only the last unread notification and get mapping info
+            const response = await fetch("/api/farcaster/send-unread-notifications", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ hiveUsername }),
+            });
+            const result = await response.json();
+            if (result.success) {
+                toast({ status: "success", title: `Sent unread notification! (${result.notificationsSent})` });
+                setEventLogs(logs => [...logs, `Hive: ${result.hiveUsername} → Farcaster: ${result.sentTo} | Sent: ${result.notificationsSent}`]);
+                await loadUserData();
+            } else {
+                toast({ status: "info", title: result.message });
+                setEventLogs(logs => [...logs, `Send unread notifications failed: ${result.message}`]);
+            }
+        } catch {
+            toast({ status: "error", title: "Failed to send unread notifications" });
+            setEventLogs(logs => [...logs, `Send unread notifications error`]);
+        } finally {
+            setSaving(false);
+        }
+    };
+
 
     const linkFarcasterAccount = async () => {
         if (!fid || !farcasterUsername) {
@@ -203,7 +269,7 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
         );
 
     return (
-        <Container minH="100vh" maxW="4xl" bg="gray.900" color="white" py={8}>
+        <Container minH="100vh" maxW="lg" bg="gray.900" color="white" py={8}>
             <Heading size="lg" mb={2}>🛹 Farcaster Notifications</Heading>
             <Text color="gray.400" mb={8}>Manage your Farcaster notification preferences for SkateHive</Text>
 
@@ -216,7 +282,7 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
             {!preferences ? (
                 <Box bg="gray.800" p={6} rounded="lg" mb={6}>
                     <Heading size="md" mb={4}>🔗 Connect Your Farcaster Account</Heading>
-                    <Text color="gray.400" mb={6}>Link your Farcaster account to receive notifications from SkateHive. Add SkateHive as a miniapp in your Farcaster client.</Text>
+                    <Text color="gray.400" mb={6}>Link your Farcaster account to receive notifications from SkateHive.</Text>
                     <Stack spacing={4}>
                         <Box>
                             <Text fontSize="sm" mb={2}>Your Farcaster FID</Text>
@@ -228,197 +294,49 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
                         </Box>
                         <Button colorScheme="blue" onClick={linkFarcasterAccount} isLoading={saving}>Link Account</Button>
                     </Stack>
-                    <Box mt={6} p={4} bg="blue.900" borderWidth={1} borderColor="blue.700" rounded="lg">
-                        <Text fontWeight="semibold" mb={2}>How to find your FID:</Text>
-                        <Stack fontSize="sm" color="gray.300" spacing={1}>
-                            <Text>1. Open your Farcaster client (Warpcast, etc.)</Text>
-                            <Text>2. Go to your profile</Text>
-                            <Text>3. Your FID is in your profile URL or settings</Text>
-                            <Text>4. Or visit farcaster.xyz/~/developers</Text>
+                </Box>
+            ) : (
+                <Box bg="gray.800" p={6} rounded="lg">
+                    <Heading size="md" mb={4}>✅ Connected Account</Heading>
+                    <Flex align="center" justify="space-between">
+                        <Box>
+                            <Text fontSize="lg">@{preferences.farcasterUsername}</Text>
+                            <Text color="gray.400">FID: {preferences.fid}</Text>
+                            <Text fontSize="sm" color="gray.500">Connected: {preferences.linkedAt ? new Date(preferences.linkedAt).toLocaleDateString() : "N/A"}</Text>
+                        </Box>
+                        <Button colorScheme="red" onClick={unlinkAccount} isLoading={saving}>Unlink</Button>
+                    </Flex>
+                    <Box mt={6}>
+                        <Text fontWeight="medium" mb={2}>Enable Notifications</Text>
+                        <Switch isChecked={preferences.notificationsEnabled} onChange={e => updatePreferences({ notificationsEnabled: e.target.checked })} colorScheme="blue" />
+                    </Box>
+                    <Stack direction="row" spacing={4} mt={6}>
+                        <Button colorScheme="blue" onClick={handleTestNotification} isLoading={saving}>Send Test Notification</Button>
+                        <Button colorScheme="purple" onClick={handleSendUnreadNotifications} isLoading={saving}>Send Unread Notifications</Button>
+                    </Stack>
+                    <Box mt={8}>
+                        <Heading size="sm" mb={2}>Last 5 Unread Notifications</Heading>
+                        {notificationsQueue.length === 0 ? (
+                            <Text color="gray.400">No unread notifications.</Text>
+                        ) : (
+                            <Stack spacing={2}>
+                                {notificationsQueue.map((notif, idx) => (
+                                    <Box key={idx} p={2} bg="gray.700" rounded="md">
+                                        <Text fontSize="sm" fontWeight="bold">{notif.type}</Text>
+                                        <Text fontSize="sm">{notif.message || notif.body}</Text>
+                                        <Text fontSize="xs" color="gray.400">{notif.timestamp ? new Date(notif.timestamp).toLocaleString() : ""}</Text>
+                                    </Box>
+                                ))}
+                            </Stack>
+                        )}
+                    </Box>
+                    <Box mt={8}>
+                        <Heading size="sm" mb={2}>Event Logs</Heading>
+                        <Stack spacing={1} fontSize="xs">
+                            {eventLogs.length === 0 ? <Text color="gray.400">No events yet.</Text> : eventLogs.map((log, idx) => <Text key={idx}>{log}</Text>)}
                         </Stack>
                     </Box>
                 </Box>
-            ) : (
-                <Stack spacing={6}>
-                    {/* Account Info */}
-                    <Box bg="gray.800" p={6} rounded="lg">
-                        <Heading size="md" mb={4}>✅ Connected Account</Heading>
-                        <Flex align="center" justify="space-between">
-                            <Box>
-                                <Text fontSize="lg">@{preferences.farcasterUsername}</Text>
-                                <Text color="gray.400">FID: {preferences.fid}</Text>
-                                <Text fontSize="sm" color="gray.500">Connected: {preferences.linkedAt ? new Date(preferences.linkedAt).toLocaleDateString() : "N/A"}</Text>
-                            </Box>
-                            <Button colorScheme="red" onClick={unlinkAccount} isLoading={saving}>Unlink</Button>
-                        </Flex>
-                    </Box>
-
-                    {/* Scheduled Notifications Section */}
-                    <Box bg="gray.800" p={6} rounded="lg">
-                        <Heading size="md" mb={4}>⏰ Scheduled Notifications</Heading>
-                        <Text color="gray.400" mb={6}>Get a daily summary of your last notifications at your preferred time.</Text>
-                        <Stack spacing={4}>
-                            <Flex align="center" justify="space-between">
-                                <Box>
-                                    <Text fontWeight="medium">Enable Scheduled Notifications</Text>
-                                    <Text fontSize="sm" color="gray.400">Get daily summaries instead of instant notifications</Text>
-                                </Box>
-                                <Switch isChecked={preferences.scheduledNotificationsEnabled} onChange={e => updateScheduledPreferences({ scheduledNotificationsEnabled: e.target.checked })} colorScheme="blue" />
-                            </Flex>
-                            {preferences.scheduledNotificationsEnabled && (
-                                <>
-                                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                                        <Box>
-                                            <Text fontSize="sm" mb={2}>Preferred Time (Hour)</Text>
-                                            <Select value={preferences.scheduledTimeHour} onChange={e => updateScheduledPreferences({ scheduledTimeHour: parseInt(e.target.value) })} bg="gray.700" color="white">
-                                                {Array.from({ length: 24 }, (_, i) => (
-                                                    <option key={i} value={i}>{i.toString().padStart(2, "0")}:00</option>
-                                                ))}
-                                            </Select>
-                                        </Box>
-                                        <Box>
-                                            <Text fontSize="sm" mb={2}>Minutes</Text>
-                                            <Select value={preferences.scheduledTimeMinute} onChange={e => updateScheduledPreferences({ scheduledTimeMinute: parseInt(e.target.value) })} bg="gray.700" color="white">
-                                                {[0, 15, 30, 45].map(minute => (
-                                                    <option key={minute} value={minute}>:{minute.toString().padStart(2, "0")}</option>
-                                                ))}
-                                            </Select>
-                                        </Box>
-                                    </SimpleGrid>
-                                    <Box>
-                                        <Text fontSize="sm" mb={2}>Timezone</Text>
-                                        <Select value={preferences.timezone} onChange={e => updateScheduledPreferences({ timezone: e.target.value })} bg="gray.700" color="white">
-                                            <option value="UTC">UTC</option>
-                                            <option value="America/New_York">Eastern Time (ET)</option>
-                                            <option value="America/Chicago">Central Time (CT)</option>
-                                            <option value="America/Denver">Mountain Time (MT)</option>
-                                            <option value="America/Los_Angeles">Pacific Time (PT)</option>
-                                            <option value="Europe/London">London (GMT)</option>
-                                            <option value="Europe/Paris">Paris (CET)</option>
-                                            <option value="Asia/Tokyo">Tokyo (JST)</option>
-                                            <option value="Australia/Sydney">Sydney (AEST)</option>
-                                        </Select>
-                                    </Box>
-                                    <Box>
-                                        <Text fontSize="sm" mb={2}>Max Notifications per Day ({preferences.maxNotificationsPerBatch})</Text>
-                                        <Slider min={1} max={20} value={preferences.maxNotificationsPerBatch} onChange={val => updateScheduledPreferences({ maxNotificationsPerBatch: val })} colorScheme="blue">
-                                            <SliderTrack><SliderFilledTrack /></SliderTrack>
-                                            <SliderThumb />
-                                        </Slider>
-                                        <Flex justify="space-between" fontSize="xs" color="gray.400" mt={1}>
-                                            <Text>1 notification</Text>
-                                            <Text>20 notifications</Text>
-                                        </Flex>
-                                    </Box>
-                                    <Box bg="blue.900" borderWidth={1} borderColor="blue.700" rounded="lg" p={4} mt={2}>
-                                        <Text fontWeight="semibold" mb={2}>📋 How Scheduled Notifications Work</Text>
-                                        <Stack fontSize="sm" color="gray.300" spacing={1}>
-                                            <Text>• Checks your Hive notifications once per day at your preferred time</Text>
-                                            <Text>• Sends you the last {preferences.maxNotificationsPerBatch} unread notifications to Farcaster</Text>
-                                            <Text>• More efficient than real-time streaming, less overwhelming</Text>
-                                            <Text>• You can still use instant notifications if you prefer</Text>
-                                            <Text>• Time is in {preferences.timezone} timezone</Text>
-                                        </Stack>
-                                        <Button mt={3} colorScheme="blue" size="sm" onClick={testScheduledNotifications} isLoading={saving}>Test Now</Button>
-                                    </Box>
-                                </>
-                            )}
-                        </Stack>
-                    </Box>
-
-                    {/* Instant Notification Preferences */}
-                    {!preferences.scheduledNotificationsEnabled && (
-                        <Box bg="gray.800" p={6} rounded="lg">
-                            <Heading size="md" mb={4}>🔔 Instant Notification Preferences</Heading>
-                            <Stack spacing={4}>
-                                <Flex align="center" justify="space-between">
-                                    <Box>
-                                        <Text fontWeight="medium">Enable Notifications</Text>
-                                        <Text fontSize="sm" color="gray.400">Master switch for all notifications</Text>
-                                    </Box>
-                                    <Switch isChecked={preferences.notificationsEnabled} onChange={e => updatePreferences({ notificationsEnabled: e.target.checked })} colorScheme="blue" />
-                                </Flex>
-                                {preferences.notificationsEnabled && (
-                                    <>
-                                        <Flex align="center" justify="space-between">
-                                            <Box>
-                                                <Text fontWeight="medium">🔥 Vote Notifications</Text>
-                                                <Text fontSize="sm" color="gray.400">When someone votes on your posts</Text>
-                                            </Box>
-                                            <Switch isChecked={preferences.notifyVotes} onChange={e => updatePreferences({ notifyVotes: e.target.checked })} colorScheme="blue" />
-                                        </Flex>
-                                        <Flex align="center" justify="space-between">
-                                            <Box>
-                                                <Text fontWeight="medium">💬 Comment Notifications</Text>
-                                                <Text fontSize="sm" color="gray.400">When someone comments on your posts</Text>
-                                            </Box>
-                                            <Switch isChecked={preferences.notifyComments} onChange={e => updatePreferences({ notifyComments: e.target.checked })} colorScheme="blue" />
-                                        </Flex>
-                                        <Flex align="center" justify="space-between">
-                                            <Box>
-                                                <Text fontWeight="medium">👤 Follow Notifications</Text>
-                                                <Text fontSize="sm" color="gray.400">When someone follows you</Text>
-                                            </Box>
-                                            <Switch isChecked={preferences.notifyFollows} onChange={e => updatePreferences({ notifyFollows: e.target.checked })} colorScheme="blue" />
-                                        </Flex>
-                                        <Flex align="center" justify="space-between">
-                                            <Box>
-                                                <Text fontWeight="medium">🔔 Mention Notifications</Text>
-                                                <Text fontSize="sm" color="gray.400">When someone mentions you</Text>
-                                            </Box>
-                                            <Switch isChecked={preferences.notifyMentions} onChange={e => updatePreferences({ notifyMentions: e.target.checked })} colorScheme="blue" />
-                                        </Flex>
-                                        <Flex align="center" justify="space-between">
-                                            <Box>
-                                                <Text fontWeight="medium">Notification Frequency</Text>
-                                                <Text fontSize="sm" color="gray.400">How often to receive notifications</Text>
-                                            </Box>
-                                            <Select value={preferences.notificationFrequency} onChange={e => updatePreferences({ notificationFrequency: e.target.value as "instant" | "hourly" | "daily" })} bg="gray.700" color="white" maxW={40}>
-                                                <option value="instant">Instant</option>
-                                                <option value="hourly">Hourly</option>
-                                                <option value="daily">Daily</option>
-                                            </Select>
-                                        </Flex>
-                                    </>
-                                )}
-                            </Stack>
-                        </Box>
-                    )}
-
-                    {/* Statistics */}
-                    {stats && (
-                        <Box bg="gray.800" p={6} rounded="lg">
-                            <Heading size="md" mb={4}>📊 Notification Statistics</Heading>
-                            <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4} mb={4}>
-                                <Box textAlign="center">
-                                    <Text fontSize="2xl" fontWeight="bold" color="blue.400">{stats.totalNotifications}</Text>
-                                    <Text fontSize="sm" color="gray.400">Total Sent</Text>
-                                </Box>
-                                <Box textAlign="center">
-                                    <Text fontSize="2xl" fontWeight="bold" color="green.400">{stats.successfulNotifications}</Text>
-                                    <Text fontSize="sm" color="gray.400">Successful</Text>
-                                </Box>
-                                <Box textAlign="center">
-                                    <Text fontSize="2xl" fontWeight="bold" color="red.400">{stats.failedNotifications}</Text>
-                                    <Text fontSize="sm" color="gray.400">Failed</Text>
-                                </Box>
-                            </SimpleGrid>
-                            {stats.notificationsByType && Object.keys(stats.notificationsByType).length > 0 && (
-                                <Box>
-                                    <Text fontWeight="medium" mb={2}>By Type:</Text>
-                                    <Stack spacing={1}>
-                                        {Object.entries(stats.notificationsByType).map(([type, count]) => (
-                                            <Flex key={type} justify="space-between" fontSize="sm">
-                                                <Text textTransform="capitalize">{type}</Text>
-                                                <Text>{String(count)}</Text>
-                                            </Flex>
-                                        ))}
-                                    </Stack>
-                                </Box>
-                            )}
-                        </Box>
-                    )}
-                </Stack>
             )}
         </Container>
     );
