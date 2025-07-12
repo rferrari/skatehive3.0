@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
     switch (decodedPayload.event) {
       case 'frame_added':
       case 'notifications_enabled': {
-        // Store Farcaster token and notification URL in DB
+        // Store Farcaster token and notification URL in DB, ensure is_active is TRUE
         const notificationDetails = decodedPayload.notificationDetails;
         let fid = null;
         let username = null;
@@ -103,11 +103,27 @@ export async function POST(request: NextRequest) {
                 notificationDetails.token,
                 notificationDetails.url
               );
+              // Explicitly enable notifications (set is_active = TRUE)
+              if (tokenStore.enableNotifications) {
+                await tokenStore.enableNotifications(
+                  fid || '',
+                  notificationDetails.token,
+                  notificationDetails.url
+                );
+              }
               dbSuccess = true;
-              console.log('[FARCASTER WEBHOOK] Stored token for user:', { fid, username, notificationDetails });
+              console.log('[FARCASTER WEBHOOK] Stored token and enabled notifications for user:', { fid, username, notificationDetails });
             } else {
+              // Ensure notifications are enabled for existing token
+              if (tokenStore.enableNotifications) {
+                await tokenStore.enableNotifications(
+                  fid || '',
+                  notificationDetails.token,
+                  notificationDetails.url
+                );
+              }
               dbSuccess = true;
-              console.log('[FARCASTER WEBHOOK] Token already exists for FID:', fid);
+              console.log('[FARCASTER WEBHOOK] Token already exists for FID, notifications enabled:', fid);
             }
           } catch (err) {
             dbError = err instanceof Error ? err.message : String(err);
