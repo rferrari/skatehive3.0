@@ -327,7 +327,7 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
                                     <p className="text-lg">@{preferences.farcasterUsername}</p>
                                     <p className="text-gray-400">FID: {preferences.fid}</p>
                                     <p className="text-sm text-gray-500">
-                                        Connected: {preferences.linkedAt ? new Date(preferences.linkedAt).toLocaleDateString() : 'N/A'}
+                                        Connected: {preferences.linkedAt ? new Date(preferences.linkedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A'}
                                     </p>
                                 </div>
                                 <button
