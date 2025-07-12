@@ -13,6 +13,7 @@ import { useComments } from "@/hooks/useComments";
 import { Discussion } from "@hiveio/dhive";
 import Snap from "@/components/homepage/Snap";
 import Conversation from "@/components/homepage/Conversation";
+import LoadingComponent from "@/components/homepage/loadingComponent";
 
 interface SpotListProps {
   newSpot?: Discussion | null;
@@ -62,12 +63,7 @@ export default function SpotList({ newSpot, spots }: SpotListProps) {
   };
 
   if (isLoading) {
-    return (
-      <Box textAlign="center" my={8}>
-        <Spinner size="xl" />
-        <Text mt={2}>Loading spots...</Text>
-      </Box>
-    );
+    return <LoadingComponent />;
   }
 
   if (error) {
