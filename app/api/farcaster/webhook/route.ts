@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Process the webhook
-        const success = processFarcasterWebhook(signature);
+        const success = await processFarcasterWebhook(signature);
 
         if (success) {
             return NextResponse.json({ success: true });

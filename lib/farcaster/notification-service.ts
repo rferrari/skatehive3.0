@@ -4,7 +4,7 @@ import {
     HiveToFarcasterNotification,
     FarcasterUserToken
 } from '@/types/farcaster';
-import { farcasterTokenStore } from '@/lib/farcaster/token-store';
+import { getTokenStore } from '@/lib/farcaster/token-store-factory';
 import { Notifications } from '@hiveio/dhive';
 
 class FarcasterNotificationService {
@@ -18,9 +18,10 @@ class FarcasterNotificationService {
     ): Promise<{ success: boolean; results: FarcasterNotificationResponse[] }> {
         try {
             // Get tokens for target users or all active users
+            const tokenStore = getTokenStore();
             const userTokens = targetUsers
-                ? farcasterTokenStore.getTokensForHiveUsers(targetUsers)
-                : farcasterTokenStore.getActiveTokens();
+                ? await tokenStore.getTokensForHiveUsers(targetUsers)
+                : await tokenStore.getActiveTokens();
 
             if (userTokens.length === 0) {
                 console.log('No Farcaster users found for notification');
@@ -185,7 +186,7 @@ class FarcasterNotificationService {
                     const result: FarcasterNotificationResponse = await response.json();
 
                     // Remove invalid tokens from our store
-                    this.handleInvalidTokens(result.invalidTokens);
+                    await this.handleInvalidTokens(result.invalidTokens);
 
                     return result;
                 } else {
@@ -223,15 +224,16 @@ class FarcasterNotificationService {
     }
 
     // Handle invalid tokens by removing them from store
-    private handleInvalidTokens(invalidTokens: string[]): void {
+    private async handleInvalidTokens(invalidTokens: string[]): Promise<void> {
         if (invalidTokens.length === 0) return;
 
-        const allTokens = farcasterTokenStore.getAllTokens();
+        const tokenStore = getTokenStore();
+        const allTokens = await tokenStore.getAllTokens();
 
         for (const invalidToken of invalidTokens) {
-            const userToken = allTokens.find(token => token.token === invalidToken);
+            const userToken = allTokens.find((token: FarcasterUserToken) => token.token === invalidToken);
             if (userToken) {
-                farcasterTokenStore.removeToken(userToken.fid);
+                await tokenStore.removeToken(userToken.fid);
                 console.log(`Removed invalid token for FID ${userToken.fid}`);
             }
         }
