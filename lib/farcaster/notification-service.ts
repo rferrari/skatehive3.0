@@ -134,7 +134,27 @@ class FarcasterNotificationService {
 
         for (const hiveNotification of hiveNotifications) {
             const farcasterNotification = this.convertHiveToFarcasterNotification(hiveNotification);
-            const result = await this.sendNotification(farcasterNotification, targetUsers);
+            let result;
+            // If targetUsers is a FID array, use FID lookup
+            if (targetUsers && targetUsers.length === 1 && /^[0-9]+$/.test(targetUsers[0])) {
+                const tokenStore = getTokenStore();
+                const userToken = await tokenStore.getTokenByFid(targetUsers[0]);
+                if (userToken) {
+                    // Send directly to this token
+                    const tokensByUrl = new Map();
+                    tokensByUrl.set(userToken.notificationUrl, [userToken.token]);
+                    const singleResults = [];
+                    for (const [notificationUrl, tokens] of tokensByUrl.entries()) {
+                        const r = await this.sendToFarcasterClient(farcasterNotification, tokens, notificationUrl);
+                        singleResults.push(r);
+                    }
+                    result = { success: true, results: singleResults };
+                } else {
+                    result = { success: true, results: [] };
+                }
+            } else {
+                result = await this.sendNotification(farcasterNotification, targetUsers);
+            }
             results.push(...result.results);
         }
 

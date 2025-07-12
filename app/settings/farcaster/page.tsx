@@ -121,34 +121,21 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
         setSaving(true);
         setEventLogs(logs => [...logs, `Send unread notifications requested at ${new Date().toLocaleTimeString()}`]);
         try {
-            // Get the latest unread notifications from the queue
-            const queueRes = await fetch(`/api/farcaster/notifications-queue?hiveUsername=${hiveUsername}`);
-            const queueData = await queueRes.json();
-            if (!queueData.success || !Array.isArray(queueData.notifications) || queueData.notifications.length === 0) {
-                toast({ status: "info", title: "No unread notifications to send." });
-                setEventLogs(logs => [...logs, `No unread notifications to send.`]);
-                setSaving(false);
-                return;
+            // Call the new API to send only the last unread notification and get mapping info
+            const response = await fetch("/api/farcaster/send-unread-notifications", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ hiveUsername }),
+            });
+            const result = await response.json();
+            if (result.success) {
+                toast({ status: "success", title: `Sent unread notification! (${result.notificationsSent})` });
+                setEventLogs(logs => [...logs, `Hive: ${result.hiveUsername} → Farcaster: ${result.sentTo} | Sent: ${result.notificationsSent}`]);
+                await loadUserData();
+            } else {
+                toast({ status: "info", title: result.message });
+                setEventLogs(logs => [...logs, `Send unread notifications failed: ${result.message}`]);
             }
-            // Send each unread notification
-            let sentCount = 0;
-            for (const notif of queueData.notifications) {
-                const response = await fetch("/api/farcaster/notify", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        type: notif.type || "unread",
-                        title: notif.title || notif.message || "Notification",
-                        body: notif.message || notif.body || "You have a new notification.",
-                        sourceUrl: notif.url || "https://skatehive.app"
-                    }),
-                });
-                const result = await response.json();
-                if (result.success) sentCount++;
-            }
-            toast({ status: "success", title: `Sent unread notifications! (${sentCount})` });
-            setEventLogs(logs => [...logs, `Unread notifications sent: ${sentCount}`]);
-            await loadUserData();
         } catch {
             toast({ status: "error", title: "Failed to send unread notifications" });
             setEventLogs(logs => [...logs, `Send unread notifications error`]);
