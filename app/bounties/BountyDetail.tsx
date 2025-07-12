@@ -171,20 +171,15 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
       const commentBody = `🏆 Bounty Winners! 🏆\n\nCongratulations to: ${winnersList}\n\nReward: ${rewardPerWinner} ${rewardInfo.currency}\n\nThank you for participating!`;
       const permlink = `bounty-winners-${Date.now()}`;
       // Validation: ensure all required fields are present
-      if (
-        !hiveUser?.name ||
-        hiveUser?.name === "undefined" ||
-        !post.author ||
-        post.author === "undefined" ||
-        !post.permlink ||
-        post.permlink === "undefined" ||
-        !permlink ||
-        permlink === "undefined" ||
-        !commentBody ||
-        commentBody === "undefined" ||
-        !post.author
-      ) {
-        setRewardError("Missing required data for posting the comment. Please refresh and try again.");
+      const missingFields = [];
+      if (!hiveUser?.name || hiveUser?.name === "undefined") missingFields.push("hiveUser.name");
+      if (!post.author || post.author === "undefined") missingFields.push("post.author");
+      if (!post.permlink || post.permlink === "undefined") missingFields.push("post.permlink");
+      if (!permlink || permlink === "undefined") missingFields.push("permlink");
+      if (!commentBody || commentBody === "undefined") missingFields.push("commentBody");
+
+      if (missingFields.length > 0) {
+        setRewardError("Missing required data: " + missingFields.join(", "));
         setIsRewarding(false);
         return;
       }
