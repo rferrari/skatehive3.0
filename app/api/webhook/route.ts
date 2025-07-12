@@ -2,35 +2,32 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
+    const headers = Object.fromEntries(request.headers.entries());
     const body = await request.json();
 
-    // Log the webhook event for debugging
-    console.log('Webhook received:', body);
+    // Detailed logging for debugging webhook delivery
+    console.log('[FARCASTER WEBHOOK] Received event:', {
+      event: body.event,
+      payload: body,
+      headers
+    });
 
     // Handle different webhook events
     switch (body.event) {
       case 'frame_added':
-        // User added the Mini App
-        console.log('User added Mini App:', body);
+        console.log('[FARCASTER WEBHOOK] User added Mini App:', body);
         break;
-
       case 'frame_removed':
-        // User removed the Mini App
-        console.log('User removed Mini App:', body);
+        console.log('[FARCASTER WEBHOOK] User removed Mini App:', body);
         break;
-
       case 'notifications_enabled':
-        // User enabled notifications
-        console.log('Notifications enabled:', body);
+        console.log('[FARCASTER WEBHOOK] Notifications enabled:', body);
         break;
-
       case 'notifications_disabled':
-        // User disabled notifications
-        console.log('Notifications disabled:', body);
+        console.log('[FARCASTER WEBHOOK] Notifications disabled:', body);
         break;
-
       default:
-        console.log('Unknown webhook event:', body.event);
+        console.log('[FARCASTER WEBHOOK] Unknown event:', body.event, body);
     }
 
     // Always return 200 OK to acknowledge receipt
