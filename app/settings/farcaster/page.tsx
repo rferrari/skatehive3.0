@@ -90,17 +90,26 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
         setSaving(true);
         setEventLogs(logs => [...logs, `Test notification requested at ${new Date().toLocaleTimeString()}`]);
         try {
-            const response = await fetch(`/api/farcaster/scheduled-notifications?action=trigger&hiveUsername=${hiveUsername}`);
+            const response = await fetch("/api/farcaster/notify", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    type: "test",
+                    title: "Test Notification",
+                    body: "This is a test notification from SkateHive.",
+                    sourceUrl: "https://skatehive.app"
+                }),
+            });
             const result = await response.json();
             if (result.success) {
-                toast({ status: "success", title: `Test successful! Sent ${result.notificationsSent} notifications` });
-                setEventLogs(logs => [...logs, `Test notification sent: ${result.notificationsSent}`]);
+                toast({ status: "success", title: `Test notification sent! (${result.results?.length || 0})` });
+                setEventLogs(logs => [...logs, `Test notification sent: ${result.results?.length || 0}`]);
             } else {
                 toast({ status: "error", title: result.message });
                 setEventLogs(logs => [...logs, `Test notification failed: ${result.message}`]);
             }
         } catch {
-            toast({ status: "error", title: "Failed to test notifications" });
+            toast({ status: "error", title: "Failed to send test notification" });
             setEventLogs(logs => [...logs, `Test notification error`]);
         } finally {
             setSaving(false);
