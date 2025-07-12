@@ -69,7 +69,8 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
             const queueRes = await fetch(`/api/farcaster/notifications-queue?hiveUsername=${hiveUsername}`);
             const queueData = await queueRes.json();
             if (queueData.success && Array.isArray(queueData.notifications)) {
-                setNotificationsQueue(queueData.notifications);
+                // Display last 5 unread notifications (no source filter)
+                setNotificationsQueue(queueData.notifications.slice(-5).reverse());
             } else {
                 setNotificationsQueue([]);
             }
@@ -120,16 +121,34 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
         setSaving(true);
         setEventLogs(logs => [...logs, `Send unread notifications requested at ${new Date().toLocaleTimeString()}`]);
         try {
-            const response = await fetch(`/api/farcaster/send-unread-notifications?hiveUsername=${hiveUsername}`);
-            const result = await response.json();
-            if (result.success) {
-                toast({ status: "success", title: `Sent unread notifications! (${result.notificationsSent})` });
-                setEventLogs(logs => [...logs, `Unread notifications sent: ${result.notificationsSent}`]);
-                await loadUserData();
-            } else {
-                toast({ status: "error", title: result.message });
-                setEventLogs(logs => [...logs, `Send unread notifications failed: ${result.message}`]);
+            // Get the latest unread notifications from the queue
+            const queueRes = await fetch(`/api/farcaster/notifications-queue?hiveUsername=${hiveUsername}`);
+            const queueData = await queueRes.json();
+            if (!queueData.success || !Array.isArray(queueData.notifications) || queueData.notifications.length === 0) {
+                toast({ status: "info", title: "No unread notifications to send." });
+                setEventLogs(logs => [...logs, `No unread notifications to send.`]);
+                setSaving(false);
+                return;
             }
+            // Send each unread notification
+            let sentCount = 0;
+            for (const notif of queueData.notifications) {
+                const response = await fetch("/api/farcaster/notify", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        type: notif.type || "unread",
+                        title: notif.title || notif.message || "Notification",
+                        body: notif.message || notif.body || "You have a new notification.",
+                        sourceUrl: notif.url || "https://skatehive.app"
+                    }),
+                });
+                const result = await response.json();
+                if (result.success) sentCount++;
+            }
+            toast({ status: "success", title: `Sent unread notifications! (${sentCount})` });
+            setEventLogs(logs => [...logs, `Unread notifications sent: ${sentCount}`]);
+            await loadUserData();
         } catch {
             toast({ status: "error", title: "Failed to send unread notifications" });
             setEventLogs(logs => [...logs, `Send unread notifications error`]);
@@ -309,15 +328,15 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
                         <Button colorScheme="purple" onClick={handleSendUnreadNotifications} isLoading={saving}>Send Unread Notifications</Button>
                     </Stack>
                     <Box mt={8}>
-                        <Heading size="sm" mb={2}>Notifications in Queue</Heading>
+                        <Heading size="sm" mb={2}>Last 5 Unread Notifications</Heading>
                         {notificationsQueue.length === 0 ? (
-                            <Text color="gray.400">No unread notifications in queue.</Text>
+                            <Text color="gray.400">No unread notifications.</Text>
                         ) : (
                             <Stack spacing={2}>
                                 {notificationsQueue.map((notif, idx) => (
                                     <Box key={idx} p={2} bg="gray.700" rounded="md">
                                         <Text fontSize="sm" fontWeight="bold">{notif.type}</Text>
-                                        <Text fontSize="sm">{notif.message}</Text>
+                                        <Text fontSize="sm">{notif.message || notif.body}</Text>
                                         <Text fontSize="xs" color="gray.400">{notif.timestamp ? new Date(notif.timestamp).toLocaleString() : ""}</Text>
                                     </Box>
                                 ))}
