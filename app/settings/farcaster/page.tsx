@@ -259,6 +259,7 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
     };
 
     // State for scheduled notification time
+    // Always use GMT-3 for notification settings
     const initialScheduledTime = preferences
         ? `${String(preferences.scheduledTimeHour).padStart(2, "0")}:${String(preferences.scheduledTimeMinute).padStart(2, "0")}`
         : "04:20";
@@ -291,7 +292,8 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
             toast({ status: "error", title: "Invalid time. Hour must be 0-23 and minute 0-59." });
             return;
         }
-        await updateScheduledPreferences({ scheduledTimeHour: hour, scheduledTimeMinute: minute });
+        // Always set timezone to GMT-3
+        await updateScheduledPreferences({ scheduledTimeHour: hour, scheduledTimeMinute: minute, timezone: "GMT-3" });
     };
 
     return (
@@ -352,7 +354,7 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
                             </Button>
                         </Flex>
                         <Text fontSize="sm" color="gray.400" mt={2}>
-                            Set the time (UTC) when you want to receive your daily notification. Example: 04:20 for default, or 17:50 for testing.
+                            Set the time (<b>GMT-3</b>) when you want to receive your daily notification. Example: 04:20 for default, or 17:50 for testing. All notifications use GMT-3.
                         </Text>
                     </Box>
                     <Stack direction="row" spacing={4} mt={6}>
