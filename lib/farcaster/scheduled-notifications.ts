@@ -135,7 +135,18 @@ export class ScheduledNotificationService {
     ): Promise<number> {
         const { hiveUsername, maxNotificationsPerBatch, lastScheduledNotificationId } = config;
 
+        console.log(`[processUserScheduledNotifications] ENTERED for ${hiveUsername}`);
         try {
+            // Log user preferences and next notification time at the start
+            const now = new Date();
+            console.log(`[processUserScheduledNotifications] User preferences for ${hiveUsername}:`, {
+                hiveUsername,
+                maxNotificationsPerBatch,
+                lastScheduledNotificationId,
+            });
+            console.log(`[processUserScheduledNotifications] Next scheduled notification for ${hiveUsername} at ${now.toISOString()} (UTC hour: ${now.getUTCHours()}, minute: ${now.getUTCMinutes()})`);
+
+            // ...existing code...
             // Update the last scheduled check time
             await sql`
                 UPDATE skatehive_farcaster_preferences 
@@ -168,6 +179,19 @@ export class ScheduledNotificationService {
             const farcasterNotifications: HiveToFarcasterNotification[] = unreadNotifications.map((notification: Notifications) => {
                 return ScheduledNotificationService.convertHiveToFarcasterNotification(notification, hiveUsername);
             });
+
+            // Log the next notification and user preferences
+            if (farcasterNotifications.length > 0) {
+                const nextNotification = farcasterNotifications[0];
+                console.log(`[processUserScheduledNotifications] Next notification for ${hiveUsername}:`, {
+                    title: nextNotification.title,
+                    body: nextNotification.body,
+                    sourceUrl: nextNotification.sourceUrl,
+                    type: nextNotification.type
+                });
+            } else {
+                console.log(`[processUserScheduledNotifications] No unread notifications to send for ${hiveUsername}`);
+            }
 
             // Send notifications to Farcaster
             let sentCount = 0;
@@ -422,13 +446,13 @@ export class ScheduledNotificationService {
         notificationsSent: number;
         message: string;
     }> {
+        console.log(`[triggerUserNotifications] API called for ${hiveUsername}`);
         try {
             const preferences = await SkateHiveFarcasterService.getUserPreferences(hiveUsername);
-
+            console.log(`[triggerUserNotifications] User preferences for ${hiveUsername}:`, preferences);
             if (!preferences) {
                 return { success: false, notificationsSent: 0, message: 'User not found' };
             }
-
             if (!preferences.scheduledNotificationsEnabled) {
                 return { success: false, notificationsSent: 0, message: 'Scheduled notifications are disabled for this user' };
             }
