@@ -111,6 +111,14 @@ export async function POST(request: NextRequest) {
                   notificationDetails.url
                 );
               }
+              // Create default user preferences relationally when miniapp is added
+              try {
+                const { SkateHiveFarcasterService } = await import('@/lib/farcaster/skatehive-integration');
+                await SkateHiveFarcasterService.createDefaultPreferences(fid || '', username || '');
+                console.log('[FARCASTER WEBHOOK] Created default user preferences for FID:', fid);
+              } catch (err) {
+                console.warn('[FARCASTER WEBHOOK] Failed to create default user preferences:', err);
+              }
               dbSuccess = true;
               console.log('[FARCASTER WEBHOOK] Stored token and enabled notifications for user:', { fid, username, notificationDetails });
             } else {
