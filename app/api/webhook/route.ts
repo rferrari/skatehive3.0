@@ -111,17 +111,17 @@ export async function POST(request: NextRequest) {
                   notificationDetails.url
                 );
               }
-              // Create default user preferences only if fid and username are present and non-empty
-              if (fid && typeof fid === 'string' && fid.trim() !== '' && username && typeof username === 'string' && username.trim() !== '') {
+              // Create default user preferences with FID and Farcaster username only
+              if (fid && typeof fid === 'string' && fid.trim() !== '') {
                 try {
                   const { SkateHiveFarcasterService } = await import('@/lib/farcaster/skatehive-integration');
-                  await SkateHiveFarcasterService.createDefaultPreferences(fid, username);
+                  await SkateHiveFarcasterService.createDefaultPreferences(fid, username ?? '');
                   console.log('[FARCASTER WEBHOOK] Created default user preferences for FID:', fid);
                 } catch (err) {
                   console.warn('[FARCASTER WEBHOOK] Failed to create default user preferences:', err);
                 }
               } else {
-                console.warn('[FARCASTER WEBHOOK] Skipped creating default preferences due to missing fid or username:', { fid, username });
+                console.warn('[FARCASTER WEBHOOK] Skipped creating default preferences due to missing fid:', { fid });
               }
               dbSuccess = true;
               console.log('[FARCASTER WEBHOOK] Stored token and enabled notifications for user:', { fid, username, notificationDetails });
