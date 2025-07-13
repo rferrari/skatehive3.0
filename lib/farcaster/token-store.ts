@@ -265,9 +265,10 @@ export async function verifyFarcasterSignature(signature: FarcasterSignature): P
 // Process webhook events from Farcaster
 export async function processFarcasterWebhook(signedPayload: FarcasterSignature): Promise<boolean> {
     try {
+        console.log('[Webhook] Processing Farcaster webhook payload:', JSON.stringify(signedPayload));
         const isValidSignature = await verifyFarcasterSignature(signedPayload);
         if (!isValidSignature) {
-            console.error('Invalid Farcaster signature');
+            console.error('[Webhook] Invalid Farcaster signature');
             return false;
         }
 
@@ -276,15 +277,17 @@ export async function processFarcasterWebhook(signedPayload: FarcasterSignature)
 
         const fid = header.fid?.toString();
         if (!fid) {
-            console.error('No FID found in webhook header');
+            console.error('[Webhook] No FID found in webhook header');
             return false;
         }
+
+        console.log(`[Webhook] Event: ${payload.event}, FID: ${fid}, Header:`, header, 'Payload:', payload);
 
         switch (payload.event) {
             case 'miniapp_added':
                 if (payload.notificationDetails) {
-                    // Extract username from header if available
                     const username = header.username || `user_${fid}`;
+                    console.log(`[Webhook] Adding token for FID ${fid}, username: ${username}`);
                     farcasterTokenStore.addToken(
                         fid,
                         username,
@@ -295,10 +298,12 @@ export async function processFarcasterWebhook(signedPayload: FarcasterSignature)
                 break;
 
             case 'miniapp_removed':
+                console.log(`[Webhook] Removing token for FID ${fid}`);
                 farcasterTokenStore.removeToken(fid);
                 break;
 
             case 'notifications_enabled':
+                console.log(`[Webhook] Enabling notifications for FID ${fid}`);
                 farcasterTokenStore.enableNotifications(
                     fid,
                     payload.notificationDetails.token,
@@ -307,17 +312,19 @@ export async function processFarcasterWebhook(signedPayload: FarcasterSignature)
                 break;
 
             case 'notifications_disabled':
+                console.log(`[Webhook] Disabling notifications for FID ${fid}`);
                 farcasterTokenStore.disableNotifications(fid);
                 break;
 
             default:
-                console.warn('Unknown Farcaster webhook event:', payload);
+                console.warn('[Webhook] Unknown Farcaster webhook event:', payload);
                 return false;
         }
 
+        console.log('[Webhook] Successfully processed event:', payload.event);
         return true;
     } catch (error) {
-        console.error('Failed to process Farcaster webhook:', error);
+        console.error('[Webhook] Failed to process Farcaster webhook:', error);
         return false;
     }
 }
