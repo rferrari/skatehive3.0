@@ -113,6 +113,9 @@ export async function POST(request: NextRequest) {
               }
               // Create default user preferences with FID and Farcaster username only
               if (fid && typeof fid === 'string' && fid.trim() !== '') {
+                if (!username) {
+                  console.warn('[FARCASTER WEBHOOK] Creating preferences with missing username for FID:', { fid });
+                }
                 try {
                   const { SkateHiveFarcasterService } = await import('@/lib/farcaster/skatehive-integration');
                   await SkateHiveFarcasterService.createDefaultPreferences(fid, username ?? '');
