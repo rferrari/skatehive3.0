@@ -84,12 +84,14 @@ export class ScheduledNotificationService {
      */
     private static async getUsersReadyForScheduledNotifications(): Promise<ScheduledNotificationConfig[]> {
         try {
+
             const now = new Date();
             const currentHour = now.getUTCHours();
             const currentMinute = now.getUTCMinutes();
+            const minMinute = (currentMinute - 5 + 60) % 60;
+            const maxMinute = (currentMinute + 5) % 60;
 
-            // Find users whose scheduled time matches current time (within 1 minute window)
-            // and haven't been checked in the last 23 hours
+            // Find users whose preferred time is within ±5 minutes of current time
             const result = await sql`
                 SELECT 
                     p.hive_username,
@@ -97,18 +99,15 @@ export class ScheduledNotificationService {
                     p.scheduled_time_minute,
                     p.timezone,
                     p.max_notifications_per_batch,
-                    p.last_scheduled_notification_id,
-                    p.last_scheduled_check
+                    p.last_scheduled_notification_id
                 FROM skatehive_farcaster_preferences p
                 JOIN farcaster_tokens t ON p.fid = t.fid
                 WHERE p.scheduled_notifications_enabled = true
                   AND p.notifications_enabled = true
                   AND t.is_active = true
                   AND p.scheduled_time_hour = ${currentHour}
-                  AND p.scheduled_time_minute = ${currentMinute}
                   AND (
-                    p.last_scheduled_check IS NULL 
-                    OR p.last_scheduled_check < NOW() - INTERVAL '23 hours'
+                    (p.scheduled_time_minute >= ${minMinute} AND p.scheduled_time_minute <= ${maxMinute})
                   )
             `;
 
@@ -146,13 +145,6 @@ export class ScheduledNotificationService {
             });
             console.log(`[processUserScheduledNotifications] Next scheduled notification for ${hiveUsername} at ${now.toISOString()} (UTC hour: ${now.getUTCHours()}, minute: ${now.getUTCMinutes()})`);
 
-            // ...existing code...
-            // Update the last scheduled check time
-            await sql`
-                UPDATE skatehive_farcaster_preferences 
-                SET last_scheduled_check = NOW()
-                WHERE hive_username = ${hiveUsername}
-            `;
 
             // Fetch user's notifications from Hive
             const allNotifications = await serverHiveClient.fetchNotifications(hiveUsername);
@@ -162,16 +154,11 @@ export class ScheduledNotificationService {
                 return 0;
             }
 
-            // Filter to unread notifications since last scheduled check
-            const unreadNotifications = allNotifications
-                .filter((notification: Notifications) => {
-                    // Filter by notification ID if we track them
-                    return notification.id && notification.id > lastScheduledNotificationId;
-                })
-                .slice(0, maxNotificationsPerBatch); // Limit to user's preference
+            // Always queue all notifications, regardless of lastScheduledNotificationId
+            const unreadNotifications = allNotifications.slice(0, maxNotificationsPerBatch); // Limit to user's preference
 
             if (unreadNotifications.length === 0) {
-                console.log(`No new notifications for ${hiveUsername} since last check`);
+                console.log(`No notifications to send for ${hiveUsername}`);
                 return 0;
             }
 
