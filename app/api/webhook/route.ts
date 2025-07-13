@@ -180,7 +180,7 @@ export async function POST(request: NextRequest) {
           } catch (err) {
             console.error('[FARCASTER WEBHOOK] Error removing token for FID:', fid, err);
           }
-          // Try to delete preferences for this FID
+          // Only delete preferences, do not update to NULL
           try {
             const { SkateHiveFarcasterService } = await import('@/lib/farcaster/skatehive-integration');
             await SkateHiveFarcasterService.deletePreferencesByFid(fid);
