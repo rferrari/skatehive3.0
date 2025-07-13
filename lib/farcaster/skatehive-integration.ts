@@ -145,44 +145,67 @@ export class SkateHiveFarcasterService {
                 WHERE fid = ${fid}
             `;
 
+
+            // Default scheduled notification preferences
+            const defaultScheduledNotificationsEnabled = preferences?.scheduledNotificationsEnabled ?? true;
+            const defaultScheduledTimeHour = preferences?.scheduledTimeHour ?? 7; // 4:20 GMT-3 = 7:20 UTC
+            const defaultScheduledTimeMinute = preferences?.scheduledTimeMinute ?? 20;
+            const defaultTimezone = preferences?.timezone ?? 'GMT-3';
+            const defaultMaxNotificationsPerBatch = preferences?.maxNotificationsPerBatch ?? 5;
+
             // Insert or update preferences
             await sql`
-                INSERT INTO skatehive_farcaster_preferences (
-                    hive_username,
-                    fid,
-                    farcaster_username,
-                    notifications_enabled,
-                    notify_votes,
-                    notify_comments,
-                    notify_follows,
-                    notify_mentions,
-                    notify_posts,
-                    notification_frequency
-                ) VALUES (
-                    ${hiveUsername},
-                    ${fid},
-                    ${farcasterUsername},
-                    ${preferences?.notificationsEnabled ?? true},
-                    ${preferences?.notifyVotes ?? true},
-                    ${preferences?.notifyComments ?? true},
-                    ${preferences?.notifyFollows ?? true},
-                    ${preferences?.notifyMentions ?? true},
-                    ${preferences?.notifyPosts ?? false},
-                    ${preferences?.notificationFrequency ?? 'instant'}
-                )
-                ON CONFLICT (hive_username) 
-                DO UPDATE SET 
-                    fid = EXCLUDED.fid,
-                    farcaster_username = EXCLUDED.farcaster_username,
-                    notifications_enabled = EXCLUDED.notifications_enabled,
-                    notify_votes = EXCLUDED.notify_votes,
-                    notify_comments = EXCLUDED.notify_comments,
-                    notify_follows = EXCLUDED.notify_follows,
-                    notify_mentions = EXCLUDED.notify_mentions,
-                    notify_posts = EXCLUDED.notify_posts,
-                    notification_frequency = EXCLUDED.notification_frequency,
-                    linked_at = NOW()
-            `;
+            INSERT INTO skatehive_farcaster_preferences (
+                hive_username,
+                fid,
+                farcaster_username,
+                notifications_enabled,
+                notify_votes,
+                notify_comments,
+                notify_follows,
+                notify_mentions,
+                notify_posts,
+                notification_frequency,
+                scheduled_notifications_enabled,
+                scheduled_time_hour,
+                scheduled_time_minute,
+                timezone,
+                max_notifications_per_batch
+            ) VALUES (
+                ${hiveUsername},
+                ${fid},
+                ${farcasterUsername},
+                ${preferences?.notificationsEnabled ?? true},
+                ${preferences?.notifyVotes ?? true},
+                ${preferences?.notifyComments ?? true},
+                ${preferences?.notifyFollows ?? true},
+                ${preferences?.notifyMentions ?? true},
+                ${preferences?.notifyPosts ?? false},
+                ${preferences?.notificationFrequency ?? 'instant'},
+                ${defaultScheduledNotificationsEnabled},
+                ${defaultScheduledTimeHour},
+                ${defaultScheduledTimeMinute},
+                ${defaultTimezone},
+                ${defaultMaxNotificationsPerBatch}
+            )
+            ON CONFLICT (hive_username) 
+            DO UPDATE SET 
+                fid = EXCLUDED.fid,
+                farcaster_username = EXCLUDED.farcaster_username,
+                notifications_enabled = EXCLUDED.notifications_enabled,
+                notify_votes = EXCLUDED.notify_votes,
+                notify_comments = EXCLUDED.notify_comments,
+                notify_follows = EXCLUDED.notify_follows,
+                notify_mentions = EXCLUDED.notify_mentions,
+                notify_posts = EXCLUDED.notify_posts,
+                notification_frequency = EXCLUDED.notification_frequency,
+                scheduled_notifications_enabled = EXCLUDED.scheduled_notifications_enabled,
+                scheduled_time_hour = EXCLUDED.scheduled_time_hour,
+                scheduled_time_minute = EXCLUDED.scheduled_time_minute,
+                timezone = EXCLUDED.timezone,
+                max_notifications_per_batch = EXCLUDED.max_notifications_per_batch,
+                linked_at = NOW()
+        `;
 
             return {
                 success: true,
