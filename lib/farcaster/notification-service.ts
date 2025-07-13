@@ -73,7 +73,7 @@ class FarcasterNotificationService {
 
         switch (type) {
             case 'vote':
-                title = '� New Vote';
+                title = '💰 New Vote';
                 body = hiveNotification.msg || `@${author} voted on your post`;
                 if (author && permlink) {
                     sourceUrl = `${baseUrl}/post/${author}/${permlink}`;
@@ -88,14 +88,14 @@ class FarcasterNotificationService {
                 }
                 break;
             case 'mention':
-                title = '� Mention';
+                title = '🏷 Mention';
                 body = hiveNotification.msg || `@${author} mentioned you`;
                 if (author && permlink) {
                     sourceUrl = `${baseUrl}/post/${author}/${permlink}`;
                 }
                 break;
             case 'follow':
-                title = '� New Follower';
+                title = '🛹 New Follower';
                 body = hiveNotification.msg || `@${author} followed you`;
                 if (author) {
                     sourceUrl = `${baseUrl}/user/${author}?view=snaps`;
@@ -108,6 +108,8 @@ class FarcasterNotificationService {
                     sourceUrl = `${baseUrl}/post/${author}/${permlink}`;
                 }
                 break;
+
+            // TODO: I think transfer notifications does not exist and it was an AI slop, review this, may be deletable code
             case 'transfer':
                 title = '💰 Transfer';
                 body = hiveNotification.msg || 'Someone sent you tokens';
