@@ -305,7 +305,6 @@ export async function processFarcasterWebhook(signedPayload: FarcasterSignature)
                 farcasterTokenStore.removeToken(fid);
                 // Delete preferences for this FID
                 const { SkateHiveFarcasterService } = await import('./skatehive-integration');
-                await SkateHiveFarcasterService.deletePreferencesByFid(fid);
                 break;
             }
             case 'notifications_enabled':
