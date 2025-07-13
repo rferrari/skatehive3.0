@@ -54,7 +54,11 @@ export class SkateHiveFarcasterService {
      * Create default preferences for a Farcaster FID (miniapp_added)
      */
     static async createDefaultPreferences(fid: string, farcasterUsername: string): Promise<void> {
-        // No hiveUsername yet, so create with minimal info
+        // Always use string for FID and ensure it's not NULL
+        const fidStr = typeof fid === 'string' ? fid.trim() : String(fid);
+        if (!fidStr || fidStr === 'null' || fidStr === '') {
+            throw new Error('Attempted to create preferences with invalid FID');
+        }
         await sql`
             INSERT INTO skatehive_farcaster_preferences (
                 fid,
@@ -73,7 +77,7 @@ export class SkateHiveFarcasterService {
                 max_notifications_per_batch,
                 linked_at
             ) VALUES (
-                ${fid},
+                ${fidStr},
                 ${farcasterUsername},
                 true,
                 true,
@@ -97,9 +101,15 @@ export class SkateHiveFarcasterService {
      * Delete preferences for a Farcaster FID (miniapp_removed)
      */
     static async deletePreferencesByFid(fid: string): Promise<void> {
+        const fidStr = typeof fid === 'string' ? fid.trim() : String(fid);
         await sql`
-            DELETE FROM skatehive_farcaster_preferences WHERE fid = ${fid}
+            DELETE FROM skatehive_farcaster_preferences WHERE fid = ${fidStr}
         `;
+        // Optionally, log if any rows remain with NULL FID (should not happen)
+        const { rows } = await sql`SELECT * FROM skatehive_farcaster_preferences WHERE fid IS NULL`;
+        if (rows.length > 0) {
+            console.warn('[SKATEHIVE INTEGRATION] Orphaned preferences rows with NULL FID detected:', rows);
+        }
     }
 
     /**
