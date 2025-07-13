@@ -258,6 +258,17 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
         }
     };
 
+    // State for scheduled notification time
+    const initialScheduledTime = preferences
+        ? `${String(preferences.scheduledTimeHour).padStart(2, "0")}:${String(preferences.scheduledTimeMinute).padStart(2, "0")}`
+        : "04:20";
+    const [scheduledTime, setScheduledTime] = useState(initialScheduledTime);
+    useEffect(() => {
+        if (preferences) {
+            setScheduledTime(`${String(preferences.scheduledTimeHour).padStart(2, "0")}:${String(preferences.scheduledTimeMinute).padStart(2, "0")}`);
+        }
+    }, [preferences]);
+
     if (loading)
         return (
             <Container minH="100vh" centerContent bg="gray.900" color="white" py={8}>
@@ -267,18 +278,6 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
                 </Box>
             </Container>
         );
-
-    // State for scheduled notification time
-    // Scheduled notification time state
-    const initialScheduledTime = preferences
-        ? `${String(preferences.scheduledTimeHour).padStart(2, "0")}:${String(preferences.scheduledTimeMinute).padStart(2, "0")}`
-        : "04:20";
-    const [scheduledTime, setScheduledTime] = useState(initialScheduledTime);
-    useEffect(() => {
-        if (preferences) {
-            setScheduledTime(`${String(preferences.scheduledTimeHour).padStart(2, "0")}:${String(preferences.scheduledTimeMinute).padStart(2, "0")}`);
-        }
-    }, [preferences?.scheduledTimeHour, preferences?.scheduledTimeMinute]);
 
     const handleScheduledTimeUpdate = async () => {
         if (!scheduledTime.match(/^\d{2}:\d{2}$/)) {
