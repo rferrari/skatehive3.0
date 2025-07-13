@@ -268,6 +268,33 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
             </Container>
         );
 
+    // State for scheduled notification time
+    // Scheduled notification time state
+    const initialScheduledTime = preferences
+        ? `${String(preferences.scheduledTimeHour).padStart(2, "0")}:${String(preferences.scheduledTimeMinute).padStart(2, "0")}`
+        : "04:20";
+    const [scheduledTime, setScheduledTime] = useState(initialScheduledTime);
+    useEffect(() => {
+        if (preferences) {
+            setScheduledTime(`${String(preferences.scheduledTimeHour).padStart(2, "0")}:${String(preferences.scheduledTimeMinute).padStart(2, "0")}`);
+        }
+    }, [preferences?.scheduledTimeHour, preferences?.scheduledTimeMinute]);
+
+    const handleScheduledTimeUpdate = async () => {
+        if (!scheduledTime.match(/^\d{2}:\d{2}$/)) {
+            toast({ status: "error", title: "Invalid time format. Use HH:MM." });
+            return;
+        }
+        const [hourStr, minuteStr] = scheduledTime.split(":");
+        const hour = parseInt(hourStr, 10);
+        const minute = parseInt(minuteStr, 10);
+        if (isNaN(hour) || isNaN(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+            toast({ status: "error", title: "Invalid time. Hour must be 0-23 and minute 0-59." });
+            return;
+        }
+        await updateScheduledPreferences({ scheduledTimeHour: hour, scheduledTimeMinute: minute });
+    };
+
     return (
         <Container minH="100vh" maxW="lg" bg="gray.900" color="white" py={8}>
             <Heading size="lg" mb={2}>🛹 Farcaster Notifications</Heading>
@@ -309,6 +336,25 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
                     <Box mt={6}>
                         <Text fontWeight="medium" mb={2}>Enable Notifications</Text>
                         <Switch isChecked={preferences.notificationsEnabled} onChange={e => updatePreferences({ notificationsEnabled: e.target.checked })} colorScheme="blue" />
+                    </Box>
+                    <Box mt={6}>
+                        <Text fontWeight="medium" mb={2}>Scheduled Notification Time</Text>
+                        <Flex align="center" gap={4}>
+                            <Input
+                                type="time"
+                                value={scheduledTime}
+                                onChange={e => setScheduledTime(e.target.value)}
+                                width="120px"
+                                bg="gray.700"
+                                color="white"
+                            />
+                            <Button colorScheme="green" onClick={handleScheduledTimeUpdate} isLoading={saving}>
+                                Update Time
+                            </Button>
+                        </Flex>
+                        <Text fontSize="sm" color="gray.400" mt={2}>
+                            Set the time (UTC) when you want to receive your daily notification. Example: 04:20 for default, or 17:50 for testing.
+                        </Text>
                     </Box>
                     <Stack direction="row" spacing={4} mt={6}>
                         <Button colorScheme="blue" onClick={handleTestNotification} isLoading={saving}>Send Test Notification</Button>

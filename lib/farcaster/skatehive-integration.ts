@@ -51,6 +51,58 @@ export interface HiveProfileExtension {
 export class SkateHiveFarcasterService {
 
     /**
+     * Create default preferences for a Farcaster FID (miniapp_added)
+     */
+    static async createDefaultPreferences(fid: string, farcasterUsername: string): Promise<void> {
+        // No hiveUsername yet, so create with minimal info
+        await sql`
+            INSERT INTO skatehive_farcaster_preferences (
+                fid,
+                farcaster_username,
+                notifications_enabled,
+                notify_votes,
+                notify_comments,
+                notify_follows,
+                notify_mentions,
+                notify_posts,
+                notification_frequency,
+                scheduled_notifications_enabled,
+                scheduled_time_hour,
+                scheduled_time_minute,
+                timezone,
+                max_notifications_per_batch,
+                linked_at
+            ) VALUES (
+                ${fid},
+                ${farcasterUsername},
+                true,
+                true,
+                true,
+                true,
+                true,
+                false,
+                'instant',
+                true,
+                7,
+                20,
+                'GMT-3',
+                5,
+                NOW()
+            )
+            ON CONFLICT (fid) DO NOTHING;
+        `;
+    }
+
+    /**
+     * Delete preferences for a Farcaster FID (miniapp_removed)
+     */
+    static async deletePreferencesByFid(fid: string): Promise<void> {
+        await sql`
+            DELETE FROM skatehive_farcaster_preferences WHERE fid = ${fid}
+        `;
+    }
+
+    /**
      * Get user's Farcaster preferences from database
      */
     static async getUserPreferences(hiveUsername: string): Promise<FarcasterPreferences | null> {
