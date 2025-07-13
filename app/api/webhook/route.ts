@@ -119,15 +119,27 @@ export async function POST(request: NextRequest) {
               // Create default user preferences with FID and Farcaster username only
               const fidStr = typeof fid === 'string' ? fid.trim() : String(fid);
               if (fidStr !== '') {
-                if (!username) {
-                  console.warn('[FARCASTER WEBHOOK] Creating preferences with missing username for FID:', { fid });
-                }
                 try {
                   const { SkateHiveFarcasterService } = await import('@/lib/farcaster/skatehive-integration');
-                  await SkateHiveFarcasterService.createDefaultPreferences(fidStr, username ?? '');
-                  console.log('[FARCASTER WEBHOOK] Created default user preferences for FID:', fidStr);
+                  // Check for existing preferences
+                  const existingPrefs = await SkateHiveFarcasterService.getPreferencesByFid(fidStr);
+                  if (existingPrefs) {
+                    // If username is missing in preferences but present in header, update it
+                    if (!existingPrefs.farcasterUsername && username) {
+                      await SkateHiveFarcasterService.updateFarcasterUsername(fidStr, username);
+                      console.log('[FARCASTER WEBHOOK] Linked previous preferences for FID:', fidStr, 'with username:', username);
+                    } else {
+                      console.log('[FARCASTER WEBHOOK] Found previous preferences for FID:', fidStr, 'No update needed.');
+                    }
+                  } else {
+                    if (!username) {
+                      console.warn('[FARCASTER WEBHOOK] Creating preferences with missing username for FID:', { fid });
+                    }
+                    await SkateHiveFarcasterService.createDefaultPreferences(fidStr, username ?? '');
+                    console.log('[FARCASTER WEBHOOK] Created default user preferences for FID:', fidStr);
+                  }
                 } catch (err) {
-                  console.warn('[FARCASTER WEBHOOK] Failed to create default user preferences:', err);
+                  console.warn('[FARCASTER WEBHOOK] Failed to create or link user preferences:', err);
                 }
               } else {
                 console.warn('[FARCASTER WEBHOOK] Skipped creating default preferences due to missing fid:', { fid });
@@ -177,7 +189,7 @@ export async function POST(request: NextRequest) {
         break;
       }
       case 'frame_removed': {
-        // Remove user's token from DB and delete preferences
+        // Remove user's token from DB but retain preferences for future re-linking
         let fid = null;
         try {
           const headerJson = JSON.parse(Buffer.from(body.header, 'base64').toString('utf8'));
@@ -194,18 +206,10 @@ export async function POST(request: NextRequest) {
           } catch (err) {
             console.error('[FARCASTER WEBHOOK] Error removing token for FID:', fid, err);
           }
-          // Only delete preferences, do not update to NULL
-          try {
-            const { SkateHiveFarcasterService } = await import('@/lib/farcaster/skatehive-integration');
-            await SkateHiveFarcasterService.deletePreferencesByFid(fid);
-            console.log('[FARCASTER WEBHOOK] Deleted preferences for FID:', fid);
-          } catch (err) {
-            console.error('[FARCASTER WEBHOOK] Error deleting preferences for FID:', fid, err);
-          }
         } else {
           console.warn('[FARCASTER WEBHOOK] No FID found for frame_removed event:', decodedPayload);
         }
-        console.log('[FARCASTER WEBHOOK] User removed Mini App:', decodedPayload);
+        console.log('[FARCASTER WEBHOOK] User removed Mini App (preferences retained):', decodedPayload);
         break;
       }
       case 'notifications_disabled': {

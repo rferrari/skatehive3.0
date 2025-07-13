@@ -49,6 +49,77 @@ export interface HiveProfileExtension {
  * Manages user preferences, Hive profile updates, and notification settings
  */
 export class SkateHiveFarcasterService {
+    /**
+     * Get preferences by FID
+     */
+    static async getPreferencesByFid(fid: string): Promise<FarcasterPreferences | null> {
+        try {
+            const result = await sql`
+                SELECT 
+                    hive_username,
+                    fid,
+                    farcaster_username,
+                    notifications_enabled,
+                    notify_votes,
+                    notify_comments,
+                    notify_follows,
+                    notify_mentions,
+                    notify_posts,
+                    notification_frequency,
+                    scheduled_notifications_enabled,
+                    scheduled_time_hour,
+                    scheduled_time_minute,
+                    timezone,
+                    max_notifications_per_batch,
+                    last_scheduled_check,
+                    last_scheduled_notification_id,
+                    linked_at,
+                    last_notification_at,
+                    hive_profile_updated
+                FROM skatehive_farcaster_preferences 
+                WHERE fid = ${fid}
+                LIMIT 1
+            `;
+            if (result.rows.length === 0) return null;
+            const row = result.rows[0];
+            return {
+                hiveUsername: row.hive_username,
+                fid: row.fid,
+                farcasterUsername: row.farcaster_username,
+                notificationsEnabled: row.notifications_enabled,
+                notifyVotes: row.notify_votes,
+                notifyComments: row.notify_comments,
+                notifyFollows: row.notify_follows,
+                notifyMentions: row.notify_mentions,
+                notifyPosts: row.notify_posts,
+                notificationFrequency: row.notification_frequency as 'instant' | 'hourly' | 'daily',
+                scheduledNotificationsEnabled: row.scheduled_notifications_enabled || false,
+                scheduledTimeHour: row.scheduled_time_hour || 9,
+                scheduledTimeMinute: row.scheduled_time_minute || 0,
+                timezone: row.timezone || 'UTC',
+                maxNotificationsPerBatch: row.max_notifications_per_batch || 5,
+                lastScheduledCheck: row.last_scheduled_check ? new Date(row.last_scheduled_check) : undefined,
+                lastScheduledNotificationId: row.last_scheduled_notification_id || 0,
+                linkedAt: new Date(row.linked_at),
+                lastNotificationAt: row.last_notification_at ? new Date(row.last_notification_at) : undefined,
+                hiveProfileUpdated: row.hive_profile_updated
+            };
+        } catch (error) {
+            console.error('Failed to get preferences by FID:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Update Farcaster username for preferences by FID
+     */
+    static async updateFarcasterUsername(fid: string, farcasterUsername: string): Promise<void> {
+        await sql`
+            UPDATE skatehive_farcaster_preferences
+            SET farcaster_username = ${farcasterUsername}
+            WHERE fid = ${fid}
+        `;
+    }
 
     /**
      * Create default preferences for a Farcaster FID (miniapp_added)
