@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
         break;
       }
       case 'frame_removed': {
-        // Remove user's token from DB
+        // Remove user's token from DB and delete preferences
         let fid = null;
         try {
           const headerJson = JSON.parse(Buffer.from(body.header, 'base64').toString('utf8'));
@@ -172,10 +172,24 @@ export async function POST(request: NextRequest) {
           console.warn('[FARCASTER WEBHOOK] Failed to decode header for FID:', err);
         }
         if (fid) {
-          const { getTokenStore } = await import('@/lib/farcaster/token-store-factory');
-          const tokenStore = getTokenStore();
-          await tokenStore.removeToken(fid);
-          console.log('[FARCASTER WEBHOOK] Removed token for FID:', fid);
+          try {
+            const { getTokenStore } = await import('@/lib/farcaster/token-store-factory');
+            const tokenStore = getTokenStore();
+            await tokenStore.removeToken(fid);
+            console.log('[FARCASTER WEBHOOK] Removed token for FID:', fid);
+          } catch (err) {
+            console.error('[FARCASTER WEBHOOK] Error removing token for FID:', fid, err);
+          }
+          // Try to delete preferences for this FID
+          try {
+            const { SkateHiveFarcasterService } = await import('@/lib/farcaster/skatehive-integration');
+            await SkateHiveFarcasterService.deletePreferencesByFid(fid);
+            console.log('[FARCASTER WEBHOOK] Deleted preferences for FID:', fid);
+          } catch (err) {
+            console.error('[FARCASTER WEBHOOK] Error deleting preferences for FID:', fid, err);
+          }
+        } else {
+          console.warn('[FARCASTER WEBHOOK] No FID found for frame_removed event:', decodedPayload);
         }
         console.log('[FARCASTER WEBHOOK] User removed Mini App:', decodedPayload);
         break;
