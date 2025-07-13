@@ -85,17 +85,20 @@ export async function POST(request: NextRequest) {
           const headerJson = JSON.parse(Buffer.from(body.header, 'base64').toString('utf8'));
           fid = headerJson.fid || null;
           username = headerJson.username || null;
+          console.log('[FARCASTER WEBHOOK] Decoded header:', { fid, username, headerJson });
         } catch (err) {
-          console.warn('[FARCASTER WEBHOOK] Failed to decode header for FID/username:', err);
+          console.warn('[FARCASTER WEBHOOK] Failed to decode header for FID/username:', err, { rawHeader: body.header });
         }
         let dbSuccess = false;
         let dbError = null;
+        console.log('[FARCASTER WEBHOOK] Notification details:', notificationDetails);
         if (notificationDetails && notificationDetails.token && notificationDetails.url) {
           try {
             const { getTokenStore } = await import('@/lib/farcaster/token-store-factory');
             const tokenStore = getTokenStore();
             // Deduplicate: check if token already exists for this FID
             const existingToken = tokenStore.getTokenByFid ? await tokenStore.getTokenByFid(fid || '') : null;
+            console.log('[FARCASTER WEBHOOK] Existing token for FID:', { fid, existingToken });
             if (!existingToken || existingToken.token !== notificationDetails.token) {
               await tokenStore.addToken(
                 fid || '',
@@ -103,6 +106,7 @@ export async function POST(request: NextRequest) {
                 notificationDetails.token,
                 notificationDetails.url
               );
+              console.log('[FARCASTER WEBHOOK] Added/Updated token for FID:', { fid, username, token: notificationDetails.token, url: notificationDetails.url });
               // Explicitly enable notifications (set is_active = TRUE)
               if (tokenStore.enableNotifications) {
                 await tokenStore.enableNotifications(
@@ -110,6 +114,7 @@ export async function POST(request: NextRequest) {
                   notificationDetails.token,
                   notificationDetails.url
                 );
+                console.log('[FARCASTER WEBHOOK] Notifications enabled for FID:', fid);
               }
               // Create default user preferences with FID and Farcaster username only
               if (fid && typeof fid === 'string' && fid.trim() !== '') {
@@ -136,13 +141,14 @@ export async function POST(request: NextRequest) {
                   notificationDetails.token,
                   notificationDetails.url
                 );
+                console.log('[FARCASTER WEBHOOK] Notifications enabled for existing token FID:', fid);
               }
               dbSuccess = true;
               console.log('[FARCASTER WEBHOOK] Token already exists for FID, notifications enabled:', fid);
             }
           } catch (err) {
             dbError = err instanceof Error ? err.message : String(err);
-            console.error('[FARCASTER WEBHOOK] DB error:', dbError);
+            console.error('[FARCASTER WEBHOOK] DB error:', dbError, { fid, username, notificationDetails });
           }
         } else {
           dbError = 'Missing notificationDetails';
