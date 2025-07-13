@@ -53,8 +53,10 @@ export class ScheduledNotificationService {
         };
 
         try {
+
             // Get all users who have scheduled notifications enabled
             const users = await this.getUsersReadyForScheduledNotifications();
+            console.log('[DEBUG] Users selected for scheduled notifications:', users.map(u => u.hiveUsername));
 
             for (const user of users) {
                 try {
@@ -85,11 +87,19 @@ export class ScheduledNotificationService {
     private static async getUsersReadyForScheduledNotifications(): Promise<ScheduledNotificationConfig[]> {
         try {
 
+
             const now = new Date();
             const currentHour = now.getUTCHours();
             const currentMinute = now.getUTCMinutes();
             const minMinute = (currentMinute - 5 + 60) % 60;
             const maxMinute = (currentMinute + 5) % 60;
+
+            console.log('[DEBUG] Scheduled notification query params:', {
+                currentHour,
+                currentMinute,
+                minMinute,
+                maxMinute
+            });
 
             // Find users whose preferred time is within ±5 minutes of current time
             const result = await sql`
@@ -111,7 +121,9 @@ export class ScheduledNotificationService {
                   )
             `;
 
-            return result.rows.map(row => ({
+            console.log('[DEBUG] Raw SQL result for scheduled notifications:', result.rows);
+
+            const selectedUsers = result.rows.map(row => ({
                 hiveUsername: row.hive_username,
                 scheduledTimeHour: row.scheduled_time_hour,
                 scheduledTimeMinute: row.scheduled_time_minute,
@@ -119,6 +131,9 @@ export class ScheduledNotificationService {
                 maxNotificationsPerBatch: row.max_notifications_per_batch,
                 lastScheduledNotificationId: row.last_scheduled_notification_id
             }));
+
+            console.log('[DEBUG] Users selected for scheduled notifications:', selectedUsers);
+            return selectedUsers;
 
         } catch (error) {
             console.error('Failed to get users ready for scheduled notifications:', error);
