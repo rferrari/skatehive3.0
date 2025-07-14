@@ -3,7 +3,7 @@ import React from 'react';
 import { Box, Select, Text, useToast, VStack, Heading, Accordion, AccordionItem, AccordionButton, AccordionPanel, AccordionIcon } from '@chakra-ui/react';
 import { useTheme, ThemeName, themeMap } from '../themeProvider';
 import LottieAnimation from '@/components/shared/LottieAnimation';
-import UpvoteSnapContainer from '@/components/settings/UpvoteSnapContainer';
+import UpvoteSnapContainer from '@/components/homepage/UpvoteSnapContainer';
 import { useRive, useStateMachineInput } from "@rive-app/react-canvas";
 
 // Reusable FooterNavButton component
