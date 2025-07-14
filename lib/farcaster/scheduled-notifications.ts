@@ -3,6 +3,7 @@ import { Notifications } from '@hiveio/dhive';
 import { serverHiveClient } from '@/lib/hive/server-client';
 import { SkateHiveFarcasterService, FarcasterPreferences } from './skatehive-integration';
 import { farcasterNotificationService } from './notification-service';
+import { getTokenStore } from './token-store-factory';
 import { HiveToFarcasterNotification } from '@/types/farcaster';
 
 // Configure the database connection
@@ -41,18 +42,34 @@ export class ScheduledNotificationService {
         processedUsers: number;
         totalNotificationsSent: number;
         errors: string[];
+        upcomingNotifications: any[];
+        nextScheduledTime: string | null;
     }> {
         const results: {
             processedUsers: number;
             totalNotificationsSent: number;
             errors: string[];
+            upcomingNotifications: any[];
+            nextScheduledTime: string | null;
         } = {
             processedUsers: 0,
             totalNotificationsSent: 0,
-            errors: []
+            errors: [],
+            upcomingNotifications: [],
+            nextScheduledTime: null
         };
 
         try {
+            // Get detailed info about all scheduled users and upcoming notifications
+            const allScheduledUsers = await this.getAllScheduledUsersInfo();
+            const nextScheduledInfo = await this.getNextScheduledNotificationInfo();
+
+            results.upcomingNotifications = allScheduledUsers;
+            results.nextScheduledTime = nextScheduledInfo.nextTime;
+
+            console.log('[CRON DEBUG] Current time (UTC):', new Date().toISOString());
+            console.log('[CRON DEBUG] All users with scheduled notifications:', allScheduledUsers);
+            console.log('[CRON DEBUG] Next scheduled notification:', nextScheduledInfo);
 
             // Get all users who have scheduled notifications enabled
             const users = await this.getUsersReadyForScheduledNotifications();
@@ -197,14 +214,33 @@ export class ScheduledNotificationService {
 
             // Send notifications to Farcaster
             let sentCount = 0;
+
+            // Get user's FID from preferences
+            const userPreferences = await SkateHiveFarcasterService.getUserPreferences(hiveUsername);
+            if (!userPreferences?.fid) {
+                console.log(`No FID found for user ${hiveUsername}, cannot send Farcaster notifications`);
+                return 0;
+            }
+
+            const tokenStore = getTokenStore();
+            const userToken = await tokenStore.getTokenByFid(userPreferences.fid);
+
+            if (!userToken || !userToken.isActive) {
+                console.log(`No active Farcaster token found for FID ${userPreferences.fid} (user: ${hiveUsername})`);
+                return 0;
+            }
+
+            console.log(`[processUserScheduledNotifications] Found active token for FID ${userPreferences.fid} (user: ${hiveUsername})`);
+
             for (const notification of farcasterNotifications) {
                 try {
-                    const result = await farcasterNotificationService.sendNotification(
+                    // Send notification directly using token details
+                    const result = await this.sendNotificationDirectly(
                         notification,
-                        [hiveUsername]
+                        userToken
                     );
 
-                    if (result.success && result.results.length > 0) {
+                    if (result.success) {
                         sentCount++;
 
                         // Log the notification
@@ -482,6 +518,155 @@ export class ScheduledNotificationService {
                 notificationsSent: 0,
                 message: `Failed to trigger notifications: ${error instanceof Error ? error.message : 'Unknown error'}`
             };
+        }
+    }
+
+    /**
+     * Get information about all users with scheduled notifications (for debugging/logging)
+     */
+    private static async getAllScheduledUsersInfo(): Promise<any[]> {
+        try {
+            const result = await sql`
+                SELECT 
+                    p.hive_username,
+                    p.fid,
+                    p.scheduled_time_hour,
+                    p.scheduled_time_minute,
+                    p.timezone,
+                    p.scheduled_notifications_enabled,
+                    p.notifications_enabled,
+                    p.max_notifications_per_batch,
+                    p.last_scheduled_notification_id,
+                    t.is_active as token_active,
+                    t.username as farcaster_username
+                FROM skatehive_farcaster_preferences p
+                LEFT JOIN farcaster_tokens t ON p.fid = t.fid
+                WHERE p.scheduled_notifications_enabled = true
+                ORDER BY p.scheduled_time_hour, p.scheduled_time_minute
+            `;
+
+            return result.rows.map(row => ({
+                hiveUsername: row.hive_username,
+                fid: row.fid,
+                farcasterUsername: row.farcaster_username,
+                scheduledTime: `${String(row.scheduled_time_hour).padStart(2, '0')}:${String(row.scheduled_time_minute).padStart(2, '0')} UTC`,
+                timezone: row.timezone,
+                scheduledNotificationsEnabled: row.scheduled_notifications_enabled,
+                notificationsEnabled: row.notifications_enabled,
+                tokenActive: row.token_active,
+                maxNotificationsPerBatch: row.max_notifications_per_batch,
+                lastScheduledNotificationId: row.last_scheduled_notification_id,
+                readyToSend: row.scheduled_notifications_enabled && row.notifications_enabled && row.token_active
+            }));
+        } catch (error) {
+            console.error('Failed to get all scheduled users info:', error);
+            return [];
+        }
+    }
+
+    /**
+     * Get information about the next scheduled notification time
+     */
+    private static async getNextScheduledNotificationInfo(): Promise<{
+        nextTime: string | null;
+        minutesUntilNext: number | null;
+        usersAtNextTime: number;
+    }> {
+        try {
+            const now = new Date();
+            const currentHour = now.getUTCHours();
+            const currentMinute = now.getUTCMinutes();
+
+            // Find the next scheduled time
+            const result = await sql`
+                SELECT 
+                    scheduled_time_hour,
+                    scheduled_time_minute,
+                    COUNT(*) as user_count
+                FROM skatehive_farcaster_preferences p
+                JOIN farcaster_tokens t ON p.fid = t.fid
+                WHERE p.scheduled_notifications_enabled = true
+                  AND p.notifications_enabled = true
+                  AND t.is_active = true
+                GROUP BY scheduled_time_hour, scheduled_time_minute
+                ORDER BY 
+                    CASE 
+                        WHEN (scheduled_time_hour > ${currentHour}) OR 
+                             (scheduled_time_hour = ${currentHour} AND scheduled_time_minute > ${currentMinute})
+                        THEN scheduled_time_hour * 60 + scheduled_time_minute
+                        ELSE (scheduled_time_hour * 60 + scheduled_time_minute) + 1440
+                    END
+                LIMIT 1
+            `;
+
+            if (result.rows.length === 0) {
+                return { nextTime: null, minutesUntilNext: null, usersAtNextTime: 0 };
+            }
+
+            const nextRow = result.rows[0];
+            const nextHour = nextRow.scheduled_time_hour;
+            const nextMinute = nextRow.scheduled_time_minute;
+            const userCount = nextRow.user_count;
+
+            const nextTime = `${String(nextHour).padStart(2, '0')}:${String(nextMinute).padStart(2, '0')} UTC`;
+
+            // Calculate minutes until next notification
+            const nowMinutes = currentHour * 60 + currentMinute;
+            const nextMinutes = nextHour * 60 + nextMinute;
+
+            let minutesUntilNext;
+            if (nextMinutes > nowMinutes) {
+                minutesUntilNext = nextMinutes - nowMinutes;
+            } else {
+                // Next day
+                minutesUntilNext = (1440 - nowMinutes) + nextMinutes;
+            }
+
+            return {
+                nextTime,
+                minutesUntilNext,
+                usersAtNextTime: userCount
+            };
+        } catch (error) {
+            console.error('Failed to get next scheduled notification info:', error);
+            return { nextTime: null, minutesUntilNext: null, usersAtNextTime: 0 };
+        }
+    }
+
+    /**
+     * Send notification directly to a specific Farcaster token
+     */
+    private static async sendNotificationDirectly(
+        notification: HiveToFarcasterNotification,
+        userToken: any
+    ): Promise<{ success: boolean }> {
+        try {
+            const response = await fetch(userToken.notificationUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    notificationId: `skatehive-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                    title: notification.title,
+                    body: notification.body,
+                    targetUrl: notification.sourceUrl,
+                    tokens: [userToken.token]
+                })
+            });
+
+            if (!response.ok) {
+                console.error(`Failed to send notification to ${userToken.fid}: ${response.status} ${response.statusText}`);
+                return { success: false };
+            }
+
+            const responseData = await response.json();
+            console.log(`Successfully sent notification to FID ${userToken.fid}:`, responseData);
+            return { success: true };
+
+        } catch (error) {
+            console.error(`Error sending notification to FID ${userToken.fid}:`, error);
+            return { success: false };
         }
     }
 }
