@@ -58,6 +58,19 @@ class ServerHiveClient {
             return '1970-01-01T00:00:00Z';
         }
     }
+
+    /**
+     * Fetch post/comment content by author and permlink
+     */
+    async fetchContent(author: string, permlink: string): Promise<any> {
+        try {
+            const content = await this.client.database.call('get_content', [author, permlink]);
+            return content;
+        } catch (error) {
+            console.error(`Error fetching content for ${author}/${permlink}:`, error);
+            return null;
+        }
+    }
 }
 
 // Singleton instance

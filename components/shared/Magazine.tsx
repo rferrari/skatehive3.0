@@ -50,9 +50,6 @@ function useMagazinePosts(query: string, tag: { tag: string; limit: number }[]) 
   return { posts, error, isLoading };
 }
 
-const magazineGrayGradient = (theme: any) => `linear-gradient(135deg, ${theme.colors.background} 80%, ${theme.colors.muted} 100%)`;
-const magazineAccentGradient = (theme: any) => `linear-gradient(135deg, ${theme.colors.primary} 60%, ${theme.colors.accent} 100%)`;
-
 const backgroundGradient = {
   minHeight: '100%',
   width: '100%',
@@ -270,7 +267,7 @@ export default function Magazine(props: MagazineProps) {
             }
           });
         }}
-        onUpdate={() => {}}
+        onUpdate={() => { }}
       >
         <Box sx={coverStyles(theme)} width="100%" height="100%" position="relative" overflow="hidden">
           {/* Matrix effect as background */}

@@ -142,7 +142,7 @@ export default function RootLayout({
             width: "100vw",
             background: "#111"
           }}>
-            <Image src="/images/hiveLogo.png" alt="Skatehive" height={80} width={80} style={{ height: "80px" }} />
+            <Image src="/SKATE_HIVE_VECTOR_FIN.svg" alt="Skatehive" height={80} width={80} style={{ height: "80px" }} />
           </div>
         </div>
         <div id="app-root" style={{ display: "none" }}>

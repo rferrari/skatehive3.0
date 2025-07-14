@@ -23,6 +23,7 @@ import {
     SliderFilledTrack,
     SliderThumb,
     Code,
+    Textarea,
 } from "@chakra-ui/react";
 
 export default function FarcasterSettingsPageWrapper() {
@@ -57,6 +58,14 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
     const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
     const [notificationsQueue, setNotificationsQueue] = useState<any[]>([]);
     const [eventLogs, setEventLogs] = useState<string[]>([]);
+
+    // New state for custom notification
+    const [customNotification, setCustomNotification] = useState({
+        title: "",
+        body: "",
+        targetUrl: "https://skatehive.app"
+    });
+
     const toast = useToast();
 
     // Load user data function (move to top for scope)
@@ -87,6 +96,75 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
     }, []);
 
     // Button handlers for notifications
+    // Custom notification sending function using the existing notify endpoint
+    const handleSendCustomNotification = async () => {
+        console.log('🔥 [UI] handleSendCustomNotification called with:', customNotification);
+        setSaving(true);
+        setEventLogs(logs => [...logs, `Custom notification requested at ${new Date().toLocaleTimeString()}`]);
+
+        try {
+            console.log('🚀 [UI] Sending custom notification via notify endpoint...');
+            const response = await fetch('/api/farcaster/notify', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    type: "custom",
+                    title: customNotification.title,
+                    body: customNotification.body,
+                    sourceUrl: customNotification.targetUrl,
+                    broadcast: true // Flag to send to all users
+                }),
+            });
+
+            console.log('📨 [UI] API response status:', response.status);
+
+            const result = await response.json();
+            console.log('✅ [UI] API response data:', result);
+
+            if (result.success) {
+                toast({
+                    title: "Custom notification sent",
+                    description: `Sent to ${result.results?.length || 0} users`,
+                    status: "success",
+                    duration: 3000,
+                    isClosable: true,
+                });
+                setEventLogs(logs => [...logs, `Custom notification sent: ${result.results?.length || 0} users`]);
+
+                // Reset form
+                setCustomNotification({
+                    title: "",
+                    body: "",
+                    targetUrl: "https://skatehive.app"
+                });
+            } else {
+                console.error('❌ [UI] API error response:', result);
+                toast({
+                    title: "Error",
+                    description: result.message || "Failed to send custom notification",
+                    status: "error",
+                    duration: 3000,
+                    isClosable: true,
+                });
+                setEventLogs(logs => [...logs, `Custom notification failed: ${result.message}`]);
+            }
+        } catch (error) {
+            console.error('💥 [UI] Error sending custom notification:', error);
+            toast({
+                title: "Error",
+                description: "Failed to send custom notification",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+            setEventLogs(logs => [...logs, `Custom notification error`]);
+        } finally {
+            setSaving(false);
+        }
+    };
+
     const handleTestNotification = async () => {
         setSaving(true);
         setEventLogs(logs => [...logs, `Test notification requested at ${new Date().toLocaleTimeString()}`]);
@@ -116,34 +194,6 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
             setSaving(false);
         }
     };
-
-    const handleSendUnreadNotifications = async () => {
-        setSaving(true);
-        setEventLogs(logs => [...logs, `Send unread notifications requested at ${new Date().toLocaleTimeString()}`]);
-        try {
-            // Call the new API to send only the last unread notification and get mapping info
-            const response = await fetch("/api/farcaster/send-unread-notifications", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ hiveUsername }),
-            });
-            const result = await response.json();
-            if (result.success) {
-                toast({ status: "success", title: `Sent unread notification! (${result.notificationsSent})` });
-                setEventLogs(logs => [...logs, `Hive: ${result.hiveUsername} → Farcaster: ${result.sentTo} | Sent: ${result.notificationsSent}`]);
-                await loadUserData();
-            } else {
-                toast({ status: "info", title: result.message });
-                setEventLogs(logs => [...logs, `Send unread notifications failed: ${result.message}`]);
-            }
-        } catch {
-            toast({ status: "error", title: "Failed to send unread notifications" });
-            setEventLogs(logs => [...logs, `Send unread notifications error`]);
-        } finally {
-            setSaving(false);
-        }
-    };
-
 
     const linkFarcasterAccount = async () => {
         if (!fid || !farcasterUsername) {
@@ -195,44 +245,7 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
         }
     };
 
-    const updateScheduledPreferences = async (newPrefs: any) => {
-        setSaving(true);
-        try {
-            const response = await fetch("/api/farcaster/scheduled-notifications", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ hiveUsername, preferences: newPrefs }),
-            });
-            const result = await response.json();
-            if (result.success) {
-                toast({ status: "success", title: "Scheduled preferences updated" });
-                await loadUserData();
-            } else {
-                toast({ status: "error", title: result.message });
-            }
-        } catch {
-            toast({ status: "error", title: "Failed to update scheduled preferences" });
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    const testScheduledNotifications = async () => {
-        setSaving(true);
-        try {
-            const response = await fetch(`/api/farcaster/scheduled-notifications?action=trigger&hiveUsername=${hiveUsername}`);
-            const result = await response.json();
-            if (result.success) {
-                toast({ status: "success", title: `Test successful! Sent ${result.notificationsSent} notifications` });
-            } else {
-                toast({ status: "error", title: result.message });
-            }
-        } catch {
-            toast({ status: "error", title: "Failed to test notifications" });
-        } finally {
-            setSaving(false);
-        }
-    };
+    // The system now automatically sends notifications every minute without manual scheduling
 
     const unlinkAccount = async () => {
         if (!window.confirm("Are you sure you want to unlink your Farcaster account?")) return;
@@ -312,8 +325,191 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
                     </Box>
                     <Stack direction="row" spacing={4} mt={6}>
                         <Button colorScheme="blue" onClick={handleTestNotification} isLoading={saving}>Send Test Notification</Button>
-                        <Button colorScheme="purple" onClick={handleSendUnreadNotifications} isLoading={saving}>Send Unread Notifications</Button>
                     </Stack>
+
+                    {/* Custom Notification Section */}
+                    <Box mt={8}>
+                        <Heading size="sm" mb={4}>📢 Send Custom Notification</Heading>
+                        <Text color="gray.400" mb={4}>Send an announcement to all users</Text>
+
+                        <Stack spacing={4}>
+                            <Box>
+                                <Text fontSize="sm" mb={2}>Title</Text>
+                                <Input
+                                    value={customNotification.title}
+                                    onChange={(e) => setCustomNotification({
+                                        ...customNotification,
+                                        title: e.target.value
+                                    })}
+                                    placeholder="Notification title"
+                                    bg="gray.700"
+                                    color="white"
+                                    _placeholder={{ color: "gray.400" }}
+                                />
+                            </Box>
+
+                            <Box>
+                                <Text fontSize="sm" mb={2}>Message</Text>
+                                <Textarea
+                                    value={customNotification.body}
+                                    onChange={(e) => setCustomNotification({
+                                        ...customNotification,
+                                        body: e.target.value
+                                    })}
+                                    placeholder="Notification message"
+                                    bg="gray.700"
+                                    color="white"
+                                    _placeholder={{ color: "gray.400" }}
+                                    rows={3}
+                                />
+                            </Box>
+
+                            <Box>
+                                <Text fontSize="sm" mb={2}>Target URL</Text>
+                                <Input
+                                    value={customNotification.targetUrl}
+                                    onChange={(e) => setCustomNotification({
+                                        ...customNotification,
+                                        targetUrl: e.target.value
+                                    })}
+                                    placeholder="https://skatehive.app"
+                                    bg="gray.700"
+                                    color="white"
+                                    _placeholder={{ color: "gray.400" }}
+                                />
+                            </Box>
+
+                            <Button
+                                onClick={() => {
+                                    console.log('🖱️ [UI] Custom notification button clicked!');
+                                    console.log('📋 [UI] Current state:', customNotification);
+                                    console.log('🔒 [UI] Button disabled?', !customNotification.title || !customNotification.body);
+                                    console.log('💾 [UI] Saving state:', saving);
+                                    handleSendCustomNotification();
+                                }}
+                                colorScheme="green"
+                                isDisabled={!customNotification.title || !customNotification.body}
+                                isLoading={saving}
+                            >
+                                Send to All Users
+                            </Button>
+                        </Stack>
+                    </Box>
+
+                    {/* Database Management Section */}
+                    <Box mt={8}>
+                        <Heading size="sm" mb={4}>🗄️ Database Management</Heading>
+                        <Text color="gray.400" mb={4}>Monitor and clean up notification logs to prevent database bloat</Text>
+
+                        <Stack direction="row" spacing={4}>
+                            <Button
+                                onClick={async () => {
+                                    setSaving(true);
+                                    setEventLogs(logs => [...logs, `Database stats requested at ${new Date().toLocaleTimeString()}`]);
+
+                                    try {
+                                        const response = await fetch('/api/farcaster/cleanup', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Authorization': 'Bearer cron-secret-key',
+                                                'Content-Type': 'application/json',
+                                            },
+                                            body: JSON.stringify({ action: 'stats' }),
+                                        });
+
+                                        const result = await response.json();
+
+                                        if (result.success) {
+                                            setEventLogs(logs => [...logs,
+                                            `Database Stats: ${result.stats.notificationLogCount} deduplication logs, ${result.stats.analyticsLogCount} analytics logs`
+                                            ]);
+                                            toast({
+                                                title: "Database stats retrieved",
+                                                description: `${result.stats.notificationLogCount} deduplication logs, ${result.stats.analyticsLogCount} analytics logs`,
+                                                status: "success",
+                                                duration: 5000,
+                                                isClosable: true,
+                                            });
+                                        } else {
+                                            throw new Error(result.message || 'Failed to get stats');
+                                        }
+                                    } catch (error) {
+                                        console.error('Error getting database stats:', error);
+                                        setEventLogs(logs => [...logs, `Database stats error`]);
+                                        toast({
+                                            title: "Error getting database stats",
+                                            status: "error",
+                                            duration: 3000,
+                                            isClosable: true,
+                                        });
+                                    } finally {
+                                        setSaving(false);
+                                    }
+                                }}
+                                colorScheme="blue"
+                                variant="outline"
+                                size="sm"
+                                isLoading={saving}
+                            >
+                                📊 Get Stats
+                            </Button>
+
+                            <Button
+                                onClick={async () => {
+                                    if (!window.confirm("Clean up old notification logs? This will delete logs older than 30-90 days.")) return;
+
+                                    setSaving(true);
+                                    setEventLogs(logs => [...logs, `Database cleanup started at ${new Date().toLocaleTimeString()}`]);
+
+                                    try {
+                                        const response = await fetch('/api/farcaster/cleanup', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Authorization': 'Bearer cron-secret-key',
+                                                'Content-Type': 'application/json',
+                                            },
+                                            body: JSON.stringify({ action: 'cleanup' }),
+                                        });
+
+                                        const result = await response.json();
+
+                                        if (result.success) {
+                                            setEventLogs(logs => [...logs,
+                                            `Cleanup: deleted ${result.results.deduplicationLogsDeleted} deduplication + ${result.results.analyticsLogsDeleted} analytics logs`
+                                            ]);
+                                            toast({
+                                                title: "Database cleanup completed",
+                                                description: `Deleted ${result.results.deduplicationLogsDeleted + result.results.analyticsLogsDeleted} old logs`,
+                                                status: "success",
+                                                duration: 5000,
+                                                isClosable: true,
+                                            });
+                                        } else {
+                                            throw new Error(result.message || 'Cleanup failed');
+                                        }
+                                    } catch (error) {
+                                        console.error('Error during cleanup:', error);
+                                        setEventLogs(logs => [...logs, `Database cleanup error`]);
+                                        toast({
+                                            title: "Database cleanup failed",
+                                            status: "error",
+                                            duration: 3000,
+                                            isClosable: true,
+                                        });
+                                    } finally {
+                                        setSaving(false);
+                                    }
+                                }}
+                                colorScheme="orange"
+                                variant="outline"
+                                size="sm"
+                                isLoading={saving}
+                            >
+                                🧹 Clean Up
+                            </Button>
+                        </Stack>
+                    </Box>
+
                     <Box mt={8}>
                         <Heading size="sm" mb={2}>Last 5 Unread Notifications</Heading>
                         {notificationsQueue.length === 0 ? (

@@ -53,59 +53,72 @@ class FarcasterNotificationService {
     // Convert Hive notification to Farcaster format
     private convertHiveToFarcasterNotification(
         hiveNotification: Notifications,
-        baseUrl: string = process.env.NEXT_PUBLIC_BASE_URL || 'https://skatehive.app'
+        baseUrl: string = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.skatehive.app'
     ): HiveToFarcasterNotification {
         const type = hiveNotification.type;
         let title = 'SkateHive';
         let body = hiveNotification.msg || 'New activity';
-        let sourceUrl = hiveNotification.url || baseUrl;
+        let sourceUrl = baseUrl;
 
-        // Parse additional info from the URL if available
-        const urlParts = hiveNotification.url ? hiveNotification.url.split('/') : [];
-        const author = urlParts.length > 1 ? urlParts[urlParts.length - 2] : '';
-        const permlink = urlParts.length > 0 ? urlParts[urlParts.length - 1] : '';
+        // Parse Hive url field: '@author/permlink' or '@author'
+        let author = '';
+        let permlink = '';
+        if (hiveNotification.url) {
+            const match = hiveNotification.url.match(/^@([^/]+)(?:\/(.+))?$/);
+            if (match) {
+                author = match[1];
+                permlink = match[2] || '';
+            }
+        }
 
         switch (type) {
             case 'vote':
-                title = '👍 New Vote';
-                body = hiveNotification.msg || 'Someone voted on your post';
-                sourceUrl = hiveNotification.url || `${baseUrl}/post/${author}/${permlink}`;
+                title = '💰 New Vote';
+                body = hiveNotification.msg || `@${author} voted on your post`;
+                if (author && permlink) {
+                    sourceUrl = `${baseUrl}/post/${author}/${permlink}`;
+                }
                 break;
-
+            case 'reply':
             case 'comment':
-                title = '💬 New Comment';
-                body = hiveNotification.msg || 'Someone commented on your post';
-                sourceUrl = hiveNotification.url || `${baseUrl}/post/${author}/${permlink}`;
+                title = '💬 New Reply';
+                body = hiveNotification.msg || `@${author} replied to your post`;
+                if (author && permlink) {
+                    sourceUrl = `${baseUrl}/post/${author}/${permlink}`;
+                }
                 break;
-
-            case 'follow':
-                title = '👥 New Follower';
-                body = hiveNotification.msg || 'Someone started following you';
-                sourceUrl = hiveNotification.url || `${baseUrl}/profile/${author}`;
-                break;
-
             case 'mention':
-                title = '📢 Mentioned';
-                body = hiveNotification.msg || 'Someone mentioned you';
-                sourceUrl = hiveNotification.url || `${baseUrl}/post/${author}/${permlink}`;
+                title = '🏷 Mention';
+                body = hiveNotification.msg || `@${author} mentioned you`;
+                if (author && permlink) {
+                    sourceUrl = `${baseUrl}/post/${author}/${permlink}`;
+                }
                 break;
-
+            case 'follow':
+                title = '🛹 New Follower';
+                body = hiveNotification.msg || `@${author} followed you`;
+                if (author) {
+                    sourceUrl = `${baseUrl}/user/${author}?view=snaps`;
+                }
+                break;
             case 'reblog':
                 title = '🔄 Reblogged';
-                body = hiveNotification.msg || 'Someone reblogged your post';
-                sourceUrl = hiveNotification.url || `${baseUrl}/post/${author}/${permlink}`;
+                body = hiveNotification.msg || `@${author} reblogged your post`;
+                if (author && permlink) {
+                    sourceUrl = `${baseUrl}/post/${author}/${permlink}`;
+                }
                 break;
 
+            // TODO: I think transfer notifications does not exist and it was an AI slop, review this, may be deletable code
             case 'transfer':
                 title = '💰 Transfer';
                 body = hiveNotification.msg || 'Someone sent you tokens';
-                sourceUrl = hiveNotification.url || `${baseUrl}/wallet`;
+                sourceUrl = `${baseUrl}/wallet`;
                 break;
-
             default:
-                title = 'SkateHive';
+                title = '🛹 SkateHive';
                 body = hiveNotification.msg || 'New activity';
-                sourceUrl = hiveNotification.url || baseUrl;
+                sourceUrl = baseUrl;
         }
 
         // Truncate to Farcaster limits
@@ -116,7 +129,7 @@ class FarcasterNotificationService {
             type: type as any,
             title,
             body,
-            hiveUsername: '', // We'll need to determine this from context
+            hiveUsername: '', // Set if needed
             sourceUrl,
             metadata: {
                 author,
@@ -244,8 +257,8 @@ class FarcasterNotificationService {
     }
 
     // Handle invalid tokens by removing them from store
-    private async handleInvalidTokens(invalidTokens: string[]): Promise<void> {
-        if (invalidTokens.length === 0) return;
+    private async handleInvalidTokens(invalidTokens: string[] | undefined): Promise<void> {
+        if (!invalidTokens || invalidTokens.length === 0) return;
 
         const tokenStore = getTokenStore();
         const allTokens = await tokenStore.getAllTokens();

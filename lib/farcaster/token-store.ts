@@ -27,7 +27,18 @@ class FarcasterTokenStore {
     // Remove a user's token
     removeToken(fid: string): void {
         this.tokens.delete(fid);
-        console.log(`Removed Farcaster token for FID ${fid}`);
+        // Remove from database
+        (async () => {
+            try {
+                const { Pool } = await import('pg');
+                const pool = new Pool({ connectionString: process.env.STORAGE_POSTGRES_URL || process.env.POSTGRES_URL });
+                const res = await pool.query('DELETE FROM farcaster_tokens WHERE fid = $1', [fid]);
+                console.log(`Removed Farcaster token for FID ${fid} from database. Rows affected:`, res.rowCount);
+            } catch (err) {
+                console.error(`Failed to remove Farcaster token for FID ${fid} from database:`, err);
+            }
+        })();
+        console.log(`Removed Farcaster token for FID ${fid} (memory + DB)`);
     }
 
     // Disable notifications for a user
@@ -265,9 +276,10 @@ export async function verifyFarcasterSignature(signature: FarcasterSignature): P
 // Process webhook events from Farcaster
 export async function processFarcasterWebhook(signedPayload: FarcasterSignature): Promise<boolean> {
     try {
+        console.log('[Webhook] Processing Farcaster webhook payload:', JSON.stringify(signedPayload));
         const isValidSignature = await verifyFarcasterSignature(signedPayload);
         if (!isValidSignature) {
-            console.error('Invalid Farcaster signature');
+            console.error('[Webhook] Invalid Farcaster signature');
             return false;
         }
 
@@ -276,48 +288,57 @@ export async function processFarcasterWebhook(signedPayload: FarcasterSignature)
 
         const fid = header.fid?.toString();
         if (!fid) {
-            console.error('No FID found in webhook header');
+            console.error('[Webhook] No FID found in webhook header');
             return false;
         }
 
+        console.log(`[Webhook] Event: ${payload.event}, FID: ${fid}, Header:`, header, 'Payload:', payload);
+
         switch (payload.event) {
-            case 'miniapp_added':
+            case 'miniapp_added': {
                 if (payload.notificationDetails) {
-                    // Extract username from header if available
                     const username = header.username || `user_${fid}`;
+                    console.log(`[Webhook] Adding token for FID ${fid}, username: ${username}`);
                     farcasterTokenStore.addToken(
                         fid,
                         username,
                         payload.notificationDetails.token,
                         payload.notificationDetails.url
                     );
+                    // Create default preferences (no hiveUsername yet)
+                    const { SkateHiveFarcasterService } = await import('./skatehive-integration');
+                    await SkateHiveFarcasterService.createDefaultPreferences(fid, username);
                 }
                 break;
-
-            case 'miniapp_removed':
+            }
+            case 'miniapp_removed': {
+                console.log(`[Webhook] Removing token for FID ${fid}`);
                 farcasterTokenStore.removeToken(fid);
+                // Delete preferences for this FID
+                const { SkateHiveFarcasterService } = await import('./skatehive-integration');
                 break;
-
+            }
             case 'notifications_enabled':
+                console.log(`[Webhook] Enabling notifications for FID ${fid}`);
                 farcasterTokenStore.enableNotifications(
                     fid,
                     payload.notificationDetails.token,
                     payload.notificationDetails.url
                 );
                 break;
-
             case 'notifications_disabled':
+                console.log(`[Webhook] Disabling notifications for FID ${fid}`);
                 farcasterTokenStore.disableNotifications(fid);
                 break;
-
             default:
-                console.warn('Unknown Farcaster webhook event:', payload);
+                console.warn('[Webhook] Unknown Farcaster webhook event:', payload);
                 return false;
         }
 
+        console.log('[Webhook] Successfully processed event:', payload.event);
         return true;
     } catch (error) {
-        console.error('Failed to process Farcaster webhook:', error);
+        console.error('[Webhook] Failed to process Farcaster webhook:', error);
         return false;
     }
 }

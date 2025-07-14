@@ -24,15 +24,9 @@ export interface FarcasterPreferences {
     notifyMentions: boolean;
     notifyPosts: boolean;
     notificationFrequency: 'instant' | 'hourly' | 'daily';
-    // Scheduled notification preferences
-    scheduledNotificationsEnabled: boolean;
-    scheduledTimeHour: number; // 0-23
-    scheduledTimeMinute: number; // 0-59
-    timezone: string;
+    // Batch configuration
     maxNotificationsPerBatch: number; // 1-20
-    lastScheduledCheck?: Date;
-    lastScheduledNotificationId: number;
-    // Existing fields
+    // Tracking fields
     linkedAt: Date;
     lastNotificationAt?: Date;
     hiveProfileUpdated: boolean;
@@ -49,6 +43,106 @@ export interface HiveProfileExtension {
  * Manages user preferences, Hive profile updates, and notification settings
  */
 export class SkateHiveFarcasterService {
+    /**
+     * Get preferences by FID
+     */
+    static async getPreferencesByFid(fid: string): Promise<FarcasterPreferences | null> {
+        try {
+            const result = await sql`
+                SELECT 
+                    hive_username,
+                    fid,
+                    farcaster_username,
+                    notifications_enabled,
+                    notify_votes,
+                    notify_comments,
+                    notify_follows,
+                    notify_mentions,
+                    notify_posts,
+                    notification_frequency,
+                    max_notifications_per_batch,
+                    linked_at,
+                    last_notification_at,
+                    hive_profile_updated
+                FROM skatehive_farcaster_preferences 
+                WHERE fid = ${fid}
+                LIMIT 1
+            `;
+            if (result.rows.length === 0) return null;
+            const row = result.rows[0];
+            return {
+                hiveUsername: row.hive_username,
+                fid: row.fid,
+                farcasterUsername: row.farcaster_username,
+                notificationsEnabled: row.notifications_enabled,
+                notifyVotes: row.notify_votes,
+                notifyComments: row.notify_comments,
+                notifyFollows: row.notify_follows,
+                notifyMentions: row.notify_mentions,
+                notifyPosts: row.notify_posts,
+                notificationFrequency: row.notification_frequency as 'instant' | 'hourly' | 'daily',
+                maxNotificationsPerBatch: row.max_notifications_per_batch || 5,
+                linkedAt: new Date(row.linked_at),
+                lastNotificationAt: row.last_notification_at ? new Date(row.last_notification_at) : undefined,
+                hiveProfileUpdated: row.hive_profile_updated
+            };
+        } catch (error) {
+            console.error('Failed to get preferences by FID:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Update Farcaster username for preferences by FID
+     */
+    static async updateFarcasterUsername(fid: string, farcasterUsername: string): Promise<void> {
+        await sql`
+            UPDATE skatehive_farcaster_preferences
+            SET farcaster_username = ${farcasterUsername}
+            WHERE fid = ${fid}
+        `;
+    }
+
+    /**
+     * Create default preferences for a Farcaster FID (miniapp_added)
+     */
+    static async createDefaultPreferences(fid: string, farcasterUsername: string): Promise<void> {
+        // Always use string for FID and ensure it's not NULL
+        const fidStr = typeof fid === 'string' ? fid.trim() : String(fid);
+        if (!fidStr || fidStr === 'null' || fidStr === '') {
+            throw new Error('Attempted to create preferences with invalid FID');
+        }
+        await sql`
+            INSERT INTO skatehive_farcaster_preferences (
+                fid,
+                farcaster_username,
+                notifications_enabled,
+                notify_votes,
+                notify_comments,
+                notify_follows,
+                notify_mentions,
+                notify_posts,
+                notification_frequency,
+                max_notifications_per_batch,
+                linked_at
+            ) VALUES (
+                ${fidStr},
+                ${farcasterUsername},
+                true,
+                true,
+                true,
+                true,
+                true,
+                false,
+                'instant',
+                5,
+                NOW()
+            )
+            ON CONFLICT (fid) DO NOTHING;
+        `;
+    }
+
+    // Removed deletePreferencesByFid: preferences should be retained for future re-linking
 
     /**
      * Get user's Farcaster preferences from database
@@ -67,13 +161,7 @@ export class SkateHiveFarcasterService {
                     notify_mentions,
                     notify_posts,
                     notification_frequency,
-                    scheduled_notifications_enabled,
-                    scheduled_time_hour,
-                    scheduled_time_minute,
-                    timezone,
                     max_notifications_per_batch,
-                    last_scheduled_check,
-                    last_scheduled_notification_id,
                     linked_at,
                     last_notification_at,
                     hive_profile_updated
@@ -96,13 +184,7 @@ export class SkateHiveFarcasterService {
                 notifyMentions: row.notify_mentions,
                 notifyPosts: row.notify_posts,
                 notificationFrequency: row.notification_frequency as 'instant' | 'hourly' | 'daily',
-                scheduledNotificationsEnabled: row.scheduled_notifications_enabled || false,
-                scheduledTimeHour: row.scheduled_time_hour || 9,
-                scheduledTimeMinute: row.scheduled_time_minute || 0,
-                timezone: row.timezone || 'UTC',
                 maxNotificationsPerBatch: row.max_notifications_per_batch || 5,
-                lastScheduledCheck: row.last_scheduled_check ? new Date(row.last_scheduled_check) : undefined,
-                lastScheduledNotificationId: row.last_scheduled_notification_id || 0,
                 linkedAt: new Date(row.linked_at),
                 lastNotificationAt: row.last_notification_at ? new Date(row.last_notification_at) : undefined,
                 hiveProfileUpdated: row.hive_profile_updated
@@ -145,8 +227,23 @@ export class SkateHiveFarcasterService {
                 WHERE fid = ${fid}
             `;
 
-            // Insert or update preferences
-            await sql`
+            // Check for orphaned preferences row with hive_username=NULL and matching FID
+            const orphanCheck = await sql`
+                SELECT id FROM skatehive_farcaster_preferences WHERE fid = ${fid} AND hive_username IS NULL LIMIT 1
+            `;
+            if (orphanCheck.rows.length > 0) {
+                // Update orphaned row to set hive_username and farcaster_username
+                await sql`
+                    UPDATE skatehive_farcaster_preferences
+                    SET hive_username = ${hiveUsername}, farcaster_username = ${farcasterUsername}, linked_at = NOW()
+                    WHERE id = ${orphanCheck.rows[0].id}
+                `;
+            } else {
+                // Default notification preferences for automated system
+                const defaultMaxNotificationsPerBatch = preferences?.maxNotificationsPerBatch ?? 5;
+
+                // Insert or update preferences
+                await sql`
                 INSERT INTO skatehive_farcaster_preferences (
                     hive_username,
                     fid,
@@ -157,7 +254,8 @@ export class SkateHiveFarcasterService {
                     notify_follows,
                     notify_mentions,
                     notify_posts,
-                    notification_frequency
+                    notification_frequency,
+                    max_notifications_per_batch
                 ) VALUES (
                     ${hiveUsername},
                     ${fid},
@@ -168,7 +266,8 @@ export class SkateHiveFarcasterService {
                     ${preferences?.notifyFollows ?? true},
                     ${preferences?.notifyMentions ?? true},
                     ${preferences?.notifyPosts ?? false},
-                    ${preferences?.notificationFrequency ?? 'instant'}
+                    ${preferences?.notificationFrequency ?? 'instant'},
+                    ${defaultMaxNotificationsPerBatch}
                 )
                 ON CONFLICT (hive_username) 
                 DO UPDATE SET 
@@ -181,8 +280,10 @@ export class SkateHiveFarcasterService {
                     notify_mentions = EXCLUDED.notify_mentions,
                     notify_posts = EXCLUDED.notify_posts,
                     notification_frequency = EXCLUDED.notification_frequency,
+                    max_notifications_per_batch = EXCLUDED.max_notifications_per_batch,
                     linked_at = NOW()
             `;
+            }
 
             return {
                 success: true,

@@ -232,7 +232,7 @@ export class SkateHiveNotifications {
                 title: '🔔 Mention',
                 body: `@${mentionerHiveUsername} mentioned you`,
                 targetUsers: [mentionedHiveUsername],
-                targetUrl: `https://skatehive.app/profile/${mentionerHiveUsername}`
+                targetUrl: `https://skatehive.app/user/${mentionerHiveUsername}`
             })
         });
     }
