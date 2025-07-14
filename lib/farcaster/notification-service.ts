@@ -257,8 +257,8 @@ class FarcasterNotificationService {
     }
 
     // Handle invalid tokens by removing them from store
-    private async handleInvalidTokens(invalidTokens: string[]): Promise<void> {
-        if (invalidTokens.length === 0) return;
+    private async handleInvalidTokens(invalidTokens: string[] | undefined): Promise<void> {
+        if (!invalidTokens || invalidTokens.length === 0) return;
 
         const tokenStore = getTokenStore();
         const allTokens = await tokenStore.getAllTokens();

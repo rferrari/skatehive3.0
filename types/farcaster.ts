@@ -61,7 +61,7 @@ export interface FarcasterUserToken {
 }
 
 export interface HiveToFarcasterNotification {
-    type: 'vote' | 'comment' | 'follow' | 'mention' | 'reblog' | 'transfer';
+    type: 'vote' | 'comment' | 'reply_comment' | 'follow' | 'mention' | 'reblog' | 'transfer';
     title: string;
     body: string;
     hiveUsername: string;

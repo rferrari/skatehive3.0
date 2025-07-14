@@ -195,44 +195,8 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
         }
     };
 
-    const updateScheduledPreferences = async (newPrefs: any) => {
-        setSaving(true);
-        try {
-            const response = await fetch("/api/farcaster/scheduled-notifications", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ hiveUsername, preferences: newPrefs }),
-            });
-            const result = await response.json();
-            if (result.success) {
-                toast({ status: "success", title: "Scheduled preferences updated" });
-                await loadUserData();
-            } else {
-                toast({ status: "error", title: result.message });
-            }
-        } catch {
-            toast({ status: "error", title: "Failed to update scheduled preferences" });
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    const testScheduledNotifications = async () => {
-        setSaving(true);
-        try {
-            const response = await fetch(`/api/farcaster/scheduled-notifications?action=trigger&hiveUsername=${hiveUsername}`);
-            const result = await response.json();
-            if (result.success) {
-                toast({ status: "success", title: `Test successful! Sent ${result.notificationsSent} notifications` });
-            } else {
-                toast({ status: "error", title: result.message });
-            }
-        } catch {
-            toast({ status: "error", title: "Failed to test notifications" });
-        } finally {
-            setSaving(false);
-        }
-    };
+    // Note: Scheduled notifications have been replaced with automated continuous processing
+    // The system now automatically sends notifications every minute without manual scheduling
 
     const unlinkAccount = async () => {
         if (!window.confirm("Are you sure you want to unlink your Farcaster account?")) return;
@@ -285,15 +249,9 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
             toast({ status: "error", title: "Invalid time format. Use HH:MM." });
             return;
         }
-        const [hourStr, minuteStr] = scheduledTime.split(":");
-        const hour = parseInt(hourStr, 10);
-        const minute = parseInt(minuteStr, 10);
-        if (isNaN(hour) || isNaN(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59) {
-            toast({ status: "error", title: "Invalid time. Hour must be 0-23 and minute 0-59." });
-            return;
-        }
-        // Always set timezone to GMT-3
-        await updateScheduledPreferences({ scheduledTimeHour: hour, scheduledTimeMinute: minute, timezone: "GMT-3" });
+        // Note: Scheduled time preferences are no longer needed
+        // The system now automatically processes notifications continuously
+        toast({ status: "info", title: "Notifications are now processed automatically every minute" });
     };
 
     return (
