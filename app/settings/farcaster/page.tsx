@@ -245,7 +245,6 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
         }
     };
 
-    // Note: Scheduled notifications have been replaced with automated continuous processing
     // The system now automatically sends notifications every minute without manual scheduling
 
     const unlinkAccount = async () => {
