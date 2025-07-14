@@ -201,6 +201,8 @@ export async function POST(request: NextRequest) {
           try {
             const { getTokenStore } = await import('@/lib/farcaster/token-store-factory');
             const tokenStore = getTokenStore();
+            await tokenStore.removeToken(fid);
+            console.log('[FARCASTER WEBHOOK] Removed token for FID:', fid);
           } catch (err) {
             console.error('[FARCASTER WEBHOOK] Error removing token for FID:', fid, err);
           }

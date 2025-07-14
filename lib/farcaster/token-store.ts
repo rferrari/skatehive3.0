@@ -27,7 +27,18 @@ class FarcasterTokenStore {
     // Remove a user's token
     removeToken(fid: string): void {
         this.tokens.delete(fid);
-        console.log(`Removed Farcaster token for FID ${fid}`);
+        // Remove from database
+        (async () => {
+            try {
+                const { Pool } = await import('pg');
+                const pool = new Pool({ connectionString: process.env.STORAGE_POSTGRES_URL || process.env.POSTGRES_URL });
+                const res = await pool.query('DELETE FROM farcaster_tokens WHERE fid = $1', [fid]);
+                console.log(`Removed Farcaster token for FID ${fid} from database. Rows affected:`, res.rowCount);
+            } catch (err) {
+                console.error(`Failed to remove Farcaster token for FID ${fid} from database:`, err);
+            }
+        })();
+        console.log(`Removed Farcaster token for FID ${fid} (memory + DB)`);
     }
 
     // Disable notifications for a user
