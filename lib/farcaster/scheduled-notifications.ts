@@ -344,19 +344,19 @@ export class ScheduledNotificationService {
         // Parse additional info from the URL if available
         let author = '';
         let permlink = '';
-        
+
         if (hiveNotification.url) {
             // Clean up the URL - remove @ symbols and handle different formats
             const cleanUrl = hiveNotification.url.replace(/^@/, '').replace(/\/@/g, '/');
             const urlParts = cleanUrl.split('/').filter(part => part.length > 0);
-            
+
             if (urlParts.length >= 1) {
                 author = urlParts[0];
             }
             if (urlParts.length >= 2) {
                 permlink = urlParts[1];
             }
-            
+
             console.log(`[convertHiveToFarcasterNotification] Parsed URL parts:`, {
                 cleanUrl,
                 urlParts,
