@@ -173,8 +173,9 @@ class AutomatedNotificationService {
 #### **1. Timestamp-Based Filtering**
 ```typescript
 // Only process notifications that occurred AFTER user linked their account
+// FIXED: Use notification.date field (Hive API returns 'date', not 'timestamp')
 const notificationsAfterLinking = allNotifications.filter(notification => {
-    const notificationTimestamp = new Date(notification.timestamp || 0);
+    const notificationTimestamp = new Date(notification.date || notification.timestamp || 0);
     return notificationTimestamp >= linkedAt; // linkedAt from farcaster_tokens.created_at
 });
 ```
@@ -316,6 +317,10 @@ POST /api/farcaster/notify
 // Account linking
 POST /api/farcaster/link-skatehive
 → { hiveUsername, fid, farcasterUsername }
+
+// Manual testing endpoint (development/debugging)
+POST /api/farcaster/test-notifications
+→ Manually trigger automated notification processing
 ```
 
 ---
@@ -343,6 +348,24 @@ POST /api/farcaster/link-skatehive
 - Database stats and cleanup via UI
 - Real-time monitoring of log counts and sizes
 - Manual test notification sending
+
+### **Recent Critical Fix** 🔧 **(July 14, 2025)**
+
+#### **Issue Resolved: Timestamp Field Mismatch**
+- **Problem**: All notifications showed `1970-01-01T00:00:00.000Z` timestamps
+- **Root Cause**: Hive API returns `date` field, but code was checking `notification.timestamp`
+- **Impact**: All notifications were filtered out as "historical" 
+- **Fix Applied**: Updated all timestamp access to use `notification.date || notification.timestamp || 0`
+- **Result**: ✅ **System now processing notifications correctly** (2 users, 2 notifications sent in test)
+
+#### **Files Updated**
+```typescript
+// lib/farcaster/automated-notifications.ts
+- Fixed: getUnreadNotifications() timestamp filtering
+- Fixed: sortedNotifications sorting logic
+- Fixed: getNotificationId() timestamp usage
+- Fixed: convertHiveToFarcasterNotification() ID generation
+```
 
 ### **Testing Commands**
 ```bash
@@ -587,19 +610,25 @@ case 'NEW_TYPE':
 
 #### **Common Issues**
 ```typescript
-// 1. Memory cache growing too large
+// 1. All notifications showing 1970 timestamps (CRITICAL BUG - FIXED)
+// Problem: Hive API returns 'date' field, not 'timestamp'
+// Check: notification.date || notification.timestamp || 0
+console.log('Notification timestamp:', notification.date);
+// Fixed in: automated-notifications.ts (July 2025)
+
+// 2. Memory cache growing too large
 console.log(`Cache size: ${enrichmentCache.size} entries`);
 // Solution: Check cleanupEnrichmentCache() execution
 
-// 2. Database logs accumulating
+// 3. Database logs accumulating
 // Check cleanup execution in logs
 console.log('[AutomatedNotificationService] 🧹 Running periodic cleanup...');
 
-// 3. API rate limiting from Hive
+// 4. API rate limiting from Hive
 // Check selective enrichment percentages
 Math.random() < 0.2 // Adjust probability values
 
-// 4. Duplicate notifications
+// 5. Duplicate notifications
 // Check deduplication signature creation
 const signature = `${converted.type}_${converted.title}_${converted.body}_${converted.sourceUrl}`;
 ```
