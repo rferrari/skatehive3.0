@@ -237,7 +237,8 @@ export class DatabaseTokenStore {
           notify_mentions BOOLEAN DEFAULT TRUE,
           notify_posts BOOLEAN DEFAULT FALSE,
           notification_frequency VARCHAR(20) DEFAULT 'instant',
-          -- Scheduled notification preferences
+          -- DEPRECATED: Scheduled notification fields (system now uses automated real-time processing)
+          -- These remain for database compatibility but are no longer used
           scheduled_notifications_enabled BOOLEAN DEFAULT FALSE,
           scheduled_time_hour INTEGER DEFAULT 9 CHECK (scheduled_time_hour >= 0 AND scheduled_time_hour <= 23),
           scheduled_time_minute INTEGER DEFAULT 0 CHECK (scheduled_time_minute >= 0 AND scheduled_time_minute <= 59),
@@ -245,34 +246,14 @@ export class DatabaseTokenStore {
           max_notifications_per_batch INTEGER DEFAULT 5 CHECK (max_notifications_per_batch > 0 AND max_notifications_per_batch <= 20),
           last_scheduled_check TIMESTAMP,
           last_scheduled_notification_id BIGINT DEFAULT 0,
-          -- Existing fields
+          -- Active fields
           linked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           last_notification_at TIMESTAMP,
           hive_profile_updated BOOLEAN DEFAULT FALSE
         )
       `;
 
-            // Add the new scheduled notification columns if they don't exist (for existing tables)
-            await sql`
-        ALTER TABLE skatehive_farcaster_preferences 
-        ADD COLUMN IF NOT EXISTS scheduled_notifications_enabled BOOLEAN DEFAULT FALSE
-      `;
-
-            await sql`
-        ALTER TABLE skatehive_farcaster_preferences 
-        ADD COLUMN IF NOT EXISTS scheduled_time_hour INTEGER DEFAULT 9
-      `;
-
-            await sql`
-        ALTER TABLE skatehive_farcaster_preferences 
-        ADD COLUMN IF NOT EXISTS scheduled_time_minute INTEGER DEFAULT 0
-      `;
-
-            await sql`
-        ALTER TABLE skatehive_farcaster_preferences 
-        ADD COLUMN IF NOT EXISTS timezone VARCHAR(50) DEFAULT 'UTC'
-      `;
-
+            // Ensure max_notifications_per_batch column exists for existing tables
             await sql`
         ALTER TABLE skatehive_farcaster_preferences 
         ADD COLUMN IF NOT EXISTS max_notifications_per_batch INTEGER DEFAULT 5

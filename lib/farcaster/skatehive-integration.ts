@@ -24,15 +24,9 @@ export interface FarcasterPreferences {
     notifyMentions: boolean;
     notifyPosts: boolean;
     notificationFrequency: 'instant' | 'hourly' | 'daily';
-    // Scheduled notification preferences
-    scheduledNotificationsEnabled: boolean;
-    scheduledTimeHour: number; // 0-23
-    scheduledTimeMinute: number; // 0-59
-    timezone: string;
+    // Batch configuration
     maxNotificationsPerBatch: number; // 1-20
-    lastScheduledCheck?: Date;
-    lastScheduledNotificationId: number;
-    // Existing fields
+    // Tracking fields
     linkedAt: Date;
     lastNotificationAt?: Date;
     hiveProfileUpdated: boolean;
@@ -66,13 +60,7 @@ export class SkateHiveFarcasterService {
                     notify_mentions,
                     notify_posts,
                     notification_frequency,
-                    scheduled_notifications_enabled,
-                    scheduled_time_hour,
-                    scheduled_time_minute,
-                    timezone,
                     max_notifications_per_batch,
-                    last_scheduled_check,
-                    last_scheduled_notification_id,
                     linked_at,
                     last_notification_at,
                     hive_profile_updated
@@ -93,13 +81,7 @@ export class SkateHiveFarcasterService {
                 notifyMentions: row.notify_mentions,
                 notifyPosts: row.notify_posts,
                 notificationFrequency: row.notification_frequency as 'instant' | 'hourly' | 'daily',
-                scheduledNotificationsEnabled: row.scheduled_notifications_enabled || false,
-                scheduledTimeHour: row.scheduled_time_hour || 9,
-                scheduledTimeMinute: row.scheduled_time_minute || 0,
-                timezone: row.timezone || 'UTC',
                 maxNotificationsPerBatch: row.max_notifications_per_batch || 5,
-                lastScheduledCheck: row.last_scheduled_check ? new Date(row.last_scheduled_check) : undefined,
-                lastScheduledNotificationId: row.last_scheduled_notification_id || 0,
                 linkedAt: new Date(row.linked_at),
                 lastNotificationAt: row.last_notification_at ? new Date(row.last_notification_at) : undefined,
                 hiveProfileUpdated: row.hive_profile_updated
@@ -141,10 +123,6 @@ export class SkateHiveFarcasterService {
                 notify_mentions,
                 notify_posts,
                 notification_frequency,
-                scheduled_notifications_enabled,
-                scheduled_time_hour,
-                scheduled_time_minute,
-                timezone,
                 max_notifications_per_batch,
                 linked_at
             ) VALUES (
@@ -157,10 +135,6 @@ export class SkateHiveFarcasterService {
                 true,
                 false,
                 'instant',
-                true,
-                7,
-                20,
-                'GMT-3',
                 5,
                 NOW()
             )
@@ -187,13 +161,7 @@ export class SkateHiveFarcasterService {
                     notify_mentions,
                     notify_posts,
                     notification_frequency,
-                    scheduled_notifications_enabled,
-                    scheduled_time_hour,
-                    scheduled_time_minute,
-                    timezone,
                     max_notifications_per_batch,
-                    last_scheduled_check,
-                    last_scheduled_notification_id,
                     linked_at,
                     last_notification_at,
                     hive_profile_updated
@@ -216,13 +184,7 @@ export class SkateHiveFarcasterService {
                 notifyMentions: row.notify_mentions,
                 notifyPosts: row.notify_posts,
                 notificationFrequency: row.notification_frequency as 'instant' | 'hourly' | 'daily',
-                scheduledNotificationsEnabled: row.scheduled_notifications_enabled || false,
-                scheduledTimeHour: row.scheduled_time_hour || 9,
-                scheduledTimeMinute: row.scheduled_time_minute || 0,
-                timezone: row.timezone || 'UTC',
                 maxNotificationsPerBatch: row.max_notifications_per_batch || 5,
-                lastScheduledCheck: row.last_scheduled_check ? new Date(row.last_scheduled_check) : undefined,
-                lastScheduledNotificationId: row.last_scheduled_notification_id || 0,
                 linkedAt: new Date(row.linked_at),
                 lastNotificationAt: row.last_notification_at ? new Date(row.last_notification_at) : undefined,
                 hiveProfileUpdated: row.hive_profile_updated
@@ -277,11 +239,7 @@ export class SkateHiveFarcasterService {
                     WHERE id = ${orphanCheck.rows[0].id}
                 `;
             } else {
-                // Default scheduled notification preferences
-                const defaultScheduledNotificationsEnabled = preferences?.scheduledNotificationsEnabled ?? true;
-                const defaultScheduledTimeHour = preferences?.scheduledTimeHour ?? 7; // 4:20 GMT-3 = 7:20 UTC
-                const defaultScheduledTimeMinute = preferences?.scheduledTimeMinute ?? 20;
-                const defaultTimezone = preferences?.timezone ?? 'GMT-3';
+                // Default notification preferences for automated system
                 const defaultMaxNotificationsPerBatch = preferences?.maxNotificationsPerBatch ?? 5;
 
                 // Insert or update preferences
@@ -297,10 +255,6 @@ export class SkateHiveFarcasterService {
                     notify_mentions,
                     notify_posts,
                     notification_frequency,
-                    scheduled_notifications_enabled,
-                    scheduled_time_hour,
-                    scheduled_time_minute,
-                    timezone,
                     max_notifications_per_batch
                 ) VALUES (
                     ${hiveUsername},
@@ -313,10 +267,6 @@ export class SkateHiveFarcasterService {
                     ${preferences?.notifyMentions ?? true},
                     ${preferences?.notifyPosts ?? false},
                     ${preferences?.notificationFrequency ?? 'instant'},
-                    ${defaultScheduledNotificationsEnabled},
-                    ${defaultScheduledTimeHour},
-                    ${defaultScheduledTimeMinute},
-                    ${defaultTimezone},
                     ${defaultMaxNotificationsPerBatch}
                 )
                 ON CONFLICT (hive_username) 
@@ -330,10 +280,6 @@ export class SkateHiveFarcasterService {
                     notify_mentions = EXCLUDED.notify_mentions,
                     notify_posts = EXCLUDED.notify_posts,
                     notification_frequency = EXCLUDED.notification_frequency,
-                    scheduled_notifications_enabled = EXCLUDED.scheduled_notifications_enabled,
-                    scheduled_time_hour = EXCLUDED.scheduled_time_hour,
-                    scheduled_time_minute = EXCLUDED.scheduled_time_minute,
-                    timezone = EXCLUDED.timezone,
                     max_notifications_per_batch = EXCLUDED.max_notifications_per_batch,
                     linked_at = NOW()
             `;

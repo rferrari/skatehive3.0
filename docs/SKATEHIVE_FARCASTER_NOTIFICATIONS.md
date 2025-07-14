@@ -28,7 +28,7 @@ This document outlines the complete implementation of an **automated, real-time 
 #### 1. **Automated Processing Engine** 
 - **AutomatedNotificationService**: Main orchestrator for all notification processing
 - **Every-minute execution**: Vercel cron job triggers processing automatically
-- **Bottom-up approach**: Processes oldest unread notifications first
+- **Bottom-up approach**: Processes oldest unread notifications first (only after account linking timestamp)
 - **Rate limiting**: 500ms delays between notifications per user
 - **Error recovery**: Comprehensive error handling with detailed logging
 
