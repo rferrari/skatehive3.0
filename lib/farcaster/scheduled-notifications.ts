@@ -333,59 +333,114 @@ export class ScheduledNotificationService {
 
         let title = '🛹 SkateHive';
         let body = hiveNotification.msg || 'New activity';
-        let sourceUrl = hiveNotification.url || baseUrl;
+        let sourceUrl = baseUrl; // Default to base URL
+
+        console.log(`[convertHiveToFarcasterNotification] Processing notification for ${hiveUsername}:`, {
+            type,
+            originalUrl: hiveNotification.url,
+            msg: hiveNotification.msg
+        });
 
         // Parse additional info from the URL if available
-        const urlParts = hiveNotification.url ? hiveNotification.url.split('/') : [];
-        const author = urlParts.length > 1 ? urlParts[urlParts.length - 2] : '';
-        const permlink = urlParts.length > 0 ? urlParts[urlParts.length - 1] : '';
+        let author = '';
+        let permlink = '';
+        
+        if (hiveNotification.url) {
+            // Clean up the URL - remove @ symbols and handle different formats
+            const cleanUrl = hiveNotification.url.replace(/^@/, '').replace(/\/@/g, '/');
+            const urlParts = cleanUrl.split('/').filter(part => part.length > 0);
+            
+            if (urlParts.length >= 1) {
+                author = urlParts[0];
+            }
+            if (urlParts.length >= 2) {
+                permlink = urlParts[1];
+            }
+            
+            console.log(`[convertHiveToFarcasterNotification] Parsed URL parts:`, {
+                cleanUrl,
+                urlParts,
+                author,
+                permlink
+            });
+        }
 
         switch (type) {
             case 'vote':
                 title = '🔥 New Vote';
                 body = hiveNotification.msg || 'Someone voted on your post';
-                sourceUrl = hiveNotification.url || `${baseUrl}/post/${author}/${permlink}`;
+                if (author && permlink) {
+                    sourceUrl = `${baseUrl}/post/${author}/${permlink}`;
+                } else {
+                    sourceUrl = `${baseUrl}/profile/${hiveUsername}`;
+                }
                 break;
 
             case 'comment':
                 title = '💬 New Comment';
                 body = hiveNotification.msg || 'Someone commented on your post';
-                sourceUrl = hiveNotification.url || `${baseUrl}/post/${author}/${permlink}`;
+                if (author && permlink) {
+                    sourceUrl = `${baseUrl}/post/${author}/${permlink}`;
+                } else {
+                    sourceUrl = `${baseUrl}/profile/${hiveUsername}`;
+                }
                 break;
 
             case 'follow':
                 title = '👥 New Follower';
                 body = hiveNotification.msg || 'Someone started following you';
-                sourceUrl = hiveNotification.url || `${baseUrl}/profile/${author}`;
+                sourceUrl = `${baseUrl}/profile/${hiveUsername}`;
                 break;
 
             case 'mention':
                 title = '📢 Mentioned';
                 body = hiveNotification.msg || 'Someone mentioned you';
-                sourceUrl = hiveNotification.url || `${baseUrl}/post/${author}/${permlink}`;
+                if (author && permlink) {
+                    sourceUrl = `${baseUrl}/post/${author}/${permlink}`;
+                } else {
+                    sourceUrl = `${baseUrl}/profile/${hiveUsername}`;
+                }
                 break;
 
             case 'reblog':
                 title = '🔄 Reblogged';
                 body = hiveNotification.msg || 'Someone reblogged your post';
-                sourceUrl = hiveNotification.url || `${baseUrl}/post/${author}/${permlink}`;
+                if (author && permlink) {
+                    sourceUrl = `${baseUrl}/post/${author}/${permlink}`;
+                } else {
+                    sourceUrl = `${baseUrl}/profile/${hiveUsername}`;
+                }
                 break;
 
             case 'transfer':
                 title = '💰 Transfer';
                 body = hiveNotification.msg || 'Someone sent you tokens';
-                sourceUrl = hiveNotification.url || `${baseUrl}/wallet`;
+                sourceUrl = `${baseUrl}/wallet`;
                 break;
 
             default:
                 title = '🛹 SkateHive';
                 body = hiveNotification.msg || 'New activity';
-                sourceUrl = hiveNotification.url || baseUrl;
+                sourceUrl = baseUrl;
+        }
+
+        // Ensure the URL is valid and properly formatted
+        try {
+            new URL(sourceUrl);
+        } catch (error) {
+            console.warn(`[convertHiveToFarcasterNotification] Invalid URL generated: ${sourceUrl}, falling back to base URL`);
+            sourceUrl = baseUrl;
         }
 
         // Truncate to Farcaster limits
         title = title.substring(0, 32);
         body = body.substring(0, 128);
+
+        console.log(`[convertHiveToFarcasterNotification] Final notification for ${hiveUsername}:`, {
+            title,
+            body,
+            sourceUrl
+        });
 
         return {
             type: type as any,
