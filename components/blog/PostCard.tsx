@@ -534,8 +534,8 @@ export default function PostCard({
                     fontWeight="bold"
                     fontSize="3xl"
                     ml={2}
-                    color="gray.200"
-                    _hover={{ color: "white" }}
+                    color="primary"
+                    _hover={{ color: "accent" }}
                     isTruncated
                   >
                     {author}
@@ -755,7 +755,7 @@ export default function PostCard({
                     color={voted ? "primary" : "gray.500"}
                     opacity={voted ? 1 : 0.5}
                     boxSize={6}
-                    _hover={{ bg: "gray.700", borderRadius: "full" }}
+                    _hover={{ bg: "accent", borderRadius: "full" }}
                   />
                   <VoteListPopover
                     trigger={

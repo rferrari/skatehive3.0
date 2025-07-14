@@ -346,6 +346,7 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
                     }
                   }}
                   size="sm"
+                  _hover={{ bg: "secondary" }}
                 >
                   {discussion.children ?? 0}
                 </Button>

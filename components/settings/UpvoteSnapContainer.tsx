@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Button, Box, Text, Spinner, useToast } from '@chakra-ui/react';
+import { Button, Box, Text, Spinner, useToast, IconButton, Icon, Tooltip } from '@chakra-ui/react';
 import { useAioha } from '@aioha/react-ui';
 import { getLastSnapsContainer, getPost } from '@/lib/hive/client-functions';
 import { Discussion } from '@hiveio/dhive';
@@ -21,6 +21,7 @@ export default function UpvoteSnapContainer({ hideIfVoted = false }: UpvoteSnapC
   const [isLoading, setIsLoading] = useState(true);
   const [isVoting, setIsVoting] = useState(false);
   const [hasVoted, setHasVoted] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
   const toast = useToast();
 
   const fetchSnapContainerData = useCallback(async () => {
@@ -73,6 +74,7 @@ export default function UpvoteSnapContainer({ hideIfVoted = false }: UpvoteSnapC
   }, [fetchSnapContainerData]);
 
   if (!user) return null;
+  if (dismissed) return null;
 
   const handleUpvote = async () => {
     if (!user) {
@@ -146,21 +148,39 @@ export default function UpvoteSnapContainer({ hideIfVoted = false }: UpvoteSnapC
   }
 
   return (
-    <Box borderWidth="1px" borderRadius="lg" p={4}>
-      <Text fontSize="lg" fontWeight="bold">Upvote Snap Container</Text>
-      <Text mb={4}>Help the community by upvoting the main post where all snaps are stored.</Text>
-      <Button
-        onClick={handleUpvote}
-        isLoading={isVoting}
-        loadingText="Voting..."
-        colorScheme={hasVoted ? "green" : "blue"}
-        disabled={!user || isVoting || hasVoted}
-      >
-        {hasVoted ? "Already Voted" : "Upvote Container Post"}
-      </Button>
-      <Text fontSize="xs" mt={2}>
-        Container: {snapContainer.author}/{snapContainer.permlink}
-      </Text>
+    <Box borderWidth="1px" borderRadius="md" p={2} position="relative">
+      <Tooltip label="dismiss" placement="top" fontSize="xs">
+        <IconButton
+          aria-label="Dismiss"
+          icon={<img src="/images/finger.svg" alt="Dismiss" style={{ width: 20, height: 20 }} />}
+          size="xs"
+          variant="ghost"
+          colorScheme="red"
+          position="absolute"
+          top={1}
+          right={1}
+          onClick={() => setDismissed(true)}
+        />
+      </Tooltip>
+      
+      <Text fontSize="xs" mb={2}>Help the community by upvoting the main post where all snaps are stored.</Text>
+      <Box display="flex" alignItems="center" gap={2}>
+        <Button
+          onClick={handleUpvote}
+          isLoading={isVoting}
+          loadingText="Voting..."
+          colorScheme={hasVoted ? "green" : "blue"}
+          disabled={!user || isVoting || hasVoted}
+          size="sm"
+          fontSize="sm"
+          mb={0}
+        >
+          {hasVoted ? "Already Voted" : "Upvote Container Post"}
+        </Button>
+        <Text fontSize="2xs" mt={0}>
+          Container: {snapContainer.author}/{snapContainer.permlink}
+        </Text>
+      </Box>
     </Box>
   );
 } 
