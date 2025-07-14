@@ -280,13 +280,13 @@ export class AutomatedNotificationService {
 
             // Filter out notifications we've already processed by converting them first and checking signature
             const unreadNotifications: any[] = [];
-            
+
             for (const notification of allNotifications) {
                 // Convert to get the signature that would be stored
                 const converted = await this.convertHiveToFarcasterNotification(notification);
                 if (converted) {
                     const signature = `${converted.type}_${converted.title}_${converted.body}_${converted.sourceUrl}`.replace(/[^a-zA-Z0-9_-]/g, '_');
-                    
+
                     if (!processedNotificationSignatures.has(signature)) {
                         unreadNotifications.push(notification);
                     }
@@ -414,7 +414,7 @@ export class AutomatedNotificationService {
 
             // Include timestamp if available for more uniqueness
             const timestamp = notification.timestamp || notification.date || '';
-            
+
             // Create a unique ID that includes type, author, permlink, and timestamp
             return `${notification.type}_${author}_${permlink}_${timestamp}`.replace(/[^a-zA-Z0-9_-]/g, '_');
         }
@@ -581,8 +581,8 @@ export class AutomatedNotificationService {
      * Uses direct Hive API calls for speed and reliability
      */
     private static async enrichNotificationContent(
-        author: string, 
-        permlink: string, 
+        author: string,
+        permlink: string,
         notificationType: 'vote' | 'comment' | 'mention' | 'reblog'
     ): Promise<string | null> {
         try {
@@ -590,7 +590,7 @@ export class AutomatedNotificationService {
 
             // Fetch the actual post/comment content from Hive blockchain
             const content = await serverHiveClient.fetchContent(author, permlink);
-            
+
             if (!content || !content.body) {
                 console.log(`[enrichNotificationContent] No content found for ${author}/${permlink}`);
                 return null;
@@ -633,7 +633,7 @@ export class AutomatedNotificationService {
 
         } catch (error) {
             console.error(`[enrichNotificationContent] ❌ Error enriching content for ${author}/${permlink}:`, error);
-            
+
             // Fallback: Try OpenGraph if direct API fails
             try {
                 return await this.enrichWithOpenGraph(author, permlink, notificationType);
@@ -648,14 +648,14 @@ export class AutomatedNotificationService {
      * Fallback: Enrich content using OpenGraph metadata from URL
      */
     private static async enrichWithOpenGraph(
-        author: string, 
-        permlink: string, 
+        author: string,
+        permlink: string,
         notificationType: string
     ): Promise<string | null> {
         try {
             const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://skatehive.app';
             const postUrl = `${baseUrl}/post/${author}/${permlink}`;
-            
+
             console.log(`[enrichWithOpenGraph] Fetching OpenGraph for: ${postUrl}`);
 
             const response = await fetch(postUrl, {
@@ -671,7 +671,7 @@ export class AutomatedNotificationService {
             }
 
             const html = await response.text();
-            
+
             // Extract OpenGraph title and description
             const ogTitle = this.extractOGTag(html, 'og:title');
             const ogDescription = this.extractOGTag(html, 'og:description');
@@ -720,10 +720,10 @@ export class AutomatedNotificationService {
     private static extractMentionContext(originalBody: string, cleanText: string): string {
         // Try to find the sentence containing the mention
         const sentences = cleanText.split(/[.!?]+/);
-        const mentionSentence = sentences.find(sentence => 
+        const mentionSentence = sentences.find(sentence =>
             sentence.includes('@') && sentence.trim().length > 10
         );
-        
+
         return mentionSentence?.trim() || cleanText.substring(0, 100);
     }
 
