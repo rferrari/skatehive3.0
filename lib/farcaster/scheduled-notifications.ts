@@ -186,16 +186,30 @@ export class ScheduledNotificationService {
                 return 0;
             }
 
-            // Always queue all notifications, regardless of lastScheduledNotificationId
-            const unreadNotifications = allNotifications.slice(0, maxNotificationsPerBatch); // Limit to user's preference
+            // Get already sent notifications from logs to avoid duplicates
+            const sentNotifications = await this.getSentNotificationIds(hiveUsername);
+            console.log(`[processUserScheduledNotifications] Found ${sentNotifications.size} previously sent notifications for ${hiveUsername}`);
 
-            if (unreadNotifications.length === 0) {
-                console.log(`No notifications to send for ${hiveUsername}`);
+            // Filter out notifications that have already been sent
+            const unsentNotifications = allNotifications.filter(notification => {
+                // Convert to Farcaster format to create identifier
+                const farcasterNotification = this.convertHiveToFarcasterNotification(notification, hiveUsername);
+                const notificationId = this.createNotificationId(farcasterNotification);
+                return !sentNotifications.has(notificationId);
+            });
+
+            console.log(`[processUserScheduledNotifications] Found ${unsentNotifications.length} unsent notifications out of ${allNotifications.length} total for ${hiveUsername}`);
+
+            if (unsentNotifications.length === 0) {
+                console.log(`No new notifications to send for ${hiveUsername}`);
                 return 0;
             }
 
+            // Limit to user's preference for batch size
+            const notificationsToSend = unsentNotifications.slice(0, maxNotificationsPerBatch);
+
             // Convert Hive notifications to Farcaster format
-            const farcasterNotifications: HiveToFarcasterNotification[] = unreadNotifications.map((notification: Notifications) => {
+            const farcasterNotifications: HiveToFarcasterNotification[] = notificationsToSend.map((notification: Notifications) => {
                 return ScheduledNotificationService.convertHiveToFarcasterNotification(notification, hiveUsername);
             });
 
@@ -243,10 +257,11 @@ export class ScheduledNotificationService {
                     if (result.success) {
                         sentCount++;
 
-                        // Log the notification
+                        // Log the notification with unique identifier to prevent duplicates
+                        const notificationId = this.createNotificationId(notification);
                         await SkateHiveFarcasterService.logNotification(
                             hiveUsername,
-                            notification.type,
+                            'scheduled_notification',
                             notification.title,
                             notification.body,
                             true,
@@ -260,7 +275,7 @@ export class ScheduledNotificationService {
                     // Log the failed notification
                     await SkateHiveFarcasterService.logNotification(
                         hiveUsername,
-                        notification.type,
+                        'scheduled_notification',
                         notification.title,
                         notification.body,
                         false,
@@ -271,8 +286,8 @@ export class ScheduledNotificationService {
             }
 
             // Update the last processed notification ID
-            if (unreadNotifications.length > 0) {
-                const highestId = Math.max(...unreadNotifications.map(n => n.id).filter(id => id !== undefined));
+            if (notificationsToSend.length > 0) {
+                const highestId = Math.max(...notificationsToSend.map((n: any) => n.id).filter((id: any) => id !== undefined));
 
                 await sql`
                     UPDATE skatehive_farcaster_preferences 
@@ -281,7 +296,7 @@ export class ScheduledNotificationService {
                 `;
             }
 
-            console.log(`Sent ${sentCount}/${unreadNotifications.length} scheduled notifications to ${hiveUsername}`);
+            console.log(`Sent ${sentCount}/${notificationsToSend.length} scheduled notifications to ${hiveUsername}`);
             return sentCount;
 
         } catch (error) {
@@ -668,5 +683,44 @@ export class ScheduledNotificationService {
             console.error(`Error sending notification to FID ${userToken.fid}:`, error);
             return { success: false };
         }
+    }
+
+    /**
+     * Get IDs of notifications that have already been sent to avoid duplicates
+     */
+    private static async getSentNotificationIds(hiveUsername: string): Promise<Set<string>> {
+        try {
+            const result = await sql`
+                SELECT target_url, body
+                FROM farcaster_notification_logs 
+                WHERE fid = (
+                    SELECT fid 
+                    FROM skatehive_farcaster_preferences 
+                    WHERE hive_username = ${hiveUsername}
+                )
+                AND success = true
+            `;
+
+            // Create a set of unique notification identifiers
+            const sentIds = new Set<string>();
+            for (const row of result.rows) {
+                // Create identifier from URL and body (same as createNotificationId)
+                const identifier = `${row.target_url || ''}-${row.body || ''}`;
+                sentIds.add(identifier);
+            }
+
+            return sentIds;
+        } catch (error) {
+            console.error('Failed to get sent notification IDs:', error);
+            return new Set();
+        }
+    }
+
+    /**
+     * Create a unique identifier for a notification to track if it's been sent
+     */
+    private static createNotificationId(notification: HiveToFarcasterNotification): string {
+        // Create identifier from URL and message - should match the logged data
+        return `${notification.sourceUrl || ''}-${notification.body || ''}`;
     }
 }
