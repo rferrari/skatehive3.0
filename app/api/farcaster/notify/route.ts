@@ -11,8 +11,17 @@ export async function POST(request: NextRequest) {
             body: messageBody = 'This is a test notification from SkateHive',
             hiveUsername,
             targetUsers,
-            sourceUrl
+            sourceUrl,
+            broadcast = false // New flag to send to all users
         } = body;
+
+        console.log('🔔 [Notify API] Received notification request:', {
+            type,
+            title,
+            body: messageBody,
+            broadcast,
+            targetUsers: targetUsers?.length || 0
+        });
 
         // Create notification object
         const notification: HiveToFarcasterNotification = {
@@ -23,20 +32,40 @@ export async function POST(request: NextRequest) {
             sourceUrl: sourceUrl || process.env.NEXT_PUBLIC_BASE_URL || 'https://skatehive.app',
             metadata: {
                 author: 'skatehive',
-                permlink: 'test-notification',
+                permlink: type === 'custom' ? 'custom-notification' : 'test-notification',
             }
         };
+
+        // Determine target users
+        let finalTargetUsers = targetUsers;
+        
+        if (broadcast) {
+            console.log('📢 [Notify API] Broadcasting to all users...');
+            // Send to all users by not specifying targetUsers
+            finalTargetUsers = undefined;
+        } else if (!targetUsers && hiveUsername) {
+            // Send to specific user
+            finalTargetUsers = [hiveUsername];
+        }
+
+        console.log('🎯 [Notify API] Sending notification to:', finalTargetUsers ? `${finalTargetUsers.length} specific users` : 'all users');
 
         // Send notification
         const result = await farcasterNotificationService.sendNotification(
             notification,
-            targetUsers
+            finalTargetUsers
         );
+
+        console.log('✅ [Notify API] Notification sent:', {
+            success: result.success,
+            resultCount: result.results?.length || 0
+        });
 
         return NextResponse.json({
             success: result.success,
             results: result.results,
             notification,
+            message: broadcast ? 'Broadcast notification sent to all users' : 'Notification sent'
         });
 
     } catch (error) {
@@ -57,20 +86,30 @@ export async function GET() {
         usage: {
             method: 'POST',
             body: {
-                type: 'vote | comment | follow | mention | reblog | transfer',
+                type: 'vote | comment | follow | mention | reblog | transfer | custom',
                 title: 'Notification title (max 32 chars)',
                 body: 'Notification body (max 128 chars)',
                 hiveUsername: 'Target Hive username (optional)',
                 targetUsers: ['array', 'of', 'hive', 'usernames'], // optional
-                sourceUrl: 'URL to open when clicked (optional)'
+                sourceUrl: 'URL to open when clicked (optional)',
+                broadcast: 'true to send to all users, false for targeted (optional)'
             }
         },
-        example: {
-            type: 'vote',
-            title: '👍 New Vote',
-            body: 'Someone voted on your skateboarding video!',
-            hiveUsername: 'skatehive',
-            sourceUrl: 'https://skatehive.app/post/skatehive/awesome-trick'
+        examples: {
+            testNotification: {
+                type: 'test',
+                title: '� Test Notification',
+                body: 'This is a test notification from SkateHive!',
+                hiveUsername: 'skatehive',
+                sourceUrl: 'https://skatehive.app'
+            },
+            customBroadcast: {
+                type: 'custom',
+                title: '📢 Announcement',
+                body: 'New features available on SkateHive!',
+                sourceUrl: 'https://skatehive.app',
+                broadcast: true
+            }
         }
     });
 }

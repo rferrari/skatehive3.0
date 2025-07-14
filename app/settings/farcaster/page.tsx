@@ -96,26 +96,43 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
     }, []);
 
     // Button handlers for notifications
-    // Custom notification sending function
+    // Custom notification sending function using the existing notify endpoint
     const handleSendCustomNotification = async () => {
+        console.log('🔥 [UI] handleSendCustomNotification called with:', customNotification);
+        setSaving(true);
+        setEventLogs(logs => [...logs, `Custom notification requested at ${new Date().toLocaleTimeString()}`]);
+        
         try {
-            const response = await fetch('/api/farcaster/send-custom-notification', {
+            console.log('🚀 [UI] Sending custom notification via notify endpoint...');
+            const response = await fetch('/api/farcaster/notify', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(customNotification),
+                body: JSON.stringify({
+                    type: "custom",
+                    title: customNotification.title,
+                    body: customNotification.body,
+                    sourceUrl: customNotification.targetUrl,
+                    broadcast: true // Flag to send to all users
+                }),
             });
 
-            if (response.ok) {
-                const result = await response.json();
+            console.log('📨 [UI] API response status:', response.status);
+            
+            const result = await response.json();
+            console.log('✅ [UI] API response data:', result);
+            
+            if (result.success) {
                 toast({
                     title: "Custom notification sent",
-                    description: `Sent to ${result.sentCount} users`,
+                    description: `Sent to ${result.results?.length || 0} users`,
                     status: "success",
                     duration: 3000,
                     isClosable: true,
                 });
+                setEventLogs(logs => [...logs, `Custom notification sent: ${result.results?.length || 0} users`]);
+                
                 // Reset form
                 setCustomNotification({
                     title: "",
@@ -123,10 +140,18 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
                     targetUrl: "https://skatehive.app"
                 });
             } else {
-                throw new Error('Failed to send notification');
+                console.error('❌ [UI] API error response:', result);
+                toast({
+                    title: "Error",
+                    description: result.message || "Failed to send custom notification",
+                    status: "error",
+                    duration: 3000,
+                    isClosable: true,
+                });
+                setEventLogs(logs => [...logs, `Custom notification failed: ${result.message}`]);
             }
         } catch (error) {
-            console.error('Error sending custom notification:', error);
+            console.error('💥 [UI] Error sending custom notification:', error);
             toast({
                 title: "Error",
                 description: "Failed to send custom notification",
@@ -134,6 +159,9 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
                 duration: 3000,
                 isClosable: true,
             });
+            setEventLogs(logs => [...logs, `Custom notification error`]);
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -353,7 +381,13 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
                             </Box>
 
                             <Button
-                                onClick={handleSendCustomNotification}
+                                onClick={() => {
+                                    console.log('🖱️ [UI] Custom notification button clicked!');
+                                    console.log('📋 [UI] Current state:', customNotification);
+                                    console.log('🔒 [UI] Button disabled?', !customNotification.title || !customNotification.body);
+                                    console.log('💾 [UI] Saving state:', saving);
+                                    handleSendCustomNotification();
+                                }}
                                 colorScheme="green"
                                 isDisabled={!customNotification.title || !customNotification.body}
                                 isLoading={saving}

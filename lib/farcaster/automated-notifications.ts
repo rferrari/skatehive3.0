@@ -6,6 +6,10 @@ import { farcasterNotificationService } from './notification-service';
 import { getTokenStore } from './token-store-factory';
 import { HiveToFarcasterNotification } from '@/types/farcaster';
 
+// Content enrichment cache to prevent duplicate API calls
+const enrichmentCache = new Map<string, { content: string | null; timestamp: number }>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache
+
 // Configure the database connection
 const getDatabaseUrl = () => {
     return process.env.STORAGE_POSTGRES_URL || process.env.POSTGRES_URL;
@@ -51,6 +55,9 @@ export class AutomatedNotificationService {
             errors: [] as string[],
             processedNotifications: [] as any[]
         };
+
+        console.log(`[AutomatedNotificationService] 🚀 Starting automated notification processing`);
+        console.log(`[AutomatedNotificationService] 📊 Cache stats: ${enrichmentCache.size} cached entries`);
 
         try {
             console.log(`[AutomatedNotificationService] Starting automated notification processing at ${new Date().toISOString()}`);
@@ -429,8 +436,14 @@ export class AutomatedNotificationService {
 
     /**
      * Convert Hive notifications to Farcaster format
+     * Only enriches notifications that are about to be sent to reduce API calls
      */
     private static async convertToFarcasterNotifications(notifications: any[]): Promise<HiveToFarcasterNotification[]> {
+        console.log(`[convertToFarcasterNotifications] Converting ${notifications.length} notifications`);
+        
+        // Clean up old cache entries before processing
+        this.cleanupEnrichmentCache();
+        
         const farcasterNotifications: HiveToFarcasterNotification[] = [];
 
         for (const notification of notifications) {
@@ -444,6 +457,7 @@ export class AutomatedNotificationService {
             }
         }
 
+        console.log(`[convertToFarcasterNotifications] Successfully converted ${farcasterNotifications.length}/${notifications.length} notifications`);
         return farcasterNotifications;
     }
 
@@ -479,13 +493,16 @@ export class AutomatedNotificationService {
             switch (notification.type) {
                 case 'vote':
                     title = '👍 New Vote';
-                    // Try to get rich content for votes on posts
-                    if (author && permlink) {
+                    // Only enrich votes occasionally to reduce API calls
+                    if (author && permlink && Math.random() < 0.2) { // 20% chance for votes
                         const enrichedContent = await this.enrichNotificationContent(author, permlink, 'vote');
                         body = enrichedContent || notification.msg || `@${author} voted on your post`;
                         sourceUrl = `${baseUrl}/post/${author}/${permlink}`;
                     } else {
-                        body = notification.msg || 'Someone voted on your content';
+                        body = notification.msg || `@${author} voted on your content`;
+                        if (author && permlink) {
+                            sourceUrl = `${baseUrl}/post/${author}/${permlink}`;
+                        }
                     }
                     break;
 
@@ -493,7 +510,7 @@ export class AutomatedNotificationService {
                 case 'comment':
                 case 'reply_comment':
                     title = '💬 New Comment';
-                    // Get the actual comment content for richer notifications
+                    // Always enrich comments as they are high-value notifications
                     if (author && permlink) {
                         const enrichedContent = await this.enrichNotificationContent(author, permlink, 'comment');
                         body = enrichedContent || notification.msg || `@${author} commented on your post`;
@@ -505,7 +522,7 @@ export class AutomatedNotificationService {
 
                 case 'mention':
                     title = '📢 You were mentioned';
-                    // Get context of where you were mentioned
+                    // Always enrich mentions as they are high-value notifications
                     if (author && permlink) {
                         const enrichedContent = await this.enrichNotificationContent(author, permlink, 'mention');
                         body = enrichedContent || notification.msg || `@${author} mentioned you`;
@@ -525,13 +542,16 @@ export class AutomatedNotificationService {
 
                 case 'reblog':
                     title = '🔄 Post Reblogged';
-                    // Get the post that was reblogged
-                    if (author && permlink) {
+                    // Enrich reblogs selectively (50% chance)
+                    if (author && permlink && Math.random() < 0.5) {
                         const enrichedContent = await this.enrichNotificationContent(author, permlink, 'reblog');
                         body = enrichedContent || notification.msg || `@${author} reblogged your post`;
                         sourceUrl = `${baseUrl}/post/${author}/${permlink}`;
                     } else {
-                        body = notification.msg || 'Your post was reblogged';
+                        body = notification.msg || `@${author} reblogged your content`;
+                        if (author && permlink) {
+                            sourceUrl = `${baseUrl}/post/${author}/${permlink}`;
+                        }
                     }
                     break;
 
@@ -579,12 +599,29 @@ export class AutomatedNotificationService {
     /**
      * Enrich notification content with actual post/comment data
      * Uses direct Hive API calls for speed and reliability
+     * Includes caching to prevent duplicate API calls
      */
     private static async enrichNotificationContent(
         author: string,
         permlink: string,
         notificationType: 'vote' | 'comment' | 'mention' | 'reblog'
     ): Promise<string | null> {
+        // Create cache key
+        const cacheKey = `${author}/${permlink}`;
+        
+        // Check cache first
+        const cached = enrichmentCache.get(cacheKey);
+        if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
+            console.log(`[enrichNotificationContent] Using cached content for ${cacheKey}`);
+            return cached.content;
+        }
+
+        // Validate that we have meaningful author and permlink
+        if (!author || !permlink || author.length < 3 || permlink.length < 3) {
+            console.log(`[enrichNotificationContent] Skipping enrichment for invalid author/permlink: ${author}/${permlink}`);
+            return null;
+        }
+
         try {
             console.log(`[enrichNotificationContent] Fetching content for ${author}/${permlink} (${notificationType})`);
 
@@ -593,12 +630,21 @@ export class AutomatedNotificationService {
 
             if (!content || !content.body) {
                 console.log(`[enrichNotificationContent] No content found for ${author}/${permlink}`);
+                // Cache the null result to avoid repeated failures
+                enrichmentCache.set(cacheKey, { content: null, timestamp: Date.now() });
                 return null;
             }
 
             // Clean and extract meaningful text from the content
             let enrichedBody = '';
             const cleanText = this.extractCleanText(content.body);
+
+            // Skip enrichment if content is too short or empty
+            if (!cleanText || cleanText.trim().length < 10) {
+                console.log(`[enrichNotificationContent] Content too short for ${author}/${permlink}, skipping enrichment`);
+                enrichmentCache.set(cacheKey, { content: null, timestamp: Date.now() });
+                return null;
+            }
 
             switch (notificationType) {
                 case 'vote':
@@ -625,22 +671,36 @@ export class AutomatedNotificationService {
                     break;
 
                 default:
+                    enrichmentCache.set(cacheKey, { content: null, timestamp: Date.now() });
                     return null;
             }
 
             console.log(`[enrichNotificationContent] ✅ Enriched content: ${enrichedBody}`);
+            
+            // Cache the successful result
+            enrichmentCache.set(cacheKey, { content: enrichedBody, timestamp: Date.now() });
             return enrichedBody;
 
         } catch (error) {
             console.error(`[enrichNotificationContent] ❌ Error enriching content for ${author}/${permlink}:`, error);
 
-            // Fallback: Try OpenGraph if direct API fails
-            try {
-                return await this.enrichWithOpenGraph(author, permlink, notificationType);
-            } catch (fallbackError) {
-                console.error(`[enrichNotificationContent] ❌ OpenGraph fallback also failed:`, fallbackError);
-                return null;
+            // Cache the failure to avoid repeated attempts
+            enrichmentCache.set(cacheKey, { content: null, timestamp: Date.now() });
+
+            // Only try OpenGraph fallback for important notification types
+            if (notificationType === 'comment' || notificationType === 'mention') {
+                try {
+                    const fallbackResult = await this.enrichWithOpenGraph(author, permlink, notificationType);
+                    if (fallbackResult) {
+                        enrichmentCache.set(cacheKey, { content: fallbackResult, timestamp: Date.now() });
+                        return fallbackResult;
+                    }
+                } catch (fallbackError) {
+                    console.error(`[enrichNotificationContent] ❌ OpenGraph fallback also failed:`, fallbackError);
+                }
             }
+            
+            return null;
         }
     }
 
@@ -742,5 +802,24 @@ export class AutomatedNotificationService {
         const regex = new RegExp(`<meta[^>]*property=["']${property}["'][^>]*content=["']([^"']*?)["']`, 'i');
         const match = html.match(regex);
         return match ? match[1] : null;
+    }
+
+    /**
+     * Clean up old entries from the enrichment cache
+     */
+    private static cleanupEnrichmentCache(): void {
+        const now = Date.now();
+        let cleanedCount = 0;
+        
+        for (const [key, value] of enrichmentCache.entries()) {
+            if (now - value.timestamp > CACHE_TTL) {
+                enrichmentCache.delete(key);
+                cleanedCount++;
+            }
+        }
+        
+        if (cleanedCount > 0) {
+            console.log(`[cleanupEnrichmentCache] Cleaned up ${cleanedCount} expired cache entries`);
+        }
     }
 }
