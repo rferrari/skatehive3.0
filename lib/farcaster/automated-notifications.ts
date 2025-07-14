@@ -209,8 +209,8 @@ export class AutomatedNotificationService {
 
             // Sort notifications from oldest to newest (bottom to top approach)
             const sortedNotifications = unreadNotifications.sort((a, b) => {
-                const timestampA = new Date(a.timestamp || 0).getTime();
-                const timestampB = new Date(b.timestamp || 0).getTime();
+                const timestampA = new Date(a.date || a.timestamp || 0).getTime();
+                const timestampB = new Date(b.date || b.timestamp || 0).getTime();
                 return timestampA - timestampB;
             });
 
@@ -290,7 +290,7 @@ export class AutomatedNotificationService {
 
             // First, filter out notifications that occurred before the user linked their account
             const notificationsAfterLinking = allNotifications.filter(notification => {
-                const notificationTimestamp = new Date(notification.timestamp || 0);
+                const notificationTimestamp = new Date(notification.date || notification.timestamp || 0);
                 const isAfterLinking = notificationTimestamp >= linkedAt;
 
                 if (!isAfterLinking) {
@@ -340,7 +340,7 @@ export class AutomatedNotificationService {
             console.error(`[getUnreadNotifications] Error getting unread notifications for ${hiveUsername}:`, error);
             // Return notifications after linking date if we can't check the log
             const notificationsAfterLinking = allNotifications.filter(notification => {
-                const notificationTimestamp = new Date(notification.timestamp || 0);
+                const notificationTimestamp = new Date(notification.date || notification.timestamp || 0);
                 return notificationTimestamp >= linkedAt;
             });
             console.log(`[getUnreadNotifications] Treating ${notificationsAfterLinking.length} notifications after linking as unread due to error`);
@@ -457,7 +457,7 @@ export class AutomatedNotificationService {
             }
 
             // Include timestamp if available for more uniqueness
-            const timestamp = notification.timestamp || notification.date || '';
+            const timestamp = notification.date || notification.timestamp || '';
 
             // Create a unique ID that includes type, author, permlink, and timestamp
             return `${notification.type}_${author}_${permlink}_${timestamp}`.replace(/[^a-zA-Z0-9_-]/g, '_');
@@ -466,7 +466,7 @@ export class AutomatedNotificationService {
         // Fallback for other formats - try to use as much unique data as possible
         const id = notification.id || notification.trx_id || notification.block_num || '';
         const type = notification.type || 'unknown';
-        const timestamp = notification.timestamp || notification.date || Date.now();
+        const timestamp = notification.date || notification.timestamp || Date.now();
 
         return `${type}_${id}_${timestamp}`.replace(/[^a-zA-Z0-9_-]/g, '_');
     }
@@ -604,7 +604,7 @@ export class AutomatedNotificationService {
             }
 
             // Generate unique notification ID
-            const notificationId = `${notification.type}_${author}_${permlink}_${Date.now()}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+            const notificationId = `${notification.type}_${author}_${permlink}_${notification.date || Date.now()}`.replace(/[^a-zA-Z0-9_-]/g, '_');
 
             // Validate URL
             try {
