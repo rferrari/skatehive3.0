@@ -169,7 +169,7 @@ export const useSnaps = () => {
       setIsLoading(true);
       try {
         let newSnaps: Discussion[] = [];
-        
+
         // Try Hive blockchain method first
         try {
           newSnaps = await getMoreSnaps();
@@ -185,7 +185,7 @@ export const useSnaps = () => {
             return;
           }
         }
-        
+
         // console.dir(newSnaps)
         if (newSnaps.length < pageMinSize) {
           setHasMore(false); // No more items to fetch
