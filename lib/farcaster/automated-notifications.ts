@@ -448,7 +448,7 @@ export class AutomatedNotificationService {
     }
 
     /**
-     * Convert a single Hive notification to Farcaster format
+     * Convert a single Hive notification to Farcaster format with rich content
      */
     private static async convertHiveToFarcasterNotification(notification: Notifications): Promise<HiveToFarcasterNotification | null> {
         try {
@@ -479,19 +479,13 @@ export class AutomatedNotificationService {
             switch (notification.type) {
                 case 'vote':
                     title = '👍 New Vote';
-                    // Extract meaningful post identifier from permlink or use message
-                    if (notification.msg) {
-                        // Use the original message if available (e.g., "@web-gnar voted on your post ($0.24)")
-                        body = notification.msg;
-                    } else {
-                        // Fallback: create descriptive message
-                        const postId = permlink ?
-                            permlink.replace(/20\d{6}t\d{6}\w+z/, '').replace(/-/g, ' ').substring(0, 30) + '...' :
-                            'your post';
-                        body = `@${author} voted on "${postId}"`;
-                    }
+                    // Try to get rich content for votes on posts
                     if (author && permlink) {
+                        const enrichedContent = await this.enrichNotificationContent(author, permlink, 'vote');
+                        body = enrichedContent || notification.msg || `@${author} voted on your post`;
                         sourceUrl = `${baseUrl}/post/${author}/${permlink}`;
+                    } else {
+                        body = notification.msg || 'Someone voted on your content';
                     }
                     break;
 
@@ -499,31 +493,25 @@ export class AutomatedNotificationService {
                 case 'comment':
                 case 'reply_comment':
                     title = '💬 New Comment';
-                    if (notification.msg) {
-                        body = notification.msg;
-                    } else {
-                        const commentPostId = permlink ?
-                            permlink.replace(/20\d{6}t\d{6}\w+z/, '').replace(/-/g, ' ').substring(0, 30) + '...' :
-                            'your post';
-                        body = `@${author} commented on "${commentPostId}"`;
-                    }
+                    // Get the actual comment content for richer notifications
                     if (author && permlink) {
+                        const enrichedContent = await this.enrichNotificationContent(author, permlink, 'comment');
+                        body = enrichedContent || notification.msg || `@${author} commented on your post`;
                         sourceUrl = `${baseUrl}/post/${author}/${permlink}`;
+                    } else {
+                        body = notification.msg || 'Someone commented on your post';
                     }
                     break;
 
                 case 'mention':
                     title = '📢 You were mentioned';
-                    if (notification.msg) {
-                        body = notification.msg;
-                    } else {
-                        const mentionPostId = permlink ?
-                            permlink.replace(/20\d{6}t\d{6}\w+z/, '').replace(/-/g, ' ').substring(0, 30) + '...' :
-                            'a post';
-                        body = `@${author} mentioned you in "${mentionPostId}"`;
-                    }
+                    // Get context of where you were mentioned
                     if (author && permlink) {
+                        const enrichedContent = await this.enrichNotificationContent(author, permlink, 'mention');
+                        body = enrichedContent || notification.msg || `@${author} mentioned you`;
                         sourceUrl = `${baseUrl}/post/${author}/${permlink}`;
+                    } else {
+                        body = notification.msg || 'You were mentioned in a post';
                     }
                     break;
 
@@ -537,9 +525,13 @@ export class AutomatedNotificationService {
 
                 case 'reblog':
                     title = '🔄 Post Reblogged';
-                    body = notification.msg || `@${author} reblogged your post`;
+                    // Get the post that was reblogged
                     if (author && permlink) {
+                        const enrichedContent = await this.enrichNotificationContent(author, permlink, 'reblog');
+                        body = enrichedContent || notification.msg || `@${author} reblogged your post`;
                         sourceUrl = `${baseUrl}/post/${author}/${permlink}`;
+                    } else {
+                        body = notification.msg || 'Your post was reblogged';
                     }
                     break;
 
@@ -582,5 +574,173 @@ export class AutomatedNotificationService {
             console.error('[convertHiveToFarcasterNotification] Error converting notification:', error);
             return null;
         }
+    }
+
+    /**
+     * Enrich notification content with actual post/comment data
+     * Uses direct Hive API calls for speed and reliability
+     */
+    private static async enrichNotificationContent(
+        author: string, 
+        permlink: string, 
+        notificationType: 'vote' | 'comment' | 'mention' | 'reblog'
+    ): Promise<string | null> {
+        try {
+            console.log(`[enrichNotificationContent] Fetching content for ${author}/${permlink} (${notificationType})`);
+
+            // Fetch the actual post/comment content from Hive blockchain
+            const content = await serverHiveClient.fetchContent(author, permlink);
+            
+            if (!content || !content.body) {
+                console.log(`[enrichNotificationContent] No content found for ${author}/${permlink}`);
+                return null;
+            }
+
+            // Clean and extract meaningful text from the content
+            let enrichedBody = '';
+            const cleanText = this.extractCleanText(content.body);
+
+            switch (notificationType) {
+                case 'vote':
+                    // For votes, show what was voted on
+                    const postTitle = content.title || this.extractFirstLine(cleanText);
+                    enrichedBody = `@${author} voted on: "${this.truncateText(postTitle, 60)}"`;
+                    break;
+
+                case 'comment':
+                    // For comments, show the actual comment text
+                    enrichedBody = `@${author}: "${this.truncateText(cleanText, 80)}"`;
+                    break;
+
+                case 'mention':
+                    // For mentions, show context around the mention
+                    const mentionContext = this.extractMentionContext(content.body, cleanText);
+                    enrichedBody = `@${author} mentioned you: "${this.truncateText(mentionContext, 70)}"`;
+                    break;
+
+                case 'reblog':
+                    // For reblogs, show what was reblogged
+                    const reblogTitle = content.title || this.extractFirstLine(cleanText);
+                    enrichedBody = `@${author} reblogged: "${this.truncateText(reblogTitle, 60)}"`;
+                    break;
+
+                default:
+                    return null;
+            }
+
+            console.log(`[enrichNotificationContent] ✅ Enriched content: ${enrichedBody}`);
+            return enrichedBody;
+
+        } catch (error) {
+            console.error(`[enrichNotificationContent] ❌ Error enriching content for ${author}/${permlink}:`, error);
+            
+            // Fallback: Try OpenGraph if direct API fails
+            try {
+                return await this.enrichWithOpenGraph(author, permlink, notificationType);
+            } catch (fallbackError) {
+                console.error(`[enrichNotificationContent] ❌ OpenGraph fallback also failed:`, fallbackError);
+                return null;
+            }
+        }
+    }
+
+    /**
+     * Fallback: Enrich content using OpenGraph metadata from URL
+     */
+    private static async enrichWithOpenGraph(
+        author: string, 
+        permlink: string, 
+        notificationType: string
+    ): Promise<string | null> {
+        try {
+            const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://skatehive.app';
+            const postUrl = `${baseUrl}/post/${author}/${permlink}`;
+            
+            console.log(`[enrichWithOpenGraph] Fetching OpenGraph for: ${postUrl}`);
+
+            const response = await fetch(postUrl, {
+                headers: {
+                    'User-Agent': 'SkateHive-Notification-Bot/1.0'
+                },
+                // Add timeout to prevent hanging
+                signal: AbortSignal.timeout(5000)
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            const html = await response.text();
+            
+            // Extract OpenGraph title and description
+            const ogTitle = this.extractOGTag(html, 'og:title');
+            const ogDescription = this.extractOGTag(html, 'og:description');
+
+            if (ogTitle) {
+                return `@${author}: "${this.truncateText(ogTitle, 70)}"`;
+            } else if (ogDescription) {
+                return `@${author}: "${this.truncateText(ogDescription, 80)}"`;
+            }
+
+            return null;
+
+        } catch (error) {
+            console.error(`[enrichWithOpenGraph] Failed to fetch OpenGraph for ${author}/${permlink}:`, error);
+            return null;
+        }
+    }
+
+    /**
+     * Extract clean text from markdown/HTML content
+     */
+    private static extractCleanText(body: string): string {
+        return body
+            .replace(/!\[.*?\]\(.*?\)/g, '') // Remove image markdown
+            .replace(/<iframe[^>]*>.*?<\/iframe>/gi, '') // Remove iframes  
+            .replace(/<[^>]*>/g, '') // Remove HTML tags
+            .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold markdown
+            .replace(/\*(.*?)\*/g, '$1') // Remove italic markdown
+            .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Convert links to text
+            .replace(/\n\s*\n/g, ' ') // Remove extra line breaks
+            .replace(/\s+/g, ' ') // Normalize whitespace
+            .trim();
+    }
+
+    /**
+     * Extract first meaningful line from text
+     */
+    private static extractFirstLine(text: string): string {
+        const lines = text.split('\n').filter(line => line.trim().length > 0);
+        return lines[0] || text.substring(0, 50);
+    }
+
+    /**
+     * Extract context around a mention in text
+     */
+    private static extractMentionContext(originalBody: string, cleanText: string): string {
+        // Try to find the sentence containing the mention
+        const sentences = cleanText.split(/[.!?]+/);
+        const mentionSentence = sentences.find(sentence => 
+            sentence.includes('@') && sentence.trim().length > 10
+        );
+        
+        return mentionSentence?.trim() || cleanText.substring(0, 100);
+    }
+
+    /**
+     * Truncate text to specified length with ellipsis
+     */
+    private static truncateText(text: string, maxLength: number): string {
+        if (!text || text.length <= maxLength) return text;
+        return text.substring(0, maxLength - 3).trim() + '...';
+    }
+
+    /**
+     * Extract OpenGraph tag content from HTML
+     */
+    private static extractOGTag(html: string, property: string): string | null {
+        const regex = new RegExp(`<meta[^>]*property=["']${property}["'][^>]*content=["']([^"']*?)["']`, 'i');
+        const match = html.match(regex);
+        return match ? match[1] : null;
     }
 }
