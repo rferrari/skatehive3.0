@@ -168,7 +168,24 @@ export const useSnaps = () => {
     const fetchPosts = async () => {
       setIsLoading(true);
       try {
-        const newSnaps = await fetchFromNewApi();
+        let newSnaps: Discussion[] = [];
+        
+        // Try Hive blockchain method first
+        try {
+          newSnaps = await getMoreSnaps();
+          console.log('Successfully fetched from Hive blockchain');
+        } catch (hiveError) {
+          console.warn('Hive blockchain fetch failed, falling back to API:', hiveError);
+          // Fallback to API if Hive method fails
+          try {
+            newSnaps = await fetchFromNewApi();
+            console.log('Successfully fetched from API fallback');
+          } catch (apiError) {
+            console.error('Both Hive and API fetch methods failed:', apiError);
+            return;
+          }
+        }
+        
         // console.dir(newSnaps)
         if (newSnaps.length < pageMinSize) {
           setHasMore(false); // No more items to fetch
