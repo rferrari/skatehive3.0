@@ -251,7 +251,7 @@ export class ScheduledNotificationService {
             for (let i = 0; i < farcasterNotifications.length; i++) {
                 const notification = farcasterNotifications[i];
                 console.log(`[processUserScheduledNotifications] Sending notification ${i + 1}/${farcasterNotifications.length} to ${hiveUsername}: ${notification.title}`);
-                
+
                 try {
                     // Send notification directly using token details
                     const result = await this.sendNotificationDirectly(
