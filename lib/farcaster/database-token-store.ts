@@ -248,8 +248,7 @@ export class DatabaseTokenStore {
           -- Existing fields
           linked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           last_notification_at TIMESTAMP,
-          hive_profile_updated BOOLEAN DEFAULT FALSE,
-          FOREIGN KEY (fid) REFERENCES farcaster_tokens(fid) ON DELETE SET NULL
+          hive_profile_updated BOOLEAN DEFAULT FALSE
         )
       `;
 
