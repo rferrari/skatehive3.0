@@ -897,30 +897,19 @@ export class AutomatedNotificationService {
 
             console.log('[cleanupNotificationLogs] Starting database cleanup...');
 
-            // Clean up deduplication logs older than 30 days
+            // Clean up old notification logs but preserve recent ones for deduplication
+            // Only delete logs older than 30 days to maintain deduplication integrity
+            // Recent logs (last 30 days) are kept to prevent duplicate notifications
             try {
-                const deduplicationResult = await sql`
-                    DELETE FROM farcaster_notification_log 
+                const cleanupResult = await sql`
+                    DELETE FROM farcaster_notification_logs 
                     WHERE sent_at < NOW() - INTERVAL '30 days'
                 `;
-                results.deduplicationLogsDeleted = deduplicationResult.rowCount || 0;
-                console.log(`[cleanupNotificationLogs] Deleted ${results.deduplicationLogsDeleted} old deduplication logs`);
+                results.deduplicationLogsDeleted = cleanupResult.rowCount || 0;
+                results.analyticsLogsDeleted = results.deduplicationLogsDeleted; // Same table
+                console.log(`[cleanupNotificationLogs] Deleted ${results.deduplicationLogsDeleted} notification logs older than 30 days (preserved recent logs for deduplication)`);
             } catch (error) {
-                const errorMsg = `Failed to clean deduplication logs: ${error instanceof Error ? error.message : 'Unknown error'}`;
-                console.error(`[cleanupNotificationLogs] ${errorMsg}`);
-                results.errors.push(errorMsg);
-            }
-
-            // Clean up analytics logs older than 90 days
-            try {
-                const analyticsResult = await sql`
-                    DELETE FROM farcaster_notification_logs 
-                    WHERE created_at < NOW() - INTERVAL '90 days'
-                `;
-                results.analyticsLogsDeleted = analyticsResult.rowCount || 0;
-                console.log(`[cleanupNotificationLogs] Deleted ${results.analyticsLogsDeleted} old analytics logs`);
-            } catch (error) {
-                const errorMsg = `Failed to clean analytics logs: ${error instanceof Error ? error.message : 'Unknown error'}`;
+                const errorMsg = `Failed to clean notification logs: ${error instanceof Error ? error.message : 'Unknown error'}`;
                 console.error(`[cleanupNotificationLogs] ${errorMsg}`);
                 results.errors.push(errorMsg);
             }
@@ -973,21 +962,19 @@ export class AutomatedNotificationService {
                     tablename,
                     pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size
                 FROM pg_tables 
-                WHERE tablename IN ('farcaster_notification_log', 'farcaster_notification_logs')
-                ORDER BY tablename
+                WHERE tablename = 'farcaster_notification_logs'
             `;
 
             // Get row counts and oldest entries
             const logStats = await sql`
                 SELECT 
-                    (SELECT COUNT(*) FROM farcaster_notification_log) as notification_log_count,
-                    (SELECT COUNT(*) FROM farcaster_notification_logs) as analytics_log_count,
-                    (SELECT MIN(sent_at) FROM farcaster_notification_log) as oldest_deduplication_log,
-                    (SELECT MIN(created_at) FROM farcaster_notification_logs) as oldest_analytics_log
+                    COUNT(*) as notification_log_count,
+                    MIN(sent_at) as oldest_notification_log
+                FROM farcaster_notification_logs
             `;
 
-            const notificationLogSize = tableSizes.rows.find((t: any) => t.tablename === 'farcaster_notification_log')?.size || 'Unknown';
-            const analyticsLogSize = tableSizes.rows.find((t: any) => t.tablename === 'farcaster_notification_logs')?.size || 'Unknown';
+            const notificationLogSize = tableSizes.rows.find((t: any) => t.tablename === 'farcaster_notification_logs')?.size || 'Unknown';
+            const analyticsLogSize = notificationLogSize; // Same table serves both purposes
 
             const statsRow = logStats.rows[0];
 
@@ -995,9 +982,9 @@ export class AutomatedNotificationService {
                 notificationLogSize,
                 analyticsLogSize,
                 notificationLogCount: parseInt(statsRow?.notification_log_count) || 0,
-                analyticsLogCount: parseInt(statsRow?.analytics_log_count) || 0,
-                oldestDeduplicationLog: statsRow?.oldest_deduplication_log || null,
-                oldestAnalyticsLog: statsRow?.oldest_analytics_log || null
+                analyticsLogCount: parseInt(statsRow?.notification_log_count) || 0, // Same table
+                oldestDeduplicationLog: statsRow?.oldest_notification_log || null,
+                oldestAnalyticsLog: statsRow?.oldest_notification_log || null, // Same table
             };
 
         } catch (error) {
