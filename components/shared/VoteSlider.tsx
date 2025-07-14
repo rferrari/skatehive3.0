@@ -173,7 +173,7 @@ const VoteSlider = ({
                     onClick={handleHeartClick}
                     size={size}
                     p={2}
-                    _hover={{ bg: "gray.700", borderRadius: "full" }}
+                    _hover={{ bg: "accent", borderRadius: "full" }}
                 />
             </Tooltip>
             <VoteListPopover
@@ -206,7 +206,7 @@ const VoteSlider = ({
                 variant="ghost"
                 onClick={handleHeartClick}
                 size={size}
-                _hover={{ bg: "gray.700" }}
+                _hover={{ bg: "accent" }}
             >
                 {uniqueVotes.length}
             </Button>
