@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Button, Box, Text, Spinner, useToast, IconButton, Icon } from '@chakra-ui/react';
+import { Button, Box, Text, Spinner, useToast, IconButton, Icon, Tooltip } from '@chakra-ui/react';
 import { useAioha } from '@aioha/react-ui';
 import { getLastSnapsContainer, getPost } from '@/lib/hive/client-functions';
 import { Discussion } from '@hiveio/dhive';
@@ -149,18 +149,20 @@ export default function UpvoteSnapContainer({ hideIfVoted = false }: UpvoteSnapC
 
   return (
     <Box borderWidth="1px" borderRadius="md" p={2} position="relative">
-      <IconButton
-        aria-label="Dismiss"
-        icon={<img src="/images/finger.svg" alt="Dismiss" style={{ width: 20, height: 20 }} />}
-        size="xs"
-        variant="ghost"
-        colorScheme="red"
-        position="absolute"
-        top={1}
-        right={1}
-        onClick={() => setDismissed(true)}
-      />
-      <Text fontSize="sm" fontWeight="semibold">Upvote Snap Container</Text>
+      <Tooltip label="dismiss" placement="top" fontSize="xs">
+        <IconButton
+          aria-label="Dismiss"
+          icon={<img src="/images/finger.svg" alt="Dismiss" style={{ width: 20, height: 20 }} />}
+          size="xs"
+          variant="ghost"
+          colorScheme="red"
+          position="absolute"
+          top={1}
+          right={1}
+          onClick={() => setDismissed(true)}
+        />
+      </Tooltip>
+      
       <Text fontSize="xs" mb={2}>Help the community by upvoting the main post where all snaps are stored.</Text>
       <Box display="flex" alignItems="center" gap={2}>
         <Button
