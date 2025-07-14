@@ -208,22 +208,23 @@ export class ScheduledNotificationService {
             // Limit to user's preference for batch size
             const notificationsToSend = unsentNotifications.slice(0, maxNotificationsPerBatch);
 
+            console.log(`[processUserScheduledNotifications] Will attempt to send ${notificationsToSend.length} notifications (max batch size: ${maxNotificationsPerBatch})`);
+
             // Convert Hive notifications to Farcaster format
             const farcasterNotifications: HiveToFarcasterNotification[] = notificationsToSend.map((notification: Notifications) => {
                 return ScheduledNotificationService.convertHiveToFarcasterNotification(notification, hiveUsername);
             });
 
-            // Log the next notification and user preferences
+            console.log(`[processUserScheduledNotifications] Converted ${farcasterNotifications.length} notifications to Farcaster format`);
+
+            // Log the notifications we're about to send
             if (farcasterNotifications.length > 0) {
-                const nextNotification = farcasterNotifications[0];
-                console.log(`[processUserScheduledNotifications] Next notification for ${hiveUsername}:`, {
-                    title: nextNotification.title,
-                    body: nextNotification.body,
-                    sourceUrl: nextNotification.sourceUrl,
-                    type: nextNotification.type
+                console.log(`[processUserScheduledNotifications] Notifications for ${hiveUsername}:`);
+                farcasterNotifications.forEach((notification, index) => {
+                    console.log(`  ${index + 1}. ${notification.title}: ${notification.body}`);
                 });
             } else {
-                console.log(`[processUserScheduledNotifications] No unread notifications to send for ${hiveUsername}`);
+                console.log(`[processUserScheduledNotifications] No notifications to send for ${hiveUsername}`);
             }
 
             // Send notifications to Farcaster
@@ -245,8 +246,12 @@ export class ScheduledNotificationService {
             }
 
             console.log(`[processUserScheduledNotifications] Found active token for FID ${userPreferences.fid} (user: ${hiveUsername})`);
+            console.log(`[processUserScheduledNotifications] Starting to send ${farcasterNotifications.length} notifications...`);
 
-            for (const notification of farcasterNotifications) {
+            for (let i = 0; i < farcasterNotifications.length; i++) {
+                const notification = farcasterNotifications[i];
+                console.log(`[processUserScheduledNotifications] Sending notification ${i + 1}/${farcasterNotifications.length} to ${hiveUsername}: ${notification.title}`);
+                
                 try {
                     // Send notification directly using token details
                     const result = await this.sendNotificationDirectly(
@@ -256,6 +261,7 @@ export class ScheduledNotificationService {
 
                     if (result.success) {
                         sentCount++;
+                        console.log(`[processUserScheduledNotifications] ✅ Successfully sent notification ${i + 1} to ${hiveUsername}`);
 
                         // Log the notification with unique identifier to prevent duplicates
                         const notificationId = this.createNotificationId(notification);
@@ -268,9 +274,11 @@ export class ScheduledNotificationService {
                             undefined,
                             notification.sourceUrl
                         );
+                    } else {
+                        console.log(`[processUserScheduledNotifications] ❌ Failed to send notification ${i + 1} to ${hiveUsername}`);
                     }
                 } catch (error) {
-                    console.error(`Failed to send notification to ${hiveUsername}:`, error);
+                    console.error(`[processUserScheduledNotifications] ❌ Error sending notification ${i + 1} to ${hiveUsername}:`, error);
 
                     // Log the failed notification
                     await SkateHiveFarcasterService.logNotification(
