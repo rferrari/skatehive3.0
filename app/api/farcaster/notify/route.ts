@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
 
         // Determine target users
         let finalTargetUsers = targetUsers;
-        
+
         if (broadcast) {
             console.log('📢 [Notify API] Broadcasting to all users...');
             // Send to all users by not specifying targetUsers

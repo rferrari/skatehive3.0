@@ -440,10 +440,10 @@ export class AutomatedNotificationService {
      */
     private static async convertToFarcasterNotifications(notifications: any[]): Promise<HiveToFarcasterNotification[]> {
         console.log(`[convertToFarcasterNotifications] Converting ${notifications.length} notifications`);
-        
+
         // Clean up old cache entries before processing
         this.cleanupEnrichmentCache();
-        
+
         const farcasterNotifications: HiveToFarcasterNotification[] = [];
 
         for (const notification of notifications) {
@@ -608,7 +608,7 @@ export class AutomatedNotificationService {
     ): Promise<string | null> {
         // Create cache key
         const cacheKey = `${author}/${permlink}`;
-        
+
         // Check cache first
         const cached = enrichmentCache.get(cacheKey);
         if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
@@ -676,7 +676,7 @@ export class AutomatedNotificationService {
             }
 
             console.log(`[enrichNotificationContent] ✅ Enriched content: ${enrichedBody}`);
-            
+
             // Cache the successful result
             enrichmentCache.set(cacheKey, { content: enrichedBody, timestamp: Date.now() });
             return enrichedBody;
@@ -699,7 +699,7 @@ export class AutomatedNotificationService {
                     console.error(`[enrichNotificationContent] ❌ OpenGraph fallback also failed:`, fallbackError);
                 }
             }
-            
+
             return null;
         }
     }
@@ -810,14 +810,14 @@ export class AutomatedNotificationService {
     private static cleanupEnrichmentCache(): void {
         const now = Date.now();
         let cleanedCount = 0;
-        
+
         for (const [key, value] of enrichmentCache.entries()) {
             if (now - value.timestamp > CACHE_TTL) {
                 enrichmentCache.delete(key);
                 cleanedCount++;
             }
         }
-        
+
         if (cleanedCount > 0) {
             console.log(`[cleanupEnrichmentCache] Cleaned up ${cleanedCount} expired cache entries`);
         }

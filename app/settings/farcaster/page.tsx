@@ -101,7 +101,7 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
         console.log('🔥 [UI] handleSendCustomNotification called with:', customNotification);
         setSaving(true);
         setEventLogs(logs => [...logs, `Custom notification requested at ${new Date().toLocaleTimeString()}`]);
-        
+
         try {
             console.log('🚀 [UI] Sending custom notification via notify endpoint...');
             const response = await fetch('/api/farcaster/notify', {
@@ -119,10 +119,10 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
             });
 
             console.log('📨 [UI] API response status:', response.status);
-            
+
             const result = await response.json();
             console.log('✅ [UI] API response data:', result);
-            
+
             if (result.success) {
                 toast({
                     title: "Custom notification sent",
@@ -132,7 +132,7 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
                     isClosable: true,
                 });
                 setEventLogs(logs => [...logs, `Custom notification sent: ${result.results?.length || 0} users`]);
-                
+
                 // Reset form
                 setCustomNotification({
                     title: "",

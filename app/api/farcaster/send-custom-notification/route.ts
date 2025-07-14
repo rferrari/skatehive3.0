@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(req: NextRequest) {
     const startTime = Date.now();
     console.log('🚀 [CustomNotification] Starting custom notification request at', new Date().toISOString());
-    
+
     try {
         const { title, body, targetUrl } = await req.json();
         console.log('📝 [CustomNotification] Request payload:', { title, body, targetUrl });
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
 
         if (result.success && result.results) {
             console.log('🔢 [CustomNotification] Processing results for counting...');
-            
+
             // Count successful notifications - fix the structure access
             const sentCount = result.results.reduce((count: number, r: any) => {
                 // Handle both direct structure and nested result structure
