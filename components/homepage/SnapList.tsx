@@ -5,7 +5,7 @@ import Snap from "./Snap";
 import SnapComposer from "./SnapComposer";
 import { Discussion } from "@hiveio/dhive"; // Add this import for consistency
 import LoadingComponent from "./loadingComponent";
-import UpvoteSnapContainer from "../settings/UpvoteSnapContainer";
+import UpvoteSnapContainer from "./UpvoteSnapContainer";
 
 interface SnapListProps {
   author: string;
