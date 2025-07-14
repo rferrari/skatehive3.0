@@ -9,6 +9,7 @@ import { HiveToFarcasterNotification } from '@/types/farcaster';
 // Content enrichment cache to prevent duplicate API calls
 const enrichmentCache = new Map<string, { content: string | null; timestamp: number }>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache
+const MAX_CACHE_SIZE = 1000; // Maximum cache entries to prevent memory bloat
 
 // Configure the database connection
 const getDatabaseUrl = () => {
@@ -30,6 +31,7 @@ export interface ActiveUser {
     notificationsEnabled: boolean;
     tokenActive: boolean;
     maxNotificationsPerBatch: number;
+    linkedAt: Date; // When the user linked their Farcaster account
 }
 
 /**
@@ -58,6 +60,18 @@ export class AutomatedNotificationService {
 
         console.log(`[AutomatedNotificationService] 🚀 Starting automated notification processing`);
         console.log(`[AutomatedNotificationService] 📊 Cache stats: ${enrichmentCache.size} cached entries`);
+
+        // Run cleanup once per day (check if we should clean up)
+        const shouldCleanup = Math.random() < 0.1; // 10% chance per run
+        if (shouldCleanup) {
+            console.log(`[AutomatedNotificationService] 🧹 Running periodic cleanup...`);
+            try {
+                const cleanupResults = await this.cleanupNotificationLogs();
+                console.log(`[AutomatedNotificationService] 🧹 Cleanup completed:`, cleanupResults);
+            } catch (error) {
+                console.error(`[AutomatedNotificationService] ❌ Cleanup failed:`, error);
+            }
+        }
 
         try {
             console.log(`[AutomatedNotificationService] Starting automated notification processing at ${new Date().toISOString()}`);
@@ -110,6 +124,7 @@ export class AutomatedNotificationService {
                     t.username as farcaster_username,
                     t.is_active as notifications_enabled,
                     t.is_active as token_active,
+                    t.created_at as linked_at,
                     COALESCE(p.max_notifications_per_batch, 5) as max_notifications_per_batch
                 FROM farcaster_tokens t
                 LEFT JOIN skatehive_farcaster_preferences p ON t.fid = p.fid
@@ -127,7 +142,8 @@ export class AutomatedNotificationService {
                 farcasterUsername: row.farcaster_username || '',
                 notificationsEnabled: row.notifications_enabled,
                 tokenActive: row.token_active,
-                maxNotificationsPerBatch: row.max_notifications_per_batch || 5
+                maxNotificationsPerBatch: row.max_notifications_per_batch || 5,
+                linkedAt: new Date(row.linked_at)
             }));
         } catch (error) {
             console.error('[AutomatedNotificationService] Error fetching active users:', error);
@@ -148,7 +164,7 @@ export class AutomatedNotificationService {
         }
 
         try {
-            console.log(`[processUserUnreadNotifications] Processing notifications for ${hiveUsername}`);
+            console.log(`[processUserUnreadNotifications] Processing notifications for ${hiveUsername} (linked at: ${user.linkedAt.toISOString()})`);
 
             // Get user's Farcaster preferences
             const userPreferences = await SkateHiveFarcasterService.getPreferencesByFid(fid) ||
@@ -182,8 +198,8 @@ export class AutomatedNotificationService {
                 return 0;
             }
 
-            // Filter to get only unread notifications (those not in our sent log)
-            const unreadNotifications = await this.getUnreadNotifications(hiveUsername, allNotifications);
+            // Filter to get only unread notifications (those not in our sent log AND after user linked account)
+            const unreadNotifications = await this.getUnreadNotifications(hiveUsername, allNotifications, user.linkedAt);
 
             console.log(`[processUserUnreadNotifications] Found ${unreadNotifications.length} unread notifications for ${hiveUsername}`);
 
@@ -266,9 +282,26 @@ export class AutomatedNotificationService {
 
     /**
      * Get unread notifications by comparing Hive notifications with our sent log
+     * Also filters out notifications that occurred before the user linked their Farcaster account
      */
-    private static async getUnreadNotifications(hiveUsername: string, allNotifications: any[]): Promise<any[]> {
+    private static async getUnreadNotifications(hiveUsername: string, allNotifications: any[], linkedAt: Date): Promise<any[]> {
         try {
+            console.log(`[getUnreadNotifications] Filtering notifications for ${hiveUsername}, linked at: ${linkedAt.toISOString()}`);
+
+            // First, filter out notifications that occurred before the user linked their account
+            const notificationsAfterLinking = allNotifications.filter(notification => {
+                const notificationTimestamp = new Date(notification.timestamp || 0);
+                const isAfterLinking = notificationTimestamp >= linkedAt;
+
+                if (!isAfterLinking) {
+                    console.log(`[getUnreadNotifications] Skipping historical notification from ${notificationTimestamp.toISOString()} (before linking at ${linkedAt.toISOString()})`);
+                }
+
+                return isAfterLinking;
+            });
+
+            console.log(`[getUnreadNotifications] Filtered ${allNotifications.length} total notifications down to ${notificationsAfterLinking.length} after account linking date`);
+
             // Get all notifications we've already processed for this user (successful OR failed)
             // Use existing columns to create unique identifiers
             const result = await sql`
@@ -288,7 +321,7 @@ export class AutomatedNotificationService {
             // Filter out notifications we've already processed by converting them first and checking signature
             const unreadNotifications: any[] = [];
 
-            for (const notification of allNotifications) {
+            for (const notification of notificationsAfterLinking) {
                 // Convert to get the signature that would be stored
                 const converted = await this.convertHiveToFarcasterNotification(notification);
                 if (converted) {
@@ -305,9 +338,13 @@ export class AutomatedNotificationService {
             return unreadNotifications;
         } catch (error) {
             console.error(`[getUnreadNotifications] Error getting unread notifications for ${hiveUsername}:`, error);
-            // Return all notifications if we can't check the log - treat all as unread
-            console.log(`[getUnreadNotifications] Treating all notifications as unread due to error`);
-            return allNotifications;
+            // Return notifications after linking date if we can't check the log
+            const notificationsAfterLinking = allNotifications.filter(notification => {
+                const notificationTimestamp = new Date(notification.timestamp || 0);
+                return notificationTimestamp >= linkedAt;
+            });
+            console.log(`[getUnreadNotifications] Treating ${notificationsAfterLinking.length} notifications after linking as unread due to error`);
+            return notificationsAfterLinking;
         }
     }
 
@@ -802,15 +839,15 @@ export class AutomatedNotificationService {
         const regex = new RegExp(`<meta[^>]*property=["']${property}["'][^>]*content=["']([^"']*?)["']`, 'i');
         const match = html.match(regex);
         return match ? match[1] : null;
-    }
-
-    /**
+    }    /**
      * Clean up old entries from the enrichment cache
+     * Also enforces maximum cache size to prevent memory bloat
      */
     private static cleanupEnrichmentCache(): void {
         const now = Date.now();
         let cleanedCount = 0;
 
+        // First pass: Remove expired entries
         for (const [key, value] of enrichmentCache.entries()) {
             if (now - value.timestamp > CACHE_TTL) {
                 enrichmentCache.delete(key);
@@ -818,8 +855,161 @@ export class AutomatedNotificationService {
             }
         }
 
+        // Second pass: If still over size limit, remove oldest entries
+        if (enrichmentCache.size > MAX_CACHE_SIZE) {
+            const entries = Array.from(enrichmentCache.entries());
+            entries.sort((a, b) => a[1].timestamp - b[1].timestamp); // Sort by timestamp, oldest first
+
+            const entriesToRemove = enrichmentCache.size - MAX_CACHE_SIZE;
+            for (let i = 0; i < entriesToRemove; i++) {
+                enrichmentCache.delete(entries[i][0]);
+                cleanedCount++;
+            }
+
+            console.log(`[cleanupEnrichmentCache] Removed ${entriesToRemove} entries due to size limit`);
+        }
+
         if (cleanedCount > 0) {
-            console.log(`[cleanupEnrichmentCache] Cleaned up ${cleanedCount} expired cache entries`);
+            console.log(`[cleanupEnrichmentCache] Cleaned up ${cleanedCount} cache entries, ${enrichmentCache.size} remaining`);
+        }
+    }
+
+    /**
+     * Clean up old notification logs to prevent database bloat
+     * Should be called periodically (e.g., daily)
+     */
+    static async cleanupNotificationLogs(): Promise<{
+        deduplicationLogsDeleted: number;
+        analyticsLogsDeleted: number;
+        errors: string[];
+    }> {
+        const results = {
+            deduplicationLogsDeleted: 0,
+            analyticsLogsDeleted: 0,
+            errors: [] as string[]
+        };
+
+        try {
+            const databaseUrl = getDatabaseUrl();
+            if (!databaseUrl) {
+                throw new Error('Database URL not configured');
+            }
+
+            console.log('[cleanupNotificationLogs] Starting database cleanup...');
+
+            // Clean up deduplication logs older than 30 days
+            try {
+                const deduplicationResult = await sql`
+                    DELETE FROM farcaster_notification_log 
+                    WHERE sent_at < NOW() - INTERVAL '30 days'
+                `;
+                results.deduplicationLogsDeleted = deduplicationResult.rowCount || 0;
+                console.log(`[cleanupNotificationLogs] Deleted ${results.deduplicationLogsDeleted} old deduplication logs`);
+            } catch (error) {
+                const errorMsg = `Failed to clean deduplication logs: ${error instanceof Error ? error.message : 'Unknown error'}`;
+                console.error(`[cleanupNotificationLogs] ${errorMsg}`);
+                results.errors.push(errorMsg);
+            }
+
+            // Clean up analytics logs older than 90 days
+            try {
+                const analyticsResult = await sql`
+                    DELETE FROM farcaster_notification_logs 
+                    WHERE created_at < NOW() - INTERVAL '90 days'
+                `;
+                results.analyticsLogsDeleted = analyticsResult.rowCount || 0;
+                console.log(`[cleanupNotificationLogs] Deleted ${results.analyticsLogsDeleted} old analytics logs`);
+            } catch (error) {
+                const errorMsg = `Failed to clean analytics logs: ${error instanceof Error ? error.message : 'Unknown error'}`;
+                console.error(`[cleanupNotificationLogs] ${errorMsg}`);
+                results.errors.push(errorMsg);
+            }
+
+            // Vacuum tables if we deleted a significant number of rows
+            if (results.deduplicationLogsDeleted > 1000 || results.analyticsLogsDeleted > 1000) {
+                try {
+                    console.log('[cleanupNotificationLogs] Running VACUUM ANALYZE...');
+                    await sql`VACUUM ANALYZE farcaster_notification_log`;
+                    await sql`VACUUM ANALYZE farcaster_notification_logs`;
+                    console.log('[cleanupNotificationLogs] VACUUM completed');
+                } catch (error) {
+                    const errorMsg = `Failed to vacuum tables: ${error instanceof Error ? error.message : 'Unknown error'}`;
+                    console.error(`[cleanupNotificationLogs] ${errorMsg}`);
+                    results.errors.push(errorMsg);
+                }
+            }
+
+            console.log('[cleanupNotificationLogs] Database cleanup completed');
+
+        } catch (error) {
+            const errorMsg = `Failed to cleanup notification logs: ${error instanceof Error ? error.message : 'Unknown error'}`;
+            console.error(`[cleanupNotificationLogs] ${errorMsg}`);
+            results.errors.push(errorMsg);
+        }
+
+        return results;
+    }
+
+    /**
+     * Get database statistics for monitoring
+     */
+    static async getDatabaseStats(): Promise<{
+        notificationLogSize: string;
+        analyticsLogSize: string;
+        notificationLogCount: number;
+        analyticsLogCount: number;
+        oldestDeduplicationLog: Date | null;
+        oldestAnalyticsLog: Date | null;
+    }> {
+        try {
+            const databaseUrl = getDatabaseUrl();
+            if (!databaseUrl) {
+                throw new Error('Database URL not configured');
+            }
+
+            // Get table sizes
+            const tableSizes = await sql`
+                SELECT 
+                    tablename,
+                    pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size
+                FROM pg_tables 
+                WHERE tablename IN ('farcaster_notification_log', 'farcaster_notification_logs')
+                ORDER BY tablename
+            `;
+
+            // Get row counts and oldest entries
+            const logStats = await sql`
+                SELECT 
+                    (SELECT COUNT(*) FROM farcaster_notification_log) as notification_log_count,
+                    (SELECT COUNT(*) FROM farcaster_notification_logs) as analytics_log_count,
+                    (SELECT MIN(sent_at) FROM farcaster_notification_log) as oldest_deduplication_log,
+                    (SELECT MIN(created_at) FROM farcaster_notification_logs) as oldest_analytics_log
+            `;
+
+            const notificationLogSize = tableSizes.rows.find((t: any) => t.tablename === 'farcaster_notification_log')?.size || 'Unknown';
+            const analyticsLogSize = tableSizes.rows.find((t: any) => t.tablename === 'farcaster_notification_logs')?.size || 'Unknown';
+
+            const statsRow = logStats.rows[0];
+
+            return {
+                notificationLogSize,
+                analyticsLogSize,
+                notificationLogCount: parseInt(statsRow?.notification_log_count) || 0,
+                analyticsLogCount: parseInt(statsRow?.analytics_log_count) || 0,
+                oldestDeduplicationLog: statsRow?.oldest_deduplication_log || null,
+                oldestAnalyticsLog: statsRow?.oldest_analytics_log || null
+            };
+
+        } catch (error) {
+            console.error('[getDatabaseStats] Error getting database stats:', error);
+            return {
+                notificationLogSize: 'Error',
+                analyticsLogSize: 'Error',
+                notificationLogCount: 0,
+                analyticsLogCount: 0,
+                oldestDeduplicationLog: null,
+                oldestAnalyticsLog: null
+            };
         }
     }
 }

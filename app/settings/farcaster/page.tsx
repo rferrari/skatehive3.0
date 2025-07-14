@@ -396,6 +396,121 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
                             </Button>
                         </Stack>
                     </Box>
+
+                    {/* Database Management Section */}
+                    <Box mt={8}>
+                        <Heading size="sm" mb={4}>🗄️ Database Management</Heading>
+                        <Text color="gray.400" mb={4}>Monitor and clean up notification logs to prevent database bloat</Text>
+
+                        <Stack direction="row" spacing={4}>
+                            <Button
+                                onClick={async () => {
+                                    setSaving(true);
+                                    setEventLogs(logs => [...logs, `Database stats requested at ${new Date().toLocaleTimeString()}`]);
+
+                                    try {
+                                        const response = await fetch('/api/farcaster/cleanup', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Authorization': 'Bearer cron-secret-key',
+                                                'Content-Type': 'application/json',
+                                            },
+                                            body: JSON.stringify({ action: 'stats' }),
+                                        });
+
+                                        const result = await response.json();
+
+                                        if (result.success) {
+                                            setEventLogs(logs => [...logs,
+                                            `Database Stats: ${result.stats.notificationLogCount} deduplication logs, ${result.stats.analyticsLogCount} analytics logs`
+                                            ]);
+                                            toast({
+                                                title: "Database stats retrieved",
+                                                description: `${result.stats.notificationLogCount} deduplication logs, ${result.stats.analyticsLogCount} analytics logs`,
+                                                status: "success",
+                                                duration: 5000,
+                                                isClosable: true,
+                                            });
+                                        } else {
+                                            throw new Error(result.message || 'Failed to get stats');
+                                        }
+                                    } catch (error) {
+                                        console.error('Error getting database stats:', error);
+                                        setEventLogs(logs => [...logs, `Database stats error`]);
+                                        toast({
+                                            title: "Error getting database stats",
+                                            status: "error",
+                                            duration: 3000,
+                                            isClosable: true,
+                                        });
+                                    } finally {
+                                        setSaving(false);
+                                    }
+                                }}
+                                colorScheme="blue"
+                                variant="outline"
+                                size="sm"
+                                isLoading={saving}
+                            >
+                                📊 Get Stats
+                            </Button>
+
+                            <Button
+                                onClick={async () => {
+                                    if (!window.confirm("Clean up old notification logs? This will delete logs older than 30-90 days.")) return;
+
+                                    setSaving(true);
+                                    setEventLogs(logs => [...logs, `Database cleanup started at ${new Date().toLocaleTimeString()}`]);
+
+                                    try {
+                                        const response = await fetch('/api/farcaster/cleanup', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Authorization': 'Bearer cron-secret-key',
+                                                'Content-Type': 'application/json',
+                                            },
+                                            body: JSON.stringify({ action: 'cleanup' }),
+                                        });
+
+                                        const result = await response.json();
+
+                                        if (result.success) {
+                                            setEventLogs(logs => [...logs,
+                                            `Cleanup: deleted ${result.results.deduplicationLogsDeleted} deduplication + ${result.results.analyticsLogsDeleted} analytics logs`
+                                            ]);
+                                            toast({
+                                                title: "Database cleanup completed",
+                                                description: `Deleted ${result.results.deduplicationLogsDeleted + result.results.analyticsLogsDeleted} old logs`,
+                                                status: "success",
+                                                duration: 5000,
+                                                isClosable: true,
+                                            });
+                                        } else {
+                                            throw new Error(result.message || 'Cleanup failed');
+                                        }
+                                    } catch (error) {
+                                        console.error('Error during cleanup:', error);
+                                        setEventLogs(logs => [...logs, `Database cleanup error`]);
+                                        toast({
+                                            title: "Database cleanup failed",
+                                            status: "error",
+                                            duration: 3000,
+                                            isClosable: true,
+                                        });
+                                    } finally {
+                                        setSaving(false);
+                                    }
+                                }}
+                                colorScheme="orange"
+                                variant="outline"
+                                size="sm"
+                                isLoading={saving}
+                            >
+                                🧹 Clean Up
+                            </Button>
+                        </Stack>
+                    </Box>
+
                     <Box mt={8}>
                         <Heading size="sm" mb={2}>Last 5 Unread Notifications</Heading>
                         {notificationsQueue.length === 0 ? (
