@@ -23,6 +23,7 @@ import {
     SliderFilledTrack,
     SliderThumb,
     Code,
+    Textarea,
 } from "@chakra-ui/react";
 
 export default function FarcasterSettingsPageWrapper() {
@@ -57,6 +58,14 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
     const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
     const [notificationsQueue, setNotificationsQueue] = useState<any[]>([]);
     const [eventLogs, setEventLogs] = useState<string[]>([]);
+
+    // New state for custom notification
+    const [customNotification, setCustomNotification] = useState({
+        title: "",
+        body: "",
+        targetUrl: "https://skatehive.app"
+    });
+
     const toast = useToast();
 
     // Load user data function (move to top for scope)
@@ -87,6 +96,47 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
     }, []);
 
     // Button handlers for notifications
+    // Custom notification sending function
+    const handleSendCustomNotification = async () => {
+        try {
+            const response = await fetch('/api/farcaster/send-custom-notification', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(customNotification),
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                toast({
+                    title: "Custom notification sent",
+                    description: `Sent to ${result.sentCount} users`,
+                    status: "success",
+                    duration: 3000,
+                    isClosable: true,
+                });
+                // Reset form
+                setCustomNotification({
+                    title: "",
+                    body: "",
+                    targetUrl: "https://skatehive.app"
+                });
+            } else {
+                throw new Error('Failed to send notification');
+            }
+        } catch (error) {
+            console.error('Error sending custom notification:', error);
+            toast({
+                title: "Error",
+                description: "Failed to send custom notification",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+        }
+    };
+
     const handleTestNotification = async () => {
         setSaving(true);
         setEventLogs(logs => [...logs, `Test notification requested at ${new Date().toLocaleTimeString()}`]);
@@ -116,34 +166,6 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
             setSaving(false);
         }
     };
-
-    const handleSendUnreadNotifications = async () => {
-        setSaving(true);
-        setEventLogs(logs => [...logs, `Send unread notifications requested at ${new Date().toLocaleTimeString()}`]);
-        try {
-            // Call the new API to send only the last unread notification and get mapping info
-            const response = await fetch("/api/farcaster/send-unread-notifications", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ hiveUsername }),
-            });
-            const result = await response.json();
-            if (result.success) {
-                toast({ status: "success", title: `Sent unread notification! (${result.notificationsSent})` });
-                setEventLogs(logs => [...logs, `Hive: ${result.hiveUsername} → Farcaster: ${result.sentTo} | Sent: ${result.notificationsSent}`]);
-                await loadUserData();
-            } else {
-                toast({ status: "info", title: result.message });
-                setEventLogs(logs => [...logs, `Send unread notifications failed: ${result.message}`]);
-            }
-        } catch {
-            toast({ status: "error", title: "Failed to send unread notifications" });
-            setEventLogs(logs => [...logs, `Send unread notifications error`]);
-        } finally {
-            setSaving(false);
-        }
-    };
-
 
     const linkFarcasterAccount = async () => {
         if (!fid || !farcasterUsername) {
@@ -222,18 +244,6 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
         }
     };
 
-    // State for scheduled notification time
-    // Always use GMT-3 for notification settings
-    const initialScheduledTime = preferences
-        ? `${String(preferences.scheduledTimeHour).padStart(2, "0")}:${String(preferences.scheduledTimeMinute).padStart(2, "0")}`
-        : "04:20";
-    const [scheduledTime, setScheduledTime] = useState(initialScheduledTime);
-    useEffect(() => {
-        if (preferences) {
-            setScheduledTime(`${String(preferences.scheduledTimeHour).padStart(2, "0")}:${String(preferences.scheduledTimeMinute).padStart(2, "0")}`);
-        }
-    }, [preferences]);
-
     if (loading)
         return (
             <Container minH="100vh" centerContent bg="gray.900" color="white" py={8}>
@@ -243,16 +253,6 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
                 </Box>
             </Container>
         );
-
-    const handleScheduledTimeUpdate = async () => {
-        if (!scheduledTime.match(/^\d{2}:\d{2}$/)) {
-            toast({ status: "error", title: "Invalid time format. Use HH:MM." });
-            return;
-        }
-        // Note: Scheduled time preferences are no longer needed
-        // The system now automatically processes notifications continuously
-        toast({ status: "info", title: "Notifications are now processed automatically every minute" });
-    };
 
     return (
         <Container minH="100vh" maxW="lg" bg="gray.900" color="white" py={8}>
@@ -296,29 +296,72 @@ function FarcasterSettingsPage({ hiveUsername, postingKey }: FarcasterSettingsPr
                         <Text fontWeight="medium" mb={2}>Enable Notifications</Text>
                         <Switch isChecked={preferences.notificationsEnabled} onChange={e => updatePreferences({ notificationsEnabled: e.target.checked })} colorScheme="blue" />
                     </Box>
-                    <Box mt={6}>
-                        <Text fontWeight="medium" mb={2}>Scheduled Notification Time</Text>
-                        <Flex align="center" gap={4}>
-                            <Input
-                                type="time"
-                                value={scheduledTime}
-                                onChange={e => setScheduledTime(e.target.value)}
-                                width="120px"
-                                bg="gray.700"
-                                color="white"
-                            />
-                            <Button colorScheme="green" onClick={handleScheduledTimeUpdate} isLoading={saving}>
-                                Update Time
-                            </Button>
-                        </Flex>
-                        <Text fontSize="sm" color="gray.400" mt={2}>
-                            Set the time (<b>GMT-3</b>) when you want to receive your daily notification. Example: 04:20 for default, or 17:50 for testing. All notifications use GMT-3.
-                        </Text>
-                    </Box>
                     <Stack direction="row" spacing={4} mt={6}>
                         <Button colorScheme="blue" onClick={handleTestNotification} isLoading={saving}>Send Test Notification</Button>
-                        <Button colorScheme="purple" onClick={handleSendUnreadNotifications} isLoading={saving}>Send Unread Notifications</Button>
                     </Stack>
+
+                    {/* Custom Notification Section */}
+                    <Box mt={8}>
+                        <Heading size="sm" mb={4}>📢 Send Custom Notification</Heading>
+                        <Text color="gray.400" mb={4}>Send an announcement to all users</Text>
+
+                        <Stack spacing={4}>
+                            <Box>
+                                <Text fontSize="sm" mb={2}>Title</Text>
+                                <Input
+                                    value={customNotification.title}
+                                    onChange={(e) => setCustomNotification({
+                                        ...customNotification,
+                                        title: e.target.value
+                                    })}
+                                    placeholder="Notification title"
+                                    bg="gray.700"
+                                    color="white"
+                                    _placeholder={{ color: "gray.400" }}
+                                />
+                            </Box>
+
+                            <Box>
+                                <Text fontSize="sm" mb={2}>Message</Text>
+                                <Textarea
+                                    value={customNotification.body}
+                                    onChange={(e) => setCustomNotification({
+                                        ...customNotification,
+                                        body: e.target.value
+                                    })}
+                                    placeholder="Notification message"
+                                    bg="gray.700"
+                                    color="white"
+                                    _placeholder={{ color: "gray.400" }}
+                                    rows={3}
+                                />
+                            </Box>
+
+                            <Box>
+                                <Text fontSize="sm" mb={2}>Target URL</Text>
+                                <Input
+                                    value={customNotification.targetUrl}
+                                    onChange={(e) => setCustomNotification({
+                                        ...customNotification,
+                                        targetUrl: e.target.value
+                                    })}
+                                    placeholder="https://skatehive.app"
+                                    bg="gray.700"
+                                    color="white"
+                                    _placeholder={{ color: "gray.400" }}
+                                />
+                            </Box>
+
+                            <Button
+                                onClick={handleSendCustomNotification}
+                                colorScheme="green"
+                                isDisabled={!customNotification.title || !customNotification.body}
+                                isLoading={saving}
+                            >
+                                Send to All Users
+                            </Button>
+                        </Stack>
+                    </Box>
                     <Box mt={8}>
                         <Heading size="sm" mb={2}>Last 5 Unread Notifications</Heading>
                         {notificationsQueue.length === 0 ? (
