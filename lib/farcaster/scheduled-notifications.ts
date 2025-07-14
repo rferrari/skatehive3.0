@@ -186,27 +186,25 @@ export class ScheduledNotificationService {
                 return 0;
             }
 
-            // Get already sent notifications from logs to avoid duplicates
-            const sentNotifications = await this.getSentNotificationIds(hiveUsername);
-            console.log(`[processUserScheduledNotifications] Found ${sentNotifications.size} previously sent notifications for ${hiveUsername}`);
-
-            // Filter out notifications that have already been sent
-            const unsentNotifications = allNotifications.filter(notification => {
-                // Convert to Farcaster format to create identifier
-                const farcasterNotification = this.convertHiveToFarcasterNotification(notification, hiveUsername);
-                const notificationId = this.createNotificationId(farcasterNotification);
-                return !sentNotifications.has(notificationId);
+            // Filter notifications to only those newer than the last processed one
+            const newNotifications = allNotifications.filter(notification => {
+                // If we have a last processed ID, only include notifications with higher IDs
+                if (lastScheduledNotificationId && notification.id) {
+                    return notification.id > lastScheduledNotificationId;
+                }
+                // If no last processed ID, include all notifications
+                return true;
             });
 
-            console.log(`[processUserScheduledNotifications] Found ${unsentNotifications.length} unsent notifications out of ${allNotifications.length} total for ${hiveUsername}`);
+            console.log(`[processUserScheduledNotifications] Found ${newNotifications.length} new notifications out of ${allNotifications.length} total for ${hiveUsername} (last processed ID: ${lastScheduledNotificationId})`);
 
-            if (unsentNotifications.length === 0) {
+            if (newNotifications.length === 0) {
                 console.log(`No new notifications to send for ${hiveUsername}`);
                 return 0;
             }
 
             // Limit to user's preference for batch size
-            const notificationsToSend = unsentNotifications.slice(0, maxNotificationsPerBatch);
+            const notificationsToSend = newNotifications.slice(0, maxNotificationsPerBatch);
 
             console.log(`[processUserScheduledNotifications] Will attempt to send ${notificationsToSend.length} notifications (max batch size: ${maxNotificationsPerBatch})`);
 
@@ -246,10 +244,9 @@ export class ScheduledNotificationService {
             }
 
             console.log(`[processUserScheduledNotifications] Found active token for FID ${userPreferences.fid} (user: ${hiveUsername})`);
-            console.log(`[processUserScheduledNotifications] Starting to send ${farcasterNotifications.length} notifications...`);
-
-            for (let i = 0; i < farcasterNotifications.length; i++) {
+            console.log(`[processUserScheduledNotifications] Starting to send ${farcasterNotifications.length} notifications...`); for (let i = 0; i < farcasterNotifications.length; i++) {
                 const notification = farcasterNotifications[i];
+                const originalNotification = notificationsToSend[i]; // Get the original Hive notification for ID tracking
                 console.log(`[processUserScheduledNotifications] Sending notification ${i + 1}/${farcasterNotifications.length} to ${hiveUsername}: ${notification.title}`);
 
                 try {
@@ -263,8 +260,7 @@ export class ScheduledNotificationService {
                         sentCount++;
                         console.log(`[processUserScheduledNotifications] ✅ Successfully sent notification ${i + 1} to ${hiveUsername}`);
 
-                        // Log the notification with unique identifier to prevent duplicates
-                        const notificationId = this.createNotificationId(notification);
+                        // Log the notification for analytics (but not for deduplication)
                         await SkateHiveFarcasterService.logNotification(
                             hiveUsername,
                             'scheduled_notification',
@@ -293,15 +289,27 @@ export class ScheduledNotificationService {
                 }
             }
 
-            // Update the last processed notification ID
+            // Update the last processed notification ID to the highest ID from this batch
+            // This ensures the next cron run will start from where this one left off
             if (notificationsToSend.length > 0) {
-                const highestId = Math.max(...notificationsToSend.map((n: any) => n.id).filter((id: any) => id !== undefined));
+                const processedIds = notificationsToSend
+                    .map((n: any) => n.id)
+                    .filter((id: any) => id !== undefined && id !== null)
+                    .map((id: any) => Number(id));
 
-                await sql`
-                    UPDATE skatehive_farcaster_preferences 
-                    SET last_scheduled_notification_id = ${highestId}
-                    WHERE hive_username = ${hiveUsername}
-                `;
+                if (processedIds.length > 0) {
+                    const highestProcessedId = Math.max(...processedIds);
+
+                    console.log(`[processUserScheduledNotifications] Updating last processed notification ID from ${lastScheduledNotificationId} to ${highestProcessedId} for ${hiveUsername}`);
+
+                    await sql`
+                        UPDATE skatehive_farcaster_preferences 
+                        SET last_scheduled_notification_id = ${highestProcessedId}
+                        WHERE hive_username = ${hiveUsername}
+                    `;
+                } else {
+                    console.log(`[processUserScheduledNotifications] No valid notification IDs found to update for ${hiveUsername}`);
+                }
             }
 
             console.log(`Sent ${sentCount}/${notificationsToSend.length} scheduled notifications to ${hiveUsername}`);
@@ -693,42 +701,4 @@ export class ScheduledNotificationService {
         }
     }
 
-    /**
-     * Get IDs of notifications that have already been sent to avoid duplicates
-     */
-    private static async getSentNotificationIds(hiveUsername: string): Promise<Set<string>> {
-        try {
-            const result = await sql`
-                SELECT target_url, body
-                FROM farcaster_notification_logs 
-                WHERE fid = (
-                    SELECT fid 
-                    FROM skatehive_farcaster_preferences 
-                    WHERE hive_username = ${hiveUsername}
-                )
-                AND success = true
-            `;
-
-            // Create a set of unique notification identifiers
-            const sentIds = new Set<string>();
-            for (const row of result.rows) {
-                // Create identifier from URL and body (same as createNotificationId)
-                const identifier = `${row.target_url || ''}-${row.body || ''}`;
-                sentIds.add(identifier);
-            }
-
-            return sentIds;
-        } catch (error) {
-            console.error('Failed to get sent notification IDs:', error);
-            return new Set();
-        }
-    }
-
-    /**
-     * Create a unique identifier for a notification to track if it's been sent
-     */
-    private static createNotificationId(notification: HiveToFarcasterNotification): string {
-        // Create identifier from URL and message - should match the logged data
-        return `${notification.sourceUrl || ''}-${notification.body || ''}`;
-    }
 }
