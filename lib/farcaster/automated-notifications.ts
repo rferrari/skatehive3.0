@@ -216,8 +216,6 @@ export class AutomatedNotificationService {
                 try {
                     const result = await farcasterNotificationService.sendNotification(notification, [hiveUsername]);
 
-                    console.log(`[DEBUG] Full result structure for ${hiveUsername}:`, JSON.stringify(result, null, 2));
-
                     // Check for successful sends - handle the actual API response structure
                     const hasSuccessfulSends = result.success && result.results.some((r: any) => {
                         // Handle both the expected structure and the actual nested structure
@@ -264,29 +262,38 @@ export class AutomatedNotificationService {
      */
     private static async getUnreadNotifications(hiveUsername: string, allNotifications: any[]): Promise<any[]> {
         try {
-            // Get all notifications we've already sent for this user using the actual table schema
+            // Get all notifications we've already processed for this user (successful OR failed)
+            // Use existing columns to create unique identifiers
             const result = await sql`
-                SELECT title, body, notification_type, target_url
+                SELECT notification_type, title, body, target_url
                 FROM farcaster_notification_logs 
                 WHERE hive_username = ${hiveUsername}
-                AND success = true
                 ORDER BY sent_at DESC
                 LIMIT 1000
             `;
 
-            // Create a set of unique identifiers for sent notifications
-            const sentNotificationIds = new Set(result.rows.map(row => {
-                // Create a unique identifier based on notification content
-                return `${row.notification_type}_${row.title}_${row.body}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+            // Create a set of processed notification signatures based on existing data
+            const processedNotificationSignatures = new Set(result.rows.map(row => {
+                // Create a signature from the converted notification data
+                return `${row.notification_type}_${row.title}_${row.body}_${row.target_url}`.replace(/[^a-zA-Z0-9_-]/g, '_');
             }));
 
-            // Filter out notifications we've already sent
-            const unreadNotifications = allNotifications.filter(notification => {
-                const notificationId = this.getNotificationId(notification);
-                return !sentNotificationIds.has(notificationId);
-            });
+            // Filter out notifications we've already processed by converting them first and checking signature
+            const unreadNotifications: any[] = [];
+            
+            for (const notification of allNotifications) {
+                // Convert to get the signature that would be stored
+                const converted = await this.convertHiveToFarcasterNotification(notification);
+                if (converted) {
+                    const signature = `${converted.type}_${converted.title}_${converted.body}_${converted.sourceUrl}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+                    
+                    if (!processedNotificationSignatures.has(signature)) {
+                        unreadNotifications.push(notification);
+                    }
+                }
+            }
 
-            console.log(`[getUnreadNotifications] Found ${sentNotificationIds.size} previously sent notifications, ${unreadNotifications.length} unread for ${hiveUsername}`);
+            console.log(`[getUnreadNotifications] Found ${processedNotificationSignatures.size} previously processed notifications, ${unreadNotifications.length} unread for ${hiveUsername}`);
 
             return unreadNotifications;
         } catch (error) {
@@ -310,7 +317,7 @@ export class AutomatedNotificationService {
                 return;
             }
 
-            // Log the notification using the actual database schema
+            // Log the notification using the existing database schema
             await sql`
                 INSERT INTO farcaster_notification_logs (
                     hive_username,
@@ -354,7 +361,7 @@ export class AutomatedNotificationService {
                 return;
             }
 
-            // Log the failed notification attempt using the actual database schema
+            // Log the failed notification attempt using the existing database schema
             await sql`
                 INSERT INTO farcaster_notification_logs (
                     hive_username,
@@ -389,6 +396,7 @@ export class AutomatedNotificationService {
 
     /**
      * Generate a unique notification ID from Hive notification data
+     * This must be consistent and unique for each Hive notification
      */
     private static getNotificationId(notification: any): string {
         // For Notifications objects, extract identifier parts
@@ -404,14 +412,19 @@ export class AutomatedNotificationService {
                 }
             }
 
-            return `${notification.type}_${author}_${permlink}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+            // Include timestamp if available for more uniqueness
+            const timestamp = notification.timestamp || notification.date || '';
+            
+            // Create a unique ID that includes type, author, permlink, and timestamp
+            return `${notification.type}_${author}_${permlink}_${timestamp}`.replace(/[^a-zA-Z0-9_-]/g, '_');
         }
 
-        // Fallback for other formats
-        const id = notification.id || notification.trx_id || Date.now();
+        // Fallback for other formats - try to use as much unique data as possible
+        const id = notification.id || notification.trx_id || notification.block_num || '';
         const type = notification.type || 'unknown';
+        const timestamp = notification.timestamp || notification.date || Date.now();
 
-        return `${type}_${id}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+        return `${type}_${id}_${timestamp}`.replace(/[^a-zA-Z0-9_-]/g, '_');
     }
 
     /**
@@ -466,7 +479,17 @@ export class AutomatedNotificationService {
             switch (notification.type) {
                 case 'vote':
                     title = '👍 New Vote';
-                    body = notification.msg || `@${author} voted on your post`;
+                    // Extract meaningful post identifier from permlink or use message
+                    if (notification.msg) {
+                        // Use the original message if available (e.g., "@web-gnar voted on your post ($0.24)")
+                        body = notification.msg;
+                    } else {
+                        // Fallback: create descriptive message
+                        const postId = permlink ?
+                            permlink.replace(/20\d{6}t\d{6}\w+z/, '').replace(/-/g, ' ').substring(0, 30) + '...' :
+                            'your post';
+                        body = `@${author} voted on "${postId}"`;
+                    }
                     if (author && permlink) {
                         sourceUrl = `${baseUrl}/post/${author}/${permlink}`;
                     }
@@ -476,7 +499,14 @@ export class AutomatedNotificationService {
                 case 'comment':
                 case 'reply_comment':
                     title = '💬 New Comment';
-                    body = notification.msg || `@${author} commented on your post`;
+                    if (notification.msg) {
+                        body = notification.msg;
+                    } else {
+                        const commentPostId = permlink ?
+                            permlink.replace(/20\d{6}t\d{6}\w+z/, '').replace(/-/g, ' ').substring(0, 30) + '...' :
+                            'your post';
+                        body = `@${author} commented on "${commentPostId}"`;
+                    }
                     if (author && permlink) {
                         sourceUrl = `${baseUrl}/post/${author}/${permlink}`;
                     }
@@ -484,7 +514,14 @@ export class AutomatedNotificationService {
 
                 case 'mention':
                     title = '📢 You were mentioned';
-                    body = notification.msg || `@${author} mentioned you in a post`;
+                    if (notification.msg) {
+                        body = notification.msg;
+                    } else {
+                        const mentionPostId = permlink ?
+                            permlink.replace(/20\d{6}t\d{6}\w+z/, '').replace(/-/g, ' ').substring(0, 30) + '...' :
+                            'a post';
+                        body = `@${author} mentioned you in "${mentionPostId}"`;
+                    }
                     if (author && permlink) {
                         sourceUrl = `${baseUrl}/post/${author}/${permlink}`;
                     }
