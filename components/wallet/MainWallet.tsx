@@ -36,6 +36,7 @@ import NFTSection from "./NFTSection";
 import WalletSummary from "./WalletSummary";
 import ConnectHiveSection from "./ConnectHiveSection";
 import { PortfolioProvider } from "@/contexts/PortfolioContext";
+import FarcasterWalletSection from "./FarcasterWalletSection";
 
 interface MainWalletProps {
   username?: string;
@@ -409,6 +410,8 @@ export default function MainWallet({ username }: MainWalletProps) {
                 isOpen={isConnectModalOpen}
                 onClose={closeConnectModal}
               />
+              {/* Farcaster Section - Show below wallet summary */}
+              <FarcasterWalletSection hiveUsername={user} />
               <MarketPrices
                 hivePrice={hivePrice}
                 hbdPrice={hbdPrice}
