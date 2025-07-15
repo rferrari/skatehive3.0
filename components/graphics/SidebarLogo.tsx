@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import PixelTransition from "./PixelTransition";
 import { Image, useToken } from "@chakra-ui/react";
 import SkateHiveLogo from "./SkateHiveLogo";
+import { DAO_ADDRESSES } from "@/lib/utils/constants";
 
 const SidebarLogo = () => {
-  const { data: activeAuction } = useLastAuction();
+  const { data: activeAuction } = useLastAuction(DAO_ADDRESSES.token);
   const router = useRouter();
   const [pixelColor] = useToken("colors", ["primary"]);
 

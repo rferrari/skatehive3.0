@@ -2,28 +2,23 @@ import { noCacheApolloClient } from '@/lib/utils/apollo';
 import { gql } from '@apollo/client';
 import { Address } from 'viem';
 
-export async function fetchAuction(
-  address: string,
-  orderBy: string,
-  orderDirection: string,
-  first: number
-) {
-  const where = { dao: address.toLocaleLowerCase() };
+export async function fetchAuction(tokenAddress: string): Promise<Auction[]> {
+  const where = { dao: tokenAddress.toLocaleLowerCase() };
 
   try {
     const { data } = (await noCacheApolloClient.query({
       query: GET_DATA,
       variables: {
         where,
-        orderBy,
-        orderDirection,
-        first,
+        orderBy: 'endTime',
+        orderDirection: 'desc',
+        first: 1,
       },
     })) as GraphResponse;
 
     return data.auctions;
   } catch (error) {
-    throw new Error('Erro ao consultar propostas');
+    throw new Error('Error fetching auction data');
   }
 }
 
@@ -56,7 +51,7 @@ export interface Bid {
 }
 
 export interface HighestBid {
-  amount: bigint;
+  amount: string;
   bidTime: string;
   bidder: Address;
 }
@@ -71,7 +66,7 @@ export interface Token {
 }
 
 export interface WinningBid {
-  amount: bigint;
+  amount: string;
   bidTime: string;
   bidder: Address;
 }
