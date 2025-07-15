@@ -5,6 +5,7 @@ import { useTheme, ThemeName, themeMap } from '../themeProvider';
 import LottieAnimation from '@/components/shared/LottieAnimation';
 import UpvoteSnapContainer from '@/components/homepage/UpvoteSnapContainer';
 import { useRive, useStateMachineInput } from "@rive-app/react-canvas";
+import LogoMatrix from "../../components/graphics/LogoMatrix";
 
 // Reusable FooterNavButton component
 // const FooterNavButton = ({ src }: { src: string }) => {
@@ -73,6 +74,9 @@ const Settings = () => {
     return (
         <Box p={8} maxW="container.md" mx="auto">
             <VStack spacing={6} align="stretch">
+                <Box>
+                    <LogoMatrix />
+                </Box>
                 <Heading size="lg" mb={2}>
                     Settings
                 </Heading>

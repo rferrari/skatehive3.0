@@ -4,7 +4,7 @@ import { Box, Spinner, VStack } from "@chakra-ui/react";
 import Snap from "./Snap";
 import SnapComposer from "./SnapComposer";
 import { Discussion } from "@hiveio/dhive"; // Add this import for consistency
-import LoadingComponent from "./loadingComponent";
+import LogoMatrix from "../graphics/LogoMatrix";
 import UpvoteSnapContainer from "./UpvoteSnapContainer";
 
 interface SnapListProps {
@@ -95,7 +95,7 @@ export default function SnapList({
     <VStack spacing={1} align="stretch" mx="auto">
       {isLoading && sortedComments.length === 0 ? (
         <Box textAlign="center" mt={-1}>
-          <LoadingComponent />
+          <LogoMatrix />
         </Box>
       ) : (
         <>
