@@ -11,38 +11,57 @@ export const formatValue = (value: number): string => {
   }).format(value);
 };
 
-export const formatPrice = (price: number | undefined | null): string => {
-  if (typeof price !== "number" || isNaN(price)) {
-    return "$0.000000";
-  }
-  return `$${price.toFixed(6)}`;
-};
-
-export const formatMarketCap = (marketCap: number | string | undefined | null): string => {
-  let numericMarketCap: number;
-
-  if (typeof marketCap === "string") {
-    numericMarketCap = parseFloat(marketCap);
-  } else if (typeof marketCap === "number") {
-    numericMarketCap = marketCap;
-  } else {
+export const formatPrice = (price: number | string | undefined | null): string => {
+  // Handle null/undefined
+  if (price == null) {
     return "N/A";
   }
-
-  if (isNaN(numericMarketCap)) {
+  
+  // Convert string to number if needed
+  const numPrice = typeof price === "string" ? parseFloat(price) : price;
+  
+  // Check if it's a valid number
+  if (typeof numPrice !== "number" || isNaN(numPrice)) {
     return "N/A";
   }
-
-  if (numericMarketCap >= 1000000000) {
-    return `$${(numericMarketCap / 1000000000).toFixed(2)}B`;
-  } else if (numericMarketCap >= 1000000) {
-    return `$${(numericMarketCap / 1000000).toFixed(2)}M`;
-  } else if (numericMarketCap >= 1000) {
-    return `$${(numericMarketCap / 1000).toFixed(2)}K`;
+  
+  // Smart decimal formatting based on price magnitude
+  let decimals: number;
+  
+  if (numPrice >= 1000) {
+    // For prices $1000+: show 2 decimals (e.g., $1,234.56)
+    decimals = 2;
+  } else if (numPrice >= 1) {
+    // For prices $1-$999: show 3 decimals (e.g., $123.456)
+    decimals = 3;
+  } else if (numPrice >= 0.01) {
+    // For prices $0.01-$0.99: show 4 decimals (e.g., $0.1234)
+    decimals = 4;
+  } else if (numPrice >= 0.001) {
+    // For prices $0.001-$0.009: show 5 decimals (e.g., $0.01234)
+    decimals = 5;
+  } else if (numPrice >= 0.0001) {
+    // For prices $0.0001-$0.0009: show 6 decimals (e.g., $0.012345)
+    decimals = 6;
   } else {
-    return `$${numericMarketCap.toFixed(0)}`;
+    // For very small prices: show 8 decimals (e.g., $0.00001234)
+    decimals = 8;
+  }
+  
+  // Format with appropriate decimals and add thousand separators for large numbers
+  if (numPrice >= 1000) {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    }).format(numPrice);
+  } else {
+    return `$${numPrice.toFixed(decimals)}`;
   }
 };
+
+
 
 
 

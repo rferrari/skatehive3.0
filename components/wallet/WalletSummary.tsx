@@ -67,19 +67,6 @@ const WalletSummary = memo(function WalletSummary({
         });
     }, [toast]);
 
-    // Debug logging for Farcaster profile
-    console.log('🔍 Farcaster Debug Info:', {
-        isAuthenticated: isFarcasterConnected,
-        profile: farcasterProfile,
-        custody: farcasterProfile?.custody,
-        verifications: farcasterProfile?.verifications,
-        connectedEthAddress: address,
-        isDuplicateCustody: farcasterProfile?.custody?.toLowerCase() === address?.toLowerCase(),
-        isDuplicateVerified: farcasterProfile?.verifications?.some(v => v.toLowerCase() === address?.toLowerCase()),
-        allProfileKeys: farcasterProfile ? Object.keys(farcasterProfile) : [],
-        fullProfile: JSON.stringify(farcasterProfile, null, 2)
-    });
-
     // Memoize constants
     const resolverOrder = useMemo(() => [
         IdentityResolver.Nns,
@@ -171,16 +158,7 @@ const WalletSummary = memo(function WalletSummary({
             overflow="visible"
             position="relative"
         >
-            <Text fontSize="sm" color="primary" mb={2} textAlign="center">
-                Total Portfolio Value
-            </Text>
-            {isPriceLoading ? (
-                <Spinner size="sm" color="primary" mx="auto" mb={4} />
-            ) : (
-                <Text fontSize="2xl" fontWeight="bold" color="primary" textAlign="center" mb={4}>
-                    {formatValue(totalValue)}
-                </Text>
-            )}
+
 
             <VStack spacing={4} align="stretch" overflow="visible">
                 {/* Portfolio Distribution Chart */}

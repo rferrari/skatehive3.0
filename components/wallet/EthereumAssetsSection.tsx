@@ -132,7 +132,7 @@ export default function EthereumAssetsSection() {
       p={2}
       borderRadius="base"
       bg="muted"
-      w="100wh"
+      w="100%"
       textAlign="left"
     >
       <AssetsHeader
@@ -141,7 +141,7 @@ export default function EthereumAssetsSection() {
       />
 
       {isMounted && ((isConnected && address) || (isFarcasterConnected && farcasterProfile?.custody)) && (
-        <Box>
+        <Box overflowX="hidden">
           {/* Token Balances Section - only display if showTokenBalances is true */}
           {showTokenBalances && (
             <>
@@ -182,12 +182,14 @@ export default function EthereumAssetsSection() {
                     </VStack>
                   ) : (
                     // Desktop Table Layout
-                    <DesktopTokenTable
-                      consolidatedTokens={memoizedConsolidatedTokens}
-                      expandedTokens={expandedTokens}
-                      onToggleExpansion={toggleTokenExpansion}
-                      onSendToken={handleSendToken}
-                    />
+                    <Box overflowX="hidden" w="100%">
+                      <DesktopTokenTable
+                        consolidatedTokens={memoizedConsolidatedTokens}
+                        expandedTokens={expandedTokens}
+                        onToggleExpansion={toggleTokenExpansion}
+                        onSendToken={handleSendToken}
+                      />
+                    </Box>
                   )}
                 </>
               )}

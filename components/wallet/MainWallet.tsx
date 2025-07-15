@@ -253,20 +253,6 @@ export default function MainWallet({ username }: MainWalletProps) {
     );
   }
 
-  // Only calculate Hive balances if user is connected to Hive - using the new memoized version above
-
-  // Debug logging for MainWallet addresses
-  console.log('🏠 MainWallet Address Debug:', {
-    isEthConnected: isConnected,
-    ethereumAddress: address,
-    isFarcasterConnected,
-    farcasterProfile,
-    farcasterCustody: farcasterProfile?.custody,
-    farcasterVerifications: farcasterProfile?.verifications,
-    addressForProvider: isConnected ? address : undefined,
-    farcasterAddressForProvider: isFarcasterConnected ? farcasterProfile?.custody : undefined,
-    verifiedAddressesForProvider: isFarcasterConnected ? farcasterProfile?.verifications : undefined
-  });
 
   return (
     <>
@@ -275,7 +261,8 @@ export default function MainWallet({ username }: MainWalletProps) {
         farcasterAddress={isFarcasterConnected ? farcasterProfile?.custody : undefined}
         farcasterVerifiedAddresses={isFarcasterConnected ? farcasterProfile?.verifications : undefined}
       >
-        <Box w="100%" maxW="100vw" overflowX="hidden">
+        <Box w="100%" maxW="100vw" overflowX="hidden" sx={{ scrollbarWidth: "none" }}>
+
           <Grid
             templateColumns={{ base: "1fr", md: "2fr 1fr" }}
             gap={{ base: 4, md: 6 }}
