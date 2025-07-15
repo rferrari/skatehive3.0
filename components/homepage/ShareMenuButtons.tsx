@@ -108,14 +108,14 @@ const ShareMenuButtons = ({
         <FaTwitter style={{ marginRight: '8px' }} />
         Share on X
       </MenuItem>
-      <MenuItem 
-        onClick={() => handleShare("farcaster")} 
-        bg={"background"} 
+      <MenuItem
+        onClick={() => handleShare("farcaster")}
+        bg={"background"}
         color={"primary"}
       >
         <FarcasterIcon size={16} />
         <span style={{ marginLeft: '8px' }}>
-          {isInFrame ? "Cast via Farcaster" : "Share on Farcaster"}
+          {isInFrame ? "Cast" : "Share on Farcaster"}
         </span>
       </MenuItem>
       <MenuItem onClick={() => handleShare("copy")} bg={"background"} color={"primary"}>
