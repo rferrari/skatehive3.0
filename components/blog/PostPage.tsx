@@ -19,16 +19,6 @@ interface PostPageProps {
 }
 
 export default function PostPage({ author, permlink }: PostPageProps) {
-  // Add debugging at the start of PostPage
-  console.log("PostPage component called with:", { author, permlink });
-  console.log("PostPage author type:", typeof author);
-  console.log("PostPage permlink type:", typeof permlink);
-
-  // Add URL debugging
-  if (typeof window !== "undefined") {
-    console.log("Current window.location:", window.location.href);
-    console.log("Current pathname:", window.location.pathname);
-  }
 
   // Add InitFrameSDK at the top so it runs on mount
   InitFrameSDK();
@@ -44,7 +34,7 @@ export default function PostPage({ author, permlink }: PostPageProps) {
   const data = useComments(author, permlink, true);
   const commentsData = {
     ...data,
-    loadNextPage: () => {},
+    loadNextPage: () => { },
     hasMore: false,
   };
 
