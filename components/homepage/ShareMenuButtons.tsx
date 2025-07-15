@@ -3,8 +3,9 @@ import {
   useClipboard,
   useToast,
 } from "@chakra-ui/react";
-import { FaFacebook, FaTwitter, FaLink } from "react-icons/fa";
+import { FaTwitter, FaLink } from "react-icons/fa";
 import React from "react";
+import { useFarcasterContext } from "@/hooks/useFarcasterContext";
 
 // Custom Farcaster Icon Component
 const FarcasterIcon = ({ size = 16 }: { size?: number }) => (
@@ -31,6 +32,7 @@ const ShareMenuButtons = ({
     `${typeof window !== "undefined" ? window.location.origin : ""}/post/${comment.author}/${comment.permlink}`
   );
   const toast = useToast();
+  const { isInFrame, composeCast } = useFarcasterContext();
 
   // Validate permlink to prevent [object Object] URLs
   if (typeof comment.permlink !== "string") {
@@ -44,16 +46,7 @@ const ShareMenuButtons = ({
   const postLink = `${typeof window !== "undefined" ? window.location.origin : ""
     }/post/${comment.author}/${comment.permlink}`;
 
-  const handleShare = (platform: string) => {
-    let shareUrl = "";
-    if (platform === "x") {
-      shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(
-        postLink
-      )}`;
-    } else if (platform === "farcaster") {
-      shareUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(postLink)}`;
-    }
-
+  const handleShare = async (platform: string) => {
     if (platform === "copy") {
       onCopy();
       toast({
@@ -62,7 +55,49 @@ const ShareMenuButtons = ({
         duration: 3000,
         isClosable: true,
       });
-    } else {
+      return;
+    }
+
+    // Handle Farcaster sharing with SDK when in frame context
+    if (platform === "farcaster" && isInFrame) {
+      try {
+        await composeCast(
+          `Check out this post from @${comment.author}!`,
+          [postLink] // URL as embed, not in text
+        );
+        toast({
+          title: "Cast created successfully!",
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+        });
+        return;
+      } catch (error) {
+        console.error("Failed to create cast:", error);
+        toast({
+          title: "Failed to create cast",
+          description: "Falling back to web sharing",
+          status: "warning",
+          duration: 3000,
+          isClosable: true,
+        });
+        // Fall through to web sharing if SDK fails
+      }
+    }
+
+    // Handle web sharing for other platforms or fallback
+    let shareUrl = "";
+    if (platform === "x") {
+      shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(
+        postLink
+      )}`;
+    } else if (platform === "farcaster") {
+      // For web fallback, include both text and URL
+      const castText = `Check out this post from @${comment.author}! ${postLink}`;
+      shareUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}`;
+    }
+
+    if (shareUrl) {
       window.open(shareUrl, "_blank");
     }
   };
@@ -73,9 +108,15 @@ const ShareMenuButtons = ({
         <FaTwitter style={{ marginRight: '8px' }} />
         Share on X
       </MenuItem>
-      <MenuItem onClick={() => handleShare("farcaster")} bg={"background"} color={"primary"}>
+      <MenuItem 
+        onClick={() => handleShare("farcaster")} 
+        bg={"background"} 
+        color={"primary"}
+      >
         <FarcasterIcon size={16} />
-        <span style={{ marginLeft: '8px' }}>Share on Farcaster</span>
+        <span style={{ marginLeft: '8px' }}>
+          {isInFrame ? "Cast via Farcaster" : "Share on Farcaster"}
+        </span>
       </MenuItem>
       <MenuItem onClick={() => handleShare("copy")} bg={"background"} color={"primary"}>
         <FaLink style={{ marginRight: '8px' }} />

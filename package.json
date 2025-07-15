@@ -19,6 +19,7 @@
     "@farcaster/frame-node": "^0.0.18",
     "@farcaster/frame-sdk": "^0.0.31",
     "@farcaster/frame-wagmi-connector": "^0.0.53",
+    "@farcaster/miniapp-sdk": "^0.1.7",
     "@ffmpeg/ffmpeg": "^0.12.15",
     "@ffmpeg/util": "^0.12.2",
     "@giphy/js-fetch-api": "^5.6.0",
