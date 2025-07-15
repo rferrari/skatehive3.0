@@ -28,6 +28,11 @@ const formatBidAmount = (amount: bigint) => {
   });
 };
 
+const formatAddress = (address: string) => {
+  if (!address) return '';
+  return `${address.slice(0, 4)}...${address.slice(-4)}`;
+};
+
 const isAuctionActive = (endTime: string) => {
   return parseInt(endTime) * 1000 > Date.now();
 };
@@ -127,13 +132,18 @@ export default function AuctionCard({
               {activeAuction.token.name} #{activeAuction.token.tokenId.toString()}
             </Text>
             {activeAuction.highestBid && (
-              <VStack align="start" spacing={0}>
+              <VStack align="start" spacing={1}>
                 <Text fontSize="lg" fontWeight="semibold" color="success">
                   Current bid: {auctionData.bidAmount} ETH
                 </Text>
-                <Text fontSize="sm" color="muted" noOfLines={1}>
-                  by {activeAuction.highestBid.bidder}
-                </Text>
+                <HStack spacing={2}>
+                  <Text fontSize="sm" color="muted">
+                    by
+                  </Text>
+                  <Text fontSize="sm" fontWeight="medium" color="text">
+                    {formatAddress(activeAuction.highestBid.bidder)}
+                  </Text>
+                </HStack>
               </VStack>
             )}
             {!activeAuction.highestBid && (
@@ -218,17 +228,17 @@ export default function AuctionCard({
                       key={index} 
                       justify="space-between" 
                       w="full"
-                      py={2} 
-                      px={3} 
+                      py={3} 
+                      px={4} 
                       bg="muted" 
                       borderRadius="md"
                     >
-                      <HStack spacing={2}>
+                      <HStack spacing={4}>
+                        <Text fontSize="sm" fontWeight="bold" color="primary">
+                          {formatAddress(bid.bidder)}
+                        </Text>
                         <Text fontSize="sm" fontWeight="medium" color="text">
                           {formatBidAmount(BigInt(bid.amount))} ETH
-                        </Text>
-                        <Text fontSize="xs" color="muted">
-                          by {bid.bidder.slice(0, 6)}...{bid.bidder.slice(-4)}
                         </Text>
                       </HStack>
                       <Text fontSize="xs" color="muted">
