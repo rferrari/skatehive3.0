@@ -157,6 +157,10 @@ export function WalletDistributionChart({
         );
     };
 
+    const totalValue = useMemo(() => {
+        return chartData.reduce((sum, item) => sum + item.value, 0);
+    }, [chartData]);
+
     if (chartData.length === 0) {
         return (
             <Box textAlign="center" py={8}>
@@ -164,10 +168,6 @@ export function WalletDistributionChart({
             </Box>
         );
     }
-
-    const totalValue = useMemo(() => {
-        return chartData.reduce((sum, item) => sum + item.value, 0);
-    }, [chartData]);
 
     return (
         <Box overflow="visible" position="relative">
