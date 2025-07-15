@@ -37,11 +37,20 @@ export default function ConnectModal({
     }
   }, [isConnected, isOpen, onClose]);
 
-  const handleFarcasterSuccess = (profile: { fid: number; username: string }) => {
+  const handleFarcasterSuccess = (profile: {
+    fid: number;
+    username: string;
+    displayName?: string;
+    pfpUrl?: string;
+    bio?: string;
+    custody?: `0x${string}`;
+    verifications?: string[];
+  }) => {
+    const walletInfo = profile.custody ? ` (Wallet: ${profile.custody.slice(0, 6)}...${profile.custody.slice(-4)})` : '';
     toast({
       status: "success",
       title: "Connected to Farcaster!",
-      description: `Welcome @${profile.username}! Your Farcaster account is now connected.`,
+      description: `Welcome @${profile.username}! Your Farcaster account is now connected.${walletInfo}`,
     });
     onClose();
   };

@@ -69,6 +69,7 @@
     "react-markdown": "^10.1.0",
     "react-pageflip": "^2.0.3",
     "react-select-country-list": "^2.2.3",
+    "recharts": "^3.1.0",
     "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.1",
     "stream-browserify": "^3.0.0",

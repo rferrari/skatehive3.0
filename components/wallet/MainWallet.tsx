@@ -20,6 +20,7 @@ import {
 } from "@chakra-ui/react";
 import { AiohaModal, useAioha } from "@aioha/react-ui";
 import { KeyTypes } from "@aioha/aioha";
+import { useProfile } from '@farcaster/auth-kit';
 import "@aioha/react-ui/dist/build.css";
 import { convertVestToHive } from "@/lib/hive/client-functions";
 import { extractNumber } from "@/lib/utils/extractNumber";
@@ -35,8 +36,7 @@ import EthereumAssetsSection from "./EthereumAssetsSection";
 import NFTSection from "./NFTSection";
 import WalletSummary from "./WalletSummary";
 import ConnectHiveSection from "./ConnectHiveSection";
-import { PortfolioProvider } from "@/contexts/PortfolioContext";
-import FarcasterWalletSection from "./FarcasterWalletSection";
+import { PortfolioProvider, usePortfolioContext } from "@/contexts/PortfolioContext";
 
 interface MainWalletProps {
   username?: string;
@@ -49,6 +49,9 @@ export default function MainWallet({ username }: MainWalletProps) {
   const { handleConfirm, handleClaimHbdInterest } = useWalletActions();
   const { isConnected, address } = useAccount();
   const { colorMode } = useColorMode();
+
+  // Get Farcaster profile for wallet integration
+  const { isAuthenticated: isFarcasterConnected, profile: farcasterProfile } = useProfile();
 
   // Prevent hydration mismatch by tracking if component is mounted
   const [isMounted, setIsMounted] = useState(false);
@@ -252,9 +255,26 @@ export default function MainWallet({ username }: MainWalletProps) {
 
   // Only calculate Hive balances if user is connected to Hive - using the new memoized version above
 
+  // Debug logging for MainWallet addresses
+  console.log('🏠 MainWallet Address Debug:', {
+    isEthConnected: isConnected,
+    ethereumAddress: address,
+    isFarcasterConnected,
+    farcasterProfile,
+    farcasterCustody: farcasterProfile?.custody,
+    farcasterVerifications: farcasterProfile?.verifications,
+    addressForProvider: isConnected ? address : undefined,
+    farcasterAddressForProvider: isFarcasterConnected ? farcasterProfile?.custody : undefined,
+    verifiedAddressesForProvider: isFarcasterConnected ? farcasterProfile?.verifications : undefined
+  });
+
   return (
     <>
-      <PortfolioProvider address={isConnected ? address : undefined}>
+      <PortfolioProvider
+        address={isConnected ? address : undefined}
+        farcasterAddress={isFarcasterConnected ? farcasterProfile?.custody : undefined}
+        farcasterVerifiedAddresses={isFarcasterConnected ? farcasterProfile?.verifications : undefined}
+      >
         <Box w="100%" maxW="100vw" overflowX="hidden">
           <Grid
             templateColumns={{ base: "1fr", md: "2fr 1fr" }}
@@ -406,12 +426,11 @@ export default function MainWallet({ username }: MainWalletProps) {
                 onConnectEthereum={openConnectModal}
                 onConnectHive={handleConnectHive}
               />
+
               <ConnectModal
                 isOpen={isConnectModalOpen}
                 onClose={closeConnectModal}
               />
-              {/* Farcaster Section - Show below wallet summary */}
-              <FarcasterWalletSection hiveUsername={user} />
               <MarketPrices
                 hivePrice={hivePrice}
                 hbdPrice={hbdPrice}

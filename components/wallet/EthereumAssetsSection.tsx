@@ -27,10 +27,13 @@ import {
   TableContainer,
   useBreakpointValue,
   IconButton,
+  Collapse,
+  Divider,
 } from "@chakra-ui/react";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useAccount, useDisconnect } from "wagmi";
-import { FaEye, FaEyeSlash, FaPaperPlane } from "react-icons/fa";
+import { useProfile } from '@farcaster/auth-kit';
+import { FaEye, FaEyeSlash, FaPaperPlane, FaChevronDown, FaChevronUp } from "react-icons/fa";
 import { ChevronDownIcon } from "@chakra-ui/icons";
 import {
   Name,
@@ -59,8 +62,9 @@ import SendTokenModal from "./SendTokenModal";
 
 export default function EthereumAssetsSection() {
   const { isConnected, address } = useAccount();
+  const { isAuthenticated: isFarcasterConnected, profile: farcasterProfile } = useProfile();
   const { disconnect } = useDisconnect();
-  const { portfolio, isLoading, error, refetch } = usePortfolioContext();
+  const { aggregatedPortfolio, portfolio, farcasterPortfolio, farcasterVerifiedPortfolios, isLoading, error, refetch } = usePortfolioContext();
   const [hideSmallBalances, setHideSmallBalances] = useState(true);
   const minBalanceThreshold = 5;
   const [logoUpdateTrigger, setLogoUpdateTrigger] = useState(0);
@@ -69,6 +73,7 @@ export default function EthereumAssetsSection() {
   const [selectedToken, setSelectedToken] = useState<TokenDetail | null>(null);
   const [selectedTokenLogo, setSelectedTokenLogo] = useState<string>("");
   const [isMounted, setIsMounted] = useState(false);
+  const [expandedTokens, setExpandedTokens] = useState<Set<string>>(new Set());
   const {
     isOpen: isSendModalOpen,
     onOpen: onSendModalOpen,
@@ -78,6 +83,19 @@ export default function EthereumAssetsSection() {
   // Prevent hydration mismatch
   useEffect(() => {
     setIsMounted(true);
+  }, []);
+
+  // Toggle expanded token details
+  const toggleTokenExpansion = useCallback((symbol: string) => {
+    setExpandedTokens(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(symbol)) {
+        newSet.delete(symbol);
+      } else {
+        newSet.add(symbol);
+      }
+      return newSet;
+    });
   }, []);
 
   // Responsive breakpoint for mobile/desktop layout
@@ -93,28 +111,121 @@ export default function EthereumAssetsSection() {
     IdentityResolver.World,
   ];
 
+  // Helper function to determine wallet source for a token
+  const getWalletSource = (tokenDetail: TokenDetail): { type: 'ethereum' | 'farcaster' | 'verified', label: string, walletLabel: string, networkLabel: string } => {
+    const networkInfo = blockchainDictionary[tokenDetail.network];
+    const networkLabel = networkInfo?.alias || tokenDetail.network;
+
+    // Use the source tag if available (from enhanced aggregation)
+    if (tokenDetail.source) {
+      switch (tokenDetail.source) {
+        case 'ethereum':
+          return {
+            type: 'ethereum',
+            label: `Ethereum Wallet on ${networkLabel}`,
+            walletLabel: 'Ethereum Wallet',
+            networkLabel: networkLabel
+          };
+        case 'farcaster':
+          return {
+            type: 'farcaster',
+            label: `Farcaster Wallet on ${networkLabel}`,
+            walletLabel: 'Farcaster Wallet',
+            networkLabel: networkLabel
+          };
+        case 'verified':
+          return {
+            type: 'verified',
+            label: `Farcaster Wallet (${tokenDetail.sourceAddress?.slice(0, 6)}...${tokenDetail.sourceAddress?.slice(-4)}) on ${networkLabel}`,
+            walletLabel: `Farcaster Wallet (${tokenDetail.sourceAddress?.slice(0, 6)}...${tokenDetail.sourceAddress?.slice(-4)})`,
+            networkLabel: networkLabel
+          };
+        default:
+          return {
+            type: 'ethereum',
+            label: `Unknown Source on ${networkLabel}`,
+            walletLabel: 'Unknown Source',
+            networkLabel: networkLabel
+          };
+      }
+    }
+
+    // Fallback to legacy detection logic if source tag is not available
+    const ethAddress = address?.toLowerCase();
+    const farcasterAddress = farcasterProfile?.custody?.toLowerCase();
+
+    // Check if token exists in farcaster portfolio and we have a farcaster address different from ethereum
+    if (farcasterPortfolio?.tokens?.some(t =>
+      t.token.address === tokenDetail.token.address &&
+      t.network === tokenDetail.network
+    ) && farcasterAddress && farcasterAddress !== ethAddress) {
+      return {
+        type: 'farcaster',
+        label: `Farcaster Wallet on ${networkLabel}`,
+        walletLabel: 'Farcaster Wallet',
+        networkLabel: networkLabel
+      };
+    }
+
+    // Check if token exists in ethereum portfolio
+    if (portfolio?.tokens?.some(t =>
+      t.token.address === tokenDetail.token.address &&
+      t.network === tokenDetail.network
+    )) {
+      return {
+        type: 'ethereum',
+        label: `Ethereum Wallet on ${networkLabel}`,
+        walletLabel: 'Ethereum Wallet',
+        networkLabel: networkLabel
+      };
+    }
+
+    // Check if token exists in any verified address portfolio
+    for (const [addr, portfolioData] of Object.entries(farcasterVerifiedPortfolios)) {
+      if (portfolioData.tokens?.some(t =>
+        t.token.address === tokenDetail.token.address &&
+        t.network === tokenDetail.network
+      )) {
+        return {
+          type: 'verified',
+          label: `Farcaster Wallet (${addr.slice(0, 6)}...${addr.slice(-4)}) on ${networkLabel}`,
+          walletLabel: `Farcaster Wallet (${addr.slice(0, 6)}...${addr.slice(-4)})`,
+          networkLabel: networkLabel
+        };
+      }
+    }
+
+    // Fallback
+    return {
+      type: 'ethereum',
+      label: `Unknown Source on ${networkLabel}`,
+      walletLabel: 'Unknown Source',
+      networkLabel: networkLabel
+    };
+  };
+
   // Memoize consolidated tokens to prevent unnecessary re-computation
   const memoizedConsolidatedTokens = useMemo(() => {
-    const consolidated = consolidateTokensBySymbol(portfolio?.tokens);
+    const consolidated = consolidateTokensBySymbol(aggregatedPortfolio?.tokens);
     const filtered = filterConsolidatedTokensByBalance(
       consolidated,
       hideSmallBalances,
       minBalanceThreshold
     );
     return sortConsolidatedTokensByBalance(filtered);
-  }, [portfolio?.tokens, hideSmallBalances, minBalanceThreshold]);
+  }, [aggregatedPortfolio?.tokens, hideSmallBalances, minBalanceThreshold]);
 
   // Effect to preload token logos and subscribe to updates - only run once per portfolio change
   useEffect(() => {
-    if (portfolio?.tokens && portfolio.tokens.length > 0) {
+    if (aggregatedPortfolio?.tokens && aggregatedPortfolio.tokens.length > 0) {
       // Only preload if not already done for this portfolio
-      const portfolioHash = portfolio.tokens
+      const portfolioHash = aggregatedPortfolio.tokens
         .map((t) => `${t.network}-${t.token.address}`)
         .join(",");
       const lastHash = sessionStorage.getItem("lastPortfolioHash");
 
       if (portfolioHash !== lastHash) {
-        preloadTokenLogos(portfolio.tokens);
+        preloadTokenLogos(aggregatedPortfolio.tokens);
         sessionStorage.setItem("lastPortfolioHash", portfolioHash);
       }
 
@@ -127,13 +238,13 @@ export default function EthereumAssetsSection() {
         unsubscribe();
       };
     }
-  }, [portfolio?.tokens]);
+  }, [aggregatedPortfolio?.tokens]);
 
   const handleForceRefresh = useCallback(async () => {
     setIsRefreshing(true);
     try {
-      if (portfolio?.tokens) {
-        await forceRefreshTokenData(portfolio.tokens);
+      if (aggregatedPortfolio?.tokens) {
+        await forceRefreshTokenData(aggregatedPortfolio.tokens);
         // Clear the portfolio hash to allow fresh preloading
         sessionStorage.removeItem("lastPortfolioHash");
       }
@@ -144,12 +255,97 @@ export default function EthereumAssetsSection() {
     } finally {
       setIsRefreshing(false);
     }
-  }, [portfolio?.tokens, refetch]);
+  }, [aggregatedPortfolio?.tokens, refetch]);
 
   const handleSendToken = (tokenDetail: TokenDetail, logoUrl?: string) => {
     setSelectedToken(tokenDetail);
     setSelectedTokenLogo(logoUrl || "");
     onSendModalOpen();
+  };
+
+  // Token Chain Breakdown Component
+  const TokenChainBreakdown = ({ consolidatedToken }: { consolidatedToken: ConsolidatedToken }) => {
+    return (
+      <Box
+        p={4}
+        bg="gray.900"
+        borderRadius="md"
+        border="1px solid"
+        borderColor="gray.600"
+        mt={2}
+      >
+        <Text fontSize="sm" fontWeight="medium" color="gray.300" mb={3}>
+          Distribution across {consolidatedToken.chains.length} blockchain{consolidatedToken.chains.length > 1 ? 's' : ''}:
+        </Text>
+
+        <VStack spacing={3} align="stretch">
+          {consolidatedToken.chains.map((chainToken, index) => {
+            const networkInfo = blockchainDictionary[chainToken.network];
+            const walletSource = getWalletSource(chainToken);
+            const isHigherToken = chainToken.token.symbol.toLowerCase() === 'higher';
+            const percentage = (chainToken.token.balanceUSD / consolidatedToken.totalBalanceUSD) * 100;
+
+            return (
+              <Box key={`${chainToken.network}-${index}`}>
+                <HStack justify="space-between" align="center" mb={2}>
+                  <HStack spacing={2}>
+                    {networkInfo?.logo && (
+                      <Image
+                        src={networkInfo.logo}
+                        alt={networkInfo?.alias || chainToken.network}
+                        w="20px"
+                        h="20px"
+                        borderRadius="full"
+                        objectFit="cover"
+                        flexShrink={0}
+                      />
+                    )}
+                    <VStack spacing={0} align="start">
+                      <Text fontSize="sm" fontWeight="medium" color="white">
+                        {walletSource.networkLabel}
+                      </Text>
+                      <Text fontSize="xs" color="gray.400">
+                        {walletSource.walletLabel}
+                      </Text>
+                    </VStack>
+                    <Badge
+                      colorScheme={walletSource.type === 'ethereum' ? 'blue' : walletSource.type === 'farcaster' ? 'purple' : 'gray'}
+                      fontSize="xs"
+                    >
+                      {percentage.toFixed(1)}%
+                    </Badge>
+                  </HStack>
+
+                  <VStack spacing={0} align="end">
+                    <Text fontSize="sm" color="white">
+                      {formatBalance(chainToken.token.balance)} {chainToken.token.symbol}
+                    </Text>
+                    <Text fontSize="xs" color="gray.400">
+                      {formatValue(chainToken.token.balanceUSD)}
+                    </Text>
+                  </VStack>
+                </HStack>
+
+                {/* Progress bar showing percentage */}
+                <Box w="100%" bg="gray.700" h="4px" borderRadius="full">
+                  <Box
+                    w={`${percentage}%`}
+                    bg={walletSource.type === 'ethereum' ? 'blue.400' : walletSource.type === 'farcaster' ? 'purple.400' : 'gray.400'}
+                    h="100%"
+                    borderRadius="full"
+                  />
+                </Box>
+
+                {/* Contract address for transparency */}
+                <Text fontSize="xs" color="gray.500" mt={1}>
+                  {chainToken.token.address.slice(0, 6)}...{chainToken.token.address.slice(-4)}
+                </Text>
+              </Box>
+            );
+          })}
+        </VStack>
+      </Box>
+    );
   };
 
   // Mobile Token Card Component
@@ -170,7 +366,7 @@ export default function EthereumAssetsSection() {
         _hover={{ bg: "gray.800" }}
       >
         <HStack justify="space-between" align="center">
-          <HStack spacing={3}>
+          <HStack spacing={3} flex={1}>
             {/* Token Logo with Chain Badge */}
             <Box position="relative" display="inline-block">
               {isHigherToken ? (
@@ -259,6 +455,8 @@ export default function EthereumAssetsSection() {
                   border="2px solid"
                   borderColor="background"
                   bg="background"
+                  objectFit="cover"
+                  flexShrink={0}
                 />
               )}
             </Box>
@@ -271,8 +469,19 @@ export default function EthereumAssetsSection() {
                 </Text>
                 {consolidatedToken.chains.length > 1 && (
                   <Badge colorScheme="blue" fontSize="xs" variant="solid">
-                    {consolidatedToken.chains.length}
+                    {consolidatedToken.chains.length} chains
                   </Badge>
+                )}
+                {/* Expand button for multi-chain tokens */}
+                {consolidatedToken.chains.length > 1 && (
+                  <IconButton
+                    aria-label="Expand token details"
+                    icon={expandedTokens.has(consolidatedToken.symbol) ? <FaChevronUp /> : <FaChevronDown />}
+                    size="xs"
+                    variant="ghost"
+                    colorScheme="blue"
+                    onClick={() => toggleTokenExpansion(consolidatedToken.symbol)}
+                  />
                 )}
               </HStack>
               <HStack spacing={2} align="center">
@@ -284,7 +493,7 @@ export default function EthereumAssetsSection() {
                     )
                   )} {consolidatedToken.symbol}
                 </Text>
-                {priceChange !== null && (
+                {priceChange !== null && priceChange !== undefined && (
                   <Text
                     fontSize="xs"
                     color={priceChange >= 0 ? "green.400" : "red.400"}
@@ -345,6 +554,8 @@ export default function EthereumAssetsSection() {
                               w="16px"
                               h="16px"
                               borderRadius="full"
+                              objectFit="cover"
+                              flexShrink={0}
                             />
                           )}
                           <VStack spacing={0} align="start" flex={1}>
@@ -384,6 +595,13 @@ export default function EthereumAssetsSection() {
             )}
           </VStack>
         </HStack>
+
+        {/* Expandable chain breakdown for mobile */}
+        {expandedTokens.has(consolidatedToken.symbol) && (
+          <Box mt={3}>
+            <TokenChainBreakdown consolidatedToken={consolidatedToken} />
+          </Box>
+        )}
       </Box>
     );
   };
@@ -411,7 +629,7 @@ export default function EthereumAssetsSection() {
         {/* Absolutely centered text */}
         <Box position="absolute" left="50%" top="50%" transform="translate(-50%, -50%)" zIndex={1}>
           <Text fontSize="sm" color="blue.200" mb={1}>
-            Ethereum Assets
+            Digital Assets
           </Text>
         </Box>
         {/* IconButton on the right */}
@@ -427,7 +645,7 @@ export default function EthereumAssetsSection() {
         </Box>
       </HStack>
 
-      {isMounted && isConnected && address && (
+      {isMounted && ((isConnected && address) || (isFarcasterConnected && farcasterProfile?.custody)) && (
         <Box>
 
           {/* Token Balances Section - only display if showTokenBalances is true */}
@@ -472,7 +690,7 @@ export default function EthereumAssetsSection() {
                 </Alert>
               )}
 
-              {portfolio && (
+              {aggregatedPortfolio && (
                 <>
                   {isMobile ? (
                     // Mobile Card Layout
@@ -521,246 +739,274 @@ export default function EthereumAssetsSection() {
                               const { marketCap, priceChange } = getEnhancedTokenData(primaryToken);
 
                               return (
-                                <Tr
-                                  key={consolidatedToken.symbol}
-                                  _hover={{ bg: "gray.800" }}
-                                  borderBottom="1px solid"
-                                  borderColor="gray.700"
-                                >
-                                  {/* Asset Column */}
-                                  <Td py={3}>
-                                    <HStack spacing={3}>
-                                      {/* Token Logo with Chain Badge */}
-                                      <Box position="relative" display="inline-block">
-                                        {isHigherToken ? (
-                                          <Image
-                                            src="/logos/higher.png"
-                                            alt={primaryToken.token.symbol}
-                                            w="32px"
-                                            h="32px"
-                                            borderRadius="full"
-                                            fallback={
-                                              <Text
-                                                fontSize="sm"
-                                                fontWeight="bold"
-                                                color="primary"
-                                              >
-                                                {primaryToken.token.symbol.charAt(0)}
-                                              </Text>
-                                            }
-                                          />
-                                        ) : getTokenLogoSync(
-                                          primaryToken.token,
-                                          networkInfo,
-                                          primaryToken.network
-                                        ) ? (
-                                          <Image
-                                            src={
-                                              getTokenLogoSync(
-                                                primaryToken.token,
-                                                networkInfo,
-                                                primaryToken.network
-                                              )!
-                                            }
-                                            alt={primaryToken.token.symbol}
-                                            w="32px"
-                                            h="32px"
-                                            borderRadius="full"
-                                            fallback={
-                                              <Text
-                                                fontSize="sm"
-                                                fontWeight="bold"
-                                                color="primary"
-                                              >
-                                                {primaryToken.token.symbol.charAt(0)}
-                                              </Text>
-                                            }
-                                          />
-                                        ) : (
-                                          <Box
-                                            w="32px"
-                                            h="32px"
-                                            borderRadius="full"
-                                            bg="gray.600"
-                                            display="flex"
-                                            alignItems="center"
-                                            justifyContent="center"
-                                          >
-                                            <Text
-                                              fontSize="sm"
-                                              fontWeight="bold"
-                                              color="white"
+                                <>
+                                  <Tr
+                                    key={consolidatedToken.symbol}
+                                    _hover={{ bg: "gray.800" }}
+                                    borderBottom="1px solid"
+                                    borderColor="gray.700"
+                                  >
+                                    {/* Asset Column */}
+                                    <Td py={3}>
+                                      <HStack spacing={3}>
+                                        {/* Token Logo with Chain Badge */}
+                                        <Box position="relative" display="inline-block">
+                                          {isHigherToken ? (
+                                            <Image
+                                              src="/logos/higher.png"
+                                              alt={primaryToken.token.symbol}
+                                              w="32px"
+                                              h="32px"
+                                              borderRadius="full"
+                                              fallback={
+                                                <Text
+                                                  fontSize="sm"
+                                                  fontWeight="bold"
+                                                  color="primary"
+                                                >
+                                                  {primaryToken.token.symbol.charAt(0)}
+                                                </Text>
+                                              }
+                                            />
+                                          ) : getTokenLogoSync(
+                                            primaryToken.token,
+                                            networkInfo,
+                                            primaryToken.network
+                                          ) ? (
+                                            <Image
+                                              src={
+                                                getTokenLogoSync(
+                                                  primaryToken.token,
+                                                  networkInfo,
+                                                  primaryToken.network
+                                                )!
+                                              }
+                                              alt={primaryToken.token.symbol}
+                                              w="32px"
+                                              h="32px"
+                                              borderRadius="full"
+                                              fallback={
+                                                <Text
+                                                  fontSize="sm"
+                                                  fontWeight="bold"
+                                                  color="primary"
+                                                >
+                                                  {primaryToken.token.symbol.charAt(0)}
+                                                </Text>
+                                              }
+                                            />
+                                          ) : (
+                                            <Box
+                                              w="32px"
+                                              h="32px"
+                                              borderRadius="full"
+                                              bg="gray.600"
+                                              display="flex"
+                                              alignItems="center"
+                                              justifyContent="center"
                                             >
-                                              {primaryToken.token.symbol.charAt(0)}
-                                            </Text>
-                                          </Box>
-                                        )}
-
-                                        {/* Chain Badge */}
-                                        {networkInfo?.logo && (
-                                          <Image
-                                            src={networkInfo.logo}
-                                            alt={networkInfo?.alias || primaryToken.network}
-                                            w="12px"
-                                            h="12px"
-                                            borderRadius="full"
-                                            position="absolute"
-                                            bottom="-2px"
-                                            right="-2px"
-                                            border="1px solid"
-                                            borderColor="background"
-                                            bg="background"
-                                          />
-                                        )}
-                                      </Box>
-
-                                      {/* Token Info */}
-                                      <VStack spacing={0} align="start">
-                                        <HStack spacing={2} align="center">
-                                          <Text
-                                            fontWeight="medium"
-                                            color="white"
-                                            fontSize="sm"
-                                          >
-                                            {consolidatedToken.symbol}
-                                          </Text>
-                                          {/* Multi-chain indicator */}
-                                          {consolidatedToken.chains.length > 1 && (
-                                            <Badge colorScheme="blue" fontSize="xs" variant="solid">
-                                              {consolidatedToken.chains.length} Networks
-                                            </Badge>
+                                              <Text
+                                                fontSize="sm"
+                                                fontWeight="bold"
+                                                color="white"
+                                              >
+                                                {primaryToken.token.symbol.charAt(0)}
+                                              </Text>
+                                            </Box>
                                           )}
-                                        </HStack>
+
+                                          {/* Chain Badge */}
+                                          {networkInfo?.logo && (
+                                            <Image
+                                              src={networkInfo.logo}
+                                              alt={networkInfo?.alias || primaryToken.network}
+                                              w="12px"
+                                              h="12px"
+                                              borderRadius="full"
+                                              position="absolute"
+                                              bottom="-2px"
+                                              right="-2px"
+                                              border="1px solid"
+                                              borderColor="background"
+                                              bg="background"
+                                              objectFit="cover"
+                                              flexShrink={0}
+                                            />
+                                          )}
+                                        </Box>
+
+                                        {/* Token Info */}
+                                        <VStack spacing={0} align="start">
+                                          <HStack spacing={2} align="center">
+                                            <Text
+                                              fontWeight="medium"
+                                              color="white"
+                                              fontSize="sm"
+                                            >
+                                              {consolidatedToken.symbol}
+                                            </Text>
+                                            {/* Multi-chain indicator */}
+                                            {consolidatedToken.chains.length > 1 && (
+                                              <Badge colorScheme="blue" fontSize="xs" variant="solid">
+                                                {consolidatedToken.chains.length} Blockchains
+                                              </Badge>
+                                            )}
+                                            {/* Expand button for multi-chain tokens */}
+                                            {consolidatedToken.chains.length > 1 && (
+                                              <IconButton
+                                                aria-label="Expand token details"
+                                                icon={expandedTokens.has(consolidatedToken.symbol) ? <FaChevronUp /> : <FaChevronDown />}
+                                                size="xs"
+                                                variant="ghost"
+                                                colorScheme="blue"
+                                                onClick={() => toggleTokenExpansion(consolidatedToken.symbol)}
+                                              />
+                                            )}
+                                          </HStack>
+                                          <Text fontSize="xs" color="gray.400">
+                                            {networkInfo?.alias || primaryToken.network}
+                                          </Text>
+                                        </VStack>
+                                      </HStack>
+                                    </Td>
+
+                                    {/* Price Column */}
+                                    <Td py={3}>
+                                      <VStack spacing={0} align="start">
+                                        <Text fontSize="sm" color="white">
+                                          {formatPrice(primaryToken.token.price)}
+                                        </Text>
+                                        {/* Price Change Badge */}
+                                        {priceChange !== null && (
+                                          <Text
+                                            fontSize="xs"
+                                            color={priceChange >= 0 ? "green.400" : "red.400"}
+                                          >
+                                            {priceChange >= 0 ? "+" : ""}
+                                            {formatPriceChange(priceChange)}%
+                                          </Text>
+                                        )}
+                                      </VStack>
+                                    </Td>
+
+                                    {/* Balance Column */}
+                                    <Td py={3} isNumeric>
+                                      <VStack spacing={0} align="end">
+                                        <Text fontSize="sm" color="white">
+                                          {formatBalance(
+                                            consolidatedToken.chains.reduce(
+                                              (sum, chain) => sum + chain.token.balance,
+                                              0
+                                            )
+                                          )}
+                                        </Text>
                                         <Text fontSize="xs" color="gray.400">
-                                          {networkInfo?.alias || primaryToken.network}
+                                          {consolidatedToken.symbol}
                                         </Text>
                                       </VStack>
-                                    </HStack>
-                                  </Td>
+                                    </Td>
 
-                                  {/* Price Column */}
-                                  <Td py={3}>
-                                    <VStack spacing={0} align="start">
-                                      <Text fontSize="sm" color="white">
-                                        {formatPrice(primaryToken.token.price)}
-                                      </Text>
-                                      {/* Price Change Badge */}
-                                      {priceChange !== null && (
-                                        <Text
-                                          fontSize="xs"
-                                          color={priceChange >= 0 ? "green.400" : "red.400"}
-                                        >
-                                          {priceChange >= 0 ? "+" : ""}
-                                          {formatPriceChange(priceChange)}%
+                                    {/* Value Column */}
+                                    <Td py={3} isNumeric>
+                                      <VStack spacing={0} align="end">
+                                        <Text fontSize="sm" color="white" fontWeight="medium">
+                                          {formatValue(consolidatedToken.totalBalanceUSD)}
                                         </Text>
-                                      )}
-                                    </VStack>
-                                  </Td>
-
-                                  {/* Balance Column */}
-                                  <Td py={3} isNumeric>
-                                    <VStack spacing={0} align="end">
-                                      <Text fontSize="sm" color="white">
-                                        {formatBalance(
-                                          consolidatedToken.chains.reduce(
-                                            (sum, chain) => sum + chain.token.balance,
-                                            0
-                                          )
-                                        )}
-                                      </Text>
-                                      <Text fontSize="xs" color="gray.400">
-                                        {consolidatedToken.symbol}
-                                      </Text>
-                                    </VStack>
-                                  </Td>
-
-                                  {/* Value Column */}
-                                  <Td py={3} isNumeric>
-                                    <VStack spacing={0} align="end">
-                                      <Text fontSize="sm" color="white" fontWeight="medium">
-                                        {formatValue(consolidatedToken.totalBalanceUSD)}
-                                      </Text>
-                                      {/* Send Button */}
-                                      {consolidatedToken.chains.length > 1 ? (
-                                        <Menu>
-                                          <MenuButton
-                                            as={Button}
+                                        {/* Send Button */}
+                                        {consolidatedToken.chains.length > 1 ? (
+                                          <Menu>
+                                            <MenuButton
+                                              as={Button}
+                                              size="xs"
+                                              colorScheme="blue"
+                                              variant="ghost"
+                                              leftIcon={<FaPaperPlane />}
+                                              fontSize="xs"
+                                            >
+                                              Send
+                                            </MenuButton>
+                                            <MenuList bg="background" border="1px solid" borderColor="gray.200">
+                                              {consolidatedToken.chains.map((chainToken, index) => {
+                                                const chainInfo = blockchainDictionary[chainToken.network];
+                                                const chainIsHigher = chainToken.token.symbol.toLowerCase() === 'higher';
+                                                return (
+                                                  <MenuItem
+                                                    key={`${chainToken.network}-${index}`}
+                                                    onClick={() =>
+                                                      handleSendToken(
+                                                        chainToken,
+                                                        chainIsHigher ? "/logos/higher.png" : getTokenLogoSync(
+                                                          chainToken.token,
+                                                          chainInfo,
+                                                          chainToken.network
+                                                        ) || undefined
+                                                      )
+                                                    }
+                                                    bg="background"
+                                                    _hover={{ bg: "gray.700" }}
+                                                  >
+                                                    <HStack spacing={2} w="100%">
+                                                      {chainInfo?.logo && (
+                                                        <Image
+                                                          src={chainInfo.logo}
+                                                          alt={chainInfo?.alias || chainToken.network}
+                                                          w="16px"
+                                                          h="16px"
+                                                          borderRadius="full"
+                                                          objectFit="cover"
+                                                          flexShrink={0}
+                                                        />
+                                                      )}
+                                                      <VStack spacing={0} align="start" flex={1}>
+                                                        <Text fontSize="sm" fontWeight="medium">
+                                                          {chainInfo?.alias || chainToken.network}
+                                                        </Text>
+                                                        <Text fontSize="xs" color="gray.400">
+                                                          {formatBalance(chainToken.token.balance)} • {formatValue(chainToken.token.balanceUSD)}
+                                                        </Text>
+                                                      </VStack>
+                                                    </HStack>
+                                                  </MenuItem>
+                                                );
+                                              })}
+                                            </MenuList>
+                                          </Menu>
+                                        ) : (
+                                          <Button
                                             size="xs"
                                             colorScheme="blue"
                                             variant="ghost"
                                             leftIcon={<FaPaperPlane />}
                                             fontSize="xs"
+                                            onClick={() =>
+                                              handleSendToken(
+                                                primaryToken,
+                                                isHigherToken ? "/logos/higher.png" : getTokenLogoSync(
+                                                  primaryToken.token,
+                                                  networkInfo,
+                                                  primaryToken.network
+                                                ) || undefined
+                                              )
+                                            }
                                           >
                                             Send
-                                          </MenuButton>
-                                          <MenuList bg="background" border="1px solid" borderColor="gray.200">
-                                            {consolidatedToken.chains.map((chainToken, index) => {
-                                              const chainInfo = blockchainDictionary[chainToken.network];
-                                              const chainIsHigher = chainToken.token.symbol.toLowerCase() === 'higher';
-                                              return (
-                                                <MenuItem
-                                                  key={`${chainToken.network}-${index}`}
-                                                  onClick={() =>
-                                                    handleSendToken(
-                                                      chainToken,
-                                                      chainIsHigher ? "/logos/higher.png" : getTokenLogoSync(
-                                                        chainToken.token,
-                                                        chainInfo,
-                                                        chainToken.network
-                                                      ) || undefined
-                                                    )
-                                                  }
-                                                  bg="background"
-                                                  _hover={{ bg: "gray.700" }}
-                                                >
-                                                  <HStack spacing={2} w="100%">
-                                                    {chainInfo?.logo && (
-                                                      <Image
-                                                        src={chainInfo.logo}
-                                                        alt={chainInfo?.alias || chainToken.network}
-                                                        w="16px"
-                                                        h="16px"
-                                                        borderRadius="full"
-                                                      />
-                                                    )}
-                                                    <VStack spacing={0} align="start" flex={1}>
-                                                      <Text fontSize="sm" fontWeight="medium">
-                                                        {chainInfo?.alias || chainToken.network}
-                                                      </Text>
-                                                      <Text fontSize="xs" color="gray.400">
-                                                        {formatBalance(chainToken.token.balance)} • {formatValue(chainToken.token.balanceUSD)}
-                                                      </Text>
-                                                    </VStack>
-                                                  </HStack>
-                                                </MenuItem>
-                                              );
-                                            })}
-                                          </MenuList>
-                                        </Menu>
-                                      ) : (
-                                        <Button
-                                          size="xs"
-                                          colorScheme="blue"
-                                          variant="ghost"
-                                          leftIcon={<FaPaperPlane />}
-                                          fontSize="xs"
-                                          onClick={() =>
-                                            handleSendToken(
-                                              primaryToken,
-                                              isHigherToken ? "/logos/higher.png" : getTokenLogoSync(
-                                                primaryToken.token,
-                                                networkInfo,
-                                                primaryToken.network
-                                              ) || undefined
-                                            )
-                                          }
-                                        >
-                                          Send
-                                        </Button>
-                                      )}
-                                    </VStack>
-                                  </Td>
-                                </Tr>
+                                          </Button>
+                                        )}
+                                      </VStack>
+                                    </Td>
+                                  </Tr>
+
+                                  {/* Expandable Row for Chain Details */}
+                                  {expandedTokens.has(consolidatedToken.symbol) && (
+                                    <Tr key={`${consolidatedToken.symbol}-expanded`}>
+                                      <Td colSpan={4} py={0} borderBottom="none">
+                                        <Box py={2}>
+                                          <TokenChainBreakdown consolidatedToken={consolidatedToken} />
+                                        </Box>
+                                      </Td>
+                                    </Tr>
+                                  )}
+                                </>
                               );
                             })
                           ) : (

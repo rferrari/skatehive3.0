@@ -1,10 +1,18 @@
 'use client';
 
-import { Box, Button, HStack, Text, VStack, useToast } from '@chakra-ui/react';
+import { Box, Button, HStack, Text, VStack, useToast, Avatar, Badge, Tooltip } from '@chakra-ui/react';
 import { SignInButton, useProfile, useSignIn } from '@farcaster/auth-kit';
 
 interface FarcasterSignInProps {
-    onSuccess?: (profile: { fid: number; username: string }) => void;
+    onSuccess?: (profile: {
+        fid: number;
+        username: string;
+        displayName?: string;
+        pfpUrl?: string;
+        bio?: string;
+        custody?: `0x${string}`;
+        verifications?: string[];
+    }) => void;
     onError?: (error?: Error) => void;
     variant?: 'button' | 'card';
     showStatus?: boolean;
@@ -25,8 +33,26 @@ export default function FarcasterSignIn({
     const toast = useToast();
 
     const handleSuccess = (res: { fid?: number; username?: string }) => {
-        if (res.fid && res.username) {
-            const profileData = { fid: res.fid, username: res.username };
+        if (res.fid && res.username && profile) {
+            // Debug logging for Farcaster sign-in data
+            console.log('🎯 Farcaster Sign-In Success:', {
+                res,
+                profile,
+                profileKeys: Object.keys(profile),
+                custody: profile.custody,
+                verifications: profile.verifications,
+                fullProfileData: JSON.stringify(profile, null, 2)
+            });
+
+            const profileData = {
+                fid: res.fid,
+                username: res.username,
+                displayName: profile.displayName,
+                pfpUrl: profile.pfpUrl,
+                bio: profile.bio,
+                custody: profile.custody,
+                verifications: profile.verifications
+            };
 
             if (onSuccess) {
                 onSuccess(profileData);
@@ -92,10 +118,29 @@ export default function FarcasterSignIn({
                     </HStack>
 
                     {isAuthenticated ? (
-                        <VStack spacing={2} align="stretch">
-                            <Text fontSize="sm" color="text">
-                                Connected as @{profile?.username}
-                            </Text>
+                        <VStack spacing={3} align="stretch">
+                            <HStack spacing={3}>
+                                <Avatar
+                                    size="sm"
+                                    name={profile?.displayName || profile?.username}
+                                    src={profile?.pfpUrl}
+                                />
+                                <VStack align="start" spacing={0} flex={1}>
+                                    <Text fontSize="sm" fontWeight="medium" color="text">
+                                        {profile?.displayName || `@${profile?.username}`}
+                                    </Text>
+                                    <Text fontSize="xs" color="muted">
+                                        @{profile?.username} • FID: {profile?.fid}
+                                    </Text>
+                                    {profile?.custody && (
+                                        <Tooltip label={`Custody Address: ${profile.custody}`} hasArrow>
+                                            <Text fontSize="xs" color="blue.400" cursor="help">
+                                                Wallet: {profile.custody.slice(0, 6)}...{profile.custody.slice(-4)}
+                                            </Text>
+                                        </Tooltip>
+                                    )}
+                                </VStack>
+                            </HStack>
                             <Button
                                 size="sm"
                                 variant="outline"
