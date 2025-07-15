@@ -44,7 +44,6 @@ import { fetchComments } from "@/lib/hive/fetchComments";
 import { separateContent } from "@/lib/utils/snapUtils";
 import { SlPencil } from "react-icons/sl";
 import { Operation } from "@hiveio/dhive";
-import { diff_match_patch } from "diff-match-patch";
 
 
 const renderMedia = (mediaContent: string) => {
@@ -139,14 +138,11 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
   } = useHivePower(user);
   const toast = useToast();
   const commentDate = getPostDate(discussion.created);
-
-  const [sliderValue, setSliderValue] = useState(5);
   const [showSlider, setShowSlider] = useState(false);
   const [activeVotes, setActiveVotes] = useState(discussion.active_votes || []);
   const [rewardAmount, setRewardAmount] = useState(
     parseFloat(getPayoutValue(discussion))
   );
-  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [inlineRepliesMap, setInlineRepliesMap] = useState<
     Record<string, Discussion[]>
   >({});
@@ -174,26 +170,6 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
     discussion.active_votes?.some(
       (item: { voter: string }) => item.voter === user
     ) || false
-  );
-
-  // Diff match patch instance
-  const dmp = useMemo(() => new diff_match_patch(), []);
-
-  const createPatch = useCallback(
-    (originalContent: string, editedContent: string) => {
-      const patch = dmp.patch_make(originalContent, editedContent);
-
-      if (patch.length > 0) {
-        const patchString = dmp.patch_toText(patch);
-        const patchedContent = dmp.patch_apply(patch, originalContent);
-        if (!patchedContent[1].some((change: boolean) => !change)) {
-          return patchString;
-        }
-      }
-
-      return null;
-    },
-    [dmp]
   );
 
   function handleConversation() {
