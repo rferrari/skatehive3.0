@@ -69,17 +69,18 @@ export default function FooterNavButtons() {
   // Navigation items with their routes and names
   const navigationItems = [
     { src: "/buttons/home.riv", onClick: () => router.push("/"), name: "Home" },
-    { src: "/buttons/blog.riv", onClick: () => router.push("/blog"), name: "Blog" },
+    { src: "/buttons/blog.riv", onClick: () => router.push("/blog"), name: "Pages" },
     { src: "/buttons/leaderboard.riv", onClick: () => router.push("/leaderboard"), name: "Leaderboard" },
     { src: "/buttons/map.riv", onClick: () => router.push("/skatespots"), name: "Skate Spots" },
     { src: "/buttons/bounties.riv", onClick: () => router.push("/bounties"), name: "Bounties" },
-    {
+    ...(user ? [{
       src: "/buttons/notif.riv",
       onClick: () => router.push("/notifications"),
       name: "Notifications",
       badge: newNotificationCount
-    },
+    }] : []),
     { src: "/buttons/wallet.riv", onClick: () => router.push("/wallet"), name: "Wallet" },
+    { src: "/buttons/profile.riv", onClick: () => router.push("/settings"), name: "Settings" },
     {
       src: "/buttons/profile.riv",
       onClick: () => {

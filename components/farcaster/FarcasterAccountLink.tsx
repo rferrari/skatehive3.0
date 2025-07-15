@@ -61,13 +61,13 @@ export default function FarcasterAccountLink({ hiveUsername, postingKey }: Farca
             });
             const result = await response.json();
             if (result.success) {
-                toast({ 
-                    status: "success", 
+                toast({
+                    status: "success",
                     title: "Account linked successfully!",
                     description: "Check your Farcaster notifications for a welcome message."
                 });
                 await loadUserData();
-                
+
                 // Send welcome notification to the user
                 try {
                     await fetch("/api/farcaster/notify", {
