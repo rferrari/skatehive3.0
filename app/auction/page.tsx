@@ -1,6 +1,6 @@
 'use client';
 
-import AuctionCard from '@/components/AuctionCard';
+import { AuctionCard } from '@/components/auction';
 import { DAO_ADDRESSES } from '@/lib/utils/constants';
 import { 
   Box, 
