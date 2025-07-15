@@ -17,6 +17,7 @@ import {
   PopoverArrow,
   PopoverBody,
   useDisclosure,
+  Center,
 } from "@chakra-ui/react";
 import React, { useState, useEffect, useMemo } from "react";
 import { Discussion } from "@hiveio/dhive";
@@ -275,7 +276,7 @@ export default function PostCard({
         flexDirection="row"
         bg="background"
         border={"1px solid"}
-        borderColor="primary"
+        borderColor="muted"
       >
         {/* Thumbnail */}
         <Box
@@ -320,7 +321,7 @@ export default function PostCard({
             >
               <Text
                 fontWeight="bold"
-                fontSize={listView ? "xl" : "lg"}
+                fontSize={listView ? "sm" : "sm"}
                 mb={1}
                 isTruncated={false}
                 whiteSpace="normal"
@@ -553,127 +554,143 @@ export default function PostCard({
               </Flex>
             </Box>
           )}
-          <Link
-            href={`/post/${author}/${post.permlink}`}
-            _hover={{ textDecoration: "underline" }}
-          >
-            <Text
-              fontWeight="bold"
-              fontSize={listView ? "xl" : "lg"}
-              mb={1}
-              isTruncated={false}
-              whiteSpace="normal"
-              wordBreak="break-word"
-              noOfLines={2}
-            >
-              {title}
-            </Text>
-          </Link>
-          <Box
-            flex="1"
-            display="flex"
-            alignItems="flex-end"
-            justifyContent="center"
-            zIndex={2}
-          >
-            {imageUrls.length > 0 ? (
-              <Swiper
-                spaceBetween={10}
-                slidesPerView={1}
-                pagination={{ clickable: true }}
-                navigation={true}
-                modules={[Navigation, Pagination]}
-                onSlideChange={handleSlideChange}
-                className="custom-swiper"
-                onSwiper={(swiper) => {
-                  setTimeout(() => {
-                    if (!swiper.el) return;
-                    const next = swiper.el.querySelector(".swiper-button-next");
-                    const prev = swiper.el.querySelector(".swiper-button-prev");
-                    if (next)
-                      next.addEventListener("click", (e) =>
-                        e.stopPropagation()
-                      );
-                    if (prev)
-                      prev.addEventListener("click", (e) =>
-                        e.stopPropagation()
-                      );
-                  }, 0);
-                }}
-              >
-                {imageUrls.slice(0, visibleImages).map((url, index) => (
-                  <SwiperSlide key={index}>
-                    <Box h="200px" w="100%" sx={{ userSelect: "none" }}>
-                      <Image
-                        src={url}
-                        alt={title}
-                        borderRadius="base"
-                        objectFit="cover"
-                        w="100%"
-                        h="100%"
-                        loading="lazy"
-                        onError={handleImageError}
-                      />
-                    </Box>
-                  </SwiperSlide>
-                ))}
-              </Swiper>
-            ) : youtubeLinks.length > 0 ? (
-              <Swiper
-                spaceBetween={10}
-                slidesPerView={1}
-                pagination={{ clickable: true }}
-                navigation={true}
-                modules={[Navigation, Pagination]}
-                className="custom-swiper"
-                onSwiper={(swiper) => {
-                  setTimeout(() => {
-                    if (!swiper.el) return;
-                    const next = swiper.el.querySelector(".swiper-button-next");
-                    const prev = swiper.el.querySelector(".swiper-button-prev");
-                    if (next)
-                      next.addEventListener("click", (e) =>
-                        e.stopPropagation()
-                      );
-                    if (prev)
-                      prev.addEventListener("click", (e) =>
-                        e.stopPropagation()
-                      );
-                  }, 0);
-                }}
-              >
-                {youtubeLinks.map((link, index) => (
-                  <SwiperSlide key={index}>
-                    <Box h="200px" w="100%">
-                      <iframe
-                        src={link.url}
-                        title={`YouTube video from ${link.domain}`}
-                        width="100%"
-                        height="100%"
-                        frameBorder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                      ></iframe>
-                    </Box>
-                  </SwiperSlide>
-                ))}
-              </Swiper>
-            ) : (
-              <Box h="200px" w="100%">
-                <Image
-                  src={default_thumbnail}
-                  alt="default thumbnail"
-                  borderRadius="base"
-                  objectFit="cover"
-                  w="100%"
-                  h="100%"
-                  loading="lazy"
-                  onError={handleImageError}
-                />
-              </Box>
-            )}
-          </Box>
 
+          {/* Content Box with Green Border */}
+          <Box
+            border="2px solid"
+            borderColor="muted"
+            borderRadius="none"
+            overflow="hidden"
+            bg="background"
+          >
+            {/* Image Section */}
+            <Box
+              flex="1"
+              display="flex"
+              alignItems="flex-end"
+              justifyContent="center"
+              zIndex={2}
+            >
+              {imageUrls.length > 0 ? (
+                <Swiper
+                  spaceBetween={10}
+                  slidesPerView={1}
+                  pagination={{ clickable: true }}
+                  navigation={true}
+                  modules={[Navigation, Pagination]}
+                  onSlideChange={handleSlideChange}
+                  className="custom-swiper"
+                  onSwiper={(swiper) => {
+                    setTimeout(() => {
+                      if (!swiper.el) return;
+                      const next = swiper.el.querySelector(".swiper-button-next");
+                      const prev = swiper.el.querySelector(".swiper-button-prev");
+                      if (next)
+                        next.addEventListener("click", (e) =>
+                          e.stopPropagation()
+                        );
+                      if (prev)
+                        prev.addEventListener("click", (e) =>
+                          e.stopPropagation()
+                        );
+                    }, 0);
+                  }}
+                >
+                  {imageUrls.slice(0, visibleImages).map((url, index) => (
+                    <SwiperSlide key={index}>
+                      <Box h="200px" w="100%" sx={{ userSelect: "none" }}>
+                        <Image
+                          src={url}
+                          alt={title}
+                          objectFit="cover"
+                          w="100%"
+                          h="100%"
+                          loading="lazy"
+                          onError={handleImageError}
+                        />
+                      </Box>
+                    </SwiperSlide>
+                  ))}
+                </Swiper>
+              ) : youtubeLinks.length > 0 ? (
+                <Swiper
+                  spaceBetween={10}
+                  slidesPerView={1}
+                  pagination={{ clickable: true }}
+                  navigation={true}
+                  modules={[Navigation, Pagination]}
+                  className="custom-swiper"
+                  onSwiper={(swiper) => {
+                    setTimeout(() => {
+                      if (!swiper.el) return;
+                      const next = swiper.el.querySelector(".swiper-button-next");
+                      const prev = swiper.el.querySelector(".swiper-button-prev");
+                      if (next)
+                        next.addEventListener("click", (e) =>
+                          e.stopPropagation()
+                        );
+                      if (prev)
+                        prev.addEventListener("click", (e) =>
+                          e.stopPropagation()
+                        );
+                    }, 0);
+                  }}
+                >
+                  {youtubeLinks.map((link, index) => (
+                    <SwiperSlide key={index}>
+                      <Box h="200px" w="100%">
+                        <iframe
+                          src={link.url}
+                          title={`YouTube video from ${link.domain}`}
+                          width="100%"
+                          height="100%"
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        ></iframe>
+                      </Box>
+                    </SwiperSlide>
+                  ))}
+                </Swiper>
+              ) : (
+                <Box h="200px" w="100%">
+                  <Image
+                    src={default_thumbnail}
+                    alt="default thumbnail"
+                    objectFit="cover"
+                    w="100%"
+                    h="100%"
+                    loading="lazy"
+                    onError={handleImageError}
+                  />
+                </Box>
+              )}
+            </Box>
+
+            {/* Title Section with border separator */}
+            <Box
+              borderTop="1px solid"
+              borderColor="primary"
+              p={3}
+              textAlign="center"
+            >
+              <Link
+                href={`/post/${author}/${post.permlink}`}
+                _hover={{ textDecoration: "underline" }}
+              >
+                <Text
+                  fontWeight="bold"
+                  fontSize={"16px"}
+                  isTruncated={false}
+                  whiteSpace="normal"
+                  wordBreak="break-word"
+                  noOfLines={2}
+                >
+                  {title}
+                </Text>
+              </Link>
+            </Box>
+          </Box>
           <Box mt="auto">
             {showSlider ? (
               <Flex mt={4} alignItems="center" onClick={stopPropagation}>
