@@ -15,20 +15,11 @@ import {
   PopoverBody,
   useDisclosure,
   IconButton,
-  Textarea,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
-  ModalBody,
-  ModalCloseButton,
 } from "@chakra-ui/react";
 import { Discussion } from "@hiveio/dhive";
 import { FaRegComment } from "react-icons/fa";
 import { useAioha } from "@aioha/react-ui";
-import { KeyTypes } from "@aioha/aioha";
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo } from "react";
 import {
   getPayoutValue,
 } from "@/lib/hive/client-functions";
@@ -38,12 +29,14 @@ import useHiveAccount from "@/hooks/useHiveAccount";
 import VideoRenderer from "../layout/VideoRenderer";
 import SnapComposer from "./SnapComposer";
 import VoteSlider from "../shared/VoteSlider";
+import EditPostModal from "./EditPostModal";
 import { FaLink } from "react-icons/fa6";
 import useHivePower from "@/hooks/useHivePower";
 import { fetchComments } from "@/lib/hive/fetchComments";
 import { separateContent } from "@/lib/utils/snapUtils";
 import { SlPencil } from "react-icons/sl";
-import { Operation } from "@hiveio/dhive";
+import { usePostEdit } from "@/hooks/usePostEdit";
+import { parsePayout, calculatePayoutDays, deduplicateVotes } from "@/lib/utils/postUtils";
 
 
 const renderMedia = (mediaContent: string) => {
@@ -138,6 +131,18 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
   } = useHivePower(user);
   const toast = useToast();
   const commentDate = getPostDate(discussion.created);
+
+  // Use the custom hook for edit functionality
+  const {
+    isEditing,
+    editedContent,
+    isSaving,
+    setEditedContent,
+    handleEditClick,
+    handleCancelEdit,
+    handleSaveEdit,
+  } = usePostEdit(discussion);
+
   const [showSlider, setShowSlider] = useState(false);
   const [activeVotes, setActiveVotes] = useState(discussion.active_votes || []);
   const [rewardAmount, setRewardAmount] = useState(
@@ -152,11 +157,6 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
   const [inlineComposerStates, setInlineComposerStates] = useState<
     Record<string, boolean>
   >({});
-
-  // Edit mode states
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedContent, setEditedContent] = useState(discussion.body);
-  const [isSaving, setIsSaving] = useState(false);
 
   const effectiveDepth = discussion.depth || 0;
 
@@ -177,95 +177,6 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
       setConversation(discussion);
     }
   }
-
-  const handleEditClick = useCallback(() => {
-    setEditedContent(discussion.body);
-    setIsEditing(true);
-  }, [discussion.body]);
-
-  const handleCancelEdit = useCallback(() => {
-    setEditedContent(discussion.body);
-    setIsEditing(false);
-  }, [discussion.body]);
-
-  const handleSaveEdit = useCallback(async () => {
-    if (!user || editedContent === discussion.body) {
-      setIsEditing(false);
-      return;
-    }
-
-    setIsSaving(true);
-
-    try {
-      // Check if no changes were made
-      if (editedContent.trim() === discussion.body.trim()) {
-        toast({
-          title: "No changes detected",
-          description: "Please make some changes before saving.",
-          status: "warning",
-          duration: 3000,
-          isClosable: true,
-        });
-        setIsSaving(false);
-        return;
-      }
-
-      // Parse existing metadata
-      let parsedMetadata: any = {};
-      try {
-        parsedMetadata = JSON.parse(discussion.json_metadata || '{}');
-      } catch (e) {
-        console.warn('Failed to parse existing metadata, using empty object');
-      }
-
-      const operation: Operation = [
-        "comment",
-        {
-          parent_author: discussion.parent_author || "",
-          parent_permlink: discussion.parent_permlink || "",
-          author: user,
-          permlink: discussion.permlink,
-          title: discussion.title || "",
-          body: editedContent,
-          json_metadata: JSON.stringify(parsedMetadata),
-        },
-      ];
-
-      console.log('Broadcasting edit operation:', operation);
-
-      // Use aioha to broadcast the edit
-      const result = await aioha.signAndBroadcastTx([operation], KeyTypes.Posting);
-
-      console.log('Broadcast result:', result);
-
-      if (result && !result.error) {
-        toast({
-          title: "Post updated successfully!",
-          status: "success",
-          duration: 3000,
-          isClosable: true,
-        });
-
-        // Update the local discussion body
-        discussion.body = editedContent;
-        setIsEditing(false);
-      } else {
-        const errorMessage = result?.error?.message || result?.message || "Failed to update post";
-        throw new Error(errorMessage);
-      }
-    } catch (error: any) {
-      console.error("Error updating post:", error);
-      toast({
-        title: "Failed to update post",
-        description: error.message || "An unknown error occurred",
-        status: "error",
-        duration: 5000,
-        isClosable: true,
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  }, [user, editedContent, discussion, aioha, toast]);
 
   const handleSharePost = async () => {
     // Validate permlink to prevent [object Object] URLs
@@ -323,33 +234,11 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
   }
 
   // Deduplicate votes by voter (keep the last occurrence)
-  const uniqueVotesMap = new Map();
-  activeVotes.forEach((vote) => {
-    uniqueVotesMap.set(vote.voter, vote);
-  });
-  const uniqueVotes = Array.from(uniqueVotesMap.values());
+  const uniqueVotes = deduplicateVotes(activeVotes);
 
-  // Helper to convert Asset or string to string
-  function assetToString(val: string | { toString: () => string }): string {
-    return typeof val === "string" ? val : val.toString();
-  }
-  // Helper to parse payout strings like "1.234 HBD"
-  function parsePayout(
-    val: string | { toString: () => string } | undefined
-  ): number {
-    if (!val) return 0;
-    const str = assetToString(val);
-    return parseFloat(str.replace(" HBD", "").replace(",", ""));
-  }
   const authorPayout = parsePayout(discussion.total_payout_value);
   const curatorPayout = parsePayout(discussion.curator_payout_value);
-  // Calculate days remaining for pending payout
-  const createdDate = new Date(discussion.created);
-  const now = new Date();
-  const timeDifferenceInMs = now.getTime() - createdDate.getTime();
-  const timeDifferenceInDays = timeDifferenceInMs / (1000 * 60 * 60 * 24);
-  const daysRemaining = Math.max(0, 7 - Math.floor(timeDifferenceInDays));
-  const isPending = timeDifferenceInDays < 7;
+  const { daysRemaining, isPending } = calculatePayoutDays(discussion.created);
   const {
     isOpen: isPayoutOpen,
     onOpen: openPayout,
@@ -383,33 +272,31 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
               {discussion.author}
             </Text>
           </Link>
-          <HStack ml={0} width="100%" justify="space-between">
-            <HStack>
-              <Text fontWeight="medium" fontSize="sm" color="gray">
-                · {commentDate}
-              </Text>
-              <FaLink
-                size={16}
-                color="gray"
-                cursor="pointer"
-                onClick={handleSharePost}
-                style={{ marginRight: "2px" }}
-              />
-            </HStack>
+          <HStack>
+            <Text fontWeight="medium" fontSize="sm" color="gray">
+              · {commentDate}
+            </Text>
+            <FaLink
+              size={16}
+              color="gray"
+              cursor="pointer"
+              onClick={handleSharePost}
+              style={{ marginRight: "2px" }}
+            />
             {user === discussion.author && (
-              <Button
-                leftIcon={<SlPencil />}
+              <IconButton
+                icon={<SlPencil />}
                 size="sm"
                 variant="ghost"
                 aria-label="Edit post"
                 onClick={handleEditClick}
                 _active={{ bg: "none" }}
                 _hover={{ bg: "none" }}
-              >
-                Edit
-              </Button>
+                ml={-3}
+              />
             )}
           </HStack>
+
         </HStack>
         <Box>
           <Box
@@ -422,55 +309,15 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
         </Box>
 
         {/* Edit Modal */}
-        <Modal isOpen={isEditing} onClose={handleCancelEdit} size="xl">
-          <ModalOverlay />
-          <ModalContent>
-            <ModalHeader>Edit Post</ModalHeader>
-            <ModalCloseButton />
-            <ModalBody>
-              <VStack spacing={4}>
-                <Textarea
-                  value={editedContent}
-                  onChange={(e) => setEditedContent(e.target.value)}
-                  placeholder="Edit your post content..."
-                  minHeight="300px"
-                  resize="vertical"
-                />
-                <Box width="100%" p={4} bg="gray.50" borderRadius="md">
-                  <Text fontSize="sm" fontWeight="bold" mb={2}>
-                    Preview:
-                  </Text>
-                  <Box
-                    dangerouslySetInnerHTML={{
-                      __html: markdownRenderer(editedContent)
-                    }}
-                    sx={{
-                      p: { marginBottom: "1rem", lineHeight: "1.6" },
-                    }}
-                  />
-                </Box>
-              </VStack>
-            </ModalBody>
-            <ModalFooter>
-              <Button
-                variant="ghost"
-                mr={3}
-                onClick={handleCancelEdit}
-                disabled={isSaving}
-              >
-                Cancel
-              </Button>
-              <Button
-                colorScheme="blue"
-                onClick={handleSaveEdit}
-                isLoading={isSaving}
-                loadingText="Saving..."
-              >
-                Save Changes
-              </Button>
-            </ModalFooter>
-          </ModalContent>
-        </Modal>
+        <EditPostModal
+          isOpen={isEditing}
+          onClose={handleCancelEdit}
+          discussion={discussion}
+          editedContent={editedContent}
+          setEditedContent={setEditedContent}
+          onSave={handleSaveEdit}
+          isSaving={isSaving}
+        />
 
         {!showSlider && (
           <HStack justify="center" spacing={8} mt={3}>
