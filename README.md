@@ -1,67 +1,73 @@
-![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/SkateHive/skatehive3.0?utm_source=oss&utm_medium=github&utm_campaign=SkateHive%2Fskatehive3.0&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
+# Skatehive 3.0
 
-# My Community (by @mengao in hive)
+Skatehive 3.0 is a Next.js application for the [Skatehive](https://www.skatehive.app) community. It lets users post content to the Hive blockchain, share skate spots, view community bounties and leaderboards and receive Farcaster notifications. The project uses Chakra UI for styling along with Tailwind utilities and integrates with Aioha, Whisk, Wagmi/Viem and React Query.
 
-> MyCommunity is a versatile React template designed for effortlessly deploying your Hive-based community website.
+## Local Development
 
-# Run Locally 
-
-## Install Packages
-
-```bash
-pnpm i
-```
-
-## Config .Env
+1. Copy `.env.local.example` to `.env.local` and fill in the values for your environment.
+2. Install dependencies with [pnpm](https://pnpm.io):
 
 ```bash
-NEXT_PUBLIC_THEME=nounish # Choose between available themes or make your own
-NEXT_PUBLIC_HIVE_COMMUNITY_TAG=hive-173115 #skatehive
-NEXT_PUBLIC_HIVE_SEARCH_TAG=hive-173115 #skatehive
-NEXT_PUBLIC_THREAD_AUTHOR=peak.snaps # so the app can read snaps from peakd
-NEXT_PUBLIC_THREAD_PERMLINK=re-skatedev-sidr6t # the permlink of the thread post (Read the threadpost section)
-NEXT_PUBLIC_HIVE_USER=skatedev # dummy user to sign the image uploads
-HIVE_POSTING_KEY=posting_private_key_here # dummy posting key for sign image uploads on hive
-NEXT_PUBLIC_SITE_TYPE=business # leave it empty for hiding store section, type business to have a store session
+pnpm install
 ```
 
-> Available Themes: bluesky / cannabis / forest / hacker / hivebr / nounish / windows95
-
-** TODO:[Explain how the Thread of posts work in the setup section]
-webgirlnawr
-## Run locally 
+3. Run the development server:
 
 ```bash
 pnpm dev
 ```
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+Open `http://localhost:3000` in your browser.
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+Run `pnpm lint` to check lint rules and `pnpm build` to create a production build.
 
+## Environment Variables
 
-## Deploy on Vercel
-
-The easiest way to deploy your community app is in Vercel. 
-
-## 1) Login in Vercel 
-
-## 2) [Click here](https://vercel.com/new/import?s=https%3A%2F%2Fgithub.com%2Fsktbrd%2Fmycommunity&hasTrialAvailable=0&showOptionalTeamCreation=false&project-name=mycommunity&framework=nextjs&totalProjects=1&remainingProjects=1&teamSlug=sktbrds-projects) 
-
-## 3) Copy and paste the .env in Vercel Enviroment variables 
+The app relies on a number of environment variables. The most common ones are provided in `.env.local.example`:
 
 ```bash
-NEXT_PUBLIC_THEME=nounish
-NEXT_PUBLIC_HIVE_COMMUNITY_TAG=hive-163772
-NEXT_PUBLIC_HIVE_SEARCH_TAG=hive-163772
-NEXT_PUBLIC_THREAD_AUTHOR=peak.snaps
-NEXT_PUBLIC_PARENT_PERM=nxvsjarvmp
+NEXT_PUBLIC_THEME=your_theme            # Available: bluesky, hacker, forest, nounish, etc.
+NEXT_PUBLIC_HIVE_COMMUNITY_TAG=hive-xxxxx
+NEXT_PUBLIC_HIVE_SEARCH_TAG=hive-xxxxx
 NEXT_PUBLIC_HIVE_USER=skatedev
-HIVE_POSTING_KEY=posting_private_key_here
-NEXT_PUBLIC_SITE_TYPE=business
-``` 
+NEXT_PUBLIC_BASE_URL=http://localhost:3000
+HIVE_POSTING_KEY=posting_key_here
 
-4) Hit Deploy button !
+# Optional Postgres database (used for Farcaster notifications)
+POSTGRES_URL=
+POSTGRES_PRISMA_URL=
+POSTGRES_URL_NO_SSL=
+POSTGRES_URL_NON_POOLING=
+POSTGRES_USER=
+POSTGRES_HOST=
+POSTGRES_PASSWORD=
+POSTGRES_DATABASE=
 
+# Farcaster notification settings
+FARCASTER_INIT_PASSWORD=your_secure_password_for_database_init
+```
 
+Additional variables used by specific features:
+
+- `PINATA_API_KEY` and `PINATA_SECRET_API_KEY` – upload media to Pinata/IPFS
+- `GIPHY_API_KEY` – GIF search in the composer
+- `NEXT_PUBLIC_WHISK_API_KEY` – Whisk social identity resolution
+- `EMAIL_USER`, `EMAIL_PASS`, `EMAIL_COMMUNITY`, `EMAIL_RECOVERYACC` – sending invite emails
+- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLIC_KEY`, `SUPABASE_PRIVATE_KEY` – Supabase integration
+- Ethereum/Wagmi keys such as `NEXT_PUBLIC_WC_PROJECT_ID`, `ETHERSCAN_API_KEY`, `NEXT_PUBLIC_ALCHEMY_KEY` and DAO addresses (`NEXT_PUBLIC_TOKEN`, `NEXT_PUBLIC_METADATA`, `NEXT_PUBLIC_AUCTION`, `NEXT_PUBLIC_TREASURY`, `NEXT_PUBLIC_GOVERNOR`)
+- `FARCASTER_HUB_URL` – custom Farcaster hub (optional)
+
+## Application Features
+
+- **Compose posts** with Markdown, images, videos or GIFs and publish them to the Hive blockchain.
+- **Skate spots** map for sharing and discovering places to skate.
+- **Bounties** for trick challenges with community rewards.
+- **Leaderboard** ranking Hive users by community engagement.
+- **Magazine/Blog** pages for curated articles and snaps.
+- **Invite system** allowing users to create Hive accounts via email.
+- **Farcaster notifications** that bridge Hive activity to Farcaster miniapp users. See [docs/SKATEHIVE_FARCASTER_NOTIFICATIONS.md](docs/SKATEHIVE_FARCASTER_NOTIFICATIONS.md) for implementation details.
+
+## Deployment
+
+The app is designed for [Vercel](https://vercel.com). After setting up the environment variables in your Vercel project, deploy with the standard Next.js build process.
 
