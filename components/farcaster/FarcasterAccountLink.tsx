@@ -10,7 +10,7 @@ import {
     Flex,
     useToast,
 } from "@chakra-ui/react";
-import { SignInButton, useProfile } from '@farcaster/auth-kit';
+import { SignInButton, useProfile, useSignIn } from '@farcaster/auth-kit';
 import { FarcasterPreferences } from "@/lib/farcaster/skatehive-integration";
 
 interface FarcasterAccountLinkProps {
@@ -24,6 +24,16 @@ export default function FarcasterAccountLink({ hiveUsername, postingKey }: Farca
     const [saving, setSaving] = useState(false);
     const toast = useToast();
     const { isAuthenticated, profile } = useProfile();
+    const { signOut } = useSignIn({});
+
+    const handleFarcasterSignOut = () => {
+        signOut();
+        toast({
+            status: "success",
+            title: "Signed out from Farcaster",
+            description: "You have been disconnected from Farcaster Auth Kit"
+        });
+    };
 
     const loadUserData = useCallback(async () => {
         setLoading(true);
@@ -134,24 +144,21 @@ export default function FarcasterAccountLink({ hiveUsername, postingKey }: Farca
                     <VStack spacing={4}>
                         {!isAuthenticated ? (
                             <Box textAlign="center">
-                                <Text fontSize="sm" mb={4} color="primary">
-                                    Connect your Farcaster account to enable notifications
-                                </Text>
                                 <SignInButton
                                     onSuccess={({ fid, username }) => {
                                         if (fid && username) {
                                             linkFarcasterAccount(fid.toString(), username);
                                         } else {
-                                            toast({ 
-                                                status: "error", 
+                                            toast({
+                                                status: "error",
                                                 title: "Authentication incomplete",
                                                 description: "Missing FID or username from Farcaster"
                                             });
                                         }
                                     }}
                                     onError={(error) => {
-                                        toast({ 
-                                            status: "error", 
+                                        toast({
+                                            status: "error",
                                             title: "Authentication failed",
                                             description: error?.message || "Failed to authenticate with Farcaster"
                                         });
@@ -166,22 +173,38 @@ export default function FarcasterAccountLink({ hiveUsername, postingKey }: Farca
                                 <Text fontSize="sm" color="primary" mb={4}>
                                     FID: {profile?.fid}
                                 </Text>
-                                <Button
-                                    bg="accent"
-                                    color="background"
-                                    onClick={() => profile?.fid && profile?.username && linkFarcasterAccount(profile.fid.toString(), profile.username)}
-                                    isLoading={saving}
-                                    size="lg"
-                                    fontWeight="bold"
-                                    _hover={{
-                                        bg: 'accent',
-                                        opacity: 0.8,
-                                        transform: 'translateY(-1px)'
-                                    }}
-                                    _active={{ transform: 'translateY(0)' }}
-                                >
-                                    Link to SkateHive
-                                </Button>
+                                <VStack spacing={3}>
+                                    <Button
+                                        bg="accent"
+                                        color="background"
+                                        onClick={() => profile?.fid && profile?.username && linkFarcasterAccount(profile.fid.toString(), profile.username)}
+                                        isLoading={saving}
+                                        size="lg"
+                                        fontWeight="bold"
+                                        _hover={{
+                                            bg: 'accent',
+                                            opacity: 0.8,
+                                            transform: 'translateY(-1px)'
+                                        }}
+                                        _active={{ transform: 'translateY(0)' }}
+                                    >
+                                        Link to SkateHive
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        borderColor="red.500"
+                                        color="red.500"
+                                        onClick={handleFarcasterSignOut}
+                                        size="sm"
+                                        _hover={{
+                                            bg: 'red.50',
+                                            borderColor: 'red.600',
+                                            color: 'red.600'
+                                        }}
+                                    >
+                                        Disconnect Farcaster
+                                    </Button>
+                                </VStack>
                             </Box>
                         )}
                     </VStack>
@@ -195,20 +218,38 @@ export default function FarcasterAccountLink({ hiveUsername, postingKey }: Farca
                                     Connected: {preferences.linkedAt ? new Date(preferences.linkedAt).toLocaleDateString() : "N/A"}
                                 </Text>
                             </Box>
-                            <Button
-                                bg="red.500"
-                                color="white"
-                                onClick={unlinkAccount}
-                                isLoading={saving}
-                                size="sm"
-                                _hover={{
-                                    bg: 'red.600',
-                                    transform: 'translateY(-1px)'
-                                }}
-                                _active={{ transform: 'translateY(0)' }}
-                            >
-                                Unlink
-                            </Button>
+                            <VStack spacing={2}>
+                                <Button
+                                    bg="red.500"
+                                    color="white"
+                                    onClick={unlinkAccount}
+                                    isLoading={saving}
+                                    size="sm"
+                                    _hover={{
+                                        bg: 'red.600',
+                                        transform: 'translateY(-1px)'
+                                    }}
+                                    _active={{ transform: 'translateY(0)' }}
+                                >
+                                    Unlink
+                                </Button>
+                                {isAuthenticated && (
+                                    <Button
+                                        variant="outline"
+                                        borderColor="orange.500"
+                                        color="orange.500"
+                                        onClick={handleFarcasterSignOut}
+                                        size="xs"
+                                        _hover={{
+                                            bg: 'orange.50',
+                                            borderColor: 'orange.600',
+                                            color: 'orange.600'
+                                        }}
+                                    >
+                                        Sign Out
+                                    </Button>
+                                )}
+                            </VStack>
                         </Flex>
 
                         <Box p={4} bg="background" border="1px solid" borderColor="muted">

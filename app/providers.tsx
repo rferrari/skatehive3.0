@@ -31,9 +31,8 @@ export const config = createConfig({
 const farcasterAuthConfig = {
   rpcUrl: "https://mainnet.optimism.io",
   domain: process.env.NEXT_PUBLIC_DOMAIN || "skatehive.app",
-  siweUri: `${
-    process.env.NEXT_PUBLIC_BASE_URL || "https://skatehive.app"
-  }/api/auth/farcaster`,
+  siweUri: `${process.env.NEXT_PUBLIC_BASE_URL || "https://skatehive.app"
+    }/api/auth/farcaster`,
 };
 
 export function Providers({ children }: { children: React.ReactNode }) {
