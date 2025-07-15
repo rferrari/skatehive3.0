@@ -100,12 +100,13 @@ export default function AuctionCard({
       <VStack spacing={6} align="stretch">
         {/* Token Info */}
         <HStack spacing={4} align="start">
-          <Box position="relative">
+          <Box position="relative" width="50%">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <Image
               src={activeAuction.token.image}
               alt={activeAuction.token.name}
-              boxSize="80px"
+              width="100%"
+              aspectRatio="1"
               borderRadius="md"
               objectFit="cover"
               fallbackSrc="/images/placeholder.png"
