@@ -12,6 +12,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WhiskSdkProvider } from "@paperclip-labs/whisk-sdk";
 import { IdentityResolver } from "@paperclip-labs/whisk-sdk/identity";
 import { UserProvider } from "@/contexts/UserContext";
+import { AuthKitProvider } from "@farcaster/auth-kit";
+import "@farcaster/auth-kit/styles.css";
 
 export const WHISK_API_KEY = process.env.NEXT_PUBLIC_WHISK_API_KEY as string;
 
@@ -25,6 +27,14 @@ export const config = createConfig({
     [base.id]: http(),
   },
 });
+
+const farcasterAuthConfig = {
+  rpcUrl: "https://mainnet.optimism.io",
+  domain: process.env.NEXT_PUBLIC_DOMAIN || "skatehive.app",
+  siweUri: `${
+    process.env.NEXT_PUBLIC_BASE_URL || "https://skatehive.app"
+  }/api/auth/farcaster`,
+};
 
 export function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -43,27 +53,29 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <ThemeProvider>
         <QueryClientProvider client={queryClient}>
           <WagmiProvider config={config}>
-            <WhiskSdkProvider
-              apiKey={WHISK_API_KEY}
-              config={{
-                identity: {
-                  resolverOrder: [
-                    IdentityResolver.Nns,
-                    IdentityResolver.Farcaster,
-                    IdentityResolver.Ens,
-                    IdentityResolver.Base,
-                    IdentityResolver.Lens,
-                    IdentityResolver.Uni,
-                    IdentityResolver.World,
-                  ],
-                },
-              }}
-            >
-              <AiohaProvider aioha={aioha}>
-                <CSSReset />
-                {children}
-              </AiohaProvider>
-            </WhiskSdkProvider>
+            <AuthKitProvider config={farcasterAuthConfig}>
+              <WhiskSdkProvider
+                apiKey={WHISK_API_KEY}
+                config={{
+                  identity: {
+                    resolverOrder: [
+                      IdentityResolver.Nns,
+                      IdentityResolver.Farcaster,
+                      IdentityResolver.Ens,
+                      IdentityResolver.Base,
+                      IdentityResolver.Lens,
+                      IdentityResolver.Uni,
+                      IdentityResolver.World,
+                    ],
+                  },
+                }}
+              >
+                <AiohaProvider aioha={aioha}>
+                  <CSSReset />
+                  {children}
+                </AiohaProvider>
+              </WhiskSdkProvider>
+            </AuthKitProvider>
           </WagmiProvider>
         </QueryClientProvider>
       </ThemeProvider>

@@ -1,17 +1,16 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
     Box,
     Button,
     Heading,
     Text,
-    Input,
     Switch,
-    Stack,
     VStack,
     Flex,
     useToast,
 } from "@chakra-ui/react";
+import { SignInButton, useProfile } from '@farcaster/auth-kit';
 import { FarcasterPreferences } from "@/lib/farcaster/skatehive-integration";
 
 interface FarcasterAccountLinkProps {
@@ -23,11 +22,10 @@ export default function FarcasterAccountLink({ hiveUsername, postingKey }: Farca
     const [preferences, setPreferences] = useState<FarcasterPreferences | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [fid, setFid] = useState("");
-    const [farcasterUsername, setFarcasterUsername] = useState("");
     const toast = useToast();
+    const { isAuthenticated, profile } = useProfile();
 
-    const loadUserData = async () => {
+    const loadUserData = useCallback(async () => {
         setLoading(true);
         try {
             const userPrefs = await fetch(`/api/farcaster/user-preferences?hiveUsername=${hiveUsername}`).then((r) => r.json());
@@ -37,17 +35,13 @@ export default function FarcasterAccountLink({ hiveUsername, postingKey }: Farca
         } finally {
             setLoading(false);
         }
-    };
+    }, [hiveUsername]);
 
     useEffect(() => {
         loadUserData();
-    }, [hiveUsername]);
+    }, [loadUserData]);
 
-    const linkFarcasterAccount = async () => {
-        if (!fid || !farcasterUsername) {
-            toast({ status: "error", title: "Please enter both FID and Farcaster username" });
-            return;
-        }
+    const linkFarcasterAccount = async (fid: string, farcasterUsername: string) => {
         setSaving(true);
         try {
             const response = await fetch("/api/farcaster/link-skatehive", {
@@ -59,8 +53,6 @@ export default function FarcasterAccountLink({ hiveUsername, postingKey }: Farca
             if (result.success) {
                 toast({ status: "success", title: result.message });
                 await loadUserData();
-                setFid("");
-                setFarcasterUsername("");
             } else {
                 toast({ status: "error", title: result.message });
             }
@@ -139,62 +131,60 @@ export default function FarcasterAccountLink({ hiveUsername, postingKey }: Farca
                 </Box>
 
                 {!preferences ? (
-                    <Stack spacing={4}>
-                        <Box>
-                            <Text fontSize="sm" mb={2} color="primary" fontWeight="medium">Your Farcaster FID</Text>
-                            <Input
-                                value={fid}
-                                onChange={(e) => setFid(e.target.value)}
-                                placeholder="e.g., 20721"
-                                bg="background"
-                                color="primary"
-                                borderColor="muted"
-                                borderWidth="2px"
-                                _focus={{
-                                    borderColor: 'accent',
-                                    boxShadow: '0 0 0 3px rgba(var(--chakra-colors-accent), 0.1)',
-                                    outline: 'none'
-                                }}
-                                _hover={{ borderColor: 'accent' }}
-                                _placeholder={{ color: 'muted' }}
-                            />
-                        </Box>
-                        <Box>
-                            <Text fontSize="sm" mb={2} color="primary" fontWeight="medium">Your Farcaster Username</Text>
-                            <Input
-                                value={farcasterUsername}
-                                onChange={(e) => setFarcasterUsername(e.target.value)}
-                                placeholder="e.g., yourname"
-                                bg="background"
-                                color="primary"
-                                borderColor="muted"
-                                borderWidth="2px"
-                                _focus={{
-                                    borderColor: 'accent',
-                                    boxShadow: '0 0 0 3px rgba(var(--chakra-colors-accent), 0.1)',
-                                    outline: 'none'
-                                }}
-                                _hover={{ borderColor: 'accent' }}
-                                _placeholder={{ color: 'muted' }}
-                            />
-                        </Box>
-                        <Button
-                            bg="accent"
-                            color="background"
-                            onClick={linkFarcasterAccount}
-                            isLoading={saving}
-                            size="lg"
-                            fontWeight="bold"
-                            _hover={{
-                                bg: 'accent',
-                                opacity: 0.8,
-                                transform: 'translateY(-1px)'
-                            }}
-                            _active={{ transform: 'translateY(0)' }}
-                        >
-                            Link Account
-                        </Button>
-                    </Stack>
+                    <VStack spacing={4}>
+                        {!isAuthenticated ? (
+                            <Box textAlign="center">
+                                <Text fontSize="sm" mb={4} color="primary">
+                                    Connect your Farcaster account to enable notifications
+                                </Text>
+                                <SignInButton
+                                    onSuccess={({ fid, username }) => {
+                                        if (fid && username) {
+                                            linkFarcasterAccount(fid.toString(), username);
+                                        } else {
+                                            toast({ 
+                                                status: "error", 
+                                                title: "Authentication incomplete",
+                                                description: "Missing FID or username from Farcaster"
+                                            });
+                                        }
+                                    }}
+                                    onError={(error) => {
+                                        toast({ 
+                                            status: "error", 
+                                            title: "Authentication failed",
+                                            description: error?.message || "Failed to authenticate with Farcaster"
+                                        });
+                                    }}
+                                />
+                            </Box>
+                        ) : (
+                            <Box textAlign="center" p={4} bg="background" border="1px solid" borderColor="muted">
+                                <Text fontSize="lg" color="primary" fontWeight="bold" mb={2}>
+                                    Welcome, @{profile?.username}!
+                                </Text>
+                                <Text fontSize="sm" color="primary" mb={4}>
+                                    FID: {profile?.fid}
+                                </Text>
+                                <Button
+                                    bg="accent"
+                                    color="background"
+                                    onClick={() => profile?.fid && profile?.username && linkFarcasterAccount(profile.fid.toString(), profile.username)}
+                                    isLoading={saving}
+                                    size="lg"
+                                    fontWeight="bold"
+                                    _hover={{
+                                        bg: 'accent',
+                                        opacity: 0.8,
+                                        transform: 'translateY(-1px)'
+                                    }}
+                                    _active={{ transform: 'translateY(0)' }}
+                                >
+                                    Link to SkateHive
+                                </Button>
+                            </Box>
+                        )}
+                    </VStack>
                 ) : (
                     <VStack spacing={4} align="stretch">
                         <Flex align="center" justify="space-between" p={4} bg="background" border="1px solid" borderColor="muted">

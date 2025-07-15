@@ -190,7 +190,7 @@ export default function FarcasterAdminPage() {
                         <AlertTitle>Security Notice</AlertTitle>
                         <AlertDescription>
                             Admin functions are protected server-side. Only authorized users can send notifications.
-                            If you're not an admin, these functions will fail with an unauthorized error.
+                            If you&apos;re not an admin, these functions will fail with an unauthorized error.
                         </AlertDescription>
                     </Box>
                 </Alert>
