@@ -1,11 +1,13 @@
 'use client';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Box, Select, Text, useToast, VStack, Heading, Accordion, AccordionItem, AccordionButton, AccordionPanel, AccordionIcon } from '@chakra-ui/react';
 import { useTheme, ThemeName, themeMap } from '../themeProvider';
 import LottieAnimation from '@/components/shared/LottieAnimation';
 import UpvoteSnapContainer from '@/components/homepage/UpvoteSnapContainer';
 import { useRive, useStateMachineInput } from "@rive-app/react-canvas";
 import LogoMatrix from "../../components/graphics/LogoMatrix";
+import FarcasterAccountLink from '@/components/farcaster/FarcasterAccountLink';
+import { useAioha } from "@aioha/react-ui";
 
 // Reusable FooterNavButton component
 // const FooterNavButton = ({ src }: { src: string }) => {
@@ -28,7 +30,14 @@ import LogoMatrix from "../../components/graphics/LogoMatrix";
 
 const Settings = () => {
     const { themeName, setThemeName } = useTheme();
+    const { user } = useAioha();
     const toast = useToast();
+
+    // Memoize user data to prevent re-renders
+    const userData = useMemo(() => ({
+        hiveUsername: typeof user === 'string' ? user : (user?.name || user?.username),
+        postingKey: typeof user === 'object' ? user?.keys?.posting : undefined
+    }), [user]);
 
     // Rive animation setup
     const STATE_MACHINE_NAME = "ButtonStateMachine"; // Update if your state machine is named differently
@@ -104,6 +113,14 @@ const Settings = () => {
                         ))}
                     </Select>
                 </Box>
+
+                {/* Farcaster Account Link */}
+                {userData.hiveUsername && (
+                    <FarcasterAccountLink
+                        hiveUsername={userData.hiveUsername}
+                        postingKey={userData.postingKey}
+                    />
+                )}
 
                 <UpvoteSnapContainer />
 

@@ -1,0 +1,188 @@
+"use client";
+import React, { useState, useEffect } from "react";
+import {
+    Box,
+    Button,
+    Heading,
+    Text,
+    Input,
+    Switch,
+    Stack,
+    Flex,
+    useToast,
+} from "@chakra-ui/react";
+import { FarcasterPreferences } from "@/lib/farcaster/skatehive-integration";
+
+interface FarcasterAccountLinkProps {
+    hiveUsername: string;
+    postingKey?: string;
+}
+
+export default function FarcasterAccountLink({ hiveUsername, postingKey }: FarcasterAccountLinkProps) {
+    const [preferences, setPreferences] = useState<FarcasterPreferences | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [fid, setFid] = useState("");
+    const [farcasterUsername, setFarcasterUsername] = useState("");
+    const toast = useToast();
+
+    const loadUserData = async () => {
+        setLoading(true);
+        try {
+            const userPrefs = await fetch(`/api/farcaster/user-preferences?hiveUsername=${hiveUsername}`).then((r) => r.json());
+            if (userPrefs.success) setPreferences(userPrefs.data);
+        } catch (error) {
+            // silent fail
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        loadUserData();
+    }, [hiveUsername]);
+
+    const linkFarcasterAccount = async () => {
+        if (!fid || !farcasterUsername) {
+            toast({ status: "error", title: "Please enter both FID and Farcaster username" });
+            return;
+        }
+        setSaving(true);
+        try {
+            const response = await fetch("/api/farcaster/link-skatehive", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ hiveUsername, fid, farcasterUsername, updateHiveProfile: !!postingKey, postingKey }),
+            });
+            const result = await response.json();
+            if (result.success) {
+                toast({ status: "success", title: result.message });
+                await loadUserData();
+                setFid("");
+                setFarcasterUsername("");
+            } else {
+                toast({ status: "error", title: result.message });
+            }
+        } catch {
+            toast({ status: "error", title: "Failed to link account" });
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const updatePreferences = async (newPrefs: Partial<FarcasterPreferences>) => {
+        setSaving(true);
+        try {
+            const response = await fetch("/api/farcaster/update-preferences", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ hiveUsername, preferences: newPrefs }),
+            });
+            const result = await response.json();
+            if (result.success) {
+                toast({ status: "success", title: "Preferences updated" });
+                await loadUserData();
+            } else {
+                toast({ status: "error", title: result.message });
+            }
+        } catch {
+            toast({ status: "error", title: "Failed to update preferences" });
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const unlinkAccount = async () => {
+        if (!window.confirm("Are you sure you want to unlink your Farcaster account?")) return;
+        setSaving(true);
+        try {
+            const response = await fetch("/api/farcaster/unlink", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ hiveUsername, updateHiveProfile: !!postingKey, postingKey }),
+            });
+            const result = await response.json();
+            if (result.success) {
+                toast({ status: "success", title: "Account unlinked" });
+                setPreferences(null);
+                await loadUserData();
+            } else {
+                toast({ status: "error", title: result.message });
+            }
+        } catch {
+            toast({ status: "error", title: "Failed to unlink account" });
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <Box bg="gray.800" p={6} rounded="lg">
+                <Box h={8} bg="gray.700" rounded="md" mb={6} />
+                <Box h={32} bg="gray.700" rounded="md" />
+            </Box>
+        );
+    }
+
+    return (
+        <Box bg="gray.800" p={6} rounded="lg">
+            <Heading size="md" mb={4}>🛹 Farcaster Notifications</Heading>
+
+            {!preferences ? (
+                <>
+                    <Text color="gray.400" mb={6}>Link your Farcaster account to receive notifications from SkateHive.</Text>
+                    <Stack spacing={4}>
+                        <Box>
+                            <Text fontSize="sm" mb={2}>Your Farcaster FID</Text>
+                            <Input
+                                value={fid}
+                                onChange={(e) => setFid(e.target.value)}
+                                placeholder="e.g., 20721"
+                                bg="gray.700"
+                                color="white"
+                            />
+                        </Box>
+                        <Box>
+                            <Text fontSize="sm" mb={2}>Your Farcaster Username</Text>
+                            <Input
+                                value={farcasterUsername}
+                                onChange={(e) => setFarcasterUsername(e.target.value)}
+                                placeholder="e.g., yourname"
+                                bg="gray.700"
+                                color="white"
+                            />
+                        </Box>
+                        <Button colorScheme="blue" onClick={linkFarcasterAccount} isLoading={saving}>
+                            Link Account
+                        </Button>
+                    </Stack>
+                </>
+            ) : (
+                <>
+                    <Flex align="center" justify="space-between" mb={6}>
+                        <Box>
+                            <Text fontSize="lg">@{preferences.farcasterUsername}</Text>
+                            <Text color="gray.400">FID: {preferences.fid}</Text>
+                            <Text fontSize="sm" color="gray.500">
+                                Connected: {preferences.linkedAt ? new Date(preferences.linkedAt).toLocaleDateString() : "N/A"}
+                            </Text>
+                        </Box>
+                        <Button colorScheme="red" onClick={unlinkAccount} isLoading={saving}>
+                            Unlink
+                        </Button>
+                    </Flex>
+
+                    <Box>
+                        <Text fontWeight="medium" mb={2}>Enable Notifications</Text>
+                        <Switch
+                            isChecked={preferences.notificationsEnabled}
+                            onChange={e => updatePreferences({ notificationsEnabled: e.target.checked })}
+                            colorScheme="blue"
+                        />
+                    </Box>
+                </>
+            )}
+        </Box>
+    );
+}
