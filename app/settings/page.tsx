@@ -74,13 +74,9 @@ const Settings = () => {
     return (
         <Box p={8} maxW="container.md" mx="auto">
             <VStack spacing={6} align="stretch">
-                <Box>
-                    <LogoMatrix />
-                </Box>
                 <Heading size="lg" mb={2}>
                     Settings
                 </Heading>
-
                 <Box>
                     <Text mb={2} fontWeight="medium">Theme Selection</Text>
                     <Select
@@ -138,6 +134,9 @@ const Settings = () => {
                         </AccordionPanel>
                     </AccordionItem>
                 </Accordion>
+                <Box>
+                    <LogoMatrix />
+                </Box>
             </VStack>
         </Box>
     );
