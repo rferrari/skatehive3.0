@@ -61,8 +61,30 @@ export default function FarcasterAccountLink({ hiveUsername, postingKey }: Farca
             });
             const result = await response.json();
             if (result.success) {
-                toast({ status: "success", title: result.message });
+                toast({ 
+                    status: "success", 
+                    title: "Account linked successfully!",
+                    description: "Check your Farcaster notifications for a welcome message."
+                });
                 await loadUserData();
+                
+                // Send welcome notification to the user
+                try {
+                    await fetch("/api/farcaster/notify", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            type: "follow",
+                            title: "🛹 Connected to SkateHive!",
+                            body: `Welcome @${farcasterUsername}! Your Farcaster account is now linked to SkateHive.`,
+                            hiveUsername: hiveUsername,
+                            sourceUrl: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://skatehive.app'}/settings/farcaster`
+                        }),
+                    });
+                } catch (notificationError) {
+                    // Silent fail for notification - don't block the main flow
+                    console.warn("Failed to send welcome notification:", notificationError);
+                }
             } else {
                 toast({ status: "error", title: result.message });
             }
