@@ -8,6 +8,7 @@ import {
     Input,
     Switch,
     Stack,
+    VStack,
     Flex,
     useToast,
 } from "@chakra-ui/react";
@@ -118,71 +119,125 @@ export default function FarcasterAccountLink({ hiveUsername, postingKey }: Farca
 
     if (loading) {
         return (
-            <Box bg="gray.800" p={6} rounded="lg">
-                <Box h={8} bg="gray.700" rounded="md" mb={6} />
-                <Box h={32} bg="gray.700" rounded="md" />
+            <Box bg="background" border="1px solid" borderColor="muted" p={6} shadow="sm">
+                <Box h={8} bg="muted" mb={6} />
+                <Box h={32} bg="muted" />
             </Box>
         );
     }
 
     return (
-        <Box bg="gray.800" p={6} rounded="lg">
-            <Heading size="md" mb={4}>🛹 Farcaster Notifications</Heading>
+        <Box bg="background" border="1px solid" borderColor="muted" p={6} shadow="sm">
+            <VStack spacing={4} align="stretch">
+                <Box>
+                    <Heading size="md" color="primary" mb={1}>
+                        🛹 Farcaster Notifications
+                    </Heading>
+                    <Text color="primary" fontSize="sm">
+                        Connect your Farcaster account to receive notifications
+                    </Text>
+                </Box>
 
-            {!preferences ? (
-                <>
-                    <Text color="gray.400" mb={6}>Link your Farcaster account to receive notifications from SkateHive.</Text>
+                {!preferences ? (
                     <Stack spacing={4}>
                         <Box>
-                            <Text fontSize="sm" mb={2}>Your Farcaster FID</Text>
+                            <Text fontSize="sm" mb={2} color="primary" fontWeight="medium">Your Farcaster FID</Text>
                             <Input
                                 value={fid}
                                 onChange={(e) => setFid(e.target.value)}
                                 placeholder="e.g., 20721"
-                                bg="gray.700"
-                                color="white"
+                                bg="background"
+                                color="primary"
+                                borderColor="muted"
+                                borderWidth="2px"
+                                _focus={{
+                                    borderColor: 'accent',
+                                    boxShadow: '0 0 0 3px rgba(var(--chakra-colors-accent), 0.1)',
+                                    outline: 'none'
+                                }}
+                                _hover={{ borderColor: 'accent' }}
+                                _placeholder={{ color: 'muted' }}
                             />
                         </Box>
                         <Box>
-                            <Text fontSize="sm" mb={2}>Your Farcaster Username</Text>
+                            <Text fontSize="sm" mb={2} color="primary" fontWeight="medium">Your Farcaster Username</Text>
                             <Input
                                 value={farcasterUsername}
                                 onChange={(e) => setFarcasterUsername(e.target.value)}
                                 placeholder="e.g., yourname"
-                                bg="gray.700"
-                                color="white"
+                                bg="background"
+                                color="primary"
+                                borderColor="muted"
+                                borderWidth="2px"
+                                _focus={{
+                                    borderColor: 'accent',
+                                    boxShadow: '0 0 0 3px rgba(var(--chakra-colors-accent), 0.1)',
+                                    outline: 'none'
+                                }}
+                                _hover={{ borderColor: 'accent' }}
+                                _placeholder={{ color: 'muted' }}
                             />
                         </Box>
-                        <Button colorScheme="blue" onClick={linkFarcasterAccount} isLoading={saving}>
+                        <Button
+                            bg="accent"
+                            color="background"
+                            onClick={linkFarcasterAccount}
+                            isLoading={saving}
+                            size="lg"
+                            fontWeight="bold"
+                            _hover={{
+                                bg: 'accent',
+                                opacity: 0.8,
+                                transform: 'translateY(-1px)'
+                            }}
+                            _active={{ transform: 'translateY(0)' }}
+                        >
                             Link Account
                         </Button>
                     </Stack>
-                </>
-            ) : (
-                <>
-                    <Flex align="center" justify="space-between" mb={6}>
-                        <Box>
-                            <Text fontSize="lg">@{preferences.farcasterUsername}</Text>
-                            <Text color="gray.400">FID: {preferences.fid}</Text>
-                            <Text fontSize="sm" color="gray.500">
-                                Connected: {preferences.linkedAt ? new Date(preferences.linkedAt).toLocaleDateString() : "N/A"}
-                            </Text>
-                        </Box>
-                        <Button colorScheme="red" onClick={unlinkAccount} isLoading={saving}>
-                            Unlink
-                        </Button>
-                    </Flex>
+                ) : (
+                    <VStack spacing={4} align="stretch">
+                        <Flex align="center" justify="space-between" p={4} bg="background" border="1px solid" borderColor="muted">
+                            <Box>
+                                <Text fontSize="lg" color="primary" fontWeight="bold">@{preferences.farcasterUsername}</Text>
+                                <Text color="primary" fontSize="sm">FID: {preferences.fid}</Text>
+                                <Text fontSize="xs" color="primary">
+                                    Connected: {preferences.linkedAt ? new Date(preferences.linkedAt).toLocaleDateString() : "N/A"}
+                                </Text>
+                            </Box>
+                            <Button
+                                bg="red.500"
+                                color="white"
+                                onClick={unlinkAccount}
+                                isLoading={saving}
+                                size="sm"
+                                _hover={{
+                                    bg: 'red.600',
+                                    transform: 'translateY(-1px)'
+                                }}
+                                _active={{ transform: 'translateY(0)' }}
+                            >
+                                Unlink
+                            </Button>
+                        </Flex>
 
-                    <Box>
-                        <Text fontWeight="medium" mb={2}>Enable Notifications</Text>
-                        <Switch
-                            isChecked={preferences.notificationsEnabled}
-                            onChange={e => updatePreferences({ notificationsEnabled: e.target.checked })}
-                            colorScheme="blue"
-                        />
-                    </Box>
-                </>
-            )}
+                        <Box p={4} bg="background" border="1px solid" borderColor="muted">
+                            <Flex justify="space-between" align="center">
+                                <Box>
+                                    <Text fontWeight="bold" color="primary" mb={1}>Enable Notifications</Text>
+                                    <Text fontSize="sm" color="primary">Receive updates about your SkateHive activity</Text>
+                                </Box>
+                                <Switch
+                                    isChecked={preferences.notificationsEnabled}
+                                    onChange={e => updatePreferences({ notificationsEnabled: e.target.checked })}
+                                    colorScheme="green"
+                                    size="lg"
+                                />
+                            </Flex>
+                        </Box>
+                    </VStack>
+                )}
+            </VStack>
         </Box>
     );
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { farcasterNotificationService } from '@/lib/farcaster/notification-service';
 import { HiveToFarcasterNotification } from '@/types/farcaster';
+import { isServerSideAdmin, logSecurityAttempt, createUnauthorizedResponse } from '@/lib/server/adminUtils';
 
 export async function POST(request: NextRequest) {
     try {
@@ -12,11 +13,28 @@ export async function POST(request: NextRequest) {
             hiveUsername,
             targetUsers,
             sourceUrl,
-            broadcast = false // New flag to send to all users
+            broadcast = false, // New flag to send to all users
+            adminUsername // Required for admin operations
         } = body;
 
+        // Define which notification types require admin privileges
+        const adminOnlyTypes = ['custom', 'test'];
+        const isAdminOperation = broadcast || adminOnlyTypes.includes(type);
+
+        // Security check: Only admin operations require verification
+        if (isAdminOperation) {
+            if (!adminUsername || !isServerSideAdmin(adminUsername)) {
+                logSecurityAttempt(adminUsername, `${type} notification (admin operation)`, request, false);
+                return createUnauthorizedResponse();
+            }
+            logSecurityAttempt(adminUsername, `${type} notification (admin operation)`, request, true);
+        }
+
+        // Log all notification requests (for monitoring)
         console.log('🔔 [Notify API] Received notification request:', {
             type,
+            isAdminOperation,
+            adminUsername: isAdminOperation ? adminUsername : 'n/a',
             title,
             body: messageBody,
             broadcast,

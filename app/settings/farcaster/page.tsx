@@ -2,7 +2,6 @@
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
 import { useAioha } from "@aioha/react-ui";
-import { isAdmin } from "@/lib/utils/adminCheck";
 import {
     Box,
     Button,
@@ -39,10 +38,6 @@ export default function FarcasterAdminPage() {
     const userName = useMemo(() => {
         return typeof user === 'string' ? user : (user?.name || user?.username);
     }, [user]);
-
-    const userIsAdmin = useMemo(() => {
-        return userName ? isAdmin(userName) : false;
-    }, [userName]);
 
     const loadNotificationsQueue = useMemo(() => async () => {
         if (!userName) return;
@@ -82,7 +77,8 @@ export default function FarcasterAdminPage() {
                     title: customNotification.title,
                     body: customNotification.body,
                     sourceUrl: customNotification.targetUrl,
-                    broadcast: true
+                    broadcast: true,
+                    adminUsername: userName
                 }),
             });
 
@@ -138,7 +134,8 @@ export default function FarcasterAdminPage() {
                     type: "test",
                     title: "Test Notification",
                     body: "This is a test notification from SkateHive.",
-                    sourceUrl: "https://skatehive.app"
+                    sourceUrl: "https://skatehive.app",
+                    adminUsername: userName
                 }),
             });
             const result = await response.json();
@@ -169,22 +166,13 @@ export default function FarcasterAdminPage() {
         );
     }
 
-    if (!userIsAdmin) {
-        return (
-            <Container minH="100vh" maxW="lg" bg="gray.900" color="white" py={8}>
-                <Alert status="error">
-                    <AlertIcon />
-                    <AlertTitle>Access Denied</AlertTitle>
-                    <AlertDescription>You don't have permission to access this admin panel.</AlertDescription>
-                </Alert>
-            </Container>
-        );
-    }
+    // Note: We don't check admin status client-side since it can be bypassed
+    // All security is enforced server-side in the API endpoints
 
     return (
         <Container minH="100vh" maxW="lg" bg="gray.900" color="white" py={8}>
             <Heading size="lg" mb={2}>🛹 Farcaster Admin Panel</Heading>
-            <Text color="gray.400" mb={8}>Admin tools for managing Farcaster notifications</Text>
+            <Text color="primary" mb={8}>Admin tools for managing Farcaster notifications</Text>
 
             {/* Account Management */}
             <FarcasterAccountLink
@@ -196,6 +184,17 @@ export default function FarcasterAdminPage() {
             <Box bg="gray.800" p={6} rounded="lg" mt={6}>
                 <Heading size="md" mb={4}>🔧 Admin Tools</Heading>
 
+                <Alert status="info" mb={6} bg="blue.900" borderColor="blue.600">
+                    <AlertIcon />
+                    <Box>
+                        <AlertTitle>Security Notice</AlertTitle>
+                        <AlertDescription>
+                            Admin functions are protected server-side. Only authorized users can send notifications.
+                            If you're not an admin, these functions will fail with an unauthorized error.
+                        </AlertDescription>
+                    </Box>
+                </Alert>
+
                 <Stack direction="row" spacing={4} mb={6}>
                     <Button colorScheme="blue" onClick={handleTestNotification} isLoading={saving}>
                         Send Test Notification
@@ -205,7 +204,7 @@ export default function FarcasterAdminPage() {
                 {/* Custom Notification Section */}
                 <Box mt={8}>
                     <Heading size="sm" mb={4}>📢 Send Custom Notification</Heading>
-                    <Text color="gray.400" mb={4}>Send an announcement to all users</Text>
+                    <Text color="primary" mb={4}>Send an announcement to all users</Text>
 
                     <Stack spacing={4}>
                         <Box>
@@ -264,138 +263,6 @@ export default function FarcasterAdminPage() {
                         </Button>
                     </Stack>
                 </Box>
-
-                {/* Database Management Section */}
-                <Box mt={8}>
-                    <Heading size="sm" mb={4}>🗄️ Database Management</Heading>
-                    <Text color="gray.400" mb={4}>Monitor and clean up notification logs to prevent database bloat</Text>
-
-                    <Stack direction="row" spacing={4}>
-                        <Button
-                            onClick={async () => {
-                                setSaving(true);
-                                setEventLogs(logs => [...logs, `Database stats requested at ${new Date().toLocaleTimeString()}`]);
-
-                                try {
-                                    const response = await fetch('/api/farcaster/cleanup', {
-                                        method: 'POST',
-                                        headers: {
-                                            'Authorization': 'Bearer cron-secret-key',
-                                            'Content-Type': 'application/json',
-                                        },
-                                        body: JSON.stringify({ action: 'stats' }),
-                                    });
-
-                                    const result = await response.json();
-
-                                    if (result.success) {
-                                        setEventLogs(logs => [...logs,
-                                        `Database Stats: ${result.stats.notificationLogCount} deduplication logs, ${result.stats.analyticsLogCount} analytics logs`
-                                        ]);
-                                        toast({
-                                            title: "Database stats retrieved",
-                                            description: `${result.stats.notificationLogCount} deduplication logs, ${result.stats.analyticsLogCount} analytics logs`,
-                                            status: "success",
-                                            duration: 5000,
-                                            isClosable: true,
-                                        });
-                                    } else {
-                                        throw new Error(result.message || 'Failed to get stats');
-                                    }
-                                } catch (error) {
-                                    console.error('Error getting database stats:', error);
-                                    setEventLogs(logs => [...logs, `Database stats error`]);
-                                    toast({
-                                        title: "Error getting database stats",
-                                        status: "error",
-                                        duration: 3000,
-                                        isClosable: true,
-                                    });
-                                } finally {
-                                    setSaving(false);
-                                }
-                            }}
-                            colorScheme="blue"
-                            variant="outline"
-                            size="sm"
-                            isLoading={saving}
-                        >
-                            📊 Get Stats
-                        </Button>
-
-                        <Button
-                            onClick={async () => {
-                                if (!window.confirm("Clean up old notification logs? This will delete logs older than 30-90 days.")) return;
-
-                                setSaving(true);
-                                setEventLogs(logs => [...logs, `Database cleanup started at ${new Date().toLocaleTimeString()}`]);
-
-                                try {
-                                    const response = await fetch('/api/farcaster/cleanup', {
-                                        method: 'POST',
-                                        headers: {
-                                            'Authorization': 'Bearer cron-secret-key',
-                                            'Content-Type': 'application/json',
-                                        },
-                                        body: JSON.stringify({ action: 'cleanup' }),
-                                    });
-
-                                    const result = await response.json();
-
-                                    if (result.success) {
-                                        setEventLogs(logs => [...logs,
-                                        `Cleanup: deleted ${result.results.deduplicationLogsDeleted} deduplication + ${result.results.analyticsLogsDeleted} analytics logs`
-                                        ]);
-                                        toast({
-                                            title: "Database cleanup completed",
-                                            description: `Deleted ${result.results.deduplicationLogsDeleted + result.results.analyticsLogsDeleted} old logs`,
-                                            status: "success",
-                                            duration: 5000,
-                                            isClosable: true,
-                                        });
-                                    } else {
-                                        throw new Error(result.message || 'Cleanup failed');
-                                    }
-                                } catch (error) {
-                                    console.error('Error during cleanup:', error);
-                                    setEventLogs(logs => [...logs, `Database cleanup error`]);
-                                    toast({
-                                        title: "Database cleanup failed",
-                                        status: "error",
-                                        duration: 3000,
-                                        isClosable: true,
-                                    });
-                                } finally {
-                                    setSaving(false);
-                                }
-                            }}
-                            colorScheme="orange"
-                            variant="outline"
-                            size="sm"
-                            isLoading={saving}
-                        >
-                            🧹 Clean Up
-                        </Button>
-                    </Stack>
-                </Box>
-
-                <Box mt={8}>
-                    <Heading size="sm" mb={2}>Last 5 Unread Notifications</Heading>
-                    {notificationsQueue.length === 0 ? (
-                        <Text color="gray.400">No unread notifications.</Text>
-                    ) : (
-                        <Stack spacing={2}>
-                            {notificationsQueue.map((notif, idx) => (
-                                <Box key={idx} p={2} bg="gray.700" rounded="md">
-                                    <Text fontSize="sm" fontWeight="bold">{notif.type}</Text>
-                                    <Text fontSize="sm">{notif.message || notif.body}</Text>
-                                    <Text fontSize="xs" color="gray.400">{notif.timestamp ? new Date(notif.timestamp).toLocaleString() : ""}</Text>
-                                </Box>
-                            ))}
-                        </Stack>
-                    )}
-                </Box>
-
                 <Box mt={8}>
                     <Heading size="sm" mb={2}>Event Logs</Heading>
                     <Stack spacing={1} fontSize="xs">
