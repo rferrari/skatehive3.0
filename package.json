@@ -44,6 +44,7 @@
     "crypto-browserify": "^3.12.1",
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.13",
+    "diff-match-patch": "^1.0.5",
     "ethers": "^6.14.3",
     "framer-motion": "^6.5.1",
     "gasp": "^0.0.2",
@@ -79,6 +80,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.8",
+    "@types/diff-match-patch": "^1.0.36",
     "@types/html-to-text": "^9.0.4",
     "@types/node": "^22.15.29",
     "@types/nodemailer": "^6.4.17",

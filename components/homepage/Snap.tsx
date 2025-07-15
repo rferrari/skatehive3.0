@@ -6,29 +6,31 @@ import {
   Avatar,
   Link,
   VStack,
-  Flex,
-  Slider,
-  SliderTrack,
-  SliderFilledTrack,
-  SliderThumb,
   Tooltip,
   useToast,
-  Image,
   Popover,
   PopoverTrigger,
   PopoverContent,
   PopoverArrow,
   PopoverBody,
   useDisclosure,
+  IconButton,
+  Textarea,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  ModalCloseButton,
 } from "@chakra-ui/react";
 import { Discussion } from "@hiveio/dhive";
 import { FaRegComment } from "react-icons/fa";
-import { LuArrowUpRight } from "react-icons/lu";
 import { useAioha } from "@aioha/react-ui";
-import { useState, useMemo } from "react";
+import { KeyTypes } from "@aioha/aioha";
+import { useState, useMemo, useCallback } from "react";
 import {
   getPayoutValue,
-  calculateUserVoteValue,
 } from "@/lib/hive/client-functions";
 import markdownRenderer from "@/lib/utils/MarkdownRenderer";
 import { getPostDate } from "@/lib/utils/GetPostDate";
@@ -38,9 +40,11 @@ import SnapComposer from "./SnapComposer";
 import VoteSlider from "../shared/VoteSlider";
 import { FaLink } from "react-icons/fa6";
 import useHivePower from "@/hooks/useHivePower";
-import VoteListPopover from "@/components/blog/VoteListModal";
 import { fetchComments } from "@/lib/hive/fetchComments";
 import { separateContent } from "@/lib/utils/snapUtils";
+import { SlPencil } from "react-icons/sl";
+import { Operation } from "@hiveio/dhive";
+import { diff_match_patch } from "diff-match-patch";
 
 
 const renderMedia = (mediaContent: string) => {
@@ -153,6 +157,11 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
     Record<string, boolean>
   >({});
 
+  // Edit mode states
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedContent, setEditedContent] = useState(discussion.body);
+  const [isSaving, setIsSaving] = useState(false);
+
   const effectiveDepth = discussion.depth || 0;
 
   const { text, media } = useMemo(
@@ -167,11 +176,120 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
     ) || false
   );
 
+  // Diff match patch instance
+  const dmp = useMemo(() => new diff_match_patch(), []);
+
+  const createPatch = useCallback(
+    (originalContent: string, editedContent: string) => {
+      const patch = dmp.patch_make(originalContent, editedContent);
+
+      if (patch.length > 0) {
+        const patchString = dmp.patch_toText(patch);
+        const patchedContent = dmp.patch_apply(patch, originalContent);
+        if (!patchedContent[1].some((change: boolean) => !change)) {
+          return patchString;
+        }
+      }
+
+      return null;
+    },
+    [dmp]
+  );
+
   function handleConversation() {
     if (setConversation) {
       setConversation(discussion);
     }
   }
+
+  const handleEditClick = useCallback(() => {
+    setEditedContent(discussion.body);
+    setIsEditing(true);
+  }, [discussion.body]);
+
+  const handleCancelEdit = useCallback(() => {
+    setEditedContent(discussion.body);
+    setIsEditing(false);
+  }, [discussion.body]);
+
+  const handleSaveEdit = useCallback(async () => {
+    if (!user || editedContent === discussion.body) {
+      setIsEditing(false);
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      // Check if no changes were made
+      if (editedContent.trim() === discussion.body.trim()) {
+        toast({
+          title: "No changes detected",
+          description: "Please make some changes before saving.",
+          status: "warning",
+          duration: 3000,
+          isClosable: true,
+        });
+        setIsSaving(false);
+        return;
+      }
+
+      // Parse existing metadata
+      let parsedMetadata: any = {};
+      try {
+        parsedMetadata = JSON.parse(discussion.json_metadata || '{}');
+      } catch (e) {
+        console.warn('Failed to parse existing metadata, using empty object');
+      }
+
+      const operation: Operation = [
+        "comment",
+        {
+          parent_author: discussion.parent_author || "",
+          parent_permlink: discussion.parent_permlink || "",
+          author: user,
+          permlink: discussion.permlink,
+          title: discussion.title || "",
+          body: editedContent,
+          json_metadata: JSON.stringify(parsedMetadata),
+        },
+      ];
+
+      console.log('Broadcasting edit operation:', operation);
+
+      // Use aioha to broadcast the edit
+      const result = await aioha.signAndBroadcastTx([operation], KeyTypes.Posting);
+
+      console.log('Broadcast result:', result);
+
+      if (result && !result.error) {
+        toast({
+          title: "Post updated successfully!",
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+        });
+
+        // Update the local discussion body
+        discussion.body = editedContent;
+        setIsEditing(false);
+      } else {
+        const errorMessage = result?.error?.message || result?.message || "Failed to update post";
+        throw new Error(errorMessage);
+      }
+    } catch (error: any) {
+      console.error("Error updating post:", error);
+      toast({
+        title: "Failed to update post",
+        description: error.message || "An unknown error occurred",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  }, [user, editedContent, discussion, aioha, toast]);
 
   const handleSharePost = async () => {
     // Validate permlink to prevent [object Object] URLs
@@ -289,17 +407,32 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
               {discussion.author}
             </Text>
           </Link>
-          <HStack ml={0} width="100%">
-            <Text fontWeight="medium" fontSize="sm" color="gray">
-              · {commentDate}
-            </Text>
-            <FaLink
-              size={16}
-              color="gray"
-              cursor="pointer"
-              onClick={handleSharePost}
-              style={{ marginRight: "2px" }}
-            />
+          <HStack ml={0} width="100%" justify="space-between">
+            <HStack>
+              <Text fontWeight="medium" fontSize="sm" color="gray">
+                · {commentDate}
+              </Text>
+              <FaLink
+                size={16}
+                color="gray"
+                cursor="pointer"
+                onClick={handleSharePost}
+                style={{ marginRight: "2px" }}
+              />
+            </HStack>
+            {user === discussion.author && (
+              <Button
+                leftIcon={<SlPencil />}
+                size="sm"
+                variant="ghost"
+                aria-label="Edit post"
+                onClick={handleEditClick}
+                _active={{ bg: "none" }}
+                _hover={{ bg: "none" }}
+              >
+                Edit
+              </Button>
+            )}
           </HStack>
         </HStack>
         <Box>
@@ -311,6 +444,57 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
           />
           <Box>{renderedMedia}</Box>
         </Box>
+
+        {/* Edit Modal */}
+        <Modal isOpen={isEditing} onClose={handleCancelEdit} size="xl">
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader>Edit Post</ModalHeader>
+            <ModalCloseButton />
+            <ModalBody>
+              <VStack spacing={4}>
+                <Textarea
+                  value={editedContent}
+                  onChange={(e) => setEditedContent(e.target.value)}
+                  placeholder="Edit your post content..."
+                  minHeight="300px"
+                  resize="vertical"
+                />
+                <Box width="100%" p={4} bg="gray.50" borderRadius="md">
+                  <Text fontSize="sm" fontWeight="bold" mb={2}>
+                    Preview:
+                  </Text>
+                  <Box
+                    dangerouslySetInnerHTML={{
+                      __html: markdownRenderer(editedContent)
+                    }}
+                    sx={{
+                      p: { marginBottom: "1rem", lineHeight: "1.6" },
+                    }}
+                  />
+                </Box>
+              </VStack>
+            </ModalBody>
+            <ModalFooter>
+              <Button
+                variant="ghost"
+                mr={3}
+                onClick={handleCancelEdit}
+                disabled={isSaving}
+              >
+                Cancel
+              </Button>
+              <Button
+                colorScheme="blue"
+                onClick={handleSaveEdit}
+                isLoading={isSaving}
+                loadingText="Saving..."
+              >
+                Save Changes
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
 
         {!showSlider && (
           <HStack justify="center" spacing={8} mt={3}>
