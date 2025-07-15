@@ -790,6 +790,13 @@ export default function PostCard({
                     post={post}
                   />
                 </Flex>
+
+                <Flex alignItems="center">
+                  <Icon as={FaComment} />
+                  <Text ml={2} fontSize="sm">
+                    {post.children}
+                  </Text>
+                </Flex>
                 <Popover
                   placement="top"
                   isOpen={isPayoutOpen}
@@ -840,12 +847,6 @@ export default function PostCard({
                     </PopoverBody>
                   </PopoverContent>
                 </Popover>
-                <Flex alignItems="center">
-                  <Icon as={FaComment} />
-                  <Text ml={2} fontSize="sm">
-                    {post.children}
-                  </Text>
-                </Flex>
               </Flex>
             )}
           </Box>
