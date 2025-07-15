@@ -15,6 +15,11 @@ import {
   PopoverBody,
   useDisclosure,
   IconButton,
+  MenuButton,
+  MenuItem,
+  Menu,
+  MenuList,
+  color,
 } from "@chakra-ui/react";
 import { Discussion } from "@hiveio/dhive";
 import { FaRegComment } from "react-icons/fa";
@@ -30,6 +35,7 @@ import VideoRenderer from "../layout/VideoRenderer";
 import SnapComposer from "./SnapComposer";
 import VoteSlider from "../shared/VoteSlider";
 import EditPostModal from "./EditPostModal";
+import ShareMenuButtons from "./ShareMenuButtons";
 import { FaLink } from "react-icons/fa6";
 import useHivePower from "@/hooks/useHivePower";
 import { fetchComments } from "@/lib/hive/fetchComments";
@@ -37,6 +43,7 @@ import { separateContent } from "@/lib/utils/snapUtils";
 import { SlPencil } from "react-icons/sl";
 import { usePostEdit } from "@/hooks/usePostEdit";
 import { parsePayout, calculatePayoutDays, deduplicateVotes } from "@/lib/utils/postUtils";
+import { BiDotsHorizontal } from "react-icons/bi";
 
 
 const renderMedia = (mediaContent: string) => {
@@ -178,26 +185,6 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
     }
   }
 
-  const handleSharePost = async () => {
-    // Validate permlink to prevent [object Object] URLs
-    if (typeof discussion.permlink !== "string") {
-      console.error(
-        "🚨 Snap: Invalid permlink type:",
-        typeof discussion.permlink
-      );
-      return;
-    }
-
-    const postLink = `${window.location.origin}/post/${discussion.author}/${discussion.permlink}`;
-    await navigator.clipboard.writeText(postLink);
-    toast({
-      title: "Post link copied to clipboard.",
-      status: "success",
-      duration: 3000,
-      isClosable: true,
-    });
-  };
-
   function handleInlineNewReply(newComment: Partial<Discussion>) {
     const newReply = newComment as Discussion;
     setInlineRepliesMap((prev) => ({
@@ -272,31 +259,45 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
               {discussion.author}
             </Text>
           </Link>
-          <HStack>
-            <Text fontWeight="medium" fontSize="sm" color="gray">
-              · {commentDate}
-            </Text>
-            <FaLink
-              size={16}
-              color="gray"
-              cursor="pointer"
-              onClick={handleSharePost}
-              style={{ marginRight: "2px" }}
-            />
-            {user === discussion.author && (
-              <IconButton
-                icon={<SlPencil />}
-                size="sm"
-                variant="ghost"
-                aria-label="Edit post"
-                onClick={handleEditClick}
-                _active={{ bg: "none" }}
-                _hover={{ bg: "none" }}
-                ml={-3}
-              />
-            )}
-          </HStack>
+          <HStack ml={0} width="100%" justify="space-between">
+            <HStack>
+              <Text fontWeight="medium" fontSize="sm" color="gray">
+                · {commentDate}
+              </Text>
+            </HStack>
 
+
+          </HStack>
+          <Menu >
+            <MenuButton
+              as={IconButton}
+              aria-label="Edit post"
+              icon={<BiDotsHorizontal />}
+              size="sm"
+              variant="ghost"
+              _active={{ bg: "none" }}
+              _hover={{ bg: "none" }}
+              bg={"background"}
+              color={"primary"}
+            />
+            <MenuList bg={"background"}
+              color={"primary"}>
+
+              {user === discussion.author && (
+                <MenuItem onClick={handleEditClick} bg={"background"}
+                  color={"primary"}>
+                  <SlPencil style={{ marginRight: '8px' }} />
+                  Edit
+                </MenuItem>
+              )}
+              <ShareMenuButtons
+                comment={{
+                  author: discussion.author,
+                  permlink: discussion.permlink
+                }}
+              />
+            </MenuList>
+          </Menu>
         </HStack>
         <Box>
           <Box

@@ -46,11 +46,7 @@ const ShareMenuButtons = ({
 
   const handleShare = (platform: string) => {
     let shareUrl = "";
-    if (platform === "facebook") {
-      shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
-        postLink
-      )}`;
-    } else if (platform === "x") {
+    if (platform === "x") {
       shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(
         postLink
       )}`;
@@ -73,19 +69,15 @@ const ShareMenuButtons = ({
 
   return (
     <>
-      <MenuItem onClick={() => handleShare("facebook")}>
-        <FaFacebook style={{ marginRight: '8px' }} />
-        Share on Facebook
-      </MenuItem>
-      <MenuItem onClick={() => handleShare("x")}>
+      <MenuItem onClick={() => handleShare("x")} bg={"background"} color={"primary"}>
         <FaTwitter style={{ marginRight: '8px' }} />
         Share on X
       </MenuItem>
-      <MenuItem onClick={() => handleShare("farcaster")}>
+      <MenuItem onClick={() => handleShare("farcaster")} bg={"background"} color={"primary"}>
         <FarcasterIcon size={16} />
         <span style={{ marginLeft: '8px' }}>Share on Farcaster</span>
       </MenuItem>
-      <MenuItem onClick={() => handleShare("copy")}>
+      <MenuItem onClick={() => handleShare("copy")} bg={"background"} color={"primary"}>
         <FaLink style={{ marginRight: '8px' }} />
         Copy Link
       </MenuItem>
