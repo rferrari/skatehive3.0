@@ -19,7 +19,6 @@ import {
   MenuItem,
   Menu,
   MenuList,
-  color,
 } from "@chakra-ui/react";
 import { Discussion } from "@hiveio/dhive";
 import { FaRegComment } from "react-icons/fa";
@@ -34,7 +33,6 @@ import SnapComposer from "./SnapComposer";
 import VoteSlider from "../shared/VoteSlider";
 import EditPostModal from "./EditPostModal";
 import ShareMenuButtons from "./ShareMenuButtons";
-import { FaLink } from "react-icons/fa6";
 import useHivePower from "@/hooks/useHivePower";
 import { fetchComments } from "@/lib/hive/fetchComments";
 import { separateContent } from "@/lib/utils/snapUtils";
