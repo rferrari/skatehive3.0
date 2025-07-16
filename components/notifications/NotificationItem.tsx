@@ -419,12 +419,16 @@ export default function NotificationItem({
                   flexWrap="wrap"
                   noOfLines={2}
                   wordBreak="break-word"
+                  maxW={{ base: "95vw", md: "100%" }}
+                  overflowX="hidden"
                 >
                   <Link
                     href={`/user/${author}`}
                     color={isNew ? "accent" : "primary"}
                     fontWeight="bold"
                     _hover={{ textDecoration: "underline" }}
+                    maxW={{ base: "40vw", md: "100%" }}
+                    overflowWrap="anywhere"
                   >
                     {notification.msg.replace(/^@/, "").split(" ")[0]}
                   </Link>
@@ -437,6 +441,8 @@ export default function NotificationItem({
                     fontWeight="bold"
                     _hover={{ textDecoration: "underline" }}
                     ml={{ base: 0.5, md: 1 }}
+                    maxW={{ base: "30vw", md: "100%" }}
+                    overflowWrap="anywhere"
                   >
                     comment
                   </Link>
@@ -450,13 +456,15 @@ export default function NotificationItem({
                       isTruncated
                       verticalAlign="middle"
                       display="inline-block"
+                      maxW={{ base: "40vw", md: "100%" }}
+                      overflowWrap="anywhere"
                     >
                       {(() => {
                         const replaced = parentPost.body
                           .replace(/!\[.*?\]\(.*?\)/g, "🖼️")
                           .replace(/<img[^>]*>/gi, "🖼️")
                           .replace(/\n/g, " ");
-                        return `"${replaced.slice(0, 100)}${replaced.length > 100 ? "…" : ""}"`;
+                        return `"${replaced.slice(0, 60)}${replaced.length > 60 ? "…" : ""}"`;
                       })()}
                     </Text>
                   )}
@@ -466,12 +474,15 @@ export default function NotificationItem({
                 {reply && (
                   <Box
                     mt={1}
-                    ml={4}
-                    pl={3}
+                    ml={{ base: 2, md: 4 }}
+                    pl={{ base: 2, md: 3 }}
+                    pr={{ base: 2, md: 0 }}
                     borderLeft="2px solid"
                     borderColor="border"
                     bg="muted"
                     borderRadius="0"
+                    maxW={{ base: "95vw", md: "100%" }}
+                    overflowX="auto"
                   >
                     <HiveMarkdown markdown={postContent} className="notification-reply-comment-markdown" />
                   </Box>

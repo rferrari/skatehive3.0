@@ -82,10 +82,7 @@ export default function ProfileHeader({
             )}
 
             <Box
-                position={{ base: "static", md: "absolute" }}
-                left={{ base: "auto", md: 0 }}
-                top={{ base: "auto", md: "-60px" }}
-                transform={{ base: "none", md: "none" }}
+                position="relative"
                 display="flex"
                 flexDirection="row"
                 alignItems="center"
@@ -97,43 +94,107 @@ export default function ProfileHeader({
                 w={{ base: "100%", md: "auto" }}
                 mt={{ base: "-32px", md: 0 }}
             >
-                <Avatar
-                    src={profileData.profileImage}
-                    name={username}
-                    borderRadius="md"
-                    boxSize="100px"
-                    mr={{ base: 0, md: 4 }}
-                    mb={{ base: 2, md: 0 }}
-                />
-                {profileData.about && (
-                    <Box position="relative" ml={{ base: 0, md: 2 }} p={0} m={0}>
-                        <Box
-                            bg="muted"
-                            color="text"
-                            px={4}
-                            py={3}
-                            borderRadius="lg"
-                            boxShadow="md"
-                            maxW="180px"
-                            fontSize="0.625rem"
-                            fontStyle="italic"
-                            cursor="pointer"
-                            onClick={speakDescription}
-                            noOfLines={4}
-                            _after={{
-                                content: '""',
-                                position: "absolute",
-                                left: "-16px",
-                                top: "24px",
-                                borderWidth: "8px",
-                                borderStyle: "solid",
-                                borderColor: "transparent",
-                                borderRightColor: "muted",
-                            }}
-                        >
-                            {profileData.about}
-                        </Box>
+                {/* Avatar wrapper for relative positioning */}
+                <Box position="relative" display="inline-block">
+                  <Avatar
+                      src={profileData.profileImage}
+                      name={username}
+                      borderRadius="md"
+                      boxSize="100px"
+                      mr={{ base: 0, md: 4 }}
+                      mb={{ base: 2, md: 0 }}
+                  />
+                  {profileData.about && (
+                    <Box
+                      display={{ base: "block", md: "none" }}
+                      position="absolute"
+                      left="100%"
+                      top="50%"
+                      transform="translateY(-50%)"
+                      ml={2}
+                      bg="muted"
+                      color="text"
+                      px={4}
+                      py={3}
+                      borderRadius="lg"
+                      boxShadow="md"
+                      maxW={{ base: "80vw", sm: "60vw" }}
+                      minW="120px"
+                      width="auto"
+                      fontSize="0.625rem"
+                      fontStyle="italic"
+                      cursor="pointer"
+                      onClick={speakDescription}
+                      noOfLines={4}
+                      _after={{
+                        content: '""',
+                        position: "absolute",
+                        left: "-16px",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        borderWidth: "8px",
+                        borderStyle: "solid",
+                        borderColor: "transparent",
+                        borderRightColor: "muted",
+                      }}
+                      sx={{
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'normal',
+                      }}
+                    >
+                      {profileData.about}
                     </Box>
+                  )}
+                </Box>
+                {/* Desktop: keep current row layout */}
+                {profileData.about && (
+                  <Box
+                    display={{ base: "none", md: "block" }}
+                    position="relative"
+                    ml={2}
+                    p={0}
+                    m={0}
+                  >
+                    <Box
+                      bg="muted"
+                      color="text"
+                      px={4}
+                      py={3}
+                      borderRadius="lg"
+                      boxShadow="md"
+                      maxW="180px"
+                      fontSize="0.625rem"
+                      fontStyle="italic"
+                      cursor="pointer"
+                      onClick={speakDescription}
+                      noOfLines={4}
+                      _after={{
+                        content: '""',
+                        position: "absolute",
+                        left: "-16px",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        borderWidth: "8px",
+                        borderStyle: "solid",
+                        borderColor: "transparent",
+                        borderRightColor: "muted",
+                      }}
+                      sx={{
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'normal',
+                      }}
+                    >
+                      {profileData.about}
+                    </Box>
+                  </Box>
                 )}
             </Box>
 
