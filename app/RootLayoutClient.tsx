@@ -70,10 +70,33 @@ function InnerLayout({ children }: { children: React.ReactNode }) {
   const isMobile = useBreakpointValue({ base: true, md: false });
 
   return (
-    <Container maxW={{ base: "100%", md: "container.xl" }} p={0}>
+    <Container
+      maxW={{ base: "100%", md: "container.xl" }}
+      p={0}
+      overflowX="hidden"
+      sx={{
+        '&::-webkit-scrollbar': { display: 'none' },
+        scrollbarWidth: 'none',
+        msOverflowStyle: 'none',
+      }}
+    >
       <Flex direction={{ base: "column", md: "row" }} minH="100vh">
         <Sidebar />
-        <Box flex="1" overflowY="auto" height="100vh">
+        <Box
+          flex="1"
+          overflowY="auto"
+          overflowX="hidden"
+          height="100vh"
+          sx={{
+            '&::-webkit-scrollbar': {
+              display: 'none',
+              width: '0',
+              height: '0'
+            },
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+          }}
+        >
           {children}
         </Box>
       </Flex>

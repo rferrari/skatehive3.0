@@ -20,6 +20,7 @@ import {
 } from "@chakra-ui/react";
 import { AiohaModal, useAioha } from "@aioha/react-ui";
 import { KeyTypes } from "@aioha/aioha";
+import { useProfile } from '@farcaster/auth-kit';
 import "@aioha/react-ui/dist/build.css";
 import { convertVestToHive } from "@/lib/hive/client-functions";
 import { extractNumber } from "@/lib/utils/extractNumber";
@@ -35,7 +36,7 @@ import EthereumAssetsSection from "./EthereumAssetsSection";
 import NFTSection from "./NFTSection";
 import WalletSummary from "./WalletSummary";
 import ConnectHiveSection from "./ConnectHiveSection";
-import { PortfolioProvider } from "@/contexts/PortfolioContext";
+import { PortfolioProvider, usePortfolioContext } from "@/contexts/PortfolioContext";
 
 interface MainWalletProps {
   username?: string;
@@ -48,6 +49,9 @@ export default function MainWallet({ username }: MainWalletProps) {
   const { handleConfirm, handleClaimHbdInterest } = useWalletActions();
   const { isConnected, address } = useAccount();
   const { colorMode } = useColorMode();
+
+  // Get Farcaster profile for wallet integration
+  const { isAuthenticated: isFarcasterConnected, profile: farcasterProfile } = useProfile();
 
   // Prevent hydration mismatch by tracking if component is mounted
   const [isMounted, setIsMounted] = useState(false);
@@ -249,12 +253,16 @@ export default function MainWallet({ username }: MainWalletProps) {
     );
   }
 
-  // Only calculate Hive balances if user is connected to Hive - using the new memoized version above
 
   return (
     <>
-      <PortfolioProvider address={isConnected ? address : undefined}>
-        <Box w="100%" maxW="100vw" overflowX="hidden">
+      <PortfolioProvider
+        address={isConnected ? address : undefined}
+        farcasterAddress={isFarcasterConnected ? farcasterProfile?.custody : undefined}
+        farcasterVerifiedAddresses={isFarcasterConnected ? farcasterProfile?.verifications : undefined}
+      >
+        <Box w="100%" maxW="100vw" overflowX="hidden" sx={{ scrollbarWidth: "none" }}>
+
           <Grid
             templateColumns={{ base: "1fr", md: "2fr 1fr" }}
             gap={{ base: 4, md: 6 }}
@@ -379,6 +387,45 @@ export default function MainWallet({ username }: MainWalletProps) {
                             isBankView={true}
                           />
                         </Box>
+
+                        {/* PIX Integration Section */}
+                        <Box
+                          p={4}
+                          bg="background"
+                          borderRadius="lg"
+                          border="1px solid"
+                          borderColor="muted"
+                        >
+                          <Heading size="sm" mb={2} color="primary" display="flex" alignItems="center" gap={2}>
+                            🇧🇷 PIX Integration
+                          </Heading>
+                          <Text fontSize="sm" color="text" mb={3}>
+                            Buy and sell HBD instantly using PIX (Brazilian Real). Fast, secure, and convenient for Brazilian users!
+                          </Text>
+                          <Box
+                            as="button"
+                            onClick={() => window.open('https://pixbee-hive.vercel.app/', '_blank')}
+                            w="100%"
+                            p={3}
+                            bg="primary"
+                            color="background"
+                            borderRadius="md"
+                            border="none"
+                            cursor="pointer"
+                            fontWeight="bold"
+                            fontSize="sm"
+                            transition="all 0.2s"
+                            _hover={{
+                              opacity: 0.8,
+                              transform: "translateY(-1px)"
+                            }}
+                            _active={{
+                              transform: "translateY(0px)"
+                            }}
+                          >
+                            🇧🇷 Buy and Sell HBD with PIX
+                          </Box>
+                        </Box>
                       </VStack>
                     </TabPanel>
                   )}
@@ -405,6 +452,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                 onConnectEthereum={openConnectModal}
                 onConnectHive={handleConnectHive}
               />
+
               <ConnectModal
                 isOpen={isConnectModalOpen}
                 onClose={closeConnectModal}

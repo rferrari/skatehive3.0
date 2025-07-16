@@ -7,8 +7,12 @@ import {
     Spinner,
     Divider,
     IconButton,
+    Badge,
+    useToast,
+    Center,
 } from "@chakra-ui/react";
 import { useAccount, useDisconnect } from "wagmi";
+import { useProfile, useSignIn } from '@farcaster/auth-kit';
 import { FaEthereum } from "react-icons/fa";
 import {
     Name,
@@ -16,7 +20,10 @@ import {
     IdentityResolver,
 } from "@paperclip-labs/whisk-sdk/identity";
 import { usePortfolioContext } from "../../contexts/PortfolioContext";
+import { PortfolioData } from "../../types/portfolio";
 import { formatValue } from "../../lib/utils/portfolioUtils";
+import { WalletDistributionChart } from "./WalletDistributionChart";
+import FarcasterSignIn from "../farcaster/FarcasterSignIn";
 import { IoLogOutSharp } from "react-icons/io5";
 import { memo, useCallback, useMemo } from "react";
 
@@ -36,8 +43,29 @@ const WalletSummary = memo(function WalletSummary({
     onConnectHive,
 }: WalletSummaryProps) {
     const { isConnected: isEthConnected, address } = useAccount();
-    const { portfolio } = usePortfolioContext();
+    const { isAuthenticated: isFarcasterConnected, profile: farcasterProfile } = useProfile();
+    const { signOut: farcasterSignOut } = useSignIn({});
+    const { aggregatedPortfolio, farcasterPortfolio, farcasterVerifiedPortfolios, portfolio } = usePortfolioContext();
     const { disconnect } = useDisconnect();
+    const toast = useToast();
+
+    // Farcaster success handler
+    const handleFarcasterSuccess = useCallback((profile: {
+        fid: number;
+        username: string;
+        displayName?: string;
+        pfpUrl?: string;
+        bio?: string;
+        custody?: `0x${string}`;
+        verifications?: string[];
+    }) => {
+        const walletInfo = profile.custody ? ` (Wallet: ${profile.custody.slice(0, 6)}...${profile.custody.slice(-4)})` : '';
+        toast({
+            status: "success",
+            title: "Connected to Farcaster!",
+            description: `Welcome @${profile.username}! FID: ${profile.fid}${walletInfo}`,
+        });
+    }, [toast]);
 
     // Memoize constants
     const resolverOrder = useMemo(() => [
@@ -52,24 +80,35 @@ const WalletSummary = memo(function WalletSummary({
 
     // Memoize calculations
     const calculations = useMemo(() => {
-        const ethValue = portfolio?.totalNetWorth || 0;
-        const totalValue = totalHiveValue + ethValue;
-        return { ethValue, totalValue };
-    }, [portfolio?.totalNetWorth, totalHiveValue]);
+        const digitalAssetsValue = aggregatedPortfolio?.totalNetWorth || 0;
+        const totalValue = totalHiveValue + digitalAssetsValue;
+        return { digitalAssetsValue, totalValue };
+    }, [aggregatedPortfolio?.totalNetWorth, totalHiveValue]);
 
     // Memoize connection status
     const connectionStatus = useMemo(() => ({
-        hasWallets: isEthConnected || !!hiveUsername,
+        hasWallets: isEthConnected || !!hiveUsername || isFarcasterConnected,
         needsEthereum: !isEthConnected,
         needsHive: !hiveUsername,
-    }), [isEthConnected, hiveUsername]);
+        needsFarcaster: !isFarcasterConnected,
+        hasDigitalAssets: isEthConnected || isFarcasterConnected,
+    }), [isEthConnected, hiveUsername, isFarcasterConnected]);
 
     // Memoized event handlers
     const handleDisconnect = useCallback(() => {
         disconnect();
     }, [disconnect]);
 
-    const ethValue = calculations.ethValue;
+    const handleFarcasterDisconnect = useCallback(() => {
+        farcasterSignOut();
+        toast({
+            status: "info",
+            title: "Disconnected from Farcaster",
+            description: "Your Farcaster account has been disconnected.",
+        });
+    }, [farcasterSignOut, toast]);
+
+    const digitalAssetsValue = calculations.digitalAssetsValue;
     const totalValue = calculations.totalValue;
 
     // Case 1: No wallets connected
@@ -116,63 +155,46 @@ const WalletSummary = memo(function WalletSummary({
             borderRadius="md"
             border="2px solid"
             borderColor="primary"
+            overflow="visible"
+            position="relative"
         >
-            <Text fontSize="sm" color="primary" mb={2} textAlign="center">
-                Total Portfolio Value
-            </Text>
-            {isPriceLoading ? (
-                <Spinner size="sm" color="primary" mx="auto" mb={4} />
-            ) : (
-                <Text fontSize="2xl" fontWeight="bold" color="primary" textAlign="center" mb={4}>
-                    {formatValue(totalValue)}
-                </Text>
-            )}
 
-            <VStack spacing={3} align="stretch">
-                {/* Hive Section */}
-                {hiveUsername && (
-                    <Box>
-                        <HStack justify="space-between" align="center">
-                            <Text fontSize="sm" color="text">
-                                Hive Assets
-                            </Text>
-                            {isPriceLoading ? (
-                                <Spinner size="xs" color="primary" />
-                            ) : (
-                                <Text fontSize="md" fontWeight="bold" color="primary">
-                                    {formatValue(totalHiveValue)}
-                                </Text>
-                            )}
-                        </HStack>
-                        <Text fontSize="xs" color="gray.400">
-                            @{hiveUsername}
-                        </Text>
-                    </Box>
-                )}
 
-                {/* Ethereum Section */}
+            <VStack spacing={4} align="stretch" overflow="visible">
+                {/* Portfolio Distribution Chart */}
+                <Box overflow="visible">
+                    <WalletDistributionChart
+                        ethPortfolio={portfolio?.totalNetWorth || 0}
+                        farcasterVerifiedPortfolios={farcasterVerifiedPortfolios}
+                        hiveValue={totalHiveValue}
+                        farcasterProfile={farcasterProfile}
+                        connectedEthAddress={address}
+                    />
+                </Box>
+
+                {/* Quick Actions Section */}
                 {isEthConnected && address && (
-                    <Box>
+                    <Box pt={3} borderTop="1px solid" borderColor="gray.600">
                         <HStack justify="space-between" align="center">
-                            <Text fontSize="sm" color="text">
-                                Ethereum Assets
-                            </Text>
-                            <Text fontSize="md" fontWeight="bold" color="primary">
-                                {formatValue(ethValue)}
-                            </Text>
-                        </HStack>
-
-                        <HStack spacing={2}>
-                            <Avatar
-                                address={address}
-                                size={16}
-                                resolverOrder={resolverOrder}
-                            />
-                            <Name
-                                address={address}
-                                resolverOrder={resolverOrder}
-                                style={{ fontSize: "12px", color: "gray" }}
-                            />
+                            <HStack spacing={2}>
+                                <Avatar
+                                    address={address}
+                                    size={16}
+                                    resolverOrder={resolverOrder}
+                                />
+                                <VStack align="start" spacing={0}>
+                                    <Name
+                                        address={address}
+                                        resolverOrder={resolverOrder}
+                                        style={{ fontSize: "12px", color: "gray" }}
+                                    />
+                                    {isFarcasterConnected && farcasterProfile?.custody?.toLowerCase() === address?.toLowerCase() && (
+                                        <Text fontSize="xs" color="purple.300">
+                                            @{farcasterProfile.username}
+                                        </Text>
+                                    )}
+                                </VStack>
+                            </HStack>
                             <IconButton
                                 icon={<IoLogOutSharp />}
                                 color={"red.500"}
@@ -182,7 +204,52 @@ const WalletSummary = memo(function WalletSummary({
                                 onClick={handleDisconnect}
                                 aria-label="Disconnect Ethereum"
                             />
+                        </HStack>
+                    </Box>
+                )}
 
+                {/* Farcaster Section */}
+                {!isFarcasterConnected ? (
+                    <Box pt={3} borderTop="1px solid" borderColor="gray.600">
+                        <Text fontSize="sm" color="purple.300" mb={3} textAlign="center">
+                            Connect Farcaster for Multi-Wallet Portfolio
+                        </Text>
+                        <Center>
+                            <FarcasterSignIn
+                                onSuccess={handleFarcasterSuccess}
+                                variant="button"
+                            />
+                        </Center>
+                    </Box>
+                ) : (
+                    <Box pt={3} borderTop="1px solid" borderColor="gray.600">
+                        <HStack justify="space-between" align="center">
+                            <HStack spacing={2}>
+                                {farcasterProfile?.custody && (
+                                    <Avatar
+                                        address={farcasterProfile.custody}
+                                        size={16}
+                                        resolverOrder={resolverOrder}
+                                    />
+                                )}
+                                <VStack align="start" spacing={0}>
+                                    <Text fontSize="xs" color="purple.300">
+                                        @{farcasterProfile?.username}
+                                    </Text>
+                                    <Text fontSize="xs" color="gray.400">
+                                        FID: {farcasterProfile?.fid}
+                                    </Text>
+                                </VStack>
+                            </HStack>
+                            <IconButton
+                                icon={<IoLogOutSharp />}
+                                color={"red.500"}
+                                size="sm"
+                                variant="ghost"
+                                colorScheme="red"
+                                onClick={handleFarcasterDisconnect}
+                                aria-label="Disconnect Farcaster"
+                            />
                         </HStack>
                     </Box>
                 )}
@@ -190,7 +257,7 @@ const WalletSummary = memo(function WalletSummary({
                 {/* Show connect buttons for missing wallets */}
                 {connectionStatus.hasWallets && (
                     <>
-                        {hiveUsername && isEthConnected && <Divider />}
+                        {(hiveUsername || isEthConnected || isFarcasterConnected) && <Divider />}
 
                         {connectionStatus.needsEthereum && (
                             <Button

@@ -1,34 +1,25 @@
 'use client';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Box, Select, Text, useToast, VStack, Heading, Accordion, AccordionItem, AccordionButton, AccordionPanel, AccordionIcon } from '@chakra-ui/react';
 import { useTheme, ThemeName, themeMap } from '../themeProvider';
 import LottieAnimation from '@/components/shared/LottieAnimation';
 import UpvoteSnapContainer from '@/components/homepage/UpvoteSnapContainer';
 import { useRive, useStateMachineInput } from "@rive-app/react-canvas";
 import LogoMatrix from "../../components/graphics/LogoMatrix";
+import FarcasterAccountLink from '@/components/farcaster/FarcasterAccountLink';
+import { useAioha } from "@aioha/react-ui";
 
-// Reusable FooterNavButton component
-// const FooterNavButton = ({ src }: { src: string }) => {
-//     const STATE_MACHINE_NAME = "ButtonStateMachine";
-//     const TRIGGER_NAME = "click";
-//     const { rive, RiveComponent } = useRive({
-//         src,
-//         stateMachines: STATE_MACHINE_NAME,
-//         autoplay: true,
-//     });
-//     const clickInput = useStateMachineInput(rive, STATE_MACHINE_NAME, TRIGGER_NAME);
-//     return (
-//         <Box textAlign="center">
-//             <Box display="inline-block" cursor="pointer">
-//                 <RiveComponent style={{ width: 60, height: 60 }} onClick={() => clickInput && clickInput.fire()} />
-//             </Box>
-//         </Box>
-//     );
-// };
 
 const Settings = () => {
     const { themeName, setThemeName } = useTheme();
+    const { user } = useAioha();
     const toast = useToast();
+
+    // Memoize user data to prevent re-renders
+    const userData = useMemo(() => ({
+        hiveUsername: typeof user === 'string' ? user : (user?.name || user?.username),
+        postingKey: typeof user === 'object' ? user?.keys?.posting : undefined
+    }), [user]);
 
     // Rive animation setup
     const STATE_MACHINE_NAME = "ButtonStateMachine"; // Update if your state machine is named differently
@@ -72,72 +63,173 @@ const Settings = () => {
     ];
 
     return (
-        <Box p={8} maxW="container.md" mx="auto">
-            <VStack spacing={6} align="stretch">
-                <Heading size="lg" mb={2}>
-                    Settings
-                </Heading>
-                <Box>
-                    <Text mb={2} fontWeight="medium">Theme Selection</Text>
-                    <Select
-                        value={themeName}
-                        onChange={handleThemeChange}
-                        size="lg"
-                        bg="background"
-                        color="primary"
-                        borderColor="primary"
-                        fontWeight="bold"
-                        fontFamily="inherit"
-                        _focus={{ borderColor: 'accent', boxShadow: '0 0 0 2px var(--chakra-colors-accent)' }}
-                        _hover={{ borderColor: 'accent' }}
-                        sx={{
-                            option: {
-                                background: 'var(--chakra-colors-background)',
-                                color: 'var(--chakra-colors-primary)',
-                            },
-                        }}
-                    >
-                        {Object.keys(themeMap).map((theme) => (
-                            <option key={theme} value={theme}>
-                                {formatThemeName(theme)}
-                            </option>
-                        ))}
-                    </Select>
-                </Box>
+        <Box minH="100vh" bg="background" color="primary">
+            <Box maxW="container.md" mx="auto" px={6} py={12}>
+                <VStack spacing={8} align="stretch">
+                    {/* Header */}
+                    <Box textAlign="center" mb={4}>
+                        <Heading size="xl" color="primary" mb={2}>
+                            ⚙️ Settings
+                        </Heading>
+                        <Text color="primary" fontSize="lg">
+                            Customize your SkateHive experience
+                        </Text>
+                    </Box>
 
-                <UpvoteSnapContainer />
-
-                <LottieAnimation src="https://lottie.host/911167fe-726b-4e03-a295-56839461ebc4/WOauo8GTeO.lottie" />
-
-                <Accordion allowToggle>
-                    <AccordionItem border="none">
-                        <h2>
-                            <AccordionButton>
-                                <Box flex="1" textAlign="left">
-                                    <Heading size="md">Generate Private Keys (BETA)</Heading>
-                                </Box>
-                                <AccordionIcon />
-                            </AccordionButton>
-                        </h2>
-                        <AccordionPanel pb={4}>
-                            <Box mt={2} p={4} borderRadius="md" bg="background">
-                                <Text mb={2}>
-                                    <b>Security Notice:</b> When your account was created, the Skatehive team temporarily stored your private keys in a Gmail account to deliver them to you. <b>This is not secure.</b> It is strongly recommended that you generate new private keys and update your Hive account, then store your new keys in a safe place only you control.
+                    {/* Theme Selection Card */}
+                    <Box bg="background" border="1px solid" borderColor="muted" p={6} shadow="sm">
+                        <VStack spacing={4} align="stretch">
+                            <Box>
+                                <Heading size="md" color="primary" mb={1}>
+                                    🎨 Theme Selection
+                                </Heading>
+                                <Text color="primary" fontSize="sm">
+                                    Choose your preferred visual style
                                 </Text>
-                                <Text color="orange.300" mb={4}>
-                                    Permanently change your keys and keep them safe. Never share your private keys with anyone.
-                                </Text>
-                                <Box textAlign="center">
-                                    <Text fontWeight="bold" fontSize="lg" color="gray.500">Coming Soon...</Text>
-                                </Box>
                             </Box>
-                        </AccordionPanel>
-                    </AccordionItem>
-                </Accordion>
-                <Box>
-                    <LogoMatrix />
-                </Box>
-            </VStack>
+                            <Select
+                                value={themeName}
+                                onChange={handleThemeChange}
+                                size="lg"
+                                bg="background"
+                                color="primary"
+                                borderColor="muted"
+                                borderWidth="2px"
+                                fontWeight="semibold"
+                                _focus={{
+                                    borderColor: 'accent',
+                                    boxShadow: '0 0 0 3px rgba(var(--chakra-colors-accent), 0.1)',
+                                    outline: 'none'
+                                }}
+                                _hover={{ borderColor: 'accent' }}
+                                sx={{
+                                    option: {
+                                        background: 'var(--chakra-colors-background)',
+                                        color: 'var(--chakra-colors-primary)',
+                                    },
+                                }}
+                            >
+                                {Object.keys(themeMap).map((theme) => (
+                                    <option key={theme} value={theme}>
+                                        {formatThemeName(theme)}
+                                    </option>
+                                ))}
+                            </Select>
+                        </VStack>
+                    </Box>
+
+                    {/* Farcaster Account Link */}
+                    {userData.hiveUsername && (
+                        <>
+                            <FarcasterAccountLink
+                                hiveUsername={userData.hiveUsername}
+                                postingKey={userData.postingKey}
+                            />
+                            <Box bg="background" border="1px solid" borderColor="muted" p={6} shadow="sm">
+                                <VStack spacing={4} align="stretch">
+                                    <Box>
+                                        <Heading size="md" color="primary" mb={1}>
+                                            🏆 Community
+                                        </Heading>
+                                        <Text color="primary" fontSize="sm">
+                                            Help support the SkateHive community
+                                        </Text>
+                                    </Box>
+                                    <UpvoteSnapContainer />
+                                </VStack>
+                            </Box>
+
+                            {/* Security Section */}
+                            <Box bg="background" border="1px solid" borderColor="muted" shadow="sm">
+                                <Accordion allowToggle>
+                                    <AccordionItem border="none">
+                                        <AccordionButton p={6} _hover={{ bg: "transparent" }}>
+                                            <VStack align="start" flex="1" spacing={1}>
+                                                <Heading size="md" color="primary">
+                                                    🔐 Security Settings (BETA)
+                                                </Heading>
+                                                <Text color="primary" fontSize="sm">
+                                                    Manage your private keys and account security
+                                                </Text>
+                                            </VStack>
+                                            <AccordionIcon color="accent" />
+                                        </AccordionButton>
+                                        <AccordionPanel px={6} pb={6}>
+                                            <Box
+                                                p={6}
+                                                bg="background"
+                                                border="1px solid"
+                                                borderColor="orange.500"
+                                                position="relative"
+                                                _before={{
+                                                    content: '""',
+                                                    position: 'absolute',
+                                                    top: 0,
+                                                    left: 0,
+                                                    right: 0,
+                                                    height: '3px',
+                                                    bg: 'orange.500'
+                                                }}
+                                            >
+                                                <VStack spacing={4} align="stretch">
+                                                    <Box>
+                                                        <Text color="orange.400" fontWeight="bold" fontSize="sm" mb={2}>
+                                                            ⚠️ SECURITY NOTICE
+                                                        </Text>
+                                                        <Text color="primary" mb={3} lineHeight="tall">
+                                                            When your account was created, the SkateHive team temporarily stored your private keys.
+                                                            <Text as="span" fontWeight="bold" color="orange.400"> This is not secure.</Text>
+                                                        </Text>
+                                                        <Text color="primary" mb={4} lineHeight="tall">
+                                                            We strongly recommend generating new private keys and updating your Hive account.
+                                                            Store your new keys safely - never share them with anyone.
+                                                        </Text>
+                                                    </Box>
+                                                    <Box
+                                                        textAlign="center"
+                                                        py={8}
+                                                        bg="background"
+                                                        border="2px dashed"
+                                                        borderColor="primary"
+                                                    >
+                                                        <Text fontWeight="bold" fontSize="lg" color="primary" opacity={0.7}>
+                                                            🚧 Coming Soon...
+                                                        </Text>
+                                                        <Text color="primary" fontSize="sm" mt={2} opacity={0.6}>
+                                                            Private key generation feature in development
+                                                        </Text>
+                                                    </Box>
+                                                </VStack>
+                                            </Box>
+                                        </AccordionPanel>
+                                    </AccordionItem>
+                                </Accordion>
+                            </Box>
+                        </>
+                    )}
+                    {/* Fun Section */}
+                    <Box bg="background" border="1px solid" borderColor="muted" p={6} shadow="sm">
+                        <VStack spacing={4}>
+                            <Box textAlign="center">
+                                <Heading size="md" color="primary" mb={1}>
+                                    🎭 Experience
+                                </Heading>
+                                <Text color="primary" fontSize="sm">
+                                    Interactive elements and animations
+                                </Text>
+                            </Box>
+                            <Box py={4}>
+                                <LottieAnimation src="https://lottie.host/911167fe-726b-4e03-a295-56839461ebc4/WOauo8GTeO.lottie" />
+                            </Box>
+                        </VStack>
+                    </Box>
+
+                    {/* Footer Graphics */}
+                    <Box py={8}>
+                        <LogoMatrix />
+                    </Box>
+                </VStack>
+            </Box>
         </Box>
     );
 };

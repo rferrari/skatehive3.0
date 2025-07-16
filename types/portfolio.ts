@@ -32,6 +32,8 @@ export interface TokenDetail {
   network: string;
   token: Token;
   updatedAt: string;
+  source?: 'ethereum' | 'farcaster' | 'verified'; // Added to track token source
+  sourceAddress?: string; // Added to track which address this token came from
 }
 
 export interface PortfolioData {

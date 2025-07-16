@@ -307,3 +307,44 @@ body.show-splash #splash-root {
 #aioha-modal .p-4.md\:p-5 {
   border-radius: 0 !important;
 }
+
+/* Hide scrollbars for table containers - more targeted approach */
+.chakra-table__container {
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE/Edge */
+}
+
+.chakra-table__container::-webkit-scrollbar {
+  display: none;
+  /* Chrome, Safari, Opera */
+  width: 0;
+  height: 0;
+}
+
+.css-8qd2dv::-webkit-scrollbar {
+  display: none !important;
+}
+
+/* Target the specific container classes visible in DevTools */
+.css-k38ti2,
+.css-1wx2rq3,
+.css-15y92lb,
+.css-47dblg,
+.css-yig9f2,
+.css-1qpongl {
+  overflow-x: hidden !important;
+  scrollbar-width: none !important;
+}
+
+.css-k38ti2::-webkit-scrollbar,
+.css-1wx2rq3::-webkit-scrollbar,
+.css-15y92lb::-webkit-scrollbar,
+.css-47dblg::-webkit-scrollbar,
+.css-yig9f2::-webkit-scrollbar,
+.css-1qpongl::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}

@@ -45,10 +45,14 @@ POSTGRES_DATABASE=
 
 # Farcaster notification settings
 FARCASTER_INIT_PASSWORD=your_secure_password_for_database_init
+
+# Admin users for Farcaster notification system (comma-separated usernames)
+ADMIN_USERS=user1,user2,user3
 ```
 
 Additional variables used by specific features:
 
+- `ADMIN_USERS` – comma-separated list of usernames with admin privileges for Farcaster notifications (e.g., `user1,user2,user3`)
 - `PINATA_API_KEY` and `PINATA_SECRET_API_KEY` – upload media to Pinata/IPFS
 - `GIPHY_API_KEY` – GIF search in the composer
 - `NEXT_PUBLIC_WHISK_API_KEY` – Whisk social identity resolution
