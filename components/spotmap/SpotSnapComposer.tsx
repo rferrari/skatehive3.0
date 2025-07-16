@@ -23,6 +23,7 @@ import { getLastSnapsContainer } from "@/lib/hive/client-functions";
 import ImageCompressor, { ImageCompressorRef } from "@/lib/utils/ImageCompressor";
 import MatrixOverlay from "../graphics/MatrixOverlay";
 import imageCompression from "browser-image-compression";
+import * as exifr from 'exifr';
 
 interface SpotSnapComposerProps {
   onNewComment: (newComment: Partial<Discussion>) => void;
@@ -165,6 +166,19 @@ export default function SpotSnapComposer({
     }
   }
 
+  // Add this function to extract GPS from image files
+  const extractGPS = async (file: File) => {
+    try {
+      const gps = await exifr.gps(file);
+      if (gps && gps.latitude && gps.longitude) {
+        setLat(gps.latitude.toString());
+        setLon(gps.longitude.toString());
+      }
+    } catch (e) {
+      // No GPS data or error reading EXIF
+    }
+  };
+
   // Drag and drop handlers (reuse SnapComposer style)
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -185,6 +199,8 @@ export default function SpotSnapComposer({
     const files = Array.from(e.dataTransfer.files);
     for (const file of files) {
       if (file.type.startsWith("image/")) {
+        // Extract GPS from EXIF if available
+        await extractGPS(file);
         // For dropped images, compress and upload
         try {
           const options = {
