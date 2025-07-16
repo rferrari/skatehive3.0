@@ -26,11 +26,10 @@ import markdownRenderer from "@/lib/utils/MarkdownRenderer";
 import { getPostDate } from "@/lib/utils/GetPostDate";
 import useHiveAccount from "@/hooks/useHiveAccount";
 import VideoRenderer from "@/components/layout/VideoRenderer";
-import SnapComposer from "@/components/homepage/SnapComposer";
 import { FaLink } from "react-icons/fa6";
 import useHivePower from "@/hooks/useHivePower";
 import VoteListPopover from "@/components/blog/VoteListModal";
-import { parse, isAfter, isBefore, isEqual } from "date-fns";
+import { parse, isAfter } from "date-fns";
 import { useTheme } from "@/app/themeProvider";
 import PaperOutline from "@/components/graphics/PaperOutline";
 
@@ -381,43 +380,46 @@ const BountySnap = ({
       sx={{
         ...(showPosterBackground
           ? {
-            // Responsive background for desktop/mobile
-            '@media (max-width: 767px)': {
-              backgroundImage: 'none',
-              backgroundColor: theme.theme.colors.muted,
-              border: '1px solid',
-              borderColor: theme.theme.colors.border,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
-              borderRadius: '16px',
-              overflow: 'hidden',
-              transition: 'box-shadow 0.2s, background 0.2s, background-image 0.2s',
-              cursor: disableCardClick ? 'default' : 'pointer',
-            },
-            '@media (min-width: 768px)': {
-              backgroundImage: 'url(/images/paper.svg)',
-              backgroundRepeat: 'no-repeat',
-              backgroundSize: '100% 100%',
-              backgroundPosition: 'center',
-              borderRadius: '16px',
-              overflow: 'hidden',
-              transition: 'box-shadow 0.2s, background 0.2s, background-image 0.2s',
-              cursor: disableCardClick ? 'default' : 'pointer',
-            },
-          }
+              // Responsive background for desktop/mobile
+              "@media (max-width: 767px)": {
+                backgroundImage: "none",
+                backgroundColor: theme.theme.colors.muted,
+                border: "1px solid",
+                borderColor: theme.theme.colors.border,
+                boxShadow: "0 2px 8px rgba(0,0,0,0.10)",
+                borderRadius: "16px",
+                overflow: "hidden",
+                transition:
+                  "box-shadow 0.2s, background 0.2s, background-image 0.2s",
+                cursor: disableCardClick ? "default" : "pointer",
+              },
+              "@media (min-width: 768px)": {
+                backgroundImage: "url(/images/paper.svg)",
+                backgroundRepeat: "no-repeat",
+                backgroundSize: "100% 100%",
+                backgroundPosition: "center",
+                borderRadius: "16px",
+                overflow: "hidden",
+                transition:
+                  "box-shadow 0.2s, background 0.2s, background-image 0.2s",
+                cursor: disableCardClick ? "default" : "pointer",
+              },
+            }
           : {
-            borderRadius: '16px',
-            overflow: 'hidden',
-            transition: 'box-shadow 0.2s, background 0.2s, background-image 0.2s',
-            cursor: disableCardClick ? 'default' : 'pointer',
-            ...(disableCardClick
-              ? {}
-              : {
-                ':hover': {
-                  boxShadow:
-                    '0 0 0 3px #ff9800, 0 2px 16px rgba(0,0,0,0.18)',
-                },
-              }),
-          }),
+              borderRadius: "16px",
+              overflow: "hidden",
+              transition:
+                "box-shadow 0.2s, background 0.2s, background-image 0.2s",
+              cursor: disableCardClick ? "default" : "pointer",
+              ...(disableCardClick
+                ? {}
+                : {
+                    ":hover": {
+                      boxShadow:
+                        "0 0 0 3px #ff9800, 0 2px 16px rgba(0,0,0,0.18)",
+                    },
+                  }),
+            }),
       }}
     >
       {/* Overlay for readability (restored) */}
@@ -449,10 +451,19 @@ const BountySnap = ({
           transition="opacity 0.2s"
         >
           <PaperOutline
-            stroke={theme.theme.colors.border || theme.theme.colors.accent || "#000"}
+            stroke={
+              theme.theme.colors.border || theme.theme.colors.accent || "#000"
+            }
             width="105%"
             height="100%"
-            style={{ display: "block", width: "105%", height: "100%", position: "absolute", left: "-2.5%", top: 0 }}
+            style={{
+              display: "block",
+              width: "105%",
+              height: "100%",
+              position: "absolute",
+              left: "-2.5%",
+              top: 0,
+            }}
           />
         </Box>
       )}
@@ -590,13 +601,7 @@ const BountySnap = ({
       </Box>
       {/* Time Remaining Footer (always visible, above the main footer) */}
       {deadlineCountdown && (
-        <Box
-          px={4}
-          pb={2}
-          zIndex={2}
-          textAlign="center"
-          flexShrink={0}
-        >
+        <Box px={4} pb={2} zIndex={2} textAlign="center" flexShrink={0}>
           <Text fontSize="md" fontWeight="bold">
             {deadlineCountdown}
           </Text>

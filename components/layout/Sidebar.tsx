@@ -8,7 +8,6 @@ import {
   Image,
   Flex,
   useColorMode,
-  useColorModeValue,
   useToken,
 } from "@chakra-ui/react";
 import { useRouter, usePathname } from "next/navigation";
@@ -28,13 +27,9 @@ import {
 import { motion } from "framer-motion";
 import { KeyTypes } from "@aioha/aioha";
 import "@aioha/react-ui/dist/build.css";
-import { useAccount } from "wagmi";
-import { useDisclosure } from "@chakra-ui/react";
 import { useTheme } from "@/app/themeProvider";
 import { useNotifications } from "@/contexts/NotificationContext";
 import SidebarLogo from "../graphics/SidebarLogo";
-
-const communityTag = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG;
 
 export default function Sidebar() {
   const { user, aioha } = useAioha();
@@ -43,12 +38,6 @@ export default function Sidebar() {
   const { colorMode } = useColorMode();
   const [modalDisplayed, setModalDisplayed] = useState(false);
   const [bellAnimating, setBellAnimating] = useState(false);
-  const { isConnected, connector: activeConnector } = useAccount();
-  const {
-    isOpen: isConnectModalOpen,
-    onOpen: openConnectModal,
-    onClose: closeConnectModal,
-  } = useDisclosure();
   const { themeName } = useTheme();
 
   // Safely get notification count with fallback
@@ -66,22 +55,6 @@ export default function Sidebar() {
   if (themeName === "windows95") hoverTextColor = "background";
   else if (themeName === "nounish") hoverTextColor = "secondary";
   else if (themeName === "hiveBR") hoverTextColor = "accent";
-
-  const logoColor = themeName === "nounish" ? "secondary" : undefined;
-  const nounishSvgStyle =
-    themeName === "nounish"
-      ? `<style>
-        .cls-7 { fill: var(--chakra-colors-secondary) !important; }
-        .cls-5 { fill: var(--chakra-colors-text) !important; }
-      </style>`
-      : "";
-
-  const hivebrSvgStyle =
-    themeName === "hiveBR"
-      ? `<style>
-        .cls-5 { fill: var(--chakra-colors-accent) !important; }
-      </style>`
-      : "";
 
   useEffect(() => {
     setBellAnimating(newNotificationCount > 0);
@@ -489,7 +462,7 @@ export default function Sidebar() {
             keyType: KeyTypes.Posting,
             loginTitle: "Login",
           }}
-          onLogin={() => { }}
+          onLogin={() => {}}
           onClose={() => setModalDisplayed(false)}
         />
       </div>

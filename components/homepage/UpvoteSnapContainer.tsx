@@ -1,10 +1,18 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { Button, Box, Text, useToast, IconButton, Icon, Tooltip, Image } from '@chakra-ui/react';
-import { useAioha } from '@aioha/react-ui';
-import { getLastSnapsContainer, getPost } from '@/lib/hive/client-functions';
-import { Discussion } from '@hiveio/dhive';
+import { useState, useEffect, useCallback } from "react";
+import {
+  Button,
+  Box,
+  Text,
+  useToast,
+  IconButton,
+  Tooltip,
+  Image,
+} from "@chakra-ui/react";
+import { useAioha } from "@aioha/react-ui";
+import { getLastSnapsContainer, getPost } from "@/lib/hive/client-functions";
+import { Discussion } from "@hiveio/dhive";
 
 interface SnapContainer {
   author: string;
@@ -15,7 +23,9 @@ interface UpvoteSnapContainerProps {
   hideIfVoted?: boolean;
 }
 
-export default function UpvoteSnapContainer({ hideIfVoted = false }: UpvoteSnapContainerProps) {
+export default function UpvoteSnapContainer({
+  hideIfVoted = false,
+}: UpvoteSnapContainerProps) {
   const { user, aioha } = useAioha();
   const [snapContainer, setSnapContainer] = useState<Discussion | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -28,10 +38,15 @@ export default function UpvoteSnapContainer({ hideIfVoted = false }: UpvoteSnapC
     try {
       const containerInfo = await getLastSnapsContainer();
       if (containerInfo) {
-        const postDetails = await getPost(containerInfo.author, containerInfo.permlink);
+        const postDetails = await getPost(
+          containerInfo.author,
+          containerInfo.permlink
+        );
         setSnapContainer(postDetails);
         if (user && postDetails) {
-          const userVote = postDetails.active_votes.some(v => v.voter === user);
+          const userVote = postDetails.active_votes.some(
+            (v) => v.voter === user
+          );
           setHasVoted(userVote);
         } else {
           setHasVoted(false);
@@ -63,13 +78,13 @@ export default function UpvoteSnapContainer({ hideIfVoted = false }: UpvoteSnapC
 
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
+      if (document.visibilityState === "visible") {
         fetchSnapContainerData();
       }
     };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [fetchSnapContainerData]);
 
@@ -117,13 +132,14 @@ export default function UpvoteSnapContainer({ hideIfVoted = false }: UpvoteSnapC
         });
         setHasVoted(true); // Optimistically update the UI
       } else {
-        throw new Error(response.message || 'Unknown error');
+        throw new Error(response.message || "Unknown error");
       }
     } catch (error: any) {
       console.error("Failed to upvote, error object:", error);
       toast({
         title: "Upvote Failed",
-        description: error.message || "An error occurred while trying to upvote.",
+        description:
+          error.message || "An error occurred while trying to upvote.",
         status: "error",
         duration: 5000,
         isClosable: true,
@@ -134,9 +150,7 @@ export default function UpvoteSnapContainer({ hideIfVoted = false }: UpvoteSnapC
   };
 
   if (isLoading) {
-    return (
-      <></>
-    );
+    return <></>;
   }
 
   if (!snapContainer) {
@@ -152,7 +166,13 @@ export default function UpvoteSnapContainer({ hideIfVoted = false }: UpvoteSnapC
       <Tooltip label="dismiss" placement="top" fontSize="xs">
         <IconButton
           aria-label="Dismiss"
-          icon={<Image src="/images/finger.svg" alt="Dismiss" style={{ width: 20, height: 20 }} />}
+          icon={
+            <Image
+              src="/images/finger.svg"
+              alt="Dismiss"
+              style={{ width: 20, height: 20 }}
+            />
+          }
           size="xs"
           variant="ghost"
           colorScheme="red"
@@ -163,7 +183,9 @@ export default function UpvoteSnapContainer({ hideIfVoted = false }: UpvoteSnapC
         />
       </Tooltip>
 
-      <Text fontSize="xs" mb={2}>Help the community by upvoting the main post where all snaps are stored.</Text>
+      <Text fontSize="xs" mb={2}>
+        Help the community by upvoting the main post where all snaps are stored.
+      </Text>
       <Box display="flex" alignItems="center" gap={2}>
         <Button
           onClick={handleUpvote}
@@ -183,4 +205,4 @@ export default function UpvoteSnapContainer({ hideIfVoted = false }: UpvoteSnapC
       </Box>
     </Box>
   );
-} 
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo } from "react";
 import {
   Box,
   Flex,
@@ -290,7 +290,10 @@ export default function LeaderboardClient({ skatersData }: Props) {
               letterSpacing="wider"
               textAlign="center"
               mb={1}
-              style={{ textTransform: "uppercase", fontFamily: "Dash, sans-serif" }}
+              style={{
+                textTransform: "uppercase",
+                fontFamily: "Dash, sans-serif",
+              }}
             >
               Skatehive Leaderboard
             </Text>

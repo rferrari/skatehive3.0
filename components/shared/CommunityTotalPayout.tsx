@@ -1,5 +1,6 @@
 "use client";
-const SKATEHIVE_TAG = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || 'hive-173115';
+const SKATEHIVE_TAG =
+  process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || "hive-173115";
 import { Box, Flex, Image, Text, VStack, useTheme } from "@chakra-ui/react";
 import { useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
@@ -13,23 +14,19 @@ function CommunityTotalPayout() {
   const [createdDate, setCreatedDate] = useState<string | null>(null);
 
   const theme = useTheme();
-  const borderColor = theme.colors.border || '#1E90FF';
-  const accentColor = theme.colors.accent || '#B0C4DE';
-  const successColor = theme.colors.success || '#38A169';
-  const textColor = theme.colors.text || '#1E90FF';
-  const backgroundColor = theme.colors.background || '#87CEEB';
-  const borderRadius = theme.radii.lg || '16px';
+  const borderColor = theme.colors.border || "#1E90FF";
+  const accentColor = theme.colors.accent || "#B0C4DE";
+  const successColor = theme.colors.success || "#38A169";
+  const textColor = theme.colors.text || "#1E90FF";
+  const borderRadius = theme.radii.lg || "16px";
   const bodyFont = theme.fonts.body;
   const headingFont = theme.fonts.heading;
   const fontWeightBold = theme.fontWeights.bold || 700;
   const fontWeightNormal = theme.fontWeights.normal || 400;
-  const fontSizeLg = theme.fontSizes.lg || '18px';
-  const fontSizeMd = theme.fontSizes.md || '16px';
-  const fontSizeSm = theme.fontSizes.sm || '14px';
-  const fontSizeXl = theme.fontSizes.xl || '20px';
-  const fontSizePayout = '64px';
-  const fontSizePayoutLarge = '64px';
-  const fontSizeBelow = theme.fontSizes["md"] || '16px';
+  const fontSizeSm = theme.fontSizes.sm || "14px";
+  const fontSizeXl = theme.fontSizes.xl || "20px";
+  const fontSizePayoutLarge = "64px";
+  const fontSizeBelow = theme.fontSizes["md"] || "16px";
 
   const formattedNumber = useMemo(
     () =>
@@ -50,7 +47,9 @@ function CommunityTotalPayout() {
           `https://stats.hivehub.dev/communities?c=${SKATEHIVE_TAG}`
         );
         const data = await response.json();
-        const payout = parseFloat(data[SKATEHIVE_TAG]?.total_payouts_hbd?.replace("$", "") || "90000");
+        const payout = parseFloat(
+          data[SKATEHIVE_TAG]?.total_payouts_hbd?.replace("$", "") || "90000"
+        );
         setTotalHBDPayout(payout);
         if (data[SKATEHIVE_TAG]?.created) {
           setCreatedDate(data[SKATEHIVE_TAG].created);
@@ -71,7 +70,10 @@ function CommunityTotalPayout() {
     if (!loading && !error) {
       const intervalId = setInterval(() => {
         setDisplayedNumber(
-          formattedNumber.split("").map(() => Math.floor(Math.random() * 10)).join("")
+          formattedNumber
+            .split("")
+            .map(() => Math.floor(Math.random() * 10))
+            .join("")
         );
       }, 100);
 
@@ -143,12 +145,21 @@ function CommunityTotalPayout() {
               src="/images/spinning-joint-sm.gif"
               zIndex={2}
             />
-            <Text fontSize={fontSizeSm} color={accentColor} zIndex={2} fontFamily={bodyFont}>
+            <Text
+              fontSize={fontSizeSm}
+              color={accentColor}
+              zIndex={2}
+              fontFamily={bodyFont}
+            >
               Loading...
             </Text>
           </VStack>
         ) : error ? (
-          <Text fontSize={fontSizeXl} color={textColor} fontFamily={bodyFont}>{`Error: ${error}`}</Text>
+          <Text
+            fontSize={fontSizeXl}
+            color={textColor}
+            fontFamily={bodyFont}
+          >{`Error: ${error}`}</Text>
         ) : (
           <Flex
             justifyContent="center"
@@ -186,7 +197,7 @@ function CommunityTotalPayout() {
                   fontWeight={fontWeightNormal}
                   fontFamily={bodyFont}
                 >
-                  since {dayjs(createdDate).format('MMM D, YYYY')}
+                  since {dayjs(createdDate).format("MMM D, YYYY")}
                 </Text>
               )}
             </Flex>
@@ -197,4 +208,4 @@ function CommunityTotalPayout() {
   );
 }
 
-export default CommunityTotalPayout; 
+export default CommunityTotalPayout;

@@ -26,7 +26,6 @@ import { FaVideo } from "react-icons/fa6";
 import { FaTimes } from "react-icons/fa";
 import ImageCompressor from "@/lib/utils/ImageCompressor";
 import { ImageCompressorRef } from "@/lib/utils/ImageCompressor";
-import MatrixOverlay from "../graphics/MatrixOverlay";
 import imageCompression from "browser-image-compression";
 
 interface SnapComposerProps {
@@ -172,7 +171,7 @@ export default function SnapComposer({
         } catch (err) {
           alert(
             "Error compressing image: " +
-            (err instanceof Error ? err.message : err)
+              (err instanceof Error ? err.message : err)
           );
         }
       } else {
@@ -319,7 +318,7 @@ export default function SnapComposer({
           } catch (err) {
             alert(
               "Error compressing image: " +
-              (err instanceof Error ? err.message : err)
+                (err instanceof Error ? err.message : err)
             );
           }
         }
@@ -629,10 +628,7 @@ export default function SnapComposer({
         </Box>
       </Box>
       {/* Matrix Overlay and login prompt if not logged in */}
-      {!user && (
-        <>
-        </>
-      )}
+      {!user && <></>}
     </Box>
   );
 }
