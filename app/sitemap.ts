@@ -27,10 +27,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ];
 
     try {
-        // Fetch recent snaps for sitemap (limit for performance)
-        const recentPosts = await HiveClient.database.getDiscussions('created', {
+        // Fetch recent snaps for sitemap using the correct bridge API
+        const recentPosts = await HiveClient.call('bridge', 'get_ranked_posts', {
             tag: process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || 'hive-173115',
             limit: 50,
+            sort: 'created'
         });
 
         // Filter and map in one pass for better performance
