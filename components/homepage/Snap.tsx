@@ -25,9 +25,7 @@ import { Discussion } from "@hiveio/dhive";
 import { FaRegComment } from "react-icons/fa";
 import { useAioha } from "@aioha/react-ui";
 import { useState, useMemo } from "react";
-import {
-  getPayoutValue,
-} from "@/lib/hive/client-functions";
+import { getPayoutValue } from "@/lib/hive/client-functions";
 import markdownRenderer from "@/lib/utils/MarkdownRenderer";
 import { getPostDate } from "@/lib/utils/GetPostDate";
 import useHiveAccount from "@/hooks/useHiveAccount";
@@ -42,18 +40,116 @@ import { fetchComments } from "@/lib/hive/fetchComments";
 import { separateContent } from "@/lib/utils/snapUtils";
 import { SlPencil } from "react-icons/sl";
 import { usePostEdit } from "@/hooks/usePostEdit";
-import { parsePayout, calculatePayoutDays, deduplicateVotes } from "@/lib/utils/postUtils";
+import {
+  parsePayout,
+  calculatePayoutDays,
+  deduplicateVotes,
+} from "@/lib/utils/postUtils";
 import { BiDotsHorizontal } from "react-icons/bi";
+import MediaCarousel from "../shared/MediaCarousel";
 
+interface MediaItem {
+  type: "image" | "video" | "iframe";
+  content: string;
+  src?: string;
+}
+
+const parseMediaContent = (mediaContent: string): MediaItem[] => {
+  const mediaItems: MediaItem[] = [];
+
+  mediaContent.split("\n").forEach((item: string) => {
+    const trimmedItem = item.trim();
+    if (!trimmedItem) return;
+
+    // Handle markdown images with IPFS
+    if (
+      trimmedItem.includes("![") &&
+      trimmedItem.includes("ipfs.skatehive.app/ipfs/")
+    ) {
+      mediaItems.push({
+        type: "image",
+        content: trimmedItem,
+      });
+      return;
+    }
+
+    // Handle other markdown images
+    if (
+      trimmedItem.includes("![") &&
+      (trimmedItem.includes("http") || trimmedItem.includes("ipfs:"))
+    ) {
+      mediaItems.push({
+        type: "image",
+        content: trimmedItem,
+      });
+      return;
+    }
+
+    // Handle iframes
+    if (trimmedItem.includes("<iframe") && trimmedItem.includes("</iframe>")) {
+      const srcMatch = trimmedItem.match(/src=["']([^"']+)["']/i);
+      if (srcMatch && srcMatch[1]) {
+        const url = srcMatch[1];
+
+        // Skip YouTube iframes (handled by auto-embed logic)
+        if (
+          url.includes("youtube.com/embed/") ||
+          url.includes("youtube-nocookie.com/embed/") ||
+          url.includes("youtu.be/")
+        ) {
+          return;
+        }
+
+        // Handle IPFS videos
+        if (url.includes("gateway.pinata.cloud/ipfs/")) {
+          const ipfsHash = url.match(/\/ipfs\/([\w-]+)/)?.[1];
+          if (ipfsHash) {
+            const skatehiveUrl = `https://ipfs.skatehive.app/ipfs/${ipfsHash}`;
+            mediaItems.push({
+              type: "video",
+              content: trimmedItem,
+              src: skatehiveUrl,
+            });
+            return;
+          }
+        } else if (url.includes("ipfs.skatehive.app/ipfs/")) {
+          mediaItems.push({
+            type: "video",
+            content: trimmedItem,
+            src: url,
+          });
+          return;
+        }
+      }
+
+      // Other iframes
+      mediaItems.push({
+        type: "iframe",
+        content: trimmedItem,
+      });
+      return;
+    }
+  });
+
+  return mediaItems;
+};
 
 const renderMedia = (mediaContent: string) => {
-  return mediaContent.split("\n").map((item: string, index: number) => {
-    if (!item.trim()) return null;
-    if (item.includes("![") && item.includes("ipfs.skatehive.app/ipfs/")) {
+  const mediaItems = parseMediaContent(mediaContent);
+
+  // If we have 2 or more media items, use carousel
+  if (mediaItems.length >= 2) {
+    return <MediaCarousel mediaItems={mediaItems} />;
+  }
+
+  // If we have only one item, render it directly with the original styling
+  if (mediaItems.length === 1) {
+    const item = mediaItems[0];
+
+    if (item.type === "image") {
       return (
         <Box
-          key={index}
-          dangerouslySetInnerHTML={{ __html: markdownRenderer(item) }}
+          dangerouslySetInnerHTML={{ __html: markdownRenderer(item.content) }}
           sx={{
             img: {
               width: "100%",
@@ -66,32 +162,15 @@ const renderMedia = (mediaContent: string) => {
         />
       );
     }
-    if (item.includes("<iframe") && item.includes("</iframe>")) {
-      const srcMatch = item.match(/src=["']([^"']+)["']/i);
-      if (srcMatch && srcMatch[1]) {
-        const url = srcMatch[1];
-        // Skip YouTube iframes (handled by auto-embed logic)
-        if (
-          url.includes("youtube.com/embed/") ||
-          url.includes("youtube-nocookie.com/embed/") ||
-          url.includes("youtu.be/")
-        ) {
-          return null;
-        }
-        if (url.includes("gateway.pinata.cloud/ipfs/")) {
-          const ipfsHash = url.match(/\/ipfs\/([\w-]+)/)?.[1];
-          if (ipfsHash) {
-            const skatehiveUrl = `https://ipfs.skatehive.app/ipfs/${ipfsHash}`;
-            return <VideoRenderer key={index} src={skatehiveUrl} />;
-          }
-        } else if (url.includes("ipfs.skatehive.app/ipfs/")) {
-          return <VideoRenderer key={index} src={url} />;
-        }
-      }
+
+    if (item.type === "video" && item.src) {
+      return <VideoRenderer src={item.src} />;
+    }
+
+    if (item.type === "iframe") {
       return (
         <Box
-          key={index}
-          dangerouslySetInnerHTML={{ __html: item }}
+          dangerouslySetInnerHTML={{ __html: item.content }}
           sx={{
             iframe: {
               width: "100%",
@@ -102,22 +181,9 @@ const renderMedia = (mediaContent: string) => {
         />
       );
     }
-    return (
-      <Box
-        key={index}
-        dangerouslySetInnerHTML={{ __html: markdownRenderer(item) }}
-        sx={{
-          img: {
-            width: "100%",
-            height: "auto",
-            objectFit: "contain",
-            marginTop: "0.5rem",
-            marginBottom: "0.5rem",
-          },
-        }}
-      />
-    );
-  });
+  }
+
+  return null;
 };
 
 interface SnapProps {
@@ -265,10 +331,8 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
                 · {commentDate}
               </Text>
             </HStack>
-
-
           </HStack>
-          <Menu >
+          <Menu>
             <MenuButton
               as={IconButton}
               aria-label="Edit post"
@@ -280,20 +344,21 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
               bg={"background"}
               color={"primary"}
             />
-            <MenuList bg={"background"}
-              color={"primary"}>
-
+            <MenuList bg={"background"} color={"primary"}>
               {user === discussion.author && (
-                <MenuItem onClick={handleEditClick} bg={"background"}
-                  color={"primary"}>
-                  <SlPencil style={{ marginRight: '8px' }} />
+                <MenuItem
+                  onClick={handleEditClick}
+                  bg={"background"}
+                  color={"primary"}
+                >
+                  <SlPencil style={{ marginRight: "8px" }} />
                   Edit
                 </MenuItem>
               )}
               <ShareMenuButtons
                 comment={{
                   author: discussion.author,
-                  permlink: discussion.permlink
+                  permlink: discussion.permlink,
                 }}
               />
             </MenuList>
@@ -525,9 +590,44 @@ export default Snap;
   }
   .markdown-body .responsive-embed iframe {
     position: absolute;
-    top: 0; left: 0;
+    top: 0;
+    left: 0;
     width: 100% !important;
     height: 100% !important;
     border: 0;
+  }
+  /* Media Carousel Styles */
+  .media-carousel {
+    width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .media-carousel .swiper-button-next,
+  .media-carousel .swiper-button-prev {
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    margin-top: -20px;
+  }
+  .media-carousel .swiper-button-next:after,
+  .media-carousel .swiper-button-prev:after {
+    font-size: 16px;
+    font-weight: bold;
+  }
+  .media-carousel .swiper-pagination {
+    bottom: 10px;
+  }
+  .media-carousel .swiper-pagination-bullet {
+    background: rgba(255, 255, 255, 0.7);
+    opacity: 1;
+  }
+  .media-carousel .swiper-pagination-bullet-active {
+    background: var(--chakra-colors-primary, #38ff8e);
+  }
+  .media-carousel .swiper-slide {
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 `}</style>;
