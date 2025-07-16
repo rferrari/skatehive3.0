@@ -128,7 +128,7 @@ export default function EmbeddedMap() {
           >
             <Text
               className="dash-title"
-              fontSize={{ base: "2xl", md: "66px" }}
+              fontSize={{ base: "6xl", md: "7xl" }}
               fontWeight="extrabold"
               color="primary"
               letterSpacing="widest"

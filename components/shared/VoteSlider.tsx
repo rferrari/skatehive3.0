@@ -161,20 +161,23 @@ const VoteSlider = ({
     return variant === "feed" ? (
         <HStack>
             <Tooltip label="upvote" hasArrow openDelay={1000}>
-                <Button
-                    leftIcon={
-                        <LuArrowUpRight
-                            size={24}
-                            color={voted ? undefined : "rgb(75, 72, 72)"}
-                            style={{ opacity: voted ? 1 : 0.5 }}
-                        />
-                    }
-                    variant="ghost"
+                <Box
+                    as="span"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                    cursor="pointer"
                     onClick={handleHeartClick}
-                    size={size}
-                    p={2}
+                    p={1}
                     _hover={{ bg: "accent", borderRadius: "full" }}
-                />
+                    transition="background 0.2s, border-radius 0.2s"
+                >
+                    <LuArrowUpRight
+                        size={24}
+                        color={voted ? undefined : "rgb(75, 72, 72)"}
+                        style={{ opacity: voted ? 1 : 0.5 }}
+                    />
+                </Box>
             </Tooltip>
             <VoteListPopover
                 trigger={

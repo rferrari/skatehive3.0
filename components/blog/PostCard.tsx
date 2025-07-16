@@ -391,7 +391,7 @@ export default function PostCard({
                   onMouseDown={openPayout}
                   onMouseUp={closePayout}
                 >
-                  <Text fontWeight="bold" fontSize="sm">
+                  <Text fontWeight="bold" fontSize="xl">
                     ${payoutValue.toFixed(2)}
                   </Text>
                 </span>
@@ -668,28 +668,36 @@ export default function PostCard({
             </Box>
 
             {/* Title Section with border separator */}
-            <Box
-              borderTop="1px solid"
-              borderColor="primary"
-              p={3}
-              textAlign="center"
+            <Link
+              href={`/post/${author}/${post.permlink}`}
+              _hover={{ textDecoration: "none" }}
+              style={{ display: "block" }}
             >
-              <Link
-                href={`/post/${author}/${post.permlink}`}
-                _hover={{ textDecoration: "underline" }}
+              <Box
+                borderTop="1px solid"
+                borderColor="primary"
+                p={3}
+                textAlign="center"
+                cursor="pointer"
+                bg="background"
+                transition="background 0.2s, color 0.2s"
+                _hover={{ bg: "primary", '& .post-title-text': { color: 'background' } }}
               >
                 <Text
+                  className="post-title-text"
                   fontWeight="bold"
                   fontSize={"16px"}
                   isTruncated={false}
                   whiteSpace="normal"
                   wordBreak="break-word"
                   noOfLines={2}
+                  color="primary"
+                  transition="color 0.2s"
                 >
                   {title}
                 </Text>
-              </Link>
-            </Box>
+              </Box>
+            </Link>
           </Box>
           <Box mt="auto">
             {showSlider ? (
@@ -762,18 +770,26 @@ export default function PostCard({
                 gap={6}
               >
                 <Flex alignItems="center">
-                  <Icon
-                    as={LuArrowUpRight}
-                    onClick={(e) => {
+                  <Box
+                    as="span"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                    cursor="pointer"
+                    p={1}
+                    onClick={(e: React.MouseEvent<HTMLSpanElement, MouseEvent>) => {
                       e.stopPropagation();
                       handleHeartClick();
                     }}
-                    cursor="pointer"
-                    color={voted ? "primary" : "gray.500"}
-                    opacity={voted ? 1 : 0.5}
-                    boxSize={6}
                     _hover={{ bg: "accent", borderRadius: "full" }}
-                  />
+                    transition="background 0.2s, border-radius 0.2s"
+                  >
+                    <LuArrowUpRight
+                      size={24}
+                      color={voted ? undefined : "gray.500"}
+                      style={{ opacity: voted ? 1 : 0.5 }}
+                    />
+                  </Box>
                   <VoteListPopover
                     trigger={
                       <Button
@@ -809,7 +825,7 @@ export default function PostCard({
                       onMouseDown={openPayout}
                       onMouseUp={closePayout}
                     >
-                      <Text fontWeight="bold" fontSize="sm">
+                      <Text fontWeight="bold" fontSize="xl">
                         ${payoutValue.toFixed(2)}
                       </Text>
                     </span>
