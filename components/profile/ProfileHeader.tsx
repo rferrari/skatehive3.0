@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback } from "react";
+import React from "react";
 import {
     Box,
     Heading,
@@ -40,62 +40,30 @@ export default function ProfileHeader({
 }: ProfileHeaderProps) {
     const [background] = useToken('colors', ['background']);
 
-    const speakDescription = useCallback(() => {
-        if (!profileData.about) return;
-
-        if ("speechSynthesis" in window && window.speechSynthesis) {
-            try {
-                const utterance = new window.SpeechSynthesisUtterance(profileData.about);
-                utterance.rate = 0.9; // More natural speech rate
-                utterance.volume = 0.8;
-                utterance.pitch = 1.0;
-
-                // Cancel any ongoing speech before starting new one
-                window.speechSynthesis.cancel();
-                window.speechSynthesis.speak(utterance);
-            } catch (error) {
-                console.error('Speech synthesis failed:', error);
-                // Fallback: Could show a toast notification here
-                alert('Speech synthesis failed. Please try again.');
-            }
-        } else {
-            // Fallback for browsers without Speech Synthesis API
-            console.warn('Speech Synthesis API is not supported in this browser');
-            alert('Text-to-speech is not supported in your browser. Please consider updating to a modern browser.');
-        }
-    }, [profileData.about]);
-
     return (
         <Box position="relative" w="100%" p={0} m={0}>
-            {/* Follow/Unfollow button in upper right */}
-            {!isOwner && user && (
-                <Box position="absolute" top={2} right={2} zIndex={3} bg={background} px={0} py={0} borderRadius="md" boxShadow="md">
-                    <FollowButton
-                        user={user}
-                        username={username}
-                        isFollowing={isFollowing}
-                        isFollowLoading={isFollowLoading}
-                        onFollowingChange={onFollowingChange}
-                        onLoadingChange={onLoadingChange}
-                    />
-                </Box>
-            )}
-
-            <Box
-                position="relative"
-                display="flex"
-                flexDirection="row"
-                alignItems="center"
-                justifyContent={{ base: "center", md: "flex-start" }}
+            {/* Responsive Flex: row on desktop, column on mobile */}
+            <Flex
+                direction={{ base: "column", md: "row" }}
+                align={{ base: "center", md: "flex-start" }}
+                justify={{ base: "center", md: "space-between" }}
+                w="100%"
+                maxW="container.md"
                 zIndex={2}
-                ml={{ base: 0, md: 8 }}
+                px={{ base: 2, md: 8 }}
                 p={0}
                 m={0}
-                w={{ base: "100%", md: "auto" }}
                 mt={{ base: "-32px", md: 0 }}
             >
-                {/* Avatar wrapper for relative positioning */}
-                <Box position="relative" display="inline-block">
+                {/* Avatar */}
+                <Box
+                  position="relative"
+                  display="inline-block"
+                  flexShrink={0}
+                  flexBasis={{ base: 'auto', md: '25%' }}
+                  maxW={{ base: 'none', md: '25%' }}
+                  w={{ base: 'auto', md: '25%' }}
+                >
                   <Avatar
                       src={profileData.profileImage}
                       name={username}
@@ -104,28 +72,109 @@ export default function ProfileHeader({
                       mr={{ base: 0, md: 4 }}
                       mb={{ base: 2, md: 0 }}
                   />
+                </Box>
+                {/* Profile Info (right-aligned on desktop, constrained width) */}
+                <Flex
+                  direction="column"
+                  align={{ base: "center", md: "flex-end" }}
+                  justify="center"
+                  flexBasis={{ base: 'auto', md: '75%' }}
+                  maxW={{ base: '100%', md: '75%' }}
+                  w={{ base: '100%', md: '75%' }}
+                  mt={{ base: 2, md: 0 }}
+                  gap={1}
+                  flexShrink={1}
+                  minWidth={0}
+                >
+                  {/* Name row with Follow button inline */}
+                  <Flex direction="row" align="center" justify={{ base: "center", md: "flex-end" }} mb={1} w="100%">
+                    {/* Inline Follow/Unfollow button */}
+                    {!isOwner && user && (
+                      <Box mr={2}>
+                        <FollowButton
+                          user={user}
+                          username={username}
+                          isFollowing={isFollowing}
+                          isFollowLoading={isFollowLoading}
+                          onFollowingChange={onFollowingChange}
+                          onLoadingChange={onLoadingChange}
+                        />
+                      </Box>
+                    )}
+                    <Heading as="h2" 
+                      size="lg" 
+                      color="primary"
+                      textAlign={{ base: "center", md: "right" }}
+                      whiteSpace="normal"
+                      wordBreak="break-word"
+                      fontSize={{ base: '2xl', md: '4xl', lg: '5xl' }}
+                      fontWeight="extrabold"
+                      mb={0}
+                    >
+                      {profileData.name}
+                    </Heading>
+                    {/* Inline Edit Profile button for owner */}
+                    {isOwner && (
+                      <Box ml={2}>
+                        <IconButton
+                          aria-label="Edit Profile"
+                          icon={<FaEdit />}
+                          size="sm"
+                          variant="ghost"
+                          colorScheme="primary"
+                          onClick={onEditModalOpen}
+                        />
+                      </Box>
+                    )}
+                  </Flex>
+                  <Text fontSize="xs" color="text" mb={0} textAlign={{ base: "center", md: "right" }} whiteSpace="normal" wordBreak="break-word">
+                      Following: {profileData.following} | Followers: {profileData.followers} | Location: {profileData.location}
+                  </Text>
+                  <Flex
+                      alignItems="center"
+                      justifyContent={{ base: "center", md: "flex-end" }}
+                      mb={0}
+                      mt={0}
+                      pt={0}
+                      pb={0}
+                      gap={2}
+                  >
+                      {profileData.website && (
+                          <Link
+                              href={
+                                  profileData.website.startsWith("http")
+                                      ? profileData.website
+                                      : `https://${profileData.website}`
+                              }
+                              isExternal
+                              fontSize="xs"
+                              color="primary"
+                              display="flex"
+                              alignItems="center"
+                              whiteSpace="normal"
+                              wordBreak="break-word"
+                          >
+                              <Icon as={FaGlobe} w={2} h={2} mr={1} />
+                              {profileData.website}
+                          </Link>
+                      )}
+                  </Flex>
+                  {/* Desktop: Speech bubble/quote */}
                   {profileData.about && (
                     <Box
-                      display={{ base: "block", md: "none" }}
-                      position="absolute"
-                      left="100%"
-                      top="50%"
-                      transform="translateY(-50%)"
+                      display={{ base: "none", md: "block" }}
+                      position="relative"
                       ml={2}
-                      bg="muted"
                       color="text"
                       px={4}
                       py={3}
                       borderRadius="lg"
-                      boxShadow="md"
-                      maxW={{ base: "80vw", sm: "60vw" }}
-                      minW="120px"
-                      width="auto"
+                      maxW="100%"
                       fontSize="0.625rem"
                       fontStyle="italic"
-                      cursor="pointer"
-                      onClick={speakDescription}
                       noOfLines={4}
+                      whiteSpace="normal"
+                      wordBreak="break-word"
                       _after={{
                         content: '""',
                         position: "absolute",
@@ -135,7 +184,7 @@ export default function ProfileHeader({
                         borderWidth: "8px",
                         borderStyle: "solid",
                         borderColor: "transparent",
-                        borderRightColor: "muted",
+                        borderRightColor: "transparent",
                       }}
                       sx={{
                         display: '-webkit-box',
@@ -146,114 +195,9 @@ export default function ProfileHeader({
                         whiteSpace: 'normal',
                       }}
                     >
-                      {profileData.about}
+                      {`"${profileData.about}"`}
                     </Box>
                   )}
-                </Box>
-                {/* Desktop: keep current row layout */}
-                {profileData.about && (
-                  <Box
-                    display={{ base: "none", md: "block" }}
-                    position="relative"
-                    ml={2}
-                    p={0}
-                    m={0}
-                  >
-                    <Box
-                      bg="muted"
-                      color="text"
-                      px={4}
-                      py={3}
-                      borderRadius="lg"
-                      boxShadow="md"
-                      maxW="180px"
-                      fontSize="0.625rem"
-                      fontStyle="italic"
-                      cursor="pointer"
-                      onClick={speakDescription}
-                      noOfLines={4}
-                      _after={{
-                        content: '""',
-                        position: "absolute",
-                        left: "-16px",
-                        top: "50%",
-                        transform: "translateY(-50%)",
-                        borderWidth: "8px",
-                        borderStyle: "solid",
-                        borderColor: "transparent",
-                        borderRightColor: "muted",
-                      }}
-                      sx={{
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'normal',
-                      }}
-                    >
-                      {profileData.about}
-                    </Box>
-                  </Box>
-                )}
-            </Box>
-
-            <Flex
-                direction="column"
-                alignItems="center"
-                justifyContent="center"
-                w="100%"
-                px={2}
-                mt={{ base: 2, md: 0 }}
-                mb={0}
-                pt={0}
-                pb={0}
-            >
-                <Heading as="h2" size="lg" color="primary" mb={1} textAlign="center">
-                    {profileData.name}
-                </Heading>
-                <Text fontSize="xs" color="text" mb={0} textAlign="center">
-                    Following: {profileData.following} | Followers: {profileData.followers} | Location: {profileData.location}
-                </Text>
-
-                <Flex
-                    alignItems="center"
-                    justifyContent="center"
-                    mb={0}
-                    mt={0}
-                    pt={0}
-                    pb={0}
-                    gap={2}
-                >
-                    {profileData.website && (
-                        <Link
-                            href={
-                                profileData.website.startsWith("http")
-                                    ? profileData.website
-                                    : `https://${profileData.website}`
-                            }
-                            isExternal
-                            fontSize="xs"
-                            color="primary"
-                            display="flex"
-                            alignItems="center"
-                        >
-                            <Icon as={FaGlobe} w={2} h={2} mr={1} />
-                            {profileData.website}
-                        </Link>
-                    )}
-
-                    {/* Edit icon for profile owner */}
-                    {isOwner && (
-                        <IconButton
-                            aria-label="Edit Profile"
-                            icon={<FaEdit />}
-                            size="sm"
-                            variant="ghost"
-                            colorScheme="primary"
-                            onClick={onEditModalOpen}
-                        />
-                    )}
                 </Flex>
             </Flex>
         </Box>
