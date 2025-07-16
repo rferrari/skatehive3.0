@@ -141,15 +141,15 @@ export default function EmbeddedMap() {
             {user && (
               <Box textAlign="center" mb={{ base: 2, md: 4 }}>
                 <Button
-                  bg="primary"
-                  color="background"
+                  bg="background"
+                  color="primary"
                   borderRadius="md"
                   px={4}
                   py={2}
                   fontWeight="bold"
                   fontSize="md"
                   boxShadow="md"
-                  _hover={{ bg: "accent" }}
+                  _hover={{ bg: "accent", color: "primary" }}
                   onClick={() => {
                     const el = document.getElementById("spot-name-field");
                     if (el) {

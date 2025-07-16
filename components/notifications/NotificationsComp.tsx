@@ -74,7 +74,17 @@ export default function NotificationsComp({ username }: NotificationCompProps) {
           </Button>
         )}
       </Flex>
-      <Select value={filter} onChange={e => setFilter(e.target.value)} maxW="200px" mb={4}>
+      <Select
+        value={filter}
+        onChange={e => setFilter(e.target.value)}
+        maxW="200px"
+        mb={4}
+        bg="muted"
+        borderColor="border"
+        color="text"
+        _focus={{ borderColor: 'primary', boxShadow: '0 0 0 1px var(--chakra-colors-primary)' }}
+        _hover={{ borderColor: 'primary' }}
+      >
         <option value="all">All</option>
         {notificationTypeOrder
           .filter(type => notifications.some(n => n.type === type))

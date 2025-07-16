@@ -286,9 +286,9 @@ export default function NotificationItem({
   };
 
   // Replace hardcoded gradient and box-shadow with theme variables
-  const notificationPulseGradient = 'linear-gradient(180deg, var(--chakra-colors-primary, #39ff14) 0%, var(--chakra-colors-accent, #00ff99) 100%)';
-  const notificationBoxShadowAccent = '0 0 8px 2px var(--chakra-colors-primary, #39ff14)';
-  const notificationBoxShadowAccent16 = '0 0 16px 4px var(--chakra-colors-primary, #39ff14)';
+  const notificationPulseGradient = 'linear-gradient(180deg, var(--chakra-colors-primary) 0%, var(--chakra-colors-accent) 100%)';
+  const notificationBoxShadowAccent = '0 0 8px 2px var(--chakra-colors-primary)';
+  const notificationBoxShadowAccent16 = '0 0 16px 4px var(--chakra-colors-primary)';
 
   return (
     <div ref={containerRef}>
@@ -385,7 +385,7 @@ export default function NotificationItem({
                     post
                   </Link>
                   {":"}
-                  <Text as="span" color="green.300" fontWeight="bold" ml={{ base: 0.5, md: 1 }}>
+                  <Text as="span" color="success" fontWeight="bold" ml={{ base: 0.5, md: 1 }}>
                     {(() => {
                       const match = notification.msg.match(/\(([^)]+)\)/);
                       return match && match[1] ? `(${match[1]})` : "";
@@ -395,7 +395,7 @@ export default function NotificationItem({
                   {notification.type === "vote" && postContent && (
                     <Text
                       as="span"
-                      color="green.300"
+                      color="success"
                       fontWeight="normal"
                       ml={{ base: 0.5, md: 1 }}
                       fontSize={{ base: "2xs", md: "xs" }}
@@ -404,7 +404,7 @@ export default function NotificationItem({
                       {postContent.length > 100 ? "…" : ""}&quot;
                     </Text>
                   )}
-                  <Text as="span" fontSize={{ base: "2xs", md: "xs" }} color="gray.400" ml={{ base: 1, md: 2 }}>
+                  <Text as="span" fontSize={{ base: "2xs", md: "xs" }} color="muted" ml={{ base: 1, md: 2 }}>
                     {formattedDate}
                   </Text>
                 </Text>
@@ -417,7 +417,7 @@ export default function NotificationItem({
                   display="flex"
                   alignItems="center"
                   flexWrap="wrap"
-                  whiteSpace="normal"
+                  noOfLines={2}
                   wordBreak="break-word"
                 >
                   <Link
@@ -440,15 +440,41 @@ export default function NotificationItem({
                   >
                     comment
                   </Link>
+                  {/* Inline quoted comment, small and muted */}
+                  {parentPost?.body && (
+                    <Text
+                      as="span"
+                      fontSize="xs"
+                      color="text"
+                      ml={2}
+                      isTruncated
+                      verticalAlign="middle"
+                      display="inline-block"
+                    >
+                      {(() => {
+                        const replaced = parentPost.body
+                          .replace(/!\[.*?\]\(.*?\)/g, "🖼️")
+                          .replace(/<img[^>]*>/gi, "🖼️")
+                          .replace(/\n/g, " ");
+                        return `"${replaced.slice(0, 100)}${replaced.length > 100 ? "…" : ""}"`;
+                      })()}
+                    </Text>
+                  )}
                   {":"}
                 </Text>
-                {/* Parent post/comment preview using HiveMarkdown */}
-                {parentPost?.body && (
-                  <HiveMarkdown markdown={parentPost.body} />
-                )}
                 {/* Main reply content using HiveMarkdown */}
                 {reply && (
-                  <HiveMarkdown markdown={postContent} />
+                  <Box
+                    mt={1}
+                    ml={4}
+                    pl={3}
+                    borderLeft="2px solid"
+                    borderColor="border"
+                    bg="muted"
+                    borderRadius="0"
+                  >
+                    <HiveMarkdown markdown={postContent} className="notification-reply-comment-markdown" />
+                  </Box>
                 )}
               </Box>
             ) : notification.type === "mention" ? (
@@ -485,7 +511,7 @@ export default function NotificationItem({
                     </Link>
                   )}
                   {":"}
-                  <Text as="span" fontSize={{ base: "2xs", md: "xs" }} color="gray.400" ml={{ base: 1, md: 2 }}>
+                  <Text as="span" fontSize={{ base: "2xs", md: "xs" }} color="muted" ml={{ base: 1, md: 2 }}>
                     {formattedDate}
                   </Text>
                 </Text>
@@ -599,7 +625,7 @@ export default function NotificationItem({
                 size={{ base: "xs", md: "sm" }}
                 isRound
                 alignSelf="center"
-                color={hasVoted ? "red.500" : isNew ? "accent" : "primary"}
+                color={hasVoted ? "error" : isNew ? "accent" : "primary"}
                 onClick={handleUpvote}
                 isLoading={isVoting}
               />
