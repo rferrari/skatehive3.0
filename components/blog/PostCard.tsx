@@ -521,8 +521,7 @@ export default function PostCard({
         )}
         <Box
           py={4}
-          pr={4}
-          pl={8}
+          px={4}
           display="flex"
           flexDirection="column"
           justifyContent="space-between"
