@@ -38,6 +38,7 @@ import {
 } from "@/lib/utils/extractImageUrls"; // Import YouTube extraction function
 import useHivePower from "@/hooks/useHivePower";
 import VoteListPopover from "./VoteListModal";
+import MatrixOverlay from "@/components/graphics/MatrixOverlay";
 
 interface PostCardProps {
   post: Discussion;
@@ -93,6 +94,7 @@ export default function PostCard({
     onClose: closePayout,
     onToggle: togglePayout,
   } = useDisclosure();
+  const [showMatrix, setShowMatrix] = useState(false);
 
   // Calculate days remaining for pending payout
   const createdDate = new Date(post.created);
@@ -503,6 +505,20 @@ export default function PostCard({
         height="100%"
         cursor="default"
       >
+        {/* MatrixOverlay covers the whole card, only when showMatrix is true */}
+        {showMatrix && (
+          <Box
+            position="absolute"
+            top={0}
+            left={0}
+            width="100%"
+            height="100%"
+            zIndex={1}
+            pointerEvents="none"
+          >
+            <MatrixOverlay />
+          </Box>
+        )}
         <Box
           py={4}
           pr={4}
@@ -511,6 +527,8 @@ export default function PostCard({
           flexDirection="column"
           justifyContent="space-between"
           height="100%"
+          position="relative"
+          zIndex={2}
         >
           {/* Only show author info if not hidden */}
           {!hideAuthorInfo && (
@@ -682,6 +700,10 @@ export default function PostCard({
                 bg="background"
                 transition="background 0.2s, color 0.2s"
                 _hover={{ bg: "primary", '& .post-title-text': { color: 'background' } }}
+                onMouseEnter={() => setShowMatrix(true)}
+                onMouseLeave={() => setShowMatrix(false)}
+                position="relative"
+                zIndex={3}
               >
                 <Text
                   className="post-title-text"
