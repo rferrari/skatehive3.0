@@ -127,6 +127,7 @@ export default function EmbeddedMap() {
             onWheel={isMobile ? undefined : handleMapSideWheel}
           >
             <Text
+              className="dash-title"
               fontSize={{ base: "2xl", md: "66px" }}
               fontWeight="extrabold"
               color="primary"

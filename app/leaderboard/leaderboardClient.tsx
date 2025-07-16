@@ -290,7 +290,7 @@ export default function LeaderboardClient({ skatersData }: Props) {
               letterSpacing="wider"
               textAlign="center"
               mb={1}
-              style={{ textTransform: "uppercase" }}
+              style={{ textTransform: "uppercase", fontFamily: "Dash, sans-serif" }}
             >
               Skatehive Leaderboard
             </Text>

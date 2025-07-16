@@ -25,6 +25,7 @@ export default function BountiesClient() {
         <Box display="flex" alignItems="center" gap={4} flex="1" mb={{ base: 4, md: 0 }}>
           <Image src="/images/ripper.png" alt="Ripper" height={120} width={120} style={{ marginRight: 12, height: 'auto', width: 'auto' }} className="ripper-logo" />
           <Text
+            className="treasuremap-title"
             fontSize={{ base: "3xl", md: "7xl" }}
             fontWeight="extrabold"
             color="primary"
