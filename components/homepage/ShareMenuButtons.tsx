@@ -1,11 +1,8 @@
-import {
-  MenuItem,
-  useClipboard,
-  useToast,
-} from "@chakra-ui/react";
-import { FaTwitter, FaLink } from "react-icons/fa";
+import { MenuItem, useClipboard, useToast } from "@chakra-ui/react";
+import { FaTwitter, FaLink, FaThumbsDown } from "react-icons/fa";
 import React from "react";
 import { useFarcasterContext } from "@/hooks/useFarcasterContext";
+import { useAioha } from "@aioha/react-ui";
 
 // Custom Farcaster Icon Component
 const FarcasterIcon = ({ size = 16 }: { size?: number }) => (
@@ -25,14 +22,15 @@ interface ShareMenuButtonsProps {
   comment: { author: string; permlink: string };
 }
 
-const ShareMenuButtons = ({
-  comment,
-}: ShareMenuButtonsProps) => {
+const ShareMenuButtons = ({ comment }: ShareMenuButtonsProps) => {
   const { onCopy } = useClipboard(
-    `${typeof window !== "undefined" ? window.location.origin : ""}/post/${comment.author}/${comment.permlink}`
+    `${typeof window !== "undefined" ? window.location.origin : ""}/post/${
+      comment.author
+    }/${comment.permlink}`
   );
   const toast = useToast();
   const { isInFrame, composeCast } = useFarcasterContext();
+  const { aioha, user } = useAioha();
 
   // Validate permlink to prevent [object Object] URLs
   if (typeof comment.permlink !== "string") {
@@ -43,8 +41,49 @@ const ShareMenuButtons = ({
     return null; // Prevent rendering with invalid data
   }
 
-  const postLink = `${typeof window !== "undefined" ? window.location.origin : ""
-    }/post/${comment.author}/${comment.permlink}`;
+  const postLink = `${
+    typeof window !== "undefined" ? window.location.origin : ""
+  }/post/${comment.author}/${comment.permlink}`;
+
+  const handleDownvote = async () => {
+    if (!user) {
+      toast({
+        title: "Please log in",
+        description: "You need to be logged in to downvote.",
+        status: "warning",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    try {
+      const vote = await aioha.vote(
+        comment.author,
+        comment.permlink,
+        -10000 // 100% downvote (negative value)
+      );
+
+      if (vote.success) {
+        toast({
+          title: "Downvote submitted!",
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+        });
+      } else {
+        throw new Error("Vote failed");
+      }
+    } catch (error) {
+      toast({
+        title: "Failed to downvote",
+        description: "Please try again",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
 
   const handleShare = async (platform: string) => {
     if (platform === "copy") {
@@ -94,7 +133,9 @@ const ShareMenuButtons = ({
     } else if (platform === "farcaster") {
       // For web fallback, include both text and URL
       const castText = `Check out this post from @${comment.author}! ${postLink}`;
-      shareUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}`;
+      shareUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(
+        castText
+      )}`;
     }
 
     if (shareUrl) {
@@ -104,23 +145,35 @@ const ShareMenuButtons = ({
 
   return (
     <>
-      <MenuItem onClick={() => handleShare("x")} bg={"background"} color={"primary"}>
-        <FaTwitter style={{ marginRight: '8px' }} />
-        Share on X
-      </MenuItem>
       <MenuItem
         onClick={() => handleShare("farcaster")}
         bg={"background"}
         color={"primary"}
       >
         <FarcasterIcon size={16} />
-        <span style={{ marginLeft: '8px' }}>
+        <span style={{ marginLeft: "8px" }}>
           {isInFrame ? "Cast" : "Share on Farcaster"}
         </span>
       </MenuItem>
-      <MenuItem onClick={() => handleShare("copy")} bg={"background"} color={"primary"}>
-        <FaLink style={{ marginRight: '8px' }} />
+      <MenuItem
+        onClick={() => handleShare("x")}
+        bg={"background"}
+        color={"primary"}
+      >
+        <FaTwitter style={{ marginRight: "8px" }} />
+        Share on X
+      </MenuItem>
+      <MenuItem
+        onClick={() => handleShare("copy")}
+        bg={"background"}
+        color={"primary"}
+      >
+        <FaLink style={{ marginRight: "8px" }} />
         Copy Link
+      </MenuItem>
+      <MenuItem onClick={handleDownvote} bg={"background"} color={"red"}>
+        <FaThumbsDown style={{ marginRight: "8px" }} />
+        Downvote Post
       </MenuItem>
     </>
   );
