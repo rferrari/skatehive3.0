@@ -7,33 +7,29 @@ import {
   FormControl,
   Heading,
   Input,
-  Spinner,
   Text,
   VStack,
   Icon,
   Image,
 } from "@chakra-ui/react";
 import { FaCheck, FaTimes, FaPiggyBank } from "react-icons/fa";
-import { MdSkateboarding, MdPublic, MdOutlinePsychology } from "react-icons/md";
-import {
-  validateAccountName,
-  checkAccountExists,
-} from "@/lib/invite/helpers";
+import { MdPublic, MdOutlinePsychology } from "react-icons/md";
+import { validateAccountName, checkAccountExists } from "@/lib/invite/helpers";
 import { useTheme } from "@/app/themeProvider";
 import CommunityTotalPayout from "@/components/shared/CommunityTotalPayout";
 
 export default function JoinPage() {
   const [desiredUsername, setDesiredUsername] = useState("");
   const [desiredEmail, setDesiredEmail] = useState("");
-  const [accountAvailable, setAccountAvailable] = useState<boolean | null>(null);
+  const [accountAvailable, setAccountAvailable] = useState<boolean | null>(
+    null
+  );
   const [accountInvalid, setAccountInvalid] = useState<string | null>(null);
   const [isCheckedOnce, setIsCheckedOnce] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const { themeName } = useTheme();
   const textColor = "text";
-  const iconColor = "accent";
 
   const handleCheck = async () => {
     setError("");
@@ -68,7 +64,13 @@ export default function JoinPage() {
   };
 
   return (
-    <Box minH="100vh" bg="background" py={0} position="relative" overflow="hidden">
+    <Box
+      minH="100vh"
+      bg="background"
+      py={0}
+      position="relative"
+      overflow="hidden"
+    >
       {/* Background Video */}
       <Box
         as="video"
@@ -84,14 +86,42 @@ export default function JoinPage() {
         height="100%"
         objectFit="cover"
         zIndex={0}
-        style={{ objectFit: 'cover', objectPosition: 'center 30%', width: '100%', height: '100%', pointerEvents: 'none', filter: 'brightness(0.5)' }}
+        style={{
+          objectFit: "cover",
+          objectPosition: "center 30%",
+          width: "100%",
+          height: "100%",
+          pointerEvents: "none",
+          filter: "brightness(0.5)",
+        }}
         aria-hidden="true"
       />
-      <Flex direction="column" align="center" justify="center" minH="100vh" px={4} position="relative" zIndex={1} mt={0} overflow="auto">
+      <Flex
+        direction="column"
+        align="center"
+        justify="center"
+        minH="100vh"
+        px={4}
+        position="relative"
+        zIndex={1}
+        mt={0}
+        overflow="auto"
+      >
         {/* Hero Section */}
         <Box textAlign="center" mt={2} mb={2}>
-          <Image src="/images/treflipgog%20crop.gif" alt="Skateboarder Treflip" maxW="64px" height="64px" objectFit="contain" mb={4} mx="auto" />
-          <Heading size="2xl" color={textColor} mb={2}
+          <Image
+            src="/images/treflipgog%20crop.gif"
+            alt="Skateboarder Treflip"
+            maxW="64px"
+            height="64px"
+            objectFit="contain"
+            mb={4}
+            mx="auto"
+          />
+          <Heading
+            size="2xl"
+            color={textColor}
+            mb={2}
             textShadow="0 4px 24px rgba(0,0,0,0.95)"
           >
             Welcome to Skatehive
@@ -105,10 +135,15 @@ export default function JoinPage() {
             background="rgba(0,0,0,0.4)"
             display="inline-block"
           >
-            <Text fontSize="lg" color={textColor} textAlign="center"
+            <Text
+              fontSize="lg"
+              color={textColor}
+              textAlign="center"
               textShadow="0 4px 24px rgba(0,0,0,0.95)"
             >
-              The decentralized skateboarding community. Connect, share, and grow with skaters worldwide. Join us and claim your unique Hive username!
+              The decentralized skateboarding community. Connect, share, and
+              grow with skaters worldwide. Join us and claim your unique Hive
+              username!
             </Text>
           </Box>
         </Box>
@@ -139,9 +174,13 @@ export default function JoinPage() {
           <Box position="relative" zIndex={1}>
             <VStack spacing={4} align="stretch">
               <FormControl>
-                <Text fontWeight="bold" color={textColor}
+                <Text
+                  fontWeight="bold"
+                  color={textColor}
                   textShadow="0 4px 24px rgba(0,0,0,0.95)"
-                >Choose your Hive Username</Text>
+                >
+                  Choose your Hive Username
+                </Text>
                 <Input
                   type="text"
                   placeholder="Desired Hive Username"
@@ -151,13 +190,17 @@ export default function JoinPage() {
                   bg="background"
                   color="text"
                   mb={2}
-                  _placeholder={{ color: 'text' }}
+                  _placeholder={{ color: "text" }}
                 />
               </FormControl>
               <FormControl>
-                <Text fontWeight="bold" color={textColor}
+                <Text
+                  fontWeight="bold"
+                  color={textColor}
                   textShadow="0 4px 24px rgba(0,0,0,0.95)"
-                >Your Email Address</Text>
+                >
+                  Your Email Address
+                </Text>
                 <Input
                   type="email"
                   placeholder="Email Address"
@@ -167,7 +210,7 @@ export default function JoinPage() {
                   bg="background"
                   color="text"
                   mb={2}
-                  _placeholder={{ color: 'text' }}
+                  _placeholder={{ color: "text" }}
                 />
               </FormControl>
               <Button
@@ -195,12 +238,15 @@ export default function JoinPage() {
                   ) : (
                     <Icon as={FaTimes} color="error" />
                   )}
-                  <Text color={textColor} ml={2}
+                  <Text
+                    color={textColor}
+                    ml={2}
                     textShadow="0 4px 24px rgba(0,0,0,0.95)"
                   >
                     {accountAvailable
                       ? "Username is available!"
-                      : "Please choose another username! " + String(accountInvalid).replace(/'/g, "&apos;")}
+                      : "Please choose another username! " +
+                        String(accountInvalid).replace(/'/g, "&apos;")}
                   </Text>
                 </Flex>
               )}
@@ -210,7 +256,10 @@ export default function JoinPage() {
                 </Button>
               )}
               {error && (
-                <Text color={textColor} fontSize="sm" textAlign="center"
+                <Text
+                  color={textColor}
+                  fontSize="sm"
+                  textAlign="center"
                   textShadow="0 4px 24px rgba(0,0,0,0.95)"
                 >
                   {error}
@@ -225,10 +274,26 @@ export default function JoinPage() {
         </Box>
         {/* Features Section */}
         <Box mt={10} w="full" maxW="3xl">
-          <Flex direction={{ base: "column", md: "row" }} gap={6} justify="center">
-            <FeatureCard icon={MdPublic} title="Global Community" desc="Connect with skaters from all over the world and share your passion." />
-            <FeatureCard icon={MdOutlinePsychology} title="Learn Web3" desc="Explore how decentralized tech connects skaters to shred limits in the digital realm." />
-            <FeatureCard icon={FaPiggyBank} title="Earn Rewards" desc="Get rewarded for your content and engagement. Skate, share, and earn on Hive!" />
+          <Flex
+            direction={{ base: "column", md: "row" }}
+            gap={6}
+            justify="center"
+          >
+            <FeatureCard
+              icon={MdPublic}
+              title="Global Community"
+              desc="Connect with skaters from all over the world and share your passion."
+            />
+            <FeatureCard
+              icon={MdOutlinePsychology}
+              title="Learn Web3"
+              desc="Explore how decentralized tech connects skaters to shred limits in the digital realm."
+            />
+            <FeatureCard
+              icon={FaPiggyBank}
+              title="Earn Rewards"
+              desc="Get rewarded for your content and engagement. Skate, share, and earn on Hive!"
+            />
           </Flex>
         </Box>
       </Flex>
@@ -236,7 +301,15 @@ export default function JoinPage() {
   );
 }
 
-function FeatureCard({ icon, title, desc }: { icon: any; title: string; desc: string }) {
+function FeatureCard({
+  icon,
+  title,
+  desc,
+}: {
+  icon: any;
+  title: string;
+  desc: string;
+}) {
   const { themeName } = useTheme();
   const textColor = "text";
   const iconColor = "accent";
@@ -269,12 +342,19 @@ function FeatureCard({ icon, title, desc }: { icon: any; title: string; desc: st
       />
       <Box position="relative" zIndex={1} width="100%" textAlign="center">
         <Icon as={icon} boxSize={10} color={iconColor} mb={2} />
-        <Text fontWeight="bold" color={textColor} fontSize="lg" mb={1}
+        <Text
+          fontWeight="bold"
+          color={textColor}
+          fontSize="lg"
+          mb={1}
           textShadow="0 4px 24px rgba(0,0,0,0.95)"
         >
           {title}
         </Text>
-        <Text color={textColor} fontSize="md" textAlign="center"
+        <Text
+          color={textColor}
+          fontSize="md"
+          textAlign="center"
           textShadow="0 4px 24px rgba(0,0,0,0.95)"
         >
           {desc}
@@ -282,4 +362,4 @@ function FeatureCard({ icon, title, desc }: { icon: any; title: string; desc: st
       </Box>
     </Flex>
   );
-} 
+}

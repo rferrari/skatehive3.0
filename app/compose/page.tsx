@@ -1,28 +1,26 @@
 "use client";
 
 import React, { useRef, useState } from "react";
-import {
-  Flex,
-  Input,
-  Button,
-  Center,
-  Spinner,
-  Box,
-} from "@chakra-ui/react";
-import ImageCompressor, { ImageCompressorRef } from "@/lib/utils/ImageCompressor";
+import { Flex, Input, Button, Center, Spinner, Box } from "@chakra-ui/react";
+import ImageCompressor, {
+  ImageCompressorRef,
+} from "@/lib/utils/ImageCompressor";
 import VideoUploader, {
   VideoUploaderRef,
 } from "../../components/homepage/VideoUploader";
-import GIFMakerWithSelector, {
-  GIFMakerRef as GIFMakerWithSelectorRef,
-} from "../../components/homepage/GIFMakerWithSelector";
+import { GIFMakerRef as GIFMakerWithSelectorRef } from "../../components/homepage/GIFMakerWithSelector";
 import MediaUploadButtons from "../../components/compose/MediaUploadButtons";
 import HashtagInput from "../../components/compose/HashtagInput";
 import GifModal from "../../components/compose/GifModal";
 import ThumbnailPicker from "../../components/compose/ThumbnailPicker";
 import MarkdownEditor from "../../components/compose/MarkdownEditor";
 import { useComposeForm } from "../../hooks/useComposeForm";
-import { useImageUpload, useVideoUpload, useGifUpload, useFileDropUpload } from "../../hooks/useFileUpload";
+import {
+  useImageUpload,
+  useVideoUpload,
+  useGifUpload,
+  useFileDropUpload,
+} from "../../hooks/useFileUpload";
 import { useDropzone } from "react-dropzone";
 
 export default function Composer() {
@@ -67,11 +65,8 @@ export default function Composer() {
     setIsUploading: setIsImageUploading,
   } = useImageUpload(insertAtCursorWrapper);
 
-  const {
-    isCompressingVideo,
-    handleVideoUpload,
-    createVideoTrigger,
-  } = useVideoUpload(insertAtCursorWrapper);
+  const { isCompressingVideo, handleVideoUpload, createVideoTrigger } =
+    useVideoUpload(insertAtCursorWrapper);
 
   // Create trigger functions with refs
   const handleImageTrigger = createImageTrigger(imageCompressorRef);
@@ -92,7 +87,9 @@ export default function Composer() {
     handleGifWebpUpload,
   } = useGifUpload();
 
-  const { isUploading: isDropUploading, onDrop } = useFileDropUpload(insertAtCursorWrapper);
+  const { isUploading: isDropUploading, onDrop } = useFileDropUpload(
+    insertAtCursorWrapper
+  );
   const { isDragActive } = useDropzone({ onDrop, noClick: true });
 
   // Combined uploading state
@@ -108,7 +105,9 @@ export default function Composer() {
     }
   }, [isGifModalOpen, setGifUrl, setGifSize, setIsProcessingGif]);
 
-  const handleGifWebpUploadWrapper = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleGifWebpUploadWrapper = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     handleGifWebpUpload(e, insertAtCursorWrapper, setIsImageUploading);
   };
 

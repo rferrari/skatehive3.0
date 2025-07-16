@@ -5,14 +5,12 @@ import {
   HStack,
   IconButton,
   Link,
-  Image,
   VStack,
   Divider,
   Button,
   Skeleton,
   Flex,
 } from "@chakra-ui/react";
-import { ExternalLinkIcon } from "@chakra-ui/icons";
 import { Discussion, Notifications } from "@hiveio/dhive";
 import { FaHeart, FaRegHeart } from "react-icons/fa";
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -286,9 +284,12 @@ export default function NotificationItem({
   };
 
   // Replace hardcoded gradient and box-shadow with theme variables
-  const notificationPulseGradient = 'linear-gradient(180deg, var(--chakra-colors-primary) 0%, var(--chakra-colors-accent) 100%)';
-  const notificationBoxShadowAccent = '0 0 8px 2px var(--chakra-colors-primary)';
-  const notificationBoxShadowAccent16 = '0 0 16px 4px var(--chakra-colors-primary)';
+  const notificationPulseGradient =
+    "linear-gradient(180deg, var(--chakra-colors-primary) 0%, var(--chakra-colors-accent) 100%)";
+  const notificationBoxShadowAccent =
+    "0 0 8px 2px var(--chakra-colors-primary)";
+  const notificationBoxShadowAccent16 =
+    "0 0 16px 4px var(--chakra-colors-primary)";
 
   return (
     <div ref={containerRef}>
@@ -332,7 +333,10 @@ export default function NotificationItem({
           }
         `}</style>
         <Box flex="1" w="full">
-          <HStack spacing={{ base: 2, md: 3 }} align={{ base: "flex-start", md: "center" }}>
+          <HStack
+            spacing={{ base: 2, md: 3 }}
+            align={{ base: "flex-start", md: "center" }}
+          >
             <Avatar
               src={`https://images.hive.blog/u/${author}/avatar/sm`}
               name=""
@@ -340,7 +344,10 @@ export default function NotificationItem({
             />
             {notification.type === "follow" ? (
               <HStack spacing={2}>
-                <Text color={isNew ? "accent" : "primary"} fontSize={{ base: "xs", md: "sm" }}>
+                <Text
+                  color={isNew ? "accent" : "primary"}
+                  fontSize={{ base: "xs", md: "sm" }}
+                >
                   {notification.msg.replace(/^@/, "")}
                 </Text>
                 {isFollowingBack ? (
@@ -348,7 +355,10 @@ export default function NotificationItem({
                     Following
                   </Text>
                 ) : (
-                  <Button size={{ base: "xs", md: "sm" }} onClick={handleFollowBack}>
+                  <Button
+                    size={{ base: "xs", md: "sm" }}
+                    onClick={handleFollowBack}
+                  >
                     Follow Back
                   </Button>
                 )}
@@ -385,7 +395,12 @@ export default function NotificationItem({
                     post
                   </Link>
                   {":"}
-                  <Text as="span" color="success" fontWeight="bold" ml={{ base: 0.5, md: 1 }}>
+                  <Text
+                    as="span"
+                    color="success"
+                    fontWeight="bold"
+                    ml={{ base: 0.5, md: 1 }}
+                  >
                     {(() => {
                       const match = notification.msg.match(/\(([^)]+)\)/);
                       return match && match[1] ? `(${match[1]})` : "";
@@ -404,7 +419,12 @@ export default function NotificationItem({
                       {postContent.length > 100 ? "…" : ""}&quot;
                     </Text>
                   )}
-                  <Text as="span" fontSize={{ base: "2xs", md: "xs" }} color="muted" ml={{ base: 1, md: 2 }}>
+                  <Text
+                    as="span"
+                    fontSize={{ base: "2xs", md: "xs" }}
+                    color="muted"
+                    ml={{ base: 1, md: 2 }}
+                  >
                     {formattedDate}
                   </Text>
                 </Text>
@@ -464,7 +484,9 @@ export default function NotificationItem({
                           .replace(/!\[.*?\]\(.*?\)/g, "🖼️")
                           .replace(/<img[^>]*>/gi, "🖼️")
                           .replace(/\n/g, " ");
-                        return `"${replaced.slice(0, 60)}${replaced.length > 60 ? "…" : ""}"`;
+                        return `"${replaced.slice(0, 60)}${
+                          replaced.length > 60 ? "…" : ""
+                        }"`;
                       })()}
                     </Text>
                   )}
@@ -484,7 +506,10 @@ export default function NotificationItem({
                     maxW={{ base: "95vw", md: "100%" }}
                     overflowX="auto"
                   >
-                    <HiveMarkdown markdown={postContent} className="notification-reply-comment-markdown" />
+                    <HiveMarkdown
+                      markdown={postContent}
+                      className="notification-reply-comment-markdown"
+                    />
                   </Box>
                 )}
               </Box>
@@ -522,7 +547,12 @@ export default function NotificationItem({
                     </Link>
                   )}
                   {":"}
-                  <Text as="span" fontSize={{ base: "2xs", md: "xs" }} color="muted" ml={{ base: 1, md: 2 }}>
+                  <Text
+                    as="span"
+                    fontSize={{ base: "2xs", md: "xs" }}
+                    color="muted"
+                    ml={{ base: 1, md: 2 }}
+                  >
                     {formattedDate}
                   </Text>
                 </Text>
@@ -565,9 +595,7 @@ export default function NotificationItem({
                   <HiveMarkdown markdown={parentPost.title} />
                 )}
                 {/* Main reply content using HiveMarkdown */}
-                {reply && (
-                  <HiveMarkdown markdown={postContent} />
-                )}
+                {reply && <HiveMarkdown markdown={postContent} />}
               </Box>
             ) : (
               <Text
@@ -595,8 +623,18 @@ export default function NotificationItem({
                 <VStack align="start" spacing={2} w="100%">
                   {isLoading ? (
                     <>
-                      <Skeleton height="16px" width="100%" startColor="muted" endColor="primary" />
-                      <Skeleton height="16px" width="100%" startColor="muted" endColor="primary" />
+                      <Skeleton
+                        height="16px"
+                        width="100%"
+                        startColor="muted"
+                        endColor="primary"
+                      />
+                      <Skeleton
+                        height="16px"
+                        width="100%"
+                        startColor="muted"
+                        endColor="primary"
+                      />
                     </>
                   ) : (
                     <>

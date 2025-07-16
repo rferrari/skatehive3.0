@@ -1,16 +1,27 @@
-'use client';
-import { useState, useRef, useMemo, useEffect } from 'react';
-import { Box, Flex, VStack, Text, Heading, Badge, Divider, HStack, Center, Image } from '@chakra-ui/react';
-import HTMLFlipBook from 'react-pageflip';
-import { Discussion } from '@hiveio/dhive';
-import { getPayoutValue, findPosts } from '@/lib/hive/client-functions';
-import AuthorAvatar from '@/components/blog/PostCard'; // Update this import if you have a dedicated AuthorAvatar
+"use client";
+import { useState, useRef, useMemo, useEffect } from "react";
+import {
+  Box,
+  Flex,
+  VStack,
+  Text,
+  Heading,
+  Badge,
+  Divider,
+  Image,
+} from "@chakra-ui/react";
+import HTMLFlipBook from "react-pageflip";
+import { Discussion } from "@hiveio/dhive";
+import { getPayoutValue, findPosts } from "@/lib/hive/client-functions";
 import HiveMarkdown from "@/components/shared/HiveMarkdown";
-import LoadingComponent from '../homepage/loadingComponent';
-import MatrixOverlay from '@/components/graphics/MatrixOverlay';
-import { useTheme } from '@/app/themeProvider';
+import LoadingComponent from "../homepage/loadingComponent";
+import MatrixOverlay from "@/components/graphics/MatrixOverlay";
+import { useTheme } from "@/app/themeProvider";
 
-function useMagazinePosts(query: string, tag: { tag: string; limit: number }[]) {
+function useMagazinePosts(
+  query: string,
+  tag: { tag: string; limit: number }[]
+) {
   const [posts, setPosts] = useState<Discussion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<null | string>(null);
@@ -29,7 +40,7 @@ function useMagazinePosts(query: string, tag: { tag: string; limit: number }[]) 
           let postsArray = [];
           if (Array.isArray(data)) {
             postsArray = data;
-          } else if (data && typeof data === 'object') {
+          } else if (data && typeof data === "object") {
             postsArray = [data];
           }
           setPosts(postsArray);
@@ -38,7 +49,7 @@ function useMagazinePosts(query: string, tag: { tag: string; limit: number }[]) 
       })
       .catch((err) => {
         if (isMounted) {
-          setError(err.message || 'Error fetching posts');
+          setError(err.message || "Error fetching posts");
           setIsLoading(false);
         }
       });
@@ -51,67 +62,69 @@ function useMagazinePosts(query: string, tag: { tag: string; limit: number }[]) 
 }
 
 const backgroundGradient = {
-  minHeight: '100%',
-  width: '100%',
+  minHeight: "100%",
+  width: "100%",
   p: 0,
   m: 0,
-  overflow: 'hidden',
+  overflow: "hidden",
 };
 
 const pageStyles = (theme: any) => ({
   background: `linear-gradient(135deg,${theme.colors.background} 80%,${theme.colors.muted} 100%)`,
-  borderRadius: '16px',
-  boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'space-between',
-  padding: '32px 28px 48px 28px',
+  borderRadius: "16px",
+  boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.15)",
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "space-between",
+  padding: "32px 28px 48px 28px",
   color: theme.colors.text,
-  overflow: 'auto',
-  position: 'relative',
+  overflow: "auto",
+  position: "relative",
   minHeight: 400,
   zIndex: 1,
-  border: `1px solid ${theme.colors.border || '#e0e7ef'}`,
+  border: `1px solid ${theme.colors.border || "#e0e7ef"}`,
 });
 
 const flipbookStyles = {
-  width: '100%',
-  maxWidth: '900px',
-  height: '100vh',
-  margin: '0 auto',
-  transition: 'none',
+  width: "100%",
+  maxWidth: "900px",
+  height: "100vh",
+  margin: "0 auto",
+  transition: "none",
 };
 
 const retroFont = {
   fontFamily: `'Joystix', 'VT323', 'Fira Mono', 'monospace'`,
-  letterSpacing: '0.5px',
+  letterSpacing: "0.5px",
 };
-const neonGreen = '#39FF14';
-const blackShadow = '0 4px 32px #000, 0 8px 48px #000, 0 0 8px #000, 0 0 2px #000';
-const retroBoxShadow = (theme: any) => `0 0 0 2px ${theme.colors.text}, 0 0 8px ${theme.colors.primary}`;
+const neonGreen = "#39FF14";
+const blackShadow =
+  "0 4px 32px #000, 0 8px 48px #000, 0 0 8px #000, 0 0 2px #000";
+const retroBoxShadow = (theme: any) =>
+  `0 0 0 2px ${theme.colors.text}, 0 0 8px ${theme.colors.primary}`;
 
 const coverStyles = (theme: any) => ({
   ...pageStyles(theme),
-  borderRadius: '0px 16px 0px 0px',
-  background: 'transparent',
+  borderRadius: "0px 16px 0px 0px",
+  background: "transparent",
   color: theme.colors.primary,
-  backgroundSize: 'cover',
-  textAlign: 'center',
+  backgroundSize: "cover",
+  textAlign: "center",
   boxShadow: retroBoxShadow(theme),
   fontFamily: `'Joystix', 'VT323', 'Fira Mono', 'monospace'`,
-  letterSpacing: '0.5px',
+  letterSpacing: "0.5px",
 });
 
 const backCoverStyles = (theme: any) => ({
   ...pageStyles(theme),
   background: `linear-gradient(120deg, ${theme.colors.primary} 60%, ${theme.colors.accent} 100%)`,
   color: theme.colors.text,
-  justifyContent: 'center',
-  alignItems: 'center',
+  justifyContent: "center",
+  alignItems: "center",
   backgroundImage:
-    'url(https://media1.giphy.com/media/9ZsHm0z5QwSYpV7g01/giphy.gif?cid=6c09b952uxaerotyqa9vct5pkiwvar6l6knjgsctieeg0sh1&ep=v1_gifs_search&rid=giphy.gif&ct=g)',
-  backgroundSize: 'cover',
-  boxShadow: '0 8px 32px 0 rgba(179,18,23,0.25)',
+    "url(https://media1.giphy.com/media/9ZsHm0z5QwSYpV7g01/giphy.gif?cid=6c09b952uxaerotyqa9vct5pkiwvar6l6knjgsctieeg0sh1&ep=v1_gifs_search&rid=giphy.gif&ct=g)",
+  backgroundSize: "cover",
+  boxShadow: "0 8px 32px 0 rgba(179,18,23,0.25)",
 });
 
 export interface MagazineProps {
@@ -128,8 +141,8 @@ function addEnableJsApiToYouTubeIframes(html: string) {
   return html.replace(
     /<iframe([^>]+src="https:\/\/www\.youtube\.com\/embed\/[^\"]+)([^>]*)>/g,
     (match, beforeSrc, afterSrc) => {
-      if (beforeSrc.includes('enablejsapi=1')) return match;
-      if (beforeSrc.includes('?')) {
+      if (beforeSrc.includes("enablejsapi=1")) return match;
+      if (beforeSrc.includes("?")) {
         return `<iframe${beforeSrc}&enablejsapi=1${afterSrc}>`;
       } else {
         return `<iframe${beforeSrc}?enablejsapi=1${afterSrc}>`;
@@ -148,8 +161,12 @@ export default function Magazine(props: MagazineProps) {
   const posts = useMemo(() => {
     return props.tag && props.query ? magazinePosts.posts : props.posts || [];
   }, [magazinePosts.posts, props.posts, props.tag, props.query]);
-  const isLoading = props.tag && props.query ? magazinePosts.isLoading : props.isLoading || false;
-  const error = props.tag && props.query ? magazinePosts.error : props.error || null;
+  const isLoading =
+    props.tag && props.query
+      ? magazinePosts.isLoading
+      : props.isLoading || false;
+  const error =
+    props.tag && props.query ? magazinePosts.error : props.error || null;
 
   useEffect(() => {
     if (audioRef.current) {
@@ -161,7 +178,10 @@ export default function Magazine(props: MagazineProps) {
   const filteredPosts = useMemo(() => {
     if (!posts) return [];
     // TODO: Add your blocked users logic if needed
-    return posts.sort((a, b) => Number(getPayoutValue(b as any)) - Number(getPayoutValue(a as any)));
+    return posts.sort(
+      (a, b) =>
+        Number(getPayoutValue(b as any)) - Number(getPayoutValue(a as any))
+    );
   }, [posts]);
 
   const playSound = () => {
@@ -200,9 +220,9 @@ export default function Magazine(props: MagazineProps) {
       justifyContent="flex-start"
       spacing={0}
       sx={{
-        '&::-webkit-scrollbar': { display: 'none' },
-        scrollbarWidth: 'none',
-        overflowY: 'hidden',
+        "&::-webkit-scrollbar": { display: "none" },
+        scrollbarWidth: "none",
+        overflowY: "hidden",
       }}
     >
       <audio ref={audioRef} src="/pageflip.mp3" preload="auto" />
@@ -230,7 +250,7 @@ export default function Magazine(props: MagazineProps) {
         renderOnlyPageLengthChange={true}
         showPageCorners={false}
         disableFlipByClick={true}
-        style={{ width: '100%', height: '100vh' }}
+        style={{ width: "100%", height: "100vh" }}
         ref={flipBookRef}
         onInit={(instance) => {
           flipBookRef.current = instance;
@@ -238,7 +258,7 @@ export default function Magazine(props: MagazineProps) {
         onFlip={(e) => {
           playSound();
           // Pause all native videos
-          const videos = document.querySelectorAll('.flipbook video');
+          const videos = document.querySelectorAll(".flipbook video");
           videos.forEach((video) => {
             const vid = video as HTMLVideoElement;
             if (!vid.paused) {
@@ -246,30 +266,39 @@ export default function Magazine(props: MagazineProps) {
             }
           });
           // Pause all iframe videos
-          const iframes = document.querySelectorAll('.flipbook iframe');
+          const iframes = document.querySelectorAll(".flipbook iframe");
           iframes.forEach((iframe) => {
             const ifr = iframe as HTMLIFrameElement;
-            if (ifr.src.includes('youtube.com/embed')) {
+            if (ifr.src.includes("youtube.com/embed")) {
               ifr.contentWindow?.postMessage(
                 JSON.stringify({
-                  event: 'command',
-                  func: 'pauseVideo',
+                  event: "command",
+                  func: "pauseVideo",
                   args: [],
                 }),
-                '*'
+                "*"
               );
-            } else if (ifr.src.includes('skatehype.com/ifplay.php') || ifr.src.includes('3speak.tv')) {
+            } else if (
+              ifr.src.includes("skatehype.com/ifplay.php") ||
+              ifr.src.includes("3speak.tv")
+            ) {
               const oldSrc = ifr.src;
-              ifr.src = '';
+              ifr.src = "";
               setTimeout(() => {
                 ifr.src = oldSrc;
               }, 100);
             }
           });
         }}
-        onUpdate={() => { }}
+        onUpdate={() => {}}
       >
-        <Box sx={coverStyles(theme)} width="100%" height="100%" position="relative" overflow="hidden">
+        <Box
+          sx={coverStyles(theme)}
+          width="100%"
+          height="100%"
+          position="relative"
+          overflow="hidden"
+        >
           {/* Matrix effect as background */}
           <Box
             position="absolute"
@@ -292,18 +321,18 @@ export default function Magazine(props: MagazineProps) {
             zIndex={1}
           >
             {/* Text content above image, overlapping bottom of image */}
-            <Box
-              zIndex={2}
-              position="relative"
-              mb={-16}
-              textAlign="center"
-            >
+            <Box zIndex={2} position="relative" mb={-16} textAlign="center">
               <Heading
                 size="2xl"
                 fontWeight="extrabold"
                 letterSpacing="tight"
                 mb={2}
-                style={{ fontFamily: `'Joystix', 'VT323', 'Fira Mono', 'monospace'`, textShadow: '0 4px 32px #000, 0 8px 48px #000, 0 0 8px #000, 0 0 2px #000', color: theme.colors.primary }}
+                style={{
+                  fontFamily: `'Joystix', 'VT323', 'Fira Mono', 'monospace'`,
+                  textShadow:
+                    "0 4px 32px #000, 0 8px 48px #000, 0 0 8px #000, 0 0 2px #000",
+                  color: theme.colors.primary,
+                }}
               >
                 SkateHive Magazine
               </Heading>
@@ -311,7 +340,11 @@ export default function Magazine(props: MagazineProps) {
                 fontSize="xl"
                 color={theme.colors.primary}
                 mb={4}
-                style={{ fontFamily: `'Joystix', 'VT323', 'Fira Mono', 'monospace'`, textShadow: '0 4px 32px #000, 0 8px 48px #000, 0 0 8px #000, 0 0 2px #000' }}
+                style={{
+                  fontFamily: `'Joystix', 'VT323', 'Fira Mono', 'monospace'`,
+                  textShadow:
+                    "0 4px 32px #000, 0 8px 48px #000, 0 0 8px #000, 0 0 2px #000",
+                }}
               >
                 The Community Skateboarding Zine
               </Text>
@@ -332,9 +365,7 @@ export default function Magazine(props: MagazineProps) {
         </Box>
         {filteredPosts.map((post: Discussion, index) => {
           const isLeftPage = index % 2 === 0;
-          const pageBorderRadius = isLeftPage
-            ? '16px 0 0 0px'
-            : '0 16px 0px 0';
+          const pageBorderRadius = isLeftPage ? "16px 0 0 0px" : "0 16px 0px 0";
           return (
             <Box
               key={`${post.id}-${index}`}
@@ -354,21 +385,69 @@ export default function Magazine(props: MagazineProps) {
                   borderRadius="full"
                   mr={2}
                 />
-                <Text fontSize="sm" color={theme.colors.primary} style={{ fontFamily: `'Joystix', 'VT323', 'Fira Mono', 'monospace'`, letterSpacing: '0.5px' }} fontWeight="bold">
+                <Text
+                  fontSize="sm"
+                  color={theme.colors.primary}
+                  style={{
+                    fontFamily: `'Joystix', 'VT323', 'Fira Mono', 'monospace'`,
+                    letterSpacing: "0.5px",
+                  }}
+                  fontWeight="bold"
+                >
                   @{post.author}
                 </Text>
-                <Text fontSize="xs" color={theme.colors.accent} style={{ fontFamily: `'Joystix', 'VT323', 'Fira Mono', 'monospace'`, letterSpacing: '0.5px' }} ml={2}>
+                <Text
+                  fontSize="xs"
+                  color={theme.colors.accent}
+                  style={{
+                    fontFamily: `'Joystix', 'VT323', 'Fira Mono', 'monospace'`,
+                    letterSpacing: "0.5px",
+                  }}
+                  ml={2}
+                >
                   {new Date(post.created).toLocaleDateString()}
                 </Text>
-                <Badge variant={'solid'} bg={theme.colors.primary} color={theme.colors.background} h={'24px'} minW={'48px'} px={2} borderRadius={8} display="flex" alignItems="center" justifyContent="center" fontWeight="bold" style={{ fontFamily: `'Joystix', 'VT323', 'Fira Mono', 'monospace'`, letterSpacing: '0.5px' }} ml={2}>
+                <Badge
+                  variant={"solid"}
+                  bg={theme.colors.primary}
+                  color={theme.colors.background}
+                  h={"24px"}
+                  minW={"48px"}
+                  px={2}
+                  borderRadius={8}
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  fontWeight="bold"
+                  style={{
+                    fontFamily: `'Joystix', 'VT323', 'Fira Mono', 'monospace'`,
+                    letterSpacing: "0.5px",
+                  }}
+                  ml={2}
+                >
                   ${Number(getPayoutValue(post as any)).toFixed(2)}
                 </Badge>
               </Flex>
-              <Heading fontSize="lg" color={theme.colors.primary} style={{ fontFamily: `'Joystix', 'VT323', 'Fira Mono', 'monospace'`, letterSpacing: '0.5px' }} mb={2}>
+              <Heading
+                fontSize="lg"
+                color={theme.colors.primary}
+                style={{
+                  fontFamily: `'Joystix', 'VT323', 'Fira Mono', 'monospace'`,
+                  letterSpacing: "0.5px",
+                }}
+                mb={2}
+              >
                 {post.title}
               </Heading>
               <Divider mt={2} mb={2} />
-              <Box flex="1 1 0%" minHeight={0} overflowY="auto" overflowX="hidden" width="100%" className="hide-scrollbar">
+              <Box
+                flex="1 1 0%"
+                minHeight={0}
+                overflowY="auto"
+                overflowX="hidden"
+                width="100%"
+                className="hide-scrollbar"
+              >
                 <HiveMarkdown markdown={post.body} />
               </Box>
             </Box>
@@ -398,14 +477,16 @@ export default function Magazine(props: MagazineProps) {
           scrollbar-width: none; /* Firefox */
         }
         /* Aggressively hide all scrollbars within the flipbook and its children */
-        .flipbook, .flipbook * {
-          scrollbar-width: none !important;      /* Firefox */
-          -ms-overflow-style: none !important;   /* IE and Edge */
+        .flipbook,
+        .flipbook * {
+          scrollbar-width: none !important; /* Firefox */
+          -ms-overflow-style: none !important; /* IE and Edge */
         }
-        .flipbook::-webkit-scrollbar, .flipbook *::-webkit-scrollbar {
-          display: none !important;              /* Chrome, Safari */
+        .flipbook::-webkit-scrollbar,
+        .flipbook *::-webkit-scrollbar {
+          display: none !important; /* Chrome, Safari */
         }
       `}</style>
     </VStack>
   );
-} 
+}
