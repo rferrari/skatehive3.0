@@ -6,6 +6,7 @@ import SnapComposer from "./SnapComposer";
 import { Discussion } from "@hiveio/dhive"; // Add this import for consistency
 import LogoMatrix from "../graphics/LogoMatrix";
 import UpvoteSnapContainer from "./UpvoteSnapContainer";
+import { countDownvotes } from "@/lib/utils/postUtils";
 
 interface SnapListProps {
   author: string;
@@ -81,19 +82,30 @@ export default function SnapList({
     }
   };
 
-  // Sort comments by creation date (newest first)
-  const sortedComments = [...displayedComments].sort(
-    (a: Discussion, b: Discussion) => {
+  // Filter out posts with 2 or more downvotes (community disapproval)
+  // This helps maintain content quality by hiding posts the community has rejected
+  const filteredAndSortedComments = [...displayedComments]
+    .filter((discussion: Discussion) => {
+      const downvoteCount = countDownvotes(discussion.active_votes);
+      // Filter out posts with 2 or more downvotes (community disapproval)
+      const shouldShow = downvoteCount < 2;
+      if (!shouldShow) {
+        console.log(
+          `❌ FILTERING OUT post by ${discussion.author} due to ${downvoteCount} downvotes`
+        );
+      }
+      return shouldShow;
+    })
+    .sort((a: Discussion, b: Discussion) => {
       return new Date(b.created).getTime() - new Date(a.created).getTime();
-    }
-  );
+    });
 
   // Conditionally render after all hooks have run
   if (!hasMounted) return null;
 
   return (
     <VStack spacing={1} align="stretch" mx="auto">
-      {isLoading && sortedComments.length === 0 ? (
+      {isLoading && filteredAndSortedComments.length === 0 ? (
         <Box textAlign="center" mt={-1}>
           <LogoMatrix />
         </Box>
@@ -113,7 +125,7 @@ export default function SnapList({
           <UpvoteSnapContainer hideIfVoted />
 
           <InfiniteScroll
-            dataLength={sortedComments.length}
+            dataLength={filteredAndSortedComments.length}
             next={loadNextPage}
             hasMore={hasMore}
             loader={
@@ -125,7 +137,7 @@ export default function SnapList({
             scrollableTarget="scrollableDiv"
           >
             <VStack spacing={1} align="stretch">
-              {sortedComments.map((discussion: Discussion) => (
+              {filteredAndSortedComments.map((discussion: Discussion) => (
                 <Snap
                   key={discussion.permlink}
                   discussion={discussion}
