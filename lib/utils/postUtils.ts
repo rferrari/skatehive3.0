@@ -43,3 +43,36 @@ export function deduplicateVotes(votes: any[]): any[] {
     });
     return Array.from(uniqueVotesMap.values());
 }
+
+/**
+ * Count downvotes (negative votes) from active_votes array
+ */
+export function countDownvotes(activeVotes: any[]): number {
+    if (!activeVotes || !Array.isArray(activeVotes)) return 0;
+    return activeVotes.filter(vote => {
+        // Check for negative weight, percent, or rshares indicating a downvote
+        const weight = vote.weight || 0;
+        const percent = vote.percent || 0;
+        const rshares = vote.rshares || 0;
+        
+        // In the Hive blockchain:
+        // - weight and rshares are the primary indicators
+        // - percent might be 0 due to API conversion (see useSnaps.ts)
+        // - negative values indicate downvotes
+        const isDownvote = weight < 0 || percent < 0 || rshares < 0;
+        
+        // Debug logging for troubleshooting
+        if (vote.voter === 'xviad' || isDownvote) {
+            console.log(`Vote analysis for ${vote.voter}:`, {
+                weight,
+                percent, 
+                rshares,
+                isDownvote,
+                rawVote: vote
+            });
+        }
+        
+        return isDownvote;
+    }).length;
+}
+
