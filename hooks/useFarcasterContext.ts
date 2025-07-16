@@ -25,7 +25,6 @@ export const useFarcasterContext = () => {
         setIsReady(true);
       } catch (error) {
         // SDK ready() failed, probably not in Farcaster frame
-        console.log('Not in Farcaster frame context:', error);
         setIsInFrame(false);
         setIsReady(true);
       }

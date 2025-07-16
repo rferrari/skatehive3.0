@@ -65,12 +65,10 @@ export const usePostEdit = (discussion: Discussion) => {
                 },
             ];
 
-            console.log('Broadcasting edit operation:', operation);
 
             // Use aioha to broadcast the edit
             const result = await aioha.signAndBroadcastTx([operation], KeyTypes.Posting);
 
-            console.log('Broadcast result:', result);
 
             if (result && !result.error) {
                 toast({

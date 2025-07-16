@@ -61,17 +61,7 @@ export function countDownvotes(activeVotes: any[]): number {
         // - negative values indicate downvotes
         const isDownvote = weight < 0 || percent < 0 || rshares < 0;
         
-        // Debug logging for troubleshooting
-        if (vote.voter === 'xviad' || isDownvote) {
-            console.log(`Vote analysis for ${vote.voter}:`, {
-                weight,
-                percent, 
-                rshares,
-                isDownvote,
-                rawVote: vote
-            });
-        }
-        
+
         return isDownvote;
     }).length;
 }

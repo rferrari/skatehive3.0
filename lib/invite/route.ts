@@ -52,7 +52,6 @@ export default async function serverMailer(
       }]
     });
 
-    //console.log(info);
     return true;
 
   } catch (error) {
