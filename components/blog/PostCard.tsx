@@ -781,6 +781,7 @@ export default function PostCard({
                     opacity={voted ? 1 : 0.5}
                     boxSize={6}
                     _hover={{ bg: "accent", borderRadius: "full" }}
+                    transition="background 0.2s, border-radius 0.2s"
                   />
                   <VoteListPopover
                     trigger={
