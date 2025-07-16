@@ -668,28 +668,36 @@ export default function PostCard({
             </Box>
 
             {/* Title Section with border separator */}
-            <Box
-              borderTop="1px solid"
-              borderColor="primary"
-              p={3}
-              textAlign="center"
+            <Link
+              href={`/post/${author}/${post.permlink}`}
+              _hover={{ textDecoration: "none" }}
+              style={{ display: "block" }}
             >
-              <Link
-                href={`/post/${author}/${post.permlink}`}
-                _hover={{ textDecoration: "underline" }}
+              <Box
+                borderTop="1px solid"
+                borderColor="primary"
+                p={3}
+                textAlign="center"
+                cursor="pointer"
+                bg="background"
+                transition="background 0.2s, color 0.2s"
+                _hover={{ bg: "primary", '& .post-title-text': { color: 'background' } }}
               >
                 <Text
+                  className="post-title-text"
                   fontWeight="bold"
                   fontSize={"16px"}
                   isTruncated={false}
                   whiteSpace="normal"
                   wordBreak="break-word"
                   noOfLines={2}
+                  color="primary"
+                  transition="color 0.2s"
                 >
                   {title}
                 </Text>
-              </Link>
-            </Box>
+              </Box>
+            </Link>
           </Box>
           <Box mt="auto">
             {showSlider ? (
