@@ -67,7 +67,7 @@ const ShareMenuButtons = ({ comment }: ShareMenuButtonsProps) => {
       if (vote.success) {
         toast({
           title: "Downvote submitted!",
-          status: "success",
+          status: "error",
           duration: 3000,
           isClosable: true,
         });
