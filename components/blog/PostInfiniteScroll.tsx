@@ -30,7 +30,9 @@ export default function PostsInfiniteScroll({
   const hasMore = allPosts.length % 12 === 0; // Adjust this logic based on your pagination
   // Determine columns based on context and viewMode
   const columns =
-    viewMode === "grid" || viewMode === "magazine" ? (context === "rightsidebar" ? 1 : 3) : 1;
+    viewMode === "grid" || viewMode === "magazine"
+      ? (context === "rightsidebar" ? 1 : context === "profile" ? 2 : 3)
+      : 1;
 
   return (
     <InfiniteScroll
