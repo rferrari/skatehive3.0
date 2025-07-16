@@ -288,15 +288,13 @@ const VideoRenderer = ({ src, ...props }: RendererProps) => {
         try {
           const hash = extractIPFSHash(src);
           if (hash) {
-            console.log('🔍 Fetching thumbnail for video hash:', hash);
             const thumbnail = await getVideoThumbnail(hash);
             if (thumbnail) {
               setThumbnailUrl(thumbnail);
-              console.log('🖼️ Thumbnail loaded:', thumbnail);
             }
           }
         } catch (error) {
-          console.error('❌ Failed to load thumbnail:', error);
+          console.error("❌ Failed to load thumbnail:", error);
         }
       }
     };

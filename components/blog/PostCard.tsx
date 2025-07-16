@@ -17,7 +17,6 @@ import {
   PopoverArrow,
   PopoverBody,
   useDisclosure,
-  Center,
 } from "@chakra-ui/react";
 import React, { useState, useEffect, useMemo } from "react";
 import { Discussion } from "@hiveio/dhive";
@@ -26,7 +25,6 @@ import { Navigation, Pagination } from "swiper/modules";
 import "swiper/swiper-bundle.css";
 import { FaComment } from "react-icons/fa";
 import { LuArrowUpRight } from "react-icons/lu";
-import { FiBook } from "react-icons/fi";
 import { getPostDate } from "@/lib/utils/GetPostDate";
 import { useAioha } from "@aioha/react-ui";
 import { useRouter } from "next/navigation";
@@ -156,44 +154,6 @@ export default function PostCard({
     handleHeartClick();
   }
 
-  function viewPost() {
-    // Enhanced debugging to catch problematic values
-    console.log("PostCard viewPost called with:", {
-      author,
-      permlink: post.permlink,
-      authorType: typeof author,
-      permlinkType: typeof post.permlink,
-    });
-
-    if (typeof author !== "string" || typeof post.permlink !== "string") {
-      console.error("PostCard: Invalid author or permlink types:", {
-        author,
-        permlink: post.permlink,
-        authorType: typeof author,
-        permlinkType: typeof post.permlink,
-      });
-      return;
-    }
-
-    // Check for object-like strings
-    if (author.includes("[object") || post.permlink.includes("[object")) {
-      console.error("Object-like string detected in navigation:", {
-        author,
-        permlink: post.permlink,
-        authorType: typeof author,
-        permlinkType: typeof post.permlink,
-      });
-      return;
-    }
-
-    // Use the correct URL format with proper encoding
-    const url = `/post/${encodeURIComponent(author)}/${encodeURIComponent(
-      post.permlink
-    )}`;
-    console.log("Navigating to URL:", url);
-    router.push(url);
-  }
-
   // **Function to load more slides**
   function handleSlideChange(swiper: any) {
     // Check if user is reaching the end of currently visible images
@@ -208,15 +168,6 @@ export default function PostCard({
   // Modified to only stop propagation
   function stopPropagation(e: React.MouseEvent) {
     e.stopPropagation();
-  }
-
-  // Create a proper handler for Swiper click events
-  function handleSwiperClick(
-    swiper: any,
-    event: MouseEvent | TouchEvent | PointerEvent
-  ) {
-    // Stop the event from bubbling up to the card
-    event.stopPropagation();
   }
 
   // New function to log image load errors
@@ -600,8 +551,12 @@ export default function PostCard({
                   onSwiper={(swiper) => {
                     setTimeout(() => {
                       if (!swiper.el) return;
-                      const next = swiper.el.querySelector(".swiper-button-next");
-                      const prev = swiper.el.querySelector(".swiper-button-prev");
+                      const next = swiper.el.querySelector(
+                        ".swiper-button-next"
+                      );
+                      const prev = swiper.el.querySelector(
+                        ".swiper-button-prev"
+                      );
                       if (next)
                         next.addEventListener("click", (e) =>
                           e.stopPropagation()
@@ -640,8 +595,12 @@ export default function PostCard({
                   onSwiper={(swiper) => {
                     setTimeout(() => {
                       if (!swiper.el) return;
-                      const next = swiper.el.querySelector(".swiper-button-next");
-                      const prev = swiper.el.querySelector(".swiper-button-prev");
+                      const next = swiper.el.querySelector(
+                        ".swiper-button-next"
+                      );
+                      const prev = swiper.el.querySelector(
+                        ".swiper-button-prev"
+                      );
                       if (next)
                         next.addEventListener("click", (e) =>
                           e.stopPropagation()
@@ -698,7 +657,10 @@ export default function PostCard({
                 cursor="pointer"
                 bg="background"
                 transition="background 0.2s, color 0.2s"
-                _hover={{ bg: "primary", '& .post-title-text': { color: 'background' } }}
+                _hover={{
+                  bg: "primary",
+                  "& .post-title-text": { color: "background" },
+                }}
                 onMouseEnter={() => setShowMatrix(true)}
                 onMouseLeave={() => setShowMatrix(false)}
                 position="relative"
@@ -798,7 +760,9 @@ export default function PostCard({
                     justifyContent="center"
                     cursor="pointer"
                     p={1}
-                    onClick={(e: React.MouseEvent<HTMLSpanElement, MouseEvent>) => {
+                    onClick={(
+                      e: React.MouseEvent<HTMLSpanElement, MouseEvent>
+                    ) => {
                       e.stopPropagation();
                       handleHeartClick();
                     }}

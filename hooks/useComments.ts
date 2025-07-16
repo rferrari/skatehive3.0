@@ -16,17 +16,6 @@ async function fetchComments(
     recursive: boolean = false
 ): Promise<Discussion[]> {
     try {
-        /*
-        const params = {
-            start: [author, permlink, "", ""],
-            limit: 10,
-            order: "by_parent"
-          };
-          
-        const temp = await HiveClient.call("database_api", "list_comments", params);
-        console.log(temp.comments)
-        const comments = temp.comments
-        */
 
         const comments = (await HiveClient.database.call("get_content_replies", [
             author,
