@@ -145,7 +145,8 @@ export const useGifUpload = () => {
             const result = await response.json();
             let ipfsUrl = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`;
             if (file.type === "image/gif") {
-                ipfsUrl += `?filename=${encodeURIComponent(file.name)}`;
+                // Always append ?filename=skatehive.gif for GIFs
+                ipfsUrl += `?filename=skatehive.gif`;
             }
             insertAtCursor(`\n![${file.name}](${ipfsUrl})\n`);
         } catch (error) {
@@ -215,7 +216,10 @@ export const useFileDropUpload = (insertAtCursor: (content: string) => void) => 
                 }
                 const result = await response.json();
                 const url = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`;
-                if (file.type.startsWith("image/")) {
+                if (file.type === "image/gif") {
+                    // Always append ?filename=skatehive.gif for GIFs
+                    insertAtCursor(`\n![${fileName}](${url}?filename=skatehive.gif)\n`);
+                } else if (file.type.startsWith("image/")) {
                     insertAtCursor(`\n![${fileName}](${url})\n`);
                 } else if (file.type.startsWith("video/")) {
                     insertAtCursor(
