@@ -104,6 +104,7 @@ export default function EmbeddedMap() {
           align="flex-start"
           justifyContent="center"
           p={4}
+          pt={0}
           w="100%"
           mx="auto"
           gap={0}
@@ -120,26 +121,30 @@ export default function EmbeddedMap() {
               scrollbarWidth: "none",
             }}
             borderRadius="10px"
-            p={{ base: 0, md: 4 }}
             width="100%"
             mx="auto"
             mb={{ base: 2, md: 6 }}
             onWheel={isMobile ? undefined : handleMapSideWheel}
           >
-            <Text
-              className="dash-title"
-              fontSize={{ base: "6xl", md: "7xl" }}
-              fontWeight="extrabold"
-              color="primary"
-              letterSpacing="widest"
-              textAlign="center"
-              style={{ textTransform: "uppercase", lineHeight: 1.1, maxWidth: "100%", whiteSpace: "nowrap" }}
-            >
-              SKATE SPOT MAP
-            </Text>
-            {/* Only show Add A Spot if user is logged in (Aioha) */}
+            {/* Title Section */}
+            <Box p={{ base: 2, md: 4 }} pt={0} pb={0}>
+              <Text
+                className="fretqwik-title"
+                fontSize={{ base: "6xl", md: "7xl" }}
+                fontWeight="extrabold"
+                color="primary"
+                letterSpacing="widest"
+                textAlign="center"
+                mt={{ base: -2, md: -4 }}
+                style={{ lineHeight: 1.1, maxWidth: "100%", whiteSpace: "nowrap" }}
+              >
+                skate spot map
+              </Text>
+            </Box>
+
+            {/* Button Section */}
             {user && (
-              <Box textAlign="center" mb={{ base: 2, md: 4 }}>
+              <Box p={{ base: 2, md: 4 }} pt={{ base: 4, md: 6 }} pb={{ base: 2, md: 2 }} textAlign="center">
                 <Button
                   bg="background"
                   color="primary"
@@ -149,7 +154,7 @@ export default function EmbeddedMap() {
                   fontWeight="bold"
                   fontSize="md"
                   boxShadow="md"
-                  _hover={{ bg: "accent", color: "primary" }}
+                  _hover={{ bg: "primary", color: "background" }}
                   onClick={() => {
                     const el = document.getElementById("spot-name-field");
                     if (el) {
@@ -162,12 +167,15 @@ export default function EmbeddedMap() {
                 </Button>
               </Box>
             )}
+
+            {/* Map Section */}
             <Box
-              mb={{ base: 2, md: 4 }}
+              p={{ base: 2, md: 4 }}
+              pt={0}
               textAlign="center"
               width="100%"
               sx={{ aspectRatio: { base: "3 / 4.8", md: "3 / 2.4" } }}
-              height={{ base: "300px", md: "calc(100vh - 220px)" }}
+              height={{ base: "300px", md: "calc(100vh - 280px)" }}
             >
               <iframe
                 src={mapSrc}

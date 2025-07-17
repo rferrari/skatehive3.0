@@ -103,15 +103,30 @@ body.show-splash #splash-root {
   font-family: 'Dash', cursive, sans-serif;
 }
 
+
+
 @font-face {
-  font-family: 'TreasureMap';
-  src: url('/fonts/TreasureMap.ttf') format('truetype');
+  font-family: 'SpoghettiWestern';
+  src: url('/fonts/SpoghettiWestern.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
+  font-display: swap;
 }
 
-.treasuremap-title {
-  font-family: 'TreasureMap', cursive, sans-serif;
+.spoghettiwestern-title {
+  font-family: 'SpoghettiWestern', cursive, sans-serif;
+}
+
+@font-face {
+  font-family: 'Fretqwik';
+  src: url('/fonts/Fretqwik.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+.fretqwik-title {
+  font-family: 'Fretqwik', cursive, sans-serif;
 }
 
 /* --- Aioha Modal Customization --- */

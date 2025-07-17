@@ -28,14 +28,17 @@ export default function BountiesClient() {
             className="ripper-logo" 
           />
           <Text
-            className="treasuremap-title"
-            fontSize={{ base: "6xl", md: "7xl" }}
+            className="spoghettiwestern-title"
             fontWeight="extrabold"
             color="primary"
             letterSpacing="wider"
             textAlign="left"
             mb={0}
-            style={{ textTransform: "uppercase" }}
+            style={{ 
+              textTransform: "uppercase",
+              fontSize: 'clamp(1.5rem, 4vw, 3rem)',
+              marginLeft: '2rem'
+            }}
           >
             Bounties
           </Text>
