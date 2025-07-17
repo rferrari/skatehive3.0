@@ -64,6 +64,8 @@ export default function SnapComposer({
 
   // Drag and drop state
   const [isDragOver, setIsDragOver] = useState(false);
+  const [uploadCount, setUploadCount] = useState(0);
+  const isUploadingMedia = uploadCount > 0;
 
   const buttonText = submitLabel || (post ? "Reply" : "Post");
 
@@ -74,12 +76,17 @@ export default function SnapComposer({
     return matches.map((hashtag) => hashtag.slice(1)); // Remove the '#' symbol
   }
 
+  // Helper functions to manage upload count
+  const startUpload = () => setUploadCount((c) => c + 1);
+  const finishUpload = () => setUploadCount((c) => Math.max(0, c - 1));
+
   // Handler for compressed image upload
   const handleCompressedImageUpload = async (
     url: string | null,
     fileName?: string
   ) => {
     if (!url) return;
+    startUpload();
     setIsLoading(true);
     try {
       const blob = await fetch(url).then((res) => res.blob());
@@ -103,6 +110,7 @@ export default function SnapComposer({
       console.error("Error uploading compressed image:", error);
     } finally {
       setIsLoading(false);
+      finishUpload();
     }
   };
 
@@ -121,6 +129,7 @@ export default function SnapComposer({
       alert("GIF or WEBP file size must be 5MB or less.");
       return;
     }
+    startUpload();
     setIsLoading(true);
     try {
       const signature = await getFileSignature(file);
@@ -140,6 +149,7 @@ export default function SnapComposer({
       console.error("Error uploading GIF/WEBP:", error);
     } finally {
       setIsLoading(false);
+      finishUpload();
       e.target.value = ""; // Reset input
     }
   };
@@ -149,6 +159,7 @@ export default function SnapComposer({
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const files = Array.from(e.target.files || []);
+    if (files.length > 0) startUpload();
     for (const file of files) {
       if (file.type === "image/gif" || file.type === "image/webp") {
         // Use GIF/WEBP logic
@@ -178,6 +189,7 @@ export default function SnapComposer({
         alert("Unsupported file type: " + file.type);
       }
     }
+    finishUpload();
     e.target.value = ""; // Reset input
   };
 
@@ -289,11 +301,13 @@ export default function SnapComposer({
     setIsDragOver(false);
   };
 
+  // Video upload logic in handleDrop
   const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
     const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) startUpload();
     for (const file of files) {
       if (file.type.startsWith("image/")) {
         // If GIF or WEBP, use GIF/WEBP upload logic
@@ -327,11 +341,13 @@ export default function SnapComposer({
         if (videoUploaderRef.current && videoUploaderRef.current.handleFile) {
           setIsLoading(true);
           try {
+            startUpload();
             await videoUploaderRef.current.handleFile(file);
           } catch (error) {
             console.error("Error uploading video:", error);
           } finally {
             setIsLoading(false);
+            finishUpload();
           }
         } else {
           alert("Video upload not supported.");
@@ -340,7 +356,12 @@ export default function SnapComposer({
         alert("Unsupported file type: " + file.type);
       }
     }
+    finishUpload();
   };
+
+  // Video upload state integration
+  const handleVideoUploadStart = () => startUpload();
+  const handleVideoUploadFinish = () => finishUpload();
 
   // Only render the composer if user is logged in
   if (!user) return null;
@@ -489,6 +510,7 @@ export default function SnapComposer({
               <Button
                 colorScheme="primary"
                 isLoading={isLoading}
+                isDisabled={isLoading || isUploadingMedia}
                 onClick={handleComment}
                 borderRadius={buttonSize === "sm" ? "sm" : "base"}
                 fontWeight="bold"
@@ -517,6 +539,8 @@ export default function SnapComposer({
               onUpload={setVideoUrl}
               isProcessing={isLoading}
               username={user || undefined}
+              onUploadStart={handleVideoUploadStart}
+              onUploadFinish={handleVideoUploadFinish}
             />
           </Box>
           <Wrap spacing={4}>
