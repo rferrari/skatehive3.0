@@ -6,6 +6,8 @@ interface VideoUploaderProps {
   onUpload: (url: string | null) => void;
   isProcessing?: boolean;
   username?: string; // Add username prop for metadata
+  onUploadStart?: () => void;
+  onUploadFinish?: () => void;
 }
 
 export interface VideoUploaderRef {
@@ -14,7 +16,7 @@ export interface VideoUploaderRef {
 }
 
 const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
-  ({ onUpload, isProcessing = false, username }, ref) => {
+  ({ onUpload, isProcessing = false, username, onUploadStart, onUploadFinish }, ref) => {
     const inputRef = useRef<HTMLInputElement>(null);
     const ffmpegRef = useRef<any>(null);
     const [status, setStatus] = useState<string>("");
@@ -148,8 +150,10 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         setCompressionProgress(0);
         setUploadProgress(0);
         console.log("No file selected.");
+        if (onUploadFinish) onUploadFinish();
         return;
       }
+      if (onUploadStart) onUploadStart();
       try {
         const twelveMB = 12 * 1024 * 1024;
         const shouldResize = file.size > twelveMB;
@@ -175,11 +179,13 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         if (compressedBlob.size === 0) {
           setStatus("Error: Compression resulted in an empty file.");
           onUpload(null);
+          if (onUploadFinish) onUploadFinish();
           return;
         }
         if (shouldResize && compressedBlob.size > file.size) {
           setStatus("Error: Compressed file is larger than the original.");
           onUpload(null);
+          if (onUploadFinish) onUploadFinish();
           return;
         }
 
@@ -204,23 +210,27 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         } catch (e) {
           setStatus("Failed to parse upload response.");
           onUpload(null);
+          if (onUploadFinish) onUploadFinish();
           return;
         }
         if (!result || !result.IpfsHash) {
           setStatus("Failed to upload video.");
           onUpload(null);
+          if (onUploadFinish) onUploadFinish();
           return;
         }
         const videoUrl = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`;
         setStatus("Upload complete!");
         setUploadProgress(100);
         onUpload(videoUrl);
+        if (onUploadFinish) onUploadFinish();
       } catch (error) {
         setStatus("Error during file upload.");
         setCompressionProgress(0);
         setUploadProgress(0);
         console.error("Error during file upload:", error);
         onUpload(null);
+        if (onUploadFinish) onUploadFinish();
       }
     };
 
@@ -230,6 +240,8 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
       const file = event.target.files?.[0];
       if (file) {
         await processVideoFile(file);
+      } else {
+        if (onUploadFinish) onUploadFinish();
       }
     };
 
