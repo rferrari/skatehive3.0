@@ -95,14 +95,18 @@ export default function TopBar({ viewMode, setViewMode, setQuery }: TopBarProps)
                         leftIcon={<FaSort />} 
                         variant="outline"
                         ml={4}
+                        bg="background"
+                        color="primary"
+                        _hover={{ bg: 'muted', color: 'primary' }}
+                        _active={{ bg: 'muted', color: 'primary' }}
                     >
                         Sort
                     </MenuButton>
-                    <MenuList zIndex="popover">
-                        <MenuItem onClick={() => setQuery('created')}>Recent</MenuItem>
-                        <MenuItem onClick={() => setQuery('trending')}>Trending</MenuItem>
-                        <MenuItem onClick={() => setQuery('highest_paid')}>Highest Paid</MenuItem>
-                        <MenuItem onClick={() => setQuery('goat')}>GOAT</MenuItem>
+                    <MenuList zIndex="popover" bg="background" color="primary" borderColor="primary">
+                        <MenuItem bg="background" color="primary" _hover={{ bg: 'muted', color: 'primary' }} onClick={() => setQuery('created')}>Recent</MenuItem>
+                        <MenuItem bg="background" color="primary" _hover={{ bg: 'muted', color: 'primary' }} onClick={() => setQuery('trending')}>Trending</MenuItem>
+                        <MenuItem bg="background" color="primary" _hover={{ bg: 'muted', color: 'primary' }} onClick={() => setQuery('highest_paid')}>Highest Paid</MenuItem>
+                        <MenuItem bg="background" color="primary" _hover={{ bg: 'muted', color: 'primary' }} onClick={() => setQuery('goat')}>GOAT</MenuItem>
                     </MenuList>
                 </Menu>
             </Flex>
