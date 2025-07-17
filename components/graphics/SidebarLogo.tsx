@@ -24,7 +24,7 @@ const SidebarLogo = () => {
           }}
           onClick={() =>
             router.push(
-              `https://nouns.build/dao/base/${activeAuction?.token?.tokenContract}`
+              `/auction`
             )
           }
         />
@@ -36,7 +36,7 @@ const SidebarLogo = () => {
           style={{ width: "100%", height: "100%", objectFit: "cover" }}
           onClick={() =>
             router.push(
-              `https://nouns.build/dao/base/${activeAuction?.token?.tokenContract}`
+              `/auction`
             )
           }
           cursor={"pointer"}
