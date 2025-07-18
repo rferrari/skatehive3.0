@@ -651,10 +651,9 @@ export default function PostCard({
                 textAlign="center"
                 cursor="pointer"
                 bg="background"
-                transition="background 0.2s, color 0.2s"
+                transition="color 0.2s"
                 _hover={{
-                  bg: "primary",
-                  "& .post-title-text": { color: "background" },
+                  "& .post-title-text": { color: "accent" },
                 }}
                 onMouseEnter={() => setShowMatrix(true)}
                 onMouseLeave={() => setShowMatrix(false)}
