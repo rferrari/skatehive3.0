@@ -14,7 +14,8 @@ import gayTheme from '@/themes/gay';
 import hackerRedTheme from '@/themes/hackerRed';
 import cyberpunkTheme from '@/themes/cyberpunk';
 import retroPaperTheme from '@/themes/paper';
-import limeTheme from '@/themes/gradient';
+import limeTheme from '@/themes/lime';
+import macTheme from '@/themes/mac';
 
 // Available themes map
 export const themeMap = {
@@ -31,6 +32,7 @@ export const themeMap = {
     cyberpunk: cyberpunkTheme,
     paper: retroPaperTheme,
     lime: limeTheme,
+    mac: macTheme,
 };
 
 export type ThemeName = keyof typeof themeMap;

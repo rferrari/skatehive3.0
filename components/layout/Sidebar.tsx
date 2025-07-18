@@ -55,6 +55,7 @@ export default function Sidebar() {
   if (themeName === "windows95") hoverTextColor = "background";
   else if (themeName === "nounish") hoverTextColor = "secondary";
   else if (themeName === "hiveBR") hoverTextColor = "accent";
+  else if (themeName === "mac") hoverTextColor = "accent";
 
   useEffect(() => {
     setBellAnimating(newNotificationCount > 0);

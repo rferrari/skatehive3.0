@@ -129,6 +129,18 @@ body.show-splash #splash-root {
   font-family: 'Fretqwik', cursive, sans-serif;
 }
 
+@font-face {
+  font-family: 'Chicago';
+  src: url('/fonts/Chicago.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+.chicago-title {
+  font-family: 'Chicago', sans-serif;
+}
+
 /* --- Aioha Modal Customization --- */
 #aioha-modal {
   background: #000 !important;
