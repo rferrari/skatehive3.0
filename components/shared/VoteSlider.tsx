@@ -120,7 +120,7 @@ const VoteSlider = ({
                             height="8px"
                             boxShadow="0 0 10px rgba(255, 255, 0, 0.8)"
                         >
-                            <SliderFilledTrack bgGradient="linear(to-r, green.400, limegreen, red.400)" />
+                            <SliderFilledTrack bgGradient="linear(to-r, success, warning, error)" />
                         </SliderTrack>
                         <SliderThumb
                             boxSize="30px"
@@ -144,14 +144,22 @@ const VoteSlider = ({
                     size={size}
                     onClick={handleVote}
                     ml={2}
-                    className={variant === "feed" ? "pulse-green" : undefined}
-                    bg={variant === "modal" ? "primary" : undefined}
-                    color={variant === "modal" ? "background" : undefined}
-                    _hover={variant === "modal" ? { bg: "primary", opacity: 0.8 } : undefined}
+                    bgGradient="linear(to-r, primary, accent)"
+                    color="background"
+                    _hover={{ bg: "accent" }}
+                    fontWeight="bold"
+                    className="subtle-pulse"
                 >
                     {variant === "feed" ? `\u00A0\u00A0\u00A0Vote ${sliderValue} %\u00A0\u00A0\u00A0` : `Vote ${sliderValue}%`}
                 </Button>
-                <Button size={size} onClick={handleHeartClick} ml={2}>
+                <Button 
+                    size={size} 
+                    onClick={handleHeartClick} 
+                    ml={2}
+                    bg="muted"
+                    color="primary"
+                    _hover={{ bg: "muted", opacity: 0.8 }}
+                >
                     {variant === "feed" ? "X" : "✕"}
                 </Button>
             </Flex>
@@ -174,8 +182,8 @@ const VoteSlider = ({
                 >
                     <LuArrowUpRight
                         size={24}
-                        color={voted ? undefined : "rgb(75, 72, 72)"}
-                        style={{ opacity: voted ? 1 : 0.5 }}
+                        color={voted ? "var(--chakra-colors-accent)" : "var(--chakra-colors-muted)"}
+                        style={{ opacity: voted ? 1 : 1 }}
                     />
                 </Box>
             </Tooltip>
@@ -202,8 +210,8 @@ const VoteSlider = ({
                 leftIcon={
                     <LuArrowUpRight
                         size={20}
-                        color={voted ? undefined : "rgb(75, 72, 72)"}
-                        style={{ opacity: voted ? 1 : 0.5 }}
+                        color={voted ? "var(--chakra-colors-accent)" : "var(--chakra-colors-muted)"}
+                        style={{ opacity: voted ? 1 : 1 }}
                     />
                 }
                 variant="ghost"
@@ -217,4 +225,28 @@ const VoteSlider = ({
     );
 };
 
-export default VoteSlider;
+const VoteSliderWithPulse = (props: VoteSliderProps) => {
+    return (
+        <>
+            <style jsx global>{`
+                .subtle-pulse {
+                    animation: subtle-pulse 2s infinite;
+                }
+                @keyframes subtle-pulse {
+                    0% {
+                        box-shadow: 0 0 0 0 var(--chakra-colors-accent);
+                    }
+                    70% {
+                        box-shadow: 0 0 0 4px rgba(72, 255, 128, 0);
+                    }
+                    100% {
+                        box-shadow: 0 0 0 0 rgba(72, 255, 128, 0);
+                    }
+                }
+            `}</style>
+            <VoteSlider {...props} />
+        </>
+    );
+};
+
+export default VoteSliderWithPulse;

@@ -674,7 +674,7 @@ export default function NotificationItem({
                 size={{ base: "xs", md: "sm" }}
                 isRound
                 alignSelf="center"
-                color={hasVoted ? "error" : isNew ? "accent" : "primary"}
+                color={hasVoted ? "accent" : "muted"}
                 onClick={handleUpvote}
                 isLoading={isVoting}
               />

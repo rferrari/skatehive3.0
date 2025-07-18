@@ -3,7 +3,7 @@ import { swiperStyles } from './swiperStyles';
 
 const blueSkyTheme = extendTheme({
     colors: {
-        background: '#87CEEB',
+        background: '#a0f8ff',
         text: '#1E90FF',
         primary: '#1E90FF',
         secondary: '#4682B4',

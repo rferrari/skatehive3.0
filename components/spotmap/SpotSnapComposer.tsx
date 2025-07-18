@@ -385,8 +385,9 @@ export default function SpotSnapComposer({
           ))}
         </Wrap>
         <Button
-          variant="solid"
-          colorScheme="primary"
+          bg="primary"
+          color="background"
+          _hover={{ bg: "accent", color: "text" }}
           onClick={handleComment}
           isDisabled={isLoading}
         >
