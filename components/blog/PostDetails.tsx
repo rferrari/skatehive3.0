@@ -447,8 +447,7 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
               icon={voted ? <FaHeart /> : <FaRegHeart />}
               size="sm"
               variant="ghost"
-              color={voted ? "red" : "primary"}
-              opacity={voted ? 1 : 0.5}
+              color={voted ? "accent" : "muted"}
               onClick={handleHeartClick}
               _hover={{ bg: "transparent", color: "accent" }}
               fontSize="14px"
@@ -466,7 +465,7 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
                   minW="auto"
                   px={1}
                   _active={{ bg: "transparent" }}
-                  color={voted ? "red" : "primary"}
+                  color={voted ? "accent" : "muted"}
                   _hover={{ textDecoration: 'underline' }}
                   fontSize="xs"
                   h="auto"
@@ -514,7 +513,7 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
                   height="8px"
                   boxShadow={boxShadowAccent}
                 >
-                  <SliderFilledTrack bgGradient={`linear(to-r, var(--chakra-colors-primary, #38ff8e), var(--chakra-colors-accent, #48BB78), red.400)`} />
+                  <SliderFilledTrack bgGradient="linear(to-r, success, warning, error)" />
                 </SliderTrack>
                 <SliderThumb
                   boxSize="30px"
@@ -534,10 +533,25 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
                 </SliderThumb>
               </Slider>
             </Box>
-            <Button size="xs" onClick={handleVote} className="pulse-green">
+            <Button 
+              size="xs" 
+              onClick={handleVote} 
+              bgGradient="linear(to-r, primary, accent)"
+              color="background"
+              _hover={{ bg: "accent" }}
+              fontWeight="bold"
+              className="subtle-pulse"
+            >
               &nbsp;&nbsp;&nbsp;Vote {sliderValue} %&nbsp;&nbsp;&nbsp;
             </Button>
-            <Button size="xs" onClick={handleHeartClick} ml={2}>
+            <Button 
+              size="xs" 
+              onClick={handleHeartClick} 
+              ml={2}
+              bg="muted"
+              color="primary"
+              _hover={{ bg: "muted", opacity: 0.8 }}
+            >
               X
             </Button>
           </Flex>
@@ -589,22 +603,18 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
         .markdown-body td {
           color: #e0e0e0;
         }
-        .pulse-green {
-          animation: pulse-green 1.5s infinite;
-          background: var(--chakra-colors-primary, #38ff8e);
-          color: black;
-          font-weight: bold;
-          border: none;
+        .subtle-pulse {
+          animation: subtle-pulse 2s infinite;
         }
-        @keyframes pulse-green {
+        @keyframes subtle-pulse {
           0% {
-            box-shadow: ${boxShadowAccent} ${boxShadowAccent10};
+            box-shadow: 0 0 0 0 var(--chakra-colors-accent);
           }
           70% {
-            box-shadow: ${boxShadowAccent} ${boxShadowAccent10};
+            box-shadow: 0 0 0 4px rgba(72, 255, 128, 0);
           }
           100% {
-            box-shadow: ${boxShadowAccent} ${boxShadowAccent10};
+            box-shadow: 0 0 0 0 rgba(72, 255, 128, 0);
           }
         }
       `}</style>

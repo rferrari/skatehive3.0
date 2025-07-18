@@ -346,13 +346,13 @@ const BountySnap = ({
   if (deadline) {
     if (isAfter(deadline, nowDate)) {
       statusNote = (
-        <Tag colorScheme="green" size="md" mb={1}>
+        <Tag bg="success" color="background" size="md" mb={1}>
           Active
         </Tag>
       );
     } else {
       statusNote = (
-        <Tag colorScheme="red" size="md" mb={1}>
+        <Tag bg="error" color="background" size="md" mb={1}>
           Complete
         </Tag>
       );
@@ -539,7 +539,7 @@ const BountySnap = ({
           <Text
             fontWeight="bold"
             fontSize="md"
-            color="orange.300"
+            color="warning"
             letterSpacing="wider"
           >
             Reward:{" "}
@@ -636,8 +636,8 @@ const BountySnap = ({
                   leftIcon={
                     <LuArrowUpRight
                       size={24}
-                      color={voted ? undefined : "rgb(75, 72, 72)"}
-                      style={{ opacity: voted ? 1 : 0.5 }}
+                      color={voted ? "var(--chakra-colors-accent)" : "var(--chakra-colors-muted)"}
+                      style={{ opacity: voted ? 1 : 1 }}
                     />
                   }
                   variant="ghost"
@@ -665,7 +665,7 @@ const BountySnap = ({
                         height="8px"
                         boxShadow="0 0 10px rgba(255, 255, 0, 0.8)"
                       >
-                        <SliderFilledTrack bgGradient="linear(to-r, green.400, limegreen, red.400)" />
+                        <SliderFilledTrack bgGradient="linear(to-r, success, warning, error)" />
                       </SliderTrack>
                       <SliderThumb
                         boxSize="30px"
@@ -687,26 +687,32 @@ const BountySnap = ({
                   </Box>
                   <Button
                     size="xs"
-                    colorScheme="primary"
+                    bgGradient="linear(to-r, primary, accent)"
+                    color="background"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleVote();
                     }}
                     isDisabled={voted}
                     ml={2}
+                    _hover={{ bg: "accent" }}
+                    fontWeight="bold"
+                    className="subtle-pulse"
                   >
                     {voted ? "Voted" : `Vote ${sliderValue}%`}
                   </Button>
                   <Button
                     size="xs"
-                    variant="ghost"
+                    bg="muted"
+                    color="primary"
                     onClick={(e) => {
                       e.stopPropagation();
                       setShowSlider(false);
                     }}
                     ml={1}
+                    _hover={{ bg: "muted", opacity: 0.8 }}
                   >
-                    Cancel
+                    X
                   </Button>
                 </Flex>
               )}
@@ -734,4 +740,28 @@ const BountySnap = ({
   );
 };
 
-export default BountySnap;
+const BountySnapWithPulse = (props: BountySnapProps) => {
+  return (
+    <>
+      <style jsx global>{`
+        .subtle-pulse {
+          animation: subtle-pulse 2s infinite;
+        }
+        @keyframes subtle-pulse {
+          0% {
+            box-shadow: 0 0 0 0 var(--chakra-colors-accent);
+          }
+          70% {
+            box-shadow: 0 0 0 4px rgba(72, 255, 128, 0);
+          }
+          100% {
+            box-shadow: 0 0 0 0 rgba(72, 255, 128, 0);
+          }
+        }
+      `}</style>
+      <BountySnap {...props} />
+    </>
+  );
+};
+
+export default BountySnapWithPulse;

@@ -311,8 +311,7 @@ export default function PostCard({
                 as={LuArrowUpRight}
                 onClick={handleHeartClick}
                 cursor="pointer"
-                color={voted ? "primary" : "gray.500"}
-                opacity={voted ? 1 : 0.5}
+                color={voted ? "accent" : "muted"}
                 boxSize={5}
                 _hover={{ bg: "gray.700", borderRadius: "full" }}
               />
@@ -429,22 +428,18 @@ export default function PostCard({
           border-radius: 0; /* Make the dots squared */
         }
 
-        .pulse-green {
-          animation: pulse-green 1.5s infinite;
-          background: ${postCardPulseGradient};
-          color: black;
-          font-weight: bold;
-          border: none;
+        .subtle-pulse {
+          animation: subtle-pulse 2s infinite;
         }
-        @keyframes pulse-green {
+        @keyframes subtle-pulse {
           0% {
-            box-shadow: ${postCardBoxShadowAccent};
+            box-shadow: 0 0 0 0 var(--chakra-colors-accent);
           }
           70% {
-            box-shadow: ${postCardBoxShadowAccent10};
+            box-shadow: 0 0 0 4px rgba(72, 255, 128, 0);
           }
           100% {
-            box-shadow: ${postCardBoxShadowAccent};
+            box-shadow: 0 0 0 0 rgba(72, 255, 128, 0);
           }
         }
       `}</style>
@@ -699,7 +694,7 @@ export default function PostCard({
                       height="8px"
                       boxShadow="0 0 10px rgba(255, 255, 0, 0.8)"
                     >
-                      <SliderFilledTrack bgGradient="linear(to-r, green.400, limegreen, red.400)" />
+                      <SliderFilledTrack bgGradient="linear(to-r, success, warning, error)" />
                     </SliderTrack>
                     <SliderThumb
                       boxSize="30px"
@@ -728,7 +723,11 @@ export default function PostCard({
                   pl={5}
                   pr={5}
                   cursor="pointer"
-                  className="pulse-green"
+                  bgGradient="linear(to-r, primary, accent)"
+                  color="background"
+                  _hover={{ bg: "accent" }}
+                  fontWeight="bold"
+                  className="subtle-pulse"
                 >
                   Vote {sliderValue} %
                 </Button>
@@ -740,6 +739,9 @@ export default function PostCard({
                   }}
                   ml={1}
                   cursor="pointer"
+                  bg="muted"
+                  color="primary"
+                  _hover={{ bg: "muted", opacity: 0.8 }}
                 >
                   X
                 </Button>
@@ -771,8 +773,8 @@ export default function PostCard({
                   >
                     <LuArrowUpRight
                       size={24}
-                      color={voted ? undefined : "gray.500"}
-                      style={{ opacity: voted ? 1 : 0.5 }}
+                      color={voted ? "var(--chakra-colors-accent)" : "var(--chakra-colors-muted)"}
+                      style={{ opacity: voted ? 1 : 1 }}
                     />
                   </Box>
                   <VoteListPopover

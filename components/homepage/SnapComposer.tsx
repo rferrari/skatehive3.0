@@ -508,7 +508,9 @@ export default function SnapComposer({
             </HStack>
             <Box display={buttonSize === "sm" ? "inline-block" : undefined}>
               <Button
-                colorScheme="primary"
+                bg="primary"
+                color="background"
+                _hover={{ bg: "accent", color: "text" }}
                 isLoading={isLoading}
                 isDisabled={isLoading || isUploadingMedia}
                 onClick={handleComment}

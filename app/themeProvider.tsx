@@ -14,6 +14,7 @@ import gayTheme from '@/themes/gay';
 import hackerRedTheme from '@/themes/hackerRed';
 import cyberpunkTheme from '@/themes/cyberpunk';
 import retroPaperTheme from '@/themes/paper';
+import limeTheme from '@/themes/gradient';
 
 // Available themes map
 export const themeMap = {
@@ -29,6 +30,7 @@ export const themeMap = {
     gay: gayTheme,
     cyberpunk: cyberpunkTheme,
     paper: retroPaperTheme,
+    lime: limeTheme,
 };
 
 export type ThemeName = keyof typeof themeMap;
@@ -90,7 +92,27 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
                 'html, body': {
                     bg: 'background',
                     color: 'text',
-                }
+                },
+                'a': {
+                    color: 'primary',
+                    textDecoration: 'none',
+                    _hover: {
+                        color: 'accent',
+                        textDecoration: 'underline',
+                    },
+                    _visited: {
+                        color: 'secondary',
+                    },
+                },
+                '.chakra-link': {
+                    color: 'primary',
+                    _hover: {
+                        color: 'accent',
+                    },
+                    _visited: {
+                        color: 'secondary',
+                    },
+                },
             }
         }
     });

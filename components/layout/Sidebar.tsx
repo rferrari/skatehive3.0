@@ -444,8 +444,9 @@ export default function Sidebar() {
                 setModalDisplayed(true);
               }
             }}
-            variant="solid"
-            colorScheme="teal"
+            bg="primary"
+            color="background"
+            _hover={{ bg: "accent", color: "text" }}
             w="full"
             mt="auto"
             mb={8}

@@ -12,7 +12,7 @@ const gayTheme = extendTheme({
         text: '#000000', // Black text for readability
         primary: '#FF69B4', // Pink for primary actions
         secondary: '#FFD700', // Gold for secondary elements
-        accent: '#00BFFF', // Deep sky blue for accentuating certain elements
+        accent: '#00ffa2', // Bright green for accentuating certain elements
         muted: '#f0f0f0', // Light gray for muted elements
         border: '#FF69B4', // Pink for borders to maintain the theme
         error: '#FF4136', // Bright red for errors

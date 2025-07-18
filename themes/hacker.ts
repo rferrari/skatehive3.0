@@ -21,7 +21,7 @@ const hackerTheme = extendTheme({
         text: '#00FF00', // Bright green text, reminiscent of terminal output
         primary: '#00FF00', // Bright green for primary actions
         secondary: '#252926', // Dark gray for secondary elements
-        accent: '#FFD700', // Gold for accentuating certain elements
+        accent: '#BD93F9', // purple for accentuating certain elements
         muted: '#1a1a1a', // Slightly lighter black for muted elements
         border: '#00FF00', // Green for borders to maintain the hacker vibe
         error: '#FF4136', // Bright red for errors

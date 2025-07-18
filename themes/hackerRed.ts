@@ -16,7 +16,7 @@ const hackerRedTheme = extendTheme({
     text: '#FF6200',             // Vibrant basketball orange
     primary: '#FF6200',          // Bold orange for primary elements
     secondary: '#1E3A8A',        // Deep navy blue for contrast
-    accent: '#DC2626',           // Red for highlights, inspired by team jerseys
+    accent: '#DAF7A6',           // Light green for highlights
     muted: '#2D2D2D',            // Muted dark gray for subtle backgrounds
     border: '#FF6200',           // Orange border to match primary
     error: '#EF4444',
