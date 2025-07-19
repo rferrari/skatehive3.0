@@ -45,7 +45,6 @@ export default function BountiesClient() {
         </Box>
         <Box flex={{ base: 'unset', md: '0 0 auto' }} display="flex" justifyContent={{ base: 'flex-start', md: 'flex-end' }} width={{ base: '100%', md: 'auto' }}>
           <Button
-            colorScheme="primary"
             size="lg"
             onClick={() => setIsModalOpen(true)}
             fontWeight="bold"
@@ -56,6 +55,12 @@ export default function BountiesClient() {
             ml={{ base: 0, md: 8 }}
             width={{ base: "100%", md: "auto" }}
             mt={{ base: 2, md: 0 }}
+            bg="primary"
+            color="background"
+            _hover={{
+              bg: "accent",
+              color: "primary"
+            }}
           >
             Create a Bounty
           </Button>

@@ -91,10 +91,7 @@ export default function BountyComposer({
       alert("Please select a reward currency.");
       return;
     }
-    if (!description.trim()) {
-      alert("Please enter a description for the bounty.");
-      return;
-    }
+
     if (!deadline) {
       alert("Please select a deadline for the bounty.");
       return;
@@ -289,7 +286,7 @@ export default function BountyComposer({
           />
         </FormControl>
         <Box borderWidth="1px" borderColor="secondary" borderRadius="md" p={4}>
-          <FormControl isRequired>
+          <FormControl>
             <FormLabel fontWeight="bold">Rules</FormLabel>
             <Textarea
               ref={descriptionRef}
@@ -479,6 +476,7 @@ export default function BountyComposer({
           variant="solid"
           colorScheme="primary"
           onClick={handleBounty}
+          color="background"
           isDisabled={
             isLoading ||
             !trick.trim() ||
@@ -486,7 +484,6 @@ export default function BountyComposer({
             isNaN(Number(rewardAmount)) ||
             Number(rewardAmount) <= 0 ||
             !rewardCurrency ||
-            !(descriptionRef.current && descriptionRef.current.value.trim()) ||
             !deadline ||
             !isAfter(parseISO(deadline), new Date())
           }

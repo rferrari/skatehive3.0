@@ -93,9 +93,11 @@ export default function BountyList({
   // Filter bounties based on status
   const filteredBounties = useMemo(() => {
     if (filter === "my-claimed" && hiveUser?.name) {
-      return displayedBounties.filter((bounty) =>
-        bounty.active_votes?.some((vote) => vote.voter === hiveUser.name)
-      );
+      return displayedBounties.filter((bounty) => {
+        // Check if the current user has voted on this bounty (claimed it) AND is not the author
+        return bounty.author !== hiveUser.name && 
+               bounty.active_votes?.some((vote) => vote.voter === hiveUser.name);
+      });
     }
     if (filter === "claimed") {
       return displayedBounties.filter(
