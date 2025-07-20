@@ -130,7 +130,10 @@ export default function AuctionCard({
           </Box>
           <VStack align="start" flex={1} spacing={1}>
             <Text fontSize="xl" fontWeight="bold" color="text">
-              {activeAuction.token.name} #{activeAuction.token.tokenId.toString()}
+              {activeAuction.token.name.includes(`#${activeAuction.token.tokenId.toString()}`) 
+                ? activeAuction.token.name 
+                : `${activeAuction.token.name} #${activeAuction.token.tokenId.toString()}`
+              }
             </Text>
             {activeAuction.highestBid && (
               <VStack align="start" spacing={1}>

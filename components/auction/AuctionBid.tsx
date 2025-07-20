@@ -19,7 +19,9 @@ import {
   Link,
   Alert,
   AlertIcon,
-  AlertDescription
+  AlertDescription,
+  HStack,
+  Divider
 } from '@chakra-ui/react';
 
 interface BidProps {
@@ -119,19 +121,55 @@ export function AuctionBid({
   }, [writeSettle, onSettle]);
 
   return (
-    <VStack spacing={4} align="stretch">
+    <VStack spacing={4} align="stretch" w="full">
+      {/* Error Alert */}
       {errorMessage && (
-        <Alert status="error" bg="rgba(255, 92, 87, 0.1)" border="1px solid" borderColor="error">
+        <Alert 
+          status="error" 
+          bg="rgba(255, 92, 87, 0.1)" 
+          border="1px solid" 
+          borderColor="error"
+          borderRadius="md"
+          py={3}
+        >
           <AlertIcon color="error" />
-          <AlertDescription color="error">{errorMessage}</AlertDescription>
+          <AlertDescription color="error" fontSize="sm">
+            {errorMessage}
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      {/* Success Transaction Hash */}
+      {txHash && (
+        <Alert 
+          status="success" 
+          bg="rgba(76, 175, 80, 0.1)" 
+          border="1px solid" 
+          borderColor="success"
+          borderRadius="md"
+          py={3}
+        >
+          <AlertIcon color="success" />
+          <AlertDescription color="success" fontSize="sm">
+            Transaction successful!{' '}
+            <Link
+              href={`https://basescan.org/tx/${txHash}`}
+              isExternal
+              color="primary"
+              textDecoration="underline"
+              _hover={{ color: 'accent' }}
+            >
+              View on Basescan
+            </Link>
+          </AlertDescription>
         </Alert>
       )}
       
       {isAuctionRunning ? (
-        <Box as="form" onSubmit={handleSubmit(onSubmitBid)}>
-          <VStack spacing={4}>
+        <Box as="form" onSubmit={handleSubmit(onSubmitBid)} w="full">
+          <VStack spacing={4} align="stretch">
             <FormControl isInvalid={!!errors.bidAmount}>
-              <FormLabel color="text" fontSize="sm" fontWeight="medium">
+              <FormLabel color="text" fontSize="sm" fontWeight="medium" mb={2}>
                 Bid Amount (ETH)
               </FormLabel>
               <Input
@@ -156,11 +194,12 @@ export function AuctionBid({
                 bg="muted"
                 borderColor="border"
                 color="text"
+                size="lg"
                 _hover={{ borderColor: 'primary' }}
                 _focus={{ borderColor: 'primary', boxShadow: 'outline' }}
                 isDisabled={!account.isConnected || isLoading}
               />
-              <FormErrorMessage color="error">
+              <FormErrorMessage color="error" fontSize="xs">
                 {errors.bidAmount?.message}
               </FormErrorMessage>
               <Text fontSize="xs" color="muted" mt={1}>
@@ -180,16 +219,26 @@ export function AuctionBid({
               isDisabled={!account.isConnected || isLoading}
               isLoading={isLoading}
               loadingText="Placing Bid..."
+              h="48px"
             >
               {isLoading ? 'Placing Bid...' : 'Place Bid'}
             </Button>
           </VStack>
         </Box>
       ) : (
-        <VStack spacing={4}>
-          <Text textAlign="center" color="text" fontSize="sm">
-            This auction has ended. Click below to settle and start a new auction.
-          </Text>
+        <VStack spacing={4} align="stretch">
+          <Box 
+            bg="rgba(255, 193, 7, 0.1)" 
+            border="1px solid" 
+            borderColor="warning" 
+            borderRadius="md" 
+            p={4}
+            textAlign="center"
+          >
+            <Text color="text" fontSize="sm" fontWeight="medium">
+              This auction has ended. Click below to settle and start a new auction.
+            </Text>
+          </Box>
           <Button
             onClick={handleSettle}
             variant="solid"
@@ -202,29 +251,26 @@ export function AuctionBid({
             isDisabled={!account.isConnected || isLoading}
             isLoading={isLoading}
             loadingText="Settling..."
+            h="48px"
           >
             {isLoading ? 'Settling...' : 'Settle & Start Next Auction'}
           </Button>
         </VStack>
       )}
 
+      {/* Wallet Connection Notice */}
       {!account.isConnected && (
-        <Text textAlign="center" color="muted" fontSize="sm">
-          Connect your wallet to participate in the auction
-        </Text>
-      )}
-
-      {txHash && (
-        <Box textAlign="center">
-          <Link
-            href={`https://basescan.org/tx/${txHash}`}
-            isExternal
-            color="primary"
-            fontSize="sm"
-            _hover={{ color: 'accent' }}
-          >
-            View Transaction on Basescan
-          </Link>
+        <Box 
+          bg="rgba(158, 158, 158, 0.1)" 
+          border="1px solid" 
+          borderColor="muted" 
+          borderRadius="md" 
+          p={4}
+          textAlign="center"
+        >
+          <Text color="muted" fontSize="sm">
+            Connect your wallet to participate in the auction
+          </Text>
         </Box>
       )}
     </VStack>
