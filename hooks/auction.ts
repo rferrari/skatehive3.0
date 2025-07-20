@@ -6,21 +6,14 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { readContract } from 'wagmi/actions';
 
-export function useLastAuction(initialData?: Auction) {
+export function useLastAuction(tokenAddress: string, initialData?: Auction) {
   return useQuery({
-    queryKey: ['auction'],
-    queryFn: async () => {
-      const auctions = await fetchAuction(
-        DAO_ADDRESSES.token,
-        'endTime',
-        'desc',
-        1
-      );
-      return auctions.length > 0 ? auctions[0] : undefined;
-    },
+    queryKey: ['auction', tokenAddress],
+    queryFn: () => fetchAuction(tokenAddress),
     refetchOnMount: true,
     staleTime: 0,
-    initialData: initialData,
+    initialData: initialData ? [initialData] : undefined,
+    select: (data) => data?.[0],
   });
 }
 

@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import PixelTransition from "./PixelTransition";
 import { Image, useToken } from "@chakra-ui/react";
 import SkateHiveLogo from "./SkateHiveLogo";
+import { DAO_ADDRESSES } from "@/lib/utils/constants";
 
 const SidebarLogo = () => {
-  const { data: activeAuction } = useLastAuction();
+  const { data: activeAuction } = useLastAuction(DAO_ADDRESSES.token);
   const router = useRouter();
   const [pixelColor] = useToken("colors", ["primary"]);
 
@@ -23,7 +24,7 @@ const SidebarLogo = () => {
           }}
           onClick={() =>
             router.push(
-              `https://nouns.build/dao/base/${activeAuction?.token?.tokenContract}`
+              `/auction`
             )
           }
         />
@@ -35,7 +36,7 @@ const SidebarLogo = () => {
           style={{ width: "100%", height: "100%", objectFit: "cover" }}
           onClick={() =>
             router.push(
-              `https://nouns.build/dao/base/${activeAuction?.token?.tokenContract}`
+              `/auction`
             )
           }
           cursor={"pointer"}
