@@ -18,7 +18,7 @@ import {
   PopoverBody,
   useDisclosure,
 } from "@chakra-ui/react";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Discussion } from "@hiveio/dhive";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination } from "swiper/modules";
@@ -37,6 +37,8 @@ import {
 import useHivePower from "@/hooks/useHivePower";
 import VoteListPopover from "./VoteListModal";
 import MatrixOverlay from "@/components/graphics/MatrixOverlay";
+
+
 
 interface PostCardProps {
   post: Discussion;
@@ -66,6 +68,7 @@ export default function PostCard({
   const [youtubeLinks, setYoutubeLinks] = useState<LinkWithDomain[]>([]);
   const [sliderValue, setSliderValue] = useState(100);
   const [showSlider, setShowSlider] = useState(false);
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
   const { aioha, user } = useAioha();
   const {
     hivePower,
@@ -115,8 +118,14 @@ export default function PostCard({
     const markdownImages = extractImageUrls(body);
     images = images.concat(markdownImages);
 
-    if (images.length > 0) {
-      setImageUrls(images);
+    // Filter out failed images only
+    const validImages = images.filter(img => {
+      if (failedImages.has(img)) return false;
+      return true;
+    });
+
+    if (validImages.length > 0) {
+      setImageUrls(validImages);
     } else {
       const ytLinks = extractYoutubeLinks(body);
       if (ytLinks.length > 0) {
@@ -126,7 +135,7 @@ export default function PostCard({
         setImageUrls([default_thumbnail]);
       }
     }
-  }, [body, metadata, default_thumbnail, post]);
+  }, [body, metadata, default_thumbnail, post, failedImages]);
 
   function handleHeartClick() {
     setShowSlider(!showSlider);
@@ -170,9 +179,28 @@ export default function PostCard({
     e.stopPropagation();
   }
 
-  // New function to log image load errors
+
+
+  // Enhanced function to handle image load errors with fallback
   function handleImageError(e: React.SyntheticEvent<HTMLImageElement, Event>) {
-    console.error("Failed to load image:", e.currentTarget.src, e);
+    const img = e.currentTarget;
+    const originalSrc = img.src;
+    
+    // Track failed images to avoid retrying them
+    setFailedImages(prev => new Set(prev).add(originalSrc));
+    
+    // If this is not already the fallback image, try to set it
+    if (img.src !== default_thumbnail) {
+      img.src = default_thumbnail;
+      img.onerror = null; // Prevent infinite loop
+    }
+    
+    // Prevent the error from bubbling up
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Return false to prevent the default error handling
+    return false;
   }
 
   // Extract summary for listView: remove image markdown, allow up to 3 lines, no char limit

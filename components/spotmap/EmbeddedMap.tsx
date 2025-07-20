@@ -34,7 +34,7 @@ export default function EmbeddedMap() {
   const sidebarRef = useRef<HTMLDivElement>(null);
   const { user } = useAioha();
 
-  const { comments: mainSnaps } = useSnaps();
+  const { comments: mainSnaps, isLoading, hasMore, loadNextPage } = useSnaps();
   // Only show snaps from the main container with BOTH skatespot and hive-173115 tags
   const allSpots = mainSnaps
     .filter(snap => {
@@ -212,7 +212,13 @@ export default function EmbeddedMap() {
             }}
           >
             <SpotSnapComposer onNewComment={handleNewSpot} onClose={handleClose} />
-            <SpotList spots={allSpots} newSpot={newSpot} />
+            <SpotList 
+              spots={allSpots} 
+              newSpot={newSpot} 
+              isLoading={isLoading}
+              hasMore={hasMore}
+              onLoadMore={loadNextPage}
+            />
           </Box>
         </Flex>
       </Box>

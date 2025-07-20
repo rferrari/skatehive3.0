@@ -1,3 +1,35 @@
+// Helper function to validate image URLs
+function isValidImageUrl(url: string): boolean {
+    try {
+        const parsedUrl = new URL(url);
+        // Check if it's a valid protocol
+        if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+            return false;
+        }
+        
+        // Check if it's a valid image extension or IPFS URL
+        const pathname = parsedUrl.pathname.toLowerCase();
+        const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp'];
+        const hasValidExtension = validExtensions.some(ext => pathname.endsWith(ext));
+        const isIpfsUrl = url.includes('ipfs') || url.includes('bafy');
+        
+        // For IPFS URLs, check if they have a filename parameter with extension
+        if (isIpfsUrl) {
+            // Check if URL has a filename parameter with valid extension
+            const filenameMatch = url.match(/[?&]filename=.*\.(jpg|jpeg|png|gif|webp|svg|bmp)/i);
+            if (filenameMatch) {
+                return true;
+            }
+            // Also allow IPFS URLs without filename parameter (for backward compatibility)
+            return true;
+        }
+        
+        return hasValidExtension;
+    } catch {
+        return false;
+    }
+}
+
 export function extractImageUrls(markdown: string): string[] {
     const imageRegex = /!\[.*?\]\((.*?)\)/g;
 
@@ -5,7 +37,11 @@ export function extractImageUrls(markdown: string): string[] {
     let match;
 
     while ((match = imageRegex.exec(markdown)) !== null) {
-        matches.push(match[1]);
+        const url = match[1];
+        // Only add valid image URLs
+        if (isValidImageUrl(url)) {
+            matches.push(url);
+        }
     }
 
     return matches;
