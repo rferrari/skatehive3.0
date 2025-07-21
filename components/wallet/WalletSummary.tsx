@@ -10,7 +10,7 @@ import {
   Center,
 } from "@chakra-ui/react";
 import { useAccount, useDisconnect } from "wagmi";
-import { useProfile, useSignIn } from "@farcaster/auth-kit";
+import { useFarcasterSession } from "../../hooks/useFarcasterSession";
 import {
   Identity,
   Avatar,
@@ -22,7 +22,7 @@ import { memo, useCallback, useMemo } from "react";
 import ConnectButton from "./ConnectButton";
 import { usePortfolioContext } from "../../contexts/PortfolioContext";
 import { WalletDistributionChart } from "./WalletDistributionChart";
-import FarcasterSignIn from "../farcaster/FarcasterSignIn";
+import FarcasterUniversalWallet from "../farcaster/FarcasterUniversalWallet";
 import { IoLogOutSharp } from "react-icons/io5";
 import { FaEthereum } from "react-icons/fa";
 
@@ -42,37 +42,11 @@ const WalletSummary = memo(function WalletSummary({
 }: WalletSummaryProps) {
   const { isConnected: isEthConnected, address } = useAccount();
   const { isAuthenticated: isFarcasterConnected, profile: farcasterProfile } =
-    useProfile();
-  const { signOut: farcasterSignOut } = useSignIn({});
+    useFarcasterSession();
   const { aggregatedPortfolio, farcasterVerifiedPortfolios, portfolio } =
     usePortfolioContext();
   const { disconnect } = useDisconnect();
   const toast = useToast();
-
-  // Farcaster success handler
-  const handleFarcasterSuccess = useCallback(
-    (profile: {
-      fid: number;
-      username: string;
-      displayName?: string;
-      pfpUrl?: string;
-      bio?: string;
-      custody?: `0x${string}`;
-      verifications?: string[];
-    }) => {
-      const walletInfo = profile.custody
-        ? ` (Wallet: ${profile.custody.slice(0, 6)}...${profile.custody.slice(
-            -4
-          )})`
-        : "";
-      toast({
-        status: "success",
-        title: "Connected to Farcaster!",
-        description: `Welcome @${profile.username}! FID: ${profile.fid}${walletInfo}`,
-      });
-    },
-    [toast]
-  );
 
   // Memoize calculations
   const calculations = useMemo(() => {
@@ -99,13 +73,13 @@ const WalletSummary = memo(function WalletSummary({
   }, [disconnect]);
 
   const handleFarcasterDisconnect = useCallback(() => {
-    farcasterSignOut();
+    // For now, just show a message - the universal wallet handles its own disconnection
     toast({
       status: "info",
-      title: "Disconnected from Farcaster",
-      description: "Your Farcaster account has been disconnected.",
+      title: "Use Farcaster settings",
+      description: "Use the Farcaster section below to manage your connection.",
     });
-  }, [farcasterSignOut, toast]);
+  }, [toast]);
 
   const handleCopyAddress = useCallback(() => {
     if (address) {
@@ -213,7 +187,9 @@ const WalletSummary = memo(function WalletSummary({
 
               {/* Farcaster connection indicator */}
               {isFarcasterConnected &&
-                farcasterProfile?.custody?.toLowerCase() ===
+                farcasterProfile &&
+                'custody' in farcasterProfile &&
+                farcasterProfile.custody?.toLowerCase() ===
                   address?.toLowerCase() && (
                   <Box
                     pt={2}
@@ -243,10 +219,7 @@ const WalletSummary = memo(function WalletSummary({
               🚀 Connect Farcaster for Multi-Wallet Portfolio
             </Text>
             <Center>
-              <FarcasterSignIn
-                onSuccess={handleFarcasterSuccess}
-                variant="button"
-              />
+              <FarcasterUniversalWallet hiveUsername={hiveUsername} />
             </Center>
           </Box>
         ) : (
