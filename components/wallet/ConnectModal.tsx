@@ -21,7 +21,9 @@ import {
   Address,
 } from "@coinbase/onchainkit/identity";
 import { useAccount } from "wagmi";
-import FarcasterSignIn from "@/components/farcaster/FarcasterSignIn";
+import { useEffect } from "react";
+import FarcasterUniversalWallet from "@/components/farcaster/FarcasterUniversalWallet";
+import { useFarcasterSession } from "@/hooks/useFarcasterSession";
 
 export default function ConnectModal({
   isOpen,
@@ -32,27 +34,28 @@ export default function ConnectModal({
 }) {
   const toast = useToast();
   const { address, isConnected } = useAccount();
+  const { profile: farcasterProfile } = useFarcasterSession();
 
-  const handleFarcasterSuccess = (profile: {
-    fid: number;
-    username: string;
-    displayName?: string;
-    pfpUrl?: string;
-    bio?: string;
-    custody?: `0x${string}`;
-    verifications?: string[];
-  }) => {
-    const walletInfo = profile.custody
-      ? ` (Wallet: ${profile.custody.slice(0, 6)}...${profile.custody.slice(
-          -4
-        )})`
-      : "";
-    toast({
-      status: "success",
-      title: "Connected to Farcaster!",
-      description: `Welcome @${profile.username}! Your Farcaster account is now connected.${walletInfo}`,
-    });
-    onClose();
+  // Auto-close modal when Farcaster connects
+  useEffect(() => {
+    if (farcasterProfile && isOpen) {
+      toast({
+        status: "success",
+        title: "Connected to Farcaster!",
+        description: `Welcome @${farcasterProfile.username}! Your Farcaster account is now connected.`,
+      });
+      // Small delay to show the toast before closing
+      setTimeout(() => {
+        onClose();
+      }, 1000);
+    }
+  }, [farcasterProfile, isOpen, onClose, toast]);
+
+  const handleFarcasterConnect = () => {
+    // This function is kept for potential future use
+    if (farcasterProfile) {
+      onClose();
+    }
   };
 
   return (
@@ -143,11 +146,7 @@ export default function ConnectModal({
                 🛹 Social Connection
               </Text>
               <Center>
-                <FarcasterSignIn
-                  onSuccess={handleFarcasterSuccess}
-                  variant="button"
-                  size="lg"
-                />
+                <FarcasterUniversalWallet />
               </Center>
             </Box>
 

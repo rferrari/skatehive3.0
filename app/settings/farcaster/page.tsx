@@ -17,7 +17,7 @@ import {
     AlertTitle,
     AlertDescription,
 } from "@chakra-ui/react";
-import FarcasterAccountLink from "@/components/farcaster/FarcasterAccountLink";
+import FarcasterUniversalLink from "@/components/farcaster/FarcasterUniversalLink";
 
 export default function FarcasterAdminPage() {
     const { user } = useAioha();
@@ -175,7 +175,7 @@ export default function FarcasterAdminPage() {
             <Text color="primary" mb={8}>Admin tools for managing Farcaster notifications</Text>
 
             {/* Account Management */}
-            <FarcasterAccountLink
+            <FarcasterUniversalLink
                 hiveUsername={userName}
                 postingKey={typeof user === 'object' ? user?.keys?.posting : undefined}
             />

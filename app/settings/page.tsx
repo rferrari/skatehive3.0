@@ -6,7 +6,7 @@ import LottieAnimation from '@/components/shared/LottieAnimation';
 import UpvoteSnapContainer from '@/components/homepage/UpvoteSnapContainer';
 import { useRive, useStateMachineInput } from "@rive-app/react-canvas";
 import LogoMatrix from "../../components/graphics/LogoMatrix";
-import FarcasterAccountLink from '@/components/farcaster/FarcasterAccountLink';
+import FarcasterUniversalLink from '@/components/farcaster/FarcasterUniversalLink';
 import { useAioha } from "@aioha/react-ui";
 
 
@@ -121,7 +121,7 @@ const Settings = () => {
                     {/* Farcaster Account Link */}
                     {userData.hiveUsername && (
                         <>
-                            <FarcasterAccountLink
+                            <FarcasterUniversalLink
                                 hiveUsername={userData.hiveUsername}
                                 postingKey={userData.postingKey}
                             />

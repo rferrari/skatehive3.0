@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useFarcasterSession } from "../../hooks/useFarcasterSession";
 import useHiveAccount from "@/hooks/useHiveAccount";
 import { useWalletActions } from "@/hooks/useWalletActions";
 import { useAccount } from "wagmi";
@@ -20,7 +21,6 @@ import {
 } from "@chakra-ui/react";
 import { AiohaModal, useAioha } from "@aioha/react-ui";
 import { KeyTypes } from "@aioha/aioha";
-import { useProfile } from "@farcaster/auth-kit";
 import "@aioha/react-ui/dist/build.css";
 import { convertVestToHive } from "@/lib/hive/client-functions";
 import { extractNumber } from "@/lib/utils/extractNumber";
@@ -55,7 +55,7 @@ export default function MainWallet({ username }: MainWalletProps) {
 
   // Get Farcaster profile for wallet integration
   const { isAuthenticated: isFarcasterConnected, profile: farcasterProfile } =
-    useProfile();
+    useFarcasterSession();
 
   // Prevent hydration mismatch by tracking if component is mounted
   const [isMounted, setIsMounted] = useState(false);
@@ -293,10 +293,18 @@ export default function MainWallet({ username }: MainWalletProps) {
       <PortfolioProvider
         address={isConnected ? address : undefined}
         farcasterAddress={
-          isFarcasterConnected ? farcasterProfile?.custody : undefined
+          isFarcasterConnected &&
+          farcasterProfile &&
+          "custody" in farcasterProfile
+            ? farcasterProfile?.custody
+            : undefined
         }
         farcasterVerifiedAddresses={
-          isFarcasterConnected ? farcasterProfile?.verifications : undefined
+          isFarcasterConnected &&
+          farcasterProfile &&
+          "verifications" in farcasterProfile
+            ? farcasterProfile?.verifications
+            : undefined
         }
       >
         <Box

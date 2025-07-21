@@ -10,8 +10,9 @@ import {
     Flex,
     useToast,
 } from "@chakra-ui/react";
-import { SignInButton, useProfile, useSignIn } from '@farcaster/auth-kit';
+import { SignInButton, useSignIn } from '@farcaster/auth-kit';
 import { FarcasterPreferences } from "@/lib/farcaster/skatehive-integration";
+import { useFarcasterSession } from "@/hooks/useFarcasterSession";
 
 interface FarcasterAccountLinkProps {
     hiveUsername: string;
@@ -23,11 +24,14 @@ export default function FarcasterAccountLink({ hiveUsername, postingKey }: Farca
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const toast = useToast();
-    const { isAuthenticated, profile } = useProfile();
+    
+    // Use custom session hook instead of direct useProfile
+    const { isAuthenticated, profile, hasPersistedSession, isRestoring, clearSession } = useFarcasterSession();
     const { signOut } = useSignIn({});
 
     const handleFarcasterSignOut = () => {
         signOut();
+        clearSession(); // Clear our persisted session
         toast({
             status: "success",
             title: "Signed out from Farcaster",
@@ -141,11 +145,14 @@ export default function FarcasterAccountLink({ hiveUsername, postingKey }: Farca
         }
     };
 
-    if (loading) {
+    if (loading || isRestoring) {
         return (
             <Box bg="background" border="1px solid" borderColor="muted" p={6} shadow="sm">
                 <Box h={8} bg="muted" mb={6} />
                 <Box h={32} bg="muted" />
+                <Text fontSize="sm" color="primary" textAlign="center" mt={2}>
+                    {isRestoring ? "Restoring session..." : "Loading..."}
+                </Text>
             </Box>
         );
     }
@@ -164,7 +171,20 @@ export default function FarcasterAccountLink({ hiveUsername, postingKey }: Farca
 
                 {!preferences ? (
                     <VStack spacing={4}>
-                        {!isAuthenticated ? (
+                        {/* Debug info - remove in production */}
+                        {process.env.NODE_ENV === 'development' && (
+                            <Box p={2} bg="gray.800" borderRadius="md">
+                                <Text fontSize="xs" color="gray.400" mb={2}>
+                                    Debug: isAuthenticated={isAuthenticated.toString()}, hasPersistedSession={hasPersistedSession.toString()}, profile={profile ? `${profile.username}(${profile.fid})` : 'null'}
+                                </Text>
+                                <Button size="xs" onClick={clearSession} colorScheme="red">
+                                    Clear Session
+                                </Button>
+                            </Box>
+                        )}
+                        
+                        {/* Show sign in button if no valid profile data */}
+                        {(!profile || !profile.fid || !profile.username) ? (
                             <Box textAlign="center">
                                 <SignInButton
                                     onSuccess={({ fid, username }) => {
@@ -192,6 +212,11 @@ export default function FarcasterAccountLink({ hiveUsername, postingKey }: Farca
                                 <Text fontSize="lg" color="primary" fontWeight="bold" mb={2}>
                                     Welcome, @{profile?.username}!
                                 </Text>
+                                {hasPersistedSession && (
+                                    <Text fontSize="xs" color="green.500" fontWeight="normal" mb={2}>
+                                        (Session restored)
+                                    </Text>
+                                )}
                                 <Text fontSize="sm" color="primary" mb={4}>
                                     FID: {profile?.fid}
                                 </Text>

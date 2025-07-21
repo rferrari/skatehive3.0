@@ -1,47 +1,44 @@
 "use client";
 
-import FarcasterSignIn from '@/components/farcaster/FarcasterSignIn';
-import { useToast } from "@chakra-ui/react";
+import { Box, Heading, Text, VStack } from "@chakra-ui/react";
+import FarcasterUniversalWallet from '../farcaster/FarcasterUniversalWallet';
+import FarcasterUniversalLink from '../farcaster/FarcasterUniversalLink';
+import { useFarcasterSession } from '../../hooks/useFarcasterSession';
 
 interface FarcasterWalletSectionProps {
     hiveUsername?: string;
 }
 
 export default function FarcasterWalletSection({ hiveUsername }: FarcasterWalletSectionProps) {
-    const toast = useToast();
-
-    const handleFarcasterSuccess = (profile: {
-        fid: number;
-        username: string;
-        displayName?: string;
-        pfpUrl?: string;
-        bio?: string;
-        custody?: `0x${string}`;
-        verifications?: string[];
-    }) => {
-        // If we have a Hive username, we could potentially link the accounts here
-        if (hiveUsername) {
-            // This would be a call to link the accounts, similar to FarcasterAccountLink
-            // For now, just show success with wallet info
-            const walletInfo = profile.custody ? ` (Wallet: ${profile.custody.slice(0, 6)}...${profile.custody.slice(-4)})` : '';
-            toast({
-                status: "success",
-                title: "Connected to Farcaster!",
-                description: `Welcome @${profile.username}! Your Farcaster account is connected.${walletInfo}`,
-            });
-        } else {
-            toast({
-                status: "success",
-                title: "Connected to Farcaster!",
-                description: `Welcome @${profile.username}!`,
-            });
-        }
-    };
+    const { profile: farcasterProfile } = useFarcasterSession();
 
     return (
-        <FarcasterSignIn
-            onSuccess={handleFarcasterSuccess}
-            variant="card"
-        />
+        <VStack spacing={4} align="stretch">
+            <Heading size="md" color="text">
+                Farcaster Connection
+            </Heading>
+            
+            <Text fontSize="sm" color="muted">
+                Connect your Farcaster account to unlock social features and wallet integration.
+            </Text>
+
+            {/* Account Linking Section - Only show if we have a hiveUsername */}
+            {hiveUsername && !farcasterProfile && (
+                <Box>
+                    <Text fontSize="sm" fontWeight="medium" color="text" mb={2}>
+                        Account Linking
+                    </Text>
+                    <FarcasterUniversalLink hiveUsername={hiveUsername} />
+                </Box>
+            )}
+
+            {/* Wallet Integration Section */}
+            <Box>
+                <Text fontSize="sm" fontWeight="medium" color="text" mb={2}>
+                    Wallet Integration
+                </Text>
+                <FarcasterUniversalWallet hiveUsername={hiveUsername} />
+            </Box>
+        </VStack>
     );
 }

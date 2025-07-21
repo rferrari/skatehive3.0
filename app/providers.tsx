@@ -29,6 +29,7 @@ const farcasterAuthConfig = {
   domain: process.env.NEXT_PUBLIC_DOMAIN || "skatehive.app",
   // siweUri is optional - Auth Kit handles SIWE verification internally
   // Only needed if you want custom server-side session management
+  relay: "https://relay.farcaster.xyz", // Ensure relay is specified
 };
 
 export function Providers({ children }: { children: React.ReactNode }) {
