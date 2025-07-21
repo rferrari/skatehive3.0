@@ -11,6 +11,7 @@ import {
 } from "@chakra-ui/react";
 import { useAccount, useDisconnect } from "wagmi";
 import { useFarcasterSession } from "../../hooks/useFarcasterSession";
+import { useSignIn } from "@farcaster/auth-kit";
 import {
   Identity,
   Avatar,
@@ -41,8 +42,12 @@ const WalletSummary = memo(function WalletSummary({
   onConnectHive,
 }: WalletSummaryProps) {
   const { isConnected: isEthConnected, address } = useAccount();
-  const { isAuthenticated: isFarcasterConnected, profile: farcasterProfile } =
-    useFarcasterSession();
+  const {
+    isAuthenticated: isFarcasterConnected,
+    profile: farcasterProfile,
+    clearSession,
+  } = useFarcasterSession();
+  const { signOut } = useSignIn({});
   const { aggregatedPortfolio, farcasterVerifiedPortfolios, portfolio } =
     usePortfolioContext();
   const { disconnect } = useDisconnect();
@@ -73,13 +78,31 @@ const WalletSummary = memo(function WalletSummary({
   }, [disconnect]);
 
   const handleFarcasterDisconnect = useCallback(() => {
-    // For now, just show a message - the universal wallet handles its own disconnection
-    toast({
-      status: "info",
-      title: "Use Farcaster settings",
-      description: "Use the Farcaster section below to manage your connection.",
-    });
-  }, [toast]);
+    try {
+      // Sign out from Auth Kit if authenticated
+      if (isFarcasterConnected) {
+        signOut();
+      }
+
+      // Clear our persisted session
+      clearSession();
+
+      toast({
+        status: "success",
+        title: "Signed out from Farcaster",
+        description: "You have been disconnected from Farcaster",
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error("Error signing out from Farcaster:", error);
+      toast({
+        status: "error",
+        title: "Sign out failed",
+        description: "There was an error signing out from Farcaster",
+        duration: 5000,
+      });
+    }
+  }, [isFarcasterConnected, signOut, clearSession, toast]);
 
   const handleCopyAddress = useCallback(() => {
     if (address) {

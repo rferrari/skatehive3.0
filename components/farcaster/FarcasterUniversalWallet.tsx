@@ -1,9 +1,10 @@
 "use client";
-import React from "react";
+import React, { useMemo } from "react";
 import { useFarcasterMiniapp } from "@/hooks/useFarcasterMiniapp";
 import FarcasterMiniappWallet from "./FarcasterMiniappWallet";
-import { Box, Text, VStack, Spinner } from "@chakra-ui/react";
+import { Box, Text, VStack, Spinner, useToast } from "@chakra-ui/react";
 import { useFarcasterSession } from "@/hooks/useFarcasterSession";
+import { SignInButton } from "@farcaster/auth-kit";
 
 interface FarcasterUniversalWalletProps {
   hiveUsername?: string;
@@ -14,20 +15,20 @@ export default function FarcasterUniversalWallet({
 }: FarcasterUniversalWalletProps) {
   const { isInMiniapp, isReady, user } = useFarcasterMiniapp();
   const { profile: farcasterProfile } = useFarcasterSession();
+  const toast = useToast();
 
-  // Debug logging
-  React.useEffect(() => {
-    if (isReady) {
-      console.log("🛹 FarcasterUniversalWallet Debug:", {
-        isInMiniapp,
-        user,
-        farcasterProfile,
-        hiveUsername,
-        userAgent: navigator.userAgent,
-        location: window.location.href,
-      });
-    }
-  }, [isReady, isInMiniapp, user, farcasterProfile, hiveUsername]);
+  // Debug logging - use useMemo to prevent excessive logging
+  const debugInfo = useMemo(
+    () => ({
+      isInMiniapp,
+      user,
+      farcasterProfile,
+      hiveUsername,
+      userAgent: typeof window !== "undefined" ? navigator.userAgent : "SSR",
+      location: typeof window !== "undefined" ? window.location.href : "SSR",
+    }),
+    [isInMiniapp, user, farcasterProfile, hiveUsername]
+  );
 
   // Show loading state while determining context
   if (!isReady) {
@@ -135,7 +136,7 @@ export default function FarcasterUniversalWallet({
           );
         }
 
-        // No Farcaster connection
+        // No Farcaster connection - show sign in button for web context
         return (
           <Box
             p={4}
@@ -143,10 +144,41 @@ export default function FarcasterUniversalWallet({
             borderRadius="lg"
             border="1px solid"
             borderColor="muted"
+            textAlign="center"
           >
-            <Text fontSize="sm" color="orange.400">
-              Connect your Farcaster account to see wallet information
-            </Text>
+            <VStack spacing={4}>
+              <Text fontSize="sm" color="text" mb={2}>
+                Connect your Farcaster account to access wallet features
+              </Text>
+              <SignInButton
+                onSuccess={({ fid, username }) => {
+                  console.log("🎉 Farcaster Sign In Success:", {
+                    fid,
+                    username,
+                  });
+                  toast({
+                    status: "success",
+                    title: "Connected to Farcaster!",
+                    description: `Welcome, @${username}!`,
+                    duration: 3000,
+                  });
+                }}
+                onError={(error) => {
+                  console.error("❌ Farcaster Sign In Error:", error);
+                  toast({
+                    status: "error",
+                    title: "Authentication failed",
+                    description:
+                      error?.message || "Failed to authenticate with Farcaster",
+                    duration: 5000,
+                  });
+                }}
+              />
+              <Text fontSize="xs" color="muted" textAlign="center">
+                💡 <strong>Pro tip:</strong> Open this page in the Farcaster app
+                for native wallet features
+              </Text>
+            </VStack>
           </Box>
         );
       })()}

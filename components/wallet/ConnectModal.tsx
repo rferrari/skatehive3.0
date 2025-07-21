@@ -21,9 +21,7 @@ import {
   Address,
 } from "@coinbase/onchainkit/identity";
 import { useAccount } from "wagmi";
-import { useEffect } from "react";
 import FarcasterUniversalWallet from "@/components/farcaster/FarcasterUniversalWallet";
-import { useFarcasterSession } from "@/hooks/useFarcasterSession";
 
 export default function ConnectModal({
   isOpen,
@@ -32,31 +30,7 @@ export default function ConnectModal({
   isOpen: boolean;
   onClose: () => void;
 }) {
-  const toast = useToast();
   const { address, isConnected } = useAccount();
-  const { profile: farcasterProfile } = useFarcasterSession();
-
-  // Auto-close modal when Farcaster connects
-  useEffect(() => {
-    if (farcasterProfile && isOpen) {
-      toast({
-        status: "success",
-        title: "Connected to Farcaster!",
-        description: `Welcome @${farcasterProfile.username}! Your Farcaster account is now connected.`,
-      });
-      // Small delay to show the toast before closing
-      setTimeout(() => {
-        onClose();
-      }, 1000);
-    }
-  }, [farcasterProfile, isOpen, onClose, toast]);
-
-  const handleFarcasterConnect = () => {
-    // This function is kept for potential future use
-    if (farcasterProfile) {
-      onClose();
-    }
-  };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} isCentered size="lg">

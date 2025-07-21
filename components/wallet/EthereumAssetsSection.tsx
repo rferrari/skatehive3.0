@@ -10,7 +10,7 @@ import {
 } from "@chakra-ui/react";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useAccount } from "wagmi";
-import { useProfile } from '@farcaster/auth-kit';
+import { useProfile } from "@farcaster/auth-kit";
 import { usePortfolioContext } from "../../contexts/PortfolioContext";
 import { TokenDetail } from "../../types/portfolio";
 import {
@@ -29,12 +29,133 @@ import DesktopTokenTable from "./components/DesktopTokenTable";
 
 export default function EthereumAssetsSection() {
   const { isConnected, address } = useAccount();
-  const { isAuthenticated: isFarcasterConnected, profile: farcasterProfile } = useProfile();
-  const { aggregatedPortfolio, isLoading, error, refetch } = usePortfolioContext();
+  const { isAuthenticated: isFarcasterConnected, profile: farcasterProfile } =
+    useProfile();
+  const {
+    aggregatedPortfolio,
+    portfolio,
+    farcasterPortfolio,
+    farcasterVerifiedPortfolios,
+    isLoading,
+    error,
+    refetch,
+  } = usePortfolioContext();
+
+  // Debug logging for Farcaster user and balance data
+  useEffect(() => {
+    console.log("🎯 EthereumAssetsSection Debug - Farcaster User Data:", {
+      isFarcasterConnected,
+      farcasterProfile: farcasterProfile
+        ? {
+            fid: farcasterProfile.fid,
+            username: farcasterProfile.username,
+            displayName: farcasterProfile.displayName,
+            custody:
+              "custody" in farcasterProfile
+                ? farcasterProfile.custody
+                : "No custody property",
+            verifications:
+              "verifications" in farcasterProfile
+                ? farcasterProfile.verifications
+                : "No verifications property",
+            fullProfile: farcasterProfile,
+            profileKeys: Object.keys(farcasterProfile),
+            profileType: typeof farcasterProfile,
+          }
+        : "No profile",
+      walletConnected: { isConnected, address },
+    });
+
+    console.log("💰 EthereumAssetsSection Debug - Portfolio Data:", {
+      portfolio: portfolio
+        ? {
+            totalNetWorth: portfolio.totalNetWorth,
+            tokensCount: portfolio.tokens?.length || 0,
+            source: "ethereum",
+          }
+        : "No ethereum portfolio",
+      farcasterPortfolio: farcasterPortfolio
+        ? {
+            totalNetWorth: farcasterPortfolio.totalNetWorth,
+            tokensCount: farcasterPortfolio.tokens?.length || 0,
+            source: "farcaster",
+          }
+        : "No farcaster portfolio",
+      farcasterVerifiedPortfolios:
+        Object.keys(farcasterVerifiedPortfolios).length > 0
+          ? Object.entries(farcasterVerifiedPortfolios).map(([addr, p]) => ({
+              address: addr,
+              totalNetWorth: p.totalNetWorth,
+              tokensCount: p.tokens?.length || 0,
+            }))
+          : "No verified portfolios",
+      aggregatedPortfolio: aggregatedPortfolio
+        ? {
+            totalNetWorth: aggregatedPortfolio.totalNetWorth,
+            tokensCount: aggregatedPortfolio.tokens?.length || 0,
+            tokensSources:
+              aggregatedPortfolio.tokens?.map((t) => ({
+                symbol: t.token.symbol,
+                source: t.source || "unknown",
+                sourceAddress: t.sourceAddress || "unknown",
+              })) || [],
+          }
+        : "No aggregated portfolio",
+      isLoading,
+      error,
+    });
+  }, [
+    isConnected,
+    address,
+    isFarcasterConnected,
+    farcasterProfile,
+    portfolio,
+    farcasterPortfolio,
+    farcasterVerifiedPortfolios,
+    aggregatedPortfolio,
+    isLoading,
+    error,
+  ]);
   const [hideSmallBalances, setHideSmallBalances] = useState(true);
   const minBalanceThreshold = 5;
   const [logoUpdateTrigger, setLogoUpdateTrigger] = useState(0);
   const [showTokenBalances, setShowTokenBalances] = useState(false);
+
+  // Auto-show token balances when user has any portfolio data
+  useEffect(() => {
+    const hasConnection =
+      (isConnected && address) ||
+      (isFarcasterConnected && farcasterProfile?.custody);
+    const hasAnyPortfolio = !!(
+      portfolio ||
+      farcasterPortfolio ||
+      (farcasterVerifiedPortfolios &&
+        Object.keys(farcasterVerifiedPortfolios).length > 0)
+    );
+
+    if ((hasConnection || hasAnyPortfolio) && !showTokenBalances) {
+      console.log("🔄 Auto-enabling token balances for connected user:", {
+        isConnected,
+        address,
+        isFarcasterConnected,
+        farcasterCustody: farcasterProfile?.custody,
+        hasEthereumPortfolio: !!portfolio,
+        hasFarcasterPortfolio: !!farcasterPortfolio,
+        hasVerifiedPortfolios:
+          Object.keys(farcasterVerifiedPortfolios || {}).length > 0,
+      });
+      setShowTokenBalances(true);
+    }
+  }, [
+    isConnected,
+    address,
+    isFarcasterConnected,
+    farcasterProfile?.custody,
+    showTokenBalances,
+    portfolio,
+    farcasterPortfolio,
+    farcasterVerifiedPortfolios,
+  ]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedToken, setSelectedToken] = useState<TokenDetail | null>(null);
   const [selectedTokenLogo, setSelectedTokenLogo] = useState<string>("");
@@ -53,7 +174,7 @@ export default function EthereumAssetsSection() {
 
   // Toggle expanded token details
   const toggleTokenExpansion = useCallback((symbol: string) => {
-    setExpandedTokens(prev => {
+    setExpandedTokens((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(symbol)) {
         newSet.delete(symbol);
@@ -120,27 +241,55 @@ export default function EthereumAssetsSection() {
     }
   }, [aggregatedPortfolio?.tokens, refetch]);
 
-  const handleSendToken = useCallback((tokenDetail: TokenDetail, logoUrl?: string) => {
-    setSelectedToken(tokenDetail);
-    setSelectedTokenLogo(logoUrl || "");
-    onSendModalOpen();
-  }, [onSendModalOpen]);
+  const handleSendToken = useCallback(
+    (tokenDetail: TokenDetail, logoUrl?: string) => {
+      setSelectedToken(tokenDetail);
+      setSelectedTokenLogo(logoUrl || "");
+      onSendModalOpen();
+    },
+    [onSendModalOpen]
+  );
+
+  // Log the condition check for showing assets
+  const shouldShowAssets = useMemo(() => {
+    if (!isMounted) return false;
+
+    // Show assets if:
+    // 1. Ethereum wallet is connected
+    // 2. Farcaster is connected with custody address
+    // 3. We have any portfolio data (ethereum, farcaster, or verified addresses)
+    const hasEthereumWallet = isConnected && address;
+    const hasFarcasterWithCustody =
+      isFarcasterConnected && farcasterProfile?.custody;
+    const hasAnyPortfolioData = !!(
+      portfolio ||
+      farcasterPortfolio ||
+      (farcasterVerifiedPortfolios &&
+        Object.keys(farcasterVerifiedPortfolios).length > 0) ||
+      aggregatedPortfolio
+    );
+
+    return hasEthereumWallet || hasFarcasterWithCustody || hasAnyPortfolioData;
+  }, [
+    isMounted,
+    isConnected,
+    address,
+    isFarcasterConnected,
+    farcasterProfile?.custody,
+    portfolio,
+    farcasterPortfolio,
+    farcasterVerifiedPortfolios,
+    aggregatedPortfolio,
+  ]);
 
   return (
-    <Box
-      mt={8}
-      p={2}
-      borderRadius="base"
-      bg="muted"
-      w="100%"
-      textAlign="left"
-    >
+    <Box mt={8} p={2} borderRadius="base" bg="muted" w="100%" textAlign="left">
       <AssetsHeader
         showTokenBalances={showTokenBalances}
         onToggleBalances={() => setShowTokenBalances(!showTokenBalances)}
       />
 
-      {isMounted && ((isConnected && address) || (isFarcasterConnected && farcasterProfile?.custody)) && (
+      {shouldShowAssets && (
         <Box overflowX="hidden">
           {/* Token Balances Section - only display if showTokenBalances is true */}
           {showTokenBalances && (
@@ -174,8 +323,12 @@ export default function EthereumAssetsSection() {
                         <MobileTokenCard
                           key={consolidatedToken.symbol}
                           consolidatedToken={consolidatedToken}
-                          isExpanded={expandedTokens.has(consolidatedToken.symbol)}
-                          onToggleExpansion={() => toggleTokenExpansion(consolidatedToken.symbol)}
+                          isExpanded={expandedTokens.has(
+                            consolidatedToken.symbol
+                          )}
+                          onToggleExpansion={() =>
+                            toggleTokenExpansion(consolidatedToken.symbol)
+                          }
                           onSendToken={handleSendToken}
                         />
                       ))}

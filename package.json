@@ -22,7 +22,6 @@
     "@farcaster/auth-kit": "^0.8.1",
     "@farcaster/frame-node": "^0.1.6",
     "@farcaster/frame-sdk": "^0.1.7",
-    "@farcaster/frame-wagmi-connector": "^1.0.0",
     "@farcaster/miniapp-sdk": "^0.1.7",
     "@farcaster/miniapp-wagmi-connector": "^1.0.0",
     "@ffmpeg/ffmpeg": "^0.12.15",
@@ -108,7 +107,6 @@
     "overrides": {
       "@types/react": "^19.1.6",
       "@types/react-dom": "^19.1.5",
-      "@farcaster/frame-wagmi-connector": "^1.0.0",
       "@farcaster/frame-sdk": "^0.1.7"
     }
   }

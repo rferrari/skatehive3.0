@@ -57,9 +57,11 @@ export default function MainWallet({ username }: MainWalletProps) {
   const { isAuthenticated: isFarcasterConnected, profile: farcasterProfile } =
     useFarcasterSession();
 
+  // State for enhanced Farcaster user data (custody + verified addresses)
+  const [farcasterUserData, setFarcasterUserData] = useState<any>(null);
+
   // Prevent hydration mismatch by tracking if component is mounted
   const [isMounted, setIsMounted] = useState(false);
-
   const { isOpen, onOpen, onClose } = useDisclosure();
   const {
     isOpen: isConnectModalOpen,
@@ -293,16 +295,22 @@ export default function MainWallet({ username }: MainWalletProps) {
       <PortfolioProvider
         address={isConnected ? address : undefined}
         farcasterAddress={
-          isFarcasterConnected &&
-          farcasterProfile &&
-          "custody" in farcasterProfile
+          // Use enhanced data if available and valid, otherwise fallback to profile custody
+          farcasterUserData && !farcasterUserData.failed
+            ? farcasterUserData.custody
+            : isFarcasterConnected &&
+              farcasterProfile &&
+              "custody" in farcasterProfile
             ? farcasterProfile?.custody
             : undefined
         }
         farcasterVerifiedAddresses={
-          isFarcasterConnected &&
-          farcasterProfile &&
-          "verifications" in farcasterProfile
+          // Use enhanced data if available and valid, otherwise fallback to profile verifications
+          farcasterUserData && !farcasterUserData.failed
+            ? farcasterUserData.verifications
+            : isFarcasterConnected &&
+              farcasterProfile &&
+              "verifications" in farcasterProfile
             ? farcasterProfile?.verifications
             : undefined
         }
@@ -405,8 +413,8 @@ export default function MainWallet({ username }: MainWalletProps) {
                         <ConnectHiveSection onConnectHive={handleConnectHive} />
                       )}
                     </Box>
-                    {/* Ethereum Assets Section - Show if connected to Ethereum */}
-                    {isMounted && isConnected && <EthereumAssetsSection />}
+                    {/* Ethereum Assets Section - Show if connected to Ethereum OR have Farcaster data */}
+                    {isMounted && <EthereumAssetsSection />}
                     {/* NFT Section - Show if connected to Ethereum */}
                     {isMounted && isConnected && <NFTSection />}
                   </TabPanel>
