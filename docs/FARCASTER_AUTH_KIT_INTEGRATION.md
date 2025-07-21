@@ -17,7 +17,8 @@ The `AuthKitProvider` has been added to `app/providers.tsx` with the following c
 const farcasterAuthConfig = {
   rpcUrl: 'https://mainnet.optimism.io',
   domain: process.env.NEXT_PUBLIC_DOMAIN || 'skatehive.app',
-  siweUri: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://skatehive.app'}/api/auth/farcaster`,
+  // siweUri is optional - Auth Kit handles SIWE verification internally
+  // Only needed if you want custom server-side session management
 };
 ```
 
@@ -68,12 +69,14 @@ When a user successfully connects their Farcaster account:
 
 ## Environment Variables
 
-Add these variables to your `.env.local` file:
+Add these variables to your `.env.local` file (optional - the app has fallback values):
 
 ```bash
 NEXT_PUBLIC_DOMAIN=skatehive.app
 NEXT_PUBLIC_BASE_URL=https://skatehive.app
 ```
+
+Note: These environment variables are optional as the application provides fallback values.
 
 ## Security Features
 
@@ -112,8 +115,10 @@ To test the integration:
 ## Troubleshooting
 
 Common issues and solutions:
-- Ensure environment variables are properly set
+- Ensure environment variables are properly set (though they have fallback values)
 - Verify that the domain matches your application's actual domain
 - Check that the Optimism RPC endpoint is accessible
 - Ensure proper provider hierarchy in the app structure
 - Welcome notifications may not be delivered if the user hasn't enabled notifications in their Farcaster client
+- If authentication fails, check browser console for detailed error messages
+- The Auth Kit handles SIWE verification internally, so no custom server endpoint is needed

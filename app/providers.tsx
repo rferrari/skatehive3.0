@@ -27,9 +27,8 @@ export const wagmiConfig = createConfig({
 const farcasterAuthConfig = {
   rpcUrl: "https://mainnet.optimism.io",
   domain: process.env.NEXT_PUBLIC_DOMAIN || "skatehive.app",
-  siweUri: `${
-    process.env.NEXT_PUBLIC_BASE_URL || "https://skatehive.app"
-  }/api/auth/farcaster`,
+  // siweUri is optional - Auth Kit handles SIWE verification internally
+  // Only needed if you want custom server-side session management
 };
 
 export function Providers({ children }: { children: React.ReactNode }) {
