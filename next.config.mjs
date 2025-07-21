@@ -70,6 +70,31 @@ const nextConfig = {
             }
         ];
     },
+    async headers() {
+        return [
+            {
+                // Apply headers to all routes
+                source: '/(.*)',
+                headers: [
+                    {
+                        // Allow embedding in any iframe (removes X-Frame-Options restrictions)
+                        key: 'X-Frame-Options',
+                        value: 'ALLOWALL',
+                    },
+                    {
+                        // Alternative modern approach - allow all origins to embed
+                        key: 'Content-Security-Policy',
+                        value: "frame-ancestors *;",
+                    },
+                    {
+                        // Ensure the site can be embedded in frames
+                        key: 'X-Content-Type-Options',
+                        value: 'nosniff',
+                    },
+                ],
+            },
+        ];
+    },
 }
 
 export default nextConfig;
