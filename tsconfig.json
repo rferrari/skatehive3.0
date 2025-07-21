@@ -21,9 +21,6 @@
     "paths": {
       "@/*": ["./*"]
     },
-    // Performance optimizations
-    "composite": false,
-    "tsBuildInfoFile": ".next/cache/tsbuildinfo"
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules", ".next", "out", "dist"]

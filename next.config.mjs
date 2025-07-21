@@ -2,32 +2,10 @@
 const nextConfig = {
     experimental: {
         serverActions: {
-            bodySizeLimit: '10mb',
-        },
-        // Build performance optimizations
-        turbotrace: {
-            logLevel: 'error'
+            bodySizeLimit: '10mb', // Increase the body size limit
         },
     },
-    // Build performance optimizations
-    swcMinify: true,
-    poweredByHeader: false,
-    
-    webpack: (config, { isServer, dev }) => {
-        // Performance optimizations
-        config.cache = {
-            type: 'filesystem',
-            cacheDirectory: '.next/cache/webpack',
-        };
-
-        // Suppress warnings for known issues
-        config.ignoreWarnings = [
-            /critical dependency: the request of a dependency is an expression/,
-            /Module not found: Can't resolve 'pino-pretty'/,
-            /warning.*cast between incompatible function types/,
-        ];
-
-        // Build optimization: exclude heavy modules in client bundle
+    webpack: (config, { isServer }) => {
         if (!isServer) {
             config.resolve.fallback = {
                 fs: false,
@@ -46,14 +24,14 @@ const nextConfig = {
             };
         }
         
-        // Optimize specific problematic modules
+        // Ignore specific problematic modules
         config.resolve.alias = {
             ...config.resolve.alias,
             'memcpy': false,
             'pino-pretty': false,
         };
         
-        // External heavy dependencies for better performance
+        // Add externals for server-side only modules
         if (!isServer) {
             config.externals = config.externals || [];
             config.externals.push({
@@ -61,10 +39,6 @@ const nextConfig = {
                 'pino-pretty': 'pino-pretty',
             });
         }
-
-        // Build performance: optimize module resolution
-        config.resolve.modules = ['node_modules'];
-        config.resolve.symlinks = false;
         
         return config;
     },
@@ -99,4 +73,3 @@ const nextConfig = {
 }
 
 export default nextConfig;
-
