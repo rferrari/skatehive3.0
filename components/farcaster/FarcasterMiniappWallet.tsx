@@ -26,17 +26,32 @@ export default function FarcasterMiniappWallet({
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasWalletSupport, setHasWalletSupport] = useState(false);
   const toast = useToast();
 
   // Check if wallet is already connected on mount
   useEffect(() => {
     const checkWalletConnection = async () => {
-      if (isReady && walletProvider) {
+      if (isReady) {
         try {
-          const address = await getWalletAddress();
-          setWalletAddress(address);
+          // Check if wallet provider is available and functional
+          if (walletProvider && typeof walletProvider.request === "function") {
+            setHasWalletSupport(true);
+            const address = await getWalletAddress();
+            setWalletAddress(address);
+            console.log("🛹 Wallet check result:", {
+              address,
+              hasSupport: true,
+            });
+          } else {
+            setHasWalletSupport(false);
+            console.warn(
+              "⚠️ Wallet provider not available or missing request method"
+            );
+          }
         } catch (error) {
-          console.error("Failed to check wallet connection:", error);
+          console.error("❌ Failed to check wallet connection:", error);
+          setHasWalletSupport(false);
         } finally {
           setIsLoading(false);
         }
@@ -49,6 +64,15 @@ export default function FarcasterMiniappWallet({
   }, [isReady, walletProvider, getWalletAddress]);
 
   const handleConnectWallet = async () => {
+    if (!hasWalletSupport) {
+      toast({
+        status: "warning",
+        title: "Wallet Not Available",
+        description: "Wallet functionality is not available in this context",
+      });
+      return;
+    }
+
     setIsConnecting(true);
     try {
       const address = await connectWallet();
@@ -63,6 +87,7 @@ export default function FarcasterMiniappWallet({
         });
       }
     } catch (error: any) {
+      console.error("🔴 Wallet connection error:", error);
       toast({
         status: "error",
         title: "Connection Failed",
@@ -160,6 +185,16 @@ export default function FarcasterMiniappWallet({
                 You can now make transactions using your Farcaster wallet
               </Text>
             </VStack>
+          ) : !hasWalletSupport ? (
+            <VStack spacing={2} align="start">
+              <Text fontSize="sm" color="orange.400">
+                Wallet functionality not available
+              </Text>
+              <Text fontSize="xs" color="muted">
+                The wallet provider is not accessible in this context. Try
+                accessing this page directly in the Farcaster app.
+              </Text>
+            </VStack>
           ) : (
             <VStack spacing={3} align="stretch">
               <Text fontSize="sm" color="text">
@@ -171,6 +206,7 @@ export default function FarcasterMiniappWallet({
                 isLoading={isConnecting}
                 loadingText="Connecting..."
                 size="sm"
+                isDisabled={!hasWalletSupport}
               >
                 Connect Farcaster Wallet
               </Button>

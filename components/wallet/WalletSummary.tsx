@@ -188,7 +188,7 @@ const WalletSummary = memo(function WalletSummary({
               {/* Farcaster connection indicator */}
               {isFarcasterConnected &&
                 farcasterProfile &&
-                'custody' in farcasterProfile &&
+                "custody" in farcasterProfile &&
                 farcasterProfile.custody?.toLowerCase() ===
                   address?.toLowerCase() && (
                   <Box
