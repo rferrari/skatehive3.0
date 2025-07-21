@@ -133,7 +133,7 @@ export default function AuctionPage() {
               lineHeight="tall"
               px={{ base: 2, md: 0 }}
             >
-              Participate in an auction to acquire a Skatehive NFT.
+              Participate in an auction to acquire a unique Skatehive NFT.
             </Text>
           </VStack>
 
@@ -260,12 +260,7 @@ export default function AuctionPage() {
                   </VStack>
 
                   {/* Bidding Interface */}
-                  <Box 
-                    w="full" 
-                    alignSelf="center"
-                    onMouseEnter={() => setIsHoveringBid(true)}
-                    onMouseLeave={() => setIsHoveringBid(false)}
-                  >
+                  <Box w="full" alignSelf="center">
                     <AuctionBid
                       tokenId={activeAuction.token.tokenId}
                       winningBid={activeAuction.highestBid?.amount ? BigInt(activeAuction.highestBid.amount) : 0n}
@@ -275,6 +270,7 @@ export default function AuctionPage() {
                       onBid={refetch}
                       onSettle={refetch}
                       alignContent="left"
+                      onBidButtonHover={(isHovering) => setIsHoveringBid(isHovering)}
                     />
                   </Box>
 

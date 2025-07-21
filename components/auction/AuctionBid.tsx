@@ -33,6 +33,7 @@ interface BidProps {
   onBid?: () => void;
   onSettle?: () => void;
   alignContent?: 'left' | 'right';
+  onBidButtonHover?: (isHovering: boolean) => void;
 }
 
 export function AuctionBid({
@@ -44,6 +45,7 @@ export function AuctionBid({
   onBid,
   onSettle,
   alignContent = 'left',
+  onBidButtonHover,
 }: BidProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [txHash, setTxHash] = useState<string | null>(null);
@@ -236,6 +238,8 @@ export function AuctionBid({
               isLoading={isLoading}
               loadingText="Placing Bid..."
               h="48px"
+              onMouseEnter={() => onBidButtonHover?.(true)}
+              onMouseLeave={() => onBidButtonHover?.(false)}
             >
               {isLoading ? 'Placing Bid...' : 'Place Bid'}
             </Button>
