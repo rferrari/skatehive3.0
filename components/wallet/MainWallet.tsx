@@ -1,4 +1,4 @@
-'use client';
+"use client";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import useHiveAccount from "@/hooks/useHiveAccount";
 import { useWalletActions } from "@/hooks/useWalletActions";
@@ -20,7 +20,7 @@ import {
 } from "@chakra-ui/react";
 import { AiohaModal, useAioha } from "@aioha/react-ui";
 import { KeyTypes } from "@aioha/aioha";
-import { useProfile } from '@farcaster/auth-kit';
+import { useProfile } from "@farcaster/auth-kit";
 import "@aioha/react-ui/dist/build.css";
 import { convertVestToHive } from "@/lib/hive/client-functions";
 import { extractNumber } from "@/lib/utils/extractNumber";
@@ -36,7 +36,10 @@ import EthereumAssetsSection from "./EthereumAssetsSection";
 import NFTSection from "./NFTSection";
 import WalletSummary from "./WalletSummary";
 import ConnectHiveSection from "./ConnectHiveSection";
-import { PortfolioProvider, usePortfolioContext } from "@/contexts/PortfolioContext";
+import {
+  PortfolioProvider,
+  usePortfolioContext,
+} from "@/contexts/PortfolioContext";
 
 interface MainWalletProps {
   username?: string;
@@ -51,7 +54,8 @@ export default function MainWallet({ username }: MainWalletProps) {
   const { colorMode } = useColorMode();
 
   // Get Farcaster profile for wallet integration
-  const { isAuthenticated: isFarcasterConnected, profile: farcasterProfile } = useProfile();
+  const { isAuthenticated: isFarcasterConnected, profile: farcasterProfile } =
+    useProfile();
 
   // Prevent hydration mismatch by tracking if component is mounted
   const [isMounted, setIsMounted] = useState(false);
@@ -126,15 +130,18 @@ export default function MainWallet({ username }: MainWalletProps) {
     fetchPrices();
   }, []);
 
-  const handleModalOpen = useCallback((
-    title: string,
-    description?: string,
-    showMemoField?: boolean,
-    showUsernameField?: boolean
-  ) => {
-    setModalContent({ title, description, showMemoField, showUsernameField });
-    onOpen();
-  }, [onOpen]);
+  const handleModalOpen = useCallback(
+    (
+      title: string,
+      description?: string,
+      showMemoField?: boolean,
+      showUsernameField?: boolean
+    ) => {
+      setModalContent({ title, description, showMemoField, showUsernameField });
+      onOpen();
+    },
+    [onOpen]
+  );
 
   const handleConnectHive = useCallback(() => {
     if (user) {
@@ -146,38 +153,49 @@ export default function MainWallet({ username }: MainWalletProps) {
     }
   }, [user, openHiveModal]);
 
-  const onConfirm = useCallback(async (
-    amount: number,
-    direction?: "HIVE_TO_HBD" | "HBD_TO_HIVE",
-    username?: string,
-    memo?: string
-  ) => {
-    if (modalContent) {
-      await handleConfirm(
-        amount,
-        direction,
-        username,
-        memo,
-        modalContent.title
-      );
-    }
-    onClose();
-  }, [modalContent, handleConfirm, onClose]);
+  const onConfirm = useCallback(
+    async (
+      amount: number,
+      direction?: "HIVE_TO_HBD" | "HBD_TO_HIVE",
+      username?: string,
+      memo?: string
+    ) => {
+      if (modalContent) {
+        await handleConfirm(
+          amount,
+          direction,
+          username,
+          memo,
+          modalContent.title
+        );
+      }
+      onClose();
+    },
+    [modalContent, handleConfirm, onClose]
+  );
 
   // Memoize balance calculations - only if user is connected to Hive
   const hiveBalances = useMemo(() => {
-    const balance = user && hiveAccount?.balance
-      ? String(extractNumber(assetToString(hiveAccount.balance)))
-      : "N/A";
-    const hbdBalance = user && hiveAccount?.hbd_balance
-      ? String(extractNumber(assetToString(hiveAccount.hbd_balance)))
-      : "N/A";
-    const hbdSavingsBalance = user && hiveAccount?.savings_hbd_balance
-      ? String(extractNumber(assetToString(hiveAccount.savings_hbd_balance)))
-      : "N/A";
+    const balance =
+      user && hiveAccount?.balance
+        ? String(extractNumber(assetToString(hiveAccount.balance)))
+        : "N/A";
+    const hbdBalance =
+      user && hiveAccount?.hbd_balance
+        ? String(extractNumber(assetToString(hiveAccount.hbd_balance)))
+        : "N/A";
+    const hbdSavingsBalance =
+      user && hiveAccount?.savings_hbd_balance
+        ? String(extractNumber(assetToString(hiveAccount.savings_hbd_balance)))
+        : "N/A";
 
     return { balance, hbdBalance, hbdSavingsBalance };
-  }, [user, hiveAccount?.balance, hiveAccount?.hbd_balance, hiveAccount?.savings_hbd_balance]);
+  }, [
+    user,
+    hiveAccount?.balance,
+    hiveAccount?.hbd_balance,
+    hiveAccount?.savings_hbd_balance,
+  ]);
 
   // Memoize HBD interest calculations
   const hbdInterestData = useMemo(() => {
@@ -186,11 +204,13 @@ export default function MainWallet({ username }: MainWalletProps) {
         savingsHbdBalance: 0,
         estimatedClaimableInterest: 0,
         daysUntilClaim: 0,
-        lastInterestPayment: undefined
+        lastInterestPayment: undefined,
       };
     }
 
-    const savingsHbdBalance = parseFloat(String(hiveAccount.savings_hbd_balance || "0.000"));
+    const savingsHbdBalance = parseFloat(
+      String(hiveAccount.savings_hbd_balance || "0.000")
+    );
     const lastInterestPayment = hiveAccount.savings_hbd_last_interest_payment;
     const APR = 0.15;
 
@@ -204,7 +224,8 @@ export default function MainWallet({ username }: MainWalletProps) {
       );
     }
 
-    const estimatedClaimableInterest = savingsHbdBalance * APR * (daysSinceLastPayment / 365);
+    const estimatedClaimableInterest =
+      savingsHbdBalance * APR * (daysSinceLastPayment / 365);
 
     let daysUntilClaim = 0;
     if (lastInterestPayment) {
@@ -212,7 +233,9 @@ export default function MainWallet({ username }: MainWalletProps) {
       const nextClaimDate = new Date(last.getTime() + 30 * 24 * 60 * 60 * 1000);
       daysUntilClaim = Math.max(
         0,
-        Math.ceil((nextClaimDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+        Math.ceil(
+          (nextClaimDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+        )
       );
     }
 
@@ -220,18 +243,30 @@ export default function MainWallet({ username }: MainWalletProps) {
       savingsHbdBalance,
       estimatedClaimableInterest,
       daysUntilClaim,
-      lastInterestPayment
+      lastInterestPayment,
     };
-  }, [user, hiveAccount?.savings_hbd_balance, hiveAccount?.savings_hbd_last_interest_payment]);
+  }, [
+    user,
+    hiveAccount?.savings_hbd_balance,
+    hiveAccount?.savings_hbd_last_interest_payment,
+  ]);
 
   // Memoize total Hive assets value calculation
   const totalHiveAssetsValue = useMemo(() => {
     if (!user || !hivePrice || !hbdPrice) return 0;
 
-    const hiveBalance = parseFloat(hiveBalances.balance === "N/A" ? "0" : hiveBalances.balance);
+    const hiveBalance = parseFloat(
+      hiveBalances.balance === "N/A" ? "0" : hiveBalances.balance
+    );
     const hivePowerBalance = parseFloat(hivePower || "0");
-    const hbdLiquidBalance = parseFloat(hiveBalances.hbdBalance === "N/A" ? "0" : hiveBalances.hbdBalance);
-    const hbdSavingsBalanceNum = parseFloat(hiveBalances.hbdSavingsBalance === "N/A" ? "0" : hiveBalances.hbdSavingsBalance);
+    const hbdLiquidBalance = parseFloat(
+      hiveBalances.hbdBalance === "N/A" ? "0" : hiveBalances.hbdBalance
+    );
+    const hbdSavingsBalanceNum = parseFloat(
+      hiveBalances.hbdSavingsBalance === "N/A"
+        ? "0"
+        : hiveBalances.hbdSavingsBalance
+    );
 
     const totalHiveValue = (hiveBalance + hivePowerBalance) * hivePrice;
     const totalHbdValue = (hbdLiquidBalance + hbdSavingsBalanceNum) * hbdPrice;
@@ -253,16 +288,23 @@ export default function MainWallet({ username }: MainWalletProps) {
     );
   }
 
-
   return (
     <>
       <PortfolioProvider
         address={isConnected ? address : undefined}
-        farcasterAddress={isFarcasterConnected ? farcasterProfile?.custody : undefined}
-        farcasterVerifiedAddresses={isFarcasterConnected ? farcasterProfile?.verifications : undefined}
+        farcasterAddress={
+          isFarcasterConnected ? farcasterProfile?.custody : undefined
+        }
+        farcasterVerifiedAddresses={
+          isFarcasterConnected ? farcasterProfile?.verifications : undefined
+        }
       >
-        <Box w="100%" maxW="100vw" overflowX="hidden" sx={{ scrollbarWidth: "none" }}>
-
+        <Box
+          w="100%"
+          maxW="100vw"
+          overflowX="hidden"
+          sx={{ scrollbarWidth: "none" }}
+        >
           <Grid
             templateColumns={{ base: "1fr", md: "2fr 1fr" }}
             gap={{ base: 4, md: 6 }}
@@ -283,7 +325,12 @@ export default function MainWallet({ username }: MainWalletProps) {
               height="100%"
               minW={0}
             >
-              <Tabs variant="soft-rounded" colorScheme="blue" size="md" flex={1}>
+              <Tabs
+                variant="soft-rounded"
+                colorScheme="blue"
+                size="md"
+                flex={1}
+              >
                 <TabList mb={4} bg="background" p={1} borderRadius="lg">
                   <Tab
                     _selected={{ bg: "primary", color: "background" }}
@@ -311,7 +358,13 @@ export default function MainWallet({ username }: MainWalletProps) {
                 <TabPanels flex={1}>
                   {/* Wallet Tab - Token Information */}
                   <TabPanel p={0}>
-                    <Box w="100%" display="flex" flexDirection="column" gap={3} p={2}>
+                    <Box
+                      w="100%"
+                      display="flex"
+                      flexDirection="column"
+                      gap={3}
+                      p={2}
+                    >
                       {/* Hive Sections - Show if user is connected to Hive */}
                       {user ? (
                         <>
@@ -331,7 +384,9 @@ export default function MainWallet({ username }: MainWalletProps) {
                             hbdPrice={hbdPrice}
                             estimatedClaimableInterest={0}
                             daysUntilClaim={0}
-                            lastInterestPayment={hbdInterestData.lastInterestPayment}
+                            lastInterestPayment={
+                              hbdInterestData.lastInterestPayment
+                            }
                             onModalOpen={handleModalOpen}
                             onClaimInterest={handleClaimHbdInterest}
                             isWalletView={true}
@@ -353,11 +408,18 @@ export default function MainWallet({ username }: MainWalletProps) {
                     <TabPanel p={0}>
                       <VStack spacing={4} align="stretch">
                         <Box>
-                          <Heading size="md" mb={3} color="primary" fontFamily="Joystix">
+                          <Heading
+                            size="md"
+                            mb={3}
+                            color="primary"
+                            fontFamily="Joystix"
+                          >
                             💎 Investment Portfolio
                           </Heading>
                           <Text fontSize="sm" color="text" mb={4}>
-                            Grow your tokens with SkateHive&apos;s investment options. Earn passive income and build your skateboarding empire!
+                            Grow your tokens with SkateHive&apos;s investment
+                            options. Earn passive income and build your
+                            skateboarding empire!
                           </Text>
                         </Box>
 
@@ -373,15 +435,20 @@ export default function MainWallet({ username }: MainWalletProps) {
                             🏛️ Dollar Savings (15% APR)
                           </Heading>
                           <Text fontSize="sm" color="text" mb={3}>
-                            Earn guaranteed 15% annual interest on your Dollar Savings. Perfect for long-term hodlers!
+                            Earn guaranteed 15% annual interest on your Dollar
+                            Savings. Perfect for long-term hodlers!
                           </Text>
                           <HBDSection
                             hbdBalance={hiveBalances.hbdBalance}
                             hbdSavingsBalance={hiveBalances.hbdSavingsBalance}
                             hbdPrice={hbdPrice}
-                            estimatedClaimableInterest={hbdInterestData.estimatedClaimableInterest}
+                            estimatedClaimableInterest={
+                              hbdInterestData.estimatedClaimableInterest
+                            }
                             daysUntilClaim={hbdInterestData.daysUntilClaim}
-                            lastInterestPayment={hbdInterestData.lastInterestPayment}
+                            lastInterestPayment={
+                              hbdInterestData.lastInterestPayment
+                            }
                             onModalOpen={handleModalOpen}
                             onClaimInterest={handleClaimHbdInterest}
                             isBankView={true}
@@ -396,15 +463,29 @@ export default function MainWallet({ username }: MainWalletProps) {
                           border="1px solid"
                           borderColor="muted"
                         >
-                          <Heading size="sm" mb={2} color="primary" display="flex" alignItems="center" gap={2}>
+                          <Heading
+                            size="sm"
+                            mb={2}
+                            color="primary"
+                            display="flex"
+                            alignItems="center"
+                            gap={2}
+                          >
                             🇧🇷 PIX Integration
                           </Heading>
                           <Text fontSize="sm" color="text" mb={3}>
-                            Buy and sell HBD instantly using PIX (Brazilian Real). Fast, secure, and convenient for Brazilian users!
+                            Buy and sell HBD instantly using PIX (Brazilian
+                            Real). Fast, secure, and convenient for Brazilian
+                            users!
                           </Text>
                           <Box
                             as="button"
-                            onClick={() => window.open('https://pixbee-hive.vercel.app/', '_blank')}
+                            onClick={() =>
+                              window.open(
+                                "https://pixbee-hive.vercel.app/",
+                                "_blank"
+                              )
+                            }
                             w="100%"
                             p={3}
                             bg="primary"
@@ -417,10 +498,10 @@ export default function MainWallet({ username }: MainWalletProps) {
                             transition="all 0.2s"
                             _hover={{
                               opacity: 0.8,
-                              transform: "translateY(-1px)"
+                              transform: "translateY(-1px)",
                             }}
                             _active={{
-                              transform: "translateY(0px)"
+                              transform: "translateY(0px)",
                             }}
                           >
                             🇧🇷 Buy and Sell HBD with PIX
@@ -465,8 +546,6 @@ export default function MainWallet({ username }: MainWalletProps) {
               <SwapSection onModalOpen={handleModalOpen} />
             </VStack>
           </Grid>
-
-
 
           {modalContent && (
             <WalletModal

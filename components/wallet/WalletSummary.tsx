@@ -11,17 +11,21 @@ import {
 } from "@chakra-ui/react";
 import { useAccount, useDisconnect } from "wagmi";
 import { useProfile, useSignIn } from "@farcaster/auth-kit";
-import { FaEthereum } from "react-icons/fa";
 import {
-  Name,
+  Identity,
   Avatar,
-  IdentityResolver,
-} from "@paperclip-labs/whisk-sdk/identity";
+  Name,
+  Address,
+  Badge,
+} from "@coinbase/onchainkit/identity";
+import { useEffect, useState } from "react";
+import ConnectButton from "./ConnectButton";
 import { usePortfolioContext } from "../../contexts/PortfolioContext";
 import { WalletDistributionChart } from "./WalletDistributionChart";
 import FarcasterSignIn from "../farcaster/FarcasterSignIn";
 import { IoLogOutSharp } from "react-icons/io5";
 import { memo, useCallback, useMemo } from "react";
+import { FaEthereum } from "react-icons/fa";
 
 interface WalletSummaryProps {
   hiveUsername?: string;
@@ -34,7 +38,6 @@ interface WalletSummaryProps {
 const WalletSummary = memo(function WalletSummary({
   hiveUsername,
   totalHiveValue,
-  isPriceLoading,
   onConnectEthereum,
   onConnectHive,
 }: WalletSummaryProps) {
@@ -50,6 +53,55 @@ const WalletSummary = memo(function WalletSummary({
   } = usePortfolioContext();
   const { disconnect } = useDisconnect();
   const toast = useToast();
+  
+  // Debug state for API testing
+  const [debugInfo, setDebugInfo] = useState<{
+    apiKey?: string;
+    projectId?: string;
+    address?: string;
+    chain?: string;
+    timestamp?: string;
+    error?: string;
+  } | null>(null);
+
+  // Test OnchainKit API connection
+  useEffect(() => {
+    const testAPI = async () => {
+      if (!address) return;
+      
+      try {
+        // Log environment variables
+        const apiKey = process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY;
+        const projectId = process.env.NEXT_PUBLIC_CDP_PROJECT_ID;
+        
+        setDebugInfo({
+          apiKey: apiKey ? `${apiKey.slice(0, 8)}...` : 'NOT_SET',
+          projectId: projectId ? `${projectId.slice(0, 8)}...` : 'NOT_SET',
+          address,
+          chain: 'base',
+          timestamp: new Date().toISOString()
+        });
+
+        // Test direct API call
+        if (apiKey) {
+          const response = await fetch(`https://api.coinbase.com/api/v2/exchange-rates?currency=USD`, {
+            headers: {
+              'Authorization': `Bearer ${apiKey}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          console.log('OnchainKit API Test Response:', response.status, response.statusText);
+        }
+      } catch (error) {
+        console.error('OnchainKit API Test Error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        setDebugInfo(prev => ({ ...prev, error: errorMessage }));
+      }
+    };
+
+    testAPI();
+  }, [address]);
 
   // Farcaster success handler
   const handleFarcasterSuccess = useCallback(
@@ -74,20 +126,6 @@ const WalletSummary = memo(function WalletSummary({
       });
     },
     [toast]
-  );
-
-  // Memoize constants
-  const resolverOrder = useMemo(
-    () => [
-      IdentityResolver.Nns,
-      IdentityResolver.Farcaster,
-      IdentityResolver.Ens,
-      IdentityResolver.Base,
-      IdentityResolver.Lens,
-      IdentityResolver.Uni,
-      IdentityResolver.World,
-    ],
-    []
   );
 
   // Memoize calculations
@@ -140,15 +178,7 @@ const WalletSummary = memo(function WalletSummary({
           Connect your wallets to get started
         </Text>
         <VStack spacing={2}>
-          <Button
-            leftIcon={<FaEthereum size={16} />}
-            onClick={onConnectEthereum}
-            w="full"
-            colorScheme="blue"
-            variant="outline"
-          >
-            Connect Ethereum
-          </Button>
+          <ConnectButton />
           <Button
             onClick={onConnectHive}
             w="full"
@@ -188,38 +218,139 @@ const WalletSummary = memo(function WalletSummary({
         {/* Quick Actions Section */}
         {isEthConnected && address && (
           <Box pt={3} borderTop="1px solid" borderColor="gray.600">
-            <HStack justify="space-between" align="center">
-              <HStack spacing={2}>
-                <Avatar
-                  address={address}
-                  size={16}
-                  resolverOrder={resolverOrder}
-                />
-                <VStack align="start" spacing={0}>
-                  <Name
-                    address={address}
-                    resolverOrder={resolverOrder}
-                    style={{ fontSize: "12px", color: "gray" }}
-                  />
-                  {isFarcasterConnected &&
-                    farcasterProfile?.custody?.toLowerCase() ===
-                      address?.toLowerCase() && (
-                      <Text fontSize="xs" color="purple.300">
-                        @{farcasterProfile.username}
+            {/* Ethereum Identity Section */}
+            <Box mb={4}>
+              <Text fontSize="sm" color="blue.300" mb={3} fontWeight="bold">
+                🔗 Ethereum Identity
+              </Text>
+              <Box
+                p={3}
+                bg="gray.800"
+                borderRadius="12px"
+                border="1px solid"
+                borderColor="gray.600"
+              >
+                {/* Main Identity Display */}
+                <HStack spacing={3} align="center" justify="space-between">
+                  <HStack spacing={3} align="center" flex={1}>
+                    {/* Custom avatar fallback */}
+                    <Box
+                      w="40px"
+                      h="40px"
+                      borderRadius="full"
+                      bg="blue.500"
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
+                      color="white"
+                      fontWeight="bold"
+                    >
+                      {address?.slice(2, 4).toUpperCase()}
+                    </Box>
+                    <VStack align="start" spacing={1} flex={1}>
+                      <Text fontSize="sm" color="white" fontWeight="medium">
+                        Ethereum Wallet
+                      </Text>
+                      <Text fontSize="xs" color="gray.400">
+                        {address?.slice(0, 6)}...{address?.slice(-4)}
+                      </Text>
+                    </VStack>
+                  </HStack>
+                  
+                  {/* Action Buttons */}
+                  <HStack spacing={2}>
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      onClick={() => {
+                        navigator.clipboard.writeText(address || '');
+                        toast({
+                          status: "success",
+                          title: "Address Copied!",
+                          description: "Wallet address copied to clipboard",
+                          duration: 2000,
+                        });
+                      }}
+                    >
+                      Copy
+                    </Button>
+                    <IconButton
+                      icon={<IoLogOutSharp />}
+                      color="red.500"
+                      size="xs"
+                      variant="outline"
+                      colorScheme="red"
+                      onClick={handleDisconnect}
+                      aria-label="Disconnect Ethereum"
+                    />
+                  </HStack>
+                </HStack>
+                
+                {/* Debug Section - Outside Identity wrapper for visibility */}
+                <Box mt={3} p={3} bg="red.900" borderRadius="8px" border="2px solid" borderColor="red.500">
+                  <Text fontSize="sm" color="red.200" mb={3} fontWeight="bold">
+                    � DEBUG PANEL 🚨
+                  </Text>
+                  
+                  {/* Environment Check */}
+                  <VStack align="start" spacing={2} mb={4}>
+                    <Text fontSize="sm" color="white">
+                      API Key: {debugInfo?.apiKey || 'Loading...'}
+                    </Text>
+                    <Text fontSize="sm" color="white">
+                      Project ID: {debugInfo?.projectId || 'Loading...'}
+                    </Text>
+                    <Text fontSize="sm" color="white">
+                      Address: {address}
+                    </Text>
+                    <Text fontSize="sm" color="white">
+                      Chain: base
+                    </Text>
+                    {debugInfo?.error && (
+                      <Text fontSize="sm" color="red.300">
+                        Error: {debugInfo.error}
                       </Text>
                     )}
-                </VStack>
-              </HStack>
-              <IconButton
-                icon={<IoLogOutSharp />}
-                color={"red.500"}
-                size="sm"
-                variant="ghost"
-                colorScheme="red"
-                onClick={handleDisconnect}
-                aria-label="Disconnect Ethereum"
-              />
-            </HStack>
+                  </VStack>
+
+                  {/* OnchainKit Components Test */}
+                  <Box p={2} bg="gray.800" borderRadius="4px">
+                    <Text fontSize="sm" color="yellow.300" mb={2}>OnchainKit Components:</Text>
+                    <Identity address={address}>
+                      <VStack align="start" spacing={3}>
+                        <HStack spacing={3}>
+                          <Text fontSize="sm" color="gray.300">Avatar:</Text>
+                          <Avatar className="h-8 w-8" />
+                        </HStack>
+                        <HStack spacing={3}>
+                          <Text fontSize="sm" color="gray.300">Name:</Text>
+                          <Name className="text-white text-sm" />
+                        </HStack>
+                        <HStack spacing={3}>
+                          <Text fontSize="sm" color="gray.300">Address:</Text>
+                          <Address className="text-gray-400 text-sm" />
+                        </HStack>
+                        <HStack spacing={3}>
+                          <Text fontSize="sm" color="gray.300">Badge:</Text>
+                          <Badge />
+                        </HStack>
+                      </VStack>
+                    </Identity>
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
+
+            {/* Farcaster connection indicator (if connected to same wallet) */}
+            {isFarcasterConnected &&
+              farcasterProfile?.custody?.toLowerCase() ===
+                address?.toLowerCase() && (
+                <Box pt={2}>
+                  <Text fontSize="xs" color="purple.300" textAlign="center">
+                    🛹 Connected via @{farcasterProfile.username}
+                  </Text>
+                </Box>
+              )}
           </Box>
         )}
 
@@ -240,13 +371,6 @@ const WalletSummary = memo(function WalletSummary({
           <Box pt={3} borderTop="1px solid" borderColor="gray.600">
             <HStack justify="space-between" align="center">
               <HStack spacing={2}>
-                {farcasterProfile?.custody && (
-                  <Avatar
-                    address={farcasterProfile.custody}
-                    size={16}
-                    resolverOrder={resolverOrder}
-                  />
-                )}
                 <VStack align="start" spacing={0}>
                   <Text fontSize="xs" color="purple.300">
                     @{farcasterProfile?.username}
