@@ -56,7 +56,8 @@ export default function MainWallet({ username }: MainWalletProps) {
     useFarcasterSession();
 
   // State for enhanced Farcaster user data (custody + verified addresses)
-  const [farcasterUserData, setFarcasterUserData] = useState<FarcasterEnhancedUserData | null>(null);
+  const [farcasterUserData, setFarcasterUserData] =
+    useState<FarcasterEnhancedUserData | null>(null);
 
   // Prevent hydration mismatch by tracking if component is mounted
   const [isMounted, setIsMounted] = useState(false);
@@ -412,7 +413,9 @@ export default function MainWallet({ username }: MainWalletProps) {
                       )}
                     </Box>
                     {/* Ethereum Assets Section - Show if connected to Ethereum OR have Farcaster data */}
-                    {isMounted && (isConnected || isFarcasterConnected) && <EthereumAssetsSection />}
+                    {isMounted && (isConnected || isFarcasterConnected) && (
+                      <EthereumAssetsSection />
+                    )}
                     {/* NFT Section - Show if connected to Ethereum */}
                     {isMounted && isConnected && <NFTSection />}
                   </TabPanel>
