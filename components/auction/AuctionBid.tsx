@@ -32,6 +32,7 @@ interface BidProps {
   minimumBidIncrement: string;
   onBid?: () => void;
   onSettle?: () => void;
+  alignContent?: 'left' | 'right';
 }
 
 export function AuctionBid({
@@ -42,6 +43,7 @@ export function AuctionBid({
   minimumBidIncrement,
   onBid,
   onSettle,
+  alignContent = 'left',
 }: BidProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [txHash, setTxHash] = useState<string | null>(null);
@@ -126,7 +128,8 @@ export function AuctionBid({
       {errorMessage && (
         <Alert 
           status="error" 
-          bg="rgba(255, 92, 87, 0.1)" 
+          bg="error"
+          opacity={0.1}
           border="1px solid" 
           borderColor="error"
           borderRadius="md"
@@ -143,7 +146,8 @@ export function AuctionBid({
       {txHash && (
         <Alert 
           status="success" 
-          bg="rgba(76, 175, 80, 0.1)" 
+          bg="success"
+          opacity={0.1}
           border="1px solid" 
           borderColor="success"
           borderRadius="md"
@@ -167,10 +171,16 @@ export function AuctionBid({
       
       {isAuctionRunning ? (
         <Box as="form" onSubmit={handleSubmit(onSubmitBid)} w="full">
-          <VStack spacing={4} align="stretch">
+          <VStack spacing={4} align={alignContent === 'right' ? 'end' : 'stretch'}>
             <FormControl isInvalid={!!errors.bidAmount}>
-              <FormLabel color="text" fontSize="sm" fontWeight="medium" mb={2}>
-                Bid Amount (ETH)
+              <FormLabel 
+                color="text" 
+                fontSize="sm" 
+                fontWeight="medium" 
+                mb={2}
+                textAlign={alignContent === 'right' ? 'right' : 'left'}
+              >
+                Your Bid (ETH)
               </FormLabel>
               <Input
                 {...register('bidAmount', {
@@ -198,11 +208,17 @@ export function AuctionBid({
                 _hover={{ borderColor: 'primary' }}
                 _focus={{ borderColor: 'primary', boxShadow: 'outline' }}
                 isDisabled={!account.isConnected || isLoading}
+                textAlign={alignContent === 'right' ? 'right' : 'left'}
               />
               <FormErrorMessage color="error" fontSize="xs">
                 {errors.bidAmount?.message}
               </FormErrorMessage>
-              <Text fontSize="xs" color="muted" mt={1}>
+              <Text 
+                fontSize="xs" 
+                color="accent" 
+                mt={1}
+                textAlign={alignContent === 'right' ? 'right' : 'left'}
+              >
                 Minimum bid: {formatEther(minBidValue)} ETH
               </Text>
             </FormControl>
@@ -228,7 +244,8 @@ export function AuctionBid({
       ) : (
         <VStack spacing={4} align="stretch">
           <Box 
-            bg="rgba(255, 193, 7, 0.1)" 
+            bg="warning"
+            opacity={0.1}
             border="1px solid" 
             borderColor="warning" 
             borderRadius="md" 
@@ -261,7 +278,8 @@ export function AuctionBid({
       {/* Wallet Connection Notice */}
       {!account.isConnected && (
         <Box 
-          bg="rgba(158, 158, 158, 0.1)" 
+          bg="muted"
+          opacity={0.1}
           border="1px solid" 
           borderColor="muted" 
           borderRadius="md" 

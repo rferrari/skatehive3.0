@@ -90,12 +90,7 @@ export default function AuctionCard({
 
   return (
     <Box 
-      bg="secondary" 
-      borderRadius="md" 
-      border="1px solid" 
-      borderColor="border" 
       p={6}
-      shadow="md"
     >
       <VStack spacing={6} align="stretch">
         {/* Token Info */}
@@ -124,7 +119,7 @@ export default function AuctionCard({
                 alignItems="center"
                 justifyContent="center"
               >
-                <Badge colorScheme="red" size="sm">ENDED</Badge>
+                <Badge bg="error" color="background" size="sm">ENDED</Badge>
               </Box>
             )}
           </Box>
