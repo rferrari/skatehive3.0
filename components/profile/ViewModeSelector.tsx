@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { ButtonGroup, IconButton } from "@chakra-ui/react";
+import { ButtonGroup, IconButton, Tooltip } from "@chakra-ui/react";
 import { FaTh, FaBars, FaBookOpen, FaVideo, FaCamera } from "react-icons/fa";
 
 interface ViewModeSelectorProps {
@@ -22,45 +22,54 @@ export default function ViewModeSelector({ viewMode, onViewModeChange, isMobile 
 
     return (
         <ButtonGroup isAttached variant="outline" size="sm" my={4} colorScheme="green">
-            <IconButton
-                aria-label="Show Snaps"
-                icon={<FaCamera />}
-                onClick={() => onViewModeChange("snaps")}
-                isActive={viewMode === "snaps"}
-                sx={buttonStyle}
-            />
-            <IconButton
-                aria-label="Grid view"
-                icon={<FaTh />}
-                onClick={() => onViewModeChange("grid")}
-                isActive={viewMode === "grid"}
-                sx={buttonStyle}
-            />
-            <IconButton
-                aria-label="List view"
-                icon={<FaBars />}
-                onClick={() => onViewModeChange("list")}
-                isActive={viewMode === "list"}
-                sx={buttonStyle}
-            />
-            {/* Hide Magazine button on mobile */}
-            {!isMobile && (
+            <Tooltip label="Snaps View" hasArrow>
                 <IconButton
-                    aria-label="Show Magazine"
-                    icon={<FaBookOpen />}
-                    onClick={() => onViewModeChange("magazine")}
-                    isActive={viewMode === "magazine"}
+                    aria-label="Show Snaps"
+                    icon={<FaCamera />}
+                    onClick={() => onViewModeChange("snaps")}
+                    isActive={viewMode === "snaps"}
                     sx={buttonStyle}
                 />
+            </Tooltip>
+            <Tooltip label="Grid View" hasArrow>
+                <IconButton
+                    aria-label="Grid view"
+                    icon={<FaTh />}
+                    onClick={() => onViewModeChange("grid")}
+                    isActive={viewMode === "grid"}
+                    sx={buttonStyle}
+                />
+            </Tooltip>
+            <Tooltip label="List View" hasArrow>
+                <IconButton
+                    aria-label="List view"
+                    icon={<FaBars />}
+                    onClick={() => onViewModeChange("list")}
+                    isActive={viewMode === "list"}
+                    sx={buttonStyle}
+                />
+            </Tooltip>
+            {/* Hide Magazine button on mobile */}
+            {!isMobile && (
+                <Tooltip label="Magazine View" hasArrow>
+                    <IconButton
+                        aria-label="Show Magazine"
+                        icon={<FaBookOpen />}
+                        onClick={() => onViewModeChange("magazine")}
+                        isActive={viewMode === "magazine"}
+                        sx={buttonStyle}
+                    />
+                </Tooltip>
             )}
-            <IconButton
-                aria-label="Show Videoparts"
-                icon={<FaVideo />}
-                onClick={() => onViewModeChange("videoparts")}
-                isActive={viewMode === "videoparts"}
-                sx={buttonStyle}
-            />
-
+            <Tooltip label="Videoparts View" hasArrow>
+                <IconButton
+                    aria-label="Show Videoparts"
+                    icon={<FaVideo />}
+                    onClick={() => onViewModeChange("videoparts")}
+                    isActive={viewMode === "videoparts"}
+                    sx={buttonStyle}
+                />
+            </Tooltip>
         </ButtonGroup>
     );
 }

@@ -31,12 +31,34 @@ export default function TopBar({ viewMode, setViewMode, setQuery }: TopBarProps)
         <Flex justifyContent="space-between" mb={4} alignItems="center" pt={4} pl={8} pr={4}>
             <Flex flex="1" alignItems="center">
                 {user && (
-                    <IconButton
-                        aria-label="Compose"
-                        icon={<FaPen />}  
+                    <Button
+                        leftIcon={<FaPen />}  
                         onClick={() => router.push('/compose')}  
-                        variant="outline"  
-                    />
+                        variant="outline"
+                        borderColor="primary"
+                        bg="background"
+                        color="primary"
+                        size="md"
+                        fontWeight="bold"
+                        px={6}
+                        py={2}
+                        borderRadius="md"
+                        boxShadow="0 2px 8px var(--chakra-colors-primary-alpha)"
+                        _hover={{
+                            borderColor: 'primary',
+                            bg: 'primary',
+                            color: 'background',
+                            boxShadow: '0 4px 12px var(--chakra-colors-primary-alpha)'
+                        }}
+                        _active={{
+                            borderColor: 'primary',
+                            bg: 'primary',
+                            color: 'background',
+                            boxShadow: '0 2px 4px var(--chakra-colors-primary-alpha)'
+                        }}
+                    >
+                        Post in Mag
+                    </Button>
                 )}
             </Flex>
             <Flex flex="1" justifyContent="flex-end" alignItems="center">

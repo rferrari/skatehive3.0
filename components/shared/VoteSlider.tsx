@@ -177,13 +177,15 @@ const VoteSlider = ({
                     cursor="pointer"
                     onClick={handleHeartClick}
                     p={1}
-                    _hover={{ bg: "accent", borderRadius: "full" }}
+                    borderRadius="full"
+                    bg={!voted ? "muted" : undefined}
+                    _hover={!voted ? { bg: "primary" } : undefined}
                     transition="background 0.2s, border-radius 0.2s"
                 >
                     <LuArrowUpRight
                         size={24}
-                        color={voted ? "var(--chakra-colors-accent)" : "var(--chakra-colors-muted)"}
-                        style={{ opacity: voted ? 1 : 1 }}
+                        color={voted ? "var(--chakra-colors-success)" : "var(--chakra-colors-accent)"}
+                        style={{ opacity: 1 }}
                     />
                 </Box>
             </Tooltip>
@@ -210,8 +212,8 @@ const VoteSlider = ({
                 leftIcon={
                     <LuArrowUpRight
                         size={20}
-                        color={voted ? "var(--chakra-colors-accent)" : "var(--chakra-colors-muted)"}
-                        style={{ opacity: voted ? 1 : 1 }}
+                        color={voted ? "var(--chakra-colors-success)" : "var(--chakra-colors-accent)"}
+                        style={{ opacity: 1 }}
                     />
                 }
                 variant="ghost"

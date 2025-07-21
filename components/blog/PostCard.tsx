@@ -339,9 +339,11 @@ export default function PostCard({
                 as={LuArrowUpRight}
                 onClick={handleHeartClick}
                 cursor="pointer"
-                color={voted ? "accent" : "muted"}
+                color={voted ? "success" : "accent"}
                 boxSize={5}
-                _hover={{ bg: "gray.700", borderRadius: "full" }}
+                bg={!voted ? "muted" : undefined}
+                borderRadius="full"
+                _hover={!voted ? { bg: "primary" } : undefined}
               />
               <VoteListPopover
                 trigger={
@@ -800,8 +802,8 @@ export default function PostCard({
                   >
                     <LuArrowUpRight
                       size={24}
-                      color={voted ? "var(--chakra-colors-accent)" : "var(--chakra-colors-muted)"}
-                      style={{ opacity: voted ? 1 : 1 }}
+                      color={voted ? "var(--chakra-colors-success)" : "var(--chakra-colors-accent)"}
+                      style={{ opacity: 1 }}
                     />
                   </Box>
                   <VoteListPopover

@@ -394,6 +394,7 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
               showSlider={showSlider}
               setShowSlider={setShowSlider}
               onVoteSuccess={(estimatedValue) => {
+                setVoted(true);
                 if (estimatedValue) {
                   setRewardAmount((prev) =>
                     parseFloat((prev + estimatedValue).toFixed(3))

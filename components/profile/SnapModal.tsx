@@ -72,7 +72,7 @@ const SnapModal = ({
     // Voting state
     const [voted, setVoted] = useState(
         currentSnap.active_votes?.some(
-            (item: { voter: string }) => item.voter === currentSnap.author
+            (item: { voter: string }) => item.voter === user
         ) || false
     );
     const [activeVotes, setActiveVotes] = useState(currentSnap.active_votes || []);
@@ -500,6 +500,7 @@ const SnapModal = ({
                                 setActiveVotes={setActiveVotes}
                                 showSlider={showSlider}
                                 setShowSlider={setShowSlider}
+                                onVoteSuccess={() => setVoted(true)}
                                 variant="modal"
                                 size="sm"
                             />

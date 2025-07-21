@@ -102,7 +102,7 @@ export default function markdownRenderer(markdown: string): string {
     const html = renderer.render(processedMarkdown);
     // Replace user mention links with <mention> tags
     const mentionLinkRegex = /<a [^>]*href="\/@([a-z0-9\-.]+)"[^>]*>@([a-z0-9\-.]+)<\/a>/gi;
-    const htmlWithMentions = html.replace(mentionLinkRegex, (match: string, username: string) => {
+    const htmlWithMentions = html.replace(mentionLinkRegex, (_match: string, username: string) => {
         return `<mention data-username="${username}">@${username}</mention>`;
     });
     return htmlWithMentions;
