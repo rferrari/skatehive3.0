@@ -36,10 +36,12 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# build artifacts and logs that might cause warnings
+# build artifacts and performance cache
 node_modules/.cache
 .pnpm-debug.log*
 .eslintcache
+.next/cache
+.swc/
 
 # OS-specific files
 Thumbs.db

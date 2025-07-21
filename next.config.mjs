@@ -2,10 +2,24 @@
 const nextConfig = {
     experimental: {
         serverActions: {
-            bodySizeLimit: '10mb', // Increase the body size limit
+            bodySizeLimit: '10mb',
+        },
+        // Build performance optimizations
+        turbotrace: {
+            logLevel: 'error'
         },
     },
-    webpack: (config, { isServer }) => {
+    // Build performance optimizations
+    swcMinify: true,
+    poweredByHeader: false,
+    
+    webpack: (config, { isServer, dev }) => {
+        // Performance optimizations
+        config.cache = {
+            type: 'filesystem',
+            cacheDirectory: '.next/cache/webpack',
+        };
+
         // Suppress warnings for known issues
         config.ignoreWarnings = [
             /critical dependency: the request of a dependency is an expression/,
@@ -13,6 +27,7 @@ const nextConfig = {
             /warning.*cast between incompatible function types/,
         ];
 
+        // Build optimization: exclude heavy modules in client bundle
         if (!isServer) {
             config.resolve.fallback = {
                 fs: false,
@@ -31,14 +46,14 @@ const nextConfig = {
             };
         }
         
-        // Ignore specific problematic modules
+        // Optimize specific problematic modules
         config.resolve.alias = {
             ...config.resolve.alias,
             'memcpy': false,
             'pino-pretty': false,
         };
         
-        // Add externals for server-side only modules
+        // External heavy dependencies for better performance
         if (!isServer) {
             config.externals = config.externals || [];
             config.externals.push({
@@ -46,6 +61,10 @@ const nextConfig = {
                 'pino-pretty': 'pino-pretty',
             });
         }
+
+        // Build performance: optimize module resolution
+        config.resolve.modules = ['node_modules'];
+        config.resolve.symlinks = false;
         
         return config;
     },

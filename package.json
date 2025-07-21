@@ -3,11 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbo",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "approve-builds": "pnpm config set strict-peer-dependencies false && pnpm install"
+    "approve-builds": "pnpm config set strict-peer-dependencies false && pnpm install",
+    "build:fast": "NODE_ENV=production next build --experimental-build-mode=compile"
   },
   "dependencies": {
     "@aioha/aioha": "^1.6.0",
@@ -102,6 +103,10 @@
         "react": "18",
         "react-dom": "18"
       }
+    },
+    "overrides": {
+      "@types/react": "^19.1.6",
+      "@types/react-dom": "^19.1.5"
     }
   }
 }

@@ -1,15 +1,22 @@
-# Allow specific packages to run build scripts
+# Optimize for build performance
 auto-install-peers=true
 strict-peer-dependencies=false
 
-# Enable build scripts for required packages
-enable-pre-post-scripts=true
+# Cache optimizations
+store-dir=~/.pnpm-store
+package-manager-strict=false
 
-# Allow all packages to run install scripts (be careful in production)
-unsafe-perm=true
+# Performance settings
+side-effects-cache=true
+side-effects-cache-readonly=false
 
-# Hoist patterns for better compatibility
-hoist-pattern[]=*
+# Only enable scripts for essential packages
+enable-pre-post-scripts=false
 
-# Shamefully hoist to avoid some compatibility issues
-shamefully-hoist=true
+# Minimal hoisting for faster resolution
+hoist-pattern[]=@types/*
+shamefully-hoist=false
+
+# Build optimization
+ignore-workspace-root-check=true
+prefer-workspace-packages=true
