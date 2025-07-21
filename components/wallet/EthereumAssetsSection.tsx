@@ -41,8 +41,12 @@ export default function EthereumAssetsSection() {
     refetch,
   } = usePortfolioContext();
 
+  const isDevelopment = process.env.NODE_ENV === "development";
+
   // Debug logging for Farcaster user and balance data
   useEffect(() => {
+    if (!isDevelopment) return;
+
     console.log("🎯 EthereumAssetsSection Debug - Farcaster User Data:", {
       isFarcasterConnected,
       farcasterProfile: farcasterProfile
@@ -134,16 +138,6 @@ export default function EthereumAssetsSection() {
     );
 
     if ((hasConnection || hasAnyPortfolio) && !showTokenBalances) {
-      console.log("🔄 Auto-enabling token balances for connected user:", {
-        isConnected,
-        address,
-        isFarcasterConnected,
-        farcasterCustody: farcasterProfile?.custody,
-        hasEthereumPortfolio: !!portfolio,
-        hasFarcasterPortfolio: !!farcasterPortfolio,
-        hasVerifiedPortfolios:
-          Object.keys(farcasterVerifiedPortfolios || {}).length > 0,
-      });
       setShowTokenBalances(true);
     }
   }, [

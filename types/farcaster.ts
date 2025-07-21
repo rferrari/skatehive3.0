@@ -72,3 +72,23 @@ export interface HiveToFarcasterNotification {
         amount?: string;
     };
 }
+
+// Enhanced Farcaster user data types
+export interface FarcasterEnhancedUserData {
+    custody?: string;
+    verifications?: string[];
+    failed?: boolean;
+}
+
+export interface FarcasterUser {
+    fid: number;
+    username: string;
+    displayName?: string;
+    pfpUrl?: string;
+    custody?: string;
+    verifications?: string[];
+}
+
+export interface FarcasterUserWithEnhancedData extends FarcasterUser {
+    enhancedData?: FarcasterEnhancedUserData;
+}
