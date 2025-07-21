@@ -6,6 +6,13 @@ const nextConfig = {
         },
     },
     webpack: (config, { isServer }) => {
+        // Suppress warnings for known issues
+        config.ignoreWarnings = [
+            /critical dependency: the request of a dependency is an expression/,
+            /Module not found: Can't resolve 'pino-pretty'/,
+            /warning.*cast between incompatible function types/,
+        ];
+
         if (!isServer) {
             config.resolve.fallback = {
                 fs: false,

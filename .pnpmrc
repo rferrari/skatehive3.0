@@ -1,0 +1,15 @@
+# Allow specific packages to run build scripts
+auto-install-peers=true
+strict-peer-dependencies=false
+
+# Enable build scripts for required packages
+enable-pre-post-scripts=true
+
+# Allow all packages to run install scripts (be careful in production)
+unsafe-perm=true
+
+# Hoist patterns for better compatibility
+hoist-pattern[]=*
+
+# Shamefully hoist to avoid some compatibility issues
+shamefully-hoist=true
