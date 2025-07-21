@@ -3,7 +3,7 @@
 import { AuctionBid, BidsModal } from "@/components/auction";
 import { useLastAuction } from "@/hooks/auction";
 import { DAO_ADDRESSES } from "@/lib/utils/constants";
-import { Address, formatEther } from "viem";
+import { formatEther } from "viem";
 import { useMemo, useState } from "react";
 import Countdown from "react-countdown";
 import { useAccount, useDisconnect } from "wagmi";
@@ -245,17 +245,9 @@ export default function AuctionPage() {
                           borderColor="border"
                           bg="muted"
                         >
-                          <HStack spacing={3} w="full" justify="space-between">
-                            <HStack spacing={2}>
-                              <FaEthereum size={16} />
-                              <Text fontSize="sm" color="text">
-                                {formatAddress(address as Address)}
-                              </Text>
-                            </HStack>
-                            <Text fontSize="xs" color="primary">
-                              Disconnect
-                            </Text>
-                          </HStack>
+                          <Text fontSize="xs" color="primary">
+                            Disconnect
+                          </Text>
                         </Button>
                       ) : (
                         <Button
@@ -271,7 +263,12 @@ export default function AuctionPage() {
                     </VStack>
 
                     {/* Bidding Interface */}
-                    <Box w="full" alignSelf="center">
+                    <Box
+                      w="full"
+                      alignSelf="center"
+                      onMouseEnter={() => setIsHoveringBid(true)}
+                      onMouseLeave={() => setIsHoveringBid(false)}
+                    >
                       <AuctionBid
                         tokenId={activeAuction.token.tokenId}
                         winningBid={
@@ -289,9 +286,6 @@ export default function AuctionPage() {
                         onBid={refetch}
                         onSettle={refetch}
                         alignContent="left"
-                        onBidButtonHover={(isHovering) =>
-                          setIsHoveringBid(isHovering)
-                        }
                       />
                     </Box>
 
