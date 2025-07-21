@@ -1,0 +1,31 @@
+{
+    "accountAssociation": {
+        "header": "eyJmaWQiOjM2MjEsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHgyY2Q4NWEwOTMyNjFmNTkyNzA4MDRBNkVBNjk3Q2VBNENlQkVjYWZFIn0",
+        "payload": "eyJkb21haW4iOiJza2F0ZWhpdmUuYXBwIn0",
+        "signature": "TU9VMF9NQTU2MDFCNDVEME5OOUc5MQNRM0Y1NEUxMzVBRTQxOEEzMUQ5ODNBODAzRkZFQUNFRUMyRDYzNUY4RTFDQUVTEQlQDUw5MzMzQUYxNzU0OUYwNjZBNUU5RTA1OUM2RkI0NTEzODQ2OTU3MEE4M0I2NzJFQkNFMUI"
+    },
+    "miniapp": {
+        "version": "1",
+        "name": "SkateHive",
+        "iconUrl": "https://skatehive.app/icon-512x512.png",
+        "homeUrl": "https://skatehive.app",
+        "splashImageUrl": "https://skatehive.app/icon-200x200.png",
+        "splashBackgroundColor": "#1a1a1a",
+        "webhookUrl": "https://skatehive.app/api/farcaster/webhook",
+        "subtitle": "Skateboarding Social Network",
+        "description": "The decentralized skateboarding social network built on Hive blockchain. Share videos, connect with skaters, and earn rewards for your content.",
+        "primaryCategory": "social",
+        "tags": [
+            "skateboarding",
+            "social",
+            "hive",
+            "blockchain",
+            "sports"
+        ],
+        "heroImageUrl": "https://skatehive.app/ogimage.png",
+        "tagline": "Skate, Share, Earn",
+        "ogTitle": "SkateHive - Decentralized Skateboarding",
+        "ogDescription": "Join the decentralized skateboarding community on Hive blockchain",
+        "ogImageUrl": "https://skatehive.app/ogimage.png"
+    }
+}

@@ -13,7 +13,18 @@ import {
 } from "@chakra-ui/react";
 import RulesModal from "./RulesModal";
 import React from "react";
+import { Name, IdentityResolver } from "@paperclip-labs/whisk-sdk/identity";
 import { Address } from "viem";
+
+const resolverOrder = [
+  IdentityResolver.Farcaster,
+  IdentityResolver.Nns,
+  IdentityResolver.Ens,
+  IdentityResolver.Base,
+  IdentityResolver.Lens,
+  IdentityResolver.Uni,
+  IdentityResolver.World,
+];
 
 interface SkaterData {
   id: number;
@@ -512,6 +523,12 @@ export default function LeaderboardClient({ skatersData }: Props) {
                               width="12px"
                               style={{ marginRight: "2px", display: "inline" }}
                             />
+                            <Name
+                              address={skater.eth_address as Address}
+                              resolverOrder={resolverOrder}
+                            >
+                              {formatEthAddress(skater.eth_address)}
+                            </Name>
                           </span>
                         ) : (
                           <span

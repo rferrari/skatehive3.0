@@ -12,7 +12,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { UserProvider } from "@/contexts/UserContext";
 import { AuthKitProvider } from "@farcaster/auth-kit";
 import "@farcaster/auth-kit/styles.css";
-import "@coinbase/onchainkit/styles.css";
 
 const aioha = new Aioha();
 const queryClient = new QueryClient();

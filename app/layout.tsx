@@ -4,7 +4,6 @@ import "./globals.css";
 import { Metadata } from "next";
 import { ColorModeScript } from "@chakra-ui/react";
 import Image from "next/image";
-import "@/lib/buffer-polyfill";
 // import '@aioha/react-ui/dist/build.css';
 
 // Initialize the VT323 font

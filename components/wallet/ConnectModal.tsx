@@ -5,20 +5,23 @@ import {
   ModalHeader,
   ModalBody,
   ModalCloseButton,
+  ModalFooter,
   VStack,
+  Button,
   Text,
   Divider,
   Box,
   useToast,
-  Center,
 } from "@chakra-ui/react";
 import { Wallet, ConnectWallet } from "@coinbase/onchainkit/wallet";
 import {
-  Identity,
   Avatar,
   Name,
+  IdentityCard,
   Badge,
   Address,
+  Socials,
+  Identity,
 } from "@coinbase/onchainkit/identity";
 import { useAccount } from "wagmi";
 import FarcasterSignIn from "@/components/farcaster/FarcasterSignIn";
@@ -59,11 +62,11 @@ export default function ConnectModal({
     <Modal isOpen={isOpen} onClose={onClose} isCentered size="lg">
       <ModalOverlay bg="blackAlpha.700" backdropFilter="blur(10px)" />
       <ModalContent
-        bg="background"
+        bg="gray.900"
         color="white"
         borderRadius="20px"
         border="1px solid"
-        borderColor="whiteAlpha.200"
+        borderColor="gray.700"
         shadow="2xl"
         mx={4}
       >
@@ -71,14 +74,14 @@ export default function ConnectModal({
           textAlign="center"
           fontSize="2xl"
           fontWeight="bold"
-          color="primary"
+          color="green.300"
           pb={2}
         >
           🛹 Connect Wallet & Social
         </ModalHeader>
         <ModalCloseButton
-          color="whiteAlpha.600"
-          _hover={{ color: "white", bg: "whiteAlpha.200" }}
+          color="gray.400"
+          _hover={{ color: "white", bg: "gray.700" }}
           borderRadius="full"
         />
         <ModalBody px={8} pb={8}>
@@ -86,104 +89,97 @@ export default function ConnectModal({
             {/* Unified Wallet Section */}
             <Box
               p={5}
-              bg="background"
+              bg="gray.800"
               borderRadius="16px"
               border="1px solid"
-              borderColor="whiteAlpha.200"
-              _hover={{ borderColor: "primary" }}
+              borderColor="gray.600"
+              _hover={{ borderColor: "green.400" }}
               transition="all 0.3s ease"
             >
               <Text
                 fontSize="lg"
-                color="primary"
+                color="green.300"
                 mb={4}
                 fontWeight="bold"
                 display="flex"
                 alignItems="center"
-                justifyContent="center"
                 gap={2}
               >
                 💰 Wallet Connection
               </Text>
-              <Center>
-                <Wallet>
-                  <ConnectWallet
-                    disconnectedLabel="Connect Wallet"
-                    onConnect={onClose}
-                  >
-                    <Avatar className="h-8 w-8" />
-                    <Name />
-                  </ConnectWallet>
-                </Wallet>
-              </Center>
+              <Wallet>
+                <ConnectWallet
+                  disconnectedLabel="Connect Wallet"
+                  onConnect={onClose}
+                >
+                  <Avatar className="h-8 w-8" />
+                  <Name />
+                </ConnectWallet>
+              </Wallet>
             </Box>
 
-            <Divider borderColor="whiteAlpha.200" />
+            <Divider borderColor="gray.600" />
 
             {/* Farcaster Section */}
             <Box
               p={5}
-              bg="background"
+              bg="gray.800"
               borderRadius="16px"
               border="1px solid"
-              borderColor="whiteAlpha.200"
-              _hover={{ borderColor: "primary" }}
+              borderColor="gray.600"
+              _hover={{ borderColor: "purple.400" }}
               transition="all 0.3s ease"
             >
               <Text
                 fontSize="lg"
-                color="primary"
+                color="purple.300"
                 mb={4}
                 fontWeight="bold"
                 display="flex"
                 alignItems="center"
-                justifyContent="center"
                 gap={2}
               >
                 🛹 Social Connection
               </Text>
-              <Center>
-                <FarcasterSignIn
-                  onSuccess={handleFarcasterSuccess}
-                  variant="button"
-                  size="lg"
-                />
-              </Center>
+              <FarcasterSignIn
+                onSuccess={handleFarcasterSuccess}
+                variant="button"
+                size="lg"
+              />
             </Box>
 
             {/* Identity Card Section - Only show when wallet is connected */}
             {isConnected && address && (
               <Box
                 p={5}
-                bg="background"
+                bg="gray.800"
                 borderRadius="16px"
                 border="1px solid"
-                borderColor="whiteAlpha.200"
-                _hover={{ borderColor: "primary" }}
+                borderColor="gray.600"
+                _hover={{ borderColor: "blue.400" }}
                 transition="all 0.3s ease"
               >
                 <Text
                   fontSize="lg"
-                  color="primary"
+                  color="blue.300"
                   mb={4}
                   fontWeight="bold"
                   display="flex"
                   alignItems="center"
-                  justifyContent="center"
                   gap={2}
                 >
                   🔗 Identity
                 </Text>
-                <Center>
-                  <Identity address={address}>
-                    <VStack align="center" spacing={3}>
-                      <Avatar className="h-12 w-12" />
-                      <Name className="text-white text-lg font-medium" />
-                      <Address className="text-gray-400 text-sm" />
-                      <Badge />
-                    </VStack>
-                  </Identity>
-                </Center>
+                <Identity address={address}>
+                  <IdentityCard />
+                  <Box mt={3} display="flex" gap={2} flexWrap="wrap">
+                    <Badge />
+                    <Address />
+                  </Box>
+                  <Box mt={3}>
+                    <Socials />
+                  </Box>
+                </Identity>
               </Box>
             )}
           </VStack>
