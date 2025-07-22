@@ -11,6 +11,7 @@ import VideoUploader, {
 import { GIFMakerRef as GIFMakerWithSelectorRef } from "../../components/homepage/GIFMakerWithSelector";
 import MediaUploadButtons from "../../components/compose/MediaUploadButtons";
 import HashtagInput from "../../components/compose/HashtagInput";
+import BeneficiariesInput from "../../components/compose/BeneficiariesInput";
 import GifModal from "../../components/compose/GifModal";
 import ThumbnailPicker from "../../components/compose/ThumbnailPicker";
 import MarkdownEditor from "../../components/compose/MarkdownEditor";
@@ -33,6 +34,8 @@ export default function Composer() {
     setHashtagInput,
     hashtags,
     setHashtags,
+    beneficiaries,
+    setBeneficiaries,
     placeholderIndex,
     selectedThumbnail,
     setSelectedThumbnail,
@@ -46,6 +49,18 @@ export default function Composer() {
     handleSubmit,
     isSubmitting,
   } = useComposeForm();
+
+  // Debug log compose form state
+  React.useEffect(() => {
+    console.log("📄 Composer: State changed", {
+      beneficiaries,
+      beneficiariesCount: beneficiaries.length,
+      title: title.length,
+      markdown: markdown.length,
+      hashtags: hashtags.length,
+      isSubmitting
+    });
+  }, [beneficiaries, title, markdown, hashtags, isSubmitting]);
 
   // Refs
   const imageCompressorRef = useRef<ImageCompressorRef>(null);
@@ -216,6 +231,19 @@ export default function Composer() {
         hashtagInput={hashtagInput}
         setHashtagInput={setHashtagInput}
         setHashtags={setHashtags}
+      />
+
+      <BeneficiariesInput
+        beneficiaries={beneficiaries}
+        setBeneficiaries={(newBeneficiaries) => {
+          console.log("📄 Composer: setBeneficiaries called", {
+            from: beneficiaries,
+            to: newBeneficiaries,
+            change: newBeneficiaries.length - beneficiaries.length
+          });
+          setBeneficiaries(newBeneficiaries);
+        }}
+        isSubmitting={isSubmitting}
       />
 
       <Flex mt="1" justify="space-between">
