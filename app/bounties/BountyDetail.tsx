@@ -267,7 +267,7 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
     if (user === post.author) {
       return (
         <Box textAlign="center" p={4} bg="gray.800" borderRadius="md">
-          <Text>You cannot submit to your own bounty.</Text>
+          <Text>You cannot hunt your own bounty.</Text>
         </Box>
       );
     }
@@ -309,6 +309,25 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
       />
     );
   };
+
+  // Claimed users (exclude post author, dedupe, sorted by time desc)
+  const claimedUsers = useMemo(() => {
+    if (!activeVotes) return [];
+    const seen = new Set();
+    const filtered = activeVotes
+      .filter(v => v.voter && v.voter !== post.author)
+      .filter(v => {
+        if (seen.has(v.voter)) return false;
+        seen.add(v.voter);
+        return true;
+      });
+    // Sort by time descending (most recent first)
+    return filtered.sort((a, b) => {
+      const ta = a.time ? new Date(a.time).getTime() : 0;
+      const tb = b.time ? new Date(b.time).getTime() : 0;
+      return tb - ta;
+    });
+  }, [activeVotes, post.author]);
 
   return (
     <Box bg="background" color="text" minH="100vh">
@@ -416,6 +435,38 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
         </Box>
         {/* Right: Submissions List */}
         <Box flex={1} h={{ base: "auto", md: "100vh" }} overflowY="auto" bg="muted" borderRadius="base" boxShadow={theme.shadows.md} p={4} sx={{ '&::-webkit-scrollbar': { display: 'none' }, scrollbarWidth: 'none' }}>
+          {/* Claimed Users Section */}
+          {claimedUsers.length > 0 && (
+            <Box mb={4}>
+              <Text fontWeight="bold" fontSize="lg" mb={2} color={theme.colors.text}>
+                Claimed By ({claimedUsers.length}):
+              </Text>
+              <Flex wrap="wrap" gap={4}>
+                {claimedUsers.map((vote) => (
+                  <Flex key={`${vote.voter}-${vote.time || ''}`} align="center" gap={2} bg={theme.colors.muted} p={2} borderRadius="md" border={`1px solid ${theme.colors.border}`}> 
+                    <Avatar size="sm" name={vote.voter} src={`https://images.hive.blog/u/${vote.voter}/avatar/sm`} />
+                    <Box>
+                      <Text fontWeight="bold">
+                        <Link 
+                          href={`/user/${vote.voter}`}
+                          color={theme.colors.primary}
+                          _hover={{ color: theme.colors.accent, textDecoration: 'underline' }}
+                          style={{ color: theme.colors.primary }}
+                        >
+                          @{vote.voter}
+                        </Link>
+                      </Text>
+                      {vote.time && (
+                        <Text fontSize="xs" color={theme.colors.accent}>
+                          Claimed: {new Date(vote.time).toLocaleString()}
+                        </Text>
+                      )}
+                    </Box>
+                  </Flex>
+                ))}
+              </Flex>
+            </Box>
+          )}
           <Text fontWeight="bold" fontSize="2xl" textAlign="left" mb={2} mt={2}>
             Submissions: {post.children || 0}
           </Text>
