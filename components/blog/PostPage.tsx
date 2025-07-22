@@ -3,7 +3,7 @@
 
 import { Box, Flex, Spinner } from "@chakra-ui/react";
 import SnapList from "../homepage/SnapList";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { Discussion } from "@hiveio/dhive"; // Ensure this import is consistent
 import Conversation from "../homepage/Conversation";
 import SnapReplyModal from "../homepage/SnapReplyModal";
@@ -19,7 +19,6 @@ interface PostPageProps {
 }
 
 export default function PostPage({ author, permlink }: PostPageProps) {
-
   // Add InitFrameSDK at the top so it runs on mount
   InitFrameSDK();
 
@@ -32,11 +31,14 @@ export default function PostPage({ author, permlink }: PostPageProps) {
   const [newComment, setNewComment] = useState<Discussion | null>(null); // Define the state
 
   const data = useComments(author, permlink, true);
-  const commentsData = {
-    ...data,
-    loadNextPage: () => { },
-    hasMore: false,
-  };
+  const commentsData = useMemo(
+    () => ({
+      ...data,
+      loadNextPage: () => {},
+      hasMore: false,
+    }),
+    [data]
+  );
 
   useEffect(() => {
     async function loadPost() {
@@ -54,14 +56,20 @@ export default function PostPage({ author, permlink }: PostPageProps) {
     loadPost();
   }, [author, permlink]);
 
-  const onOpen = () => setIsOpen(true);
-  const onClose = () => setIsOpen(false);
+  const onOpen = useCallback(() => setIsOpen(true), []);
+  const onClose = useCallback(() => setIsOpen(false), []);
 
-  const handleNewComment = (
-    newComment: Partial<Discussion> | CharacterData
-  ) => {
-    setNewComment(newComment as Discussion); // Type assertion
-  };
+  const handleNewComment = useCallback(
+    (newComment: Partial<Discussion> | CharacterData) => {
+      setNewComment(newComment as Discussion); // Type assertion
+    },
+    []
+  );
+
+  // Memoize bounty detection
+  const isBounty = useMemo(() => {
+    return post?.body && post.body.includes("Trick/Challenge:");
+  }, [post?.body]);
 
   if (isLoading || !post || !author || !permlink) {
     return (
@@ -77,7 +85,6 @@ export default function PostPage({ author, permlink }: PostPageProps) {
   }
 
   // Detect if this is a bounty post
-  const isBounty = post.body && post.body.includes("Trick/Challenge:");
   if (isBounty) {
     return <BountyDetail post={post} />;
   }

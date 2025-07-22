@@ -10,7 +10,6 @@ import {
   SliderTrack,
   SliderFilledTrack,
   SliderThumb,
-  SliderMark,
   Divider,
   Image,
   useTheme,
@@ -19,22 +18,25 @@ import {
   PopoverContent,
   PopoverArrow,
   PopoverBody,
-  background,
   useToast,
   IconButton,
   HStack,
 } from "@chakra-ui/react";
-import React, { useState, useEffect, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useCallback,
+} from "react";
 import { Discussion } from "@hiveio/dhive";
-import {
-  FaHeart, FaComment, FaRegHeart, FaRegComment, FaShare, FaCopy, FaShareSquare
-} from "react-icons/fa";
+import { FaHeart, FaRegHeart, FaShareSquare } from "react-icons/fa";
 import { getPostDate } from "@/lib/utils/GetPostDate";
 import { useAioha } from "@aioha/react-ui";
 import { getPayoutValue } from "@/lib/hive/client-functions";
 import useHivePower from "@/hooks/useHivePower";
 import VoteListPopover from "./VoteListModal";
-import { processMediaContent } from '@/lib/utils/MarkdownRenderer';
+import { processMediaContent } from "@/lib/utils/MarkdownRenderer";
 import HiveMarkdown from "@/components/shared/HiveMarkdown";
 import VideoRenderer from "@/components/layout/VideoRenderer";
 
@@ -43,61 +45,97 @@ interface PostDetailsProps {
   onOpenConversation: () => void;
 }
 
-export default function PostDetails({ post, onOpenConversation }: PostDetailsProps) {
+export default function PostDetails({
+  post,
+  onOpenConversation,
+}: PostDetailsProps) {
   const { title, author, body, created } = post;
-  const postDate = getPostDate(created);
+  const postDate = useMemo(() => getPostDate(created), [created]);
   const { aioha, user } = useAioha();
   const [sliderValue, setSliderValue] = useState(100);
   const [showSlider, setShowSlider] = useState(false);
   const [activeVotes, setActiveVotes] = useState(post.active_votes || []);
-  const [payoutValue, setPayoutValue] = useState(parseFloat(getPayoutValue(post)));
+  const [payoutValue, setPayoutValue] = useState(
+    parseFloat(getPayoutValue(post))
+  );
   const [voted, setVoted] = useState(
-    post.active_votes?.some((item) => item.voter.toLowerCase() === user?.toLowerCase())
+    post.active_votes?.some(
+      (item) => item.voter.toLowerCase() === user?.toLowerCase()
+    )
   );
   const toast = useToast();
 
-  const { hivePower, isLoading: isHivePowerLoading, error: hivePowerError, estimateVoteValue } = useHivePower(user);
-  const theme = useTheme();
+  const {
+    hivePower,
+    isLoading: isHivePowerLoading,
+    error: hivePowerError,
+    estimateVoteValue,
+  } = useHivePower(user);
 
-  // Compose gradient and box shadows using theme color names directly
-  const detailsGradient = `linear-gradient(to bottom, var(--chakra-colors-secondary, #1d211f), var(--chakra-colors-primary, #38ff8e))`;
-  const boxShadowAccent = `0 0 0 0 var(--chakra-colors-accent, #48BB78B3)`;
-  const boxShadowAccent10 = `0 0 0 10px var(--chakra-colors-accent, #48BB7800)`;
+  // Memoize expensive computations
+  const processedBody = useMemo(() => {
+    console.log(
+      "🎬 Processing media content for body:",
+      body.substring(0, 100) + "..."
+    );
+    return processMediaContent(body);
+  }, [body]);
 
-  const pulseGreenStyle = {
-    background: "primary",
-    color: 'black',
-    fontWeight: 'bold',
-    border: 'none',
-  };
-
-  const processedBody = processMediaContent(body);
-  const markdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (processedBody.includes("<!--INSTAGRAM_EMBED_SCRIPT-->") && typeof window !== "undefined") {
-      // Remove any existing Instagram embed script
-      const existing = document.querySelector('script[src="https://www.instagram.com/embed.js"]');
-      if (!existing) {
-        const script = document.createElement("script");
-        script.src = "https://www.instagram.com/embed.js";
-        script.async = true;
-        document.body.appendChild(script);
-      } else {
-        // @ts-ignore
-        const instgrm = (window as any).instgrm;
-        if (instgrm && instgrm.Embeds) {
-          instgrm.Embeds.process();
-        }
-      }
-    }
+  const processedBodyWithPlaceholders = useMemo(() => {
+    const result = processedBody.replace(
+      /<div class="video-embed" data-ipfs-hash="([^"]+)">[\s\S]*?<\/div>/g,
+      (_, videoID) => `[[VIDEO:${videoID}]]`
+    );
+    console.log("🎬 Video placeholders processed");
+    return result;
   }, [processedBody]);
 
-  function handleHeartClick() {
-    setShowSlider(!showSlider);
-  }
+  // Memoize payout calculations
+  const payoutData = useMemo(() => {
+    const createdDate = new Date(post.created);
+    const now = new Date();
+    const timeDifferenceInMs = now.getTime() - createdDate.getTime();
+    const timeDifferenceInDays = timeDifferenceInMs / (1000 * 60 * 60 * 24);
+    const isPending = timeDifferenceInDays < 7;
+    const daysRemaining = isPending
+      ? Math.max(0, 7 - Math.floor(timeDifferenceInDays))
+      : 0;
 
-  const handleShare = async () => {
+    const assetToString = (val: string | { toString: () => string }): string =>
+      typeof val === "string" ? val : val.toString();
+
+    const parsePayout = (
+      val: string | { toString: () => string } | undefined
+    ): number => {
+      if (!val) return 0;
+      const str = assetToString(val);
+      return parseFloat(str.replace(" HBD", "").replace(",", ""));
+    };
+
+    return {
+      isPending,
+      daysRemaining,
+      authorPayout: parsePayout(post.total_payout_value),
+      curatorPayout: parsePayout(post.curator_payout_value),
+    };
+  }, [post.created, post.total_payout_value, post.curator_payout_value]);
+
+  // Compose gradient and box shadows using theme color names directly
+  const boxShadowAccent = `0 0 0 0 var(--chakra-colors-accent, #48BB78B3)`;
+
+  const markdownRef = useRef<HTMLDivElement>(null);
+
+  // Popover state for payout split
+  const [isPayoutOpen, setIsPayoutOpen] = useState(false);
+  const openPayout = useCallback(() => setIsPayoutOpen(true), []);
+  const closePayout = useCallback(() => setIsPayoutOpen(false), []);
+
+  // Memoize event handlers
+  const handleHeartClick = useCallback(() => {
+    setShowSlider(!showSlider);
+  }, [showSlider]);
+
+  const handleShare = useCallback(async () => {
     const postUrl = `${window.location.origin}/post/${author}/${post.permlink}`;
 
     try {
@@ -118,9 +156,9 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
         isClosable: true,
       });
     }
-  };
+  }, [author, post.permlink, toast]);
 
-  async function handleVote() {
+  const handleVote = useCallback(async () => {
     const vote = await aioha.vote(
       post.author,
       post.permlink,
@@ -139,53 +177,38 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
         }
       }
     }
-    handleHeartClick();
-  }
+    setShowSlider(false);
+  }, [
+    aioha,
+    post.author,
+    post.permlink,
+    sliderValue,
+    activeVotes,
+    user,
+    estimateVoteValue,
+  ]);
 
-  // Helper to convert Asset or string to string
-  function assetToString(val: string | { toString: () => string }): string {
-    return typeof val === "string" ? val : val.toString();
-  }
-  // Helper to parse payout strings like "1.234 HBD"
-  function parsePayout(val: string | { toString: () => string } | undefined): number {
-    if (!val) return 0;
-    const str = assetToString(val);
-    return parseFloat(str.replace(" HBD", "").replace(",", ""));
-  }
-  // Payout logic copied from PostCard
-  const createdDate = new Date(post.created);
-  const now = new Date();
-  const timeDifferenceInMs = now.getTime() - createdDate.getTime();
-  const timeDifferenceInDays = timeDifferenceInMs / (1000 * 60 * 60 * 24);
-  const isPending = timeDifferenceInDays < 7;
-  let daysRemaining = 0;
-  if (isPending) {
-    daysRemaining = Math.max(0, 7 - Math.floor(timeDifferenceInDays));
-  }
-  const authorPayout = parsePayout(post.total_payout_value);
-  const curatorPayout = parsePayout(post.curator_payout_value);
-  // Popover state for payout split
-  const [isPayoutOpen, setIsPayoutOpen] = useState(false);
-  function openPayout() { setIsPayoutOpen(true); }
-  function closePayout() { setIsPayoutOpen(false); }
-
-  // Replace video-embed divs with a placeholder
-  const processedBodyWithPlaceholders = processedBody.replace(/<div class="video-embed" data-ipfs-hash="([^"]+)">[\s\S]*?<\/div>/g, (_, videoID) => `[[VIDEO:${videoID}]]`);
-
-  // Helper to render body with VideoRenderer components and Odysee iframes
-  function renderBodyWithVideos(body: string) {
+  // Memoize the video rendering function
+  const renderBodyWithVideos = useCallback((body: string) => {
     // Split on all supported video placeholders
-    const parts = body.split(/(\[\[(VIDEO|ODYSEE|YOUTUBE|VIMEO):([^\]]+)\]\])/g);
+    const parts = body.split(
+      /(\[\[(VIDEO|ODYSEE|YOUTUBE|VIMEO):([^\]]+)\]\])/g
+    );
+
     return parts.map((part, idx) => {
       // Handle IPFS video
       const videoMatch = part.match(/^\[\[VIDEO:([^\]]+)\]\]$/);
       if (videoMatch) {
         const videoID = videoMatch[1];
         return (
-          <VideoRenderer key={`video-${videoID}-${idx}`} src={`https://ipfs.skatehive.app/ipfs/${videoID}`} />
+          <VideoRenderer
+            key={`video-${videoID}-${idx}`}
+            src={`https://ipfs.skatehive.app/ipfs/${videoID}`}
+          />
         );
       }
-      // Handle Odysee iframe and hide the Odysee URL line
+
+      // Handle Odysee iframe
       const odyseeMatch = part.match(/^\[\[ODYSEE:([^\]]+)\]\]$/);
       if (odyseeMatch) {
         const odyseeUrl = odyseeMatch[1];
@@ -193,12 +216,13 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
           <iframe
             key={`odysee-${idx}`}
             src={odyseeUrl}
-            style={{ width: '100%', aspectRatio: '16 / 9', border: 0 }}
+            style={{ width: "100%", aspectRatio: "16 / 9", border: 0 }}
             allowFullScreen
             id={`odysee-iframe-${idx}`}
           />
         );
       }
+
       // Handle YouTube
       const youtubeMatch = part.match(/^\[\[YOUTUBE:([^\]]+)\]\]$/);
       if (youtubeMatch) {
@@ -207,12 +231,13 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
           <iframe
             key={`youtube-${idx}`}
             src={`https://www.youtube.com/embed/${videoId}`}
-            style={{ width: '100%', aspectRatio: '16 / 9', border: 0 }}
+            style={{ width: "100%", aspectRatio: "16 / 9", border: 0 }}
             allowFullScreen
             id={`youtube-iframe-${idx}`}
           />
         );
       }
+
       // Handle Vimeo
       const vimeoMatch = part.match(/^\[\[VIMEO:([^\]]+)\]\]$/);
       if (vimeoMatch) {
@@ -221,19 +246,71 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
           <iframe
             key={`vimeo-${idx}`}
             src={`https://player.vimeo.com/video/${videoId}`}
-            style={{ width: '100%', aspectRatio: '16 / 9', border: 0 }}
+            style={{ width: "100%", aspectRatio: "16 / 9", border: 0 }}
             allowFullScreen
             id={`vimeo-iframe-${idx}`}
           />
         );
       }
-      // Hide Odysee URLs that appear alone on a line
-      const partWithoutOdyseeUrl = part.replace(/^https?:\/\/(?:www\.)?odysee.com\/[\S]+$/gm, "");
-      // Hide plain CIDs (hashes) that appear alone on a line
-      const partWithoutCID = partWithoutOdyseeUrl.replace(/^(Qm[1-9A-HJ-NP-Za-km-z]{44,})$/gm, "");
-      return <HiveMarkdown key={`md-${idx}`} markdown={partWithoutCID} />;
+
+      // Skip empty parts or parts that are just whitespace
+      if (!part || part.trim() === "") {
+        return null;
+      }
+
+      // Skip if part is just an IPFS CID (bafy... or Qm...)
+      if (
+        /^(bafy[0-9a-z]{50,}|Qm[1-9A-HJ-NP-Za-km-z]{44,})$/.test(part.trim())
+      ) {
+        return null;
+      }
+
+      // Clean the part
+      let cleanedPart = part
+        .replace(/^https?:\/\/(?:www\.)?odysee\.com\/.*$/gm, "")
+        .replace(/^ODYSEE\s*$/gm, "")
+        .replace(/^VIDEO\s*$/gm, "")
+        .replace(/^(Qm[1-9A-HJ-NP-Za-km-z]{44,})$/gm, "")
+        .replace(/^(bafy[0-9a-z]{50,})$/gm, "");
+
+      // Skip if the cleaned part is empty or just whitespace
+      if (!cleanedPart || cleanedPart.trim() === "") {
+        return null;
+      }
+
+      return <HiveMarkdown key={`md-${idx}`} markdown={cleanedPart} />;
     });
-  }
+  }, []);
+
+  // Memoize the rendered content
+  const renderedContent = useMemo(() => {
+    return renderBodyWithVideos(processedBodyWithPlaceholders);
+  }, [processedBodyWithPlaceholders, renderBodyWithVideos]);
+
+  // Instagram script effect
+  useEffect(() => {
+    if (
+      processedBody.includes("<!--INSTAGRAM_EMBED_SCRIPT-->") &&
+      typeof window !== "undefined"
+    ) {
+      // Remove any existing Instagram embed script
+      const existing = document.querySelector(
+        'script[src="https://www.instagram.com/embed.js"]'
+      );
+      if (!existing) {
+        const script = document.createElement("script");
+        script.src = "https://www.instagram.com/embed.js";
+        script.async = true;
+        document.body.appendChild(script);
+      } else {
+        // @ts-ignore
+        const instgrm = (window as any).instgrm;
+        if (instgrm && instgrm.Embeds) {
+          instgrm.Embeds.process();
+        }
+      }
+    }
+  }, [processedBody]);
 
   return (
     <Box
@@ -258,7 +335,13 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
         {/* Mobile and Desktop layouts */}
         <Box display={["block", "none"]}>
           {/* Mobile Layout - Two rows */}
-          <Flex direction="row" alignItems="center" w="100%" justifyContent="space-between" mb={2}>
+          <Flex
+            direction="row"
+            alignItems="center"
+            w="100%"
+            justifyContent="space-between"
+            mb={2}
+          >
             <Flex direction="row" alignItems="center" flex="0 0 auto" minW="0">
               <Avatar
                 size="sm"
@@ -266,40 +349,72 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
                 src={`https://images.hive.blog/u/${author}/avatar/sm`}
               />
               <Box ml={2} minW="0">
-                <Text fontWeight="medium" fontSize="sm" mb={-1} color="colorBackground" isTruncated>
-                  <Link href={`/user/${author}`} color="colorBackground">@{author}</Link>
+                <Text
+                  fontWeight="medium"
+                  fontSize="sm"
+                  mb={-1}
+                  color="colorBackground"
+                  isTruncated
+                >
+                  <Link href={`/user/${author}`} color="colorBackground">
+                    @{author}
+                  </Link>
                 </Text>
               </Box>
             </Flex>
 
-            <Flex alignItems="center" gap={1} flex="0 0 auto" justifyContent="flex-end">
-              <Popover placement="top" isOpen={isPayoutOpen} onClose={closePayout} closeOnBlur={true}>
+            <Flex
+              alignItems="center"
+              gap={1}
+              flex="0 0 auto"
+              justifyContent="flex-end"
+            >
+              <Popover
+                placement="top"
+                isOpen={isPayoutOpen}
+                onClose={closePayout}
+                closeOnBlur={true}
+              >
                 <PopoverTrigger>
-                  <span style={{ cursor: "pointer" }} onMouseDown={openPayout} onMouseUp={closePayout}>
+                  <span
+                    style={{ cursor: "pointer" }}
+                    onMouseDown={openPayout}
+                    onMouseUp={closePayout}
+                  >
                     <Text fontWeight="bold" color="primary" fontSize="sm">
                       ${payoutValue.toFixed(2)}
                     </Text>
                   </span>
                 </PopoverTrigger>
-                <PopoverContent w="auto" bg="gray.800" color="white" borderRadius="md" boxShadow="lg" p={2}>
+                <PopoverContent
+                  w="auto"
+                  bg="gray.800"
+                  color="white"
+                  borderRadius="md"
+                  boxShadow="lg"
+                  p={2}
+                >
                   <PopoverArrow />
                   <PopoverBody>
-                    {isPending ? (
+                    {payoutData.isPending ? (
                       <div>
                         <div>
                           <b>Pending</b>
                         </div>
                         <div>
-                          {daysRemaining} day{daysRemaining !== 1 ? "s" : ""} until payout
+                          {payoutData.daysRemaining} day
+                          {payoutData.daysRemaining !== 1 ? "s" : ""} until
+                          payout
                         </div>
                       </div>
                     ) : (
                       <>
                         <div>
-                          Author: <b>${authorPayout.toFixed(3)}</b>
+                          Author: <b>${payoutData.authorPayout.toFixed(3)}</b>
                         </div>
                         <div>
-                          Curators: <b>${curatorPayout.toFixed(3)}</b>
+                          Curators:{" "}
+                          <b>${payoutData.curatorPayout.toFixed(3)}</b>
                         </div>
                       </>
                     )}
@@ -347,7 +462,7 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
                     px={1}
                     _active={{ bg: "transparent" }}
                     color={voted ? "red" : "primary"}
-                    _hover={{ textDecoration: 'underline' }}
+                    _hover={{ textDecoration: "underline" }}
                     fontSize="sm"
                     h="auto"
                     p={1}
@@ -358,7 +473,6 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
                 votes={activeVotes}
                 post={post}
               />
-
             </Flex>
           </Flex>
 
@@ -377,7 +491,14 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
         </Box>
 
         {/* Desktop Layout - Two rows like mobile */}
-        <Flex direction="row" alignItems="center" w="100%" justifyContent="space-between" display={["none", "flex"]} mb={2}>
+        <Flex
+          direction="row"
+          alignItems="center"
+          w="100%"
+          justifyContent="space-between"
+          display={["none", "flex"]}
+          mb={2}
+        >
           <Flex direction="row" alignItems="center" flex="0 0 auto" minW="0">
             <Avatar
               size="sm"
@@ -385,8 +506,15 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
               src={`https://images.hive.blog/u/${author}/avatar/sm`}
             />
             <HStack ml={2} minW="0">
-              <Text fontWeight="medium" fontSize="sm" color="colorBackground" isTruncated>
-                <Link href={`/user/${author}`} color="colorBackground">@{author}</Link>
+              <Text
+                fontWeight="medium"
+                fontSize="sm"
+                color="colorBackground"
+                isTruncated
+              >
+                <Link href={`/user/${author}`} color="colorBackground">
+                  @{author}
+                </Link>
               </Text>
               <Text fontSize="sm" color="colorBackground">
                 - {postDate} ago
@@ -394,34 +522,55 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
             </HStack>
           </Flex>
 
-          <Flex alignItems="center" gap={2} flex="0 0 auto" justifyContent="flex-end">
-            <Popover placement="top" isOpen={isPayoutOpen} onClose={closePayout} >
+          <Flex
+            alignItems="center"
+            gap={2}
+            flex="0 0 auto"
+            justifyContent="flex-end"
+          >
+            <Popover
+              placement="top"
+              isOpen={isPayoutOpen}
+              onClose={closePayout}
+            >
               <PopoverTrigger>
-                <span style={{ cursor: "pointer" }} onMouseDown={openPayout} onMouseUp={closePayout}>
+                <span
+                  style={{ cursor: "pointer" }}
+                  onMouseDown={openPayout}
+                  onMouseUp={closePayout}
+                >
                   <Text fontWeight="bold" color="primary" fontSize="xs" mt={1}>
                     ${payoutValue.toFixed(2)}
                   </Text>
                 </span>
               </PopoverTrigger>
-              <PopoverContent w="auto" bg="gray.800" color="white" borderRadius="md" boxShadow="lg" p={2}>
+              <PopoverContent
+                w="auto"
+                bg="gray.800"
+                color="white"
+                borderRadius="md"
+                boxShadow="lg"
+                p={2}
+              >
                 <PopoverArrow />
                 <PopoverBody>
-                  {isPending ? (
+                  {payoutData.isPending ? (
                     <div>
                       <div>
                         <b>Pending</b>
                       </div>
                       <div>
-                        {daysRemaining} day{daysRemaining !== 1 ? "s" : ""} until payout
+                        {payoutData.daysRemaining} day
+                        {payoutData.daysRemaining !== 1 ? "s" : ""} until payout
                       </div>
                     </div>
                   ) : (
                     <>
                       <div>
-                        Author: <b>${authorPayout.toFixed(3)}</b>
+                        Author: <b>${payoutData.authorPayout.toFixed(3)}</b>
                       </div>
                       <div>
-                        Curators: <b>${curatorPayout.toFixed(3)}</b>
+                        Curators: <b>${payoutData.curatorPayout.toFixed(3)}</b>
                       </div>
                     </>
                   )}
@@ -466,7 +615,7 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
                   px={1}
                   _active={{ bg: "transparent" }}
                   color={voted ? "accent" : "muted"}
-                  _hover={{ textDecoration: 'underline' }}
+                  _hover={{ textDecoration: "underline" }}
                   fontSize="xs"
                   h="auto"
                   p={1}
@@ -477,7 +626,6 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
               votes={activeVotes}
               post={post}
             />
-
           </Flex>
         </Flex>
 
@@ -533,9 +681,9 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
                 </SliderThumb>
               </Slider>
             </Box>
-            <Button 
-              size="xs" 
-              onClick={handleVote} 
+            <Button
+              size="xs"
+              onClick={handleVote}
               bgGradient="linear(to-r, primary, accent)"
               color="background"
               _hover={{ bg: "accent" }}
@@ -544,9 +692,9 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
             >
               &nbsp;&nbsp;&nbsp;Vote {sliderValue} %&nbsp;&nbsp;&nbsp;
             </Button>
-            <Button 
-              size="xs" 
-              onClick={handleHeartClick} 
+            <Button
+              size="xs"
+              onClick={handleHeartClick}
               ml={2}
               bg="muted"
               color="primary"
@@ -561,7 +709,7 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
       <Divider />
 
       <Box mt={4} className="markdown-body" ref={markdownRef}>
-        {renderBodyWithVideos(processedBodyWithPlaceholders)}
+        {renderedContent}
       </Box>
 
       <style jsx global>{`
@@ -579,11 +727,11 @@ export default function PostDetails({ post, onOpenConversation }: PostDetailsPro
           margin: 2rem 0;
           background: #181c1f;
           overflow: hidden;
-          box-shadow: 0 2px 16px rgba(0,0,0,0.12);
+          box-shadow: 0 2px 16px rgba(0, 0, 0, 0.12);
           border: 1px solid primary;
-
         }
-        .markdown-body th, .markdown-body td {
+        .markdown-body th,
+        .markdown-body td {
           border: 1px solid #333;
           padding: 12px 16px;
           text-align: left;

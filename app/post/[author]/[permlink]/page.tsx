@@ -136,10 +136,6 @@ async function getData(user: string, permlink: string) {
   validatePermlink(permlink, "getData");
   try {
     const cleanUser = user.startsWith("@") ? user.slice(1) : user;
-    console.log("Fetching post content for:", {
-      user: cleanUser,
-      permlink,
-    });
     const postContent = await HiveClient.database.call("get_content", [
       cleanUser,
       permlink,
@@ -204,9 +200,9 @@ export async function generateMetadata({
     const images = post.body ? post.body.match(/!\[.*?\]\((.*?)\)/g) : [];
     const imageUrls = images
       ? images.map((img: string) => {
-        const match = img.match(/\((.*?)\)/);
-        return match ? match[1] : "";
-      })
+          const match = img.match(/\((.*?)\)/);
+          return match ? match[1] : "";
+        })
       : [];
 
     // Parse JSON metadata for additional images
@@ -224,12 +220,12 @@ export async function generateMetadata({
 
     const postUrl = `${DOMAIN_URL}/post/${cleanedAuthor}/${permlink}`;
 
-    console.log("Generated metadata:", {
-      title,
-      description,
-      bannerImage,
-      postUrl,
-    });
+    // console.log("Generated metadata:", {
+    //   title,
+    //   description,
+    //   bannerImage,
+    //   postUrl,
+    // });
 
     return {
       title: title,
