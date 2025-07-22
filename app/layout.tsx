@@ -134,15 +134,23 @@ export default function RootLayout({
       </head>
       <body className="chakra-ui-dark">
         <div id="splash-root">
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            height: "100vh",
-            width: "100vw",
-            background: "#111"
-          }}>
-            <Image src="/SKATE_HIVE_VECTOR_FIN.svg" alt="Skatehive" height={80} width={80} style={{ height: "80px" }} />
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              height: "100vh",
+              width: "100vw",
+              background: "background",
+            }}
+          >
+            <Image
+              src="/SKATE_HIVE_VECTOR_FIN.svg"
+              alt="Skatehive"
+              height={80}
+              width={80}
+              style={{ height: "80px" }}
+            />
           </div>
         </div>
         <div id="app-root" style={{ display: "none" }}>
