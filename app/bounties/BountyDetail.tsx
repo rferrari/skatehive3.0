@@ -379,9 +379,16 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
                   display={["none", "block"]}
                 />
                 <Box flexGrow={1} ml={[0, 4]} mt={[2, 0]} textAlign="start" minWidth={0}>
-                  <Tag colorScheme={isActive ? "green" : "red"} size="md" ml={2}>
-                    {isActive ? "Active Bounty" : "Closed Bounty"}
-                  </Tag>
+                  <Text
+                    fontSize={{ base: '2xl', md: '3xl', lg: '4xl' }}
+                    fontWeight="extrabold"
+                    color={isActive ? theme.colors.primary : theme.colors.error}
+                    letterSpacing="tight"
+                    textShadow="0 2px 8px rgba(0,0,0,0.25)"
+                    lineHeight="1.1"
+                  >
+                    {isActive ? 'Active Bounty' : 'Closed Bounty'}
+                  </Text>
                 </Box>
               </Flex>
             </Flex>
@@ -438,26 +445,37 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
           {/* Claimed Users Section */}
           {claimedUsers.length > 0 && (
             <Box mb={4}>
-              <Text fontWeight="bold" fontSize="lg" mb={2} color={theme.colors.text}>
+              <Text fontWeight="bold" fontSize="lg" mb={2} color="text">
                 Claimed By ({claimedUsers.length}):
               </Text>
               <Flex wrap="wrap" gap={4}>
                 {claimedUsers.map((vote) => (
-                  <Flex key={`${vote.voter}-${vote.time || ''}`} align="center" gap={2} bg={theme.colors.muted} p={2} borderRadius="md" border={`1px solid ${theme.colors.border}`}> 
-                    <Avatar size="sm" name={vote.voter} src={`https://images.hive.blog/u/${vote.voter}/avatar/sm`} />
+                  <Flex
+                    key={`${vote.voter}-${vote.time || ''}`}
+                    align="center"
+                    gap={2}
+                    bg="muted"
+                    p={2}
+                    borderRadius="md"
+                    border="1px solid"
+                    borderColor="border"
+                  >
+                    <Avatar
+                      size="sm"
+                      name={vote.voter}
+                      src={`https://images.hive.blog/u/${vote.voter}/avatar/sm`}
+                    />
                     <Box>
-                      <Text fontWeight="bold">
-                        <Link 
+                      <Text>
+                        <Link
                           href={`/user/${vote.voter}`}
-                          color={theme.colors.primary}
-                          _hover={{ color: theme.colors.accent, textDecoration: 'underline' }}
-                          style={{ color: theme.colors.primary }}
+                          _hover={{ textDecoration: "underline" }}
                         >
                           @{vote.voter}
                         </Link>
                       </Text>
                       {vote.time && (
-                        <Text fontSize="xs" color={theme.colors.accent}>
+                        <Text fontSize="xs" color="accent">
                           Claimed: {new Date(vote.time).toLocaleString()}
                         </Text>
                       )}
@@ -513,12 +531,12 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
             <Text>
               Each winner receives: <b>{rewardPerWinner} {rewardInfo.currency}</b>
             </Text>
-            {rewardError && <Text color="red.400" mt={2}>{rewardError}</Text>}
-            {rewardSuccess && <Text color="green.400" mt={2}>Bounty rewards sent and winners announced!</Text>}
+            {rewardError && <Text color="error" mt={2}>{rewardError}</Text>}
+            {rewardSuccess && <Text color="success" mt={2}>Bounty rewards sent and winners announced!</Text>}
           </ModalBody>
           <ModalFooter>
             <Button colorScheme="orange" mr={3} isDisabled={selectedWinners.length === 0 || isRewarding} onClick={handleRewardBountyHunters} isLoading={isRewarding}>
-              Reward Bounty Hunters
+              Send Reward
             </Button>
             <Button variant="ghost" onClick={onClose} isDisabled={isRewarding}>Close</Button>
           </ModalFooter>
