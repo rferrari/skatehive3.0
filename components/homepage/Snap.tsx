@@ -192,15 +192,13 @@ interface SnapProps {
 }
 
 const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
-  const { aioha, user } = useAioha();
-  const { hiveAccount } = useHiveAccount(user || "");
+  const { user } = useAioha();
   const {
     hivePower,
     isLoading: isHivePowerLoading,
     error: hivePowerError,
     estimateVoteValue,
   } = useHivePower(user);
-  const toast = useToast();
   const commentDate = getPostDate(discussion.created);
 
   // Use the custom hook for edit functionality
