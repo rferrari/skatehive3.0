@@ -247,19 +247,6 @@ export function AuctionBid({
         </Box>
       ) : (
         <VStack spacing={4} align="stretch">
-          <Box 
-            bg="warning"
-            opacity={0.1}
-            border="1px solid" 
-            borderColor="warning" 
-            borderRadius="md" 
-            p={4}
-            textAlign="center"
-          >
-            <Text color="text" fontSize="sm" fontWeight="medium">
-              This auction has ended. Click below to settle and start a new auction.
-            </Text>
-          </Box>
           <Button
             onClick={handleSettle}
             variant="solid"
@@ -274,7 +261,7 @@ export function AuctionBid({
             loadingText="Settling..."
             h="48px"
           >
-            {isLoading ? 'Settling...' : 'Settle & Start Next Auction'}
+            {isLoading ? 'Settling...' : 'Start Next Auction'}
           </Button>
         </VStack>
       )}

@@ -106,22 +106,6 @@ export default function AuctionCard({
               objectFit="cover"
               fallbackSrc="/images/placeholder.png"
             />
-            {!auctionData.isRunning && (
-              <Box
-                position="absolute"
-                top={0}
-                left={0}
-                right={0}
-                bottom={0}
-                bg="rgba(0,0,0,0.7)"
-                borderRadius="md"
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-              >
-                <Badge bg="error" color="background" size="sm">ENDED</Badge>
-              </Box>
-            )}
           </Box>
           <VStack align="start" flex={1} spacing={1}>
             <Text fontSize="xl" fontWeight="bold" color="text">
@@ -159,7 +143,7 @@ export default function AuctionCard({
         <VStack spacing={4}>
           <HStack justify="space-between" w="full">
             <Text fontSize="sm" fontWeight="medium" color="text">
-              {auctionData.isRunning ? 'Time remaining:' : 'Auction ended'}
+              {auctionData.isRunning ? 'Time remaining:' : 'Auction has'}
             </Text>
             {auctionData.isRunning && (
               <Countdown
