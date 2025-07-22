@@ -265,11 +265,7 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
     }
 
     if (user === post.author) {
-      return (
-        <Box textAlign="center" p={4} bg="gray.800" borderRadius="md">
-          <Text>You cannot hunt your own bounty.</Text>
-        </Box>
-      );
+      return null;
     }
 
     if (!hasClaimed) {
@@ -407,6 +403,49 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
               <Text fontWeight="bold" mb={1}>Rules:</Text>
               <HiveMarkdown markdown={body.replace(/^Trick\/Challenge:.*$/gim, '').replace(/^Reward:.*$/gim, '').replace(/^Deadline:.*$/gim, '').replace(/^Bounty Rules: ?/gim, '').trim()} />
             </Box>
+            {/* Claimed Users Section (moved from right panel) */}
+            {claimedUsers.length > 0 && (
+              <Box mb={4}>
+                <Text fontWeight="bold" fontSize="lg" mb={2} color="text">
+                  Claimed By ({claimedUsers.length}):
+                </Text>
+                <Flex wrap="wrap" gap={4}>
+                  {claimedUsers.map((vote) => (
+                    <Flex
+                      key={`${vote.voter}-${vote.time || ''}`}
+                      align="center"
+                      gap={2}
+                      bg="muted"
+                      p={2}
+                      borderRadius="md"
+                      border="1px solid"
+                      borderColor="border"
+                    >
+                      <Avatar
+                        size="sm"
+                        name={vote.voter}
+                        src={`https://images.hive.blog/u/${vote.voter}/avatar/sm`}
+                      />
+                      <Box>
+                        <Text>
+                          <Link
+                            href={`/user/${vote.voter}`}
+                            _hover={{ textDecoration: "underline" }}
+                          >
+                            @{vote.voter}
+                          </Link>
+                        </Text>
+                        {vote.time && (
+                          <Text fontSize="xs" color="accent">
+                            Claimed: {new Date(vote.time).toLocaleString()}
+                          </Text>
+                        )}
+                      </Box>
+                    </Flex>
+                  ))}
+                </Flex>
+              </Box>
+            )}
             {/* Claim Bounty Button */}
             {isActive && user && user !== post.author && (
               <Flex justify="center" my={4}>
@@ -419,6 +458,11 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
                   {hasClaimed ? "Bounty Claimed" : "Claim Bounty (100% Vote)"}
                 </Button>
               </Flex>
+            )}
+            {isActive && user === post.author && (
+              <Box textAlign="center" my={4}>
+                <Text color="gray.400">You cannot claim your own bounty.</Text>
+              </Box>
             )}
             {claimError && <Text color="red.400" textAlign="center">{claimError}</Text>}
             {/* Media Section */}
@@ -442,49 +486,7 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
         </Box>
         {/* Right: Submissions List */}
         <Box flex={1} h={{ base: "auto", md: "100vh" }} overflowY="auto" bg="muted" borderRadius="base" boxShadow={theme.shadows.md} p={4} sx={{ '&::-webkit-scrollbar': { display: 'none' }, scrollbarWidth: 'none' }}>
-          {/* Claimed Users Section */}
-          {claimedUsers.length > 0 && (
-            <Box mb={4}>
-              <Text fontWeight="bold" fontSize="lg" mb={2} color="text">
-                Claimed By ({claimedUsers.length}):
-              </Text>
-              <Flex wrap="wrap" gap={4}>
-                {claimedUsers.map((vote) => (
-                  <Flex
-                    key={`${vote.voter}-${vote.time || ''}`}
-                    align="center"
-                    gap={2}
-                    bg="muted"
-                    p={2}
-                    borderRadius="md"
-                    border="1px solid"
-                    borderColor="border"
-                  >
-                    <Avatar
-                      size="sm"
-                      name={vote.voter}
-                      src={`https://images.hive.blog/u/${vote.voter}/avatar/sm`}
-                    />
-                    <Box>
-                      <Text>
-                        <Link
-                          href={`/user/${vote.voter}`}
-                          _hover={{ textDecoration: "underline" }}
-                        >
-                          @{vote.voter}
-                        </Link>
-                      </Text>
-                      {vote.time && (
-                        <Text fontSize="xs" color="accent">
-                          Claimed: {new Date(vote.time).toLocaleString()}
-                        </Text>
-                      )}
-                    </Box>
-                  </Flex>
-                ))}
-              </Flex>
-            </Box>
-          )}
+          {/* Claimed Users Section removed from here */}
           <Text fontWeight="bold" fontSize="2xl" textAlign="left" mb={2} mt={2}>
             Submissions: {post.children || 0}
           </Text>
