@@ -217,7 +217,6 @@ export async function checkAccountName(username: string) {
     const users = await HiveClient.call('condenser_api', 'lookup_accounts', [
       username, 1
     ]);
-    console.log(users[0])
     return users[0]
   } catch (error) {
     console.log(error)
