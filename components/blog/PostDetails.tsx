@@ -34,6 +34,7 @@ import { MarkdownProcessor } from "@/lib/markdown/MarkdownProcessor";
 import { EnhancedMarkdownRenderer } from "@/components/markdown/EnhancedMarkdownRenderer";
 import { useInstagramEmbeds } from "@/hooks/useInstagramEmbeds";
 import { usePostEdit } from "@/hooks/usePostEdit";
+import ThumbnailPicker from "@/components/compose/ThumbnailPicker";
 
 interface PostDetailsProps {
   post: Discussion;
@@ -68,7 +69,9 @@ export default function PostDetails({
     isEditing,
     editedContent,
     isSaving,
+    selectedThumbnail,
     setEditedContent,
+    setSelectedThumbnail,
     handleEditClick,
     handleCancelEdit,
     handleSaveEdit,
@@ -630,6 +633,17 @@ export default function PostDetails({
               fontFamily="monospace"
               fontSize="sm"
             />
+
+            {/* Thumbnail Picker */}
+            <Box mt={4}>
+              <ThumbnailPicker
+                show={true}
+                markdown={editedContent}
+                selectedThumbnail={selectedThumbnail}
+                setSelectedThumbnail={setSelectedThumbnail}
+              />
+            </Box>
+
             <Flex mt={3} gap={2} justifyContent="flex-end">
               <Button
                 size="sm"
