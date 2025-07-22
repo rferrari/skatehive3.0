@@ -32,7 +32,6 @@ import useHivePower from "@/hooks/useHivePower";
 import VoteListPopover from "./VoteListModal";
 import { MarkdownProcessor } from "@/lib/markdown/MarkdownProcessor";
 import { EnhancedMarkdownRenderer } from "@/components/markdown/EnhancedMarkdownRenderer";
-import { useInstagramEmbeds } from "@/hooks/useInstagramEmbeds";
 import { usePostEdit } from "@/hooks/usePostEdit";
 import ThumbnailPicker from "@/components/compose/ThumbnailPicker";
 
@@ -89,9 +88,6 @@ export default function PostDetails({
     const contentToProcess = isEditing ? editedContent : body;
     return MarkdownProcessor.process(contentToProcess);
   }, [body, editedContent, isEditing]);
-
-  // Handle Instagram embeds
-  useInstagramEmbeds(processedMarkdown.hasInstagramEmbeds);
 
   // Memoize payout calculations
   const payoutData = useMemo(() => {
@@ -617,13 +613,42 @@ export default function PostDetails({
 
       <Divider />
 
-      <Box mt={4} ref={markdownRef}>
+      <Box
+        mt={4}
+        ref={markdownRef}
+        maxHeight="1000px"
+        overflowY="auto"
+        css={{
+          "&::-webkit-scrollbar": {
+            width: "8px",
+          },
+          "&::-webkit-scrollbar-track": {
+            background: "var(--chakra-colors-muted)",
+            borderRadius: "2px",
+          },
+          "&::-webkit-scrollbar-thumb": {
+            background: "var(--chakra-colors-primary)",
+            borderRadius: "2px",
+            border: "1px solid var(--chakra-colors-background)",
+            cursor: "grab",
+          },
+          "&::-webkit-scrollbar-thumb:hover": {
+            background: "var(--chakra-colors-accent)",
+            cursor: "grabbing",
+          },
+          // Firefox scrollbar
+          scrollbarWidth: "thin",
+          scrollbarColor:
+            "var(--chakra-colors-primary) var(--chakra-colors-muted)",
+        }}
+      >
         {isEditing ? (
           <Box>
             <Textarea
               value={editedContent}
               onChange={(e) => setEditedContent(e.target.value)}
-              minHeight="300px"
+              minHeight="400px"
+              maxHeight="700px"
               bg="background"
               border="1px solid"
               borderColor="primary"
@@ -632,6 +657,12 @@ export default function PostDetails({
               resize="vertical"
               fontFamily="monospace"
               fontSize="sm"
+              css={{
+                "&::-webkit-scrollbar": {
+                  width: "none",
+                },
+                scrollbarWidth: "none",
+              }}
             />
 
             {/* Thumbnail Picker */}
@@ -674,61 +705,6 @@ export default function PostDetails({
           />
         )}
       </Box>
-
-      <style jsx global>{`
-        .markdown-body .instagram-media {
-          display: block;
-          margin-left: auto !important;
-          margin-right: auto !important;
-          margin-top: 2rem;
-          margin-bottom: 2rem;
-          max-width: 100%;
-        }
-        .markdown-body table {
-          border-collapse: collapse;
-          width: 100%;
-          margin: 2rem 0;
-          background: #181c1f;
-          overflow: hidden;
-          box-shadow: 0 2px 16px rgba(0, 0, 0, 0.12);
-          border: 1px solid primary;
-        }
-        .markdown-body th,
-        .markdown-body td {
-          border: 1px solid #333;
-          padding: 12px 16px;
-          text-align: left;
-        }
-        .markdown-body th {
-          background: #23272b;
-          color: #38ff8e;
-          font-weight: bold;
-          font-size: 1.1em;
-        }
-        .markdown-body tr:nth-child(even) {
-          background: #202426;
-        }
-        .markdown-body tr:nth-child(odd) {
-          background: #181c1f;
-        }
-        .markdown-body td {
-          color: #e0e0e0;
-        }
-        .subtle-pulse {
-          animation: subtle-pulse 2s infinite;
-        }
-        @keyframes subtle-pulse {
-          0% {
-            box-shadow: 0 0 0 0 var(--chakra-colors-accent);
-          }
-          70% {
-            box-shadow: 0 0 0 4px rgba(72, 255, 128, 0);
-          }
-          100% {
-            box-shadow: 0 0 0 0 rgba(72, 255, 128, 0);
-          }
-        }
-      `}</style>
     </Box>
   );
 }

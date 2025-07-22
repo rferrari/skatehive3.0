@@ -14,7 +14,7 @@ import {
   useColorModeValue,
 } from "@chakra-ui/react";
 import { Discussion } from "@hiveio/dhive";
-import markdownRenderer from "@/lib/markdown/MarkdownRenderer";
+import { EnhancedMarkdownRenderer } from "@/components/markdown/EnhancedMarkdownRenderer";
 
 interface EditPostModalProps {
   isOpen: boolean;
@@ -83,14 +83,13 @@ const EditPostModal = ({
                 Preview:
               </Text>
               <Box
-                dangerouslySetInnerHTML={{
-                  __html: markdownRenderer(editedContent),
-                }}
                 sx={{
                   p: { marginBottom: "1rem", lineHeight: "1.6" },
                   color: primaryColor,
                 }}
-              />
+              >
+                <EnhancedMarkdownRenderer content={editedContent} />
+              </Box>
             </Box>
           </VStack>
         </ModalBody>

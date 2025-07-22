@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import markdown styles */
+@import '../styles/markdown.css';
+
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
@@ -56,10 +59,6 @@ body::-webkit-scrollbar {
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
   /* Chrome, Safari, Opera */
-}
-
-.markdown-body p {
-  margin-bottom: 1em;
 }
 
 body.show-splash #app-root {

@@ -25,7 +25,7 @@ import { FaRegComment } from "react-icons/fa";
 import { useAioha } from "@aioha/react-ui";
 import { useState, useMemo } from "react";
 import { getPayoutValue } from "@/lib/hive/client-functions";
-import markdownRenderer from "@/lib/markdown/MarkdownRenderer";
+import { EnhancedMarkdownRenderer } from "@/components/markdown/EnhancedMarkdownRenderer";
 import { getPostDate } from "@/lib/utils/GetPostDate";
 import useHiveAccount from "@/hooks/useHiveAccount";
 import VideoRenderer from "../layout/VideoRenderer";
@@ -147,7 +147,6 @@ const renderMedia = (mediaContent: string) => {
     if (item.type === "image") {
       return (
         <Box
-          dangerouslySetInnerHTML={{ __html: markdownRenderer(item.content) }}
           sx={{
             img: {
               width: "100%",
@@ -157,7 +156,9 @@ const renderMedia = (mediaContent: string) => {
               marginBottom: "0.5rem",
             },
           }}
-        />
+        >
+          <EnhancedMarkdownRenderer content={item.content} />
+        </Box>
       );
     }
 
@@ -362,11 +363,12 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
         </HStack>
         <Box>
           <Box
-            dangerouslySetInnerHTML={{ __html: markdownRenderer(text) }}
             sx={{
               p: { marginBottom: "1rem", lineHeight: "1.6", marginLeft: "4" },
             }}
-          />
+          >
+            <EnhancedMarkdownRenderer content={text} />
+          </Box>
           <Box>{renderedMedia}</Box>
         </Box>
 
@@ -565,33 +567,6 @@ export default Snap;
     100% {
       box-shadow: 0 0 0 0 var(--chakra-colors-accent, rgba(72, 255, 128, 0));
     }
-  }
-  /* Responsive YouTube iframe for Hive-rendered markdown in Snap */
-  .markdown-body iframe[src*="youtube.com"],
-  .markdown-body iframe[src*="youtube-nocookie.com"] {
-    width: 100% !important;
-    height: 100% !important;
-    aspect-ratio: 16 / 9;
-    min-height: 200px;
-    max-width: 100%;
-    display: block;
-  }
-  /* Optional: wrap iframes in a responsive container if needed */
-  .markdown-body .responsive-embed {
-    position: relative;
-    width: 100%;
-    padding-bottom: 56.25%; /* 16:9 */
-    height: 0;
-    overflow: hidden;
-    margin: 16px 0;
-  }
-  .markdown-body .responsive-embed iframe {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100% !important;
-    height: 100% !important;
-    border: 0;
   }
   /* Media Carousel Styles */
   .media-carousel {

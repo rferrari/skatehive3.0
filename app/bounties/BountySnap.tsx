@@ -22,7 +22,7 @@ import { LuArrowUpRight } from "react-icons/lu";
 import { useAioha } from "@aioha/react-ui";
 import { useState, useMemo } from "react";
 import { getPayoutValue } from "@/lib/hive/client-functions";
-import markdownRenderer from "@/lib/markdown/MarkdownRenderer";
+import { EnhancedMarkdownRenderer } from "@/components/markdown/EnhancedMarkdownRenderer";
 import { getPostDate } from "@/lib/utils/GetPostDate";
 import useHiveAccount from "@/hooks/useHiveAccount";
 import VideoRenderer from "@/components/layout/VideoRenderer";
@@ -54,7 +54,6 @@ const renderMedia = (mediaContent: string) => {
       return (
         <Box
           key={index}
-          dangerouslySetInnerHTML={{ __html: markdownRenderer(item) }}
           sx={{
             img: {
               width: "100%",
@@ -64,7 +63,9 @@ const renderMedia = (mediaContent: string) => {
               marginBottom: "0.5rem",
             },
           }}
-        />
+        >
+          <EnhancedMarkdownRenderer content={item} />
+        </Box>
       );
     }
     if (item.includes("<iframe") && item.includes("</iframe>")) {
@@ -98,7 +99,6 @@ const renderMedia = (mediaContent: string) => {
     return (
       <Box
         key={index}
-        dangerouslySetInnerHTML={{ __html: markdownRenderer(item) }}
         sx={{
           img: {
             width: "100%",
@@ -108,7 +108,9 @@ const renderMedia = (mediaContent: string) => {
             marginBottom: "0.5rem",
           },
         }}
-      />
+      >
+        <EnhancedMarkdownRenderer content={item} />
+      </Box>
     );
   });
 };

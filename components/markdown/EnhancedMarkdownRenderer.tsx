@@ -4,6 +4,7 @@ import {
   ProcessedMarkdown,
 } from "@/lib/markdown/MarkdownProcessor";
 import { VideoEmbed } from "./VideoEmbed";
+import InstagramEmbed from "./InstagramEmbed";
 import HiveMarkdown from "@/components/shared/HiveMarkdown";
 
 interface EnhancedMarkdownRendererProps {
@@ -29,9 +30,9 @@ export function EnhancedMarkdownRenderer({
 function renderContentWithVideos(
   processed: ProcessedMarkdown
 ): React.ReactNode[] {
-  // Split on all supported video placeholders
+  // Split on all supported video and social media placeholders
   const parts = processed.contentWithPlaceholders.split(
-    /(\[\[(VIDEO|ODYSEE|YOUTUBE|VIMEO):([^\]]+)\]\])/g
+    /(\[\[(VIDEO|ODYSEE|YOUTUBE|VIMEO|INSTAGRAM):([^\]]+)\]\])/g
   );
 
   return parts
@@ -46,6 +47,13 @@ function renderContentWithVideos(
         return (
           <VideoEmbed key={`video-${idx}`} type={type} id={id} index={idx} />
         );
+      }
+
+      // Handle Instagram placeholders
+      const instagramMatch = part.match(/^\[\[INSTAGRAM:([^\]]+)\]\]$/);
+      if (instagramMatch) {
+        const url = instagramMatch[1];
+        return <InstagramEmbed key={`instagram-${idx}`} url={url} />;
       }
 
       // Skip empty parts or parts that are just whitespace
@@ -78,10 +86,16 @@ function renderContentWithVideos(
 function cleanMarkdownPart(part: string): string {
   return part
     .replace(/^https?:\/\/(?:www\.)?odysee\.com\/.*$/gm, "")
+    .replace(/^https?:\/\/(?:www\.)?instagram\.com\/.*$/gm, "")
+    .replace(/^https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/).*$/gm, "")
+    .replace(/^https?:\/\/(?:www\.)?(?:vimeo\.com\/).*$/gm, "")
     .replace(/^ODYSEE\s*$/gm, "")
     .replace(/^VIDEO\s*$/gm, "")
     .replace(/^YOUTUBE\s*$/gm, "")
     .replace(/^VIMEO\s*$/gm, "")
+    .replace(/^INSTAGRAM\s*$/gm, "")
+    .replace(/^[a-zA-Z0-9_-]{11}$/gm, "") // YouTube video IDs (11 characters)
+    .replace(/^[0-9]{8,}$/gm, "") // Vimeo video IDs (8+ digits)
     .replace(/^(Qm[1-9A-HJ-NP-Za-km-z]{44,})$/gm, "")
     .replace(/^(bafy[0-9a-z]{50,})$/gm, "");
 }

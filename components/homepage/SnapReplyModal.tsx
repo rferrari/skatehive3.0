@@ -15,7 +15,7 @@ import React from "react";
 import SnapComposer from "./SnapComposer";
 import { Discussion } from "@hiveio/dhive";
 import { CloseIcon } from "@chakra-ui/icons";
-import markdownRenderer from "@/lib/markdown/MarkdownRenderer";
+import { EnhancedMarkdownRenderer } from "@/components/markdown/EnhancedMarkdownRenderer";
 import { getPostDate } from "@/lib/utils/GetPostDate";
 
 interface SnapReplyModalProps {
@@ -71,12 +71,9 @@ export default function SnapReplyModal({
           </HStack>
         </ModalHeader>
         <ModalBody>
-          <Box
-            dangerouslySetInnerHTML={{
-              __html: markdownRenderer(discussion.body),
-            }}
-            pb={6}
-          />
+          <Box pb={6}>
+            <EnhancedMarkdownRenderer content={discussion.body} />
+          </Box>
           <SnapComposer
             pa={discussion.author}
             pp={discussion.permlink}

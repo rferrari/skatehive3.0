@@ -2,7 +2,7 @@ import React from "react";
 import { Box, useBreakpointValue } from "@chakra-ui/react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination } from "swiper/modules";
-import markdownRenderer from "@/lib/markdown/MarkdownRenderer";
+import { EnhancedMarkdownRenderer } from "@/components/markdown/EnhancedMarkdownRenderer";
 import VideoRenderer from "../layout/VideoRenderer";
 
 // Import Swiper styles
@@ -74,7 +74,6 @@ function renderMediaItem(item: MediaItem) {
     case "image":
       return (
         <Box
-          dangerouslySetInnerHTML={{ __html: markdownRenderer(item.content) }}
           sx={{
             img: {
               width: "100%",
@@ -86,7 +85,9 @@ function renderMediaItem(item: MediaItem) {
               margin: "0 auto",
             },
           }}
-        />
+        >
+          <EnhancedMarkdownRenderer content={item.content} />
+        </Box>
       );
     case "video":
       return item.src ? (
