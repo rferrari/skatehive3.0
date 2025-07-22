@@ -7,7 +7,18 @@
         "**/Thumbs.db": true,
         "**/CVS": true,
         "**/.ruby-lsp": true,
-        "**/pnpm-lock.yaml": true
+        "**/pnpm-lock.yaml": true,
+        ".env.local.example": true,
+        "tsconfig.tsbuildinfo": true,
+        "node_modules": true,
+        "README.md": true,
+        "docs": true
     },
-    "hide-files.files": []
+    "hide-files.files": [
+        ".env.local.example",
+        "tsconfig.tsbuildinfo",
+        "node_modules",
+        "README.md",
+        "docs"
+    ]
 }
