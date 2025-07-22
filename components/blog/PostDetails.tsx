@@ -20,10 +20,11 @@ import {
   useToast,
   IconButton,
   HStack,
+  Textarea,
 } from "@chakra-ui/react";
 import React, { useState, useRef, useMemo, useCallback } from "react";
 import { Discussion } from "@hiveio/dhive";
-import { FaHeart, FaRegHeart, FaShareSquare } from "react-icons/fa";
+import { FaHeart, FaRegHeart, FaShareSquare, FaEdit } from "react-icons/fa";
 import { getPostDate } from "@/lib/utils/GetPostDate";
 import { useAioha } from "@aioha/react-ui";
 import { getPayoutValue } from "@/lib/hive/client-functions";
@@ -32,6 +33,7 @@ import VoteListPopover from "./VoteListModal";
 import { MarkdownProcessor } from "@/lib/markdown/MarkdownProcessor";
 import { EnhancedMarkdownRenderer } from "@/components/markdown/EnhancedMarkdownRenderer";
 import { useInstagramEmbeds } from "@/hooks/useInstagramEmbeds";
+import { usePostEdit } from "@/hooks/usePostEdit";
 
 interface PostDetailsProps {
   post: Discussion;
@@ -58,6 +60,20 @@ export default function PostDetails({
   );
   const toast = useToast();
 
+  // Check if current user is the author
+  const isAuthor = user && user.toLowerCase() === author.toLowerCase();
+
+  // Use the post edit hook
+  const {
+    isEditing,
+    editedContent,
+    isSaving,
+    setEditedContent,
+    handleEditClick,
+    handleCancelEdit,
+    handleSaveEdit,
+  } = usePostEdit(post);
+
   const {
     hivePower,
     isLoading: isHivePowerLoading,
@@ -67,8 +83,9 @@ export default function PostDetails({
 
   // Process markdown content once
   const processedMarkdown = useMemo(() => {
-    return MarkdownProcessor.process(body);
-  }, [body]);
+    const contentToProcess = isEditing ? editedContent : body;
+    return MarkdownProcessor.process(contentToProcess);
+  }, [body, editedContent, isEditing]);
 
   // Handle Instagram embeds
   useInstagramEmbeds(processedMarkdown.hasInstagramEmbeds);
@@ -294,6 +311,21 @@ export default function PostDetails({
                 h="auto"
                 p={1}
               />
+              {isAuthor && (
+                <IconButton
+                  aria-label="Edit post"
+                  icon={<FaEdit />}
+                  size="sm"
+                  variant="ghost"
+                  color="primary"
+                  onClick={handleEditClick}
+                  _hover={{ bg: "transparent", color: "accent" }}
+                  fontSize="14px"
+                  minW="auto"
+                  h="auto"
+                  p={1}
+                />
+              )}
               {voted ? (
                 <Icon
                   as={FaHeart}
@@ -450,6 +482,21 @@ export default function PostDetails({
               h="auto"
               p={1}
             />
+            {isAuthor && (
+              <IconButton
+                aria-label="Edit post"
+                icon={<FaEdit />}
+                size="sm"
+                variant="ghost"
+                color="primary"
+                onClick={handleEditClick}
+                _hover={{ bg: "transparent", color: "accent" }}
+                fontSize="14px"
+                minW="auto"
+                h="auto"
+                p={1}
+              />
+            )}
             <IconButton
               aria-label={voted ? "Unvote" : "Vote"}
               icon={voted ? <FaHeart /> : <FaRegHeart />}
@@ -568,9 +615,50 @@ export default function PostDetails({
       <Divider />
 
       <Box mt={4} ref={markdownRef}>
-        <EnhancedMarkdownRenderer
-          content={processedMarkdown.contentWithPlaceholders}
-        />
+        {isEditing ? (
+          <Box>
+            <Textarea
+              value={editedContent}
+              onChange={(e) => setEditedContent(e.target.value)}
+              minHeight="300px"
+              bg="background"
+              border="1px solid"
+              borderColor="primary"
+              color="colorBackground"
+              _focus={{ borderColor: "accent" }}
+              resize="vertical"
+              fontFamily="monospace"
+              fontSize="sm"
+            />
+            <Flex mt={3} gap={2} justifyContent="flex-end">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={handleCancelEdit}
+                color="muted"
+                _hover={{ bg: "transparent", color: "primary" }}
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleSaveEdit}
+                isLoading={isSaving}
+                loadingText="Saving..."
+                bgGradient="linear(to-r, primary, accent)"
+                color="background"
+                _hover={{ bg: "accent" }}
+                fontWeight="bold"
+              >
+                Save Changes
+              </Button>
+            </Flex>
+          </Box>
+        ) : (
+          <EnhancedMarkdownRenderer
+            content={processedMarkdown.contentWithPlaceholders}
+          />
+        )}
       </Box>
 
       <style jsx global>{`
