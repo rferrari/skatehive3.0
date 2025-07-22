@@ -12,7 +12,6 @@ import {
   SliderThumb,
   Divider,
   Image,
-  useTheme,
   Popover,
   PopoverTrigger,
   PopoverContent,
@@ -22,13 +21,7 @@ import {
   IconButton,
   HStack,
 } from "@chakra-ui/react";
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  useMemo,
-  useCallback,
-} from "react";
+import React, { useState, useRef, useMemo, useCallback } from "react";
 import { Discussion } from "@hiveio/dhive";
 import { FaHeart, FaRegHeart, FaShareSquare } from "react-icons/fa";
 import { getPostDate } from "@/lib/utils/GetPostDate";
@@ -36,9 +29,9 @@ import { useAioha } from "@aioha/react-ui";
 import { getPayoutValue } from "@/lib/hive/client-functions";
 import useHivePower from "@/hooks/useHivePower";
 import VoteListPopover from "./VoteListModal";
-import { processMediaContent } from "@/lib/utils/MarkdownRenderer";
-import HiveMarkdown from "@/components/shared/HiveMarkdown";
-import VideoRenderer from "@/components/layout/VideoRenderer";
+import { MarkdownProcessor } from "@/lib/markdown/MarkdownProcessor";
+import { EnhancedMarkdownRenderer } from "@/components/markdown/EnhancedMarkdownRenderer";
+import { useInstagramEmbeds } from "@/hooks/useInstagramEmbeds";
 
 interface PostDetailsProps {
   post: Discussion;
@@ -72,23 +65,13 @@ export default function PostDetails({
     estimateVoteValue,
   } = useHivePower(user);
 
-  // Memoize expensive computations
-  const processedBody = useMemo(() => {
-    console.log(
-      "🎬 Processing media content for body:",
-      body.substring(0, 100) + "..."
-    );
-    return processMediaContent(body);
+  // Process markdown content once
+  const processedMarkdown = useMemo(() => {
+    return MarkdownProcessor.process(body);
   }, [body]);
 
-  const processedBodyWithPlaceholders = useMemo(() => {
-    const result = processedBody.replace(
-      /<div class="video-embed" data-ipfs-hash="([^"]+)">[\s\S]*?<\/div>/g,
-      (_, videoID) => `[[VIDEO:${videoID}]]`
-    );
-    console.log("🎬 Video placeholders processed");
-    return result;
-  }, [processedBody]);
+  // Handle Instagram embeds
+  useInstagramEmbeds(processedMarkdown.hasInstagramEmbeds);
 
   // Memoize payout calculations
   const payoutData = useMemo(() => {
@@ -187,130 +170,6 @@ export default function PostDetails({
     user,
     estimateVoteValue,
   ]);
-
-  // Memoize the video rendering function
-  const renderBodyWithVideos = useCallback((body: string) => {
-    // Split on all supported video placeholders
-    const parts = body.split(
-      /(\[\[(VIDEO|ODYSEE|YOUTUBE|VIMEO):([^\]]+)\]\])/g
-    );
-
-    return parts.map((part, idx) => {
-      // Handle IPFS video
-      const videoMatch = part.match(/^\[\[VIDEO:([^\]]+)\]\]$/);
-      if (videoMatch) {
-        const videoID = videoMatch[1];
-        return (
-          <VideoRenderer
-            key={`video-${videoID}-${idx}`}
-            src={`https://ipfs.skatehive.app/ipfs/${videoID}`}
-          />
-        );
-      }
-
-      // Handle Odysee iframe
-      const odyseeMatch = part.match(/^\[\[ODYSEE:([^\]]+)\]\]$/);
-      if (odyseeMatch) {
-        const odyseeUrl = odyseeMatch[1];
-        return (
-          <iframe
-            key={`odysee-${idx}`}
-            src={odyseeUrl}
-            style={{ width: "100%", aspectRatio: "16 / 9", border: 0 }}
-            allowFullScreen
-            id={`odysee-iframe-${idx}`}
-          />
-        );
-      }
-
-      // Handle YouTube
-      const youtubeMatch = part.match(/^\[\[YOUTUBE:([^\]]+)\]\]$/);
-      if (youtubeMatch) {
-        const videoId = youtubeMatch[1];
-        return (
-          <iframe
-            key={`youtube-${idx}`}
-            src={`https://www.youtube.com/embed/${videoId}`}
-            style={{ width: "100%", aspectRatio: "16 / 9", border: 0 }}
-            allowFullScreen
-            id={`youtube-iframe-${idx}`}
-          />
-        );
-      }
-
-      // Handle Vimeo
-      const vimeoMatch = part.match(/^\[\[VIMEO:([^\]]+)\]\]$/);
-      if (vimeoMatch) {
-        const videoId = vimeoMatch[1];
-        return (
-          <iframe
-            key={`vimeo-${idx}`}
-            src={`https://player.vimeo.com/video/${videoId}`}
-            style={{ width: "100%", aspectRatio: "16 / 9", border: 0 }}
-            allowFullScreen
-            id={`vimeo-iframe-${idx}`}
-          />
-        );
-      }
-
-      // Skip empty parts or parts that are just whitespace
-      if (!part || part.trim() === "") {
-        return null;
-      }
-
-      // Skip if part is just an IPFS CID (bafy... or Qm...)
-      if (
-        /^(bafy[0-9a-z]{50,}|Qm[1-9A-HJ-NP-Za-km-z]{44,})$/.test(part.trim())
-      ) {
-        return null;
-      }
-
-      // Clean the part
-      let cleanedPart = part
-        .replace(/^https?:\/\/(?:www\.)?odysee\.com\/.*$/gm, "")
-        .replace(/^ODYSEE\s*$/gm, "")
-        .replace(/^VIDEO\s*$/gm, "")
-        .replace(/^(Qm[1-9A-HJ-NP-Za-km-z]{44,})$/gm, "")
-        .replace(/^(bafy[0-9a-z]{50,})$/gm, "");
-
-      // Skip if the cleaned part is empty or just whitespace
-      if (!cleanedPart || cleanedPart.trim() === "") {
-        return null;
-      }
-
-      return <HiveMarkdown key={`md-${idx}`} markdown={cleanedPart} />;
-    });
-  }, []);
-
-  // Memoize the rendered content
-  const renderedContent = useMemo(() => {
-    return renderBodyWithVideos(processedBodyWithPlaceholders);
-  }, [processedBodyWithPlaceholders, renderBodyWithVideos]);
-
-  // Instagram script effect
-  useEffect(() => {
-    if (
-      processedBody.includes("<!--INSTAGRAM_EMBED_SCRIPT-->") &&
-      typeof window !== "undefined"
-    ) {
-      // Remove any existing Instagram embed script
-      const existing = document.querySelector(
-        'script[src="https://www.instagram.com/embed.js"]'
-      );
-      if (!existing) {
-        const script = document.createElement("script");
-        script.src = "https://www.instagram.com/embed.js";
-        script.async = true;
-        document.body.appendChild(script);
-      } else {
-        // @ts-ignore
-        const instgrm = (window as any).instgrm;
-        if (instgrm && instgrm.Embeds) {
-          instgrm.Embeds.process();
-        }
-      }
-    }
-  }, [processedBody]);
 
   return (
     <Box
@@ -708,8 +567,10 @@ export default function PostDetails({
 
       <Divider />
 
-      <Box mt={4} className="markdown-body" ref={markdownRef}>
-        {renderedContent}
+      <Box mt={4} ref={markdownRef}>
+        <EnhancedMarkdownRenderer
+          content={processedMarkdown.contentWithPlaceholders}
+        />
       </Box>
 
       <style jsx global>{`

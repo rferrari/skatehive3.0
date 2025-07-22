@@ -15,7 +15,7 @@ import React from "react";
 import SnapComposer from "./SnapComposer";
 import { Discussion } from "@hiveio/dhive";
 import { CloseIcon } from "@chakra-ui/icons";
-import markdownRenderer from "@/lib/utils/MarkdownRenderer";
+import markdownRenderer from "@/lib/markdown/MarkdownRenderer";
 import { getPostDate } from "@/lib/utils/GetPostDate";
 
 interface SnapReplyModalProps {

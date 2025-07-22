@@ -2,7 +2,7 @@ import React from "react";
 import { Box, useBreakpointValue } from "@chakra-ui/react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination } from "swiper/modules";
-import markdownRenderer from "@/lib/utils/MarkdownRenderer";
+import markdownRenderer from "@/lib/markdown/MarkdownRenderer";
 import VideoRenderer from "../layout/VideoRenderer";
 
 // Import Swiper styles

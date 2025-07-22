@@ -22,7 +22,7 @@ import { LuArrowUpRight } from "react-icons/lu";
 import { useAioha } from "@aioha/react-ui";
 import { useState, useMemo } from "react";
 import { getPayoutValue } from "@/lib/hive/client-functions";
-import markdownRenderer from "@/lib/utils/MarkdownRenderer";
+import markdownRenderer from "@/lib/markdown/MarkdownRenderer";
 import { getPostDate } from "@/lib/utils/GetPostDate";
 import useHiveAccount from "@/hooks/useHiveAccount";
 import VideoRenderer from "@/components/layout/VideoRenderer";
@@ -636,7 +636,11 @@ const BountySnap = ({
                   leftIcon={
                     <LuArrowUpRight
                       size={24}
-                      color={voted ? "var(--chakra-colors-accent)" : "var(--chakra-colors-muted)"}
+                      color={
+                        voted
+                          ? "var(--chakra-colors-accent)"
+                          : "var(--chakra-colors-muted)"
+                      }
                       style={{ opacity: voted ? 1 : 1 }}
                     />
                   }

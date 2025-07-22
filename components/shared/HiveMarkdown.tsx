@@ -1,5 +1,5 @@
 import React from "react";
-import markdownRenderer from "@/lib/utils/MarkdownRenderer";
+import markdownRenderer from "@/lib/markdown/MarkdownRenderer";
 import { Image } from "@chakra-ui/react";
 
 interface HiveMarkdownProps {
@@ -71,8 +71,10 @@ const HiveMarkdown: React.FC<HiveMarkdownProps> = ({
   // Post-process YouTube tags in the HTML
   const processYouTubeEmbeds = (html: string) => {
     // Replace all [[YOUTUBE:VIDEOID]] with responsive iframes
-    return html.replace(/\[\[YOUTUBE:([a-zA-Z0-9_-]{11})\]\]/g, (_match, videoId) => {
-      return `
+    return html.replace(
+      /\[\[YOUTUBE:([a-zA-Z0-9_-]{11})\]\]/g,
+      (_match, videoId) => {
+        return `
         <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; margin: 1rem 0;">
           <iframe
             src="https://www.youtube.com/embed/${videoId}"
@@ -83,7 +85,8 @@ const HiveMarkdown: React.FC<HiveMarkdownProps> = ({
           ></iframe>
         </div>
       `;
-    });
+      }
+    );
   };
 
   rawHtml = processYouTubeEmbeds(rawHtml);

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@chakra-ui/react";
 import { useAioha } from "@aioha/react-ui";
-import { generatePermlink, prepareImageArray, insertAtCursor } from "@/lib/utils/composeUtils";
+import { generatePermlink, prepareImageArray, insertAtCursor } from "@/lib/markdown/composeUtils";
 
 export const useComposeForm = () => {
     const [markdown, setMarkdown] = useState("");

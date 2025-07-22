@@ -1,6 +1,6 @@
 import { useState } from "react";
 import imageCompression from "browser-image-compression";
-import { uploadToIPFS } from "@/lib/utils/composeUtils";
+import { uploadToIPFS } from "@/lib/markdown/composeUtils";
 
 export const useImageUpload = (insertAtCursor: (content: string) => void) => {
     const [isUploading, setIsUploading] = useState(false);
