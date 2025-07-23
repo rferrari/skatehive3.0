@@ -10,8 +10,8 @@ const londrinaSolid = Londrina_Solid({
 const nounsDaoTheme = extendTheme({
     colors: {
         background: 'linear-gradient(45deg, #ffcc00, #f7f7f7)',  // Cool gradient background
-        text: '#333333',  // Dark gray text
-        primary: '#333333',
+        text: '#909090',  // Dark gray text
+        primary: '#1B1F3B',
         secondary: '#ffcc00',  // Nouns yellow
         accent: '#9d0040',  // Deep burgundy for accent
         muted: '#f7f7f7',  // Muted background

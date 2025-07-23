@@ -261,7 +261,7 @@ const HBDSection = memo(function HBDSection({
                     </HStack>
 
                     {/* Available HBD to invest */}
-                    <Box p={3} bg="background" borderRadius="md" border="1px solid" borderColor="muted">
+                    <Box p={3} borderRadius="md" bg={theme.colors.muted}>
                         <Text fontSize="sm" color="text" mb={1}>
                             Available HBD to invest: <Text as="span" fontWeight="bold" color="primary">{hbdBalance} HBD</Text>
                         </Text>
@@ -272,13 +272,23 @@ const HBDSection = memo(function HBDSection({
 
                     {/* Claimable Interest */}
                     {estimatedClaimableInterest > 0 && (
-                        <Box p={3} bg="background" borderRadius="md" border="1px solid" borderColor="lime">
+                        <Box p={3} borderRadius="md" bg={theme.colors.muted}>
                             <Box display="flex" alignItems="center" justifyContent="space-between">
                                 <Box>
                                     <Text fontWeight="bold" color="lime">💎 Claimable Interest</Text>
-                                    <Text color="gray.400" fontSize="sm">
-                                        Your earned rewards are ready!
-                                    </Text>
+                                    {daysUntilClaim === 0 && estimatedClaimableInterest > 0 ? (
+                                        <Text color="gray.400" fontSize="sm">
+                                            Your earned rewards are ready!
+                                        </Text>
+                                    ) : daysUntilClaim > 0 ? (
+                                        <Text color="gray.400" fontSize="sm">
+                                            Rewards will be ready in {daysUntilClaim} day{daysUntilClaim > 1 ? 's' : ''}
+                                        </Text>
+                                    ) : (
+                                        <Text color="gray.400" fontSize="sm">
+                                            No claimable interest yet
+                                        </Text>
+                                    )}
                                     {lastInterestPayment && (
                                         <Text color="gray.400" fontSize="xs">
                                             Last payment: {daysAgo(lastInterestPayment)} days ago
@@ -307,7 +317,7 @@ const HBDSection = memo(function HBDSection({
                     )}
 
                     {/* Investment Info */}
-                    <Box p={3} bg="background" borderRadius="md" border="1px solid" borderColor="muted">
+                    <Box p={3} borderRadius="md" bg={theme.colors.muted}>
                         <Text fontSize="sm" fontWeight="bold" mb={1}>📈 Investment Details</Text>
                         <Text fontSize="xs" color="text" mb={1}>
                             • <Text as="span" color="lime" fontWeight="bold">15% APR</Text> guaranteed returns

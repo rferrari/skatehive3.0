@@ -198,7 +198,7 @@ export default function SendTokenModal({
   return (
     <Modal isOpen={isOpen} onClose={handleClose} size="md">
       <ModalOverlay />
-      <ModalContent bg="background" color="white">
+      <ModalContent bg="background" color="text" borderRadius="lg" border="1px solid" borderColor="border">
         <ModalHeader>
           <HStack spacing={3}>
             {tokenLogo && (
@@ -210,35 +210,36 @@ export default function SendTokenModal({
                 borderRadius="full"
               />
             )}
-            <Text>Send {token.token.symbol}</Text>
+            <Text color="primary">Send {token.token.symbol}</Text>
           </HStack>
         </ModalHeader>
-        <ModalCloseButton />
+        <ModalCloseButton color="text" _hover={{ color: "background", bg: "primary" }} />
 
         <ModalBody>
           <VStack spacing={4}>
-            <Alert status="info" borderRadius="md">
-              <AlertIcon />
-              <Text fontSize="sm">
+            <Alert status="info" borderRadius="md" bg="muted" color="text">
+              <AlertIcon color="primary" />
+              <Text fontSize="sm" color="text">
                 Balance: {formatBalance(token.token.balance)}{" "}
                 {token.token.symbol}
               </Text>
             </Alert>
 
             <FormControl>
-              <FormLabel>Recipient Address</FormLabel>
+              <FormLabel color="primary">Recipient Address</FormLabel>
               <Input
                 placeholder="0x..."
                 value={recipient}
                 onChange={(e) => setRecipient(e.target.value)}
                 bg="muted"
                 border="1px solid"
-                borderColor="gray.600"
+                borderColor="border"
+                color="text"
               />
             </FormControl>
 
             <FormControl>
-              <FormLabel>Amount</FormLabel>
+              <FormLabel color="primary">Amount</FormLabel>
               <Input
                 type="number"
                 step="any"
@@ -247,9 +248,10 @@ export default function SendTokenModal({
                 onChange={(e) => setAmount(e.target.value)}
                 bg="muted"
                 border="1px solid"
-                borderColor="gray.600"
+                borderColor="border"
+                color="text"
               />
-              <Text fontSize="xs" color="gray.400" mt={1}>
+              <Text fontSize="xs" color="muted" mt={1}>
                 Decimals: {token.token.decimals}
               </Text>
             </FormControl>
@@ -257,17 +259,19 @@ export default function SendTokenModal({
         </ModalBody>
 
         <ModalFooter>
-          <Button variant="ghost" mr={3} onClick={handleClose}>
+          <Button variant="ghost" mr={3} onClick={handleClose} color="primary" _hover={{ color: "background", bg: "primary" }}>
             Cancel
           </Button>
           <Button
-            colorScheme="blue"
+            bg="primary"
+            color="background"
             onClick={handleSend}
             isLoading={isPending || isConfirming}
             loadingText={isPending ? "Sending..." : "Confirming..."}
             disabled={!recipient || !amount}
+            _hover={{ bg: "accent", color: "background" }}
           >
-            {isPending || isConfirming ? <Spinner size="sm" /> : "Send"}
+            {isPending || isConfirming ? <Spinner size="sm" color="background" /> : "Send"}
           </Button>
         </ModalFooter>
       </ModalContent>

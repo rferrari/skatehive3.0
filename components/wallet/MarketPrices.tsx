@@ -23,7 +23,7 @@ export default function MarketPrices({
       p={{ base: 2, md: 4 }}
       border="none"
       borderRadius="base"
-      bg="muted"
+      bg={theme.colors.muted}
       boxShadow="none"
       width="100%"
     >
@@ -31,7 +31,7 @@ export default function MarketPrices({
         <Text
           fontWeight="extrabold"
           fontSize={{ base: "xl", md: "2xl" }}
-          color="primary"
+          color={theme.colors.primary}
           mr={2}
         >
           Market Prices
@@ -42,11 +42,11 @@ export default function MarketPrices({
             px={2}
             py={1}
             fontSize="sm"
-            bg="primary"
-            color="background"
+            bg={theme.colors.primary}
+            color={theme.colors.background}
             borderRadius="md"
             fontWeight="bold"
-            _hover={{ bg: "accent" }}
+            _hover={{ bg: theme.colors.accent }}
             onClick={() => router.push("https://hivedex.io/")}
             ml={2}
           >
@@ -63,11 +63,11 @@ export default function MarketPrices({
       {/* HIVE Market Stat */}
       <Box mb={6}>
         <HStack align="center" justify="center" mb={1} spacing={2}>
-          <CustomHiveIcon color="rgb(233, 66, 95)" />
+          <CustomHiveIcon color={theme.colors.primary} />
           <Text
             fontWeight="bold"
             fontSize={{ base: "md", md: "lg" }}
-            color="gray.100"
+            color={theme.colors.primary}
           >
             HIVE
           </Text>
@@ -76,7 +76,7 @@ export default function MarketPrices({
           <Text
             fontSize={{ base: "2xl", md: "4xl" }}
             fontWeight="extrabold"
-            color="green.200"
+            color={theme.colors.success || theme.colors.primary}
           >
             {isPriceLoading
               ? "Loading..."
@@ -84,15 +84,15 @@ export default function MarketPrices({
               ? `${hivePrice.toFixed(3)} USD`
               : "N/A"}
           </Text>
-          <Text fontSize="sm" color="gray.400" textAlign="center">
+          <Text fontSize="sm" color={theme.colors.muted} textAlign="center">
             HIVE price by
             <Text
               as="a"
               href="https://www.coingecko.com/en/coins/hive"
               target="_blank"
               rel="noopener noreferrer"
-              color="blue.300"
-              _hover={{ textDecoration: "underline", color: "blue.400" }}
+              color={theme.colors.accent}
+              _hover={{ textDecoration: "underline", color: theme.colors.primary }}
               ml={1}
               display="inline"
             >
@@ -105,11 +105,11 @@ export default function MarketPrices({
       {/* HBD Market Stat */}
       <Box mb={4}>
         <HStack align="center" justify="center" mb={1} spacing={2}>
-          <CustomHiveIcon color="lime" />
+          <CustomHiveIcon color={theme.colors.accent} />
           <Text
             fontWeight="bold"
             fontSize={{ base: "md", md: "lg" }}
-            color="gray.100"
+            color={theme.colors.accent}
           >
             HBD
           </Text>
@@ -118,7 +118,7 @@ export default function MarketPrices({
           <Text
             fontSize={{ base: "2xl", md: "4xl" }}
             fontWeight="extrabold"
-            color="green.200"
+            color={theme.colors.success || theme.colors.primary}
           >
             {isPriceLoading
               ? "Loading..."
@@ -126,15 +126,15 @@ export default function MarketPrices({
               ? `${hbdPrice.toFixed(3)} USD`
               : "N/A"}
           </Text>
-          <Text fontSize="sm" color="gray.400" textAlign="center">
+          <Text fontSize="sm" color={theme.colors.muted} textAlign="center">
             HBD price by
             <Text
               as="a"
               href="https://www.coingecko.com/en/coins/hive_dollar"
               target="_blank"
               rel="noopener noreferrer"
-              color="blue.300"
-              _hover={{ textDecoration: "underline", color: "blue.400" }}
+              color={theme.colors.accent}
+              _hover={{ textDecoration: "underline", color: theme.colors.primary }}
               ml={1}
               display="inline"
             >

@@ -34,13 +34,13 @@ export default function ConnectModal({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} isCentered size="lg">
-      <ModalOverlay bg="blackAlpha.700" backdropFilter="blur(10px)" />
+      <ModalOverlay bg="muted" backdropFilter="blur(10px)" />
       <ModalContent
         bg="background"
-        color="white"
+        color="text"
         borderRadius="20px"
         border="1px solid"
-        borderColor="whiteAlpha.200"
+        borderColor="border"
         shadow="2xl"
         mx={4}
       >
@@ -54,8 +54,8 @@ export default function ConnectModal({
           🛹 Connect Wallet & Social
         </ModalHeader>
         <ModalCloseButton
-          color="whiteAlpha.600"
-          _hover={{ color: "white", bg: "whiteAlpha.200" }}
+          color="text"
+          _hover={{ color: "background", bg: "primary" }}
           borderRadius="full"
         />
         <ModalBody px={8} pb={8}>
@@ -66,7 +66,7 @@ export default function ConnectModal({
               bg="background"
               borderRadius="16px"
               border="1px solid"
-              borderColor="whiteAlpha.200"
+              borderColor="border"
               _hover={{ borderColor: "primary" }}
               transition="all 0.3s ease"
             >
@@ -95,7 +95,7 @@ export default function ConnectModal({
               </Center>
             </Box>
 
-            <Divider borderColor="whiteAlpha.200" />
+            <Divider borderColor="border" />
 
             {/* Farcaster Section */}
             <Box
@@ -103,7 +103,7 @@ export default function ConnectModal({
               bg="background"
               borderRadius="16px"
               border="1px solid"
-              borderColor="whiteAlpha.200"
+              borderColor="border"
               _hover={{ borderColor: "primary" }}
               transition="all 0.3s ease"
             >
@@ -131,7 +131,7 @@ export default function ConnectModal({
                 bg="background"
                 borderRadius="16px"
                 border="1px solid"
-                borderColor="whiteAlpha.200"
+                borderColor="border"
                 _hover={{ borderColor: "primary" }}
                 transition="all 0.3s ease"
               >
@@ -151,8 +151,8 @@ export default function ConnectModal({
                   <Identity address={address}>
                     <VStack align="center" spacing={3}>
                       <Avatar className="h-12 w-12" />
-                      <Name className="text-white text-lg font-medium" />
-                      <Address className="text-gray-400 text-sm" />
+                      <Name className="text-primary text-lg font-medium" />
+                      <Address className="text-text text-sm" />
                       <Badge />
                     </VStack>
                   </Identity>

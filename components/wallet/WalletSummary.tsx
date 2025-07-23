@@ -150,8 +150,7 @@ const WalletSummary = memo(function WalletSummary({
       p={4}
       bg="background"
       borderRadius="md"
-      border="2px solid"
-      borderColor="primary"
+      // Removed border and borderColor
     >
       <VStack spacing={4} align="stretch">
         {/* Portfolio Distribution Chart */}
@@ -171,7 +170,6 @@ const WalletSummary = memo(function WalletSummary({
             </Text>
             <Box
               p={3}
-              bg="background"
               borderRadius="12px"
               border="1px solid"
               borderColor="whiteAlpha.200"
@@ -252,7 +250,6 @@ const WalletSummary = memo(function WalletSummary({
             </Text>
             <Box
               p={3}
-              bg="background"
               borderRadius="12px"
               border="1px solid"
               borderColor="whiteAlpha.200"

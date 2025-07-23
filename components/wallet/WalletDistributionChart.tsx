@@ -3,6 +3,7 @@ import React, { useMemo } from 'react';
 import { Box, Text, VStack, HStack, Badge } from '@chakra-ui/react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { formatValue } from '../../lib/utils/portfolioUtils';
+import { useTheme } from "@/app/themeProvider";
 
 interface WalletData {
     name: string;
@@ -20,17 +21,6 @@ interface WalletDistributionChartProps {
     connectedEthAddress?: string;
 }
 
-const COLORS = [
-    '#3182ce', // Ethereum blue
-    '#e53e3e', // Hive red
-    '#805ad5', // Farcaster purple 1 (main)
-    '#9f7aea', // Farcaster purple 2 (lighter)
-    '#b794f6', // Farcaster purple 3 (even lighter)
-    '#d6bcfa', // Farcaster purple 4 (lightest)
-    '#6b46c1', // Farcaster purple 5 (darker)
-    '#553c9a'  // Farcaster purple 6 (darkest)
-];
-
 export function WalletDistributionChart({
     ethPortfolio = 0,
     farcasterVerifiedPortfolios = {},
@@ -38,17 +28,25 @@ export function WalletDistributionChart({
     farcasterProfile,
     connectedEthAddress
 }: WalletDistributionChartProps) {
+    const { theme } = useTheme();
+
+    // Use theme colors for chart segments
+    const THEME_COLORS = [
+        theme.colors.primary,
+        theme.colors.accent,
+        theme.colors.success || theme.colors.secondary,
+        theme.colors.warning || theme.colors.border,
+        theme.colors.text,
+        theme.colors.muted,
+        theme.colors.background,
+        theme.colors.error
+    ].filter(Boolean);
 
     const chartData = useMemo(() => {
         const data: WalletData[] = [];
-
-        // Calculate total value first to determine if we should show anything
         const verifiedWalletValues = Object.values(farcasterVerifiedPortfolios).map(p => p?.totalNetWorth || 0);
         const totalValue = ethPortfolio + hiveValue + verifiedWalletValues.reduce((sum, val) => sum + val, 0);
-
         if (totalValue === 0) return [];
-
-        // Add Ethereum wallet (only if balance > 0)
         if (ethPortfolio > 0) {
             const percentage = (ethPortfolio / totalValue) * 100;
             data.push({
@@ -57,41 +55,36 @@ export function WalletDistributionChart({
                     : 'Ethereum Wallet',
                 value: ethPortfolio,
                 address: connectedEthAddress,
-                color: COLORS[0], // Blue for Ethereum
+                color: THEME_COLORS[0],
                 percentage
             });
         }
-
-        // Add Hive wallet (only if balance > 0)
         if (hiveValue > 0) {
             const percentage = (hiveValue / totalValue) * 100;
             data.push({
                 name: 'Hive Blockchain',
                 value: hiveValue,
-                color: COLORS[1], // Red for Hive
+                color: THEME_COLORS[1 % THEME_COLORS.length],
                 percentage
             });
         }
-
-        // Add verified Farcaster wallets (only if balance > 0)
-        let farcasterColorIndex = 2; // Start from purple colors
+        let farcasterColorIndex = 2;
         Object.entries(farcasterVerifiedPortfolios).forEach(([address, portfolio], index) => {
             const value = portfolio?.totalNetWorth || 0;
-            if (value > 0) { // Only add wallets with positive balance
+            if (value > 0) {
                 const percentage = (value / totalValue) * 100;
                 data.push({
                     name: `Verified Wallet ${index + 1}`,
                     value,
                     address,
-                    color: COLORS[farcasterColorIndex] || COLORS[2], // Default to main purple if we run out
+                    color: THEME_COLORS[farcasterColorIndex % THEME_COLORS.length],
                     percentage
                 });
                 farcasterColorIndex++;
             }
         });
-
-        return data.sort((a, b) => b.value - a.value); // Sort by value descending
-    }, [ethPortfolio, farcasterVerifiedPortfolios, hiveValue, farcasterProfile, connectedEthAddress]);
+        return data.sort((a, b) => b.value - a.value);
+    }, [ethPortfolio, farcasterVerifiedPortfolios, hiveValue, farcasterProfile, connectedEthAddress, THEME_COLORS]);
 
     // Custom tooltip component
     const CustomTooltip = ({ active, payload }: any) => {
@@ -99,28 +92,28 @@ export function WalletDistributionChart({
             const data = payload[0].payload;
             return (
                 <Box
-                    bg="gray.800"
+                    bg={theme.colors.background}
                     p={3}
                     borderRadius="md"
                     border="1px solid"
-                    borderColor="gray.600"
+                    borderColor={theme.colors.border}
                     boxShadow="2xl"
                     zIndex={1000}
                     position="relative"
                     minW="200px"
                 >
                     <VStack spacing={1} align="stretch">
-                        <Text fontSize="sm" fontWeight="bold" color="white">
+                        <Text fontSize="sm" fontWeight="bold" color={theme.colors.text}>
                             {data.name}
                         </Text>
-                        <Text fontSize="lg" fontWeight="bold" color="primary">
+                        <Text fontSize="lg" fontWeight="bold" color={theme.colors.primary}>
                             {formatValue(data.value)}
                         </Text>
-                        <Text fontSize="xs" color="gray.300">
+                        <Text fontSize="xs" color={theme.colors.muted}>
                             {data.percentage.toFixed(1)}% of portfolio
                         </Text>
                         {data.address && (
-                            <Text fontSize="xs" color="gray.400" fontFamily="mono">
+                            <Text fontSize="xs" color={theme.colors.accent} fontFamily="mono">
                                 {data.address.slice(0, 6)}...{data.address.slice(-4)}
                             </Text>
                         )}
@@ -144,11 +137,11 @@ export function WalletDistributionChart({
                                 borderRadius="sm"
                                 bg={entry.color}
                             />
-                            <Text fontSize="sm" color="text" noOfLines={1}>
+                            <Text fontSize="sm" color={theme.colors.text} noOfLines={1}>
                                 {entry.value}
                             </Text>
                         </HStack>
-                        <Badge colorScheme="blue" fontSize="xs">
+                        <Badge bg={entry.color} color={theme.colors.background} fontSize="xs" variant="solid">
                             {entry.payload.percentage.toFixed(1)}%
                         </Badge>
                     </HStack>
@@ -164,14 +157,14 @@ export function WalletDistributionChart({
     if (chartData.length === 0) {
         return (
             <Box textAlign="center" py={8}>
-                <Text color="gray.400">No wallet data available</Text>
+                <Text color={theme.colors.muted}>No wallet data available</Text>
             </Box>
         );
     }
 
     return (
         <Box overflow="visible" position="relative">
-            <Text fontSize="lg" fontWeight="bold" color="primary" textAlign="center" mb={4}>
+            <Text fontSize="lg" fontWeight="bold" color={theme.colors.primary} textAlign="center" mb={4}>
                 Portfolio Distribution
             </Text>
 
@@ -216,10 +209,10 @@ export function WalletDistributionChart({
                     textAlign="center"
                     pointerEvents="none"
                 >
-                    <Text fontSize="xs" color="gray.400" mb={1}>
+                    <Text fontSize="xs" color={theme.colors.muted} mb={1}>
                         Total Value
                     </Text>
-                    <Text fontSize="lg" fontWeight="bold" color="primary">
+                    <Text fontSize="lg" fontWeight="bold" color={theme.colors.primary}>
                         {formatValue(totalValue)}
                     </Text>
                 </Box>

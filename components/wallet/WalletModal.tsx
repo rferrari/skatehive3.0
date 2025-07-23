@@ -43,26 +43,28 @@ export default function WalletModal({ isOpen, onClose, title, description, showM
     return (
         <Modal isOpen={isOpen} onClose={onClose}>
             <ModalOverlay />
-            <ModalContent>
-                <ModalHeader>{title}</ModalHeader>
-                <ModalCloseButton />
+            <ModalContent bg="background" color="text" borderRadius="lg" border="1px solid" borderColor="border">
+                <ModalHeader color="primary">{title}</ModalHeader>
+                <ModalCloseButton color="text" _hover={{ color: "background", bg: "primary" }} />
                 <ModalBody>
-                    {description && <Text fontSize={'small'} mb={4}>{description}</Text>}
+                    {description && <Text fontSize={'small'} mb={4} color="text">{description}</Text>}
                     {title.toLowerCase().includes('convert') && (
                         <Flex mb={4} align="center" justify="center" gap={4}>
-                            <Text fontWeight="bold" fontSize="lg">HIVE</Text>
+                            <Text fontWeight="bold" fontSize="lg" color="primary">HIVE</Text>
                             <IconButton
                                 aria-label="Flip direction"
                                 icon={<ArrowForwardIcon />}
                                 onClick={() => setDirection(direction === 'HIVE_TO_HBD' ? 'HBD_TO_HIVE' : 'HIVE_TO_HBD')}
                                 variant="ghost"
                                 fontSize="2xl"
+                                color="primary"
+                                _hover={{ color: "background", bg: "primary" }}
                                 sx={{
                                     transition: 'transform 0.3s',
                                     transform: direction === 'HIVE_TO_HBD' ? 'rotate(0deg)' : 'rotate(180deg)',
                                 }}
                             />
-                            <Text fontWeight="bold" fontSize="lg">HBD</Text>
+                            <Text fontWeight="bold" fontSize="lg" color="primary">HBD</Text>
                         </Flex>
                     )}
                     <Box mb={4}>
@@ -72,6 +74,10 @@ export default function WalletModal({ isOpen, onClose, title, description, showM
                             value={amount}
                             onChange={handleAmountChange}
                             min={0}
+                            bg="muted"
+                            border="1px solid"
+                            borderColor="border"
+                            color="text"
                         />
                     </Box>
                     {showUsernameField && (
@@ -80,6 +86,10 @@ export default function WalletModal({ isOpen, onClose, title, description, showM
                                 placeholder="Enter username"
                                 value={username}
                                 onChange={handleUsernameChange}
+                                bg="muted"
+                                border="1px solid"
+                                borderColor="border"
+                                color="text"
                             />
                         </Box>
                     )}
@@ -89,13 +99,17 @@ export default function WalletModal({ isOpen, onClose, title, description, showM
                                 placeholder="Enter memo (optional)"
                                 value={memo}
                                 onChange={handleMemoChange}
+                                bg="muted"
+                                border="1px solid"
+                                borderColor="border"
+                                color="text"
                             />
                         </Box>
                     )}
                 </ModalBody>
                 <ModalFooter>
-                    <Button variant="ghost" onClick={onClose}>Cancel</Button>
-                    <Button ml={3} onClick={handleConfirm}>Confirm</Button>
+                    <Button variant="ghost" onClick={onClose} color="primary" _hover={{ color: "background", bg: "primary" }}>Cancel</Button>
+                    <Button ml={3} onClick={handleConfirm} color="background" bg="primary" _hover={{ bg: "accent", color: "background" }}>Confirm</Button>
                 </ModalFooter>
             </ModalContent>
         </Modal>
