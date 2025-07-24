@@ -6,6 +6,14 @@ export const client = new dhive.Client([
     "https://api.hive.blog",
 ]);
 
+
+/**
+ * @returns A random password for the new account.
+ * This password is generated using the crypto API for security.
+ * It creates a random seed and generates a private key from it.
+ * The password is prefixed with 'SKATE000' to ensure it meets the length requirement
+ * for Hive accounts.
+ */
 export const generatePassword = () => {
     const array = new Uint32Array(10);
     if (typeof window !== 'undefined' && window.crypto) {
@@ -16,6 +24,15 @@ export const generatePassword = () => {
     const key = 'SKATE000' + dhive.PrivateKey.fromSeed(array.toString()).toString();
     return key.substring(0, 25);
 }
+
+/** * Generates private keys for a given username and password.
+ * @param {string} username - The username for which to generate private keys.
+ * @param {string} password - The password used to generate the private keys.
+ * @param {string[]} roles - An array of roles for which to generate keys.
+ * @returns {object} An object containing the private keys for the specified roles. 
+ * Each key is stored with its role as the key name.
+ * The keys are generated using the dhive library's PrivateKey.fromLogin method.
+ */
 
 export const getPrivateKeys = (username: string, password: string, roles = ['owner', 'active', 'posting', 'memo']) => {
     const privKeys = {} as any;

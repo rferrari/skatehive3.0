@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import {
   Box,
   Button,
-  Center,
   Flex,
   FormControl,
   Heading,
@@ -19,7 +18,6 @@ import {
   AccordionButton,
   AccordionPanel,
   AccordionIcon,
-  useToast,
 } from "@chakra-ui/react";
 import { FaCheck, FaTimes } from "react-icons/fa";
 import {
@@ -46,7 +44,6 @@ export default function InvitePage() {
   );
   const { KeychainSDK, KeychainRequestTypes, KeychainKeyTypes, isLoaded } =
     useKeychainSDK();
-  const toast = useToast();
   const [desiredUsername, setDesiredUsername] = useState("");
   const [desiredEmail, setDesiredEmail] = useState("");
   const [accountAvailable, setAccountAvailable] = useState(false);
@@ -352,7 +349,7 @@ export default function InvitePage() {
               {accountAvailable
                 ? "Yeah!! Account available. Drop it!"
                 : "Please choose another nickname! " +
-                String(accountInvalid).replace(/'/g, "&apos;")}
+                  String(accountInvalid).replace(/'/g, "&apos;")}
             </Text>
           </Flex>
         )}
