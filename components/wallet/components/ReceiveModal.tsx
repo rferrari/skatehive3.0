@@ -21,35 +21,36 @@ import {
   useToast,
   Spinner,
   Badge,
-  Avatar,
   Divider,
   IconButton,
   Tooltip,
   Icon,
+  Avatar as ChakraAvatar,
 } from "@chakra-ui/react";
 import { FiCopy, FiDownload, FiShare2 } from "react-icons/fi";
 import { useAccount } from "wagmi";
 import { useHiveUser } from "@/contexts/UserContext";
 import * as QRCode from "qrcode";
-
+import { Name, Avatar as OnchainAvatar } from "@coinbase/onchainkit/identity";
+import { FaEthereum, FaHive } from "react-icons/fa";
+import { useAioha } from "@aioha/react-ui";
 interface ReceiveModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
-
 const ReceiveModal: React.FC<ReceiveModalProps> = ({ isOpen, onClose }) => {
   const { isConnected, address } = useAccount();
-  const { hiveUser } = useHiveUser();
+  const { user } = useAioha();
   const [ethereumQR, setEthereumQR] = useState<string>("");
   const [hiveQR, setHiveQR] = useState<string>("");
   const [isGeneratingQR, setIsGeneratingQR] = useState(false);
   const toast = useToast();
-
+  console.log(user);
   const { hasCopied: hasEthCopied, onCopy: onEthCopy } = useClipboard(
     address || ""
   );
   const { hasCopied: hasHiveCopied, onCopy: onHiveCopy } = useClipboard(
-    hiveUser?.name || ""
+    user?.name || ""
   );
 
   const generateQRCode = async (text: string, type: "ethereum" | "hive") => {
@@ -90,10 +91,11 @@ const ReceiveModal: React.FC<ReceiveModalProps> = ({ isOpen, onClose }) => {
   }, [isOpen, address]);
 
   useEffect(() => {
-    if (isOpen && hiveUser?.name) {
-      generateQRCode(hiveUser.name, "hive");
+    if (isOpen && user?.name) {
+      console.log("Hive QR Debug:", { isOpen, hiveName: user.name });
+      generateQRCode(user.name, "hive");
     }
-  }, [isOpen, hiveUser?.name]);
+  }, [isOpen, user?.name]);
 
   const shortenAddress = (addr: string) => {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
@@ -179,52 +181,44 @@ const ReceiveModal: React.FC<ReceiveModalProps> = ({ isOpen, onClose }) => {
               <TabList p={4} bg="background">
                 <Tab
                   flex={1}
-                  color="textSecondary"
+                  color="text"
+                  bg="background"
                   _selected={{
                     bg: "primary",
-                    color: "white",
-                    fontWeight: "semibold",
+                    color: "text",
+                    fontWeight: "bold",
                   }}
                   _hover={{
-                    bg: "rgba(59, 130, 246, 0.1)",
+                    bg: "primary",
                     color: "text",
                   }}
                   borderRadius="lg"
                   transition="all 0.2s ease"
                 >
                   <HStack spacing={2}>
-                    <Avatar src="/logos/ethereum-logo.png" size="xs" />
-                    <Text>Ethereum</Text>
-                    {isConnected && (
-                      <Badge colorScheme="green" size="sm" borderRadius="full">
-                        Connected
-                      </Badge>
-                    )}
+                    <FaEthereum size="20px" color="text" />
+                    <Text color="text">Ethereum</Text>
                   </HStack>
                 </Tab>
                 <Tab
                   flex={1}
-                  color="textSecondary"
+                  color="text"
+                  bg="background"
                   _selected={{
-                    bg: "primary",
-                    color: "white",
-                    fontWeight: "semibold",
+                    bg: "secondary",
+                    color: "text",
+                    fontWeight: "bold",
                   }}
                   _hover={{
-                    bg: "rgba(59, 130, 246, 0.1)",
+                    bg: "secondary",
                     color: "text",
                   }}
                   borderRadius="lg"
                   transition="all 0.2s ease"
                 >
                   <HStack spacing={2}>
-                    <Avatar src="/logos/hive-logo.png" size="xs" />
-                    <Text>Hive</Text>
-                    {hiveUser && (
-                      <Badge colorScheme="green" size="sm" borderRadius="full">
-                        Connected
-                      </Badge>
-                    )}
+                    <FaHive size="20px" color="text" />
+                    <Text color="text">Hive</Text>
                   </HStack>
                 </Tab>
               </TabList>
@@ -234,14 +228,12 @@ const ReceiveModal: React.FC<ReceiveModalProps> = ({ isOpen, onClose }) => {
                 <TabPanel px={6} py={8}>
                   {isConnected && address ? (
                     <VStack spacing={6} align="center">
-                      {/* Header */}
+                      {/* Header with OnchainKit Identity */}
                       <VStack spacing={2}>
                         <HStack spacing={3}>
-                          <Avatar src="/logos/ethereum-logo.png" size="md" />
+                          <OnchainAvatar address={address} />
                           <VStack align="start" spacing={0}>
-                            <Text fontWeight="bold" fontSize="lg" color="text">
-                              Ethereum Wallet
-                            </Text>
+                            <Name address={address} />
                             <Text fontSize="sm" color="textSecondary">
                               ERC-20 tokens supported
                             </Text>
@@ -490,12 +482,12 @@ const ReceiveModal: React.FC<ReceiveModalProps> = ({ isOpen, onClose }) => {
 
                 {/* Hive Tab */}
                 <TabPanel px={6} py={8}>
-                  {hiveUser ? (
+                  {user ? (
                     <VStack spacing={6} align="center">
                       {/* Header */}
                       <VStack spacing={2}>
                         <HStack spacing={3}>
-                          <Avatar src="/logos/hive-logo.png" size="md" />
+                          <ChakraAvatar src="/logos/hive-logo.png" size="md" />
                           <VStack align="start" spacing={0}>
                             <Text fontWeight="bold" fontSize="lg" color="text">
                               Hive Wallet
@@ -585,9 +577,7 @@ const ReceiveModal: React.FC<ReceiveModalProps> = ({ isOpen, onClose }) => {
                                   bg="white"
                                   color="red.400"
                                   _hover={{ bg: "gray.50" }}
-                                  onClick={() =>
-                                    shareAddress(hiveUser.name, "hive")
-                                  }
+                                  onClick={() => shareAddress(user, "hive")}
                                 />
                               </Tooltip>
                             </HStack>
@@ -633,7 +623,7 @@ const ReceiveModal: React.FC<ReceiveModalProps> = ({ isOpen, onClose }) => {
                                 color="text"
                                 fontWeight="medium"
                               >
-                                @{hiveUser.name}
+                                @{user}
                               </Text>
                               <Button
                                 size="sm"
@@ -701,7 +691,8 @@ const ReceiveModal: React.FC<ReceiveModalProps> = ({ isOpen, onClose }) => {
                           color="textSecondary"
                           textAlign="center"
                         >
-                          Connect your Hive account to generate a receive QR code
+                          Connect your Hive account to generate a receive QR
+                          code
                         </Text>
                       </VStack>
                       <Button
