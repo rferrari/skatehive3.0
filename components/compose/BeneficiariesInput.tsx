@@ -43,7 +43,7 @@ export default function BeneficiariesInput({
       newBeneficiary,
       currentCount: beneficiaries.length,
       newCount: updatedBeneficiaries.length,
-      updatedBeneficiaries
+      updatedBeneficiaries,
     });
     setBeneficiaries(updatedBeneficiaries);
   }, [beneficiaries, setBeneficiaries]);
@@ -57,7 +57,7 @@ export default function BeneficiariesInput({
         removedBeneficiary,
         beforeCount: beneficiaries.length,
         afterCount: newBeneficiaries.length,
-        newBeneficiaries
+        newBeneficiaries,
       });
       setBeneficiaries(newBeneficiaries);
       validateBeneficiaries(newBeneficiaries);
@@ -69,13 +69,14 @@ export default function BeneficiariesInput({
     (index: number, field: keyof Beneficiary, value: string | number) => {
       const oldBeneficiary = beneficiaries[index];
       const newBeneficiaries = [...beneficiaries];
-      
+
       if (field === "weight") {
         // Convert percentage to basis points (1% = 100 basis points)
-        const percentage = typeof value === "string" ? parseFloat(value) || 0 : value;
+        const percentage =
+          typeof value === "string" ? parseFloat(value) || 0 : value;
         const weightInBasisPoints = Math.round(percentage * 100);
         newBeneficiaries[index][field] = weightInBasisPoints;
-        
+
         console.log("📊 BeneficiariesInput: Updating beneficiary weight", {
           index,
           field,
@@ -85,11 +86,11 @@ export default function BeneficiariesInput({
           oldValue: oldBeneficiary.weight,
           newValue: weightInBasisPoints,
           oldBeneficiary,
-          newBeneficiary: newBeneficiaries[index]
+          newBeneficiary: newBeneficiaries[index],
         });
       } else {
         newBeneficiaries[index][field] = value as string;
-        
+
         console.log("👤 BeneficiariesInput: Updating beneficiary account", {
           index,
           field,
@@ -97,67 +98,95 @@ export default function BeneficiariesInput({
           oldValue: oldBeneficiary.account,
           newValue: value,
           oldBeneficiary,
-          newBeneficiary: newBeneficiaries[index]
+          newBeneficiary: newBeneficiaries[index],
         });
       }
-      
+
       setBeneficiaries(newBeneficiaries);
       validateBeneficiaries(newBeneficiaries);
     },
     [beneficiaries, setBeneficiaries]
   );
 
-  const validateBeneficiaries = useCallback((beneficiariesList: Beneficiary[]) => {
-    console.log("✅ BeneficiariesInput: Starting validation", { beneficiariesList });
-    
-    const validationErrors: string[] = [];
+  const validateBeneficiaries = useCallback(
+    (beneficiariesList: Beneficiary[]) => {
+      console.log("✅ BeneficiariesInput: Starting validation", {
+        beneficiariesList,
+      });
 
-    // Check for empty accounts
-    beneficiariesList.forEach((beneficiary, index) => {
-      if (!beneficiary.account.trim()) {
-        validationErrors.push(`Beneficiary ${index + 1}: Account name is required`);
-      } else if (!/^[a-z][a-z0-9.-]*[a-z0-9]$/.test(beneficiary.account) || 
-                 beneficiary.account.length < 3 || 
-                 beneficiary.account.length > 16) {
-        validationErrors.push(`Beneficiary ${index + 1}: Invalid Hive account name`);
+      const validationErrors: string[] = [];
+
+      // Check for empty accounts
+      beneficiariesList.forEach((beneficiary, index) => {
+        if (!beneficiary.account.trim()) {
+          validationErrors.push(
+            `Beneficiary ${index + 1}: Account name is required`
+          );
+        } else if (
+          !/^[a-z][a-z0-9.-]*[a-z0-9]$/.test(beneficiary.account) ||
+          beneficiary.account.length < 3 ||
+          beneficiary.account.length > 16
+        ) {
+          validationErrors.push(
+            `Beneficiary ${index + 1}: Invalid Hive account name`
+          );
+        }
+      });
+
+      // Check total weight doesn't exceed 100%
+      const totalWeight = beneficiariesList.reduce(
+        (sum, b) => sum + b.weight,
+        0
+      );
+      const totalPercentage = totalWeight / 100;
+
+      console.log("📈 BeneficiariesInput: Weight calculation", {
+        beneficiariesList,
+        individualWeights: beneficiariesList.map((b) => ({
+          account: b.account,
+          weight: b.weight,
+          percentage: b.weight / 100,
+        })),
+        totalWeight,
+        totalPercentage,
+        isExceeding100: totalWeight > 10000,
+      });
+
+      if (totalWeight > 10000) {
+        // 10000 basis points = 100%
+        validationErrors.push(
+          `Total beneficiary percentage cannot exceed 100% (currently ${totalPercentage.toFixed(
+            1
+          )}%)`
+        );
       }
-    });
 
-    // Check total weight doesn't exceed 100%
-    const totalWeight = beneficiariesList.reduce((sum, b) => sum + b.weight, 0);
-    const totalPercentage = totalWeight / 100;
-    
-    console.log("📈 BeneficiariesInput: Weight calculation", {
-      beneficiariesList,
-      individualWeights: beneficiariesList.map(b => ({ account: b.account, weight: b.weight, percentage: b.weight / 100 })),
-      totalWeight,
-      totalPercentage,
-      isExceeding100: totalWeight > 10000
-    });
-    
-    if (totalWeight > 10000) { // 10000 basis points = 100%
-      validationErrors.push(`Total beneficiary percentage cannot exceed 100% (currently ${totalPercentage.toFixed(1)}%)`);
-    }
+      // Check for duplicate accounts
+      const accounts = beneficiariesList.map((b) => b.account.toLowerCase());
+      const duplicates = accounts.filter(
+        (account, index) => accounts.indexOf(account) !== index
+      );
+      if (duplicates.length > 0) {
+        validationErrors.push(
+          `Duplicate accounts found: ${duplicates.join(", ")}`
+        );
+      }
 
-    // Check for duplicate accounts
-    const accounts = beneficiariesList.map(b => b.account.toLowerCase());
-    const duplicates = accounts.filter((account, index) => accounts.indexOf(account) !== index);
-    if (duplicates.length > 0) {
-      validationErrors.push(`Duplicate accounts found: ${duplicates.join(", ")}`);
-    }
+      console.log("🔍 BeneficiariesInput: Validation results", {
+        validationErrors,
+        hasErrors: validationErrors.length > 0,
+        totalWeight,
+        totalPercentage,
+        duplicates,
+      });
 
-    console.log("🔍 BeneficiariesInput: Validation results", {
-      validationErrors,
-      hasErrors: validationErrors.length > 0,
-      totalWeight,
-      totalPercentage,
-      duplicates
-    });
+      setErrors(validationErrors);
+    },
+    []
+  );
 
-    setErrors(validationErrors);
-  }, []);
-
-  const totalPercentage = beneficiaries.reduce((sum, b) => sum + b.weight, 0) / 100;
+  const totalPercentage =
+    beneficiaries.reduce((sum, b) => sum + b.weight, 0) / 100;
 
   // Add effect to log beneficiaries changes
   React.useEffect(() => {
@@ -167,7 +196,7 @@ export default function BeneficiariesInput({
       totalWeight: beneficiaries.reduce((sum, b) => sum + b.weight, 0),
       totalPercentage,
       isOpen,
-      errors: errors.length
+      errors: errors.length,
     });
   }, [beneficiaries, totalPercentage, isOpen, errors.length]);
 
@@ -185,14 +214,23 @@ export default function BeneficiariesInput({
       </Button>
 
       {isOpen && (
-        <Box mt={3} p={4} border="1px solid" borderColor="purple.200" borderRadius="md" bg="background">
+        <Box
+          mt={3}
+          p={4}
+          border="1px solid"
+          borderColor="purple.200"
+          borderRadius="md"
+          bg="background"
+        >
           <VStack spacing={4} align="stretch">
             <Box>
               <Text fontSize="sm" color="gray.600" mb={2}>
-                Set reward beneficiaries who will receive a percentage of this post's earnings.
+                Set reward beneficiaries who will receive a percentage of this
+                post&apos;s earnings.{" "}
               </Text>
               <Text fontSize="xs" color="gray.500">
-                Total: {totalPercentage.toFixed(1)}% | Author keeps: {(100 - totalPercentage).toFixed(1)}%
+                Total: {totalPercentage.toFixed(1)}% | Author keeps:{" "}
+                {(100 - totalPercentage).toFixed(1)}%
               </Text>
             </Box>
 
@@ -205,12 +243,14 @@ export default function BeneficiariesInput({
                   <Input
                     placeholder="hive-username"
                     value={beneficiary.account}
-                    onChange={(e) => updateBeneficiary(index, "account", e.target.value)}
+                    onChange={(e) =>
+                      updateBeneficiary(index, "account", e.target.value)
+                    }
                     size="sm"
                     isDisabled={isSubmitting}
                   />
                 </FormControl>
-                
+
                 <FormControl flex="1">
                   <FormLabel fontSize="xs" mb={1}>
                     Percentage
@@ -222,12 +262,14 @@ export default function BeneficiariesInput({
                     max="100"
                     step="0.1"
                     value={(beneficiary.weight / 100).toFixed(1)}
-                    onChange={(e) => updateBeneficiary(index, "weight", e.target.value)}
+                    onChange={(e) =>
+                      updateBeneficiary(index, "weight", e.target.value)
+                    }
                     size="sm"
                     isDisabled={isSubmitting}
                   />
                 </FormControl>
-                
+
                 <IconButton
                   aria-label="Remove beneficiary"
                   icon={<FaTrash />}
@@ -269,7 +311,9 @@ export default function BeneficiariesInput({
               <Alert status="info" size="sm">
                 <AlertIcon />
                 <Text fontSize="xs">
-                  {beneficiaries.length} beneficiar{beneficiaries.length === 1 ? "y" : "ies"} will receive {totalPercentage.toFixed(1)}% of post rewards
+                  {beneficiaries.length} beneficiar
+                  {beneficiaries.length === 1 ? "y" : "ies"} will receive{" "}
+                  {totalPercentage.toFixed(1)}% of post rewards
                 </Text>
               </Alert>
             )}
