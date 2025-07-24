@@ -31,8 +31,7 @@ import SnapComposer from "@/components/homepage/SnapComposer";
 import MatrixOverlay from "@/components/graphics/MatrixOverlay";
 import { useAioha } from "@aioha/react-ui";
 import useHivePower from "@/hooks/useHivePower";
-import { useHiveUser } from "@/contexts/UserContext";
-import { transferWithKeychain, commentWithKeychain } from "@/lib/hive/client-functions";
+import { transferWithKeychain } from "@/lib/hive/client-functions";
 import { KeychainSDK } from "keychain-sdk";
 
 interface BountyDetailProps {
@@ -66,17 +65,24 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
   const [showSlider, setShowSlider] = useState(false);
   const [activeVotes, setActiveVotes] = useState(post.active_votes || []);
   const [voted, setVoted] = useState(
-    post.active_votes?.some((item) => item.voter.toLowerCase() === user?.toLowerCase())
+    post.active_votes?.some(
+      (item) => item.voter.toLowerCase() === user?.toLowerCase()
+    )
   );
-  const { hivePower, isLoading: isHivePowerLoading, error: hivePowerError, estimateVoteValue } = useHivePower(user);
+  const {
+    hivePower,
+    isLoading: isHivePowerLoading,
+    error: hivePowerError,
+    estimateVoteValue,
+  } = useHivePower(user);
 
   // Claim state
-  const { hiveUser } = useHiveUser();
   const [isClaiming, setIsClaiming] = useState(false);
   const [claimError, setClaimError] = useState<string | null>(null);
-  const hasClaimed = useMemo(() => 
-    activeVotes.some(v => v.voter === user)
-  , [activeVotes, user]);
+  const hasClaimed = useMemo(
+    () => activeVotes.some((v) => v.voter === user),
+    [activeVotes, user]
+  );
 
   // Reward Modal State
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -86,7 +92,9 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
   // Extract bounty fields
   const challengeName = useMemo(() => {
     const match = body.match(/Trick\/Challenge:\s*(.*)/);
-    return match && match[1] ? match[1].trim() : postTitle || "Bounty Submission";
+    return match && match[1]
+      ? match[1].trim()
+      : postTitle || "Bounty Submission";
   }, [body, postTitle]);
   const rules = useMemo(() => {
     const match = body.match(/Bounty Rules:\s*([\s\S]*?)(?:\n|$)/);
@@ -131,7 +139,10 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
     return { amount: 0, currency: "HIVE" };
   }, [body]);
 
-  const rewardPerWinner = selectedWinners.length > 0 ? (rewardInfo.amount / selectedWinners.length).toFixed(3) : "0";
+  const rewardPerWinner =
+    selectedWinners.length > 0
+      ? (rewardInfo.amount / selectedWinners.length).toFixed(3)
+      : "0";
 
   // function handleHeartClick() {
   //   setShowSlider(!showSlider);
@@ -159,7 +170,7 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
       // Send tip to each winner
       for (const winner of selectedWinners) {
         await transferWithKeychain(
-          String(hiveUser?.name),
+          String(user),
           winner,
           rewardPerWinner,
           `Congrats @${winner}! You won ${rewardPerWinner} ${rewardInfo.currency} in the bounty: ${challengeName}`,
@@ -172,11 +183,14 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
       const permlink = `bounty-winners-${Date.now()}`;
       // Validation: ensure all required fields are present
       const missingFields = [];
-      if (!hiveUser?.name || hiveUser?.name === "undefined") missingFields.push("hiveUser.name");
-      if (!post.author || post.author === "undefined") missingFields.push("post.author");
-      if (!post.permlink || post.permlink === "undefined") missingFields.push("post.permlink");
+      if (!user || user === "undefined") missingFields.push("user");
+      if (!post.author || post.author === "undefined")
+        missingFields.push("post.author");
+      if (!post.permlink || post.permlink === "undefined")
+        missingFields.push("post.permlink");
       if (!permlink || permlink === "undefined") missingFields.push("permlink");
-      if (!commentBody || commentBody === "undefined") missingFields.push("commentBody");
+      if (!commentBody || commentBody === "undefined")
+        missingFields.push("commentBody");
 
       if (missingFields.length > 0) {
         setRewardError("Missing required data: " + missingFields.join(", "));
@@ -184,13 +198,13 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
         return;
       }
       const postObj = {
-        username: String(hiveUser?.name),
+        username: String(user),
         body: commentBody,
         parent_username: post.author,
         parent_perm: post.permlink,
         permlink,
         json_metadata: JSON.stringify({}),
-        comment_options: '',
+        comment_options: "",
       };
       console.log("Prepared minimal comment postObj:", postObj);
       // Validate all fields are present and not undefined
@@ -210,7 +224,10 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
         }
       } catch (err) {
         console.error("Keychain post error:", err);
-        setRewardError("Failed to post bounty winner comment. " + ((err as any)?.message || String(err)));
+        setRewardError(
+          "Failed to post bounty winner comment. " +
+            ((err as any)?.message || String(err))
+        );
         setIsRewarding(false);
         return;
       }
@@ -237,15 +254,17 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
     setClaimError(null);
     try {
       // Use a 100% vote to claim the bounty
-      const result = await aioha.vote(post.author, post.permlink, 10000); 
+      const result = await aioha.vote(post.author, post.permlink, 10000);
       if (result.success) {
         // Optimistically update the votes list
-        setActiveVotes(prev => [...prev, { voter: user, percent: 10000 }]);
+        setActiveVotes((prev) => [...prev, { voter: user, percent: 10000 }]);
       } else {
         setClaimError("Failed to claim bounty. Your vote was not successful.");
       }
     } catch (err: any) {
-      setClaimError(err.message || "An error occurred while claiming the bounty.");
+      setClaimError(
+        err.message || "An error occurred while claiming the bounty."
+      );
     } finally {
       setIsClaiming(false);
     }
@@ -300,7 +319,9 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
       <SnapComposer
         pa={post.author}
         pp={post.permlink}
-        onNewComment={setNewComment as (newComment: Partial<Discussion>) => void}
+        onNewComment={
+          setNewComment as (newComment: Partial<Discussion>) => void
+        }
         onClose={() => null}
       />
     );
@@ -311,8 +332,8 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
     if (!activeVotes) return [];
     const seen = new Set();
     const filtered = activeVotes
-      .filter(v => v.voter && v.voter !== post.author)
-      .filter(v => {
+      .filter((v) => v.voter && v.voter !== post.author)
+      .filter((v) => {
         if (seen.has(v.voter)) return false;
         seen.add(v.voter);
         return true;
@@ -327,9 +348,21 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
 
   return (
     <Box bg="background" color="text" minH="100vh">
-      <Flex direction={{ base: "column", md: "row" }} h={{ base: "auto", md: "100vh" }} gap={4}>
+      <Flex
+        direction={{ base: "column", md: "row" }}
+        h={{ base: "auto", md: "100vh" }}
+        gap={4}
+      >
         {/* Left: Bounty Details */}
-        <Box flex={1} h={{ base: "auto", md: "100vh" }} overflowY="auto" sx={{ '&::-webkit-scrollbar': { display: 'none' }, scrollbarWidth: 'none' }}>
+        <Box
+          flex={1}
+          h={{ base: "auto", md: "100vh" }}
+          overflowY="auto"
+          sx={{
+            "&::-webkit-scrollbar": { display: "none" },
+            scrollbarWidth: "none",
+          }}
+        >
           <Box
             data-component="BountyDetail"
             borderRadius="base"
@@ -345,23 +378,46 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
             <Flex
               direction="column"
               boxShadow={theme.shadows.md}
-              bg={theme.colors.primary ? `linear-gradient(to bottom, ${theme.colors.primary}, ${theme.colors.secondary})` : undefined}
+              bg={
+                theme.colors.primary
+                  ? `linear-gradient(to bottom, ${theme.colors.primary}, ${theme.colors.secondary})`
+                  : undefined
+              }
               p={4}
               mb={4}
             >
               {/* Challenge Name at the top */}
-              <Text fontSize="xl" fontWeight="bold" color={theme.colors.background} mb={2}>
+              <Text
+                fontSize="xl"
+                fontWeight="bold"
+                color={theme.colors.background}
+                mb={2}
+              >
                 {challengeName}
               </Text>
-              <Flex direction={["column", "row"]} alignItems={["flex-start", "center"]} w="100%">
+              <Flex
+                direction={["column", "row"]}
+                alignItems={["flex-start", "center"]}
+                w="100%"
+              >
                 <Avatar
                   size="sm"
                   name={author}
                   src={`https://images.hive.blog/u/${author}/avatar/sm`}
                 />
                 <Box ml={[0, 3]} mt={[2, 0]} whiteSpace="nowrap">
-                  <Text fontWeight="medium" fontSize="sm" mb={-2} color={theme.colors.background}>
-                    <Link href={`/user/${author}`} color={theme.colors.background}>@{author}</Link>
+                  <Text
+                    fontWeight="medium"
+                    fontSize="sm"
+                    mb={-2}
+                    color={theme.colors.background}
+                  >
+                    <Link
+                      href={`/user/${author}`}
+                      color={theme.colors.background}
+                    >
+                      @{author}
+                    </Link>
                   </Text>
                   <Text fontSize="sm" color={theme.colors.background}>
                     {postDate}
@@ -374,16 +430,22 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
                   mx={4}
                   display={["none", "block"]}
                 />
-                <Box flexGrow={1} ml={[0, 4]} mt={[2, 0]} textAlign="start" minWidth={0}>
+                <Box
+                  flexGrow={1}
+                  ml={[0, 4]}
+                  mt={[2, 0]}
+                  textAlign="start"
+                  minWidth={0}
+                >
                   <Text
-                    fontSize={{ base: '2xl', md: '3xl', lg: '4xl' }}
+                    fontSize={{ base: "2xl", md: "3xl", lg: "4xl" }}
                     fontWeight="extrabold"
                     color={isActive ? theme.colors.primary : theme.colors.error}
                     letterSpacing="tight"
                     textShadow="0 2px 8px rgba(0,0,0,0.25)"
                     lineHeight="1.1"
                   >
-                    {isActive ? 'Active Bounty' : 'Closed Bounty'}
+                    {isActive ? "Active Bounty" : "Closed Bounty"}
                   </Text>
                 </Box>
               </Flex>
@@ -400,8 +462,17 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
             <Divider />
             {/* Rules/Description */}
             <Box my={4}>
-              <Text fontWeight="bold" mb={1}>Rules:</Text>
-              <HiveMarkdown markdown={body.replace(/^Trick\/Challenge:.*$/gim, '').replace(/^Reward:.*$/gim, '').replace(/^Deadline:.*$/gim, '').replace(/^Bounty Rules: ?/gim, '').trim()} />
+              <Text fontWeight="bold" mb={1}>
+                Rules:
+              </Text>
+              <HiveMarkdown
+                markdown={body
+                  .replace(/^Trick\/Challenge:.*$/gim, "")
+                  .replace(/^Reward:.*$/gim, "")
+                  .replace(/^Deadline:.*$/gim, "")
+                  .replace(/^Bounty Rules: ?/gim, "")
+                  .trim()}
+              />
             </Box>
             {/* Claimed Users Section (moved from right panel) */}
             {claimedUsers.length > 0 && (
@@ -412,7 +483,7 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
                 <Flex wrap="wrap" gap={4}>
                   {claimedUsers.map((vote) => (
                     <Flex
-                      key={`${vote.voter}-${vote.time || ''}`}
+                      key={`${vote.voter}-${vote.time || ""}`}
                       align="center"
                       gap={2}
                       bg="muted"
@@ -449,8 +520,8 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
             {/* Claim Bounty Button */}
             {isActive && user && user !== post.author && (
               <Flex justify="center" my={4}>
-                <Button 
-                  colorScheme="green" 
+                <Button
+                  colorScheme="green"
                   onClick={handleClaimBounty}
                   isLoading={isClaiming}
                   isDisabled={hasClaimed}
@@ -464,7 +535,11 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
                 <Text color="gray.400">You cannot claim your own bounty.</Text>
               </Box>
             )}
-            {claimError && <Text color="red.400" textAlign="center">{claimError}</Text>}
+            {claimError && (
+              <Text color="red.400" textAlign="center">
+                {claimError}
+              </Text>
+            )}
             {/* Media Section */}
             {/* Media Section removed, as full body is now shown above */}
             <Divider />
@@ -485,7 +560,19 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
           </Box>
         </Box>
         {/* Right: Submissions List */}
-        <Box flex={1} h={{ base: "auto", md: "100vh" }} overflowY="auto" bg="muted" borderRadius="base" boxShadow={theme.shadows.md} p={4} sx={{ '&::-webkit-scrollbar': { display: 'none' }, scrollbarWidth: 'none' }}>
+        <Box
+          flex={1}
+          h={{ base: "auto", md: "100vh" }}
+          overflowY="auto"
+          bg="muted"
+          borderRadius="base"
+          boxShadow={theme.shadows.md}
+          p={4}
+          sx={{
+            "&::-webkit-scrollbar": { display: "none" },
+            scrollbarWidth: "none",
+          }}
+        >
           {/* Claimed Users Section removed from here */}
           <Text fontWeight="bold" fontSize="2xl" textAlign="left" mb={2} mt={2}>
             Submissions: {post.children || 0}
@@ -501,7 +588,12 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
             newComment={newComment}
             setNewComment={setNewComment}
             post={true}
-            data={{ comments, loadNextPage: () => {}, isLoading, hasMore: false }}
+            data={{
+              comments,
+              loadNextPage: () => {},
+              isLoading,
+              hasMore: false,
+            }}
             hideComposer={true}
           />
         </Box>
@@ -528,19 +620,41 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
             </CheckboxGroup>
             <Divider my={3} />
             <Text>
-              Total Reward: <b>{rewardInfo.amount} {rewardInfo.currency}</b>
+              Total Reward:{" "}
+              <b>
+                {rewardInfo.amount} {rewardInfo.currency}
+              </b>
             </Text>
             <Text>
-              Each winner receives: <b>{rewardPerWinner} {rewardInfo.currency}</b>
+              Each winner receives:{" "}
+              <b>
+                {rewardPerWinner} {rewardInfo.currency}
+              </b>
             </Text>
-            {rewardError && <Text color="error" mt={2}>{rewardError}</Text>}
-            {rewardSuccess && <Text color="success" mt={2}>Bounty rewards sent and winners announced!</Text>}
+            {rewardError && (
+              <Text color="error" mt={2}>
+                {rewardError}
+              </Text>
+            )}
+            {rewardSuccess && (
+              <Text color="success" mt={2}>
+                Bounty rewards sent and winners announced!
+              </Text>
+            )}
           </ModalBody>
           <ModalFooter>
-            <Button colorScheme="orange" mr={3} isDisabled={selectedWinners.length === 0 || isRewarding} onClick={handleRewardBountyHunters} isLoading={isRewarding}>
+            <Button
+              colorScheme="orange"
+              mr={3}
+              isDisabled={selectedWinners.length === 0 || isRewarding}
+              onClick={handleRewardBountyHunters}
+              isLoading={isRewarding}
+            >
               Send Reward
             </Button>
-            <Button variant="ghost" onClick={onClose} isDisabled={isRewarding}>Close</Button>
+            <Button variant="ghost" onClick={onClose} isDisabled={isRewarding}>
+              Close
+            </Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -548,4 +662,4 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
   );
 };
 
-export default BountyDetail; 
+export default BountyDetail;
