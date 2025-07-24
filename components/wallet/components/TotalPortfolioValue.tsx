@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Text } from "@chakra-ui/react";
+import { Center, Text } from "@chakra-ui/react";
 import { usePortfolioContext } from "@/contexts/PortfolioContext";
 import { formatValue } from "@/lib/utils/portfolioUtils";
 
@@ -12,15 +12,17 @@ export default function TotalPortfolioValue({
 }: TotalPortfolioValueProps) {
   const { aggregatedPortfolio } = usePortfolioContext();
 
-  // Calculate total portfolio value combining Hive and Ethereum assets
+  // Calculate total portfolio value combining Hive and Ethereum/Farcaster assets
   const totalPortfolioValue = useMemo(() => {
-    const ethereumValue = aggregatedPortfolio?.totalBalanceUSDApp || 0;
+    const ethereumValue = aggregatedPortfolio?.totalNetWorth || 0;
     return totalHiveAssetsValue + ethereumValue;
-  }, [totalHiveAssetsValue, aggregatedPortfolio?.totalBalanceUSDApp]);
+  }, [totalHiveAssetsValue, aggregatedPortfolio?.totalNetWorth]);
 
   return (
-    <Text fontSize="lg" color="primary" fontWeight="bold" mb={4}>
-      Total Portfolio Value: {formatValue(totalPortfolioValue)}
-    </Text>
+    <Center display={{ base: "flex", md: "none" }}>
+      <Text fontSize="3xl" color="primary" fontWeight="bold" mb={4}>
+        {formatValue(totalPortfolioValue)}
+      </Text>
+    </Center>
   );
 }

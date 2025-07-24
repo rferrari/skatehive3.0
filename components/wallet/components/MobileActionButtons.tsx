@@ -85,31 +85,6 @@ export default function MobileActionButtons({
           Swap
         </Text>
       </VStack>
-
-      <VStack spacing={2}>
-        <Box
-          as="button"
-          w="56px"
-          h="56px"
-          bg="rgba(255, 255, 255, 0.1)"
-          borderRadius="full"
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-          _hover={{
-            bg: "rgba(255, 255, 255, 0.15)",
-            transform: "scale(1.05)",
-          }}
-          transition="all 0.2s ease"
-        >
-          <Text fontSize="xs" color="white" fontWeight="bold">
-            ⏰
-          </Text>
-        </Box>
-        <Text fontSize="sm" color="rgba(255, 255, 255, 0.8)" fontWeight="500">
-          Activity
-        </Text>
-      </VStack>
     </HStack>
   );
 }

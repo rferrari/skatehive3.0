@@ -23,7 +23,6 @@ import {
   ConsolidatedToken,
 } from "../../lib/utils/portfolioUtils";
 import SendTokenModal from "./SendTokenModal";
-import AssetsHeader from "./components/AssetsHeader";
 import TokenControlsBar from "./components/TokenControlsBar";
 import MobileTokenTable from "./components/MobileTokenTable";
 import MobileActionButtons from "./components/MobileActionButtons";
@@ -205,14 +204,6 @@ export default function EthereumAssetsSection() {
     <Box mt={8} p={2} borderRadius="base" bg="muted" w="100%" textAlign="left">
       {shouldShowAssets && (
         <Box overflowX="hidden">
-          {/* Token Controls */}
-          <TokenControlsBar
-            isRefreshing={isRefreshing}
-            hideSmallBalances={hideSmallBalances}
-            onRefresh={handleForceRefresh}
-            onToggleSmallBalances={handleToggleSmallBalances}
-          />
-
           {isLoading && (
             <Flex justify="center" align="center" py={4}>
               <Spinner color="primary" />
@@ -238,7 +229,12 @@ export default function EthereumAssetsSection() {
                     onReceive={handleMobileReceive}
                     onSwap={handleMobileSwap}
                   />
-
+                  <TokenControlsBar
+                    isRefreshing={isRefreshing}
+                    hideSmallBalances={hideSmallBalances}
+                    onRefresh={handleForceRefresh}
+                    onToggleSmallBalances={handleToggleSmallBalances}
+                  />
                   {/* Token Table */}
                   <MobileTokenTable
                     consolidatedTokens={memoizedConsolidatedTokens}
@@ -246,16 +242,24 @@ export default function EthereumAssetsSection() {
                     onToggleExpansion={toggleTokenExpansion}
                     onTokenSelect={handleTokenSelect}
                   />
+                  {/* Token Controls */}
                 </VStack>
               ) : (
                 // Desktop Table Layout
                 <Box overflowX="hidden" w="100%">
+                  <TokenControlsBar
+                    isRefreshing={isRefreshing}
+                    hideSmallBalances={hideSmallBalances}
+                    onRefresh={handleForceRefresh}
+                    onToggleSmallBalances={handleToggleSmallBalances}
+                  />
                   <DesktopTokenTable
                     consolidatedTokens={memoizedConsolidatedTokens}
                     expandedTokens={expandedTokens}
                     onToggleExpansion={toggleTokenExpansion}
                     onSendToken={handleSendToken}
                   />
+                  {/* Token Controls */}
                 </Box>
               )}
             </>

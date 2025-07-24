@@ -16,20 +16,11 @@ export default function MarketPrices({
   hbdPrice,
   isPriceLoading,
 }: MarketPricesProps) {
-  const { theme } = useTheme();
   const router = useRouter();
-
-  const [primary, accent, background, muted, success] = useToken("colors", [
-    theme.colors.primary,
-    theme.colors.accent,
-    theme.colors.background,
-    theme.colors.muted,
-    theme.colors.success || theme.colors.primary,
-  ]);
 
   return (
     <Box
-      bg={muted}
+      bg={"muted"}
       borderRadius="md"
       px={4}
       py={3}
@@ -43,11 +34,11 @@ export default function MarketPrices({
           onClick={() => router.push("https://hivedex.io/")}
           cursor={"pointer"}
         >
-          <CustomHiveIcon color={primary} />
-          <Text color={primary} fontWeight="bold">
-            HIVE
+          <CustomHiveIcon color={"primary"} />
+          <Text color={"red.200"} fontWeight="bold">
+            HIVE -
           </Text>
-          <Text color={success} fontWeight="extrabold">
+          <Text color={"success"} fontWeight="extrabold">
             {isPriceLoading ? "..." : hivePrice?.toFixed(3) + " USD"}
           </Text>
         </HStack>
@@ -57,11 +48,11 @@ export default function MarketPrices({
           onClick={() => router.push("https://hivedex.io/")}
           cursor={"pointer"}
         >
-          <CustomHiveIcon color={accent} />
-          <Text color={accent} fontWeight="bold">
-            HBD
+          <CustomHiveIcon color={"accent"} />
+          <Text color={"green.200"} fontWeight="bold">
+            HBD -
           </Text>
-          <Text color={success} fontWeight="extrabold">
+          <Text color={"success"} fontWeight="extrabold">
             {isPriceLoading ? "..." : hbdPrice?.toFixed(3) + " USD"}
           </Text>
         </HStack>

@@ -47,8 +47,12 @@ const WalletSummary = memo(function WalletSummary({
     clearSession,
   } = useFarcasterSession();
   const { signOut } = useSignIn({});
-  const { aggregatedPortfolio, farcasterVerifiedPortfolios, portfolio } =
-    usePortfolioContext();
+  const {
+    aggregatedPortfolio,
+    farcasterVerifiedPortfolios,
+    portfolio,
+    farcasterPortfolio,
+  } = usePortfolioContext();
   const { disconnect } = useDisconnect();
   const toast = useToast();
 
@@ -116,6 +120,7 @@ const WalletSummary = memo(function WalletSummary({
         {/* Portfolio Distribution Chart */}
         <WalletDistributionChart
           ethPortfolio={portfolio?.totalNetWorth || 0}
+          farcasterPortfolio={farcasterPortfolio?.totalNetWorth || 0}
           farcasterVerifiedPortfolios={farcasterVerifiedPortfolios}
           hiveValue={totalHiveValue}
           farcasterProfile={farcasterProfile}

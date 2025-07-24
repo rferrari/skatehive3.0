@@ -380,7 +380,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                   <TabPanel p={0}>
                     <Box
                       w="100%"
-                      display="flex"
+                      display={{ base: "flex", md: "none" }} // Only display on mobile
                       flexDirection="column"
                       gap={3}
                       p={2}
