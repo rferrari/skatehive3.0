@@ -7,7 +7,6 @@ import { formatEther } from "viem";
 import { useMemo, useState } from "react";
 import Countdown from "react-countdown";
 import { useAccount, useDisconnect } from "wagmi";
-import { FaEthereum } from "react-icons/fa";
 import ConnectModal from "@/components/wallet/ConnectModal";
 import {
   Box,
@@ -27,10 +26,12 @@ import {
   List,
   ListItem,
   ListIcon,
+  Center,
 } from "@chakra-ui/react";
 import { CheckCircleIcon, InfoIcon } from "@chakra-ui/icons";
 import MatrixOverlay from "@/components/graphics/MatrixOverlay";
-
+import { Name, Avatar, Identity } from "@coinbase/onchainkit/identity";
+import ConnectButton from "@/components/wallet/ConnectButton";
 const formatBidAmount = (amount: bigint) => {
   return Number(formatEther(amount)).toLocaleString(undefined, {
     maximumFractionDigits: 5,
@@ -127,6 +128,9 @@ export default function AuctionPage() {
               textTransform="uppercase"
               letterSpacing="wide"
               lineHeight="tight"
+              style={{
+                fontFamily: "Dash",
+              }}
             >
               Skatehive Auction
             </Heading>
@@ -151,25 +155,60 @@ export default function AuctionPage() {
             >
               {/* Auction Details */}
               <GridItem order={{ base: 2, lg: 2 }}>
+                {/* Wallet Connection */}
+                {!isConnected ? (
+                  <ConnectButton />
+                ) : (
+                  <Box
+                    display="flex"
+                    flexDirection="column"
+                    alignItems="stretch"
+                    justifyContent="center"
+                    bg="muted"
+                    border="2px solid"
+                    borderColor="primary"
+                    borderRadius="xl"
+                    p={2}
+                    minH="60px"
+                    transition="all 0.3s ease"
+                    w="100%"
+                  >
+                    <Box w="full">
+                      <Identity address={address as `0x${string}`}>
+                        <Avatar />
+                        <Name className="font-bold text-base ml-1" />
+                      </Identity>
+                    </Box>
+                    <Button
+                      w="full"
+                      mt={2}
+                      px={2}
+                      py={1}
+                      fontSize="md"
+                      fontWeight="bold"
+                      textTransform="uppercase"
+                      color="#D1FF4C"
+                      bg="transparent"
+                      border="2px solid #D1FF4C"
+                      borderRadius="lg"
+                      _hover={{ bg: "#1a1a1a", color: "#D1FF4C" }}
+                      onClick={() => disconnect()}
+                    >
+                      Disconnect
+                    </Button>
+                  </Box>
+                )}
                 <Box
-                  borderTopLeftRadius="0"
-                  borderTopRightRadius="0"
-                  borderBottomLeftRadius="12px"
-                  borderBottomRightRadius="12px"
-                  p={{ base: 6, lg: 8 }}
-                  h="full"
+                  p={{ base: 6, lg: 6 }}
                   position="relative"
                   overflow="hidden"
+                  border={"1px solid"}
+                  borderColor="border"
                 >
                   {isHoveringBid && <MatrixOverlay />}
                   <VStack spacing={6} align="center">
                     {/* Time Remaining */}
-                    <VStack
-                      align="center"
-                      spacing={2}
-                      position="relative"
-                      zIndex={1}
-                    >
+                    <VStack spacing={2} position="relative" zIndex={1}>
                       <Text fontSize="sm" color="primary" fontWeight="medium">
                         Auction ends in
                       </Text>
@@ -232,36 +271,6 @@ export default function AuctionPage() {
                       )}
                     </VStack>
 
-                    {/* Wallet Connection */}
-                    <VStack align="center" spacing={2}>
-                      {isConnected ? (
-                        <Button
-                          onClick={() => disconnect()}
-                          w="full"
-                          variant="outline"
-                          height="auto"
-                          py={3}
-                          border="1px solid"
-                          borderColor="border"
-                          bg="muted"
-                        >
-                          <Text fontSize="xs" color="primary">
-                            Disconnect
-                          </Text>
-                        </Button>
-                      ) : (
-                        <Button
-                          leftIcon={<FaEthereum size={16} />}
-                          onClick={() => setIsConnectModalOpen(true)}
-                          w="full"
-                          colorScheme="blue"
-                          variant="outline"
-                        >
-                          Connect Wallet to Bid
-                        </Button>
-                      )}
-                    </VStack>
-
                     {/* Bidding Interface */}
                     <Box
                       w="full"
@@ -320,57 +329,47 @@ export default function AuctionPage() {
                         }}
                       >
                         <VStack spacing={3} align="stretch">
-                          {/* Highest Bidder */}
-                          {activeAuction.highestBid && (
-                            <Box
-                              bg="background"
-                              color="primary"
-                              p={3}
-                              borderRadius="md"
-                            >
-                              <VStack spacing={2} align="stretch" w="full">
-                                <Text
-                                  fontSize="sm"
-                                  fontWeight="bold"
-                                  color="primary"
-                                  textAlign="center"
-                                >
-                                  Highest Bidder
-                                </Text>
-                                <Text
-                                  fontSize="lg"
-                                  fontWeight="bold"
-                                  color="background"
-                                  textAlign="center"
-                                  w="full"
-                                >
-                                  {formatAddress(
-                                    activeAuction.highestBid.bidder
-                                  )}
-                                </Text>
-                                <Text
-                                  fontSize="lg"
-                                  fontWeight="bold"
-                                  color="success"
-                                  textAlign="center"
-                                  w="full"
-                                >
-                                  {auctionData.bidAmount} ETH
-                                </Text>
-                              </VStack>
-                            </Box>
-                          )}
-
                           {/* Bid History */}
                           <VStack spacing={2} align="stretch" flex={1}>
-                            <Text
-                              fontSize="sm"
-                              fontWeight="bold"
-                              color="primary"
-                            >
-                              Bid History
-                            </Text>
-                            {activeAuction.bids.length > 1 ? (
+                            <Center>
+                              <Text
+                                fontSize="sm"
+                                fontWeight="bold"
+                                color="primary"
+                              >
+                                Bid History
+                              </Text>
+                            </Center>
+                            {activeAuction.bids.length === 1 ? (
+                              <HStack
+                                justify="space-between"
+                                w="full"
+                                py={0}
+                                px={0}
+                                bg="muted"
+                                borderRadius="md"
+                              >
+                                <HStack>
+                                  <Avatar
+                                    address={activeAuction.bids[0].bidder}
+                                  />
+                                  <Name
+                                    address={activeAuction.bids[0].bidder}
+                                    className="font-bold text-sm"
+                                  />
+                                </HStack>
+                                <Text
+                                  fontSize="sm"
+                                  fontWeight="medium"
+                                  color="text"
+                                >
+                                  {formatBidAmount(
+                                    BigInt(activeAuction.bids[0].amount)
+                                  )}{" "}
+                                  ETH
+                                </Text>
+                              </HStack>
+                            ) : activeAuction.bids.length > 1 ? (
                               [...activeAuction.bids]
                                 .sort((a, b) => {
                                   const amountA = BigInt(a.amount);
@@ -392,9 +391,13 @@ export default function AuctionPage() {
                                     bg="secondary"
                                     borderRadius="md"
                                   >
-                                    <Text fontSize="sm" color="accent">
-                                      {formatAddress(bid.bidder)}
-                                    </Text>
+                                    <HStack>
+                                      <Avatar address={bid.bidder} />
+                                      <Name
+                                        address={bid.bidder}
+                                        className="font-bold text-sm"
+                                      />
+                                    </HStack>
                                     <Text
                                       fontSize="sm"
                                       fontWeight="medium"
@@ -433,15 +436,7 @@ export default function AuctionPage() {
 
               {/* Large NFT Image */}
               <GridItem order={{ base: 1, lg: 1 }}>
-                <Box
-                  borderTopLeftRadius="0"
-                  borderTopRightRadius="0"
-                  borderBottomLeftRadius="12px"
-                  borderBottomRightRadius="12px"
-                  p={{ base: 6, lg: 8 }}
-                  position="relative"
-                  h="full"
-                >
+                <Box p={{ base: 6, lg: 8 }} position="relative" h="full">
                   <VStack spacing={8}>
                     {/* NFT Image */}
                     <Box
@@ -459,6 +454,57 @@ export default function AuctionPage() {
                         objectFit="cover"
                         fallbackSrc="/images/placeholder.png"
                       />
+                      {/* Stamped Latest Champ Box - Centered and Rotated */}
+                      {!auctionData.isRunning && activeAuction.highestBid && (
+                        <Box
+                          position="absolute"
+                          top="50%"
+                          left="50%"
+                          transform="translate(-50%, -50%) rotate(30deg)"
+                          bg="background"
+                          color="primary"
+                          p={3}
+                          borderRadius="md"
+                          boxShadow="lg"
+                          border="2px dashed"
+                          borderColor="primary"
+                          zIndex={2}
+                          minW={{ base: "180px", md: "220px" }}
+                        >
+                          <VStack spacing={2} align="stretch" w="full">
+                            <Text
+                              fontSize="sm"
+                              fontWeight="bold"
+                              color="primary"
+                              textAlign="center"
+                              letterSpacing="wide"
+                              textTransform="uppercase"
+                            >
+                              Latest Champ
+                            </Text>
+                            <Center>
+                              <HStack>
+                                <Avatar
+                                  address={activeAuction.highestBid.bidder}
+                                />
+                                <Name
+                                  className="text-lg font-bold"
+                                  address={activeAuction.highestBid.bidder}
+                                />
+                              </HStack>
+                            </Center>
+                            <Text
+                              fontSize="lg"
+                              fontWeight="bold"
+                              color="success"
+                              textAlign="center"
+                              w="full"
+                            >
+                              {auctionData.bidAmount} ETH
+                            </Text>
+                          </VStack>
+                        </Box>
+                      )}
                     </Box>
 
                     {/* Title and Date Group */}

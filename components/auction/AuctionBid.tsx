@@ -1,28 +1,35 @@
-import { useWriteAuctionCreateBid, useWriteAuctionSettleCurrentAndCreateNewAuction } from '@/hooks/wagmiGenerated';
-import { useCallback, useState } from 'react';
-import { parseEther, formatEther } from 'viem';
-import { useAccount } from 'wagmi';
-import { waitForTransactionReceipt } from 'wagmi/actions';
-import { useForm } from 'react-hook-form';
-import { getConfig } from '@/lib/utils/wagmi';
-import { DAO_ADDRESSES } from '@/lib/utils/constants';
-import { calculateMinBid, handleAuctionError, validateBid } from '@/lib/utils/auction';
-import { 
-  Box, 
-  Button, 
-  Input, 
-  Text, 
-  VStack, 
-  FormControl, 
-  FormLabel, 
+import {
+  useWriteAuctionCreateBid,
+  useWriteAuctionSettleCurrentAndCreateNewAuction,
+} from "@/hooks/wagmiGenerated";
+import { useCallback, useState } from "react";
+import { parseEther, formatEther } from "viem";
+import { useAccount } from "wagmi";
+import { waitForTransactionReceipt } from "wagmi/actions";
+import { useForm } from "react-hook-form";
+import { getConfig } from "@/lib/utils/wagmi";
+import { DAO_ADDRESSES } from "@/lib/utils/constants";
+import {
+  calculateMinBid,
+  handleAuctionError,
+  validateBid,
+} from "@/lib/utils/auction";
+import {
+  Box,
+  Button,
+  Input,
+  Text,
+  VStack,
+  FormControl,
+  FormLabel,
   FormErrorMessage,
   Link,
   Alert,
   AlertIcon,
   AlertDescription,
   HStack,
-  Divider
-} from '@chakra-ui/react';
+  Divider,
+} from "@chakra-ui/react";
 
 interface BidProps {
   tokenId: bigint;
@@ -32,7 +39,7 @@ interface BidProps {
   minimumBidIncrement: string;
   onBid?: () => void;
   onSettle?: () => void;
-  alignContent?: 'left' | 'right';
+  alignContent?: "left" | "right";
   onBidButtonHover?: (isHovering: boolean) => void;
 }
 
@@ -44,13 +51,15 @@ export function AuctionBid({
   minimumBidIncrement,
   onBid,
   onSettle,
-  alignContent = 'left',
+  alignContent = "left",
   onBidButtonHover,
 }: BidProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [txHash, setTxHash] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const account = useAccount();
+  const [hasShownToast, setHasShownToast] = useState(false);
+  const toast = require("@chakra-ui/react").useToast();
 
   // Calculate minimum bid: currentBid + (currentBid * increment%)
   const minBidValue = calculateMinBid(
@@ -59,65 +68,98 @@ export function AuctionBid({
     minimumBidIncrement
   );
 
-  const { register, handleSubmit, formState: { errors }, setValue } = useForm({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setValue,
+  } = useForm({
     defaultValues: { bidAmount: formatEther(minBidValue) },
   });
 
   const { writeContractAsync: writeBid } = useWriteAuctionCreateBid();
-  const { writeContractAsync: writeSettle } = useWriteAuctionSettleCurrentAndCreateNewAuction();
+  const { writeContractAsync: writeSettle } =
+    useWriteAuctionSettleCurrentAndCreateNewAuction();
 
-  const onSubmitBid = useCallback(async (data: { bidAmount: string }) => {
-    setIsLoading(true);
-    setErrorMessage(null);
-    setTxHash(null);
-    
-    try {
-      const txHash = await writeBid({
-        address: DAO_ADDRESSES.auction,
-        args: [tokenId],
-        value: parseEther(data.bidAmount),
-      });
+  const onSubmitBid = useCallback(
+    async (data: { bidAmount: string }) => {
+      setIsLoading(true);
+      setErrorMessage(null);
+      setTxHash(null);
 
-      await waitForTransactionReceipt(getConfig(), { hash: txHash });
-      setTxHash(txHash);
+      try {
+        const txHash = await writeBid({
+          address: DAO_ADDRESSES.auction,
+          args: [tokenId],
+          value: parseEther(data.bidAmount),
+        });
 
-      // Update for next bid
-      const currentBid = parseEther(data.bidAmount);
-      const nextMinBid = calculateMinBid(
-        currentBid,
-        BigInt(reservePrice),
-        minimumBidIncrement
-      );
-      setValue('bidAmount', formatEther(nextMinBid));
+        await waitForTransactionReceipt(getConfig(), { hash: txHash });
+        setTxHash(txHash);
 
-      // Wait for subgraph to update
-      await new Promise(resolve => setTimeout(resolve, 5000));
-      onBid?.();
-    } catch (error: any) {
-      console.error('Bid failed:', error);
-      setErrorMessage(handleAuctionError(error));
-    } finally {
-      setIsLoading(false);
-    }
-  }, [tokenId, writeBid, onBid, minimumBidIncrement, setValue, reservePrice]);
+        // Show toast for successful transaction
+        toast({
+          title: "Transaction Successful!",
+          description: (
+            <>
+              Your bid was placed successfully.{" "}
+              <Link
+                href={`https://basescan.org/tx/${txHash}`}
+                isExternal
+                color="primary"
+                textDecoration="underline"
+                _hover={{ color: "accent" }}
+              >
+                View on Basescan
+              </Link>
+            </>
+          ),
+          status: "success",
+          duration: 9000,
+          isClosable: true,
+          position: "top",
+        });
+        setHasShownToast(true);
+
+        // Update for next bid
+        const currentBid = parseEther(data.bidAmount);
+        const nextMinBid = calculateMinBid(
+          currentBid,
+          BigInt(reservePrice),
+          minimumBidIncrement
+        );
+        setValue("bidAmount", formatEther(nextMinBid));
+
+        // Wait for subgraph to update
+        await new Promise((resolve) => setTimeout(resolve, 5000));
+        onBid?.();
+      } catch (error: any) {
+        console.error("Bid failed:", error);
+        setErrorMessage(handleAuctionError(error));
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [tokenId, writeBid, onBid, minimumBidIncrement, setValue, reservePrice]
+  );
 
   const handleSettle = useCallback(async () => {
     setIsLoading(true);
     setErrorMessage(null);
     setTxHash(null);
-    
+
     try {
       const txHash = await writeSettle({
         address: DAO_ADDRESSES.auction,
       });
       await waitForTransactionReceipt(getConfig(), { hash: txHash });
       setTxHash(txHash);
-      
+
       // Wait for subgraph to update
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      await new Promise((resolve) => setTimeout(resolve, 5000));
       onSettle?.();
     } catch (error: any) {
-      console.error('Settlement failed:', error);
+      console.error("Settlement failed:", error);
       setErrorMessage(handleAuctionError(error));
     } finally {
       setIsLoading(false);
@@ -128,11 +170,11 @@ export function AuctionBid({
     <VStack spacing={4} align="stretch" w="full">
       {/* Error Alert */}
       {errorMessage && (
-        <Alert 
-          status="error" 
+        <Alert
+          status="error"
           bg="error"
           opacity={0.1}
-          border="1px solid" 
+          border="1px solid"
           borderColor="error"
           borderRadius="md"
           py={3}
@@ -143,55 +185,33 @@ export function AuctionBid({
           </AlertDescription>
         </Alert>
       )}
-      
-      {/* Success Transaction Hash */}
-      {txHash && (
-        <Alert 
-          status="success" 
-          bg="success"
-          opacity={0.1}
-          border="1px solid" 
-          borderColor="success"
-          borderRadius="md"
-          py={3}
-        >
-          <AlertIcon color="success" />
-          <AlertDescription color="success" fontSize="sm">
-            Transaction successful!{' '}
-            <Link
-              href={`https://basescan.org/tx/${txHash}`}
-              isExternal
-              color="primary"
-              textDecoration="underline"
-              _hover={{ color: 'accent' }}
-            >
-              View on Basescan
-            </Link>
-          </AlertDescription>
-        </Alert>
-      )}
-      
+
+      {/* Success Transaction Hash Toast handled in logic above */}
+
       {isAuctionRunning ? (
         <Box as="form" onSubmit={handleSubmit(onSubmitBid)} w="full">
-          <VStack spacing={4} align={alignContent === 'right' ? 'end' : 'stretch'}>
+          <VStack
+            spacing={4}
+            align={alignContent === "right" ? "end" : "stretch"}
+          >
             <FormControl isInvalid={!!errors.bidAmount}>
-              <FormLabel 
-                color="text" 
-                fontSize="sm" 
-                fontWeight="medium" 
+              <FormLabel
+                color="text"
+                fontSize="sm"
+                fontWeight="medium"
                 mb={2}
-                textAlign={alignContent === 'right' ? 'right' : 'left'}
+                textAlign={alignContent === "right" ? "right" : "left"}
               >
                 Your Bid (ETH)
               </FormLabel>
               <Input
-                {...register('bidAmount', {
-                  required: 'Bid amount required',
+                {...register("bidAmount", {
+                  required: "Bid amount required",
                   validate: (value) => {
                     const numValue = Number(value);
-                    if (isNaN(numValue)) return 'Invalid number';
-                    if (numValue <= 0) return 'Bid must be greater than 0';
-                    
+                    if (isNaN(numValue)) return "Invalid number";
+                    if (numValue <= 0) return "Bid must be greater than 0";
+
                     const minBidEth = parseFloat(formatEther(minBidValue));
                     if (numValue < minBidEth) {
                       return `Minimum bid: ${formatEther(minBidValue)} ETH`;
@@ -207,24 +227,24 @@ export function AuctionBid({
                 borderColor="border"
                 color="text"
                 size="lg"
-                _hover={{ borderColor: 'primary' }}
-                _focus={{ borderColor: 'primary', boxShadow: 'outline' }}
+                _hover={{ borderColor: "primary" }}
+                _focus={{ borderColor: "primary", boxShadow: "outline" }}
                 isDisabled={!account.isConnected || isLoading}
-                textAlign={alignContent === 'right' ? 'right' : 'left'}
+                textAlign={alignContent === "right" ? "right" : "left"}
               />
               <FormErrorMessage color="error" fontSize="xs">
                 {errors.bidAmount?.message}
               </FormErrorMessage>
-              <Text 
-                fontSize="xs" 
-                color="accent" 
+              <Text
+                fontSize="xs"
+                color="accent"
                 mt={1}
-                textAlign={alignContent === 'right' ? 'right' : 'left'}
+                textAlign={alignContent === "right" ? "right" : "left"}
               >
                 Minimum bid: {formatEther(minBidValue)} ETH
               </Text>
             </FormControl>
-            
+
             <Button
               type="submit"
               variant="solid"
@@ -232,8 +252,8 @@ export function AuctionBid({
               width="full"
               bg="primary"
               color="background"
-              _hover={{ bg: 'accent', color: 'background' }}
-              _disabled={{ bg: 'muted', color: 'text', cursor: 'not-allowed' }}
+              _hover={{ bg: "accent", color: "background" }}
+              _disabled={{ bg: "muted", color: "text", cursor: "not-allowed" }}
               isDisabled={!account.isConnected || isLoading}
               isLoading={isLoading}
               loadingText="Placing Bid..."
@@ -241,7 +261,7 @@ export function AuctionBid({
               onMouseEnter={() => onBidButtonHover?.(true)}
               onMouseLeave={() => onBidButtonHover?.(false)}
             >
-              {isLoading ? 'Placing Bid...' : 'Place Bid'}
+              {isLoading ? "Placing Bid..." : "Place Bid"}
             </Button>
           </VStack>
         </Box>
@@ -254,26 +274,26 @@ export function AuctionBid({
             width="full"
             bg="success"
             color="background"
-            _hover={{ bg: 'primary', color: 'background' }}
-            _disabled={{ bg: 'muted', color: 'text', cursor: 'not-allowed' }}
+            _hover={{ bg: "primary", color: "background" }}
+            _disabled={{ bg: "muted", color: "text", cursor: "not-allowed" }}
             isDisabled={!account.isConnected || isLoading}
             isLoading={isLoading}
             loadingText="Settling..."
             h="48px"
           >
-            {isLoading ? 'Settling...' : 'Start Next Auction'}
+            {isLoading ? "Settling..." : "Start Next Auction"}
           </Button>
         </VStack>
       )}
 
       {/* Wallet Connection Notice */}
       {!account.isConnected && (
-        <Box 
+        <Box
           bg="muted"
           opacity={0.1}
-          border="1px solid" 
-          borderColor="muted" 
-          borderRadius="md" 
+          border="1px solid"
+          borderColor="muted"
+          borderRadius="md"
           p={4}
           textAlign="center"
         >
