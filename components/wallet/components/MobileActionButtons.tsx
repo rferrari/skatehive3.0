@@ -90,7 +90,7 @@ export default function MobileActionButtons({
             onClick={openSendModal}
             w="56px"
             h="56px"
-            bg="rgba(96, 165, 250, 0.8)"
+            bg="primary"
             borderRadius="full"
             display="flex"
             alignItems="center"
@@ -101,7 +101,7 @@ export default function MobileActionButtons({
             }}
             transition="all 0.2s ease"
           >
-            <FaPaperPlane size="20px" color="white" />
+            <FaPaperPlane size="20px" color="background" />
           </Box>
           <Text fontSize="sm" color="rgba(255, 255, 255, 0.8)" fontWeight="500">
             Send
