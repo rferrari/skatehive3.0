@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import {
   Modal,
   ModalOverlay,
@@ -5,261 +6,456 @@ import {
   ModalHeader,
   ModalBody,
   ModalCloseButton,
-  VStack,
-  HStack,
-  Box,
-  Text,
-  Button,
   Tabs,
   TabList,
   TabPanels,
   Tab,
   TabPanel,
+  VStack,
+  HStack,
+  Box,
+  Text,
   Image,
+  Button,
   useClipboard,
   useToast,
-  Flex,
+  Spinner,
   Badge,
+  Avatar,
+  Divider,
+  IconButton,
+  Tooltip,
+  Icon,
 } from "@chakra-ui/react";
-import { useEffect, useState } from "react";
-import { FaCopy, FaCheck } from "react-icons/fa";
+import { FiCopy, FiDownload, FiShare2 } from "react-icons/fi";
 import { useAccount } from "wagmi";
-import { useAioha } from "@aioha/react-ui";
-import QRCode from "qrcode";
+import { useHiveUser } from "@/contexts/UserContext";
+import * as QRCode from "qrcode";
 
 interface ReceiveModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
+const ReceiveModal: React.FC<ReceiveModalProps> = ({ isOpen, onClose }) => {
   const { isConnected, address } = useAccount();
-  const { user } = useAioha();
-  const toast = useToast();
-
+  const { hiveUser: user } = useHiveUser();
   const [ethereumQR, setEthereumQR] = useState<string>("");
   const [hiveQR, setHiveQR] = useState<string>("");
+  const [isGeneratingQR, setIsGeneratingQR] = useState(false);
+  const toast = useToast();
 
   const { hasCopied: hasEthCopied, onCopy: onEthCopy } = useClipboard(
     address || ""
   );
-
   const { hasCopied: hasHiveCopied, onCopy: onHiveCopy } = useClipboard(
-    user || ""
+    user?.name || ""
   );
 
-  // Generate QR codes when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      // Generate Ethereum QR code
-      if (address) {
-        QRCode.toDataURL(address, {
-          width: 200,
-          margin: 2,
-          color: {
-            dark: "#000000",
-            light: "#FFFFFF",
-          },
-        })
-          .then((url: string) => setEthereumQR(url))
-          .catch((err: any) =>
-            console.error("Error generating Ethereum QR:", err)
-          );
-      }
+  const generateQRCode = async (text: string, type: "ethereum" | "hive") => {
+    try {
+      setIsGeneratingQR(true);
+      const qrDataURL = await QRCode.toDataURL(text, {
+        width: 256,
+        margin: 2,
+        color: {
+          dark: "#000000",
+          light: "#ffffff",
+        },
+      });
 
-      // Generate Hive QR code
-      if (user) {
-        QRCode.toDataURL(user, {
-          width: 200,
-          margin: 2,
-          color: {
-            dark: "#000000",
-            light: "#FFFFFF",
-          },
-        })
-          .then((url: string) => setHiveQR(url))
-          .catch((err: any) => console.error("Error generating Hive QR:", err));
+      if (type === "ethereum") {
+        setEthereumQR(qrDataURL);
+      } else {
+        setHiveQR(qrDataURL);
       }
-    }
-  }, [isOpen, address, user]);
-
-  const handleCopyAddress = (type: "ethereum" | "hive") => {
-    if (type === "ethereum") {
-      onEthCopy();
+    } catch (error) {
+      console.error("Error generating QR code:", error);
       toast({
-        title: "Address copied!",
-        description: "Ethereum address copied to clipboard",
-        status: "success",
-        duration: 2000,
+        title: "Error",
+        description: "Failed to generate QR code",
+        status: "error",
+        duration: 3000,
         isClosable: true,
       });
-    } else {
-      onHiveCopy();
-      toast({
-        title: "Username copied!",
-        description: "Hive username copied to clipboard",
-        status: "success",
-        duration: 2000,
-        isClosable: true,
-      });
+    } finally {
+      setIsGeneratingQR(false);
     }
   };
 
+  useEffect(() => {
+    if (isOpen && address) {
+      generateQRCode(address, "ethereum");
+    }
+  }, [isOpen, address]);
+
+  useEffect(() => {
+    if (isOpen && user?.name) {
+      generateQRCode(user.name, "hive");
+    }
+  }, [isOpen, user?.name]);
+
   const shortenAddress = (addr: string) => {
-    if (!addr) return "";
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
   };
 
+  const downloadQR = (qrCode: string, filename: string) => {
+    const link = document.createElement("a");
+    link.download = filename;
+    link.href = qrCode;
+    link.click();
+  };
+
+  const shareAddress = async (addr: string, type: string) => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `My ${type} Address`,
+          text: `Here's my ${type} address: ${addr}`,
+        });
+      } catch (error) {
+        console.log("Share canceled");
+      }
+    } else {
+      // Fallback to clipboard
+      navigator.clipboard.writeText(addr);
+      toast({
+        title: "Copied to clipboard",
+        description: `${type} address copied`,
+        status: "success",
+        duration: 2000,
+        isClosable: true,
+      });
+    }
+  };
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="lg">
-      <ModalOverlay />
-      <ModalContent bg="background" border="1px solid" borderColor="muted">
-        <ModalHeader color="primary" fontFamily="Joystix">
-          💰 Receive Crypto
+    <Modal isOpen={isOpen} onClose={onClose} size="md" isCentered>
+      <ModalOverlay bg="blackAlpha.600" backdropFilter="blur(10px)" />
+      <ModalContent
+        bg="cardBg"
+        borderRadius="2xl"
+        border="1px solid"
+        borderColor="border"
+        boxShadow="0 25px 50px rgba(0, 0, 0, 0.25)"
+        mx={4}
+      >
+        <ModalHeader
+          pb={2}
+          borderBottom="1px solid"
+          borderColor="border"
+          bg="linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1))"
+          borderTopRadius="2xl"
+        >
+          <HStack spacing={3}>
+            <Box
+              w={8}
+              h={8}
+              bg="linear-gradient(135deg, #3b82f6, #9333ea)"
+              borderRadius="lg"
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+            >
+              <Text color="white" fontWeight="bold" fontSize="sm">
+                R
+              </Text>
+            </Box>
+            <VStack align="start" spacing={0}>
+              <Text fontWeight="bold" fontSize="lg" color="text">
+                Receive Crypto
+              </Text>
+              <Text fontSize="sm" color="textSecondary">
+                Share your addresses to receive payments
+              </Text>
+            </VStack>
+          </HStack>
         </ModalHeader>
         <ModalCloseButton />
-        <ModalBody pb={6}>
-          <VStack spacing={4} align="stretch">
-            <Text fontSize="sm" color="textSecondary" textAlign="center">
-              Share your wallet address or scan QR code to receive payments
-            </Text>
 
-            <Tabs variant="soft-rounded" colorScheme="blue">
-              <TabList bg="muted" p={1} borderRadius="lg">
-                <Tab
-                  _selected={{ bg: "primary", color: "background" }}
-                  _hover={{ bg: "primary", opacity: 0.8 }}
-                  fontWeight="bold"
-                  fontSize="sm"
-                  flex={1}
-                  isDisabled={!isConnected}
-                >
-                  ⚡ Ethereum
-                  {!isConnected && (
-                    <Badge ml={2} size="sm" colorScheme="red">
-                      Not Connected
-                    </Badge>
-                  )}
+        <ModalBody p={0}>
+          <VStack spacing={0} w="100%">
+            <Tabs variant="soft-rounded" colorScheme="blue" w="100%">
+              <TabList p={4} bg="rgba(0, 0, 0, 0.02)">
+                <Tab flex={1} _selected={{ bg: "primary", color: "white" }}>
+                  <HStack spacing={2}>
+                    <Avatar src="/logos/ethereum-logo.png" size="xs" />
+                    <Text>Ethereum</Text>
+                    {isConnected && (
+                      <Badge colorScheme="green" size="sm" borderRadius="full">
+                        Connected
+                      </Badge>
+                    )}
+                  </HStack>
                 </Tab>
-                <Tab
-                  _selected={{ bg: "primary", color: "background" }}
-                  _hover={{ bg: "primary", opacity: 0.8 }}
-                  fontWeight="bold"
-                  fontSize="sm"
-                  flex={1}
-                  isDisabled={!user}
-                >
-                  🚀 Hive
-                  {!user && (
-                    <Badge ml={2} size="sm" colorScheme="red">
-                      Not Connected
-                    </Badge>
-                  )}
+                <Tab flex={1} _selected={{ bg: "primary", color: "white" }}>
+                  <HStack spacing={2}>
+                    <Avatar src="/logos/hive-logo.png" size="xs" />
+                    <Text>Hive</Text>
+                    {user && (
+                      <Badge colorScheme="green" size="sm" borderRadius="full">
+                        Connected
+                      </Badge>
+                    )}
+                  </HStack>
                 </Tab>
               </TabList>
 
               <TabPanels>
                 {/* Ethereum Tab */}
-                <TabPanel p={4}>
+                <TabPanel px={6} py={8}>
                   {isConnected && address ? (
-                    <VStack spacing={4} align="center">
-                      {/* QR Code */}
-                      <Box
-                        p={4}
-                        bg="white"
-                        borderRadius="lg"
-                        border="2px solid"
-                        borderColor="border"
-                      >
-                        {ethereumQR ? (
-                          <Image
-                            src={ethereumQR}
-                            alt="Ethereum Address QR Code"
-                            w="200px"
-                            h="200px"
-                          />
-                        ) : (
-                          <Flex
-                            w="200px"
-                            h="200px"
-                            align="center"
-                            justify="center"
-                            bg="gray.100"
-                            borderRadius="md"
-                          >
-                            <Text color="gray.500">Generating QR...</Text>
-                          </Flex>
-                        )}
-                      </Box>
-
-                      {/* Address Display */}
-                      <VStack spacing={2} w="100%">
-                        <Text fontSize="sm" color="textSecondary">
-                          Ethereum Address:
-                        </Text>
-                        <HStack
-                          w="100%"
-                          p={3}
-                          bg="muted"
-                          borderRadius="md"
-                          border="1px solid"
-                          borderColor="border"
-                          justify="space-between"
-                        >
-                          <VStack align="start" spacing={0} flex={1}>
-                            <Text fontSize="xs" color="textSecondary">
-                              {shortenAddress(address)}
+                    <VStack spacing={6} align="center">
+                      {/* Header */}
+                      <VStack spacing={2}>
+                        <HStack spacing={3}>
+                          <Avatar src="/logos/ethereum-logo.png" size="md" />
+                          <VStack align="start" spacing={0}>
+                            <Text fontWeight="bold" fontSize="lg" color="text">
+                              Ethereum Wallet
                             </Text>
-                            <Text
-                              fontSize="xs"
-                              color="textSecondary"
-                              opacity={0.7}
-                            >
-                              {address}
+                            <Text fontSize="sm" color="textSecondary">
+                              ERC-20 tokens supported
                             </Text>
                           </VStack>
-                          <Button
-                            size="sm"
-                            leftIcon={hasEthCopied ? <FaCheck /> : <FaCopy />}
-                            colorScheme={hasEthCopied ? "green" : "blue"}
-                            onClick={() => handleCopyAddress("ethereum")}
-                          >
-                            {hasEthCopied ? "Copied!" : "Copy"}
-                          </Button>
                         </HStack>
                       </VStack>
 
-                      {/* Network Info */}
-                      <Box
-                        w="100%"
-                        p={3}
-                        bg="rgba(96, 165, 250, 0.1)"
-                        borderRadius="md"
-                        border="1px solid"
-                        borderColor="rgba(96, 165, 250, 0.3)"
-                      >
-                        <Text fontSize="sm" color="primary" fontWeight="bold">
-                          ⚠️ Important:
-                        </Text>
-                        <Text fontSize="xs" color="textSecondary" mt={1}>
-                          This address supports Ethereum and ERC-20 tokens only.
-                          Make sure the sender uses the correct network.
-                        </Text>
-                      </Box>
+                      <Divider />
+
+                      {/* QR Code */}
+                      <VStack spacing={4}>
+                        <Box
+                          p={6}
+                          bg="white"
+                          borderRadius="2xl"
+                          border="3px solid"
+                          borderColor="primary"
+                          boxShadow="0 10px 30px rgba(0, 0, 0, 0.1)"
+                          position="relative"
+                          _hover={{
+                            transform: "scale(1.02)",
+                            boxShadow: "0 15px 40px rgba(0, 0, 0, 0.15)",
+                          }}
+                          transition="all 0.3s ease"
+                        >
+                          {isGeneratingQR ? (
+                            <Box
+                              w="200px"
+                              h="200px"
+                              display="flex"
+                              alignItems="center"
+                              justifyContent="center"
+                            >
+                              <Spinner
+                                size="xl"
+                                color="primary"
+                                thickness="4px"
+                              />
+                            </Box>
+                          ) : ethereumQR ? (
+                            <Image
+                              src={ethereumQR}
+                              alt="Ethereum Address QR Code"
+                              w="200px"
+                              h="200px"
+                            />
+                          ) : (
+                            <Box
+                              w="200px"
+                              h="200px"
+                              bg="gray.100"
+                              borderRadius="lg"
+                            />
+                          )}
+
+                          {ethereumQR && !isGeneratingQR && (
+                            <HStack
+                              position="absolute"
+                              top={2}
+                              right={2}
+                              spacing={1}
+                            >
+                              <Tooltip label="Download QR Code">
+                                <IconButton
+                                  aria-label="Download QR"
+                                  icon={<Icon as={FiDownload} />}
+                                  size="sm"
+                                  variant="ghost"
+                                  bg="white"
+                                  color="primary"
+                                  _hover={{ bg: "gray.50" }}
+                                  onClick={() =>
+                                    downloadQR(
+                                      ethereumQR,
+                                      "ethereum-address-qr.png"
+                                    )
+                                  }
+                                />
+                              </Tooltip>
+                              <Tooltip label="Share Address">
+                                <IconButton
+                                  aria-label="Share Address"
+                                  icon={<Icon as={FiShare2} />}
+                                  size="sm"
+                                  variant="ghost"
+                                  bg="white"
+                                  color="primary"
+                                  _hover={{ bg: "gray.50" }}
+                                  onClick={() =>
+                                    shareAddress(address, "ethereum")
+                                  }
+                                />
+                              </Tooltip>
+                            </HStack>
+                          )}
+                        </Box>
+                      </VStack>
+
+                      {/* Address Display */}
+                      <VStack spacing={4} w="100%">
+                        <VStack spacing={3} w="100%">
+                          <HStack spacing={2}>
+                            <Text
+                              fontSize="md"
+                              color="text"
+                              fontWeight="medium"
+                            >
+                              Wallet Address
+                            </Text>
+                            <Badge colorScheme="green" borderRadius="full">
+                              Connected
+                            </Badge>
+                          </HStack>
+
+                          <Box
+                            w="100%"
+                            p={4}
+                            bg="rgba(59, 130, 246, 0.05)"
+                            border="2px solid"
+                            borderColor="rgba(59, 130, 246, 0.2)"
+                            borderRadius="xl"
+                            _hover={{
+                              borderColor: "primary",
+                              transform: "scale(1.01)",
+                            }}
+                            transition="all 0.2s ease"
+                            cursor="pointer"
+                            onClick={onEthCopy}
+                          >
+                            <HStack justify="space-between" w="100%">
+                              <VStack align="start" spacing={1} flex={1}>
+                                <Text
+                                  fontSize="sm"
+                                  fontFamily="mono"
+                                  color="text"
+                                  fontWeight="medium"
+                                  wordBreak="break-all"
+                                  display={{ base: "none", md: "block" }}
+                                >
+                                  {address}
+                                </Text>
+                                <Text
+                                  fontSize="sm"
+                                  fontFamily="mono"
+                                  color="text"
+                                  fontWeight="medium"
+                                  display={{ base: "block", md: "none" }}
+                                >
+                                  {shortenAddress(address)}
+                                </Text>
+                              </VStack>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                leftIcon={<Icon as={FiCopy} />}
+                                colorScheme={hasEthCopied ? "green" : "blue"}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onEthCopy();
+                                }}
+                              >
+                                {hasEthCopied ? "Copied!" : "Copy"}
+                              </Button>
+                            </HStack>
+                          </Box>
+                        </VStack>
+
+                        <VStack spacing={3} w="100%">
+                          <Text
+                            fontSize="sm"
+                            color="textSecondary"
+                            textAlign="center"
+                            fontWeight="medium"
+                          >
+                            Supported Networks
+                          </Text>
+                          <HStack spacing={2} flexWrap="wrap" justify="center">
+                            <Badge colorScheme="blue" borderRadius="full">
+                              Ethereum
+                            </Badge>
+                            <Badge colorScheme="purple" borderRadius="full">
+                              Polygon
+                            </Badge>
+                            <Badge colorScheme="orange" borderRadius="full">
+                              BSC
+                            </Badge>
+                            <Badge colorScheme="green" borderRadius="full">
+                              Arbitrum
+                            </Badge>
+                          </HStack>
+                          <Text
+                            fontSize="sm"
+                            color="textSecondary"
+                            lineHeight="1.4"
+                            textAlign="center"
+                          >
+                            This address supports Ethereum and ERC-20 tokens
+                            across multiple networks. Always verify the network
+                            before sending.
+                          </Text>
+                        </VStack>
+                      </VStack>
                     </VStack>
                   ) : (
-                    <VStack spacing={4} align="center" py={8}>
-                      <Box fontSize="48px">🔗</Box>
-                      <Text color="textSecondary" textAlign="center">
-                        Connect your Ethereum wallet to receive crypto payments
-                      </Text>
-                      <Text
-                        fontSize="sm"
-                        color="textSecondary"
-                        textAlign="center"
+                    <VStack spacing={6} align="center" py={12}>
+                      <Box
+                        fontSize="64px"
+                        opacity={0.5}
+                        filter="grayscale(100%)"
                       >
-                        Click "Connect Wallet" to get started
-                      </Text>
+                        🔗
+                      </Box>
+                      <VStack spacing={2}>
+                        <Text fontSize="lg" fontWeight="semibold" color="text">
+                          Wallet Not Connected
+                        </Text>
+                        <Text
+                          fontSize="sm"
+                          color="textSecondary"
+                          textAlign="center"
+                        >
+                          Connect your Ethereum wallet to generate a receive
+                          address and QR code
+                        </Text>
+                      </VStack>
+                      <Button
+                        size="lg"
+                        colorScheme="blue"
+                        borderRadius="xl"
+                        px={8}
+                        py={6}
+                        fontSize="md"
+                        fontWeight="semibold"
+                        bg="linear-gradient(135deg, #3b82f6, #1d4ed8)"
+                        _hover={{
+                          transform: "translateY(-2px)",
+                          boxShadow: "0 8px 25px rgba(59, 130, 246, 0.3)",
+                        }}
+                        transition="all 0.3s ease"
+                      >
+                        Connect Wallet
+                      </Button>
                     </VStack>
                   )}
                 </TabPanel>
@@ -283,99 +479,82 @@ export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
                             w="200px"
                             h="200px"
                           />
-                        ) : (
-                          <Flex
+                        ) : isGeneratingQR ? (
+                          <Box
                             w="200px"
                             h="200px"
-                            align="center"
-                            justify="center"
-                            bg="gray.100"
-                            borderRadius="md"
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="center"
                           >
-                            <Text color="gray.500">Generating QR...</Text>
-                          </Flex>
+                            <Spinner size="xl" />
+                          </Box>
+                        ) : (
+                          <Box
+                            w="200px"
+                            h="200px"
+                            bg="gray.100"
+                            borderRadius="lg"
+                          />
                         )}
                       </Box>
 
                       {/* Username Display */}
                       <VStack spacing={2} w="100%">
                         <Text fontSize="sm" color="textSecondary">
-                          Hive Username:
+                          Hive Username
                         </Text>
-                        <HStack
+                        <Box
                           w="100%"
                           p={3}
-                          bg="muted"
-                          borderRadius="md"
+                          bg="rgba(0, 0, 0, 0.05)"
+                          borderRadius="lg"
                           border="1px solid"
                           borderColor="border"
-                          justify="space-between"
                         >
-                          <HStack spacing={2} flex={1}>
-                            <Image
-                              src="/logos/hive-logo.png"
-                              alt="Hive"
-                              w="20px"
-                              h="20px"
-                              fallbackSrc="/logos/default-token.png"
-                            />
-                            <Text fontSize="md" fontWeight="bold" color="text">
-                              @{user}
+                          <HStack justify="space-between">
+                            <Text fontFamily="mono" fontSize="md" color="text">
+                              @{user.name}
                             </Text>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              leftIcon={<Icon as={FiCopy} />}
+                              colorScheme={hasHiveCopied ? "green" : "gray"}
+                              onClick={onHiveCopy}
+                            >
+                              {hasHiveCopied ? "Copied!" : "Copy"}
+                            </Button>
                           </HStack>
-                          <Button
-                            size="sm"
-                            leftIcon={hasHiveCopied ? <FaCheck /> : <FaCopy />}
-                            colorScheme={hasHiveCopied ? "green" : "blue"}
-                            onClick={() => handleCopyAddress("hive")}
-                          >
-                            {hasHiveCopied ? "Copied!" : "Copy"}
-                          </Button>
-                        </HStack>
+                        </Box>
                       </VStack>
 
-                      {/* Supported Tokens */}
-                      <Box
-                        w="100%"
-                        p={3}
-                        bg="rgba(34, 197, 94, 0.1)"
-                        borderRadius="md"
-                        border="1px solid"
-                        borderColor="rgba(34, 197, 94, 0.3)"
-                      >
-                        <Text fontSize="sm" color="green.400" fontWeight="bold">
-                          💚 Supported Tokens:
+                      {/* Info */}
+                      <VStack spacing={2} w="100%">
+                        <Text
+                          fontSize="sm"
+                          color="textSecondary"
+                          textAlign="center"
+                        >
+                          Send HIVE, HBD, and other Hive tokens to this username
                         </Text>
-                        <HStack spacing={2} mt={2} flexWrap="wrap">
-                          <Badge colorScheme="green" size="sm">
-                            HIVE
-                          </Badge>
-                          <Badge colorScheme="green" size="sm">
-                            HBD
-                          </Badge>
-                          <Badge colorScheme="green" size="sm">
-                            Hive Engine Tokens
-                          </Badge>
-                        </HStack>
-                        <Text fontSize="xs" color="textSecondary" mt={2}>
-                          Send HIVE, HBD, or any Hive Engine token to this
-                          username
-                        </Text>
-                      </Box>
+                      </VStack>
                     </VStack>
                   ) : (
                     <VStack spacing={4} align="center" py={8}>
-                      <Box fontSize="48px">🚀</Box>
-                      <Text color="textSecondary" textAlign="center">
-                        Connect your Hive account to receive HIVE and HBD
+                      <Text fontSize="lg" fontWeight="semibold" color="text">
+                        Not Connected to Hive
                       </Text>
                       <Text
                         fontSize="sm"
                         color="textSecondary"
                         textAlign="center"
                       >
-                        Click "Connect Hive" to get started
+                        Connect your Hive account to generate a receive QR code
                       </Text>
+                      <Button size="lg" colorScheme="red">
+                        Connect Hive Account
+                      </Button>
                     </VStack>
                   )}
                 </TabPanel>
@@ -386,4 +565,6 @@ export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
       </ModalContent>
     </Modal>
   );
-}
+};
+
+export default ReceiveModal;

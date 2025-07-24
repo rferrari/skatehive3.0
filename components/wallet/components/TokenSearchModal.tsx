@@ -330,7 +330,7 @@ export default function TokenSearchModal({
                 filteredTokens.ethereum.length === 0 && (
                   <Box textAlign="center" py={8}>
                     <Text color="textSecondary">
-                      No tokens found matching "{searchQuery}"
+                      No tokens found matching &quot;{searchQuery}&quot;
                     </Text>
                   </Box>
                 )}

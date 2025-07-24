@@ -424,39 +424,38 @@ export default function MainWallet({ username }: MainWalletProps) {
                       <TotalPortfolioValue
                         totalHiveAssetsValue={totalHiveAssetsValue}
                       />
-
-                      {/* Hive Sections - Show if user is connected to Hive */}
-                      {user ? (
-                        <>
-                          <HivePowerSection
-                            hivePower={hivePower}
-                            hivePrice={hivePrice}
-                            onModalOpen={handleModalOpen}
-                          />
-                          <HiveSection
-                            balance={hiveBalances.balance}
-                            hivePrice={hivePrice}
-                            onModalOpen={handleModalOpen}
-                          />
-                          <HBDSection
-                            hbdBalance={hiveBalances.hbdBalance}
-                            hbdSavingsBalance="0.000" // Only show liquid HBD in wallet tab
-                            hbdPrice={hbdPrice}
-                            estimatedClaimableInterest={0}
-                            daysUntilClaim={0}
-                            lastInterestPayment={
-                              hbdInterestData.lastInterestPayment
-                            }
-                            onModalOpen={handleModalOpen}
-                            onClaimInterest={handleClaimHbdInterest}
-                            isWalletView={true}
-                          />
-                        </>
-                      ) : (
-                        /* Show Connect Hive Section if not connected */
-                        <ConnectWallets onConnectHive={handleConnectHive} />
-                      )}
                     </Box>
+                    {/* Hive Sections - Show if user is connected to Hive */}
+                    {user ? (
+                      <>
+                        <HivePowerSection
+                          hivePower={hivePower}
+                          hivePrice={hivePrice}
+                          onModalOpen={handleModalOpen}
+                        />
+                        <HiveSection
+                          balance={hiveBalances.balance}
+                          hivePrice={hivePrice}
+                          onModalOpen={handleModalOpen}
+                        />
+                        <HBDSection
+                          hbdBalance={hiveBalances.hbdBalance}
+                          hbdSavingsBalance="0.000" // Only show liquid HBD in wallet tab
+                          hbdPrice={hbdPrice}
+                          estimatedClaimableInterest={0}
+                          daysUntilClaim={0}
+                          lastInterestPayment={
+                            hbdInterestData.lastInterestPayment
+                          }
+                          onModalOpen={handleModalOpen}
+                          onClaimInterest={handleClaimHbdInterest}
+                          isWalletView={true}
+                        />
+                      </>
+                    ) : (
+                      /* Show Connect Hive Section if not connected */
+                      <ConnectWallets onConnectHive={handleConnectHive} />
+                    )}
                     {/* Ethereum Assets Section - Show if connected to Ethereum OR have Farcaster data */}
                     {isMounted && (isConnected || isFarcasterConnected) && (
                       <EthereumAssetsSection />
