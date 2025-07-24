@@ -53,7 +53,7 @@ export default function DesktopTokenTable({
             <Tr>
               <Td colSpan={4} textAlign="center" py={8}>
                 <Text color="gray.400" fontSize="sm">
-                  No tokens to display. Try turning off "Hide Dust" to see
+                  No tokens to display. Try turning off &quot;Hide Dust&quot; to see
                   smaller balances.
                 </Text>
               </Td>

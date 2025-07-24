@@ -39,7 +39,7 @@ interface ReceiveModalProps {
 
 const ReceiveModal: React.FC<ReceiveModalProps> = ({ isOpen, onClose }) => {
   const { isConnected, address } = useAccount();
-  const { hiveUser: user } = useHiveUser();
+  const { hiveUser } = useHiveUser();
   const [ethereumQR, setEthereumQR] = useState<string>("");
   const [hiveQR, setHiveQR] = useState<string>("");
   const [isGeneratingQR, setIsGeneratingQR] = useState(false);
@@ -49,7 +49,7 @@ const ReceiveModal: React.FC<ReceiveModalProps> = ({ isOpen, onClose }) => {
     address || ""
   );
   const { hasCopied: hasHiveCopied, onCopy: onHiveCopy } = useClipboard(
-    user?.name || ""
+    hiveUser?.name || ""
   );
 
   const generateQRCode = async (text: string, type: "ethereum" | "hive") => {
@@ -90,10 +90,10 @@ const ReceiveModal: React.FC<ReceiveModalProps> = ({ isOpen, onClose }) => {
   }, [isOpen, address]);
 
   useEffect(() => {
-    if (isOpen && user?.name) {
-      generateQRCode(user.name, "hive");
+    if (isOpen && hiveUser?.name) {
+      generateQRCode(hiveUser.name, "hive");
     }
-  }, [isOpen, user?.name]);
+  }, [isOpen, hiveUser?.name]);
 
   const shortenAddress = (addr: string) => {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
@@ -175,9 +175,23 @@ const ReceiveModal: React.FC<ReceiveModalProps> = ({ isOpen, onClose }) => {
 
         <ModalBody p={0}>
           <VStack spacing={0} w="100%">
-            <Tabs variant="soft-rounded" colorScheme="blue" w="100%">
-              <TabList p={4} bg="rgba(0, 0, 0, 0.02)">
-                <Tab flex={1} _selected={{ bg: "primary", color: "white" }}>
+            <Tabs variant="soft-rounded" w="100%">
+              <TabList p={4} bg="background">
+                <Tab
+                  flex={1}
+                  color="textSecondary"
+                  _selected={{
+                    bg: "primary",
+                    color: "white",
+                    fontWeight: "semibold",
+                  }}
+                  _hover={{
+                    bg: "rgba(59, 130, 246, 0.1)",
+                    color: "text",
+                  }}
+                  borderRadius="lg"
+                  transition="all 0.2s ease"
+                >
                   <HStack spacing={2}>
                     <Avatar src="/logos/ethereum-logo.png" size="xs" />
                     <Text>Ethereum</Text>
@@ -188,11 +202,25 @@ const ReceiveModal: React.FC<ReceiveModalProps> = ({ isOpen, onClose }) => {
                     )}
                   </HStack>
                 </Tab>
-                <Tab flex={1} _selected={{ bg: "primary", color: "white" }}>
+                <Tab
+                  flex={1}
+                  color="textSecondary"
+                  _selected={{
+                    bg: "primary",
+                    color: "white",
+                    fontWeight: "semibold",
+                  }}
+                  _hover={{
+                    bg: "rgba(59, 130, 246, 0.1)",
+                    color: "text",
+                  }}
+                  borderRadius="lg"
+                  transition="all 0.2s ease"
+                >
                   <HStack spacing={2}>
                     <Avatar src="/logos/hive-logo.png" size="xs" />
                     <Text>Hive</Text>
-                    {user && (
+                    {hiveUser && (
                       <Badge colorScheme="green" size="sm" borderRadius="full">
                         Connected
                       </Badge>
@@ -461,98 +489,236 @@ const ReceiveModal: React.FC<ReceiveModalProps> = ({ isOpen, onClose }) => {
                 </TabPanel>
 
                 {/* Hive Tab */}
-                <TabPanel p={4}>
-                  {user ? (
-                    <VStack spacing={4} align="center">
-                      {/* QR Code */}
-                      <Box
-                        p={4}
-                        bg="white"
-                        borderRadius="lg"
-                        border="2px solid"
-                        borderColor="border"
-                      >
-                        {hiveQR ? (
-                          <Image
-                            src={hiveQR}
-                            alt="Hive Username QR Code"
-                            w="200px"
-                            h="200px"
-                          />
-                        ) : isGeneratingQR ? (
-                          <Box
-                            w="200px"
-                            h="200px"
-                            display="flex"
-                            alignItems="center"
-                            justifyContent="center"
-                          >
-                            <Spinner size="xl" />
-                          </Box>
-                        ) : (
-                          <Box
-                            w="200px"
-                            h="200px"
-                            bg="gray.100"
-                            borderRadius="lg"
-                          />
-                        )}
-                      </Box>
-
-                      {/* Username Display */}
-                      <VStack spacing={2} w="100%">
-                        <Text fontSize="sm" color="textSecondary">
-                          Hive Username
-                        </Text>
-                        <Box
-                          w="100%"
-                          p={3}
-                          bg="rgba(0, 0, 0, 0.05)"
-                          borderRadius="lg"
-                          border="1px solid"
-                          borderColor="border"
-                        >
-                          <HStack justify="space-between">
-                            <Text fontFamily="mono" fontSize="md" color="text">
-                              @{user.name}
+                <TabPanel px={6} py={8}>
+                  {hiveUser ? (
+                    <VStack spacing={6} align="center">
+                      {/* Header */}
+                      <VStack spacing={2}>
+                        <HStack spacing={3}>
+                          <Avatar src="/logos/hive-logo.png" size="md" />
+                          <VStack align="start" spacing={0}>
+                            <Text fontWeight="bold" fontSize="lg" color="text">
+                              Hive Wallet
                             </Text>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              leftIcon={<Icon as={FiCopy} />}
-                              colorScheme={hasHiveCopied ? "green" : "gray"}
-                              onClick={onHiveCopy}
+                            <Text fontSize="sm" color="textSecondary">
+                              HIVE, HBD, and Hive Engine tokens
+                            </Text>
+                          </VStack>
+                        </HStack>
+                      </VStack>
+
+                      <Divider />
+
+                      {/* QR Code */}
+                      <VStack spacing={4}>
+                        <Box
+                          p={6}
+                          bg="white"
+                          borderRadius="2xl"
+                          border="3px solid"
+                          borderColor="red.400"
+                          boxShadow="0 10px 30px rgba(0, 0, 0, 0.1)"
+                          position="relative"
+                          _hover={{
+                            transform: "scale(1.02)",
+                            boxShadow: "0 15px 40px rgba(0, 0, 0, 0.15)",
+                          }}
+                          transition="all 0.3s ease"
+                        >
+                          {isGeneratingQR ? (
+                            <Box
+                              w="200px"
+                              h="200px"
+                              display="flex"
+                              alignItems="center"
+                              justifyContent="center"
                             >
-                              {hasHiveCopied ? "Copied!" : "Copy"}
-                            </Button>
-                          </HStack>
+                              <Spinner
+                                size="xl"
+                                color="red.400"
+                                thickness="4px"
+                              />
+                            </Box>
+                          ) : hiveQR ? (
+                            <Image
+                              src={hiveQR}
+                              alt="Hive Username QR Code"
+                              w="200px"
+                              h="200px"
+                            />
+                          ) : (
+                            <Box
+                              w="200px"
+                              h="200px"
+                              bg="gray.100"
+                              borderRadius="lg"
+                            />
+                          )}
+
+                          {hiveQR && !isGeneratingQR && (
+                            <HStack
+                              position="absolute"
+                              top={2}
+                              right={2}
+                              spacing={1}
+                            >
+                              <Tooltip label="Download QR Code">
+                                <IconButton
+                                  aria-label="Download QR"
+                                  icon={<Icon as={FiDownload} />}
+                                  size="sm"
+                                  variant="ghost"
+                                  bg="white"
+                                  color="red.400"
+                                  _hover={{ bg: "gray.50" }}
+                                  onClick={() =>
+                                    downloadQR(hiveQR, "hive-username-qr.png")
+                                  }
+                                />
+                              </Tooltip>
+                              <Tooltip label="Share Username">
+                                <IconButton
+                                  aria-label="Share Username"
+                                  icon={<Icon as={FiShare2} />}
+                                  size="sm"
+                                  variant="ghost"
+                                  bg="white"
+                                  color="red.400"
+                                  _hover={{ bg: "gray.50" }}
+                                  onClick={() =>
+                                    shareAddress(hiveUser.name, "hive")
+                                  }
+                                />
+                              </Tooltip>
+                            </HStack>
+                          )}
                         </Box>
                       </VStack>
 
-                      {/* Info */}
-                      <VStack spacing={2} w="100%">
+                      {/* Username Display */}
+                      <VStack spacing={4} w="100%">
+                        <VStack spacing={3} w="100%">
+                          <HStack spacing={2}>
+                            <Text
+                              fontSize="md"
+                              color="text"
+                              fontWeight="medium"
+                            >
+                              Hive Username
+                            </Text>
+                            <Badge colorScheme="green" borderRadius="full">
+                              Connected
+                            </Badge>
+                          </HStack>
+
+                          <Box
+                            w="100%"
+                            p={4}
+                            bg="rgba(239, 68, 68, 0.05)"
+                            border="2px solid"
+                            borderColor="rgba(239, 68, 68, 0.2)"
+                            borderRadius="xl"
+                            _hover={{
+                              borderColor: "red.400",
+                              transform: "scale(1.01)",
+                            }}
+                            transition="all 0.2s ease"
+                            cursor="pointer"
+                            onClick={onHiveCopy}
+                          >
+                            <HStack justify="space-between" w="100%">
+                              <Text
+                                fontSize="lg"
+                                fontFamily="mono"
+                                color="text"
+                                fontWeight="medium"
+                              >
+                                @{hiveUser.name}
+                              </Text>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                leftIcon={<Icon as={FiCopy} />}
+                                colorScheme={hasHiveCopied ? "green" : "red"}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onHiveCopy();
+                                }}
+                              >
+                                {hasHiveCopied ? "Copied!" : "Copy"}
+                              </Button>
+                            </HStack>
+                          </Box>
+                        </VStack>
+
+                        <VStack spacing={3} w="100%">
+                          <Text
+                            fontSize="sm"
+                            color="textSecondary"
+                            textAlign="center"
+                            fontWeight="medium"
+                          >
+                            Supported Tokens
+                          </Text>
+                          <HStack spacing={2} flexWrap="wrap" justify="center">
+                            <Badge colorScheme="red" borderRadius="full">
+                              HIVE
+                            </Badge>
+                            <Badge colorScheme="orange" borderRadius="full">
+                              HBD
+                            </Badge>
+                            <Badge colorScheme="purple" borderRadius="full">
+                              Hive Engine
+                            </Badge>
+                          </HStack>
+                          <Text
+                            fontSize="sm"
+                            color="textSecondary"
+                            lineHeight="1.4"
+                            textAlign="center"
+                          >
+                            Send HIVE, HBD, and other Hive Engine tokens to this
+                            username. No memo required for basic transfers.
+                          </Text>
+                        </VStack>
+                      </VStack>
+                    </VStack>
+                  ) : (
+                    <VStack spacing={6} align="center" py={12}>
+                      <Box
+                        fontSize="64px"
+                        opacity={0.5}
+                        filter="grayscale(100%)"
+                      >
+                        🟥
+                      </Box>
+                      <VStack spacing={2}>
+                        <Text fontSize="lg" fontWeight="semibold" color="text">
+                          Not Connected to Hive
+                        </Text>
                         <Text
                           fontSize="sm"
                           color="textSecondary"
                           textAlign="center"
                         >
-                          Send HIVE, HBD, and other Hive tokens to this username
+                          Connect your Hive account to generate a receive QR code
                         </Text>
                       </VStack>
-                    </VStack>
-                  ) : (
-                    <VStack spacing={4} align="center" py={8}>
-                      <Text fontSize="lg" fontWeight="semibold" color="text">
-                        Not Connected to Hive
-                      </Text>
-                      <Text
-                        fontSize="sm"
-                        color="textSecondary"
-                        textAlign="center"
+                      <Button
+                        size="lg"
+                        colorScheme="red"
+                        borderRadius="xl"
+                        px={8}
+                        py={6}
+                        fontSize="md"
+                        fontWeight="semibold"
+                        bg="linear-gradient(135deg, #ef4444, #dc2626)"
+                        _hover={{
+                          transform: "translateY(-2px)",
+                          boxShadow: "0 8px 25px rgba(239, 68, 68, 0.3)",
+                        }}
+                        transition="all 0.3s ease"
                       >
-                        Connect your Hive account to generate a receive QR code
-                      </Text>
-                      <Button size="lg" colorScheme="red">
                         Connect Hive Account
                       </Button>
                     </VStack>

@@ -26,8 +26,8 @@ export default function MobileTokenTable({
       >
         <Center>
           <Text color="gray.400" fontSize="sm">
-            No tokens to display. Try turning off "Hide Dust" to see smaller
-            balances.
+            No tokens to display. Try turning off &quot;Hide Dust&quot; to see
+            smaller balances.
           </Text>
         </Center>
       </Box>
