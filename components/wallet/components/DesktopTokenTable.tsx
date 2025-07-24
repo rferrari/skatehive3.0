@@ -50,7 +50,7 @@ export default function DesktopTokenTable({
       <TableContainer>
         <Table variant="simple" size="sm">
           <Thead>
-            <Tr>
+            {/* <Tr>
               <Th
                 color="gray.400"
                 fontSize="xs"
@@ -85,12 +85,15 @@ export default function DesktopTokenTable({
               >
                 Value
               </Th>
-            </Tr>
+            </Tr> */}
           </Thead>
           <Tbody>
             <Tr>
               <Td colSpan={4} textAlign="center" py={8}>
-                <Text color="muted">No tokens found in portfolio</Text>
+                <Text color="gray.400" fontSize="sm">
+                  No tokens to display. Try turning off "Hide Dust" to see
+                  smaller balances.
+                </Text>
               </Td>
             </Tr>
           </Tbody>
@@ -103,7 +106,7 @@ export default function DesktopTokenTable({
     <TableContainer>
       <Table variant="simple" size="sm">
         <Thead>
-          <Tr>
+          {/* <Tr>
             <Th
               color="gray.400"
               fontSize="xs"
@@ -138,7 +141,7 @@ export default function DesktopTokenTable({
             >
               Value
             </Th>
-          </Tr>
+          </Tr> */}
         </Thead>
         <Tbody>
           {consolidatedTokens.map((consolidatedToken) => {
@@ -198,7 +201,13 @@ export default function DesktopTokenTable({
                           )}
                         </HStack>
                         <Text fontSize="xs" color="gray.400">
-                          {networkInfo?.alias || primaryToken.network}
+                          {formatBalance(
+                            consolidatedToken.chains.reduce(
+                              (sum, chain) => sum + chain.token.balance,
+                              0
+                            )
+                          )}{" "}
+                          {consolidatedToken.symbol}
                         </Text>
                       </VStack>
                     </HStack>
@@ -220,23 +229,6 @@ export default function DesktopTokenTable({
                           {formatPriceChange(priceChange)}%
                         </Text>
                       )}
-                    </VStack>
-                  </Td>
-
-                  {/* Balance Column */}
-                  <Td py={3} isNumeric>
-                    <VStack spacing={0} align="end">
-                      <Text fontSize="sm" color="white">
-                        {formatBalance(
-                          consolidatedToken.chains.reduce(
-                            (sum, chain) => sum + chain.token.balance,
-                            0
-                          )
-                        )}
-                      </Text>
-                      <Text fontSize="xs" color="gray.400">
-                        {consolidatedToken.symbol}
-                      </Text>
                     </VStack>
                   </Td>
 
@@ -326,7 +318,7 @@ export default function DesktopTokenTable({
                 {/* Expandable Row for Chain Details */}
                 {isExpanded && (
                   <Tr key={`${consolidatedToken.symbol}-expanded`}>
-                    <Td colSpan={4} py={0} borderBottom="none">
+                    <Td colSpan={3} py={0} borderBottom="none">
                       <Box py={2}>
                         <TokenChainBreakdown
                           consolidatedToken={consolidatedToken}

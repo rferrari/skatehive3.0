@@ -8,7 +8,6 @@ import {
 } from "@chakra-ui/react";
 import { FaArrowDown, FaQuestionCircle } from "react-icons/fa";
 import { useState, useCallback, useMemo, memo } from "react";
-import { useTheme } from "@/app/themeProvider";
 import useIsMobile from "@/hooks/useIsMobile";
 
 interface HivePowerSectionProps {
@@ -22,7 +21,6 @@ const HivePowerSection = memo(function HivePowerSection({
   hivePrice,
   onModalOpen,
 }: HivePowerSectionProps) {
-  const { theme } = useTheme();
   const [showInfo, setShowInfo] = useState(false);
   const isMobile = useIsMobile();
 
@@ -36,7 +34,7 @@ const HivePowerSection = memo(function HivePowerSection({
 
   // Memoize event handlers
   const handleInfoToggle = useCallback(() => {
-    setShowInfo(prev => !prev);
+    setShowInfo((prev) => !prev);
   }, []);
 
   const handlePowerDown = useCallback(() => {
@@ -77,11 +75,11 @@ const HivePowerSection = memo(function HivePowerSection({
                 onClick={handleInfoToggle}
               />
             </HStack>
-            {!isMobile && (
+            {/* {!isMobile && (
               <Text fontSize="sm" color="gray.400">
                 Staked Hive for governance and curation
               </Text>
-            )}
+            )} */}
           </Box>
         </HStack>
 
@@ -112,7 +110,8 @@ const HivePowerSection = memo(function HivePowerSection({
       {showInfo && (
         <Box mt={3} p={3} bg="muted" borderRadius="md">
           <Text color="gray.400" fontSize="sm">
-            Staked Hive is the power you have to vote on posts. Earns you 3% interest. Actively voting on posts can earn up to 10% APR.
+            Staked Hive is the power you have to vote on posts. Earns you 3%
+            interest. Actively voting on posts can earn up to 10% APR.
           </Text>
         </Box>
       )}

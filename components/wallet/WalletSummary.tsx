@@ -96,61 +96,9 @@ const WalletSummary = memo(function WalletSummary({
     }
   }, [isFarcasterConnected, signOut, clearSession, toast]);
 
-  const handleCopyAddress = useCallback(() => {
-    if (address) {
-      navigator.clipboard.writeText(address);
-      toast({
-        status: "success",
-        title: "Address Copied!",
-        description: "Wallet address copied to clipboard",
-        duration: 2000,
-      });
-    }
-  }, [address, toast]);
-
   // Case 1: No wallets connected
   if (!connectionStatus.hasWallets) {
-    return (
-      <></>
-      // <Box
-      //   p={6}
-      //   bg="background"
-      //   borderRadius="xl"
-      //   border="2px solid"
-      //   borderColor="primary"
-      //   position="relative"
-      //   overflow="hidden"
-      // >
-      //   <VStack spacing={4} position="relative" zIndex={1}>
-      //     <Text
-      //       fontSize="lg"
-      //       color="primary"
-      //       fontWeight="bold"
-      //       textAlign="center"
-      //     >
-      //       🛹 Welcome to SkateHive
-      //     </Text>
-      //     <Text fontSize="sm" color="text" textAlign="center" mb={2}>
-      //       Connect your wallets to unlock your digital identity
-      //     </Text>
-
-      //     <Center w="full">
-      //       <ConnectButton />
-      //     </Center>
-
-      //     <Button
-      //       onClick={onConnectHive}
-      //       w="full"
-      //       variant="outline"
-      //       colorScheme="green"
-      //       leftIcon={<Text fontSize="lg">🐝</Text>}
-      //       size="lg"
-      //     >
-      //       Connect Hive Blockchain
-      //     </Button>
-      //   </VStack>
-      // </Box>
-    );
+    return <></>;
   }
 
   // Case 2: At least one wallet connected - show summary
@@ -187,13 +135,22 @@ const WalletSummary = memo(function WalletSummary({
               border="1px solid"
               borderColor="border"
             >
-              <Wallet>
-                <ConnectWallet>
-                  <Avatar />
-                  <Name />
-                </ConnectWallet>
-              </Wallet>
-
+              <HStack justify="space-between" align="center" mt={3}>
+                <Wallet>
+                  <ConnectWallet>
+                    <Avatar />
+                    <Name />
+                  </ConnectWallet>
+                </Wallet>
+                <IconButton
+                  icon={<IoLogOutSharp />}
+                  size="xs"
+                  variant="outline"
+                  colorScheme="red"
+                  onClick={handleDisconnect}
+                  aria-label="Disconnect Ethereum"
+                />
+              </HStack>
               {/* Farcaster connection indicator */}
               {isFarcasterConnected &&
                 farcasterProfile &&

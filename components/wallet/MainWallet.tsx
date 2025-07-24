@@ -36,8 +36,13 @@ import EthereumAssetsSection from "./EthereumAssetsSection";
 import NFTSection from "./NFTSection";
 import WalletSummary from "./WalletSummary";
 import ConnectWallets from "./ConnectHiveSection";
-import { PortfolioProvider } from "@/contexts/PortfolioContext";
+import {
+  PortfolioProvider,
+  usePortfolioContext,
+} from "@/contexts/PortfolioContext";
 import { FarcasterEnhancedUserData } from "@/types/farcaster";
+import { formatValue } from "@/lib/utils/portfolioUtils";
+import TotalPortfolioValue from "./components/TotalPortfolioValue";
 
 interface MainWalletProps {
   username?: string;
@@ -380,6 +385,10 @@ export default function MainWallet({ username }: MainWalletProps) {
                       gap={3}
                       p={2}
                     >
+                      <TotalPortfolioValue
+                        totalHiveAssetsValue={totalHiveAssetsValue}
+                      />
+
                       {/* Hive Sections - Show if user is connected to Hive */}
                       {user ? (
                         <>
@@ -532,7 +541,9 @@ export default function MainWallet({ username }: MainWalletProps) {
             </Box>
 
             {/* Right: Market Stats and Swap */}
+            {/* Hide right sidebar on mobile */}
             <VStack
+              display={{ base: "none", md: "flex" }}
               spacing={4}
               align="stretch"
               maxW={{ base: "100%", md: "340px" }}
@@ -543,6 +554,11 @@ export default function MainWallet({ username }: MainWalletProps) {
               justifyContent="flex-start"
               minW={0}
             >
+              <MarketPrices
+                hivePrice={hivePrice}
+                hbdPrice={hbdPrice}
+                isPriceLoading={isPriceLoading}
+              />
               <WalletSummary
                 hiveUsername={user}
                 totalHiveValue={totalHiveAssetsValue}
@@ -550,24 +566,17 @@ export default function MainWallet({ username }: MainWalletProps) {
                 onConnectEthereum={openConnectModal}
                 onConnectHive={handleConnectHive}
               />
-
               <ConnectModal
                 isOpen={isConnectModalOpen}
                 onClose={closeConnectModal}
               />
-              <MarketPrices
+              <SwapSection
                 hivePrice={hivePrice}
                 hbdPrice={hbdPrice}
                 isPriceLoading={isPriceLoading}
               />
-              <SwapSection 
-                hivePrice={hivePrice} 
-                hbdPrice={hbdPrice} 
-                isPriceLoading={isPriceLoading}
-              />
             </VStack>
           </Grid>
-
           {modalContent && (
             <WalletModal
               isOpen={isOpen}

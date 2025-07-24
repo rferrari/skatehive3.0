@@ -20,11 +20,13 @@ import {
   consolidateTokensBySymbol,
   filterConsolidatedTokensByBalance,
   sortConsolidatedTokensByBalance,
+  ConsolidatedToken,
 } from "../../lib/utils/portfolioUtils";
 import SendTokenModal from "./SendTokenModal";
 import AssetsHeader from "./components/AssetsHeader";
 import TokenControlsBar from "./components/TokenControlsBar";
-import MobileTokenCard from "./components/MobileTokenCard";
+import MobileTokenTable from "./components/MobileTokenTable";
+import MobileActionButtons from "./components/MobileActionButtons";
 import DesktopTokenTable from "./components/DesktopTokenTable";
 
 export default function EthereumAssetsSection() {
@@ -41,115 +43,9 @@ export default function EthereumAssetsSection() {
     refetch,
   } = usePortfolioContext();
 
-  const isDevelopment = process.env.NODE_ENV === "development";
-
-  // Debug logging for Farcaster user and balance data
-  useEffect(() => {
-    if (!isDevelopment) return;
-
-    console.log("🎯 EthereumAssetsSection Debug - Farcaster User Data:", {
-      isFarcasterConnected,
-      farcasterProfile: farcasterProfile
-        ? {
-            fid: farcasterProfile.fid,
-            username: farcasterProfile.username,
-            displayName: farcasterProfile.displayName,
-            custody:
-              "custody" in farcasterProfile
-                ? farcasterProfile.custody
-                : "No custody property",
-            verifications:
-              "verifications" in farcasterProfile
-                ? farcasterProfile.verifications
-                : "No verifications property",
-            fullProfile: farcasterProfile,
-            profileKeys: Object.keys(farcasterProfile),
-            profileType: typeof farcasterProfile,
-          }
-        : "No profile",
-      walletConnected: { isConnected, address },
-    });
-
-    console.log("💰 EthereumAssetsSection Debug - Portfolio Data:", {
-      portfolio: portfolio
-        ? {
-            totalNetWorth: portfolio.totalNetWorth,
-            tokensCount: portfolio.tokens?.length || 0,
-            source: "ethereum",
-          }
-        : "No ethereum portfolio",
-      farcasterPortfolio: farcasterPortfolio
-        ? {
-            totalNetWorth: farcasterPortfolio.totalNetWorth,
-            tokensCount: farcasterPortfolio.tokens?.length || 0,
-            source: "farcaster",
-          }
-        : "No farcaster portfolio",
-      farcasterVerifiedPortfolios:
-        Object.keys(farcasterVerifiedPortfolios).length > 0
-          ? Object.entries(farcasterVerifiedPortfolios).map(([addr, p]) => ({
-              address: addr,
-              totalNetWorth: p.totalNetWorth,
-              tokensCount: p.tokens?.length || 0,
-            }))
-          : "No verified portfolios",
-      aggregatedPortfolio: aggregatedPortfolio
-        ? {
-            totalNetWorth: aggregatedPortfolio.totalNetWorth,
-            tokensCount: aggregatedPortfolio.tokens?.length || 0,
-            tokensSources:
-              aggregatedPortfolio.tokens?.map((t) => ({
-                symbol: t.token.symbol,
-                source: t.source || "unknown",
-                sourceAddress: t.sourceAddress || "unknown",
-              })) || [],
-          }
-        : "No aggregated portfolio",
-      isLoading,
-      error,
-    });
-  }, [
-    isConnected,
-    address,
-    isFarcasterConnected,
-    farcasterProfile,
-    portfolio,
-    farcasterPortfolio,
-    farcasterVerifiedPortfolios,
-    aggregatedPortfolio,
-    isLoading,
-    error,
-  ]);
   const [hideSmallBalances, setHideSmallBalances] = useState(true);
-  const minBalanceThreshold = 5;
+  const minBalanceThreshold = 1; // Changed from 5 to 1 USD
   const [logoUpdateTrigger, setLogoUpdateTrigger] = useState(0);
-  const [showTokenBalances, setShowTokenBalances] = useState(false);
-
-  // Auto-show token balances when user has any portfolio data
-  useEffect(() => {
-    const hasConnection =
-      (isConnected && address) ||
-      (isFarcasterConnected && farcasterProfile?.custody);
-    const hasAnyPortfolio = !!(
-      portfolio ||
-      farcasterPortfolio ||
-      (farcasterVerifiedPortfolios &&
-        Object.keys(farcasterVerifiedPortfolios).length > 0)
-    );
-
-    if ((hasConnection || hasAnyPortfolio) && !showTokenBalances) {
-      setShowTokenBalances(true);
-    }
-  }, [
-    isConnected,
-    address,
-    isFarcasterConnected,
-    farcasterProfile?.custody,
-    showTokenBalances,
-    portfolio,
-    farcasterPortfolio,
-    farcasterVerifiedPortfolios,
-  ]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedToken, setSelectedToken] = useState<TokenDetail | null>(null);
   const [selectedTokenLogo, setSelectedTokenLogo] = useState<string>("");
@@ -244,6 +140,35 @@ export default function EthereumAssetsSection() {
     [onSendModalOpen]
   );
 
+  const handleTokenSelect = useCallback(
+    (consolidatedToken: ConsolidatedToken) => {
+      // For now, select the primary chain token for sending
+      const primaryToken = consolidatedToken.primaryChain;
+      handleSendToken(primaryToken);
+    },
+    [handleSendToken]
+  );
+
+  const handleToggleSmallBalances = useCallback((checked: boolean) => {
+    setHideSmallBalances(checked);
+  }, []);
+
+  const handleMobileSend = useCallback(() => {
+    // Open a token selection modal or list for sending
+    // For now, we could show a toast or implement token selection
+    console.log("Send button clicked");
+  }, []);
+
+  const handleMobileReceive = useCallback(() => {
+    // Open receive modal or copy address
+    console.log("Receive button clicked");
+  }, []);
+
+  const handleMobileSwap = useCallback(() => {
+    // Open swap interface
+    console.log("Swap button clicked");
+  }, []);
+
   // Log the condition check for showing assets
   const shouldShowAssets = useMemo(() => {
     if (!isMounted) return false;
@@ -278,67 +203,60 @@ export default function EthereumAssetsSection() {
 
   return (
     <Box mt={8} p={2} borderRadius="base" bg="muted" w="100%" textAlign="left">
-      <AssetsHeader
-        showTokenBalances={showTokenBalances}
-        onToggleBalances={() => setShowTokenBalances(!showTokenBalances)}
-      />
-
       {shouldShowAssets && (
         <Box overflowX="hidden">
-          {/* Token Balances Section - only display if showTokenBalances is true */}
-          {showTokenBalances && (
+          {/* Token Controls */}
+          <TokenControlsBar
+            isRefreshing={isRefreshing}
+            hideSmallBalances={hideSmallBalances}
+            onRefresh={handleForceRefresh}
+            onToggleSmallBalances={handleToggleSmallBalances}
+          />
+
+          {isLoading && (
+            <Flex justify="center" align="center" py={4}>
+              <Spinner color="primary" />
+            </Flex>
+          )}
+
+          {error && (
+            <Alert status="error" mb={4}>
+              <AlertIcon />
+              {error}
+            </Alert>
+          )}
+
+          {/* Always show Ethereum assets if connected */}
+          {aggregatedPortfolio && (
             <>
-              <TokenControlsBar
-                isRefreshing={isRefreshing}
-                hideSmallBalances={hideSmallBalances}
-                onRefresh={handleForceRefresh}
-                onToggleSmallBalances={setHideSmallBalances}
-              />
+              {isMobile ? (
+                // Mobile Layout with Action Buttons and Table
+                <VStack spacing={4} align="stretch">
+                  {/* Action Buttons */}
+                  <MobileActionButtons
+                    onSend={handleMobileSend}
+                    onReceive={handleMobileReceive}
+                    onSwap={handleMobileSwap}
+                  />
 
-              {isLoading && (
-                <Flex justify="center" align="center" py={4}>
-                  <Spinner color="primary" />
-                </Flex>
-              )}
-
-              {error && (
-                <Alert status="error" mb={4}>
-                  <AlertIcon />
-                  {error}
-                </Alert>
-              )}
-
-              {aggregatedPortfolio && (
-                <>
-                  {isMobile ? (
-                    // Mobile Card Layout
-                    <VStack spacing={0} align="stretch">
-                      {memoizedConsolidatedTokens.map((consolidatedToken) => (
-                        <MobileTokenCard
-                          key={consolidatedToken.symbol}
-                          consolidatedToken={consolidatedToken}
-                          isExpanded={expandedTokens.has(
-                            consolidatedToken.symbol
-                          )}
-                          onToggleExpansion={() =>
-                            toggleTokenExpansion(consolidatedToken.symbol)
-                          }
-                          onSendToken={handleSendToken}
-                        />
-                      ))}
-                    </VStack>
-                  ) : (
-                    // Desktop Table Layout
-                    <Box overflowX="hidden" w="100%">
-                      <DesktopTokenTable
-                        consolidatedTokens={memoizedConsolidatedTokens}
-                        expandedTokens={expandedTokens}
-                        onToggleExpansion={toggleTokenExpansion}
-                        onSendToken={handleSendToken}
-                      />
-                    </Box>
-                  )}
-                </>
+                  {/* Token Table */}
+                  <MobileTokenTable
+                    consolidatedTokens={memoizedConsolidatedTokens}
+                    expandedTokens={expandedTokens}
+                    onToggleExpansion={toggleTokenExpansion}
+                    onTokenSelect={handleTokenSelect}
+                  />
+                </VStack>
+              ) : (
+                // Desktop Table Layout
+                <Box overflowX="hidden" w="100%">
+                  <DesktopTokenTable
+                    consolidatedTokens={memoizedConsolidatedTokens}
+                    expandedTokens={expandedTokens}
+                    onToggleExpansion={toggleTokenExpansion}
+                    onSendToken={handleSendToken}
+                  />
+                </Box>
               )}
             </>
           )}

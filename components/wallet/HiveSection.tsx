@@ -1,11 +1,4 @@
-import {
-  Box,
-  Text,
-  HStack,
-  Tooltip,
-  Icon,
-  IconButton
-} from "@chakra-ui/react";
+import { Box, Text, HStack, Tooltip, Icon, IconButton } from "@chakra-ui/react";
 import { FaPaperPlane, FaArrowUp, FaQuestionCircle } from "react-icons/fa";
 import { useState, useCallback, useMemo, memo } from "react";
 import { CustomHiveIcon } from "./CustomHiveIcon";
@@ -42,16 +35,11 @@ const HiveSection = memo(function HiveSection({
 
   // Memoize event handlers
   const handleInfoToggle = useCallback(() => {
-    setShowInfo(prev => !prev);
+    setShowInfo((prev) => !prev);
   }, []);
 
   const handleSendClick = useCallback(() => {
-    onModalOpen(
-      "Send HIVE",
-      "Send Hive to another account",
-      true,
-      true
-    );
+    onModalOpen("Send HIVE", "Send Hive to another account", true, true);
   }, [onModalOpen]);
 
   const handlePowerUpClick = useCallback(() => {
@@ -83,11 +71,11 @@ const HiveSection = memo(function HiveSection({
                 onClick={handleInfoToggle}
               />
             </HStack>
-            {!isMobile && (
+            {/* {!isMobile && (
               <Text fontSize="sm" color="gray.400">
                 The primary token of the Hive Blockchain
               </Text>
-            )}
+            )} */}
           </Box>
         </HStack>
 
@@ -130,7 +118,8 @@ const HiveSection = memo(function HiveSection({
       {showInfo && (
         <Box mt={3} p={3} bg="muted" borderRadius="md">
           <Text color="gray.400" fontSize="sm">
-            The primary token of the Hive Blockchain. Liquid and transferable. Can be powered up to Hive Power for governance and curation rewards.
+            The primary token of the Hive Blockchain. Liquid and transferable.
+            Can be powered up to Hive Power for governance and curation rewards.
           </Text>
         </Box>
       )}
