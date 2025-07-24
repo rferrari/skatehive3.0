@@ -20,7 +20,7 @@ export default function TotalPortfolioValue({
 
   return (
     <Center display={{ base: "flex", md: "none" }}>
-      <Text fontSize="3xl" color="primary" fontWeight="bold" mb={4}>
+      <Text fontSize="38px" color="primary" fontWeight="bold" mb={4}>
         {formatValue(totalPortfolioValue)}
       </Text>
     </Center>

@@ -25,7 +25,6 @@ import {
 import SendTokenModal from "./SendTokenModal";
 import TokenControlsBar from "./components/TokenControlsBar";
 import MobileTokenTable from "./components/MobileTokenTable";
-import MobileActionButtons from "./components/MobileActionButtons";
 import DesktopTokenTable from "./components/DesktopTokenTable";
 
 export default function EthereumAssetsSection() {
@@ -152,22 +151,6 @@ export default function EthereumAssetsSection() {
     setHideSmallBalances(checked);
   }, []);
 
-  const handleMobileSend = useCallback(() => {
-    // Open a token selection modal or list for sending
-    // For now, we could show a toast or implement token selection
-    console.log("Send button clicked");
-  }, []);
-
-  const handleMobileReceive = useCallback(() => {
-    // Open receive modal or copy address
-    console.log("Receive button clicked");
-  }, []);
-
-  const handleMobileSwap = useCallback(() => {
-    // Open swap interface
-    console.log("Swap button clicked");
-  }, []);
-
   // Log the condition check for showing assets
   const shouldShowAssets = useMemo(() => {
     if (!isMounted) return false;
@@ -221,14 +204,8 @@ export default function EthereumAssetsSection() {
           {aggregatedPortfolio && (
             <>
               {isMobile ? (
-                // Mobile Layout with Action Buttons and Table
+                // Mobile Layout with Token Table
                 <VStack spacing={4} align="stretch">
-                  {/* Action Buttons */}
-                  <MobileActionButtons
-                    onSend={handleMobileSend}
-                    onReceive={handleMobileReceive}
-                    onSwap={handleMobileSwap}
-                  />
                   <TokenControlsBar
                     isRefreshing={isRefreshing}
                     hideSmallBalances={hideSmallBalances}
@@ -242,7 +219,6 @@ export default function EthereumAssetsSection() {
                     onToggleExpansion={toggleTokenExpansion}
                     onTokenSelect={handleTokenSelect}
                   />
-                  {/* Token Controls */}
                 </VStack>
               ) : (
                 // Desktop Table Layout

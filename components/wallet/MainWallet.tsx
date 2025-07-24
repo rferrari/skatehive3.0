@@ -43,6 +43,18 @@ import {
 import { FarcasterEnhancedUserData } from "@/types/farcaster";
 import { formatValue } from "@/lib/utils/portfolioUtils";
 import TotalPortfolioValue from "./components/TotalPortfolioValue";
+import MobileActionButtons from "./components/MobileActionButtons";
+import { TokenDetail } from "@/types/portfolio";
+
+interface HiveToken {
+  symbol: string;
+  name: string;
+  balance: string;
+  balanceUSD: number;
+  logo: string;
+  network: "hive";
+  type: "liquid" | "savings" | "power";
+}
 
 interface MainWalletProps {
   username?: string;
@@ -280,6 +292,17 @@ export default function MainWallet({ username }: MainWalletProps) {
     return totalHiveValue + totalHbdValue;
   }, [user, hivePrice, hbdPrice, hiveBalances, hivePower]);
 
+  // Mobile action handlers
+  const handleMobileSend = useCallback((token: TokenDetail | HiveToken) => {
+    console.log("Send token:", token);
+    // TODO: Open send modal with selected token
+  }, []);
+
+  const handleMobileSwap = useCallback((token: TokenDetail | HiveToken) => {
+    console.log("Swap token:", token);
+    // TODO: Open swap interface with selected token
+  }, []);
+
   // Only show loading if user is trying to access Hive data
   if ((isLoading && user) || !isMounted) {
     return (
@@ -385,6 +408,19 @@ export default function MainWallet({ username }: MainWalletProps) {
                       gap={3}
                       p={2}
                     >
+                      {/* Mobile Action Buttons - Always at the top on mobile */}
+                      <Box
+                        display={{ base: "block", md: "none" }}
+                        px={4}
+                        pt={4}
+                        pb={2}
+                      >
+                        <MobileActionButtons
+                          onSend={handleMobileSend}
+                          onSwap={handleMobileSwap}
+                        />
+                      </Box>
+
                       <TotalPortfolioValue
                         totalHiveAssetsValue={totalHiveAssetsValue}
                       />
