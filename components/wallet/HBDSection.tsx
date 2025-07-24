@@ -131,7 +131,7 @@ const HBDSection = memo(function HBDSection({
     return (
       <Box
         p={4}
-        bg="background"
+        bg="transparent"
         borderRadius="md"
         border="1px solid"
         borderColor="gray.200"
@@ -162,16 +162,6 @@ const HBDSection = memo(function HBDSection({
           </HStack>
 
           <HStack spacing={3} align="center">
-            <Box textAlign="right">
-              <Text fontSize="2xl" fontWeight="bold" color="primary">
-                {hbdBalance}
-              </Text>
-              {liquidUsdValue && (
-                <Text fontSize="sm" color="gray.400">
-                  (${liquidUsdValue})
-                </Text>
-              )}
-            </Box>
             <HStack spacing={1}>
               <Tooltip label="Send HBD" hasArrow>
                 <IconButton
@@ -194,6 +184,16 @@ const HBDSection = memo(function HBDSection({
                 />
               </Tooltip>
             </HStack>
+            <Box textAlign="right">
+              <Text fontSize="2xl" fontWeight="bold" color="primary">
+                {hbdBalance}
+              </Text>
+              {liquidUsdValue && (
+                <Text fontSize="sm" color="gray.400">
+                  (${liquidUsdValue})
+                </Text>
+              )}
+            </Box>
           </HStack>
         </HStack>
 

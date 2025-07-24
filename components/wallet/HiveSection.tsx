@@ -49,7 +49,7 @@ const HiveSection = memo(function HiveSection({
   return (
     <Box
       p={4}
-      bg="background"
+      bg="transparent"
       borderRadius="md"
       border="1px solid"
       borderColor="gray.200"
@@ -80,16 +80,6 @@ const HiveSection = memo(function HiveSection({
         </HStack>
 
         <HStack spacing={3} align="center">
-          <Box textAlign="right">
-            <Text fontSize="2xl" fontWeight="bold" color="primary">
-              {balance}
-            </Text>
-            {usdValue && (
-              <Text fontSize="sm" color="gray.400">
-                (${usdValue})
-              </Text>
-            )}
-          </Box>
           <HStack spacing={1}>
             <Tooltip label="Send HIVE" hasArrow>
               <IconButton
@@ -112,6 +102,16 @@ const HiveSection = memo(function HiveSection({
               />
             </Tooltip>
           </HStack>
+          <Box textAlign="right">
+            <Text fontSize="2xl" fontWeight="bold" color="primary">
+              {balance}
+            </Text>
+            {usdValue && (
+              <Text fontSize="sm" color="gray.400">
+                (${usdValue})
+              </Text>
+            )}
+          </Box>
         </HStack>
       </HStack>
 

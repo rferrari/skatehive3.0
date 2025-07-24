@@ -47,7 +47,7 @@ const HivePowerSection = memo(function HivePowerSection({
   return (
     <Box
       p={4}
-      bg="background"
+      bg="transparent"
       borderRadius="md"
       border="1px solid"
       borderColor="gray.200"
@@ -57,8 +57,8 @@ const HivePowerSection = memo(function HivePowerSection({
           <Image
             src="/images/hp_logo.png"
             alt="Hive Power Logo"
-            width="32px"
-            height="32px"
+            width="26px"
+            height="26px"
             borderRadius="full"
           />
           <Box>
@@ -84,16 +84,6 @@ const HivePowerSection = memo(function HivePowerSection({
         </HStack>
 
         <HStack spacing={3} align="center">
-          <Box textAlign="right">
-            <Text fontSize="2xl" fontWeight="bold" color="primary">
-              {hivePower !== undefined ? hivePower : "Loading..."}
-            </Text>
-            {usdValue && (
-              <Text fontSize="sm" color="gray.400">
-                (${usdValue})
-              </Text>
-            )}
-          </Box>
           <Tooltip label="Power Down" hasArrow>
             <IconButton
               aria-label="Power Down"
@@ -104,6 +94,16 @@ const HivePowerSection = memo(function HivePowerSection({
               onClick={handlePowerDown}
             />
           </Tooltip>
+          <Box textAlign="right">
+            <Text fontSize="2xl" fontWeight="bold" color="primary">
+              {hivePower !== undefined ? hivePower : "Loading..."}
+            </Text>
+            {usdValue && (
+              <Text fontSize="sm" color="gray.400">
+                (${usdValue})
+              </Text>
+            )}
+          </Box>
         </HStack>
       </HStack>
 

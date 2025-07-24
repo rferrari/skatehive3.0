@@ -49,44 +49,6 @@ export default function DesktopTokenTable({
     return (
       <TableContainer>
         <Table variant="simple" size="sm">
-          <Thead>
-            {/* <Tr>
-              <Th
-                color="gray.400"
-                fontSize="xs"
-                fontWeight="normal"
-                textTransform="uppercase"
-              >
-                Asset
-              </Th>
-              <Th
-                color="gray.400"
-                fontSize="xs"
-                fontWeight="normal"
-                textTransform="uppercase"
-              >
-                Price
-              </Th>
-              <Th
-                color="gray.400"
-                fontSize="xs"
-                fontWeight="normal"
-                textTransform="uppercase"
-                isNumeric
-              >
-                Balance
-              </Th>
-              <Th
-                color="gray.400"
-                fontSize="xs"
-                fontWeight="normal"
-                textTransform="uppercase"
-                isNumeric
-              >
-                Value
-              </Th>
-            </Tr> */}
-          </Thead>
           <Tbody>
             <Tr>
               <Td colSpan={4} textAlign="center" py={8}>
@@ -105,48 +67,9 @@ export default function DesktopTokenTable({
   return (
     <TableContainer>
       <Table variant="simple" size="sm">
-        <Thead>
-          {/* <Tr>
-            <Th
-              color="gray.400"
-              fontSize="xs"
-              fontWeight="normal"
-              textTransform="uppercase"
-            >
-              Asset
-            </Th>
-            <Th
-              color="gray.400"
-              fontSize="xs"
-              fontWeight="normal"
-              textTransform="uppercase"
-            >
-              Price
-            </Th>
-            <Th
-              color="gray.400"
-              fontSize="xs"
-              fontWeight="normal"
-              textTransform="uppercase"
-              isNumeric
-            >
-              Balance
-            </Th>
-            <Th
-              color="gray.400"
-              fontSize="xs"
-              fontWeight="normal"
-              textTransform="uppercase"
-              isNumeric
-            >
-              Value
-            </Th>
-          </Tr> */}
-        </Thead>
         <Tbody>
           {consolidatedTokens.map((consolidatedToken) => {
             const primaryToken = consolidatedToken.primaryChain;
-            const networkInfo = blockchainDictionary[primaryToken.network];
             const { priceChange } = getEnhancedTokenData(primaryToken);
             const isExpanded = expandedTokens.has(consolidatedToken.symbol);
 
@@ -215,21 +138,16 @@ export default function DesktopTokenTable({
 
                   {/* Price Column */}
                   <Td py={3}>
-                    <VStack spacing={0} align="start">
-                      <Text fontSize="sm" color="white">
-                        {formatPrice(primaryToken.token.price)}
+                    {/* Price Change Badge */}
+                    {priceChange !== null && (
+                      <Text
+                        fontSize="xs"
+                        color={priceChange >= 0 ? "green.400" : "red.400"}
+                      >
+                        {priceChange >= 0 ? "+" : ""}
+                        {formatPriceChange(priceChange)}%
                       </Text>
-                      {/* Price Change Badge */}
-                      {priceChange !== null && (
-                        <Text
-                          fontSize="xs"
-                          color={priceChange >= 0 ? "green.400" : "red.400"}
-                        >
-                          {priceChange >= 0 ? "+" : ""}
-                          {formatPriceChange(priceChange)}%
-                        </Text>
-                      )}
-                    </VStack>
+                    )}
                   </Td>
 
                   {/* Value Column */}
