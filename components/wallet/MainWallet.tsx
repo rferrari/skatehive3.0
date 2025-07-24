@@ -560,7 +560,11 @@ export default function MainWallet({ username }: MainWalletProps) {
                 hbdPrice={hbdPrice}
                 isPriceLoading={isPriceLoading}
               />
-              <SwapSection onModalOpen={handleModalOpen} />
+              <SwapSection 
+                hivePrice={hivePrice} 
+                hbdPrice={hbdPrice} 
+                isPriceLoading={isPriceLoading}
+              />
             </VStack>
           </Grid>
 
