@@ -53,8 +53,8 @@ export default function DesktopTokenTable({
             <Tr>
               <Td colSpan={4} textAlign="center" py={8}>
                 <Text color="gray.400" fontSize="sm">
-                  No tokens to display. Try turning off &quot;Hide Dust&quot; to see
-                  smaller balances.
+                  No tokens to display. Try turning off &quot;Hide Dust&quot; to
+                  see smaller balances.
                 </Text>
               </Td>
             </Tr>
@@ -123,15 +123,94 @@ export default function DesktopTokenTable({
                             />
                           )}
                         </HStack>
-                        <Text fontSize="xs" color="gray.400">
-                          {formatBalance(
-                            consolidatedToken.chains.reduce(
-                              (sum, chain) => sum + chain.token.balance,
-                              0
-                            )
-                          )}{" "}
-                          {consolidatedToken.symbol}
-                        </Text>
+                        <HStack>
+                          {/* Send Button */}
+                          {consolidatedToken.chains.length > 1 ? (
+                            <Menu>
+                              <MenuButton
+                                as={Button}
+                                size="xs"
+                                colorScheme="blue"
+                                variant="ghost"
+                                fontSize="xs"
+                              >
+                                <FaPaperPlane />
+                              </MenuButton>
+                              <MenuList
+                                bg="background"
+                                border="1px solid"
+                                borderColor="gray.200"
+                              >
+                                {consolidatedToken.chains.map(
+                                  (chainToken, index) => {
+                                    const chainInfo =
+                                      blockchainDictionary[chainToken.network];
+                                    return (
+                                      <MenuItem
+                                        key={`${chainToken.network}-${index}`}
+                                        onClick={() => onSendToken(chainToken)}
+                                        bg="background"
+                                        _hover={{ bg: "gray.700" }}
+                                      >
+                                        <HStack spacing={2} w="100%">
+                                          <TokenLogo
+                                            token={chainToken}
+                                            size="16px"
+                                            showNetworkBadge={false}
+                                          />
+                                          <VStack
+                                            spacing={0}
+                                            align="start"
+                                            flex={1}
+                                          >
+                                            <Text
+                                              fontSize="sm"
+                                              fontWeight="medium"
+                                            >
+                                              {chainInfo?.alias ||
+                                                chainToken.network}
+                                            </Text>
+                                            <Text
+                                              fontSize="xs"
+                                              color="gray.400"
+                                            >
+                                              {formatBalance(
+                                                chainToken.token.balance
+                                              )}{" "}
+                                              •{" "}
+                                              {formatValue(
+                                                chainToken.token.balanceUSD
+                                              )}
+                                            </Text>
+                                          </VStack>
+                                        </HStack>
+                                      </MenuItem>
+                                    );
+                                  }
+                                )}
+                              </MenuList>
+                            </Menu>
+                          ) : (
+                            <Button
+                              size="xs"
+                              colorScheme="blue"
+                              variant="ghost"
+                              fontSize="xs"
+                              onClick={() => onSendToken(primaryToken)}
+                            >
+                              <FaPaperPlane />
+                            </Button>
+                          )}
+                          <Text fontSize="xs" color="gray.400">
+                            {formatBalance(
+                              consolidatedToken.chains.reduce(
+                                (sum, chain) => sum + chain.token.balance,
+                                0
+                              )
+                            )}{" "}
+                            {consolidatedToken.symbol}
+                          </Text>
+                        </HStack>
                       </VStack>
                     </HStack>
                   </Td>
@@ -156,79 +235,6 @@ export default function DesktopTokenTable({
                       <Text fontSize="sm" color="white" fontWeight="medium">
                         {formatValue(consolidatedToken.totalBalanceUSD)}
                       </Text>
-                      {/* Send Button */}
-                      {consolidatedToken.chains.length > 1 ? (
-                        <Menu>
-                          <MenuButton
-                            as={Button}
-                            size="xs"
-                            colorScheme="blue"
-                            variant="ghost"
-                            leftIcon={<FaPaperPlane />}
-                            fontSize="xs"
-                          >
-                            Send
-                          </MenuButton>
-                          <MenuList
-                            bg="background"
-                            border="1px solid"
-                            borderColor="gray.200"
-                          >
-                            {consolidatedToken.chains.map(
-                              (chainToken, index) => {
-                                const chainInfo =
-                                  blockchainDictionary[chainToken.network];
-                                return (
-                                  <MenuItem
-                                    key={`${chainToken.network}-${index}`}
-                                    onClick={() => onSendToken(chainToken)}
-                                    bg="background"
-                                    _hover={{ bg: "gray.700" }}
-                                  >
-                                    <HStack spacing={2} w="100%">
-                                      <TokenLogo
-                                        token={chainToken}
-                                        size="16px"
-                                        showNetworkBadge={false}
-                                      />
-                                      <VStack
-                                        spacing={0}
-                                        align="start"
-                                        flex={1}
-                                      >
-                                        <Text fontSize="sm" fontWeight="medium">
-                                          {chainInfo?.alias ||
-                                            chainToken.network}
-                                        </Text>
-                                        <Text fontSize="xs" color="gray.400">
-                                          {formatBalance(
-                                            chainToken.token.balance
-                                          )}{" "}
-                                          •{" "}
-                                          {formatValue(
-                                            chainToken.token.balanceUSD
-                                          )}
-                                        </Text>
-                                      </VStack>
-                                    </HStack>
-                                  </MenuItem>
-                                );
-                              }
-                            )}
-                          </MenuList>
-                        </Menu>
-                      ) : (
-                        <Button
-                          size="xs"
-                          colorScheme="blue"
-                          variant="ghost"
-                          leftIcon={<FaPaperPlane />}
-                          fontSize="xs"
-                          onClick={() => onSendToken(primaryToken)}
-                        >
-                          Send
-                        </Button>
-                      )}
                     </VStack>
                   </Td>
                 </Tr>
