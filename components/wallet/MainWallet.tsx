@@ -35,7 +35,7 @@ import SwapSection from "./SwapSection";
 import EthereumAssetsSection from "./EthereumAssetsSection";
 import NFTSection from "./NFTSection";
 import WalletSummary from "./WalletSummary";
-import ConnectHiveSection from "./ConnectHiveSection";
+import ConnectWallets from "./ConnectHiveSection";
 import { PortfolioProvider } from "@/contexts/PortfolioContext";
 import { FarcasterEnhancedUserData } from "@/types/farcaster";
 
@@ -409,7 +409,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                         </>
                       ) : (
                         /* Show Connect Hive Section if not connected */
-                        <ConnectHiveSection onConnectHive={handleConnectHive} />
+                        <ConnectWallets onConnectHive={handleConnectHive} />
                       )}
                     </Box>
                     {/* Ethereum Assets Section - Show if connected to Ethereum OR have Farcaster data */}

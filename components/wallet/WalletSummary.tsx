@@ -20,13 +20,12 @@ import {
   Badge,
 } from "@coinbase/onchainkit/identity";
 import { memo, useCallback, useMemo } from "react";
-import ConnectButton from "./ConnectButton";
 import { usePortfolioContext } from "../../contexts/PortfolioContext";
 import { WalletDistributionChart } from "./WalletDistributionChart";
 import FarcasterUniversalWallet from "../farcaster/FarcasterUniversalWallet";
 import { IoLogOutSharp } from "react-icons/io5";
 import { FaEthereum } from "react-icons/fa";
-
+import { Wallet, ConnectWallet } from "@coinbase/onchainkit/wallet";
 interface WalletSummaryProps {
   hiveUsername?: string;
   totalHiveValue: number;
@@ -112,41 +111,60 @@ const WalletSummary = memo(function WalletSummary({
   // Case 1: No wallets connected
   if (!connectionStatus.hasWallets) {
     return (
-      <Box
-        p={4}
-        bg="background"
-        borderRadius="md"
-        border="2px solid"
-        borderColor="primary"
-      >
-        <Text fontSize="sm" color="primary" mb={3} textAlign="center">
-          Connect your wallets to get started
-        </Text>
-        <ConnectButton />
+      <></>
+      // <Box
+      //   p={6}
+      //   bg="background"
+      //   borderRadius="xl"
+      //   border="2px solid"
+      //   borderColor="primary"
+      //   position="relative"
+      //   overflow="hidden"
+      // >
+      //   <VStack spacing={4} position="relative" zIndex={1}>
+      //     <Text
+      //       fontSize="lg"
+      //       color="primary"
+      //       fontWeight="bold"
+      //       textAlign="center"
+      //     >
+      //       🛹 Welcome to SkateHive
+      //     </Text>
+      //     <Text fontSize="sm" color="text" textAlign="center" mb={2}>
+      //       Connect your wallets to unlock your digital identity
+      //     </Text>
 
-        <VStack spacing={2}>
-          <Button
-            onClick={onConnectHive}
-            w="full"
-            colorScheme="green"
-            variant="outline"
-          >
-            Connect Hive
-          </Button>
-        </VStack>
-      </Box>
+      //     <Center w="full">
+      //       <ConnectButton />
+      //     </Center>
+
+      //     <Button
+      //       onClick={onConnectHive}
+      //       w="full"
+      //       variant="outline"
+      //       colorScheme="green"
+      //       leftIcon={<Text fontSize="lg">🐝</Text>}
+      //       size="lg"
+      //     >
+      //       Connect Hive Blockchain
+      //     </Button>
+      //   </VStack>
+      // </Box>
     );
   }
 
   // Case 2: At least one wallet connected - show summary
   return (
     <Box
-      p={4}
+      p={6}
       bg="background"
-      borderRadius="md"
-      // Removed border and borderColor
+      borderRadius="xl"
+      border="1px solid"
+      borderColor="border"
+      position="relative"
+      overflow="hidden"
     >
-      <VStack spacing={4} align="stretch">
+      <VStack spacing={6} align="stretch" position="relative" zIndex={1}>
         {/* Portfolio Distribution Chart */}
         <WalletDistributionChart
           ethPortfolio={portfolio?.totalNetWorth || 0}
@@ -158,47 +176,23 @@ const WalletSummary = memo(function WalletSummary({
 
         {/* Ethereum Wallet Section */}
         {isEthConnected && address && (
-          <Box pt={3} borderTop="1px solid" borderColor="whiteAlpha.200">
-            <Text fontSize="sm" color="primary" mb={3} fontWeight="bold">
+          <Box pt={4} borderTop="1px solid" borderColor="border">
+            <Text fontSize="sm" color="primary" mb={4} fontWeight="bold">
               🔗 Ethereum Identity
             </Text>
             <Box
-              p={3}
-              borderRadius="12px"
+              p={4}
+              borderRadius="xl"
+              bg="muted"
               border="1px solid"
-              borderColor="whiteAlpha.200"
+              borderColor="border"
             >
-              <HStack spacing={4} align="center" justify="space-between">
-                <HStack spacing={3} align="center" flex={1}>
-                  <Identity address={address}>
-                    <Avatar className="h-10 w-10" />
-                    <Name className="text-white font-medium" />
-                    <Address className="text-gray-400 text-sm" />
-                    <Badge />
-                  </Identity>
-                </HStack>
-
-                {/* Action Buttons */}
-                <HStack spacing={2}>
-                  <Button
-                    size="xs"
-                    variant="outline"
-                    colorScheme="green"
-                    onClick={handleCopyAddress}
-                  >
-                    Copy
-                  </Button>
-                  <IconButton
-                    icon={<IoLogOutSharp />}
-                    color="red.500"
-                    size="xs"
-                    variant="outline"
-                    colorScheme="red"
-                    onClick={handleDisconnect}
-                    aria-label="Disconnect Ethereum"
-                  />
-                </HStack>
-              </HStack>
+              <Wallet>
+                <ConnectWallet>
+                  <Avatar />
+                  <Name />
+                </ConnectWallet>
+              </Wallet>
 
               {/* Farcaster connection indicator */}
               {isFarcasterConnected &&
@@ -206,13 +200,8 @@ const WalletSummary = memo(function WalletSummary({
                 "custody" in farcasterProfile &&
                 farcasterProfile.custody?.toLowerCase() ===
                   address?.toLowerCase() && (
-                  <Box
-                    pt={2}
-                    mt={2}
-                    borderTop="1px solid"
-                    borderColor="whiteAlpha.200"
-                  >
-                    <Text fontSize="xs" color="primary" textAlign="center">
+                  <Box pt={3} mt={3} borderTop="1px solid" borderColor="border">
+                    <Text fontSize="xs" color="accent" textAlign="center">
                       🛹 Connected via @{farcasterProfile.username}
                     </Text>
                   </Box>
@@ -223,11 +212,11 @@ const WalletSummary = memo(function WalletSummary({
 
         {/* Farcaster Section */}
         {!isFarcasterConnected ? (
-          <Box pt={3} borderTop="1px solid" borderColor="whiteAlpha.200">
+          <Box pt={4} borderTop="1px solid" borderColor="border">
             <Text
               fontSize="sm"
-              color="primary"
-              mb={3}
+              color="accent"
+              mb={4}
               textAlign="center"
               fontWeight="bold"
             >
@@ -238,30 +227,30 @@ const WalletSummary = memo(function WalletSummary({
             </Center>
           </Box>
         ) : (
-          <Box pt={3} borderTop="1px solid" borderColor="whiteAlpha.200">
-            <Text fontSize="sm" color="primary" mb={3} fontWeight="bold">
+          <Box pt={4} borderTop="1px solid" borderColor="border">
+            <Text fontSize="sm" color="accent" mb={4} fontWeight="bold">
               🚀 Farcaster Identity
             </Text>
             <Box
-              p={3}
-              borderRadius="12px"
+              p={4}
+              borderRadius="xl"
+              bg="muted"
               border="1px solid"
-              borderColor="whiteAlpha.200"
+              borderColor="border"
             >
               <HStack justify="space-between" align="center">
                 <HStack spacing={3}>
                   <VStack align="start" spacing={1}>
-                    <Text fontSize="sm" color="white" fontWeight="medium">
+                    <Text fontSize="sm" color="text" fontWeight="medium">
                       @{farcasterProfile?.username}
                     </Text>
-                    <Text fontSize="xs" color="whiteAlpha.600">
+                    <Text fontSize="xs" color="text">
                       FID: {farcasterProfile?.fid}
                     </Text>
                   </VStack>
                 </HStack>
                 <IconButton
                   icon={<IoLogOutSharp />}
-                  color="red.500"
                   size="xs"
                   variant="outline"
                   colorScheme="red"
@@ -277,16 +266,17 @@ const WalletSummary = memo(function WalletSummary({
         {connectionStatus.hasWallets && (
           <>
             {(hiveUsername || isEthConnected || isFarcasterConnected) && (
-              <Divider />
+              <Divider borderColor="border" />
             )}
 
             {connectionStatus.needsEthereum && (
               <Button
                 leftIcon={<FaEthereum size={14} />}
                 onClick={onConnectEthereum}
-                size="sm"
-                colorScheme="blue"
+                w="full"
+                size="lg"
                 variant="outline"
+                colorScheme="blue"
               >
                 Connect Ethereum
               </Button>
@@ -295,11 +285,13 @@ const WalletSummary = memo(function WalletSummary({
             {connectionStatus.needsHive && (
               <Button
                 onClick={onConnectHive}
-                size="sm"
-                colorScheme="green"
+                w="full"
+                size="lg"
                 variant="outline"
+                colorScheme="green"
+                leftIcon={<Text fontSize="sm">🐝</Text>}
               >
-                Connect Hive
+                Connect Hive Blockchain
               </Button>
             )}
           </>

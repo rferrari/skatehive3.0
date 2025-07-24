@@ -18,17 +18,17 @@ export default function FarcasterUniversalWallet({
   const toast = useToast();
 
   // Debug logging - use useMemo to prevent excessive logging
-  const debugInfo = useMemo(
-    () => ({
-      isInMiniapp,
-      user,
-      farcasterProfile,
-      hiveUsername,
-      userAgent: typeof window !== "undefined" ? navigator.userAgent : "SSR",
-      location: typeof window !== "undefined" ? window.location.href : "SSR",
-    }),
-    [isInMiniapp, user, farcasterProfile, hiveUsername]
-  );
+  // const debugInfo = useMemo(
+  //   () => ({
+  //     isInMiniapp,
+  //     user,
+  //     farcasterProfile,
+  //     hiveUsername,
+  //     userAgent: typeof window !== "undefined" ? navigator.userAgent : "SSR",
+  //     location: typeof window !== "undefined" ? window.location.href : "SSR",
+  //   }),
+  //   [isInMiniapp, user, farcasterProfile, hiveUsername]
+  // );
 
   // Show loading state while determining context
   if (!isReady) {
@@ -52,7 +52,7 @@ export default function FarcasterUniversalWallet({
   return (
     <VStack spacing={4} align="stretch">
       {/* Debug Panel - only show in development */}
-      {process.env.NODE_ENV === "development" && (
+      {/* {process.env.NODE_ENV === "development" && (
         <Box
           p={3}
           bg="gray.50"
@@ -79,7 +79,7 @@ export default function FarcasterUniversalWallet({
             </Text>
           </VStack>
         </Box>
-      )}
+      )} */}
 
       {/* Main Content */}
       {(() => {
@@ -138,43 +138,31 @@ export default function FarcasterUniversalWallet({
 
         // No Farcaster connection - show sign in button for web context
         return (
-          <Box
-            p={4}
-            bg="background"
-            borderRadius="lg"
-            border="1px solid"
-            borderColor="muted"
-            textAlign="center"
-          >
-            <VStack spacing={4}>
-              <Text fontSize="sm" color="text" mb={2}>
-                Connect your Farcaster account to access wallet features
-              </Text>
-              <SignInButton
-                onSuccess={({ fid, username }) => {
-                  console.log("🎉 Farcaster Sign In Success:", {
-                    fid,
-                    username,
-                  });
-                  toast({
-                    status: "success",
-                    title: "Connected to Farcaster!",
-                    description: `Welcome, @${username}!`,
-                    duration: 3000,
-                  });
-                }}
-                onError={(error) => {
-                  console.error("❌ Farcaster Sign In Error:", error);
-                  toast({
-                    status: "error",
-                    title: "Authentication failed",
-                    description:
-                      error?.message || "Failed to authenticate with Farcaster",
-                    duration: 5000,
-                  });
-                }}
-              />
-            </VStack>
+          <Box p={4} bg="background" textAlign="center">
+            <SignInButton
+              onSuccess={({ fid, username }) => {
+                console.log("🎉 Farcaster Sign In Success:", {
+                  fid,
+                  username,
+                });
+                toast({
+                  status: "success",
+                  title: "Connected to Farcaster!",
+                  description: `Welcome, @${username}!`,
+                  duration: 3000,
+                });
+              }}
+              onError={(error) => {
+                console.error("❌ Farcaster Sign In Error:", error);
+                toast({
+                  status: "error",
+                  title: "Authentication failed",
+                  description:
+                    error?.message || "Failed to authenticate with Farcaster",
+                  duration: 5000,
+                });
+              }}
+            />
           </Box>
         );
       })()}
