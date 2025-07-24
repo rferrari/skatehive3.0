@@ -48,7 +48,7 @@ const VoteSlider = ({
 }: VoteSliderProps) => {
     const { aioha, user } = useAioha();
     const toast = useToast();
-    const [sliderValue, setSliderValue] = useState(5);
+    const [sliderValue, setSliderValue] = useState(100);
 
     const handleHeartClick = () => {
         setShowSlider(!showSlider);
