@@ -137,7 +137,7 @@ export default function AuctionPage() {
               lineHeight="tall"
               px={{ base: 2, md: 0 }}
             >
-              Participate in an auction to acquire a unique Skatehive NFT.
+              Participate in an auction to acquire Skatehive Art and Votes
             </Text>
           </VStack>
 
@@ -323,8 +323,8 @@ export default function AuctionPage() {
                           {/* Highest Bidder */}
                           {activeAuction.highestBid && (
                             <Box
-                              bg="accent"
-                              color="background"
+                              bg="background"
+                              color="primary"
                               p={3}
                               borderRadius="md"
                             >
@@ -332,7 +332,7 @@ export default function AuctionPage() {
                                 <Text
                                   fontSize="sm"
                                   fontWeight="bold"
-                                  color="background"
+                                  color="primary"
                                   textAlign="center"
                                 >
                                   Highest Bidder
@@ -410,13 +410,13 @@ export default function AuctionPage() {
                                 display="flex"
                                 alignItems="center"
                                 justifyContent="center"
-                                bg="secondary"
+                                bg="muted"
                                 borderRadius="md"
                                 minH="100px"
                               >
                                 <Text
                                   fontSize="sm"
-                                  color="muted"
+                                  color="primary"
                                   textAlign="center"
                                 >
                                   No bid history yet
@@ -459,24 +459,6 @@ export default function AuctionPage() {
                         objectFit="cover"
                         fallbackSrc="/images/placeholder.png"
                       />
-                      {!auctionData.isRunning && (
-                        <Box
-                          position="absolute"
-                          top={0}
-                          left={0}
-                          right={0}
-                          bottom={0}
-                          bg="rgba(0,0,0,0.7)"
-                          borderRadius="lg"
-                          display="flex"
-                          alignItems="center"
-                          justifyContent="center"
-                        >
-                          <Badge bg="error" color="background" size="lg">
-                            ENDED
-                          </Badge>
-                        </Box>
-                      )}
                     </Box>
 
                     {/* Title and Date Group */}
@@ -532,7 +514,7 @@ export default function AuctionPage() {
             {/* How it works */}
             <GridItem>
               <Box
-                bg="secondary"
+                bg="muted"
                 borderRadius="xl"
                 border="1px solid"
                 borderColor="border"
@@ -577,7 +559,7 @@ export default function AuctionPage() {
             {/* Auction Rules */}
             <GridItem>
               <Box
-                bg="secondary"
+                bg="muted"
                 borderRadius="xl"
                 border="1px solid"
                 borderColor="border"
