@@ -141,7 +141,7 @@ export default function RootLayout({
               justifyContent: "center",
               height: "100vh",
               width: "100vw",
-              background: "background",
+              background: "black",
             }}
           >
             <Image
