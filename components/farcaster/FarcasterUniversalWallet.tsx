@@ -174,10 +174,6 @@ export default function FarcasterUniversalWallet({
                   });
                 }}
               />
-              <Text fontSize="xs" color="muted" textAlign="center">
-                💡 <strong>Pro tip:</strong> Open this page in the Farcaster app
-                for native wallet features
-              </Text>
             </VStack>
           </Box>
         );
