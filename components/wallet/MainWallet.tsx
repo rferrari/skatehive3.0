@@ -36,12 +36,8 @@ import EthereumAssetsSection from "./EthereumAssetsSection";
 import NFTSection from "./NFTSection";
 import WalletSummary from "./WalletSummary";
 import ConnectWallets from "./ConnectHiveSection";
-import {
-  PortfolioProvider,
-  usePortfolioContext,
-} from "@/contexts/PortfolioContext";
+import { PortfolioProvider } from "@/contexts/PortfolioContext";
 import { FarcasterEnhancedUserData } from "@/types/farcaster";
-import { formatValue } from "@/lib/utils/portfolioUtils";
 import TotalPortfolioValue from "./components/TotalPortfolioValue";
 import MobileActionButtons from "./components/MobileActionButtons";
 import { TokenDetail } from "@/types/portfolio";

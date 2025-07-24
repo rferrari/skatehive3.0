@@ -68,12 +68,6 @@ export default function LeaderboardClient({ skatersData }: Props) {
     });
   };
 
-  const formatEthAddress = (address: string) => {
-    if (!address || address === "0x0000000000000000000000000000000000000000")
-      return "-";
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
-  };
-
   const sortedSkaters = useMemo(() => {
     const sorted = [...skatersData].sort((a, b) => {
       switch (sortBy) {

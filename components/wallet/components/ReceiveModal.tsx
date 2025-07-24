@@ -27,12 +27,11 @@ import {
   Icon,
   Avatar as ChakraAvatar,
 } from "@chakra-ui/react";
-import { FiCopy, FiDownload, FiShare2 } from "react-icons/fi";
+import { FiCopy } from "react-icons/fi";
 import { useAccount } from "wagmi";
-import { useHiveUser } from "@/contexts/UserContext";
 import * as QRCode from "qrcode";
 import { Name, Avatar as OnchainAvatar } from "@coinbase/onchainkit/identity";
-import { FaEthereum, FaHive } from "react-icons/fa";
+import { FaEthereum, FaHive, FaShare } from "react-icons/fa";
 import { useAioha } from "@aioha/react-ui";
 interface ReceiveModalProps {
   isOpen: boolean;
@@ -45,7 +44,6 @@ const ReceiveModal: React.FC<ReceiveModalProps> = ({ isOpen, onClose }) => {
   const [hiveQR, setHiveQR] = useState<string>("");
   const [isGeneratingQR, setIsGeneratingQR] = useState(false);
   const toast = useToast();
-  console.log(user);
   const { hasCopied: hasEthCopied, onCopy: onEthCopy } = useClipboard(
     address || ""
   );
@@ -64,14 +62,12 @@ const ReceiveModal: React.FC<ReceiveModalProps> = ({ isOpen, onClose }) => {
           light: "#ffffff",
         },
       });
-
       if (type === "ethereum") {
         setEthereumQR(qrDataURL);
       } else {
         setHiveQR(qrDataURL);
       }
     } catch (error) {
-      console.error("Error generating QR code:", error);
       toast({
         title: "Error",
         description: "Failed to generate QR code",
@@ -85,27 +81,35 @@ const ReceiveModal: React.FC<ReceiveModalProps> = ({ isOpen, onClose }) => {
   };
 
   useEffect(() => {
-    if (isOpen && address) {
+    // Only generate QR if address changes and modal is open
+    if (isOpen && address && ethereumQR === "") {
       generateQRCode(address, "ethereum");
     }
-  }, [isOpen, address]);
+    // Reset QR when modal closes
+    if (!isOpen && ethereumQR !== "") {
+      setEthereumQR("");
+    }
+  }, [isOpen, address, ethereumQR]);
 
   useEffect(() => {
-    if (isOpen && user?.name) {
-      console.log("Hive QR Debug:", { isOpen, hiveName: user.name });
-      generateQRCode(user.name, "hive");
+    // Only generate QR if username changes and modal is open, and username is not empty
+    if (
+      isOpen &&
+      user &&
+      typeof user === "string" &&
+      user.trim() !== "" &&
+      hiveQR === ""
+    ) {
+      generateQRCode(user, "hive");
     }
-  }, [isOpen, user?.name]);
+    // Reset QR when modal closes
+    if (!isOpen && hiveQR !== "") {
+      setHiveQR("");
+    }
+  }, [isOpen, user, hiveQR]);
 
   const shortenAddress = (addr: string) => {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
-  };
-
-  const downloadQR = (qrCode: string, filename: string) => {
-    const link = document.createElement("a");
-    link.download = filename;
-    link.href = qrCode;
-    link.click();
   };
 
   const shareAddress = async (addr: string, type: string) => {
@@ -296,27 +300,10 @@ const ReceiveModal: React.FC<ReceiveModalProps> = ({ isOpen, onClose }) => {
                               right={2}
                               spacing={1}
                             >
-                              <Tooltip label="Download QR Code">
-                                <IconButton
-                                  aria-label="Download QR"
-                                  icon={<Icon as={FiDownload} />}
-                                  size="sm"
-                                  variant="ghost"
-                                  bg="white"
-                                  color="primary"
-                                  _hover={{ bg: "gray.50" }}
-                                  onClick={() =>
-                                    downloadQR(
-                                      ethereumQR,
-                                      "ethereum-address-qr.png"
-                                    )
-                                  }
-                                />
-                              </Tooltip>
                               <Tooltip label="Share Address">
                                 <IconButton
                                   aria-label="Share Address"
-                                  icon={<Icon as={FiShare2} />}
+                                  icon={<Icon as={FaShare} />}
                                   size="sm"
                                   variant="ghost"
                                   bg="white"
@@ -487,7 +474,7 @@ const ReceiveModal: React.FC<ReceiveModalProps> = ({ isOpen, onClose }) => {
                       {/* Header */}
                       <VStack spacing={2}>
                         <HStack spacing={3}>
-                          <ChakraAvatar src="/logos/hive-logo.png" size="md" />
+                          <FaHive size="24px" color="text" />
                           <VStack align="start" spacing={0}>
                             <Text fontWeight="bold" fontSize="lg" color="text">
                               Hive Wallet
@@ -545,42 +532,6 @@ const ReceiveModal: React.FC<ReceiveModalProps> = ({ isOpen, onClose }) => {
                               bg="gray.100"
                               borderRadius="lg"
                             />
-                          )}
-
-                          {hiveQR && !isGeneratingQR && (
-                            <HStack
-                              position="absolute"
-                              top={2}
-                              right={2}
-                              spacing={1}
-                            >
-                              <Tooltip label="Download QR Code">
-                                <IconButton
-                                  aria-label="Download QR"
-                                  icon={<Icon as={FiDownload} />}
-                                  size="sm"
-                                  variant="ghost"
-                                  bg="white"
-                                  color="red.400"
-                                  _hover={{ bg: "gray.50" }}
-                                  onClick={() =>
-                                    downloadQR(hiveQR, "hive-username-qr.png")
-                                  }
-                                />
-                              </Tooltip>
-                              <Tooltip label="Share Username">
-                                <IconButton
-                                  aria-label="Share Username"
-                                  icon={<Icon as={FiShare2} />}
-                                  size="sm"
-                                  variant="ghost"
-                                  bg="white"
-                                  color="red.400"
-                                  _hover={{ bg: "gray.50" }}
-                                  onClick={() => shareAddress(user, "hive")}
-                                />
-                              </Tooltip>
-                            </HStack>
                           )}
                         </Box>
                       </VStack>
