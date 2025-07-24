@@ -53,13 +53,6 @@ const WalletSummary = memo(function WalletSummary({
   const { disconnect } = useDisconnect();
   const toast = useToast();
 
-  // Memoize calculations
-  const calculations = useMemo(() => {
-    const digitalAssetsValue = aggregatedPortfolio?.totalNetWorth || 0;
-    const totalValue = totalHiveValue + digitalAssetsValue;
-    return { digitalAssetsValue, totalValue };
-  }, [aggregatedPortfolio?.totalNetWorth, totalHiveValue]);
-
   // Memoize connection status
   const connectionStatus = useMemo(
     () => ({
@@ -129,8 +122,9 @@ const WalletSummary = memo(function WalletSummary({
         <Text fontSize="sm" color="primary" mb={3} textAlign="center">
           Connect your wallets to get started
         </Text>
+        <ConnectButton />
+
         <VStack spacing={2}>
-          <ConnectButton />
           <Button
             onClick={onConnectHive}
             w="full"
@@ -174,12 +168,12 @@ const WalletSummary = memo(function WalletSummary({
               border="1px solid"
               borderColor="whiteAlpha.200"
             >
-              <HStack spacing={3} align="center" justify="space-between">
+              <HStack spacing={4} align="center" justify="space-between">
                 <HStack spacing={3} align="center" flex={1}>
                   <Identity address={address}>
-                    <Avatar />
-                    <Name />
-                    <Address />
+                    <Avatar className="h-10 w-10" />
+                    <Name className="text-white font-medium" />
+                    <Address className="text-gray-400 text-sm" />
                     <Badge />
                   </Identity>
                 </HStack>

@@ -5,6 +5,7 @@ import { Metadata } from "next";
 import { ColorModeScript } from "@chakra-ui/react";
 import Image from "next/image";
 // import '@aioha/react-ui/dist/build.css';
+import "@coinbase/onchainkit/styles.css";
 
 // Initialize the VT323 font
 const vt323 = VT323({

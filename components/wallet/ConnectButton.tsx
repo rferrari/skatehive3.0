@@ -4,8 +4,8 @@ import { Avatar, Name } from "@coinbase/onchainkit/identity";
 export default function ConnectButton() {
   return (
     <Wallet>
-      <ConnectWallet disconnectedLabel="Connect3333 Wallet">
-        <Avatar className="h-6 w-6" />
+      <ConnectWallet disconnectedLabel="Connect Ethereum">
+        <Avatar className="h-10 w-10 rounded-full" />
         <Name />
       </ConnectWallet>
     </Wallet>
