@@ -6,10 +6,6 @@ import {
   Avatar,
   Link,
   Flex,
-  Slider,
-  SliderTrack,
-  SliderFilledTrack,
-  SliderThumb,
   Tooltip,
   useToast,
   Image,
@@ -32,6 +28,7 @@ import VoteListPopover from "@/components/blog/VoteListModal";
 import { parse, isAfter } from "date-fns";
 import { useTheme } from "@/app/themeProvider";
 import PaperOutline from "@/components/graphics/PaperOutline";
+import { UpvoteButton } from "@/components/shared";
 
 const separateContent = (body: string) => {
   const textParts: string[] = [];
@@ -154,7 +151,6 @@ const BountySnap = ({
   const toast = useToast();
   const commentDate = getPostDate(discussion.created);
 
-  const [sliderValue, setSliderValue] = useState(5);
   const [showSlider, setShowSlider] = useState(false);
   const [activeVotes, setActiveVotes] = useState(discussion.active_votes || []);
   const [rewardAmount, setRewardAmount] = useState(
@@ -188,38 +184,10 @@ const BountySnap = ({
     ) || false
   );
 
-  function handleHeartClick() {
-    setShowSlider(!showSlider);
-  }
-
   function handleConversation() {
     if (setConversation) {
       setConversation(discussion);
     }
-  }
-
-  async function handleVote() {
-    const vote = await aioha.vote(
-      discussion.author,
-      discussion.permlink,
-      sliderValue * 100
-    );
-    if (vote.success) {
-      setVoted(true);
-      setActiveVotes([...activeVotes, { voter: user }]);
-      // Estimate the value and optimistically update payout
-      if (estimateVoteValue) {
-        try {
-          const estimatedValue = await estimateVoteValue(sliderValue);
-          setRewardAmount((prev) =>
-            parseFloat((prev + estimatedValue).toFixed(3))
-          );
-        } catch (e) {
-          // fallback: do not update payout
-        }
-      }
-    }
-    handleHeartClick();
   }
 
   const handleSharePost = async () => {
@@ -633,110 +601,24 @@ const BountySnap = ({
                 leftIcon={<FaLink size={16} color="gray" />}
                 _hover={{ bg: "gray.700", borderRadius: "full" }}
               ></Button>
-              <Tooltip label="upvote" hasArrow openDelay={1000}>
-                <Button
-                  leftIcon={
-                    <LuArrowUpRight
-                      size={24}
-                      color={
-                        voted
-                          ? "var(--chakra-colors-accent)"
-                          : "var(--chakra-colors-muted)"
-                      }
-                      style={{ opacity: voted ? 1 : 1 }}
-                    />
+              <UpvoteButton
+                discussion={discussion}
+                voted={voted}
+                setVoted={setVoted}
+                activeVotes={activeVotes}
+                setActiveVotes={setActiveVotes}
+                showSlider={showSlider}
+                setShowSlider={setShowSlider}
+                onVoteSuccess={(estimatedValue) => {
+                  if (estimatedValue) {
+                    setRewardAmount((prev) =>
+                      parseFloat((prev + estimatedValue).toFixed(3))
+                    );
                   }
-                  variant="ghost"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleHeartClick();
-                  }}
-                  size="sm"
-                  p={2}
-                  _hover={{ bg: "gray.700", borderRadius: "full" }}
-                />
-              </Tooltip>
-              {showSlider && (
-                <Flex mt={4} alignItems="center">
-                  <Box width="150px" mr={2}>
-                    <Slider
-                      aria-label="slider-ex-1"
-                      min={1}
-                      max={100}
-                      value={sliderValue}
-                      onChange={setSliderValue}
-                    >
-                      <SliderTrack
-                        bg="gray.700"
-                        height="8px"
-                        boxShadow="0 0 10px rgba(255, 255, 0, 0.8)"
-                      >
-                        <SliderFilledTrack bgGradient="linear(to-r, success, warning, error)" />
-                      </SliderTrack>
-                      <SliderThumb
-                        boxSize="30px"
-                        bg="transparent"
-                        boxShadow={"none"}
-                        _focus={{ boxShadow: "none" }}
-                        zIndex={1}
-                      >
-                        <Image
-                          src="/images/spitfire.png"
-                          alt="thumb"
-                          w="100%"
-                          h="auto"
-                          mr={2}
-                          mb={1}
-                        />
-                      </SliderThumb>
-                    </Slider>
-                  </Box>
-                  <Button
-                    size="xs"
-                    bgGradient="linear(to-r, primary, accent)"
-                    color="background"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleVote();
-                    }}
-                    isDisabled={voted}
-                    ml={2}
-                    _hover={{ bg: "accent" }}
-                    fontWeight="bold"
-                    className="subtle-pulse"
-                  >
-                    {voted ? "Voted" : `Vote ${sliderValue}%`}
-                  </Button>
-                  <Button
-                    size="xs"
-                    bg="muted"
-                    color="primary"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowSlider(false);
-                    }}
-                    ml={1}
-                    _hover={{ bg: "muted", opacity: 0.8 }}
-                  >
-                    X
-                  </Button>
-                </Flex>
-              )}
-              <VoteListPopover
-                trigger={
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    ml={1}
-                    p={1}
-                    _hover={{ textDecoration: "underline" }}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {uniqueVotes.length}
-                  </Button>
-                }
-                votes={activeVotes}
-                post={discussion}
+                }}
+                estimateVoteValue={estimateVoteValue}
+                variant="withSlider"
+                size="sm"
               />
             </HStack>
           </HStack>

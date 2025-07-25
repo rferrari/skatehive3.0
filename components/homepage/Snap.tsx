@@ -30,7 +30,7 @@ import { getPostDate } from "@/lib/utils/GetPostDate";
 import useHiveAccount from "@/hooks/useHiveAccount";
 import VideoRenderer from "../layout/VideoRenderer";
 import SnapComposer from "./SnapComposer";
-import VoteSlider from "../shared/VoteSlider";
+import { UpvoteButton } from "@/components/shared";
 import EditPostModal from "./EditPostModal";
 import ShareMenuButtons from "./ShareMenuButtons";
 import useHivePower from "@/hooks/useHivePower";
@@ -385,7 +385,7 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
 
         {!showSlider && (
           <HStack justify="center" spacing={8} mt={3}>
-            <VoteSlider
+            <UpvoteButton
               discussion={discussion}
               voted={voted}
               setVoted={setVoted}
@@ -393,7 +393,7 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
               setActiveVotes={setActiveVotes}
               showSlider={showSlider}
               setShowSlider={setShowSlider}
-              onVoteSuccess={(estimatedValue) => {
+              onVoteSuccess={(estimatedValue?: number) => {
                 setVoted(true);
                 if (estimatedValue) {
                   setRewardAmount((prev) =>
@@ -402,7 +402,7 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
                 }
               }}
               estimateVoteValue={estimateVoteValue}
-              variant="feed"
+              variant="withSlider"
               size="sm"
             />
             <HStack>
@@ -480,7 +480,7 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
         )}
 
         {showSlider && (
-          <VoteSlider
+          <UpvoteButton
             discussion={discussion}
             voted={voted}
             setVoted={setVoted}
@@ -488,7 +488,7 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
             setActiveVotes={setActiveVotes}
             showSlider={showSlider}
             setShowSlider={setShowSlider}
-            onVoteSuccess={(estimatedValue) => {
+            onVoteSuccess={(estimatedValue?: number) => {
               if (estimatedValue) {
                 setRewardAmount((prev) =>
                   parseFloat((prev + estimatedValue).toFixed(3))
@@ -496,7 +496,7 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
               }
             }}
             estimateVoteValue={estimateVoteValue}
-            variant="feed"
+            variant="withSlider"
             size="sm"
           />
         )}
