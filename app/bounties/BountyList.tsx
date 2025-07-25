@@ -17,7 +17,7 @@ import { Discussion } from "@hiveio/dhive";
 import BountySnap from "./BountySnap";
 import { parse, isAfter } from "date-fns";
 import HiveClient from "@/lib/hive/hiveclient";
-import { useHiveUser } from "@/contexts/UserContext";
+import { useAioha } from "@aioha/react-ui";
 import {
   FaBolt,
   FaCheckCircle,
@@ -54,7 +54,7 @@ export default function BountyList({
   >("default");
 
   // Claimed bounties logic
-  const { hiveUser } = useHiveUser();
+  const { user } = useAioha();
 
   useEffect(() => {
     let bounties = [...comments];
@@ -92,11 +92,14 @@ export default function BountyList({
 
   // Filter bounties based on status
   const filteredBounties = useMemo(() => {
-    if (filter === "my-claimed" && hiveUser?.name) {
+    if (filter === "my-claimed" && user) {
       return displayedBounties.filter((bounty) => {
         // Check if the current user has voted on this bounty (claimed it) AND is not the author
-        return bounty.author !== hiveUser.name && 
-               bounty.active_votes?.some((vote) => vote.voter === hiveUser.name);
+        // Use case-insensitive comparison to handle potential case differences
+        const isNotAuthor = bounty.author.toLowerCase() !== user.toLowerCase();
+        const hasVoted = bounty.active_votes?.some((vote) => vote.voter.toLowerCase() === user.toLowerCase());
+        
+        return isNotAuthor && hasVoted;
       });
     }
     if (filter === "claimed") {
@@ -113,7 +116,7 @@ export default function BountyList({
       if (filter === "completed") return !isAfter(deadline, now);
       return true;
     });
-  }, [filter, displayedBounties, hiveUser?.name]);
+  }, [filter, displayedBounties, user]);
 
   // Sorting logic
   const sortedBounties = useMemo(() => {
@@ -300,7 +303,7 @@ export default function BountyList({
 
   if (
     filter === "my-claimed" &&
-    hiveUser?.name &&
+    user &&
     filteredBounties.length === 0
   ) {
     return (
