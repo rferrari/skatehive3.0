@@ -10,7 +10,7 @@ import {
   IconButton,
   Image,
 } from "@chakra-ui/react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useAioha } from "@aioha/react-ui";
 import { useRive, useStateMachineInput } from "@rive-app/react-canvas";
 import { AiohaModal } from "@aioha/react-ui";
@@ -59,6 +59,7 @@ const MenuRiveButton = ({
 
 export default function FooterNavButtons() {
   const router = useRouter();
+  const pathname = usePathname();
   const { user } = useAioha();
   const [modalDisplayed, setModalDisplayed] = useState(false);
   const { themeName } = useTheme();
@@ -371,6 +372,16 @@ export default function FooterNavButtons() {
       onClick: () => router.push("/bounties"),
       name: "Bounties",
     },
+    // Only show auction button if not already on auction page
+    ...(!pathname.startsWith("/auction")
+      ? [
+          {
+            src: "/buttons/bounties.riv", // Using bounties icon as placeholder
+            onClick: () => router.push("/auction"),
+            name: "Auction",
+          },
+        ]
+      : []),
     ...(user
       ? [
           {

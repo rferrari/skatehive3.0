@@ -251,7 +251,9 @@ export default function AuctionPage({
               <GridItem order={{ base: 2, lg: 2 }}>
                 {/* Wallet Connection */}
                 {!isConnected ? (
-                  <ConnectButton />
+                  <Center m={1}>
+                    <ConnectButton />
+                  </Center>
                 ) : (
                   <Box
                     display="flex"

@@ -58,7 +58,7 @@ interface MainWalletProps {
 
 export default function MainWallet({ username }: MainWalletProps) {
   // Use the connected user from Aioha for Hive account data
-  const { user, aioha } = useAioha();
+  const { user } = useAioha();
   const { hiveAccount, isLoading, error } = useHiveAccount(user || "");
   const { handleConfirm, handleClaimHbdInterest } = useWalletActions();
   const { isConnected, address } = useAccount();
