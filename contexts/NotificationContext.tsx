@@ -103,7 +103,7 @@ export const NotificationProvider = ({
 
   // Memoize the notification count calculation to avoid recalculating on every render
   const newNotificationCount = useMemo(() => {
-    if (notifications.length === 0) return 0;
+    if (!notifications || notifications.length === 0) return 0;
 
     const lastReadTimestamp = new Date(lastReadDate).getTime();
 

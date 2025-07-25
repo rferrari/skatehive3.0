@@ -142,7 +142,7 @@ const UpvoteButton = ({
             p={1}
             borderRadius="full"
             bg={!voted ? "muted" : undefined}
-            _hover={!voted ? { bg: "primary", animation: "none" } : undefined}
+            _hover={!voted ? { bg: "primary" } : undefined}
             transition="background 0.2s, border-radius 0.2s"
             className={`${className} ${!voted ? "arrow-bg-fade" : ""}`}
           >
@@ -173,7 +173,7 @@ const UpvoteButton = ({
             p={1}
             borderRadius="full"
             bg={!voted ? "muted" : undefined}
-            _hover={!voted ? { bg: "primary", animation: "none" } : undefined}
+            _hover={!voted ? { bg: "primary" } : undefined}
             transition="background 0.2s, border-radius 0.2s"
             className={`${className} ${!voted ? "arrow-bg-fade" : ""}`}
           >
@@ -284,7 +284,7 @@ const UpvoteButton = ({
             p={1}
             borderRadius="full"
             bg={!voted ? "muted" : undefined}
-            _hover={!voted ? { bg: "primary", animation: "none" } : undefined}
+            _hover={!voted ? { bg: "primary" } : undefined}
             transition="background 0.2s, border-radius 0.2s"
             className={`${className} ${!voted ? "arrow-bg-fade" : ""}`}
           >
@@ -344,6 +344,9 @@ const UpvoteButtonWithPulse = (props: UpvoteButtonProps) => {
         .arrow-bg-fade {
           animation: arrow-bg-fade 3s ease-in-out infinite;
         }
+        .arrow-bg-fade:hover {
+          animation: arrow-bg-fade-hover 3s ease-in-out infinite;
+        }
         @keyframes arrow-pulse {
           0% {
             transform: scale(1) translate(0, 0);
@@ -364,6 +367,17 @@ const UpvoteButtonWithPulse = (props: UpvoteButtonProps) => {
           }
           100% {
             background-color: var(--chakra-colors-muted);
+          }
+        }
+        @keyframes arrow-bg-fade-hover {
+          0% {
+            background-color: var(--chakra-colors-primary);
+          }
+          50% {
+            background-color: transparent;
+          }
+          100% {
+            background-color: var(--chakra-colors-primary);
           }
         }
       `}</style>
