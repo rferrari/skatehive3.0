@@ -6,8 +6,15 @@ import {
   Box,
   useDisclosure,
 } from "@chakra-ui/react";
-import { FaPaperPlane, FaDownload, FaExchangeAlt } from "react-icons/fa";
-import { useState } from "react";
+import {
+  FaPaperPlane,
+  FaDownload,
+  FaExchangeAlt,
+  FaEthereum,
+} from "react-icons/fa";
+import { useState, useEffect } from "react";
+import { Wallet, ConnectWallet } from "@coinbase/onchainkit/wallet";
+import { useAccount } from "wagmi";
 import TokenSearchModal from "./TokenSearchModal";
 import ReceiveModal from "./ReceiveModal";
 import { TokenDetail } from "../../../types/portfolio";
@@ -31,6 +38,14 @@ export default function MobileActionButtons({
   onSend,
   onSwap,
 }: MobileActionButtonsProps) {
+  const { isConnected } = useAccount();
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Prevent hydration issues by only rendering after mount
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const {
     isOpen: isSendModalOpen,
     onOpen: openSendModal,
@@ -131,6 +146,37 @@ export default function MobileActionButtons({
             Swap
           </Text>
         </VStack>
+
+        {/* Disguised Ethereum Connect Button - only shows when not connected */}
+        {isMounted && !isConnected && (
+          <VStack spacing={2}>
+            <Box
+              w="56px"
+              h="56px"
+              bg="rgba(255, 255, 255, 0.1)"
+              borderRadius="full"
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              _hover={{
+                bg: "rgba(255, 255, 255, 0.15)",
+                transform: "scale(1.05)",
+              }}
+              transition="all 0.2s ease"
+              cursor="pointer"
+            >
+              <ConnectWallet disconnectedLabel={<FaEthereum />} />{" "}
+            </Box>
+
+            <Text
+              fontSize="sm"
+              color="rgba(255, 255, 255, 0.8)"
+              fontWeight="500"
+            >
+              Connect
+            </Text>
+          </VStack>
+        )}
       </HStack>
 
       {/* Token Search Modals */}

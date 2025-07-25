@@ -161,7 +161,8 @@ export default function AuthButton() {
 
   // Check if any connection exists or if user wants to see connection options
   const hasAnyConnection = user || isEthereumConnected || isFarcasterConnected;
-  const shouldShowConnectionPanel = isClientMounted && (hasAnyConnection || showConnectionOptions);
+  const shouldShowConnectionPanel =
+    isClientMounted && (hasAnyConnection || showConnectionOptions);
 
   // Connection status data
   const baseConnections: ConnectionStatus[] = [
@@ -189,7 +190,8 @@ export default function AuthButton() {
   const connections = baseConnections;
 
   // Get the primary (first connected) connection for collapsed state
-  const primaryConnection = connections.find(conn => conn.connected) || connections[0];
+  const primaryConnection =
+    connections.find((conn) => conn.connected) || connections[0];
 
   // Helper functions to get user display information
   const getUserDisplayInfo = (connection: ConnectionStatus) => {
@@ -381,7 +383,10 @@ export default function AuthButton() {
     );
   }
 
-  const renderConnectionButton = (connection: ConnectionStatus, isPrimary = false) => {
+  const renderConnectionButton = (
+    connection: ConnectionStatus,
+    isPrimary = false
+  ) => {
     if (connection.name === "Farcaster" && !connection.connected) {
       return (
         <Button
