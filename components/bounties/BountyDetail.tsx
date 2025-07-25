@@ -9,15 +9,6 @@ import {
   Tag,
   useTheme,
   VStack,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  ModalCloseButton,
-  Checkbox,
-  CheckboxGroup,
   useDisclosure,
 } from "@chakra-ui/react";
 import React, { useMemo, useState } from "react";
@@ -31,8 +22,7 @@ import SnapComposer from "@/components/homepage/SnapComposer";
 import MatrixOverlay from "@/components/graphics/MatrixOverlay";
 import { useAioha } from "@aioha/react-ui";
 import useHivePower from "@/hooks/useHivePower";
-import { transferWithKeychain } from "@/lib/hive/client-functions";
-import { KeychainSDK } from "keychain-sdk";
+import BountyRewarder from "./BountyRewarder";
 
 interface BountyDetailProps {
   post: Discussion;
@@ -86,7 +76,6 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
 
   // Reward Modal State
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const [selectedWinners, setSelectedWinners] = useState<string[]>([]);
   const [hasRewarded, setHasRewarded] = useState(false); // TODO: Replace with real check
 
   // Extract bounty fields
@@ -122,9 +111,7 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
     const match = body.match(/Reward:\s*([0-9.]+)/);
     return match && match[1] ? parseFloat(match[1]) : 0;
   }, [body]);
-  const [isRewarding, setIsRewarding] = useState(false);
-  const [rewardError, setRewardError] = useState<string | null>(null);
-  const [rewardSuccess, setRewardSuccess] = useState(false);
+
 
   // Parse reward amount and currency from body
   const rewardInfo = useMemo(() => {
@@ -138,11 +125,6 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
     }
     return { amount: 0, currency: "HIVE" };
   }, [body]);
-
-  const rewardPerWinner =
-    selectedWinners.length > 0
-      ? (rewardInfo.amount / selectedWinners.length).toFixed(3)
-      : "0";
 
   // function handleHeartClick() {
   //   setShowSlider(!showSlider);
@@ -161,88 +143,7 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
     setShowSlider(false);
   }
 
-  // Handler for rewarding bounty hunters
-  async function handleRewardBountyHunters() {
-    setIsRewarding(true);
-    setRewardError(null);
-    setRewardSuccess(false);
-    try {
-      // Send tip to each winner
-      for (const winner of selectedWinners) {
-        await transferWithKeychain(
-          String(user),
-          winner,
-          rewardPerWinner,
-          `Congrats @${winner}! You won ${rewardPerWinner} ${rewardInfo.currency} in the bounty: ${challengeName}`,
-          rewardInfo.currency
-        );
-      }
-      // Post a comment announcing the winners
-      const winnersList = selectedWinners.map((w) => `@${w}`).join(", ");
-      const commentBody = `🏆 Bounty Winners! 🏆\n\nCongratulations to: ${winnersList}\n\nReward: ${rewardPerWinner} ${rewardInfo.currency}\n\nThank you for participating!`;
-      const permlink = `bounty-winners-${Date.now()}`;
-      // Validation: ensure all required fields are present
-      const missingFields = [];
-      if (!user || user === "undefined") missingFields.push("user");
-      if (!post.author || post.author === "undefined")
-        missingFields.push("post.author");
-      if (!post.permlink || post.permlink === "undefined")
-        missingFields.push("post.permlink");
-      if (!permlink || permlink === "undefined") missingFields.push("permlink");
-      if (!commentBody || commentBody === "undefined")
-        missingFields.push("commentBody");
 
-      if (missingFields.length > 0) {
-        setRewardError("Missing required data: " + missingFields.join(", "));
-        setIsRewarding(false);
-        return;
-      }
-      const postObj = {
-        username: String(user),
-        body: commentBody,
-        parent_username: post.author,
-        parent_perm: post.permlink,
-        permlink,
-        json_metadata: JSON.stringify({}),
-        comment_options: "",
-      };
-      console.log("Prepared minimal comment postObj:", postObj);
-      // Validate all fields are present and not undefined
-      for (const [key, value] of Object.entries(postObj)) {
-        if (value === undefined || value === null || value === "undefined") {
-          setRewardError(`Field ${key} is missing or undefined.`);
-          setIsRewarding(false);
-          return;
-        }
-      }
-      try {
-        const keychain = new KeychainSDK(window);
-        const commentResult = await keychain.post(postObj);
-        console.log("Keychain result:", commentResult);
-        if (!commentResult || commentResult.success === false) {
-          throw new Error("Failed to post bounty winner comment.");
-        }
-      } catch (err) {
-        console.error("Keychain post error:", err);
-        setRewardError(
-          "Failed to post bounty winner comment. " +
-            ((err as any)?.message || String(err))
-        );
-        setIsRewarding(false);
-        return;
-      }
-      setRewardSuccess(true);
-      setHasRewarded(true);
-      // Only close the modal after success
-      setTimeout(() => {
-        onClose();
-      }, 2000);
-    } catch (err: any) {
-      setRewardError(err.message || "Failed to reward bounty hunters.");
-    } finally {
-      setIsRewarding(false);
-    }
-  }
 
   // Handler for claiming the bounty
   async function handleClaimBounty() {
@@ -597,66 +498,16 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
           />
         </Box>
       </Flex>
-      {/* Reward Modal */}
-      <Modal isOpen={isOpen} onClose={onClose} isCentered>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Select Bounty Winners</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <Text mb={2}>Select the users who won this bounty:</Text>
-            <CheckboxGroup
-              value={selectedWinners}
-              onChange={(val) => setSelectedWinners(val as string[])}
-            >
-              <VStack align="start">
-                {uniqueCommenters.map((username: string) => (
-                  <Checkbox key={username} value={username}>
-                    @{username}
-                  </Checkbox>
-                ))}
-              </VStack>
-            </CheckboxGroup>
-            <Divider my={3} />
-            <Text>
-              Total Reward:{" "}
-              <b>
-                {rewardInfo.amount} {rewardInfo.currency}
-              </b>
-            </Text>
-            <Text>
-              Each winner receives:{" "}
-              <b>
-                {rewardPerWinner} {rewardInfo.currency}
-              </b>
-            </Text>
-            {rewardError && (
-              <Text color="error" mt={2}>
-                {rewardError}
-              </Text>
-            )}
-            {rewardSuccess && (
-              <Text color="success" mt={2}>
-                Bounty rewards sent and winners announced!
-              </Text>
-            )}
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              colorScheme="orange"
-              mr={3}
-              isDisabled={selectedWinners.length === 0 || isRewarding}
-              onClick={handleRewardBountyHunters}
-              isLoading={isRewarding}
-            >
-              Send Reward
-            </Button>
-            <Button variant="ghost" onClick={onClose} isDisabled={isRewarding}>
-              Close
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      <BountyRewarder
+        isOpen={isOpen}
+        onClose={onClose}
+        post={post}
+        user={user}
+        uniqueCommenters={uniqueCommenters}
+        challengeName={challengeName}
+        rewardInfo={rewardInfo}
+        onRewardSuccess={() => setHasRewarded(true)}
+      />
     </Box>
   );
 };

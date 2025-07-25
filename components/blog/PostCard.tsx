@@ -5,10 +5,6 @@ import {
   Avatar,
   Flex,
   Icon,
-  Slider,
-  SliderTrack,
-  SliderFilledTrack,
-  SliderThumb,
   Button,
   Link,
   Popover,
@@ -24,7 +20,6 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination } from "swiper/modules";
 import "swiper/swiper-bundle.css";
 import { FaComment } from "react-icons/fa";
-import { LuArrowUpRight } from "react-icons/lu";
 import { getPostDate } from "@/lib/utils/GetPostDate";
 import { useAioha } from "@aioha/react-ui";
 import { useRouter } from "next/navigation";
@@ -37,7 +32,7 @@ import {
 import useHivePower from "@/hooks/useHivePower";
 import VoteListPopover from "./VoteListModal";
 import MatrixOverlay from "@/components/graphics/MatrixOverlay";
-
+import { UpvoteButton } from "@/components/shared";
 
 
 interface PostCardProps {
@@ -66,7 +61,6 @@ export default function PostCard({
 
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [youtubeLinks, setYoutubeLinks] = useState<LinkWithDomain[]>([]);
-  const [sliderValue, setSliderValue] = useState(100);
   const [showSlider, setShowSlider] = useState(false);
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
   const { aioha, user } = useAioha();
@@ -137,32 +131,6 @@ export default function PostCard({
     }
   }, [body, metadata, default_thumbnail, post, failedImages]);
 
-  function handleHeartClick() {
-    setShowSlider(!showSlider);
-  }
-
-  async function handleVote() {
-    const vote = await aioha.vote(
-      post.author,
-      post.permlink,
-      sliderValue * 100
-    );
-    if (vote.success) {
-      setVoted(true);
-      setActiveVotes([...activeVotes, { voter: user }]);
-      // Estimate the value and optimistically update payout
-      if (estimateVoteValue) {
-        try {
-          const estimatedValue = await estimateVoteValue(sliderValue);
-          setPayoutValue((prev) => prev + estimatedValue);
-        } catch (e) {
-          // fallback: do not update payout
-        }
-      }
-    }
-    handleHeartClick();
-  }
-
   // **Function to load more slides**
   function handleSlideChange(swiper: any) {
     // Check if user is reaching the end of currently visible images
@@ -178,8 +146,6 @@ export default function PostCard({
   function stopPropagation(e: React.MouseEvent) {
     e.stopPropagation();
   }
-
-
 
   // Enhanced function to handle image load errors with fallback
   function handleImageError(e: React.SyntheticEvent<HTMLImageElement, Event>) {
@@ -244,9 +210,6 @@ export default function PostCard({
   }
   const authorPayout = parsePayout(post.total_payout_value);
   const curatorPayout = parsePayout(post.curator_payout_value);
-  // const payoutTooltip = `Author: $${authorPayout.toFixed(
-  //   3
-  // )}\nCurators: $${curatorPayout.toFixed(3)}`;
 
   if (listView) {
     return (
@@ -334,33 +297,21 @@ export default function PostCard({
             mt={2}
             flexShrink={0}
           >
-            <Flex alignItems="center">
-              <Icon
-                as={LuArrowUpRight}
-                onClick={handleHeartClick}
-                cursor="pointer"
-                color={voted ? "success" : "accent"}
-                boxSize={5}
-                bg={!voted ? "muted" : undefined}
-                borderRadius="full"
-                _hover={!voted ? { bg: "primary" } : undefined}
-              />
-              <VoteListPopover
-                trigger={
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    ml={1}
-                    p={1}
-                    _hover={{ textDecoration: "underline" }}
-                  >
-                    {uniqueVotes.length}
-                  </Button>
+            <UpvoteButton
+              discussion={post}
+              voted={voted}
+              setVoted={setVoted}
+              activeVotes={activeVotes}
+              setActiveVotes={setActiveVotes}
+              onVoteSuccess={(estimatedValue?: number) => {
+                if (estimatedValue) {
+                  setPayoutValue((prev) => prev + estimatedValue);
                 }
-                votes={activeVotes}
-                post={post}
-              />
-            </Flex>
+              }}
+              estimateVoteValue={estimateVoteValue}
+              variant="withVoteCount"
+              size="sm"
+            />
             <Popover
               placement="top"
               isOpen={isPayoutOpen}
@@ -708,122 +659,48 @@ export default function PostCard({
           </Box>
           <Box mt="auto">
             {showSlider ? (
-              <Flex mt={4} alignItems="center" onClick={stopPropagation}>
-                <Box width="100%" mr={4}>
-                  <Slider
-                    aria-label="slider-ex-1"
-                    defaultValue={0}
-                    min={0}
-                    max={100}
-                    value={sliderValue}
-                    onChange={(val) => setSliderValue(val)}
-                  >
-                    <SliderTrack
-                      bg="gray.700"
-                      height="8px"
-                      boxShadow="0 0 10px rgba(255, 255, 0, 0.8)"
-                    >
-                      <SliderFilledTrack bgGradient="linear(to-r, success, warning, error)" />
-                    </SliderTrack>
-                    <SliderThumb
-                      boxSize="30px"
-                      bg="transparent"
-                      boxShadow={"none"}
-                      _focus={{ boxShadow: "none" }}
-                      zIndex={1}
-                    >
-                      <Image
-                        src="/images/spitfire.png"
-                        alt="thumb"
-                        w="100%"
-                        h="auto"
-                        mr={2}
-                        mb={1}
-                      />
-                    </SliderThumb>
-                  </Slider>
-                </Box>
-                <Button
-                  size="xs"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleVote();
-                  }}
-                  pl={5}
-                  pr={5}
-                  cursor="pointer"
-                  bgGradient="linear(to-r, primary, accent)"
-                  color="background"
-                  _hover={{ bg: "accent" }}
-                  fontWeight="bold"
-                  className="subtle-pulse"
-                >
-                  Vote {sliderValue} %
-                </Button>
-                <Button
-                  size="xs"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleHeartClick();
-                  }}
-                  ml={1}
-                  cursor="pointer"
-                  bg="muted"
-                  color="primary"
-                  _hover={{ bg: "muted", opacity: 0.8 }}
-                >
-                  X
-                </Button>
-              </Flex>
+              <UpvoteButton
+                discussion={post}
+                voted={voted}
+                setVoted={setVoted}
+                activeVotes={activeVotes}
+                setActiveVotes={setActiveVotes}
+                showSlider={showSlider}
+                setShowSlider={setShowSlider}
+                onVoteSuccess={(estimatedValue?: number) => {
+                  if (estimatedValue) {
+                    setPayoutValue((prev) => prev + estimatedValue);
+                  }
+                }}
+                estimateVoteValue={estimateVoteValue}
+                variant="withSlider"
+                size="sm"
+              />
             ) : (
               <Flex
                 mt={4}
                 justifyContent="center"
                 alignItems="center"
-                onClick={stopPropagation}
                 gap={6}
               >
-                <Flex alignItems="center">
-                  <Box
-                    as="span"
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
-                    cursor="pointer"
-                    p={1}
-                    onClick={(
-                      e: React.MouseEvent<HTMLSpanElement, MouseEvent>
-                    ) => {
-                      e.stopPropagation();
-                      handleHeartClick();
-                    }}
-                    _hover={{ bg: "accent", borderRadius: "full" }}
-                    transition="background 0.2s, border-radius 0.2s"
-                  >
-                    <LuArrowUpRight
-                      size={24}
-                      color={voted ? "var(--chakra-colors-success)" : "var(--chakra-colors-accent)"}
-                      style={{ opacity: 1 }}
-                    />
-                  </Box>
-                  <VoteListPopover
-                    trigger={
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        ml={1}
-                        p={1}
-                        _hover={{ textDecoration: "underline" }}
-                      >
-                        {uniqueVotes.length}
-                      </Button>
+                <UpvoteButton
+                  discussion={post}
+                  voted={voted}
+                  setVoted={setVoted}
+                  activeVotes={activeVotes}
+                  setActiveVotes={setActiveVotes}
+                  showSlider={showSlider}
+                  setShowSlider={setShowSlider}
+                  onVoteSuccess={(estimatedValue?: number) => {
+                    if (estimatedValue) {
+                      setPayoutValue((prev) => prev + estimatedValue);
                     }
-                    votes={activeVotes}
-                    post={post}
-                  />
-                </Flex>
-
-                <Flex alignItems="center">
+                  }}
+                  estimateVoteValue={estimateVoteValue}
+                  variant="withSlider"
+                  size="sm"
+                />
+                <Flex alignItems="center" onClick={stopPropagation}>
                   <Icon as={FaComment} />
                   <Text ml={2} fontSize="sm">
                     {post.children}
@@ -840,6 +717,7 @@ export default function PostCard({
                       style={{ cursor: "pointer" }}
                       onMouseDown={openPayout}
                       onMouseUp={closePayout}
+                      onClick={stopPropagation}
                     >
                       <Text fontWeight="bold" fontSize="xl">
                         ${payoutValue.toFixed(2)}

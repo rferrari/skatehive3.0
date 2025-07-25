@@ -26,7 +26,7 @@ import { useAioha } from "@aioha/react-ui";
 import VideoRenderer from "../layout/VideoRenderer";
 import SnapComposer from "../homepage/SnapComposer";
 import Snap from "../homepage/Snap";
-import VoteSlider from "../shared/VoteSlider";
+import { UpvoteButton } from "@/components/shared";
 import { useComments } from "@/hooks/useComments";
 import HiveMarkdown from "../shared/HiveMarkdown";
 
@@ -492,7 +492,7 @@ const SnapModal = ({
                             )}
 
                             {/* Voting Section */}
-                            <VoteSlider
+                            <UpvoteButton
                                 discussion={currentSnap}
                                 voted={voted}
                                 setVoted={setVoted}
@@ -501,7 +501,7 @@ const SnapModal = ({
                                 showSlider={showSlider}
                                 setShowSlider={setShowSlider}
                                 onVoteSuccess={() => setVoted(true)}
-                                variant="modal"
+                                variant="withSlider"
                                 size="sm"
                             />
                         </Box>

@@ -1,0 +1,275 @@
+import {
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  ModalCloseButton,
+  Checkbox,
+  CheckboxGroup,
+  VStack,
+  Text,
+  Button,
+  Divider,
+  useTheme,
+} from "@chakra-ui/react";
+import React, { useState } from "react";
+import { Discussion } from "@hiveio/dhive";
+import { transferWithKeychain } from "@/lib/hive/client-functions";
+import { KeychainSDK } from "keychain-sdk";
+
+interface BountyRewarderProps {
+  isOpen: boolean;
+  onClose: () => void;
+  post: Discussion;
+  user: string | null;
+  uniqueCommenters: string[];
+  challengeName: string;
+  rewardInfo: {
+    amount: number;
+    currency: string;
+  };
+  onRewardSuccess: () => void;
+}
+
+const BountyRewarder: React.FC<BountyRewarderProps> = ({
+  isOpen,
+  onClose,
+  post,
+  user,
+  uniqueCommenters,
+  challengeName,
+  rewardInfo,
+  onRewardSuccess,
+}) => {
+  const theme = useTheme();
+  const [selectedWinners, setSelectedWinners] = useState<string[]>([]);
+  const [isRewarding, setIsRewarding] = useState(false);
+  const [rewardError, setRewardError] = useState<string | null>(null);
+  const [rewardSuccess, setRewardSuccess] = useState(false);
+
+  const rewardPerWinner =
+    selectedWinners.length > 0
+      ? (rewardInfo.amount / selectedWinners.length).toFixed(3)
+      : "0";
+
+  const handleRewardBountyHunters = async () => {
+    if (!user) {
+      setRewardError("You must be logged in to reward bounty hunters.");
+      return;
+    }
+
+    setIsRewarding(true);
+    setRewardError(null);
+    setRewardSuccess(false);
+    
+    try {
+      // Send tip to each winner
+      for (const winner of selectedWinners) {
+        try {
+          await transferWithKeychain(
+            String(user),
+            winner,
+            rewardPerWinner,
+            `Congrats @${winner}! You won ${rewardPerWinner} ${rewardInfo.currency} in the bounty: ${challengeName}`,
+            rewardInfo.currency
+          );
+        } catch (err) {
+          console.error(`Transfer error for ${winner}:`, err);
+          setRewardError(`Failed to send reward to @${winner}. Please try again.`);
+          setIsRewarding(false);
+          return; // Exit early if any transfer fails
+        }
+      }
+      
+      // If we reach here, all transfers were successful (no exceptions thrown)
+      // Now proceed with posting the comment to announce the winners
+      const winnersList = selectedWinners.map((w) => `@${w}`).join(", ");
+      const commentBody = `🏆 Bounty Winners! 🏆\n\nCongratulations to: ${winnersList}\n\nReward: ${rewardPerWinner} ${rewardInfo.currency}\n\nThank you for participating!`;
+      const permlink = `bounty-winners-${Date.now()}`;
+      
+      // Validation: ensure all required fields are present
+      const missingFields = [];
+      if (!user || user === "undefined") missingFields.push("user");
+      if (!post.author || post.author === "undefined")
+        missingFields.push("post.author");
+      if (!post.permlink || post.permlink === "undefined")
+        missingFields.push("post.permlink");
+      if (!permlink || permlink === "undefined") missingFields.push("permlink");
+      if (!commentBody || commentBody === "undefined")
+        missingFields.push("commentBody");
+
+      if (missingFields.length > 0) {
+        setRewardError("Missing required data: " + missingFields.join(", "));
+        setIsRewarding(false);
+        return;
+      }
+      
+      const postObj = {
+        username: String(user),
+        body: commentBody,
+        parent_username: post.author,
+        parent_perm: post.permlink,
+        permlink,
+        json_metadata: JSON.stringify({}),
+        comment_options: "",
+      };
+      
+      console.log("Prepared minimal comment postObj:", postObj);
+      
+      // Validate all fields are present and not undefined
+      for (const [key, value] of Object.entries(postObj)) {
+        if (value === undefined || value === null || value === "undefined") {
+          setRewardError(`Field ${key} is missing or undefined.`);
+          setIsRewarding(false);
+          return;
+        }
+      }
+      
+      try {
+        const keychain = new KeychainSDK(window);
+        const commentResult = await keychain.post(postObj);
+        console.log("Keychain result:", commentResult);
+        if (!commentResult || commentResult.success === false) {
+          throw new Error("Failed to post bounty winner comment.");
+        }
+      } catch (err) {
+        console.error("Keychain post error:", err);
+        setRewardError(
+          "Failed to post bounty winner comment. " +
+            ((err as any)?.message || String(err))
+        );
+        setIsRewarding(false);
+        return;
+      }
+      
+      setRewardSuccess(true);
+      onRewardSuccess();
+      
+      // Only close the modal after success
+      setTimeout(() => {
+        onClose();
+        // Reset state for next use
+        setSelectedWinners([]);
+        setRewardError(null);
+        setRewardSuccess(false);
+      }, 2000);
+    } catch (err: any) {
+      setRewardError(err.message || "Failed to reward bounty hunters.");
+    } finally {
+      setIsRewarding(false);
+    }
+  };
+
+  const handleClose = () => {
+    if (!isRewarding) {
+      onClose();
+      // Reset state
+      setSelectedWinners([]);
+      setRewardError(null);
+      setRewardSuccess(false);
+    }
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={handleClose} isCentered>
+      <ModalOverlay bg="rgba(0, 0, 0, 0.6)" />
+      <ModalContent
+        bg="muted"
+        border="1px solid"
+        borderColor="border"
+        color="text"
+      >
+        <ModalHeader color="primary" fontWeight="bold">
+          Select Bounty Winners
+        </ModalHeader>
+        <ModalCloseButton color="text" />
+        <ModalBody>
+          <Text mb={2} color="text">
+            Select the users who won this bounty:
+          </Text>
+          <CheckboxGroup
+            value={selectedWinners}
+            onChange={(val) => setSelectedWinners(val as string[])}
+          >
+            <VStack align="start">
+              {uniqueCommenters.map((username: string) => (
+                <Checkbox 
+                  key={username} 
+                  value={username}
+                  colorScheme="primary"
+                  sx={{
+                    '& .chakra-checkbox__control': {
+                      borderColor: 'primary',
+                      _checked: {
+                        bg: 'primary',
+                        borderColor: 'primary',
+                        '& .chakra-checkbox__icon': {
+                          color: 'background',
+                        },
+                      },
+                    },
+                    '& .chakra-checkbox__label': {
+                      color: 'text',
+                    },
+                  }}
+                >
+                  @{username}
+                </Checkbox>
+              ))}
+            </VStack>
+          </CheckboxGroup>
+          <Divider my={3} borderColor="border" />
+          <Text color="text">
+            Total Reward:{" "}
+            <b style={{ color: theme.colors.primary }}>
+              {rewardInfo.amount} {rewardInfo.currency}
+            </b>
+          </Text>
+          <Text color="text">
+            Each winner receives:{" "}
+            <b style={{ color: theme.colors.accent }}>
+              {rewardPerWinner} {rewardInfo.currency}
+            </b>
+          </Text>
+          {rewardError && (
+            <Text color="error" mt={2}>
+              {rewardError}
+            </Text>
+          )}
+          {rewardSuccess && (
+            <Text color="success" mt={2}>
+              Bounty rewards sent and winners announced!
+            </Text>
+          )}
+        </ModalBody>
+        <ModalFooter>
+          <Button
+            bg="primary"
+            color="background"
+            _hover={{ bg: "accent" }}
+            mr={3}
+            isDisabled={selectedWinners.length === 0 || isRewarding}
+            onClick={handleRewardBountyHunters}
+            isLoading={isRewarding}
+            fontWeight="bold"
+          >
+            Send Reward
+          </Button>
+          <Button 
+            variant="ghost" 
+            onClick={handleClose} 
+            isDisabled={isRewarding}
+            color="text"
+            _hover={{ bg: "muted" }}
+          >
+            Close
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
+  );
+};
+
+export default BountyRewarder; 

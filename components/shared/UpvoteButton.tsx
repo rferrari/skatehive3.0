@@ -63,8 +63,8 @@ const UpvoteButton = ({
   const handleHeartClick = () => {
     if (variant === "withSlider" && setShowSlider) {
       setShowSlider(!showSlider);
-    } else if (variant === "simple") {
-      handleVote(100); // Default 100% vote for simple variant
+    } else if (variant === "simple" || variant === "withVoteCount") {
+      handleVote(100); // Default 100% vote for simple and withVoteCount variants
     }
   };
 
