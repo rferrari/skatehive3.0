@@ -53,25 +53,43 @@ const farcasterButtonStyles = `
 `;
 
 const onchainKitStyles = `
-  /* Balanced avatar styling - less aggressive overrides */
-  .${ONCHAIN_AVATAR_CLASS} img {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
+  /* OnchainKit Avatar root container: force size, roundness, and clipping */
+  [data-testid="ockAvatar"] {
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    min-height: 20px !important;
+    max-width: 20px !important;
+    max-height: 20px !important;
+    border-radius: 50% !important;
+    overflow: hidden !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
-  
-  .${ONCHAIN_AVATAR_CONTAINER_CLASS} img {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-  }
-  
-  /* OnchainKit specific targeting with less aggressive overrides */
+  /* Target all children (img, svg, canvas, div) for size and roundness */
   [data-testid="ockAvatar"] img,
-  [data-testid="ockAvatar"] > div {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
+  [data-testid="ockAvatar"] svg,
+  [data-testid="ockAvatar"] canvas,
+  [data-testid="ockAvatar"] div {
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    min-height: 20px !important;
+    max-width: 20px !important;
+    max-height: 20px !important;
+    border-radius: 50% !important;
+    overflow: hidden !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    object-fit: cover !important;
+    display: block !important;
   }
   
   /* Balanced name/text styling */
@@ -193,13 +211,13 @@ export default function AuthButton() {
       name: "Ethereum",
       connected: isEthereumConnected,
       icon: FaEthereum,
-      color: "blue",
+      color: "blue.200",
     },
     {
       name: "Farcaster",
       connected: isFarcasterConnected,
       icon: SiFarcaster,
-      color: "purple",
+      color: "purple.400",
     },
   ];
 
@@ -494,23 +512,52 @@ export default function AuthButton() {
                     fontSize="xs"
                     leftIcon={
                       connection.connected && getUserDisplayInfo(connection) ? (
-                        connection.name === "Ethereum" ? (
-                          <Box className={ONCHAIN_AVATAR_CONTAINER_CLASS}>
-                            <Avatar
-                              address={ethereumAddress as `0x${string}`}
-                              className={ONCHAIN_AVATAR_CLASS}
-                            />
-                          </Box>
-                        ) : (
-                          <Box className={ONCHAIN_AVATAR_CONTAINER_CLASS}>
+                        <Box
+                          position="relative"
+                          display="inline-block"
+                          minWidth="24px"
+                          minHeight="24px"
+                        >
+                          {connection.name === "Ethereum" ? (
+                            <Box
+                              width="20px"
+                              height="20px"
+                              borderRadius="50%"
+                              overflow="hidden"
+                              display="flex"
+                              alignItems="center"
+                              justifyContent="center"
+                            >
+                              <Avatar
+                                address={ethereumAddress as `0x${string}`}
+                                className={ONCHAIN_AVATAR_CLASS}
+                                style={{ width: 20, height: 20 }}
+                              />
+                            </Box>
+                          ) : (
                             <ChakraAvatar
                               size="xs"
                               src={getUserDisplayInfo(connection)?.avatar}
                               name={getUserDisplayInfo(connection)?.displayName}
                               className={ONCHAIN_AVATAR_CLASS}
+                              style={{ width: 20, height: 20 }}
+                            />
+                          )}
+                          <Box
+                            position="absolute"
+                            bottom={-2}
+                            right={-2}
+                            bg="transparent"
+                            borderRadius="full"
+                            p={0}
+                          >
+                            <Icon
+                              as={connection.icon}
+                              boxSize={3}
+                              color={connection.color}
                             />
                           </Box>
-                        )
+                        </Box>
                       ) : (
                         <Icon as={connection.icon} boxSize={3} />
                       )
