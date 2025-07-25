@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@chakra-ui/react";
-import { useAioha, KeyTypes } from "@aioha/react-ui";
+import { useAioha } from "@aioha/react-ui";
+import { KeyTypes } from "@aioha/aioha";
 import { generatePermlink, prepareImageArray, insertAtCursor } from "@/lib/markdown/composeUtils";
 import { Beneficiary } from "@/components/compose/BeneficiariesInput";
 
