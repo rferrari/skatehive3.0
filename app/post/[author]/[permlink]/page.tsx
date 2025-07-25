@@ -42,38 +42,6 @@ function parseJsonMetadata(
   return null;
 }
 
-// Function to extract image URLs from markdown content
-function extractImageFromMarkdown(markdownContent: string): string | null {
-  if (!markdownContent) return null;
-
-  // Regex patterns to match different image formats in markdown
-  const imagePatterns = [
-    // Standard markdown images: ![alt](url)
-    /!\[.*?\]\((https?:\/\/[^\s\)]+(?:\.[a-zA-Z]{2,4})(?:\/[^\s\)]*)?)\)/i,
-    // HTML img tags: <img src="url" />
-    /<img[^>]+src=["']([^"']+)["'][^>]*>/i,
-    // Direct image URLs (common image extensions)
-    /(https?:\/\/[^\s]+\.(?:jpg|jpeg|png|gif|webp|bmp|svg)(?:\?[^\s]*)?)/i,
-  ];
-
-  for (const pattern of imagePatterns) {
-    const match = markdownContent.match(pattern);
-    if (match && match[1]) {
-      // Validate that the URL looks like an image
-      const url = match[1];
-      if (
-        url.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?|$)/i) ||
-        url.includes("image") ||
-        url.includes("img")
-      ) {
-        return url;
-      }
-    }
-  }
-
-  return null;
-}
-
 // Function to clean markdown and HTML syntax from text
 function cleanTextForDescription(text: string): string {
   if (!text) return "";

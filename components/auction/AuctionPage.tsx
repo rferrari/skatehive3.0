@@ -77,6 +77,8 @@ export default function AuctionPage({
   tokenId,
   showNavigation = false,
 }: AuctionPageProps) {
+  console.log("🏆 AuctionPage props:", { tokenId, showNavigation, tokenIdType: typeof tokenId });
+  
   const isMobile = useBreakpointValue({ base: true, md: false });
   const router = useRouter();
 
@@ -89,11 +91,16 @@ export default function AuctionPage({
   } = useQuery({
     queryKey: tokenId ? ["auction", tokenId] : ["auction", "latest"],
     queryFn: async () => {
+      console.log("🔍 Fetching auction data:", { tokenId });
+      
       if (tokenId !== undefined) {
-        return await fetchAuctionByTokenId(tokenId);
+        const result = await fetchAuctionByTokenId(tokenId);
+        console.log("📦 fetchAuctionByTokenId result:", { tokenId, result });
+        return result;
       } else {
         // Fetch latest auction for main page
         const auctions = await fetchAuction(DAO_ADDRESSES.token);
+        console.log("📦 fetchAuction result:", { auctions });
         return auctions[0] || null;
       }
     },
@@ -183,9 +190,15 @@ export default function AuctionPage({
           <VStack spacing={8} justify="center" minH="60vh">
             <Text color="muted" fontSize="lg">
               {tokenId
-                ? `No auction found for token #${tokenId}`
+                ? `Auction #${tokenId} not found. This auction may not exist or may not be from SkateHive DAO.`
                 : "No active auction found"}
             </Text>
+            {tokenId && (
+              <Text color="muted" fontSize="sm" textAlign="center" maxW="md">
+                Only auctions from SkateHive DAO are displayed. If you're looking for a specific auction, 
+                make sure the token ID corresponds to a SkateHive auction.
+              </Text>
+            )}
           </VStack>
         </Container>
       </Box>
@@ -749,8 +762,8 @@ export default function AuctionPage({
                   <ListItem display="flex" alignItems="start">
                     <ListIcon as={CheckCircleIcon} color="primary" mt={1} />
                     <Text fontSize="sm" color="text">
-                      If you're the highest bidder when the auction ends, you
-                      win!
+                      If you&apos;re the highest bidder when the auction ends,
+                      you win!
                     </Text>
                   </ListItem>
                   <ListItem display="flex" alignItems="start">

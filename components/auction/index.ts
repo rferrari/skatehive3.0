@@ -4,3 +4,4 @@ export { AuctionBid } from './AuctionBid';
 export { AuctionWidget, QuickBidWidget } from './AuctionWidgets';
 export { BidsModal } from './BidsModal';
 export { default as AuctionPage } from './AuctionPage';
+export { default as AuctionPageClient } from './AuctionPageClient';

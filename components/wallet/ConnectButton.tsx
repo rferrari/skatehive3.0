@@ -1,3 +1,5 @@
+"use client";
+
 import { Wallet, ConnectWallet } from "@coinbase/onchainkit/wallet";
 import { Avatar, Name } from "@coinbase/onchainkit/identity";
 import { Box, Text, Icon } from "@chakra-ui/react";

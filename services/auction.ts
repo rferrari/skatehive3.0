@@ -6,6 +6,12 @@ export async function fetchAuctionByTokenId(tokenId: number): Promise<Auction | 
     // Import DAO_ADDRESSES to filter by the correct DAO
     const { DAO_ADDRESSES } = await import('@/lib/utils/constants');
     
+    console.log("🔍 fetchAuctionByTokenId:", { 
+      tokenId, 
+      daoToken: DAO_ADDRESSES.token,
+      daoTokenLower: DAO_ADDRESSES.token.toLowerCase()
+    });
+    
     // Filter by both DAO and tokenId
     const { data } = (await noCacheApolloClient.query({
       query: GET_DATA,
@@ -19,6 +25,12 @@ export async function fetchAuctionByTokenId(tokenId: number): Promise<Auction | 
         first: 1,
       },
     })) as GraphResponse;
+    
+    console.log("📦 GraphQL response:", { 
+      tokenId, 
+      auctionsFound: data.auctions?.length || 0,
+      firstAuction: data.auctions?.[0] || null 
+    });
     
     return data.auctions?.[0] || null;
   } catch (error) {

@@ -1,16 +1,18 @@
-import { AuctionBid } from './AuctionBid';
-import AuctionCard from './AuctionCard';
-import { useLastAuction } from '@/hooks/auction';
-import { DAO_ADDRESSES } from '@/lib/utils/constants';
-import { 
-  Box, 
-  VStack, 
-  HStack, 
-  Text, 
+"use client";
+
+import { AuctionBid } from "./AuctionBid";
+import AuctionCard from "./AuctionCard";
+import { useLastAuction } from "@/hooks/auction";
+import { DAO_ADDRESSES } from "@/lib/utils/constants";
+import {
+  Box,
+  VStack,
+  HStack,
+  Text,
   Heading,
   Image,
-  Spinner
-} from '@chakra-ui/react';
+  Spinner,
+} from "@chakra-ui/react";
 
 // Simple integration example - can be used in any existing component
 export function AuctionWidget() {
@@ -34,7 +36,9 @@ export function AuctionWidget() {
 
   return (
     <VStack spacing={4} align="stretch">
-      <Heading size="xl" color="primary">Current Auction</Heading>
+      <Heading size="xl" color="primary">
+        Current Auction
+      </Heading>
       <AuctionCard tokenAddress={DAO_ADDRESSES.token} />
     </VStack>
   );
@@ -49,35 +53,39 @@ export function QuickBidWidget() {
   const isRunning = parseInt(auction.endTime) * 1000 > Date.now();
 
   return (
-    <Box 
-      bg="secondary" 
-      borderRadius="md" 
-      border="1px solid" 
-      borderColor="border" 
+    <Box
+      bg="secondary"
+      borderRadius="md"
+      border="1px solid"
+      borderColor="border"
       p={4}
       shadow="sm"
     >
       <VStack spacing={4}>
         <HStack spacing={4} align="center" w="full">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <Image 
-            src={auction.token.image} 
-            alt={auction.token.name} 
+          <Image
+            src={auction.token.image}
+            alt={auction.token.name}
             boxSize="64px"
             borderRadius="md"
             objectFit="cover"
           />
           <VStack align="start" spacing={1}>
-            <Text fontWeight="semibold" color="text">{auction.token.name}</Text>
+            <Text fontWeight="semibold" color="text">
+              {auction.token.name}
+            </Text>
             <Text fontSize="sm" color="muted">
               #{auction.token.tokenId.toString()}
             </Text>
           </VStack>
         </HStack>
-        
+
         <AuctionBid
           tokenId={auction.token.tokenId}
-          winningBid={auction.highestBid?.amount ? BigInt(auction.highestBid.amount) : 0n}
+          winningBid={
+            auction.highestBid?.amount ? BigInt(auction.highestBid.amount) : 0n
+          }
           isAuctionRunning={isRunning}
           reservePrice={auction.dao.auctionConfig.reservePrice}
           minimumBidIncrement={auction.dao.auctionConfig.minimumBidIncrement}
