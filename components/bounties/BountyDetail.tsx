@@ -661,4 +661,4 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
   );
 };
 
-export default BountyDetail;
+export default BountyDetail; 

@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import BountiesClient from "./bountiesClient";
+import BountiesClient from "@/components/bounties/bountiesClient";
 
 export const metadata: Metadata = {
   title: "Bounties | Skate Trick Challenges",

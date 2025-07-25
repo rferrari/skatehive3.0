@@ -11,7 +11,7 @@ import { getPost } from "@/lib/hive/client-functions";
 import PostDetails from "@/components/blog/PostDetails";
 import { useComments } from "@/hooks/useComments";
 import InitFrameSDK from "@/hooks/init-frame-sdk";
-import BountyDetail from "@/app/bounties/BountyDetail";
+import BountyDetail from "@/components/bounties/BountyDetail";
 
 interface PostPageProps {
   author: string;

@@ -493,4 +493,4 @@ export default function BountyComposer({
       </VStack>
     </Box>
   );
-}
+} 

@@ -646,4 +646,4 @@ export default function BountyList({
       )}
     </>
   );
-}
+} 

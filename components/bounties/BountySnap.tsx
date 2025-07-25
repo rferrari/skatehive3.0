@@ -770,4 +770,4 @@ const BountySnapWithPulse = (props: BountySnapProps) => {
   );
 };
 
-export default BountySnapWithPulse;
+export default BountySnapWithPulse; 
