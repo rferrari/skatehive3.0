@@ -7,11 +7,10 @@ import {
   Icon,
   Image,
   Flex,
-  useColorMode,
   useToken,
 } from "@chakra-ui/react";
 import { useRouter, usePathname } from "next/navigation";
-import { AiohaModal, useAioha } from "@aioha/react-ui";
+import { useAioha } from "@aioha/react-ui";
 import {
   FiHome,
   FiBell,
@@ -25,18 +24,15 @@ import {
   FiTarget,
 } from "react-icons/fi";
 import { motion } from "framer-motion";
-import { KeyTypes } from "@aioha/aioha";
-import "@aioha/react-ui/dist/build.css";
 import { useTheme } from "@/app/themeProvider";
 import { useNotifications } from "@/contexts/NotificationContext";
 import SidebarLogo from "../graphics/SidebarLogo";
+import AuthButton from "./AuthButton";
 
 export default function Sidebar() {
-  const { user, aioha } = useAioha();
+  const { user } = useAioha();
   const router = useRouter();
   const pathname = usePathname();
-  const { colorMode } = useColorMode();
-  const [modalDisplayed, setModalDisplayed] = useState(false);
   const [bellAnimating, setBellAnimating] = useState(false);
   const { themeName } = useTheme();
 
@@ -54,7 +50,7 @@ export default function Sidebar() {
   let hoverTextColor = "black";
   if (themeName === "windows95") hoverTextColor = "background";
   else if (themeName === "nounish") hoverTextColor = "secondary";
-  else if (themeName === "hiveBR") hoverTextColor = "accent";
+  else if (themeName === "hiveBR") hoverTextColor = "acxcent";
   else if (themeName === "mac") hoverTextColor = "accent";
 
   useEffect(() => {
@@ -403,71 +399,10 @@ export default function Sidebar() {
                 </Box>
               </Button>
             )}
-            {/* {!user && (
-              <Button
-                onClick={() => handleNavigation("/join")}
-                variant="ghost"
-                w="full"
-                justifyContent="flex-start"
-                pl={0}
-                pr={4}
-                py={3}
-                mb={1}
-                role="group"
-                _hover={{}}
-                _active={{ bg: "transparent" }}
-                _focus={{ bg: "transparent" }}
-              >
-                <Box
-                  as="span"
-                  display="flex"
-                  alignItems="center"
-                  px={1}
-                  py={0.5}
-                  borderRadius="md"
-                  transition="background 0.2s"
-                  _groupHover={{ bg: primaryBg, color: hoverTextColor }}
-                >
-                  <Icon as={FiUser} boxSize={4} mr={2} />
-                  Join
-                </Box>
-              </Button>
-            )} */}
           </VStack>
         </Box>
-        <VStack spacing={2} align="stretch" p={4} m={0}>
-          <Button
-            onClick={async () => {
-              if (user) {
-                await aioha.logout();
-              } else {
-                await aioha.logout();
-                setModalDisplayed(true);
-              }
-            }}
-            bg="primary"
-            color="background"
-            _hover={{ bg: "accent", color: "text" }}
-            w="full"
-            mt="auto"
-            mb={8}
-          >
-            {user ? "Logout" : "Login"}
-          </Button>
-        </VStack>
+        <AuthButton />
       </Flex>
-      <div className={colorMode}>
-        <AiohaModal
-          displayed={modalDisplayed}
-          loginOptions={{
-            msg: "Login",
-            keyType: KeyTypes.Posting,
-            loginTitle: "Login",
-          }}
-          onLogin={() => {}}
-          onClose={() => setModalDisplayed(false)}
-        />
-      </div>
     </Box>
   );
 }
