@@ -121,6 +121,12 @@ const SnapModal = ({
         setOptimisticComments((prev) => [newComment as Discussion, ...prev]);
     };
 
+    // Callback to update comment count when a new comment is added
+    const handleCommentAdded = () => {
+        // This will be called when a comment is added to update the count
+        // The count is already updated optimistically in the Snap component
+    };
+
     const cleanBodyText = (body: string) => {
         if (!body) return "";
         let cleaned = body.replace(/!\[.*?\]\(.*?\)/g, "");
@@ -578,6 +584,7 @@ const SnapModal = ({
                                                         discussion={comment}
                                                         onOpen={() => { }}
                                                         setReply={() => { }}
+                                                        onCommentAdded={handleCommentAdded}
                                                     />
                                                 </Box>
                                             ))}
@@ -593,6 +600,7 @@ const SnapModal = ({
                                                         discussion={comment}
                                                         onOpen={() => { }}
                                                         setReply={() => { }}
+                                                        onCommentAdded={handleCommentAdded}
                                                     />
                                                 </Box>
                                             ))}

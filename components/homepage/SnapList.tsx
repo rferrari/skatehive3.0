@@ -82,6 +82,12 @@ export default function SnapList({
     }
   };
 
+  // Callback to update comment count when a new comment is added to the main post
+  const handleMainPostCommentAdded = () => {
+    // This will be called when a comment is added to the main post
+    // The count is already updated optimistically in the Snap component
+  };
+
   // Filter out posts with 2 or more downvotes (community disapproval)
   // This helps maintain content quality by hiding posts the community has rejected
   const filteredAndSortedComments = [...displayedComments]

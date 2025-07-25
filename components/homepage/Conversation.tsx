@@ -53,6 +53,12 @@ const Conversation = ({
     setReply(newReply);
   }
 
+  // Callback to update comment count when a new comment is added
+  function handleCommentAdded() {
+    // This will be called when a comment is added to update the count
+    // The count is already updated optimistically in the Snap component
+  }
+
   if (isLoading) {
     return (
       <Box textAlign="center" mt={4}>
@@ -83,6 +89,7 @@ const Conversation = ({
         onOpen={onOpen}
         setReply={setReply}
         setConversation={setConversation}
+        onCommentAdded={handleCommentAdded}
       />
       <Divider my={4} />
       <Box mt={2}>

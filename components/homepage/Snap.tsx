@@ -190,9 +190,10 @@ interface SnapProps {
   onOpen: () => void;
   setReply: (discussion: Discussion) => void;
   setConversation?: (conversation: Discussion) => void;
+  onCommentAdded?: () => void;
 }
 
-const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
+const Snap = ({ discussion, onOpen, setReply, setConversation, onCommentAdded }: SnapProps) => {
   const { user } = useAioha();
   const {
     hivePower,
@@ -227,6 +228,9 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
   const [inlineComposerStates, setInlineComposerStates] = useState<
     Record<string, boolean>
   >({});
+  
+  // State to track comment count for optimistic updates
+  const [commentCount, setCommentCount] = useState(discussion.children ?? 0);
 
   const effectiveDepth = discussion.depth || 0;
 
@@ -254,6 +258,12 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
       ...prev,
       [discussion.permlink]: [...(prev[discussion.permlink] || []), newReply],
     }));
+    // Update comment count optimistically
+    setCommentCount((prev) => prev + 1);
+    // Notify parent component if callback is provided
+    if (onCommentAdded) {
+      onCommentAdded();
+    }
   }
 
   async function handleReplyButtonClick(permlink: string) {
@@ -420,7 +430,7 @@ const Snap = ({ discussion, onOpen, setReply, setConversation }: SnapProps) => {
                   size="sm"
                   _hover={{ bg: "secondary" }}
                 >
-                  {discussion.children ?? 0}
+                  {commentCount}
                 </Button>
               </Tooltip>
             </HStack>
