@@ -114,7 +114,7 @@ export default async function AuctionTokenPage({ params }: PageProps) {
     return (
       <div style={{ padding: "20px", textAlign: "center" }}>
         <h1>Invalid Token ID</h1>
-        <p>The token ID "{tokenId}" is not a valid number.</p>
+        <p>The token ID &quot;{tokenId}&quot; is not a valid number.</p>
       </div>
     );
   }

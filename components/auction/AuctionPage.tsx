@@ -195,7 +195,7 @@ export default function AuctionPage({
             </Text>
             {tokenId && (
               <Text color="muted" fontSize="sm" textAlign="center" maxW="md">
-                Only auctions from SkateHive DAO are displayed. If you're looking for a specific auction, 
+                Only auctions from SkateHive DAO are displayed. If you&apos;re looking for a specific auction, 
                 make sure the token ID corresponds to a SkateHive auction.
               </Text>
             )}

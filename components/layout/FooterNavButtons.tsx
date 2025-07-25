@@ -274,7 +274,7 @@ export default function FooterNavButtons() {
 
     setIsHolding(false);
     setIsDragging(false);
-  }, [isHolding, isDragging, touchTimer, position.x]);
+  }, [ isDragging, touchTimer, position.x]);
 
   // Only render on client to avoid hydration mismatch
   React.useEffect(() => {
