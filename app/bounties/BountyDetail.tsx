@@ -518,15 +518,14 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
               </Box>
             )}
             {/* Claim Bounty Button */}
-            {isActive && user && user !== post.author && (
+            {isActive && user && user !== post.author && !hasClaimed && (
               <Flex justify="center" my={4}>
                 <Button
                   colorScheme="green"
                   onClick={handleClaimBounty}
                   isLoading={isClaiming}
-                  isDisabled={hasClaimed}
                 >
-                  {hasClaimed ? "Bounty Claimed" : "Claim Bounty (100% Vote)"}
+                  Claim Bounty (100% Vote)
                 </Button>
               </Flex>
             )}
