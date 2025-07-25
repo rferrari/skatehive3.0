@@ -142,14 +142,15 @@ const UpvoteButton = ({
             p={1}
             borderRadius="full"
             bg={!voted ? "muted" : undefined}
-            _hover={!voted ? { bg: "primary" } : undefined}
+            _hover={!voted ? { bg: "primary", animation: "none" } : undefined}
             transition="background 0.2s, border-radius 0.2s"
-            className={className}
+            className={`${className} ${!voted ? "arrow-bg-fade" : ""}`}
           >
             <LuArrowUpRight
               size={24}
               color={voted ? "var(--chakra-colors-success)" : "var(--chakra-colors-accent)"}
               style={{ opacity: 1 }}
+              className={!voted ? "arrow-pulse" : ""}
             />
           </Box>
         </Tooltip>
@@ -172,14 +173,15 @@ const UpvoteButton = ({
             p={1}
             borderRadius="full"
             bg={!voted ? "muted" : undefined}
-            _hover={!voted ? { bg: "primary" } : undefined}
+            _hover={!voted ? { bg: "primary", animation: "none" } : undefined}
             transition="background 0.2s, border-radius 0.2s"
-            className={className}
+            className={`${className} ${!voted ? "arrow-bg-fade" : ""}`}
           >
             <LuArrowUpRight
               size={24}
               color={voted ? "var(--chakra-colors-success)" : "var(--chakra-colors-accent)"}
               style={{ opacity: 1 }}
+              className={!voted ? "arrow-pulse" : ""}
             />
           </Box>
         </Tooltip>
@@ -282,14 +284,15 @@ const UpvoteButton = ({
             p={1}
             borderRadius="full"
             bg={!voted ? "muted" : undefined}
-            _hover={!voted ? { bg: "primary" } : undefined}
+            _hover={!voted ? { bg: "primary", animation: "none" } : undefined}
             transition="background 0.2s, border-radius 0.2s"
-            className={className}
+            className={`${className} ${!voted ? "arrow-bg-fade" : ""}`}
           >
             <LuArrowUpRight
               size={24}
               color={voted ? "var(--chakra-colors-success)" : "var(--chakra-colors-accent)"}
               style={{ opacity: 1 }}
+              className={!voted ? "arrow-pulse" : ""}
             />
           </Box>
         </Tooltip>
@@ -332,6 +335,35 @@ const UpvoteButtonWithPulse = (props: UpvoteButtonProps) => {
           }
           100% {
             box-shadow: 0 0 0 0 rgba(72, 255, 128, 0);
+          }
+        }
+        
+        .arrow-pulse {
+          animation: arrow-pulse 3s ease-in-out infinite;
+        }
+        .arrow-bg-fade {
+          animation: arrow-bg-fade 3s ease-in-out infinite;
+        }
+        @keyframes arrow-pulse {
+          0% {
+            transform: scale(1) translate(0, 0);
+          }
+          50% {
+            transform: scale(1.1) translate(2px, -2px);
+          }
+          100% {
+            transform: scale(1) translate(0, 0);
+          }
+        }
+        @keyframes arrow-bg-fade {
+          0% {
+            background-color: var(--chakra-colors-muted);
+          }
+          50% {
+            background-color: transparent;
+          }
+          100% {
+            background-color: var(--chakra-colors-muted);
           }
         }
       `}</style>
