@@ -10,7 +10,9 @@ import {
   Icon,
   useToast,
   Avatar as ChakraAvatar,
+  Tooltip,
 } from "@chakra-ui/react";
+import { useRouter } from "next/navigation";
 import { AiohaModal, useAioha } from "@aioha/react-ui";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { KeyTypes } from "@aioha/aioha";
@@ -19,6 +21,7 @@ import { SignInButton, useSignIn } from "@farcaster/auth-kit";
 import "@aioha/react-ui/dist/build.css";
 import { FaEthereum, FaHive } from "react-icons/fa";
 import { SiFarcaster } from "react-icons/si";
+import { IoLogOutSharp } from "react-icons/io5";
 import { Name, Avatar } from "@coinbase/onchainkit/identity";
 // OnchainKit component class names
 const ONCHAIN_AVATAR_CLASS = "custom-onchain-avatar";
@@ -116,6 +119,7 @@ interface ConnectionStatus {
 export default function AuthButton() {
   const { user, aioha } = useAioha();
   const { colorMode } = useColorMode();
+  const router = useRouter();
   const [modalDisplayed, setModalDisplayed] = useState(false);
   const [showConnectionOptions, setShowConnectionOptions] = useState(false);
   const [isClientMounted, setIsClientMounted] = useState(false);
@@ -244,6 +248,12 @@ export default function AuthButton() {
 
   const handleShowConnectionOptions = () => {
     setShowConnectionOptions(true);
+  };
+
+  const handleProfileClick = () => {
+    if (user) {
+      router.push(`/user/${user}?view=snaps`);
+    }
   };
 
   const handleHiveLogin = async () => {
@@ -376,21 +386,27 @@ export default function AuthButton() {
       return (
         <Button
           key={connection.name}
-          size="xs"
+          size="lg"
           variant="ghost"
           bg="transparent"
           color="text"
           onClick={handleCustomFarcasterSignIn}
           w="full"
-          fontSize="xs"
-          leftIcon={<Icon as={connection.icon} boxSize={3} />}
+          h="full"
+          fontSize="sm"
+          leftIcon={<Icon as={connection.icon} boxSize={4} color={connection.color} />}
           isLoading={isFarcasterAuthInProgress}
           loadingText="Connecting..."
           isDisabled={isFarcasterAuthInProgress}
           justifyContent="flex-start"
           pl={3}
+          py={3}
+          _hover={{
+            bg: "success",
+            color: "background",
+          }}
         >
-          <Text fontSize="xs" noOfLines={1}>
+          <Text fontSize="sm" noOfLines={1} color={connection.color}>
             Connect
           </Text>
         </Button>
@@ -398,89 +414,106 @@ export default function AuthButton() {
     }
 
     return (
-      <Button
-        key={connection.name}
-        size="xs"
-        variant="ghost"
-        bg="transparent"
-        color="text"
-        onClick={getConnectionAction(connection)}
-        w="full"
-        fontSize="xs"
-        leftIcon={
-          connection.connected && getUserDisplayInfo(connection) ? (
-            <Box
-              position="relative"
-              display="inline-block"
-              minWidth="24px"
-              minHeight="24px"
-            >
-              {connection.name === "Ethereum" ? (
-                <Box
-                  width="20px"
-                  height="20px"
-                  borderRadius="50%"
-                  overflow="hidden"
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                >
-                  <Avatar
-                    address={ethereumAddress as `0x${string}`}
+        <Button
+          key={connection.name}
+          size="lg"
+          variant="ghost"
+          bg="transparent"
+          color="text"
+          onClick={getConnectionAction(connection)}
+          w="full"
+          fontSize="sm"
+          _hover={
+            connection.connected
+              ? {
+                  bg: "error",
+                  color: "background",
+                }
+              : {
+                  bg: "success",
+                  color: "background",
+                }
+          }
+          leftIcon={
+            connection.connected && getUserDisplayInfo(connection) ? (
+              <Box
+                position="relative"
+                display="inline-block"
+                minWidth="24px"
+                minHeight="24px"
+              >
+                {connection.name === "Ethereum" ? (
+                  <Box
+                    width="20px"
+                    height="20px"
+                    borderRadius="50%"
+                    overflow="hidden"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                  >
+                    <Avatar
+                      address={ethereumAddress as `0x${string}`}
+                      className={ONCHAIN_AVATAR_CLASS}
+                      style={{ width: 20, height: 20 }}
+                    />
+                  </Box>
+                ) : (
+                  <ChakraAvatar
+                    size="xs"
+                    src={getUserDisplayInfo(connection)?.avatar}
+                    name={getUserDisplayInfo(connection)?.displayName}
                     className={ONCHAIN_AVATAR_CLASS}
                     style={{ width: 20, height: 20 }}
                   />
-                </Box>
-              ) : (
-                <ChakraAvatar
-                  size="xs"
-                  src={getUserDisplayInfo(connection)?.avatar}
-                  name={getUserDisplayInfo(connection)?.displayName}
-                  className={ONCHAIN_AVATAR_CLASS}
-                  style={{ width: 20, height: 20 }}
-                />
-              )}
-              <Box
-                position="absolute"
-                bottom={-2}
-                right={-2}
-                bg="transparent"
-                borderRadius="full"
-                p={0}
-              >
-                <Icon
-                  as={connection.icon}
-                  boxSize={3}
-                  color={connection.color}
-                />
+                )}
+                {/* Only show platform icon in expanded form (not primary) */}
+                {!isPrimary && (
+                  <Box
+                    position="absolute"
+                    bottom={-2}
+                    right={-2}
+                    bg="transparent"
+                    borderRadius="full"
+                    p={0}
+                  >
+                    <Icon
+                      as={connection.icon}
+                      boxSize={3}
+                      color={connection.color}
+                    />
+                  </Box>
+                )}
               </Box>
+            ) : (
+              <Icon as={connection.icon} boxSize={3} />
+            )
+          }
+          justifyContent="flex-start"
+          pl={3}
+          py={3}
+          h="full"
+        >
+          {connection.name === "Ethereum" && connection.connected ? (
+            <Box className={ONCHAIN_NAME_CONTAINER_CLASS}>
+              <Name
+                address={ethereumAddress as `0x${string}`}
+                className={ONCHAIN_NAME_CLASS}
+              />
             </Box>
           ) : (
-            <Icon as={connection.icon} boxSize={3} />
-          )
-        }
-        justifyContent="flex-start"
-        pl={3}
-      >
-        {connection.name === "Ethereum" && connection.connected ? (
-          <Box className={ONCHAIN_NAME_CONTAINER_CLASS}>
-            <Name
-              address={ethereumAddress as `0x${string}`}
-              className={ONCHAIN_NAME_CLASS}
-            />
-          </Box>
-        ) : (
-          <Box className={ONCHAIN_NAME_CONTAINER_CLASS}>
-            <Text
-              fontSize="xs"
-              noOfLines={1}
-              className={ONCHAIN_NAME_CLASS}
-            >
-              {getConnectionButtonText(connection)}
-            </Text>
-          </Box>
-        )}
-      </Button>
+            <Box className={ONCHAIN_NAME_CONTAINER_CLASS}>
+              <Text
+                fontSize="sm"
+                noOfLines={1}
+                className={ONCHAIN_NAME_CLASS}
+                color={connection.connected ? "text" : connection.color}
+              >
+                {getConnectionButtonText(connection)}
+              </Text>
+            </Box>
+          )}
+        </Button>
     );
   };
 
@@ -495,20 +528,96 @@ export default function AuthButton() {
       >
         {/* Collapsed State - Show only primary connection */}
         <Box
-          opacity={isDrawerExpanded ? 0 : 1}
-          visibility={isDrawerExpanded ? "hidden" : "visible"}
-          transition="opacity 0.2s ease-in-out"
-          p={2}
+          bg="background"
+          borderRadius="md"
+          border="1px solid"
+          borderColor="border"
+          boxShadow="sm"
+          onClick={handleProfileClick}
+          cursor="pointer"
+          _hover={{ borderColor: "primary" }}
+          transition="border-color 0.2s ease-in-out"
         >
-          {renderConnectionButton(primaryConnection, true)}
+          <Button
+            size="xs"
+            variant="ghost"
+            bg="transparent"
+            color="text"
+            w="full"
+            fontSize="xs"
+            leftIcon={
+              primaryConnection.connected && getUserDisplayInfo(primaryConnection) ? (
+                <Box
+                  position="relative"
+                  display="inline-block"
+                  minWidth="24px"
+                  minHeight="24px"
+                >
+                  {primaryConnection.name === "Ethereum" ? (
+                    <Box
+                      width="20px"
+                      height="20px"
+                      borderRadius="50%"
+                      overflow="hidden"
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
+                    >
+                      <Avatar
+                        address={ethereumAddress as `0x${string}`}
+                        className={ONCHAIN_AVATAR_CLASS}
+                        style={{ width: 20, height: 20 }}
+                      />
+                    </Box>
+                  ) : (
+                    <ChakraAvatar
+                      size="xs"
+                      src={getUserDisplayInfo(primaryConnection)?.avatar}
+                      name={getUserDisplayInfo(primaryConnection)?.displayName}
+                      className={ONCHAIN_AVATAR_CLASS}
+                      style={{ width: 20, height: 20 }}
+                    />
+                  )}
+                </Box>
+              ) : (
+                <Icon as={primaryConnection.icon} boxSize={3} />
+              )
+            }
+            justifyContent="flex-start"
+            pl={3}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleProfileClick();
+            }}
+          >
+            {primaryConnection.name === "Ethereum" && primaryConnection.connected ? (
+              <Box className={ONCHAIN_NAME_CONTAINER_CLASS}>
+                <Name
+                  address={ethereumAddress as `0x${string}`}
+                  className={ONCHAIN_NAME_CLASS}
+                />
+              </Box>
+            ) : (
+              <Box className={ONCHAIN_NAME_CONTAINER_CLASS}>
+                <Text
+                  fontSize="xs"
+                  noOfLines={1}
+                  className={ONCHAIN_NAME_CLASS}
+                >
+                  {getConnectionButtonText(primaryConnection)}
+                </Text>
+              </Box>
+            )}
+          </Button>
         </Box>
 
         {/* Expanded State - Show all connections */}
         <Box
           position="absolute"
-          bottom={0}
+          bottom="100%"
           left={0}
           right={0}
+          mb={2}
           bg="background"
           borderRadius="md"
           boxShadow="lg"
@@ -519,29 +628,39 @@ export default function AuthButton() {
           transform={isDrawerExpanded ? "translateY(0)" : "translateY(10px)"}
           transition="all 0.2s ease-in-out"
           zIndex={1000}
-          p={2}
+          p={0}
         >
-          <VStack spacing={0} align="stretch">
+          <Box pt={0} mt={0} h="full" display="flex" flexDirection="column">
             {!hasAnyConnection && (
-              <HStack spacing={2} mb={2}>
+              <HStack spacing={2} mb={1}>
                 <Button
                   size="xs"
                   variant="ghost"
                   onClick={() => setShowConnectionOptions(false)}
                   color="muted"
                   _hover={{ color: "text" }}
+                  p={1}
+                  minH="auto"
                 >
                   ✕
                 </Button>
               </HStack>
             )}
             
-            {connections.map((connection) => (
-              <Box key={connection.name}>
+            {connections.map((connection, index) => (
+              <Box 
+                key={connection.name} 
+                mt={0} 
+                pt={0} 
+                mb={0} 
+                pb={0}
+                flex={1}
+                display="flex"
+              >
                 {renderConnectionButton(connection)}
               </Box>
             ))}
-          </VStack>
+          </Box>
         </Box>
       </Box>
 
