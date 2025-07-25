@@ -1,3 +1,31 @@
+// Fetch auction by tokenId
+export async function fetchAuctionByTokenId(tokenId: number): Promise<Auction | null> {
+  if (!tokenId) return null;
+  
+  try {
+    // Import DAO_ADDRESSES to filter by the correct DAO
+    const { DAO_ADDRESSES } = await import('@/lib/utils/constants');
+    
+    // Filter by both DAO and tokenId
+    const { data } = (await noCacheApolloClient.query({
+      query: GET_DATA,
+      variables: {
+        where: { 
+          dao: DAO_ADDRESSES.token.toLowerCase(),
+          token_: { tokenId: tokenId.toString() }
+        },
+        orderBy: "endTime",
+        orderDirection: "desc",
+        first: 1,
+      },
+    })) as GraphResponse;
+    
+    return data.auctions?.[0] || null;
+  } catch (error) {
+    console.error("Error in fetchAuctionByTokenId:", error);
+    throw new Error("Error fetching auction by tokenId");
+  }
+}
 import { noCacheApolloClient } from '@/lib/utils/apollo';
 import { gql } from '@apollo/client';
 import { Address } from 'viem';

@@ -35,7 +35,7 @@ import SwapSection from "./SwapSection";
 import EthereumAssetsSection from "./EthereumAssetsSection";
 import NFTSection from "./NFTSection";
 import WalletSummary from "./WalletSummary";
-import ConnectWallets from "./ConnectHiveSection";
+import ConnectWallets from "./ConnectWallets";
 import { PortfolioProvider } from "@/contexts/PortfolioContext";
 import { FarcasterEnhancedUserData } from "@/types/farcaster";
 import TotalPortfolioValue from "./components/TotalPortfolioValue";
