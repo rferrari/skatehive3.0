@@ -77,8 +77,6 @@ export default function AuctionPage({
   tokenId,
   showNavigation = false,
 }: AuctionPageProps) {
-  console.log("🏆 AuctionPage props:", { tokenId, showNavigation, tokenIdType: typeof tokenId });
-  
   const isMobile = useBreakpointValue({ base: true, md: false });
   const router = useRouter();
 
@@ -92,7 +90,7 @@ export default function AuctionPage({
     queryKey: tokenId ? ["auction", tokenId] : ["auction", "latest"],
     queryFn: async () => {
       console.log("🔍 Fetching auction data:", { tokenId });
-      
+
       if (tokenId !== undefined) {
         const result = await fetchAuctionByTokenId(tokenId);
         console.log("📦 fetchAuctionByTokenId result:", { tokenId, result });
@@ -195,8 +193,9 @@ export default function AuctionPage({
             </Text>
             {tokenId && (
               <Text color="muted" fontSize="sm" textAlign="center" maxW="md">
-                Only auctions from SkateHive DAO are displayed. If you&apos;re looking for a specific auction, 
-                make sure the token ID corresponds to a SkateHive auction.
+                Only auctions from SkateHive DAO are displayed. If you&apos;re
+                looking for a specific auction, make sure the token ID
+                corresponds to a SkateHive auction.
               </Text>
             )}
           </VStack>
