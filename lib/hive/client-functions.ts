@@ -94,8 +94,16 @@ export async function transferWithKeychain(username: string, destination: string
       .transfer(
         formParamsAsObject.data as Transfer);
     console.log({ transfer });
+    
+    // Check if the transfer was successful
+    if (!transfer || !transfer.success) {
+      throw new Error("Transfer was cancelled or failed");
+    }
+    
+    return transfer;
   } catch (error) {
     console.log({ error });
+    throw error; // Re-throw the error so the caller can handle it
   }
 }
 

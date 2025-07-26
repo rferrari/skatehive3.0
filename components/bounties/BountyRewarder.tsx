@@ -52,6 +52,7 @@ const BountyRewarder: React.FC<BountyRewarderProps> = ({
   const [rewardError, setRewardError] = useState<string | null>(null);
   const [rewardSuccess, setRewardSuccess] = useState(false);
   const [showCompletionOverlay, setShowCompletionOverlay] = useState(false);
+  const [currentStep, setCurrentStep] = useState<string>("");
 
   const rewardPerWinner =
     selectedWinners.length > 0
@@ -69,26 +70,37 @@ const BountyRewarder: React.FC<BountyRewarderProps> = ({
     setRewardSuccess(false);
     
     try {
-      // Send tip to each winner
-      for (const winner of selectedWinners) {
+      // Step 1: Send tip to each winner sequentially
+      console.log("Starting tip transfers...");
+      setCurrentStep("Sending rewards...");
+      
+      for (let i = 0; i < selectedWinners.length; i++) {
+        const winner = selectedWinners[i];
         try {
-          await transferWithKeychain(
+          console.log(`Sending tip to ${winner}... (${i + 1}/${selectedWinners.length})`);
+          setCurrentStep(`Sending reward to @${winner}... (${i + 1}/${selectedWinners.length})`);
+          
+          const transferResult = await transferWithKeychain(
             String(user),
             winner,
             rewardPerWinner,
             `Congrats @${winner}! You won ${rewardPerWinner} ${rewardInfo.currency} in the bounty: ${challengeName}`,
             rewardInfo.currency
           );
+          console.log(`Transfer to ${winner} successful:`, transferResult);
         } catch (err) {
           console.error(`Transfer error for ${winner}:`, err);
           setRewardError(`Failed to send reward to @${winner}. Please try again.`);
+          setCurrentStep("");
           setIsRewarding(false);
           return; // Exit early if any transfer fails
         }
       }
       
-      // If we reach here, all transfers were successful (no exceptions thrown)
-      // Now proceed with posting the comment to announce the winners
+      // Step 2: Only if ALL transfers were successful, proceed with posting the comment
+      console.log("All transfers successful, proceeding with comment...");
+      setCurrentStep("Announcing Winners... Confirm the keychain transaction to make a post in this bounty tagging the winners");
+      
       const winnersList = selectedWinners.map((w) => `@${w}`).join(", ");
       const commentBody = `🏆 Bounty Winners! 🏆\n\nCongratulations to: ${winnersList}\n\nReward: ${rewardPerWinner} ${rewardInfo.currency}\n\nThank you for participating!`;
       const permlink = `bounty-winners-${Date.now()}`;
@@ -165,6 +177,7 @@ const BountyRewarder: React.FC<BountyRewarderProps> = ({
       
       setRewardSuccess(true);
       onRewardSuccess();
+      setCurrentStep("");
       
       // Only close the modal after success
       setTimeout(() => {
@@ -264,6 +277,11 @@ const BountyRewarder: React.FC<BountyRewarderProps> = ({
               {rewardError}
             </Text>
           )}
+          {currentStep && (
+            <Text color="primary" mt={2} fontWeight="bold">
+              {currentStep}
+            </Text>
+          )}
           {rewardSuccess && (
             <Text color="success" mt={2}>
               Bounty rewards sent and winners announced!
@@ -320,7 +338,7 @@ const BountyRewarder: React.FC<BountyRewarderProps> = ({
         }}
       >
         <Text
-          fontSize="4xl"
+          fontSize="8xl"
           fontWeight="bold"
           color="success"
           textAlign="center"
