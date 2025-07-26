@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
     Box,
     Button,
@@ -18,6 +18,8 @@ import { LuArrowUpRight } from "react-icons/lu";
 import { useAioha } from "@aioha/react-ui";
 import { Discussion } from "@hiveio/dhive";
 import VoteListPopover from "@/components/blog/VoteListModal";
+import { DEFAULT_VOTE_WEIGHT } from "@/lib/utils/constants";
+import useVoteWeight from "@/hooks/useVoteWeight";
 
 interface VoteSliderProps {
     discussion: Discussion;
@@ -48,7 +50,13 @@ const VoteSlider = ({
 }: VoteSliderProps) => {
     const { aioha, user } = useAioha();
     const toast = useToast();
-    const [sliderValue, setSliderValue] = useState(100);
+    const userVoteWeight = useVoteWeight(user || "");
+    const [sliderValue, setSliderValue] = useState(userVoteWeight);
+
+    // Update slider value when user's vote weight changes
+    useEffect(() => {
+        setSliderValue(userVoteWeight);
+    }, [userVoteWeight]);
 
     const handleHeartClick = () => {
         setShowSlider(!showSlider);
