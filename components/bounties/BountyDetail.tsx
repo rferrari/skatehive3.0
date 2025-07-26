@@ -46,7 +46,7 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
   const { author, created, body, title: postTitle } = post;
   const postDate = getPostDate(created);
   const theme = useTheme();
-  const { comments, isLoading } = useComments(post.author, post.permlink, true);
+  const { comments, isLoading, addComment } = useComments(post.author, post.permlink, true);
   const [newComment, setNewComment] = useState<Discussion | null>(null);
 
   // Voting state
@@ -507,6 +507,7 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
         challengeName={challengeName}
         rewardInfo={rewardInfo}
         onRewardSuccess={() => setHasRewarded(true)}
+        addComment={addComment}
       />
     </Box>
   );

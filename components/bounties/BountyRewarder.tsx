@@ -13,6 +13,7 @@ import {
   Button,
   Divider,
   useTheme,
+  Box,
 } from "@chakra-ui/react";
 import React, { useState } from "react";
 import { Discussion } from "@hiveio/dhive";
@@ -31,6 +32,7 @@ interface BountyRewarderProps {
     currency: string;
   };
   onRewardSuccess: () => void;
+  addComment: (newComment: Discussion) => void;
 }
 
 const BountyRewarder: React.FC<BountyRewarderProps> = ({
@@ -42,12 +44,14 @@ const BountyRewarder: React.FC<BountyRewarderProps> = ({
   challengeName,
   rewardInfo,
   onRewardSuccess,
+  addComment,
 }) => {
   const theme = useTheme();
   const [selectedWinners, setSelectedWinners] = useState<string[]>([]);
   const [isRewarding, setIsRewarding] = useState(false);
   const [rewardError, setRewardError] = useState<string | null>(null);
   const [rewardSuccess, setRewardSuccess] = useState(false);
+  const [showCompletionOverlay, setShowCompletionOverlay] = useState(false);
 
   const rewardPerWinner =
     selectedWinners.length > 0
@@ -134,6 +138,21 @@ const BountyRewarder: React.FC<BountyRewarderProps> = ({
         if (!commentResult || commentResult.success === false) {
           throw new Error("Failed to post bounty winner comment.");
         }
+        
+        // Add the new comment to the comments list immediately
+        const newComment = {
+          author: String(user),
+          permlink,
+          body: commentBody,
+          parent_author: post.author,
+          parent_permlink: post.permlink,
+          created: new Date().toISOString(),
+          children: 0,
+          active_votes: [],
+          replies: [],
+        } as Discussion;
+        
+        addComment(newComment);
       } catch (err) {
         console.error("Keychain post error:", err);
         setRewardError(
@@ -150,6 +169,12 @@ const BountyRewarder: React.FC<BountyRewarderProps> = ({
       // Only close the modal after success
       setTimeout(() => {
         onClose();
+        // Show completion overlay
+        setShowCompletionOverlay(true);
+        // Hide overlay after 3 seconds
+        setTimeout(() => {
+          setShowCompletionOverlay(false);
+        }, 3000);
         // Reset state for next use
         setSelectedWinners([]);
         setRewardError(null);
@@ -173,14 +198,15 @@ const BountyRewarder: React.FC<BountyRewarderProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} isCentered>
-      <ModalOverlay bg="rgba(0, 0, 0, 0.6)" />
-      <ModalContent
-        bg="muted"
-        border="1px solid"
-        borderColor="border"
-        color="text"
-      >
+    <>
+      <Modal isOpen={isOpen} onClose={handleClose} isCentered>
+        <ModalOverlay bg="rgba(0, 0, 0, 0.6)" />
+        <ModalContent
+          bg="muted"
+          border="1px solid"
+          borderColor="border"
+          color="text"
+        >
         <ModalHeader color="primary" fontWeight="bold">
           Select Bounty Winners
         </ModalHeader>
@@ -269,6 +295,42 @@ const BountyRewarder: React.FC<BountyRewarderProps> = ({
         </ModalFooter>
       </ModalContent>
     </Modal>
+    
+    {/* Completion Overlay */}
+    {showCompletionOverlay && (
+      <Box
+        position="fixed"
+        top="0"
+        left="0"
+        right="0"
+        bottom="0"
+        bg="rgba(0, 0, 0, 0.8)"
+        zIndex={9999}
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        animation="fadeInOut 3s ease-in-out"
+        sx={{
+          "@keyframes fadeInOut": {
+            "0%": { opacity: 0 },
+            "20%": { opacity: 1 },
+            "80%": { opacity: 1 },
+            "100%": { opacity: 0 },
+          },
+        }}
+      >
+        <Text
+          fontSize="4xl"
+          fontWeight="bold"
+          color="success"
+          textAlign="center"
+          textShadow="0 2px 8px rgba(0,0,0,0.5)"
+        >
+          BOUNTY COMPLETE
+        </Text>
+      </Box>
+    )}
+    </>
   );
 };
 
