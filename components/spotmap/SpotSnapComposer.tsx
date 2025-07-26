@@ -83,11 +83,11 @@ export default function SpotSnapComposer({
 
   async function handleComment() {
     let description = postBodyRef.current?.value || "";
-    // Require either (lat & lon) or address
+    // Require either GPS coordinates (from photos) or address
     const hasCoords = lat.trim() && lon.trim();
     const hasAddress = address.trim();
     if (!spotName.trim() || (!hasCoords && !hasAddress)) {
-      alert("Please enter a spot name and either coordinates (lat/lon) or an address.");
+      alert("Please enter a spot name and either upload a photo with GPS data or enter an address.");
       return;
     }
     if (!description.trim() && compressedImages.length === 0) {
@@ -166,13 +166,20 @@ export default function SpotSnapComposer({
     }
   }
 
+  // Helper function to translate Spanish coordinate directions
+  const translateCoordinateDirection = (coord: string): string => {
+    if (!coord) return coord;
+    // Replace Spanish "O" (Oeste/West) with "W"
+    return coord.replace(/^O\s*/, 'W').replace(/\s*O$/, ' W');
+  };
+
   // Add this function to extract GPS from image files
   const extractGPS = async (file: File) => {
     try {
       const gps = await exifr.gps(file);
       if (gps && gps.latitude && gps.longitude) {
-        setLat(gps.latitude.toString());
-        setLon(gps.longitude.toString());
+        setLat(translateCoordinateDirection(gps.latitude.toString()));
+        setLon(translateCoordinateDirection(gps.longitude.toString()));
       }
     } catch (e) {
       // No GPS data or error reading EXIF
@@ -273,33 +280,40 @@ export default function SpotSnapComposer({
             value={spotName}
             onChange={(e) => setSpotName(e.target.value)}
             isDisabled={isLoading}
+            borderColor="muted"
+            _focus={{ borderColor: "primary" }}
           />
         </FormControl>
+        {lat && lon && (
+          <FormControl>
+            <FormLabel>GPS Coordinates (extracted from photo)</FormLabel>
+            <HStack spacing={2}>
+              <Input
+                placeholder="Latitude"
+                value={lat}
+                isReadOnly
+                isDisabled={isLoading}
+                size="sm"
+              />
+              <Input
+                placeholder="Longitude"
+                value={lon}
+                isReadOnly
+                isDisabled={isLoading}
+                size="sm"
+              />
+            </HStack>
+          </FormControl>
+        )}
         <FormControl>
-          <FormLabel>Latitude</FormLabel>
-          <Input
-            placeholder="e.g. 40.7128"
-            value={lat}
-            onChange={(e) => setLat(e.target.value)}
-            isDisabled={isLoading}
-          />
-        </FormControl>
-        <FormControl>
-          <FormLabel>Longitude</FormLabel>
-          <Input
-            placeholder="e.g. -74.0060"
-            value={lon}
-            onChange={(e) => setLon(e.target.value)}
-            isDisabled={isLoading}
-          />
-        </FormControl>
-        <FormControl>
-          <FormLabel>Address</FormLabel>
+          <FormLabel>Address (if no GPS data in photo)</FormLabel>
           <Input
             placeholder="e.g. 123 Skate St, New York, NY"
             value={address}
             onChange={(e) => setAddress(e.target.value)}
             isDisabled={isLoading}
+            borderColor="muted"
+            _focus={{ borderColor: "primary" }}
           />
         </FormControl>
         <FormControl>
@@ -316,31 +330,31 @@ export default function SpotSnapComposer({
             _focusVisible={{ border: "tb1" }}
           />
         </FormControl>
-        <HStack>
-          <FormControl>
-            <FormLabel>Upload Image</FormLabel>
-            <Button
-              leftIcon={<FaImage size={22} />}
-              variant="ghost"
-              isDisabled={isLoading}
-              onClick={() => imageCompressorRef.current?.trigger()}
-              border="2px solid transparent"
-              _hover={{
-                borderColor: "primary",
-                boxShadow: "0 0 0 2px var(--chakra-colors-primary)",
-              }}
-              _active={{ borderColor: "accent" }}
-            >
-              Upload Image <Box as="span" color="red.500" ml={1}>*</Box>
-            </Button>
-          </FormControl>
-          <ImageCompressor
-            ref={imageCompressorRef}
-            onUpload={handleCompressedImageUpload}
-            isProcessing={isLoading}
-            hideStatus={true}
-          />
-        </HStack>
+        <Box display="flex" justifyContent="center">
+          <Button
+            leftIcon={<FaImage size={22} />}
+            variant="ghost"
+            size="lg"
+            width="100%"
+            isDisabled={isLoading}
+            onClick={() => imageCompressorRef.current?.trigger()}
+            border="2px solid"
+            borderColor="muted"
+            _hover={{
+              borderColor: "primary",
+              boxShadow: "0 0 0 2px var(--chakra-colors-primary)",
+            }}
+            _active={{ borderColor: "accent" }}
+          >
+            Upload Image <Box as="span" color="red.500" ml={1}>*</Box>
+          </Button>
+        </Box>
+        <ImageCompressor
+          ref={imageCompressorRef}
+          onUpload={handleCompressedImageUpload}
+          isProcessing={isLoading}
+          hideStatus={true}
+        />
         <Wrap spacing={4}>
           {compressedImages.map((imgObj, index) => (
             <Box key={index} position="relative" mb={4}>
@@ -384,15 +398,19 @@ export default function SpotSnapComposer({
             </Box>
           ))}
         </Wrap>
-        <Button
-          bg="primary"
-          color="background"
-          _hover={{ bg: "accent", color: "text" }}
-          onClick={handleComment}
-          isDisabled={isLoading}
-        >
-          {isLoading ? <Spinner size="sm" /> : buttonText}
-        </Button>
+        <Box display="flex" justifyContent="center">
+          <Button
+            bg="primary"
+            color="background"
+            size="sm"
+            width="50%"
+            _hover={{ bg: "accent", color: "text" }}
+            onClick={handleComment}
+            isDisabled={isLoading}
+          >
+            {isLoading ? <Spinner size="sm" /> : buttonText}
+          </Button>
+        </Box>
       </VStack>
       {/* Matrix Overlay and login prompt if not logged in */}
       {!user && (
