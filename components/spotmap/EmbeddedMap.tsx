@@ -98,8 +98,51 @@ export default function EmbeddedMap() {
         height={{ base: 'auto', md: '100vh' }}
         overflow={{ base: 'visible', md: 'hidden' }}
       >
+        {/* Header Section */}
+        <Box p={{ base: 2, md: 4 }} pt={0} pb={0}>
+          <Text
+            className="fretqwik-title"
+            fontSize={{ base: "6xl", md: "7xl" }}
+            fontWeight="extrabold"
+            color="primary"
+            letterSpacing="widest"
+            textAlign="center"
+            mt={{ base: -2, md: -4 }}
+            style={{ lineHeight: 1.1, maxWidth: "100%", whiteSpace: "nowrap" }}
+          >
+            skate spot map
+          </Text>
+        </Box>
+
+        {/* Add Spot Button Section */}
+        {user && (
+          <Box p={{ base: 2, md: 4 }} pt={{ base: 4, md: 6 }} pb={{ base: 2, md: 2 }} textAlign="center">
+            <Button
+              bg="background"
+              color="primary"
+              borderRadius="md"
+              px={4}
+              py={2}
+              fontWeight="bold"
+              fontSize="md"
+              boxShadow="md"
+              _hover={{ bg: "primary", color: "background" }}
+              onClick={() => {
+                const el = document.getElementById("spot-name-field");
+                if (el) {
+                  el.scrollIntoView({ behavior: "smooth", block: "start" });
+                  el.focus();
+                }
+              }}
+            >
+              Add A Spot
+            </Button>
+          </Box>
+        )}
+
+        {/* Main Content Section */}
         <Flex
-          height={{ base: 'auto', md: '100vh' }}
+          height={{ base: 'auto', md: 'calc(100vh - 200px)' }}
           flexDirection={{ base: "column", md: "row" }}
           align="flex-start"
           justifyContent="center"
@@ -109,12 +152,12 @@ export default function EmbeddedMap() {
           mx="auto"
           gap={0}
         >
-          {/* Main content: Map and instructions */}
+          {/* Map Section */}
           <Box
             flex="2"
             minW={0}
             w={{ base: "100%", md: "65%" }}
-            height={{ base: "auto", md: "100vh" }}
+            height={{ base: "300px", md: "100%" }}
             overflow={{ base: "visible", md: "hidden" }}
             sx={{
               "&::-webkit-scrollbar": { display: "none" },
@@ -126,56 +169,12 @@ export default function EmbeddedMap() {
             mb={{ base: 2, md: 6 }}
             onWheel={isMobile ? undefined : handleMapSideWheel}
           >
-            {/* Title Section */}
-            <Box p={{ base: 2, md: 4 }} pt={0} pb={0}>
-              <Text
-                className="fretqwik-title"
-                fontSize={{ base: "6xl", md: "7xl" }}
-                fontWeight="extrabold"
-                color="primary"
-                letterSpacing="widest"
-                textAlign="center"
-                mt={{ base: -2, md: -4 }}
-                style={{ lineHeight: 1.1, maxWidth: "100%", whiteSpace: "nowrap" }}
-              >
-                skate spot map
-              </Text>
-            </Box>
-
-            {/* Button Section */}
-            {user && (
-              <Box p={{ base: 2, md: 4 }} pt={{ base: 4, md: 6 }} pb={{ base: 2, md: 2 }} textAlign="center">
-                <Button
-                  bg="background"
-                  color="primary"
-                  borderRadius="md"
-                  px={4}
-                  py={2}
-                  fontWeight="bold"
-                  fontSize="md"
-                  boxShadow="md"
-                  _hover={{ bg: "primary", color: "background" }}
-                  onClick={() => {
-                    const el = document.getElementById("spot-name-field");
-                    if (el) {
-                      el.scrollIntoView({ behavior: "smooth", block: "start" });
-                      el.focus();
-                    }
-                  }}
-                >
-                  Add A Spot
-                </Button>
-              </Box>
-            )}
-
-            {/* Map Section */}
             <Box
               p={{ base: 2, md: 4 }}
               pt={0}
               textAlign="center"
               width="100%"
-              sx={{ aspectRatio: { base: "3 / 4.8", md: "3 / 2.4" } }}
-              height={{ base: "300px", md: "calc(100vh - 280px)" }}
+              height="100%"
             >
               <iframe
                 src={mapSrc}
@@ -192,7 +191,8 @@ export default function EmbeddedMap() {
               ></iframe>
             </Box>
           </Box>
-          {/* Right sidebar: Spot submission and feed (desktop only) */}
+
+          {/* Sidebar Section */}
           <Box
             ref={sidebarRef}
             flex="1"
@@ -204,21 +204,28 @@ export default function EmbeddedMap() {
             mb={{ base: 0, md: 8 }}
             mx={{ base: "auto", md: 0 }}
             display={{ base: "block", md: "block" }}
-            height={{ base: "auto", md: "100vh" }}
+            height={{ base: "auto", md: "100%" }}
             overflowY={{ base: "visible", md: "auto" }}
             sx={{
               "&::-webkit-scrollbar": { display: "none" },
               scrollbarWidth: "none",
             }}
           >
-            <SpotSnapComposer onNewComment={handleNewSpot} onClose={handleClose} />
-            <SpotList 
-              spots={allSpots} 
-              newSpot={newSpot} 
-              isLoading={isLoading}
-              hasMore={hasMore}
-              onLoadMore={loadNextPage}
-            />
+            {/* Spot Composer Section */}
+            <Box mb={4}>
+              <SpotSnapComposer onNewComment={handleNewSpot} onClose={handleClose} />
+            </Box>
+
+            {/* Spot List Section */}
+            <Box>
+              <SpotList 
+                spots={allSpots} 
+                newSpot={newSpot} 
+                isLoading={isLoading}
+                hasMore={hasMore}
+                onLoadMore={loadNextPage}
+              />
+            </Box>
           </Box>
         </Flex>
       </Box>
