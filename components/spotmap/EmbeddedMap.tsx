@@ -95,8 +95,8 @@ export default function EmbeddedMap() {
         `}
       />
       <Box
-        height={{ base: 'auto', md: '100vh' }}
-        overflow={{ base: 'visible', md: 'hidden' }}
+        height="auto"
+        overflow="visible"
       >
         {/* Header Section */}
         <Box p={{ base: 2, md: 4 }} pt={0} pb={0}>
@@ -142,7 +142,7 @@ export default function EmbeddedMap() {
 
         {/* Main Content Section */}
         <Flex
-          height={{ base: 'auto', md: 'calc(100vh - 200px)' }}
+          height={{ base: 'auto', md: '600px' }}
           flexDirection={{ base: "column", md: "row" }}
           align="flex-start"
           justifyContent="center"
@@ -158,11 +158,7 @@ export default function EmbeddedMap() {
             minW={0}
             w={{ base: "100%", md: "65%" }}
             height={{ base: "300px", md: "100%" }}
-            overflow={{ base: "visible", md: "hidden" }}
-            sx={{
-              "&::-webkit-scrollbar": { display: "none" },
-              scrollbarWidth: "none",
-            }}
+            overflow="visible"
             borderRadius="10px"
             width="100%"
             mx="auto"
@@ -192,9 +188,8 @@ export default function EmbeddedMap() {
             </Box>
           </Box>
 
-          {/* Sidebar Section */}
+          {/* Sidebar Section - Only Composer */}
           <Box
-            ref={sidebarRef}
             flex="1"
             minW={{ md: "340px" }}
             maxW={{ md: "420px" }}
@@ -205,29 +200,22 @@ export default function EmbeddedMap() {
             mx={{ base: "auto", md: 0 }}
             display={{ base: "block", md: "block" }}
             height={{ base: "auto", md: "100%" }}
-            overflowY={{ base: "visible", md: "auto" }}
-            sx={{
-              "&::-webkit-scrollbar": { display: "none" },
-              scrollbarWidth: "none",
-            }}
+            overflowY="visible"
           >
-            {/* Spot Composer Section */}
-            <Box mb={4}>
-              <SpotSnapComposer onNewComment={handleNewSpot} onClose={handleClose} />
-            </Box>
-
-            {/* Spot List Section */}
-            <Box>
-              <SpotList 
-                spots={allSpots} 
-                newSpot={newSpot} 
-                isLoading={isLoading}
-                hasMore={hasMore}
-                onLoadMore={loadNextPage}
-              />
-            </Box>
+            <SpotSnapComposer onNewComment={handleNewSpot} onClose={handleClose} />
           </Box>
         </Flex>
+
+        {/* Spot List Section - 3 Column Grid */}
+        <Box p={4} pt={0}>
+          <SpotList 
+            spots={allSpots} 
+            newSpot={newSpot} 
+            isLoading={isLoading}
+            hasMore={hasMore}
+            onLoadMore={loadNextPage}
+          />
+        </Box>
       </Box>
     </>
   );

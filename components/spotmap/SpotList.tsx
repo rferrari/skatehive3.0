@@ -8,6 +8,7 @@ import {
   Modal,
   ModalOverlay,
   ModalContent,
+  SimpleGrid,
 } from "@chakra-ui/react";
 import { Discussion } from "@hiveio/dhive";
 import Snap from "@/components/homepage/Snap";
@@ -115,16 +116,18 @@ export default function SpotList({
 
   return (
     <>
-      <VStack spacing={6} align="stretch" my={8}>
-        {displayedSpots.slice(0, visibleCount).map((spot) => (
-          <Snap
-            key={spot.permlink}
-            discussion={spot}
-            onOpen={() => handleOpenConversation(spot)}
-            setReply={() => {}}
-            setConversation={handleOpenConversation}
-          />
-        ))}
+      <Box my={8}>
+        <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
+          {displayedSpots.slice(0, visibleCount).map((spot) => (
+            <Snap
+              key={spot.permlink}
+              discussion={spot}
+              onOpen={() => handleOpenConversation(spot)}
+              setReply={() => {}}
+              setConversation={handleOpenConversation}
+            />
+          ))}
+        </SimpleGrid>
         
         {/* Show loading spinner when fetching more data */}
         {isLoading && displayedSpots.length > 0 && (
@@ -135,16 +138,17 @@ export default function SpotList({
         
         {/* Show manual load more button as fallback */}
         {(hasMore || visibleCount < displayedSpots.length) && !isLoading && (
-          <Button
-            onClick={handleLoadMore}
-            alignSelf="center"
-            colorScheme="primary"
-            variant="outline"
-          >
-            {hasMore ? "Load More Spots" : "Show More"}
-          </Button>
+          <Box display="flex" justifyContent="center" py={4}>
+            <Button
+              onClick={handleLoadMore}
+              colorScheme="primary"
+              variant="outline"
+            >
+              {hasMore ? "Load More Spots" : "Show More"}
+            </Button>
+          </Box>
         )}
-      </VStack>
+      </Box>
       <Modal isOpen={isModalOpen} onClose={handleCloseModal} size="2xl">
         <ModalOverlay />
         <ModalContent bg="background" color="text">

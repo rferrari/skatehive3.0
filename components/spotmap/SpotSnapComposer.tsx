@@ -239,6 +239,8 @@ export default function SpotSnapComposer({
       borderBottom={"1px"}
       borderColor="muted"
       position="relative"
+      maxHeight="600px"
+      overflowY="auto"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -248,6 +250,11 @@ export default function SpotSnapComposer({
           : undefined,
         background: isDragOver ? "rgba(0,0,0,0.04)" : undefined,
         transition: "border 0.2s, background 0.2s",
+        scrollbarWidth: "none",
+        msOverflowStyle: "none",
+      }}
+      sx={{
+        "&::-webkit-scrollbar": { display: "none" },
       }}
     >
       {/* Optionally, overlay a message when dragging */}
@@ -317,7 +324,6 @@ export default function SpotSnapComposer({
           />
         </FormControl>
         <FormControl>
-          <FormLabel>Description</FormLabel>
           <Textarea
             placeholder="Describe the spot"
             bg="background"
@@ -330,12 +336,12 @@ export default function SpotSnapComposer({
             _focusVisible={{ border: "tb1" }}
           />
         </FormControl>
-        <Box display="flex" justifyContent="center">
+        <HStack spacing={4} width="100%">
           <Button
             leftIcon={<FaImage size={22} />}
             variant="ghost"
             size="lg"
-            width="100%"
+            flex="1"
             isDisabled={isLoading}
             onClick={() => imageCompressorRef.current?.trigger()}
             border="2px solid"
@@ -348,7 +354,18 @@ export default function SpotSnapComposer({
           >
             Upload Image <Box as="span" color="red.500" ml={1}>*</Box>
           </Button>
-        </Box>
+          <Button
+            bg="primary"
+            color="background"
+            size="lg"
+            flex="1"
+            _hover={{ bg: "accent", color: "text" }}
+            onClick={handleComment}
+            isDisabled={isLoading}
+          >
+            {isLoading ? <Spinner size="sm" /> : buttonText}
+          </Button>
+        </HStack>
         <ImageCompressor
           ref={imageCompressorRef}
           onUpload={handleCompressedImageUpload}
@@ -398,19 +415,6 @@ export default function SpotSnapComposer({
             </Box>
           ))}
         </Wrap>
-        <Box display="flex" justifyContent="center">
-          <Button
-            bg="primary"
-            color="background"
-            size="sm"
-            width="50%"
-            _hover={{ bg: "accent", color: "text" }}
-            onClick={handleComment}
-            isDisabled={isLoading}
-          >
-            {isLoading ? <Spinner size="sm" /> : buttonText}
-          </Button>
-        </Box>
       </VStack>
       {/* Matrix Overlay and login prompt if not logged in */}
       {!user && (
