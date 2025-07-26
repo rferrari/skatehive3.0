@@ -24,6 +24,7 @@ import {
   FaUserCheck,
   FaList,
   FaFlagCheckered,
+  FaUserEdit,
 } from "react-icons/fa";
 
 interface BountyListProps {
@@ -43,7 +44,7 @@ export default function BountyList({
   const [displayedBounties, setDisplayedBounties] = useState<Discussion[]>([]);
   const [visibleCount, setVisibleCount] = useState(10);
   const [filter, setFilter] = useState<
-    "active" | "claimed" | "my-claimed" | "all" | "completed"
+    "active" | "claimed" | "my-claimed" | "my-bounties" | "all" | "completed"
   >("active");
   const [bountyGrinders, setBountyGrinders] = useState<string[]>([]);
   const [isLoadingGrinders, setIsLoadingGrinders] = useState(false);
@@ -100,6 +101,12 @@ export default function BountyList({
         const hasVoted = bounty.active_votes?.some((vote) => vote.voter.toLowerCase() === user.toLowerCase());
         
         return isNotAuthor && hasVoted;
+      });
+    }
+    if (filter === "my-bounties" && user) {
+      return displayedBounties.filter((bounty) => {
+        // Check if the current user is the author of this bounty
+        return bounty.author.toLowerCase() === user.toLowerCase();
       });
     }
     if (filter === "claimed") {
@@ -170,12 +177,13 @@ export default function BountyList({
     if (f === "active") return 0;
     if (f === "claimed") return 1;
     if (f === "my-claimed") return 2;
-    if (f === "all") return 3;
-    if (f === "completed") return 4;
+    if (f === "my-bounties") return 3;
+    if (f === "all") return 4;
+    if (f === "completed") return 5;
     return 0;
   };
   const indexToFilter = (idx: number) =>
-    ["active", "claimed", "my-claimed", "all", "completed"][
+    ["active", "claimed", "my-claimed", "my-bounties", "all", "completed"][
       idx
     ] as typeof filter;
 
@@ -310,6 +318,20 @@ export default function BountyList({
       <Box textAlign="center" my={8}>
         <Text>
           You have not claimed any bounties yet. Go upvote a bounty to claim it!
+        </Text>
+      </Box>
+    );
+  }
+
+  if (
+    filter === "my-bounties" &&
+    user &&
+    filteredBounties.length === 0
+  ) {
+    return (
+      <Box textAlign="center" my={8}>
+        <Text>
+          You have not created any bounties yet. Create your first bounty to get started!
         </Text>
       </Box>
     );
@@ -463,7 +485,7 @@ export default function BountyList({
               borderWidth="2px"
               borderColor="transparent"
               minW={0}
-              fontSize={{ base: "xl", md: "md" }}
+              fontSize={{ base: "lg", md: "sm" }}
               px={{ base: 1, md: 2 }}
               py={{ base: 1, md: 1 }}
               m={{ base: 0, md: 1 }}
@@ -486,7 +508,7 @@ export default function BountyList({
               borderWidth="2px"
               borderColor="transparent"
               minW={0}
-              fontSize={{ base: "xl", md: "md" }}
+              fontSize={{ base: "lg", md: "sm" }}
               px={{ base: 1, md: 2 }}
               py={{ base: 1, md: 1 }}
               m={{ base: 0, md: 1 }}
@@ -509,7 +531,7 @@ export default function BountyList({
               borderWidth="2px"
               borderColor="transparent"
               minW={0}
-              fontSize={{ base: "xl", md: "md" }}
+              fontSize={{ base: "lg", md: "sm" }}
               px={{ base: 1, md: 2 }}
               py={{ base: 1, md: 1 }}
               m={{ base: 0, md: 1 }}
@@ -532,7 +554,30 @@ export default function BountyList({
               borderWidth="2px"
               borderColor="transparent"
               minW={0}
-              fontSize={{ base: "xl", md: "md" }}
+              fontSize={{ base: "lg", md: "sm" }}
+              px={{ base: 1, md: 2 }}
+              py={{ base: 1, md: 1 }}
+              m={{ base: 0, md: 1 }}
+              _selected={{
+                color: "primary",
+                bg: "primary.900",
+                borderColor: "primary",
+                borderWidth: "2px",
+              }}
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+            >
+              <FaUserEdit />
+              <Box display={{ base: "none", md: "inline" }} ml={1}>
+                My Bounties
+              </Box>
+            </Tab>
+            <Tab
+              borderWidth="2px"
+              borderColor="transparent"
+              minW={0}
+              fontSize={{ base: "lg", md: "sm" }}
               px={{ base: 1, md: 2 }}
               py={{ base: 1, md: 1 }}
               m={{ base: 0, md: 1 }}
@@ -555,7 +600,7 @@ export default function BountyList({
               borderWidth="2px"
               borderColor="transparent"
               minW={0}
-              fontSize={{ base: "xl", md: "md" }}
+              fontSize={{ base: "lg", md: "sm" }}
               px={{ base: 1, md: 2 }}
               py={{ base: 1, md: 1 }}
               m={{ base: 0, md: 1 }}

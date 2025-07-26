@@ -333,12 +333,13 @@ export default function SpotSnapComposer({
             _placeholder={{ color: "text" }}
             isDisabled={isLoading}
             onKeyDown={handleKeyDown}
+            borderColor="muted"
+            _focus={{ borderColor: "primary" }}
             _focusVisible={{ border: "tb1" }}
           />
         </FormControl>
         <HStack spacing={4} width="100%">
           <Button
-            leftIcon={<FaImage size={22} />}
             variant="ghost"
             size="lg"
             flex="1"
@@ -351,8 +352,14 @@ export default function SpotSnapComposer({
               boxShadow: "0 0 0 2px var(--chakra-colors-primary)",
             }}
             _active={{ borderColor: "accent" }}
+            flexDirection="column"
+            height="auto"
+            py={3}
           >
-            Upload Image <Box as="span" color="red.500" ml={1}>*</Box>
+            <FaImage size={28} />
+            <Box fontSize="sm" mt={1}>
+              Upload <Box as="span" color="red.500">*</Box>
+            </Box>
           </Button>
           <Button
             bg="primary"
