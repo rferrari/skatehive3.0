@@ -98,47 +98,58 @@ export default function EmbeddedMap() {
         height="auto"
         overflow="visible"
       >
-        {/* Header Section */}
-        <Box p={{ base: 2, md: 4 }} pt={0} pb={0}>
-          <Text
-            className="fretqwik-title"
-            fontSize={{ base: "6xl", md: "7xl" }}
-            fontWeight="extrabold"
-            color="primary"
-            letterSpacing="widest"
-            textAlign="center"
-            mt={{ base: -2, md: -4 }}
-            style={{ lineHeight: 1.1, maxWidth: "100%", whiteSpace: "nowrap" }}
-          >
-            skate spot map
-          </Text>
-        </Box>
-
-        {/* Add Spot Button Section */}
-        {user && (
-          <Box p={{ base: 2, md: 4 }} pt={{ base: 4, md: 6 }} pb={{ base: 2, md: 2 }} textAlign="center">
-            <Button
-              bg="background"
+        {/* Sticky Header Section */}
+        <Box
+          position="sticky"
+          top={0}
+          zIndex={10}
+          bg="background"
+          borderBottom="1px solid"
+          borderColor="muted"
+          backdropFilter="blur(10px)"
+        >
+          {/* Header Section */}
+          <Box p={{ base: 2, md: 4 }} pt={0} pb={0}>
+            <Text
+              className="fretqwik-title"
+              fontSize={{ base: "6xl", md: "7xl" }}
+              fontWeight="extrabold"
               color="primary"
-              borderRadius="md"
-              px={4}
-              py={2}
-              fontWeight="bold"
-              fontSize="md"
-              boxShadow="md"
-              _hover={{ bg: "primary", color: "background" }}
-              onClick={() => {
-                const el = document.getElementById("spot-name-field");
-                if (el) {
-                  el.scrollIntoView({ behavior: "smooth", block: "start" });
-                  el.focus();
-                }
-              }}
+              letterSpacing="widest"
+              textAlign="center"
+              mt={{ base: -2, md: -4 }}
+              style={{ lineHeight: 1.1, maxWidth: "100%", whiteSpace: "nowrap" }}
             >
-              Add A Spot
-            </Button>
+              skate spot map
+            </Text>
           </Box>
-        )}
+
+          {/* Add Spot Button Section */}
+          {user && (
+            <Box p={{ base: 2, md: 4 }} pt={{ base: 4, md: 6 }} pb={{ base: 2, md: 2 }} textAlign="center">
+              <Button
+                bg="background"
+                color="primary"
+                borderRadius="md"
+                px={4}
+                py={2}
+                fontWeight="bold"
+                fontSize="md"
+                boxShadow="md"
+                _hover={{ bg: "primary", color: "background" }}
+                onClick={() => {
+                  const el = document.getElementById("spot-name-field");
+                  if (el) {
+                    el.scrollIntoView({ behavior: "smooth", block: "start" });
+                    el.focus();
+                  }
+                }}
+              >
+                Add A Spot
+              </Button>
+            </Box>
+          )}
+        </Box>
 
         {/* Main Content Section */}
         <Flex
