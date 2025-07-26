@@ -1,6 +1,7 @@
 "use client";
 
 import { AuctionBid, BidsModal } from "@/components/auction";
+import { AuctionHeader } from "@/components/auction/AuctionHeader";
 import { fetchAuctionByTokenId, fetchAuction } from "@/services/auction";
 import { useQuery } from "@tanstack/react-query";
 import { DAO_ADDRESSES } from "@/lib/utils/constants";
@@ -207,7 +208,7 @@ export default function AuctionPage({
   return (
     <Box bg="background" minH="100vh" py={{ base: 4, md: 8 }}>
       <Container maxW="7xl" px={{ base: 4, md: 6 }}>
-        <VStack spacing={{ base: 6, md: 8 }}>
+        <VStack spacing={{ base: 2, md: 3 }}>
           {/* Header Section */}
           <VStack
             spacing={{ base: 3, md: 4 }}
@@ -239,61 +240,75 @@ export default function AuctionPage({
             </Text>
           </VStack>
 
+          {/* Auction Header - Name, Date, Navigation */}
+          <Box maxW="4xl" mx="auto" w="full">
+            <AuctionHeader
+              tokenName={activeAuction.token.name}
+              tokenId={activeAuction.token.tokenId.toString()}
+              startTime={activeAuction.startTime}
+              showNavigation={showNavigation}
+              currentTokenId={currentTokenId}
+              isLatestAuction={isLatestAuction ?? false}
+              onPrev={handlePrev}
+              onNext={handleNext}
+            />
+          </Box>
+
           {/* Main Auction Layout */}
-          <Box maxW="6xl" mx="auto" w="full">
+          <Box maxW="4xl" mx="auto" w="full" mb={16} mt={6}>
             <Grid
-              templateColumns={{ base: "1fr", lg: "1fr 2fr" }}
+              templateColumns={{ base: "1fr", lg: "0.25fr 0.75fr" }}
               gap={{ base: 6, md: 6 }}
               w="full"
-              alignItems="stretch"
+              alignItems="center"
             >
               {/* Auction Details */}
-              <GridItem order={{ base: 2, lg: 2 }}>
+              <GridItem order={{ base: 2, lg: 2 }} ml={{ base: 0, lg: 4 }}>
                 {/* Wallet Connection */}
-                {!isConnected ? (
-                  <Center m={1}>
-                    <ConnectButton />
-                  </Center>
-                ) : (
-                  <Box
-                    display="flex"
-                    flexDirection="column"
-                    alignItems="stretch"
-                    justifyContent="center"
-                    bg="muted"
-                    border="2px solid"
-                    borderColor="primary"
-                    borderRadius="xl"
-                    p={2}
-                    minH="60px"
-                    transition="all 0.3s ease"
-                    w="100%"
-                  >
-                    <Box w="full">
-                      <Identity address={address as `0x${string}`}>
-                        <Avatar />
-                        <Name className="font-bold text-base ml-1" />
-                      </Identity>
-                    </Box>
-                    <Button
-                      w="full"
-                      mt={2}
-                      px={2}
-                      py={1}
-                      fontSize="md"
-                      fontWeight="bold"
-                      textTransform="uppercase"
-                      color="#D1FF4C"
-                      bg="transparent"
-                      border="2px solid #D1FF4C"
-                      borderRadius="lg"
-                      _hover={{ bg: "#1a1a1a", color: "#D1FF4C" }}
-                      onClick={() => disconnect()}
-                    >
-                      Disconnect
-                    </Button>
-                  </Box>
-                )}
+                <Box
+                  display="flex"
+                  flexDirection="column"
+                  alignItems="stretch"
+                  justifyContent="center"
+                  borderRadius="xl"
+                  p={2}
+                  minH="60px"
+                  transition="all 0.3s ease"
+                  w="100%"
+                >
+                  {!isConnected ? (
+                    <Center>
+                      <ConnectButton />
+                    </Center>
+                  ) : (
+                    <>
+                      <Box w="full">
+                        <Identity address={address as `0x${string}`}>
+                          <Avatar />
+                          <Name className="font-bold text-base ml-1" />
+                        </Identity>
+                      </Box>
+                      <Button
+                        w="full"
+                        mt={2}
+                        px={2}
+                        py={1}
+                        fontSize="md"
+                        fontWeight="bold"
+                        textTransform="uppercase"
+                        color="primary"
+                        bg="muted"
+                        border="2px solid"
+                        borderColor="primary"
+                        borderRadius="lg"
+                        _hover={{ bg: "primary", color: "background" }}
+                        onClick={() => disconnect()}
+                      >
+                        Disconnect
+                      </Button>
+                    </>
+                  )}
+                </Box>
                 <Box
                   p={{ base: 6, lg: 6 }}
                   position="relative"
@@ -370,8 +385,6 @@ export default function AuctionPage({
                     <Box
                       w="full"
                       alignSelf="center"
-                      onMouseEnter={() => setIsHoveringBid(true)}
-                      onMouseLeave={() => setIsHoveringBid(false)}
                     >
                       <AuctionBid
                         tokenId={activeAuction.token.tokenId}
@@ -390,147 +403,19 @@ export default function AuctionPage({
                         onBid={refetch}
                         onSettle={refetch}
                         alignContent="left"
+                        bids={activeAuction.bids || []}
+                        onBidSectionHover={setIsHoveringBid}
+                        isLatestAuction={isLatestAuction ?? false}
                       />
                     </Box>
-
-                    {/* Bids Viewport */}
-                    {activeAuction.bids && activeAuction.bids.length > 0 && (
-                      <Box
-                        w="full"
-                        bg="muted"
-                        borderRadius="md"
-                        p={3}
-                        maxH="376px"
-                        overflowY="auto"
-                        position="relative"
-                        zIndex={1}
-                        sx={{
-                          "&::-webkit-scrollbar": { width: "6px" },
-                          "&::-webkit-scrollbar-track": {
-                            background: "transparent",
-                          },
-                          "&::-webkit-scrollbar-thumb": {
-                            background: "var(--chakra-colors-border)",
-                            borderRadius: "3px",
-                          },
-                          "&::-webkit-scrollbar-thumb:hover": {
-                            background: "var(--chakra-colors-primary)",
-                          },
-                          scrollbarWidth: "thin",
-                          scrollbarColor:
-                            "var(--chakra-colors-border) transparent",
-                        }}
-                      >
-                        <VStack spacing={3} align="stretch">
-                          {/* Bid History */}
-                          <VStack spacing={2} align="stretch" flex={1}>
-                            <Center>
-                              <Text
-                                fontSize="sm"
-                                fontWeight="bold"
-                                color="primary"
-                              >
-                                Bid History
-                              </Text>
-                            </Center>
-                            {activeAuction.bids.length === 1 ? (
-                              <HStack
-                                justify="space-between"
-                                w="full"
-                                py={0}
-                                px={0}
-                                bg="muted"
-                                borderRadius="md"
-                              >
-                                <HStack>
-                                  <Avatar
-                                    address={activeAuction.bids[0].bidder}
-                                  />
-                                  <Name
-                                    address={activeAuction.bids[0].bidder}
-                                    className="font-bold text-sm"
-                                  />
-                                </HStack>
-                                <Text
-                                  fontSize="sm"
-                                  fontWeight="medium"
-                                  color="text"
-                                >
-                                  {formatBidAmount(
-                                    BigInt(activeAuction.bids[0].amount)
-                                  )}{" "}
-                                  ETH
-                                </Text>
-                              </HStack>
-                            ) : activeAuction.bids.length > 1 ? (
-                              [...activeAuction.bids]
-                                .sort((a, b) => {
-                                  const amountA = BigInt(a.amount);
-                                  const amountB = BigInt(b.amount);
-                                  return amountB > amountA
-                                    ? 1
-                                    : amountB < amountA
-                                    ? -1
-                                    : 0;
-                                })
-                                .slice(1)
-                                .map((bid, index) => (
-                                  <HStack
-                                    key={index}
-                                    justify="space-between"
-                                    w="full"
-                                    py={2}
-                                    px={3}
-                                    bg="secondary"
-                                    borderRadius="md"
-                                  >
-                                    <HStack>
-                                      <Avatar address={bid.bidder} />
-                                      <Name
-                                        address={bid.bidder}
-                                        className="font-bold text-sm"
-                                      />
-                                    </HStack>
-                                    <Text
-                                      fontSize="sm"
-                                      fontWeight="medium"
-                                      color="text"
-                                    >
-                                      {formatBidAmount(BigInt(bid.amount))} ETH
-                                    </Text>
-                                  </HStack>
-                                ))
-                            ) : (
-                              <Box
-                                flex={1}
-                                display="flex"
-                                alignItems="center"
-                                justifyContent="center"
-                                bg="muted"
-                                borderRadius="md"
-                                minH="100px"
-                              >
-                                <Text
-                                  fontSize="sm"
-                                  color="primary"
-                                  textAlign="center"
-                                >
-                                  No bid history yet
-                                </Text>
-                              </Box>
-                            )}
-                          </VStack>
-                        </VStack>
-                      </Box>
-                    )}
                   </VStack>
                 </Box>
               </GridItem>
 
               {/* Large NFT Image */}
               <GridItem order={{ base: 1, lg: 1 }}>
-                <Box p={{ base: 6, lg: 8 }} position="relative" h="full">
-                  <VStack spacing={8}>
+                <Box position="relative" h="full">
+                  <VStack spacing={0}>
                     {/* NFT Image */}
                     <Box
                       position="relative"
@@ -600,125 +485,8 @@ export default function AuctionPage({
                       )}
                     </Box>
 
-                    {/* Title and Date Group with Optional Navigation */}
-                    <VStack spacing={1}>
-                      {/* NFT Title */}
-                      <Text
-                        fontSize="2xl"
-                        fontWeight="bold"
-                        color="text"
-                        textAlign="center"
-                        pt={2}
-                        mb={0}
-                      >
-                        {activeAuction.token.name.includes(
-                          `#${activeAuction.token.tokenId.toString()}`
-                        )
-                          ? activeAuction.token.name
-                          : `${
-                              activeAuction.token.name
-                            } #${activeAuction.token.tokenId.toString()}`}
-                      </Text>
-                      {/* Date */}
-                      <Text
-                        fontSize="xs"
-                        color="primary"
-                        textAlign="center"
-                        mt={0}
-                        mb={showNavigation ? 4 : 0}
-                      >
-                        {new Date(
-                          parseInt(activeAuction.startTime) * 1000
-                        ).toLocaleDateString("en-US", {
-                          month: "long",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
-                      </Text>
-
-                      {/* Navigation Arrows (only show if enabled) */}
-                      {showNavigation && currentTokenId && (
-                        <HStack spacing={4} justify="center" w="full">
-                          <Tooltip
-                            label={
-                              currentTokenId && currentTokenId > 1
-                                ? `View Auction #${currentTokenId - 1}`
-                                : "No previous auction"
-                            }
-                            hasArrow
-                            placement="bottom"
-                          >
-                            <IconButton
-                              aria-label="Previous Auction"
-                              icon={<ArrowBackIcon />}
-                              onClick={handlePrev}
-                              isDisabled={
-                                !currentTokenId || currentTokenId <= 1
-                              }
-                              size="lg"
-                              variant="ghost"
-                              colorScheme="red"
-                              color="primary"
-                              bg="background"
-                              border="2px solid"
-                              borderColor="primary"
-                              borderRadius="full"
-                              _hover={{
-                                bg: "primary",
-                                color: "background",
-                                transform: "scale(1.1)",
-                              }}
-                              _active={{ transform: "scale(0.95)" }}
-                              transition="all 0.2s ease"
-                            />
-                          </Tooltip>
-
-                          <Text fontSize="sm" color="muted" fontFamily="mono">
-                            Token #{activeAuction.token.tokenId.toString()}
-                          </Text>
-
-                          <Tooltip
-                            label={
-                              !tokenId || isLatestAuction
-                                ? "Latest auction - no future auctions available"
-                                : currentTokenId
-                                ? `View Auction #${currentTokenId + 1}`
-                                : "Next auction"
-                            }
-                            hasArrow
-                            placement="bottom"
-                          >
-                            <IconButton
-                              aria-label="Next Auction"
-                              icon={<ArrowForwardIcon />}
-                              onClick={handleNext}
-                              isDisabled={
-                                !!(
-                                  !currentTokenId ||
-                                  !tokenId ||
-                                  isLatestAuction
-                                )
-                              }
-                              size="lg"
-                              variant="ghost"
-                              colorScheme="red"
-                              color="primary"
-                              bg="background"
-                              border="2px solid"
-                              borderColor="primary"
-                              borderRadius="full"
-                              _hover={{
-                                bg: "primary",
-                                color: "background",
-                                transform: "scale(1.1)",
-                              }}
-                              _active={{ transform: "scale(0.95)" }}
-                              transition="all 0.2s ease"
-                            />
-                          </Tooltip>
-                        </HStack>
-                      )}
-                    </VStack>
+                    {/* NFT Image Only - Title, Date, and Navigation moved to AuctionHeader */}
+                    <Box />
                   </VStack>
                 </Box>
               </GridItem>

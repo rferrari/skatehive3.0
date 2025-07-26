@@ -26,9 +26,8 @@ export default function ConnectButton() {
         minH="80px"
         transition="all 0.3s ease"
         _hover={{
-          borderColor: "accent",
-          bg: "background",
-          transform: "translateY(-2px)",
+          bg: "primary",
+          color: "background",
         }}
         cursor="pointer"
         display="flex"
@@ -49,12 +48,12 @@ export default function ConnectButton() {
           position="absolute"
           zIndex={10}
         >
-          <Icon as={FaEthereum} boxSize={6} color="primary" />
+          <Icon as={FaEthereum} boxSize={6} color="inherit" />
           <Box display="flex" flexDirection="column" alignItems="start">
-            <Text fontSize="sm" fontWeight="semibold" color="primary">
+            <Text fontSize="sm" fontWeight="semibold" color="inherit">
               Connect Ethereum
             </Text>
-            <Text fontSize="xs" color="primary" fontWeight="medium">
+            <Text fontSize="xs" color="inherit" fontWeight="medium">
               🛹 Join the session
             </Text>
           </Box>

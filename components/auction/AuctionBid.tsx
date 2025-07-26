@@ -31,8 +31,15 @@ import {
   AlertDescription,
   HStack,
   Divider,
+  Center,
 } from "@chakra-ui/react";
 import { base } from "viem/chains";
+import { Name, Avatar } from "@coinbase/onchainkit/identity";
+
+interface Bid {
+  bidder: string;
+  amount: string;
+}
 
 interface BidProps {
   tokenId: bigint;
@@ -44,6 +51,9 @@ interface BidProps {
   onSettle?: () => void;
   alignContent?: "left" | "right";
   onBidButtonHover?: (isHovering: boolean) => void;
+  onBidSectionHover?: (isHovering: boolean) => void;
+  bids: Bid[];
+  isLatestAuction?: boolean;
 }
 
 export function AuctionBid({
@@ -56,6 +66,9 @@ export function AuctionBid({
   onSettle,
   alignContent = "left",
   onBidButtonHover,
+  onBidSectionHover,
+  bids,
+  isLatestAuction = false,
 }: BidProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [txHash, setTxHash] = useState<string | null>(null);
@@ -195,7 +208,11 @@ export function AuctionBid({
       {/* Success Transaction Hash Toast handled in logic above */}
 
       {isAuctionRunning ? (
-        <Box as="form" onSubmit={handleSubmit(onSubmitBid)} w="full">
+        <Box 
+          as="form" 
+          onSubmit={handleSubmit(onSubmitBid)} 
+          w="full"
+        >
           <VStack
             spacing={4}
             align={alignContent === "right" ? "end" : "stretch"}
@@ -264,50 +281,116 @@ export function AuctionBid({
               isLoading={isLoading}
               loadingText="Placing Bid..."
               h="48px"
-              onMouseEnter={() => onBidButtonHover?.(true)}
-              onMouseLeave={() => onBidButtonHover?.(false)}
+              onMouseEnter={() => {
+                onBidButtonHover?.(true);
+                onBidSectionHover?.(true);
+              }}
+              onMouseLeave={() => {
+                onBidButtonHover?.(false);
+                onBidSectionHover?.(false);
+              }}
             >
               {isLoading ? "Placing Bid..." : "Place Bid"}
             </Button>
           </VStack>
         </Box>
       ) : (
-        <VStack spacing={4} align="stretch">
-          <Button
-            onClick={handleSettle}
-            variant="solid"
-            size="lg"
-            width="full"
-            bg="success"
-            color="background"
-            _hover={{ bg: "primary", color: "background" }}
-            _disabled={{ bg: "muted", color: "text", cursor: "not-allowed" }}
-            isDisabled={!account.isConnected || isLoading}
-            isLoading={isLoading}
-            loadingText="Settling..."
-            h="48px"
-          >
-            {isLoading ? "Settling..." : "Start Next Auction"}
-          </Button>
-        </VStack>
+        <>
+          {isLatestAuction && (
+            <VStack spacing={4} align="stretch">
+              <Button
+                onClick={handleSettle}
+                variant="solid"
+                size="lg"
+                width="full"
+                bg="success"
+                color="background"
+                _hover={{ bg: "primary", color: "background" }}
+                _disabled={{ bg: "muted", color: "text", cursor: "not-allowed" }}
+                isDisabled={!account.isConnected || isLoading}
+                isLoading={isLoading}
+                loadingText="Settling..."
+                h="48px"
+              >
+                {isLoading ? "Settling..." : "Start Next Auction"}
+              </Button>
+            </VStack>
+          )}
+        </>
       )}
 
-      {/* Wallet Connection Notice */}
-      {!account.isConnected && (
-        <Box
-          bg="muted"
-          opacity={0.1}
-          border="1px solid"
-          borderColor="muted"
-          borderRadius="md"
-          p={4}
-          textAlign="center"
-        >
-          <Text color="muted" fontSize="sm">
-            Connect your wallet to participate in the auction
+      {/* Bid History */}
+      <Box
+        w="full"
+        bg="muted"
+        borderRadius="md"
+        p={3}
+        maxH="200px"
+        overflowY="auto"
+        position="relative"
+        zIndex={1}
+        sx={{
+          "&::-webkit-scrollbar": { width: "6px" },
+          "&::-webkit-scrollbar-track": { background: "transparent" },
+          "&::-webkit-scrollbar-thumb": {
+            background: "var(--chakra-colors-border)",
+            borderRadius: "3px",
+          },
+          "&::-webkit-scrollbar-thumb:hover": {
+            background: "var(--chakra-colors-primary)",
+          },
+          scrollbarWidth: "thin",
+          scrollbarColor: "var(--chakra-colors-border) transparent",
+        }}
+      >
+        <VStack spacing={0} align="stretch" style={{ margin: 0, gap: 0 }}>
+          <Text fontSize="sm" fontWeight="bold" color="primary" textAlign="center">
+            Bid History
           </Text>
-        </Box>
-      )}
+          {bids.length === 0 ? (
+            <Box
+              flex={1}
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              bg="muted"
+              borderRadius="md"
+              minH="100px"
+            >
+              <Text fontSize="sm" color="primary" textAlign="center">
+                No bid history yet
+              </Text>
+            </Box>
+          ) : (
+            [...bids]
+              .sort((a, b) => {
+                const amountA = BigInt(a.amount);
+                const amountB = BigInt(b.amount);
+                return amountB > amountA ? 1 : amountB < amountA ? -1 : 0;
+              })
+              .map((bid, index) => (
+                                                 <HStack
+                  key={index}
+                  justify="space-between"
+                  w="full"
+                  py={2}
+                  px={3}
+                  bg="muted"
+                  borderRadius="md"
+                  style={{ margin: 0, gap: 0 }}
+                >
+                  <HStack spacing={1} style={{ marginTop: 0 }}>
+                    <Avatar address={bid.bidder as `0x${string}`} />
+                    <Name address={bid.bidder as `0x${string}`} className="font-bold text-sm text" style={{ padding: 0, margin: 0 }} />
+                  </HStack>
+                  <Text fontSize="sm" fontWeight="medium" color="text">
+                    {formatEther(BigInt(bid.amount))} ETH
+                  </Text>
+                </HStack>
+              ))
+          )}
+        </VStack>
+      </Box>
     </VStack>
   );
 }
