@@ -152,20 +152,6 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
       []
     );
 
-    // Handle wallet connection manually
-    const handleWalletConnect = useCallback(async () => {
-      try {
-        const connector =
-          connectors.find((c) => c.name === "MetaMask") || connectors[0];
-        if (connector) {
-          await connect({ connector });
-        }
-      } catch (error) {
-        console.error("Failed to connect wallet:", error);
-        setError("Failed to connect wallet");
-      }
-    }, [connect, connectors]);
-
     // Check if user wants to update their Ethereum address
     const handleConnectEthWallet = useCallback(() => {
       if (isConnected && address) {

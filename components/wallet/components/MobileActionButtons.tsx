@@ -1,11 +1,4 @@
-import {
-  HStack,
-  Button,
-  VStack,
-  Text,
-  Box,
-  useDisclosure,
-} from "@chakra-ui/react";
+import { HStack, VStack, Text, Box, useDisclosure } from "@chakra-ui/react";
 import {
   FaPaperPlane,
   FaDownload,
@@ -13,7 +6,7 @@ import {
   FaEthereum,
 } from "react-icons/fa";
 import { useState, useEffect } from "react";
-import { Wallet, ConnectWallet } from "@coinbase/onchainkit/wallet";
+import { ConnectWallet } from "@coinbase/onchainkit/wallet";
 import { useAccount } from "wagmi";
 import TokenSearchModal from "./TokenSearchModal";
 import ReceiveModal from "./ReceiveModal";
@@ -153,19 +146,25 @@ export default function MobileActionButtons({
             <Box
               w="56px"
               h="56px"
-              bg="rgba(255, 255, 255, 0.1)"
               borderRadius="full"
               display="flex"
               alignItems="center"
               justifyContent="center"
+              bg="transparent"
               _hover={{
-                bg: "rgba(255, 255, 255, 0.15)",
+                bg: "transparent",
                 transform: "scale(1.05)",
+              }}
+              _active={{
+                bg: "transparent",
               }}
               transition="all 0.2s ease"
               cursor="pointer"
             >
-              <ConnectWallet disconnectedLabel={<FaEthereum />} />{" "}
+              <ConnectWallet
+                className="bg-transparent"
+                disconnectedLabel={<FaEthereum />}
+              />
             </Box>
 
             <Text

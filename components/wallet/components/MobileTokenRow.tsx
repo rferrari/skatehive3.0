@@ -76,6 +76,24 @@ export default function MobileTokenRow({
                     {consolidatedToken.chains.length}
                   </Badge>
                 )}
+                {/* Expand button for multi-chain tokens */}
+                {consolidatedToken.chains.length > 1 && (
+                  <IconButton
+                    aria-label="Expand token details"
+                    icon={isExpanded ? <FaChevronUp /> : <FaChevronDown />}
+                    size="xs"
+                    variant="ghost"
+                    color="rgba(255, 255, 255, 0.4)"
+                    _hover={{
+                      bg: "rgba(255, 255, 255, 0.1)",
+                      color: "rgba(255, 255, 255, 0.8)",
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleExpansion();
+                    }}
+                  />
+                )}
               </HStack>
               <Text fontSize="sm" color="rgba(255, 255, 255, 0.6)">
                 {formatBalance(
@@ -109,25 +127,6 @@ export default function MobileTokenRow({
               </Text>
             )}
           </VStack>
-
-          {/* Expand button for multi-chain tokens */}
-          {consolidatedToken.chains.length > 1 && (
-            <IconButton
-              aria-label="Expand token details"
-              icon={isExpanded ? <FaChevronUp /> : <FaChevronDown />}
-              size="xs"
-              variant="ghost"
-              color="rgba(255, 255, 255, 0.4)"
-              _hover={{
-                bg: "rgba(255, 255, 255, 0.1)",
-                color: "rgba(255, 255, 255, 0.8)",
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggleExpansion();
-              }}
-            />
-          )}
         </HStack>
       </Box>
 
