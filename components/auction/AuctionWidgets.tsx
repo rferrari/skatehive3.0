@@ -91,6 +91,7 @@ export function QuickBidWidget() {
           minimumBidIncrement={auction.dao.auctionConfig.minimumBidIncrement}
           onBid={refetch}
           onSettle={refetch}
+          bids={auction.bids || []}
         />
       </VStack>
     </Box>

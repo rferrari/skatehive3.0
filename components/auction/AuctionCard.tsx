@@ -211,6 +211,7 @@ export default function AuctionCard({
             }
             onBid={refetch}
             onSettle={refetch}
+            bids={activeAuction.bids || []}
           />
         </Box>
 
