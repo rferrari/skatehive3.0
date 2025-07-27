@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import {
   Box,
   Text,
@@ -25,7 +25,7 @@ import {
 import RulesModal from "./RulesModal";
 import React from "react";
 import useIsMobile from "@/hooks/useIsMobile";
-
+import { Name } from "@coinbase/onchainkit/identity";
 interface SkaterData {
   id: number;
   hive_author: string;
@@ -70,6 +70,110 @@ export default function LeaderboardClient({ skatersData }: Props) {
   const [isRulesOpen, setIsRulesOpen] = useState(false);
   const toast = useToast();
   const isMobile = useIsMobile();
+
+  // Add debugging for render count
+  const renderCount = React.useRef(0);
+  renderCount.current += 1;
+
+  console.log(`LeaderboardClient render #${renderCount.current}`);
+
+  // Memoized component for ETH address to prevent unnecessary re-renders
+  const EthAddress = React.memo(({ address }: { address: string }) => {
+    console.log(`Rendering Name component for address: ${address}`);
+    return (
+      <HStack spacing={1}>
+        <Image src="/images/ethvector.svg" alt="ETH" h="10px" w="10px" />
+        <Name
+          address={address as `0x${string}`}
+          style={{
+            fontSize: "10px",
+            color: "#00ff88", // Bright green for better contrast
+            fontWeight: "500",
+          }}
+        />
+      </HStack>
+    );
+  });
+
+  // Memoized skater row component
+  const SkaterRow = React.memo(
+    ({
+      skater,
+      rank,
+      columns,
+    }: {
+      skater: SkaterData;
+      rank: number;
+      columns: typeof mobileColumns | typeof desktopColumns;
+    }) => {
+      console.log(`Rendering SkaterRow for: ${skater.hive_author}`);
+
+      return (
+        <Tr _hover={{ bg: "muted" }} transition="background 0.2s">
+          <Td
+            borderColor="border"
+            position="sticky"
+            left={0}
+            bg="background"
+            zIndex={1}
+            minW={isMobile ? "120px" : "200px"}
+            _groupHover={{ bg: "muted" }}
+          >
+            <HStack spacing={2}>
+              <Box minW="30px">{getRankIcon(rank)}</Box>
+              <Avatar
+                src={`https://images.hive.blog/u/${skater.hive_author}/avatar/small`}
+                name={skater.hive_author}
+                size={isMobile ? "xs" : "sm"}
+              />
+              <VStack spacing={0} align="start" minW={0}>
+                <Text
+                  as={Link}
+                  href={`https://www.skatehive.app/user/${skater.hive_author}`}
+                  color="primary"
+                  fontWeight="bold"
+                  fontSize={isMobile ? "xs" : "sm"}
+                  isTruncated
+                  maxW="100px"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  _hover={{ color: "accent" }}
+                >
+                  {skater.hive_author}
+                </Text>
+                {!isMobile &&
+                  skater.eth_address &&
+                  skater.eth_address !==
+                    "0x0000000000000000000000000000000000000000" && (
+                    <EthAddress address={skater.eth_address} />
+                  )}
+                {!isMobile && (
+                  <Text color="#888888" fontSize="2xs" fontWeight="medium">
+                    Last: {getTimeSince(skater.last_post)}
+                  </Text>
+                )}
+              </VStack>
+            </HStack>
+          </Td>
+          {columns.map((col) => (
+            <Td
+              key={col.key}
+              borderColor="border"
+              textAlign="center"
+              fontSize={isMobile ? "xs" : "sm"}
+              color={col.key === "points" ? "#00ff88" : "text"}
+              fontWeight={col.key === "points" ? "bold" : "medium"}
+              bg={
+                col.key === "points" ? "rgba(0, 255, 136, 0.1)" : "transparent"
+              }
+            >
+              {col.value(skater)}
+            </Td>
+          ))}
+        </Tr>
+      );
+    }
+  );
 
   // Responsive values
   const headerFontSize = useBreakpointValue({
@@ -391,11 +495,16 @@ export default function LeaderboardClient({ skatersData }: Props) {
                 {columns.map((col) => (
                   <Th
                     key={col.key}
-                    color="primary"
+                    color={col.key === "points" ? "#00ff88" : "primary"}
                     fontWeight="bold"
                     borderColor="border"
                     textAlign="center"
                     minW={isMobile ? "60px" : "80px"}
+                    bg={
+                      col.key === "points"
+                        ? "rgba(0, 255, 136, 0.1)"
+                        : "transparent"
+                    }
                   >
                     {col.label}
                   </Th>
@@ -406,76 +515,12 @@ export default function LeaderboardClient({ skatersData }: Props) {
               {sortedSkaters.map((skater, index) => {
                 const rank = index + 1;
                 return (
-                  <Tr
+                  <SkaterRow
                     key={skater.id}
-                    _hover={{ bg: "muted" }}
-                    transition="background 0.2s"
-                  >
-                    <Td
-                      borderColor="border"
-                      position="sticky"
-                      left={0}
-                      bg="background"
-                      zIndex={1}
-                      minW={isMobile ? "120px" : "200px"}
-                      _groupHover={{ bg: "muted" }}
-                    >
-                      <HStack spacing={2}>
-                        <Box minW="30px">{getRankIcon(rank)}</Box>
-                        <Avatar
-                          src={`https://images.hive.blog/u/${skater.hive_author}/avatar/small`}
-                          name={skater.hive_author}
-                          size={isMobile ? "xs" : "sm"}
-                        />
-                        <VStack spacing={0} align="start" minW={0}>
-                          <Text
-                            as={Link}
-                            href={`https://peakd.com/@${skater.hive_author}`}
-                            color="primary"
-                            fontWeight="bold"
-                            fontSize={isMobile ? "xs" : "sm"}
-                            isTruncated
-                            maxW="100px"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            _hover={{ color: "accent" }}
-                          >
-                            {skater.hive_author}
-                          </Text>
-                          {!isMobile &&
-                            skater.eth_address &&
-                            skater.eth_address !==
-                              "0x0000000000000000000000000000000000000000" && (
-                              <HStack spacing={1}>
-                                <Image
-                                  src="/images/ethvector.svg"
-                                  alt="ETH"
-                                  h="10px"
-                                  w="10px"
-                                />
-                              </HStack>
-                            )}
-                          {!isMobile && (
-                            <Text color="muted" fontSize="2xs">
-                              Last: {getTimeSince(skater.last_post)}
-                            </Text>
-                          )}
-                        </VStack>
-                      </HStack>
-                    </Td>
-                    {columns.map((col) => (
-                      <Td
-                        key={col.key}
-                        borderColor="border"
-                        textAlign="center"
-                        fontSize={isMobile ? "xs" : "sm"}
-                        color="text"
-                        fontWeight="medium"
-                      >
-                        {col.value(skater)}
-                      </Td>
-                    ))}
-                  </Tr>
+                    skater={skater}
+                    rank={rank}
+                    columns={columns}
+                  />
                 );
               })}
             </Tbody>

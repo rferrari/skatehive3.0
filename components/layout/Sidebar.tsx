@@ -58,7 +58,8 @@ export default function Sidebar() {
   else if (themeName === "mac") hoverTextColor = "accent";
 
   // Check if user is connected to any of the 3 protocols
-  const isAnyProtocolConnected = user || isEthereumConnected || isFarcasterConnected;
+  const isAnyProtocolConnected =
+    user || isEthereumConnected || isFarcasterConnected;
 
   useEffect(() => {
     setBellAnimating(newNotificationCount > 0);
