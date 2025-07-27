@@ -81,12 +81,6 @@ const VoteSlider = ({
     };
 
     const handleVoteWithWeight = async (votePercentage: number) => {
-        console.log("🎯 VoteSlider handleVoteWithWeight called:", {
-            votePercentage,
-            discussion: `${discussion.author}/${discussion.permlink}`,
-            user
-        });
-
         try {
             const vote = await aioha.vote(
                 discussion.author,

@@ -168,7 +168,6 @@ const VoteWeightSlider: React.FC<VoteWeightSliderProps> = ({
           error.message?.includes("User rejected") ||
           error.message?.includes("User denied")) {
         // Don't show error toast for user cancellation
-        console.log("User cancelled vote weight preferences update");
       } else {
         // Show error toast for actual errors
         let errorMessage = "Failed to update vote weight preferences";

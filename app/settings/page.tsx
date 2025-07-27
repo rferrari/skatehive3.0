@@ -155,7 +155,7 @@ const Settings = () => {
             <VoteWeightSlider
               username={userData.hiveUsername}
               onVoteWeightUpdate={(voteWeight) => {
-                console.log("Vote weight updated:", voteWeight);
+                // Vote weight updated
               }}
             />
           )}

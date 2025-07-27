@@ -283,9 +283,8 @@ export async function witnessVoteWithKeychain(username: string, witness: string)
     const witnessvote = await keychain
       .witnessVote(
         formParamsAsObject.data as WitnessVote);
-    console.log({ witnessvote });
   } catch (error) {
-    console.log({ error });
+    // Handle error silently
   }
 }
 

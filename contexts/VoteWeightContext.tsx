@@ -38,38 +38,21 @@ export const VoteWeightProvider: React.FC<VoteWeightProviderProps> = ({ children
 
   // Extract vote weight and disable slider preference from Hive account metadata
   useEffect(() => {
-    console.log("🔄 VoteWeightContext: Processing user data:", {
-      user,
-      hasHiveAccount: !!hiveAccount,
-      isLoading,
-      hasMetadata: !!hiveAccount?.json_metadata
-    });
-
     if (hiveAccount?.json_metadata) {
       try {
         const parsedMetadata = JSON.parse(hiveAccount.json_metadata);
         const customVoteWeight = parsedMetadata?.extensions?.vote_weight;
         const customDisableSlider = parsedMetadata?.extensions?.disable_slider;
         
-        console.log("📋 VoteWeightContext: Parsed metadata:", {
-          customVoteWeight,
-          customDisableSlider,
-          extensions: parsedMetadata?.extensions
-        });
-        
         if (typeof customVoteWeight === 'number' && customVoteWeight >= 0 && customVoteWeight <= 100) {
-          console.log("✅ VoteWeightContext: Setting custom vote weight:", customVoteWeight);
           setVoteWeight(customVoteWeight);
         } else {
-          console.log("🔄 VoteWeightContext: Using default vote weight:", DEFAULT_VOTE_WEIGHT);
           setVoteWeight(DEFAULT_VOTE_WEIGHT);
         }
         
         if (typeof customDisableSlider === 'boolean') {
-          console.log("✅ VoteWeightContext: Setting custom disable slider:", customDisableSlider);
           setDisableSlider(customDisableSlider);
         } else {
-          console.log("🔄 VoteWeightContext: Using default disable slider: false");
           setDisableSlider(false);
         }
       } catch (error) {
@@ -78,12 +61,9 @@ export const VoteWeightProvider: React.FC<VoteWeightProviderProps> = ({ children
         setDisableSlider(false);
       }
     } else if (user) {
-      console.log("🔄 VoteWeightContext: User logged in but no metadata, using defaults");
       // If user is logged in but no metadata, use defaults
       setVoteWeight(DEFAULT_VOTE_WEIGHT);
       setDisableSlider(false);
-    } else {
-      console.log("🔄 VoteWeightContext: No user or no hive account");
     }
   }, [hiveAccount, user]);
 
