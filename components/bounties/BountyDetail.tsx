@@ -11,7 +11,7 @@ import {
   VStack,
   useDisclosure,
 } from "@chakra-ui/react";
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { Discussion } from "@hiveio/dhive";
 import { getPostDate } from "@/lib/utils/GetPostDate";
 import { useComments } from "@/hooks/useComments";
@@ -24,6 +24,7 @@ import { useAioha } from "@aioha/react-ui";
 import useHivePower from "@/hooks/useHivePower";
 import BountyRewarder from "./BountyRewarder";
 import { DEFAULT_VOTE_WEIGHT } from "@/lib/utils/constants";
+import useVoteWeight from "@/hooks/useVoteWeight";
 
 interface BountyDetailProps {
   post: Discussion;
@@ -52,7 +53,8 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
 
   // Voting state
   const { aioha, user } = useAioha();
-  const [sliderValue, setSliderValue] = useState(DEFAULT_VOTE_WEIGHT);
+  const userVoteWeight = useVoteWeight(user || "");
+  const [sliderValue, setSliderValue] = useState(userVoteWeight);
   const [showSlider, setShowSlider] = useState(false);
   const [activeVotes, setActiveVotes] = useState(post.active_votes || []);
   const [voted, setVoted] = useState(
@@ -66,6 +68,11 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
     error: hivePowerError,
     estimateVoteValue,
   } = useHivePower(user);
+
+  // Update slider value when user's vote weight changes
+  useEffect(() => {
+    setSliderValue(userVoteWeight);
+  }, [userVoteWeight]);
 
   // Claim state
   const [isClaiming, setIsClaiming] = useState(false);

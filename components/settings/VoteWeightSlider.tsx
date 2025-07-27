@@ -13,11 +13,14 @@ import {
   useToast,
   Flex,
   Image,
+  Checkbox,
+  HStack,
 } from "@chakra-ui/react";
 import { useAioha } from "@aioha/react-ui";
 import { KeychainSDK, KeychainKeyTypes } from "keychain-sdk";
 import { DEFAULT_VOTE_WEIGHT } from "@/lib/utils/constants";
 import { Operation } from "@hiveio/dhive";
+import { useVoteWeightContext } from "@/contexts/VoteWeightContext";
 
 interface VoteWeightSliderProps {
   username: string;
@@ -27,31 +30,42 @@ interface VoteWeightSliderProps {
 
 const VoteWeightSlider: React.FC<VoteWeightSliderProps> = ({
   username,
-  currentVoteWeight = DEFAULT_VOTE_WEIGHT,
+  currentVoteWeight,
   onVoteWeightUpdate,
 }) => {
   const { user } = useAioha();
+  const { voteWeight, disableSlider, updateVoteWeight, updateDisableSlider, refreshVoteWeight } = useVoteWeightContext();
   const toast = useToast();
-  const [sliderValue, setSliderValue] = useState(currentVoteWeight);
+  const [sliderValue, setSliderValue] = useState(voteWeight);
+  const [disableSliderValue, setDisableSliderValue] = useState(disableSlider);
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
-  // Update slider value when currentVoteWeight changes
+  // Use the global vote weight if no currentVoteWeight is provided
+  const effectiveCurrentVoteWeight = currentVoteWeight ?? voteWeight;
+
+  // Update slider value when vote weight changes from context
   useEffect(() => {
-    setSliderValue(currentVoteWeight);
+    setSliderValue(effectiveCurrentVoteWeight);
+    setDisableSliderValue(disableSlider);
     setHasChanges(false);
-  }, [currentVoteWeight]);
+  }, [effectiveCurrentVoteWeight, disableSlider]);
 
   const handleSliderChange = (value: number) => {
     setSliderValue(value);
-    setHasChanges(value !== currentVoteWeight);
+    setHasChanges(value !== effectiveCurrentVoteWeight || disableSliderValue !== disableSlider);
+  };
+
+  const handleDisableSliderChange = (checked: boolean) => {
+    setDisableSliderValue(checked);
+    setHasChanges(sliderValue !== effectiveCurrentVoteWeight || checked !== disableSlider);
   };
 
   const handleSave = async () => {
     if (!user || user !== username) {
       toast({
         title: "Error",
-        description: "You can only update your own vote weight",
+        description: "You can only update your own vote weight preferences",
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -96,8 +110,9 @@ const VoteWeightSlider: React.FC<VoteWeightSliderProps> = ({
         currentMetadata.extensions = {};
       }
 
-      // Update vote weight in extensions
+      // Update vote weight and disable slider preference in extensions
       currentMetadata.extensions.vote_weight = sliderValue;
+      currentMetadata.extensions.disable_slider = disableSliderValue;
 
       // Create the account update operation
       const operation: Operation = [
@@ -121,12 +136,16 @@ const VoteWeightSlider: React.FC<VoteWeightSliderProps> = ({
       const result = await keychain.broadcast(formParamsAsObject.data as any);
 
       if (!result) {
-        throw new Error("Failed to update vote weight");
+        throw new Error("Failed to update vote weight preferences");
       }
 
+      // Update the global context immediately (optimistic update)
+      updateVoteWeight(sliderValue);
+      updateDisableSlider(disableSliderValue);
+
       toast({
-        title: "Vote Weight Updated!",
-        description: `Default vote weight set to ${sliderValue}%`,
+        title: "Preferences Updated!",
+        description: `Vote weight set to ${sliderValue}%${disableSliderValue ? ' and slider disabled' : ''}`,
         status: "success",
         duration: 3000,
         isClosable: true,
@@ -134,8 +153,13 @@ const VoteWeightSlider: React.FC<VoteWeightSliderProps> = ({
 
       setHasChanges(false);
       onVoteWeightUpdate?.(sliderValue);
+      
+      // Refresh from blockchain to ensure consistency
+      setTimeout(() => {
+        refreshVoteWeight();
+      }, 1000);
     } catch (error: any) {
-      console.error("Failed to update vote weight:", error);
+      console.error("Failed to update vote weight preferences:", error);
       
       // Check if it's a user cancellation
       if (error.message?.includes("user_cancel") || 
@@ -144,10 +168,10 @@ const VoteWeightSlider: React.FC<VoteWeightSliderProps> = ({
           error.message?.includes("User rejected") ||
           error.message?.includes("User denied")) {
         // Don't show error toast for user cancellation
-        console.log("User cancelled vote weight update");
+        console.log("User cancelled vote weight preferences update");
       } else {
         // Show error toast for actual errors
-        let errorMessage = "Failed to update vote weight";
+        let errorMessage = "Failed to update vote weight preferences";
         if (error.message?.includes("insufficient")) {
           errorMessage = "Insufficient resource credits to update";
         } else if (error.message?.includes("serialize")) {
@@ -234,7 +258,42 @@ const VoteWeightSlider: React.FC<VoteWeightSliderProps> = ({
             </Text>
           </Flex>
 
-
+          {/* Disable Slider Checkbox */}
+          <HStack spacing={3} mt={4}>
+            <Checkbox
+              isChecked={disableSliderValue}
+              onChange={(e) => handleDisableSliderChange(e.target.checked)}
+              size="lg"
+              bg="background"
+              borderColor="muted"
+              _checked={{
+                bg: "background",
+                borderColor: "primary",
+                color: "primary",
+              }}
+              sx={{
+                "& .chakra-checkbox__control": {
+                  bg: "background",
+                  borderColor: "muted",
+                },
+                "& .chakra-checkbox__control[data-checked]": {
+                  bg: "background",
+                  borderColor: "primary",
+                  color: "primary",
+                },
+              }}
+            >
+              <Text color="primary" fontSize="sm" fontWeight="medium">
+                Disable Slider
+              </Text>
+            </Checkbox>
+          </HStack>
+          
+          {disableSliderValue && (
+            <Text color="accent" fontSize="xs" mt={2} fontStyle="italic">
+              When disabled, upvote buttons will use your default vote weight without showing the slider
+            </Text>
+          )}
         </Box>
 
         <Button
@@ -248,12 +307,12 @@ const VoteWeightSlider: React.FC<VoteWeightSliderProps> = ({
           fontWeight="bold"
           size="lg"
         >
-          Save Vote Weight
+          Save Preferences
         </Button>
 
         {hasChanges && (
           <Text color="accent" fontSize="sm" textAlign="center">
-            Changes detected - click save to update your default vote weight
+            Changes detected - click save to update your vote weight preferences
           </Text>
         )}
       </VStack>

@@ -309,6 +309,7 @@ export default function PostCard({
                 }
               }}
               estimateVoteValue={estimateVoteValue}
+              isHivePowerLoading={isHivePowerLoading}
               variant="withVoteCount"
               size="sm"
             />
@@ -673,6 +674,7 @@ export default function PostCard({
                   }
                 }}
                 estimateVoteValue={estimateVoteValue}
+                isHivePowerLoading={isHivePowerLoading}
                 variant="withSlider"
                 size="sm"
               />
@@ -697,6 +699,7 @@ export default function PostCard({
                     }
                   }}
                   estimateVoteValue={estimateVoteValue}
+                  isHivePowerLoading={isHivePowerLoading}
                   variant="withSlider"
                   size="sm"
                 />

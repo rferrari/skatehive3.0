@@ -19,7 +19,7 @@ import { useAioha } from "@aioha/react-ui";
 import { Discussion } from "@hiveio/dhive";
 import VoteListPopover from "@/components/blog/VoteListModal";
 import { DEFAULT_VOTE_WEIGHT } from "@/lib/utils/constants";
-import useVoteWeight from "@/hooks/useVoteWeight";
+import { useVoteWeightContext } from "@/contexts/VoteWeightContext";
 
 interface VoteSliderProps {
     discussion: Discussion;
@@ -50,7 +50,7 @@ const VoteSlider = ({
 }: VoteSliderProps) => {
     const { aioha, user } = useAioha();
     const toast = useToast();
-    const userVoteWeight = useVoteWeight(user || "");
+      const { voteWeight: userVoteWeight, disableSlider, isLoading } = useVoteWeightContext();
     const [sliderValue, setSliderValue] = useState(userVoteWeight);
 
     // Update slider value when user's vote weight changes
@@ -59,15 +59,39 @@ const VoteSlider = ({
     }, [userVoteWeight]);
 
     const handleHeartClick = () => {
-        setShowSlider(!showSlider);
+        // Don't allow voting if user info is still loading
+        if (isLoading) {
+            toast({
+                title: "Please wait",
+                description: "Loading user preferences...",
+                status: "info",
+                duration: 2000,
+                isClosable: true,
+            });
+            return;
+        }
+
+        if (disableSlider) {
+            // If slider is disabled, vote directly with preferred weight
+            handleVoteWithWeight(userVoteWeight);
+        } else {
+            // Show slider if enabled
+            setShowSlider(!showSlider);
+        }
     };
 
-    const handleVote = async () => {
+    const handleVoteWithWeight = async (votePercentage: number) => {
+        console.log("🎯 VoteSlider handleVoteWithWeight called:", {
+            votePercentage,
+            discussion: `${discussion.author}/${discussion.permlink}`,
+            user
+        });
+
         try {
             const vote = await aioha.vote(
                 discussion.author,
                 discussion.permlink,
-                sliderValue * 100
+                votePercentage * 100
             );
 
             if (vote.success) {
@@ -77,7 +101,7 @@ const VoteSlider = ({
                 // Estimate the value and call onVoteSuccess if provided
                 if (estimateVoteValue && onVoteSuccess) {
                     try {
-                        const estimatedValue = await estimateVoteValue(sliderValue);
+                        const estimatedValue = await estimateVoteValue(votePercentage);
                         onVoteSuccess(estimatedValue);
                     } catch (e) {
                         onVoteSuccess();
@@ -102,7 +126,11 @@ const VoteSlider = ({
                 isClosable: true,
             });
         }
-        handleHeartClick();
+        
+        // Close slider if it was open
+        if (showSlider) {
+            setShowSlider(false);
+        }
     };
 
     // Deduplicate votes by voter (keep the last occurrence)
@@ -112,6 +140,70 @@ const VoteSlider = ({
     });
     const uniqueVotes = Array.from(uniqueVotesMap.values());
 
+    // If slider is disabled, don't show the slider interface
+    if (disableSlider) {
+        return variant === "feed" ? (
+            <HStack>
+                <Tooltip label="upvote" hasArrow openDelay={1000}>
+                    <Box
+                        as="span"
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="center"
+                        cursor="pointer"
+                        onClick={handleHeartClick}
+                        p={1}
+                        borderRadius="full"
+                        bg={!voted ? "muted" : undefined}
+                        _hover={!voted ? { bg: "primary" } : undefined}
+                        transition="background 0.2s, border-radius 0.2s"
+                    >
+                        <LuArrowUpRight
+                            size={24}
+                            color={voted ? "var(--chakra-colors-success)" : "var(--chakra-colors-accent)"}
+                            style={{ opacity: 1 }}
+                        />
+                    </Box>
+                </Tooltip>
+                <VoteListPopover
+                    trigger={
+                        <Button
+                            variant="ghost"
+                            size={size}
+                            ml={1}
+                            p={1}
+                            _hover={{ textDecoration: "underline" }}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {uniqueVotes.length}
+                        </Button>
+                    }
+                    votes={activeVotes}
+                    post={discussion}
+                />
+            </HStack>
+        ) : (
+            <HStack mt={3} spacing={4}>
+                <Button
+                    leftIcon={
+                        <LuArrowUpRight
+                            size={20}
+                            color={voted ? "var(--chakra-colors-success)" : "var(--chakra-colors-accent)"}
+                            style={{ opacity: 1 }}
+                        />
+                    }
+                    variant="ghost"
+                    onClick={handleHeartClick}
+                    size={size}
+                    _hover={{ bg: "accent" }}
+                >
+                    {uniqueVotes.length}
+                </Button>
+            </HStack>
+        );
+    }
+
+    // Show slider interface if enabled
     if (showSlider) {
         return (
             <Flex mt={4} alignItems="center">
@@ -150,25 +242,24 @@ const VoteSlider = ({
                 </Box>
                 <Button
                     size={size}
-                    onClick={handleVote}
+                    onClick={() => handleVoteWithWeight(sliderValue)}
                     ml={2}
                     bgGradient="linear(to-r, primary, accent)"
                     color="background"
                     _hover={{ bg: "accent" }}
                     fontWeight="bold"
-                    className="subtle-pulse"
                 >
-                    {variant === "feed" ? `\u00A0\u00A0\u00A0Vote ${sliderValue} %\u00A0\u00A0\u00A0` : `Vote ${sliderValue}%`}
+                    Vote {sliderValue}%
                 </Button>
-                <Button 
-                    size={size} 
-                    onClick={handleHeartClick} 
+                <Button
+                    size={size}
+                    onClick={() => setShowSlider(false)}
                     ml={2}
                     bg="muted"
                     color="primary"
                     _hover={{ bg: "muted", opacity: 0.8 }}
                 >
-                    {variant === "feed" ? "X" : "✕"}
+                    X
                 </Button>
             </Flex>
         );
@@ -235,28 +326,4 @@ const VoteSlider = ({
     );
 };
 
-const VoteSliderWithPulse = (props: VoteSliderProps) => {
-    return (
-        <>
-            <style jsx global>{`
-                .subtle-pulse {
-                    animation: subtle-pulse 2s infinite;
-                }
-                @keyframes subtle-pulse {
-                    0% {
-                        box-shadow: 0 0 0 0 var(--chakra-colors-accent);
-                    }
-                    70% {
-                        box-shadow: 0 0 0 4px rgba(72, 255, 128, 0);
-                    }
-                    100% {
-                        box-shadow: 0 0 0 0 rgba(72, 255, 128, 0);
-                    }
-                }
-            `}</style>
-            <VoteSlider {...props} />
-        </>
-    );
-};
-
-export default VoteSliderWithPulse;
+export default VoteSlider;
