@@ -40,7 +40,13 @@ export default function Sidebar() {
   const router = useRouter();
   const pathname = usePathname();
   const [bellAnimating, setBellAnimating] = useState(false);
+  const [isClientMounted, setIsClientMounted] = useState(false);
   const { themeName } = useTheme();
+
+  // Ensure client-side only rendering to prevent hydration mismatch
+  useEffect(() => {
+    setIsClientMounted(true);
+  }, []);
 
   // Safely get notification count with fallback
   let newNotificationCount = 0;
@@ -116,6 +122,10 @@ export default function Sidebar() {
       </Box>
     </Link>
   );
+
+  if (!isClientMounted) {
+    return null;
+  }
 
   return (
     <Box
