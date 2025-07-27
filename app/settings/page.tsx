@@ -12,6 +12,7 @@ import {
   AccordionButton,
   AccordionPanel,
   AccordionIcon,
+  Button,
 } from "@chakra-ui/react";
 import { useTheme, ThemeName, themeMap } from "../themeProvider";
 import LottieAnimation from "@/components/shared/LottieAnimation";
@@ -23,6 +24,7 @@ import VoteWeightSlider from "@/components/settings/VoteWeightSlider";
 import { useAioha } from "@aioha/react-ui";
 import useHiveAccount from "@/hooks/useHiveAccount";
 import useProfileData from "@/hooks/useProfileData";
+import { KeychainSDK, KeychainKeyTypes } from "keychain-sdk";
 
 const Settings = () => {
   const { themeName, setThemeName } = useTheme();
@@ -75,6 +77,92 @@ const Settings = () => {
       .split(/(?=[A-Z])|[-_]/)
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(" ");
+  };
+
+  const handleRestoreProfile = async () => {
+    if (!userData.hiveUsername) {
+      toast({
+        title: "Missing Credentials",
+        description: "Please log in to your Hive account",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    try {
+      const accountResp = await fetch("https://api.hive.blog", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          method: "condenser_api.get_accounts",
+          params: [[userData.hiveUsername]],
+          id: 1,
+        }),
+      }).then((res) => res.json());
+
+      if (!accountResp.result || accountResp.result.length === 0) {
+        throw new Error("Account not found");
+      }
+
+      let postingMetadata: any = {};
+      let jsonMetadata: any = {};
+      try {
+        if (accountResp.result[0].posting_json_metadata) {
+          postingMetadata = JSON.parse(accountResp.result[0].posting_json_metadata);
+        }
+      } catch {
+        postingMetadata = {};
+      }
+
+      try {
+        if (accountResp.result[0].json_metadata) {
+          jsonMetadata = JSON.parse(accountResp.result[0].json_metadata);
+        }
+      } catch {
+        jsonMetadata = {};
+      }
+
+      if (postingMetadata.skatehiveuser) delete postingMetadata.skatehiveuser;
+      if (postingMetadata.extensions) delete postingMetadata.extensions;
+      if (jsonMetadata.skatehiveuser) delete jsonMetadata.skatehiveuser;
+      if (jsonMetadata.extensions) delete jsonMetadata.extensions;
+
+      const keychain = new KeychainSDK(window);
+      const formParams = {
+        data: {
+          username: userData.hiveUsername,
+          operations: [
+            [
+              "account_update2",
+              {
+                account: userData.hiveUsername,
+                posting_json_metadata: JSON.stringify(postingMetadata),
+                json_metadata: JSON.stringify(jsonMetadata),
+                extensions: [],
+              },
+            ],
+          ],
+          method: KeychainKeyTypes.active,
+        },
+      };
+
+      const result = await keychain.broadcast(formParams.data as any);
+      if (!result) {
+        throw new Error("Profile restore failed");
+      }
+
+      toast({ title: "Profile Restored", status: "success", duration: 3000 });
+    } catch (err: any) {
+      toast({
+        title: "Restore Failed",
+        description: err?.message || "Unable to restore profile",
+        status: "error",
+        duration: 3000,
+      });
+    }
   };
 
   const buttonSources = [
@@ -158,6 +246,17 @@ const Settings = () => {
                 // Vote weight updated
               }}
             />
+          )}
+
+          {/* Restore Profile Button */}
+          {userData.hiveUsername && (
+            <Button
+              onClick={handleRestoreProfile}
+              colorScheme="red"
+              variant="outline"
+            >
+              Restore Profile
+            </Button>
           )}
 
           {/* Farcaster Account Link */}

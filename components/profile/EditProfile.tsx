@@ -18,12 +18,17 @@ import {
   Select,
   Text,
   Flex,
+  useToast,
 } from "@chakra-ui/react";
 import countryList from "react-select-country-list";
 import { ProfileData } from "./ProfilePage";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { useAioha } from "@aioha/react-ui";
+import { useFarcasterSession } from "@/hooks/useFarcasterSession";
 import { KeychainSDK, KeychainKeyTypes, Broadcast } from "keychain-sdk";
+import { Operation } from "@hiveio/dhive";
+import { migrateLegacyMetadata } from "@/lib/utils/metadataMigration";
+import MergeAccountModal from "./MergeAccountModal";
 
 interface EditProfileProps {
   isOpen: boolean;
@@ -52,7 +57,11 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
     const { connect, connectors, isPending } = useConnect();
     const { disconnect } = useDisconnect();
     const { user } = useAioha();
+    const { isAuthenticated: isFarcasterConnected, profile: farcasterProfile } =
+      useFarcasterSession();
     const [isEditingEthAddress, setIsEditingEthAddress] = useState(false);
+    const [showMergeModal, setShowMergeModal] = useState(false);
+    const toast = useToast();
 
     const countryOptions = useMemo(() => countryList().getData(), []);
 
@@ -72,6 +81,12 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
         setError(null);
       }
     }, [isOpen, profileData]);
+
+    useEffect(() => {
+      if (isOpen && (isConnected || isFarcasterConnected)) {
+        setShowMergeModal(true);
+      }
+    }, [isOpen, isConnected, isFarcasterConnected]);
 
     // Memoized form field handlers
     const handleFormChange = useCallback(
@@ -172,6 +187,137 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
       setIsEditingEthAddress(false);
     }, []);
 
+    const handleMergeAccounts = useCallback(async () => {
+      if (!user || user !== username || (!isConnected && !isFarcasterConnected)) {
+        setShowMergeModal(false);
+        return;
+      }
+
+      try {
+        const accountResp = await fetch("https://api.hive.blog", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            method: "condenser_api.get_accounts",
+            params: [[username]],
+            id: 1,
+          }),
+        }).then((res) => res.json());
+
+        if (!accountResp.result || accountResp.result.length === 0) {
+          throw new Error("Account not found");
+        }
+
+        let currentMetadata: any = {};
+        let postingMetadata: any = {};
+        try {
+          if (accountResp.result[0].json_metadata) {
+            currentMetadata = JSON.parse(accountResp.result[0].json_metadata);
+          }
+        } catch (error) {
+          console.log("No existing metadata or invalid JSON");
+        }
+        try {
+          if (accountResp.result[0].posting_json_metadata) {
+            postingMetadata = JSON.parse(
+              accountResp.result[0].posting_json_metadata
+            );
+          }
+        } catch {
+          postingMetadata = {};
+        }
+
+        const migrated = migrateLegacyMetadata(currentMetadata);
+        migrated.extensions = migrated.extensions || {};
+        migrated.extensions.wallets = migrated.extensions.wallets || {};
+        if (isConnected && address) {
+          migrated.extensions.wallets.primary_wallet = address;
+        }
+
+        if (isFarcasterConnected && farcasterProfile) {
+          migrated.extensions.farcaster = migrated.extensions.farcaster || {};
+          migrated.extensions.farcaster.username = farcasterProfile.username;
+          migrated.extensions.farcaster.fid = farcasterProfile.fid;
+          if (farcasterProfile.pfpUrl) {
+            migrated.extensions.farcaster.pfp_url = farcasterProfile.pfpUrl;
+            postingMetadata.profile = postingMetadata.profile || {};
+            postingMetadata.profile.profile_image = farcasterProfile.pfpUrl;
+          }
+          if (farcasterProfile.bio) {
+            migrated.extensions.farcaster.bio = farcasterProfile.bio;
+            postingMetadata.profile = postingMetadata.profile || {};
+            postingMetadata.profile.about = farcasterProfile.bio;
+          }
+          if (farcasterProfile.custody) {
+            migrated.extensions.wallets.custody_address = farcasterProfile.custody;
+          }
+          if (
+            Array.isArray(farcasterProfile.verifications) &&
+            farcasterProfile.verifications.length > 0
+          ) {
+            migrated.extensions.wallets.farcaster_verified_wallets =
+              farcasterProfile.verifications;
+          }
+        }
+
+        const operation: Operation = [
+          "account_update2",
+          {
+            account: username,
+            json_metadata: JSON.stringify(migrated),
+            posting_json_metadata: JSON.stringify(postingMetadata),
+            extensions: [],
+          },
+        ];
+
+        const keychain = new KeychainSDK(window);
+        const formParams = {
+          data: {
+            username: username,
+            operations: [operation],
+            method: KeychainKeyTypes.active,
+          },
+        };
+
+        const result = await keychain.broadcast(formParams.data as any);
+
+        if (!result) {
+          throw new Error("Merge failed");
+        }
+
+        const updatedData: Partial<ProfileData> = {};
+        if (address) updatedData.ethereum_address = address;
+        if (farcasterProfile?.pfpUrl) updatedData.profileImage = farcasterProfile.pfpUrl;
+        if (farcasterProfile?.bio) updatedData.about = farcasterProfile.bio;
+        onProfileUpdate(updatedData);
+        toast({
+          title: "Wallet Linked",
+          status: "success",
+          duration: 3000,
+        });
+      } catch (err: any) {
+        console.error("Failed to merge account data", err);
+        toast({
+          title: "Merge Failed",
+          description: err?.message || "Unable to update account",
+          status: "error",
+          duration: 3000,
+        });
+      } finally {
+        setShowMergeModal(false);
+      }
+    }, [
+      address,
+      isConnected,
+      isFarcasterConnected,
+      farcasterProfile,
+      user,
+      username,
+      onProfileUpdate,
+      toast,
+    ]);
+
     // Update handleSave to use Keychain SDK directly
     const handleSave = useCallback(async () => {
       setIsSaving(true);
@@ -217,12 +363,37 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
           },
         };
 
-        const extMetadata = {
-          extensions: {
-            eth_address: profileData.ethereum_address || "",
-            video_parts: profileData.video_parts || [],
-          },
-        };
+        const accountResp = await fetch("https://api.hive.blog", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            method: "condenser_api.get_accounts",
+            params: [[username]],
+            id: 1,
+          }),
+        }).then((res) => res.json());
+
+        if (!accountResp.result || accountResp.result.length === 0) {
+          throw new Error("Account not found");
+        }
+
+        let currentMetadata: any = {};
+        try {
+          if (accountResp.result[0].json_metadata) {
+            currentMetadata = JSON.parse(accountResp.result[0].json_metadata);
+          }
+        } catch (error) {
+          console.log("No existing metadata or invalid JSON");
+        }
+
+        const migrated = migrateLegacyMetadata(currentMetadata);
+        migrated.extensions = migrated.extensions || {};
+        migrated.extensions.wallets = migrated.extensions.wallets || {};
+        migrated.extensions.wallets.primary_wallet = profileData.ethereum_address || "";
+        migrated.extensions.video_parts = profileData.video_parts || [];
+
+        const extMetadata = migrated;
 
         const formParamsAsObject = {
           data: {
@@ -498,6 +669,7 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
     );
 
     return (
+      <>
       <Modal isOpen={isOpen} onClose={onClose} size="lg">
         <ModalOverlay blur={"lg"} />
         <ModalContent bg={"background"}>
@@ -614,9 +786,15 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
             >
               Save Changes
             </Button>
-          </ModalFooter>
-        </ModalContent>
+      </ModalFooter>
+    </ModalContent>
       </Modal>
+      <MergeAccountModal
+        isOpen={showMergeModal}
+        onClose={() => setShowMergeModal(false)}
+        onMerge={handleMergeAccounts}
+      />
+      </>
     );
   }
 );

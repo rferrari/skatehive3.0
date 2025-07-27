@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { getProfile } from "@/lib/hive/client-functions";
 import { ProfileData } from "../components/profile/ProfilePage";
 import { VideoPart } from "@/types/VideoPart";
+import { migrateLegacyMetadata } from "@/lib/utils/metadataMigration";
 
 interface HiveAccount {
     posting_json_metadata?: string;
@@ -53,10 +54,12 @@ export default function useProfileData(username: string, hiveAccount: HiveAccoun
 
                 if (hiveAccount?.json_metadata) {
                     try {
-                        const parsedMetadata = JSON.parse(hiveAccount.json_metadata);
-                        ethereum_address = parsedMetadata?.extensions?.eth_address || "";
-                        video_parts = parsedMetadata?.extensions?.video_parts || [];
-                        vote_weight = parsedMetadata?.extensions?.vote_weight || 51;
+                        const rawMetadata = JSON.parse(hiveAccount.json_metadata);
+                        const parsedMetadata = migrateLegacyMetadata(rawMetadata);
+                        ethereum_address = parsedMetadata.extensions?.wallets?.primary_wallet || "";
+                        video_parts = parsedMetadata.extensions?.video_parts || [];
+                        const defaultWeight = parsedMetadata.extensions?.settings?.voteSettings?.default_voting_weight;
+                        vote_weight = typeof defaultWeight === 'number' ? Math.round(defaultWeight / 100) : 51;
                     } catch (err) {
                         console.error("Failed to parse json_metadata", err);
                     }

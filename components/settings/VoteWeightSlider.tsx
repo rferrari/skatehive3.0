@@ -19,6 +19,7 @@ import {
 import { useAioha } from "@aioha/react-ui";
 import { KeychainSDK, KeychainKeyTypes } from "keychain-sdk";
 import { DEFAULT_VOTE_WEIGHT } from "@/lib/utils/constants";
+import { migrateLegacyMetadata } from "@/lib/utils/metadataMigration";
 import { Operation } from "@hiveio/dhive";
 import { useVoteWeightContext } from "@/contexts/VoteWeightContext";
 
@@ -96,7 +97,6 @@ const VoteWeightSlider: React.FC<VoteWeightSliderProps> = ({
       const account = accounts.result[0];
       let currentMetadata: any = {};
 
-      // Parse existing metadata
       try {
         if (account.json_metadata) {
           currentMetadata = JSON.parse(account.json_metadata);
@@ -105,21 +105,25 @@ const VoteWeightSlider: React.FC<VoteWeightSliderProps> = ({
         console.log("No existing metadata or invalid JSON");
       }
 
-      // Ensure extensions object exists
-      if (!currentMetadata.extensions) {
-        currentMetadata.extensions = {};
-      }
+      const migrated = migrateLegacyMetadata(currentMetadata);
+      migrated.extensions = migrated.extensions || {};
+      migrated.extensions.settings = migrated.extensions.settings || {};
+      migrated.extensions.settings.voteSettings =
+        migrated.extensions.settings.voteSettings || {
+          default_voting_weight: sliderValue * 100,
+          enable_slider: true,
+        };
 
-      // Update vote weight and disable slider preference in extensions
-      currentMetadata.extensions.vote_weight = sliderValue;
-      currentMetadata.extensions.disable_slider = disableSliderValue;
+      migrated.extensions.settings.voteSettings.default_voting_weight =
+        sliderValue * 100;
+      migrated.extensions.settings.voteSettings.enable_slider = !disableSliderValue;
 
       // Create the account update operation
       const operation: Operation = [
         "account_update2",
         {
           account: username,
-          json_metadata: JSON.stringify(currentMetadata),
+          json_metadata: JSON.stringify(migrated),
           posting_json_metadata: account.posting_json_metadata || "{}",
           extensions: [],
         },
