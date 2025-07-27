@@ -52,7 +52,8 @@ export default function SpotSnapComposer({
 
   const handleCompressedImageUpload = async (
     url: string | null,
-    fileName?: string
+    fileName?: string,
+    originalFile?: File
   ) => {
     if (!url) return;
     setIsLoading(true);
@@ -61,6 +62,12 @@ export default function SpotSnapComposer({
       const file = new File([blob], fileName || "compressed.jpg", {
         type: blob.type,
       });
+      
+      // Extract GPS from original file if available
+      if (originalFile) {
+        await extractGPS(originalFile);
+      }
+      
       const signature = await getFileSignature(file);
       const uploadUrl = await uploadImage(
         file,
@@ -178,12 +185,18 @@ export default function SpotSnapComposer({
     try {
       const gps = await exifr.gps(file);
       if (gps && gps.latitude && gps.longitude) {
-        setLat(translateCoordinateDirection(gps.latitude.toString()));
-        setLon(translateCoordinateDirection(gps.longitude.toString()));
+        const latStr = translateCoordinateDirection(gps.latitude.toString());
+        const lonStr = translateCoordinateDirection(gps.longitude.toString());
+        setLat(latStr);
+        setLon(lonStr);
+        // Auto-fill the address field with GPS coordinates
+        setAddress(`${latStr}, ${lonStr}`);
+        return true; // Return true if GPS data was found
       }
     } catch (e) {
       // No GPS data or error reading EXIF
     }
+    return false; // Return false if no GPS data found
   };
 
   // Drag and drop handlers (reuse SnapComposer style)
@@ -207,7 +220,7 @@ export default function SpotSnapComposer({
     for (const file of files) {
       if (file.type.startsWith("image/")) {
         // Extract GPS from EXIF if available
-        await extractGPS(file);
+        const hasGPS = await extractGPS(file);
         // For dropped images, compress and upload
         try {
           const options = {
@@ -216,9 +229,9 @@ export default function SpotSnapComposer({
             useWebWorker: true,
           };
           const compressedFile = await imageCompression(file, options);
-          const url = URL.createObjectURL(compressedFile);
-          await handleCompressedImageUpload(url, compressedFile.name);
-          URL.revokeObjectURL(url);
+                  const url = URL.createObjectURL(compressedFile);
+        await handleCompressedImageUpload(url, compressedFile.name, file);
+        URL.revokeObjectURL(url);
         } catch (err) {
           alert(
             "Error compressing image: " +
@@ -293,7 +306,9 @@ export default function SpotSnapComposer({
         </FormControl>
         {lat && lon && (
           <FormControl>
-            <FormLabel>GPS Coordinates (extracted from photo)</FormLabel>
+            <FormLabel color="green.500" fontWeight="bold">
+              📍 GPS Coordinates (extracted from photo)
+            </FormLabel>
             <HStack spacing={2}>
               <Input
                 placeholder="Latitude"
@@ -301,6 +316,9 @@ export default function SpotSnapComposer({
                 isReadOnly
                 isDisabled={isLoading}
                 size="sm"
+                bg="green.50"
+                borderColor="green.200"
+                _focus={{ borderColor: "green.400" }}
               />
               <Input
                 placeholder="Longitude"
@@ -308,12 +326,21 @@ export default function SpotSnapComposer({
                 isReadOnly
                 isDisabled={isLoading}
                 size="sm"
+                bg="green.50"
+                borderColor="green.200"
+                _focus={{ borderColor: "green.400" }}
               />
             </HStack>
           </FormControl>
         )}
         <FormControl>
-          <FormLabel>Address (if no GPS data in photo)</FormLabel>
+          <FormLabel>
+            Address {!lat && !lon && compressedImages.length > 0 && (
+              <Box as="span" color="orange.500" fontSize="sm">
+                (No GPS data found in photos - please enter address)
+              </Box>
+            )}
+          </FormLabel>
           <Input
             placeholder="e.g. 123 Skate St, New York, NY"
             value={address}

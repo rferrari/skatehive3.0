@@ -8,7 +8,7 @@ import React, {
 import imageCompression from "browser-image-compression";
 
 export interface ImageCompressorProps {
-  onUpload: (url: string | null, fileName?: string) => void;
+  onUpload: (url: string | null, fileName?: string, originalFile?: File) => void;
   isProcessing?: boolean;
   hideStatus?: boolean;
 }
@@ -87,7 +87,7 @@ const ImageCompressor = forwardRef<ImageCompressorRef, ImageCompressorProps>(
         const url = URL.createObjectURL(compressedFile);
         setBlobUrl(url);
         setStatus("Image compressed successfully!");
-        onUpload(url, compressedFile.name);
+        onUpload(url, compressedFile.name, file);
       } catch (err: any) {
         console.error(err);
         setError("Error compressing image.");
