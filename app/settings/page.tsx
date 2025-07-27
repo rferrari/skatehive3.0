@@ -126,19 +126,9 @@ const Settings = () => {
       }
 
       if (postingMetadata.skatehiveuser) delete postingMetadata.skatehiveuser;
-      if (postingMetadata.extensions?.skatehiveuser) {
-        delete postingMetadata.extensions.skatehiveuser;
-        if (Object.keys(postingMetadata.extensions).length === 0) {
-          delete postingMetadata.extensions;
-        }
-      }
+      if (postingMetadata.extensions) delete postingMetadata.extensions;
       if (jsonMetadata.skatehiveuser) delete jsonMetadata.skatehiveuser;
-      if (jsonMetadata.extensions?.skatehiveuser) {
-        delete jsonMetadata.extensions.skatehiveuser;
-        if (Object.keys(jsonMetadata.extensions).length === 0) {
-          delete jsonMetadata.extensions;
-        }
-      }
+      if (jsonMetadata.extensions) delete jsonMetadata.extensions;
 
       const keychain = new KeychainSDK(window);
       const formParams = {
