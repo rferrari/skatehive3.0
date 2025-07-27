@@ -1,10 +1,4 @@
-export interface SkatehiveVideoPart {
-  name: string;
-  filmmaker: string[];
-  friends: string[];
-  year: string;
-  url: string;
-}
+import { VideoPart } from './VideoPart';
 
 export interface SkatehiveExtensions {
   wallets?: {
@@ -18,7 +12,7 @@ export interface SkatehiveExtensions {
     fid?: number;
     username?: string;
   };
-  video_parts?: SkatehiveVideoPart[];
+  video_parts?: VideoPart[];
   other?: Record<string, any>;
   settings?: {
     voteSettings?: {
