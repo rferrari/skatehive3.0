@@ -209,7 +209,7 @@ export class SkateHiveNotifications {
                 title: '👤 New Follower',
                 body: `@${followerHiveUsername} started following you`,
                 targetUsers: [followedHiveUsername],
-                targetUrl: `https://skatehive.app/profile/${followerHiveUsername}`
+                targetUrl: `https://skatehive.app/user/${followerHiveUsername}`
             })
         });
     }

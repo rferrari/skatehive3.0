@@ -573,7 +573,7 @@ export class AutomatedNotificationService {
                     title = '👤 New Follower';
                     body = notification.msg || `@${author} started following you`;
                     if (author) {
-                        sourceUrl = `${baseUrl}/profile/${author}`;
+                        sourceUrl = `${baseUrl}/user/${author}`;
                     }
                     break;
 
