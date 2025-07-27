@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { useAioha } from "@aioha/react-ui";
 import { DEFAULT_VOTE_WEIGHT } from "@/lib/utils/constants";
 import useHiveAccount from "@/hooks/useHiveAccount";
+import { migrateLegacyMetadata } from "@/lib/utils/metadataMigration";
 
 interface VoteWeightContextType {
   voteWeight: number;
@@ -40,28 +41,31 @@ export const VoteWeightProvider: React.FC<VoteWeightProviderProps> = ({ children
   useEffect(() => {
     if (hiveAccount?.json_metadata) {
       try {
-        const parsedMetadata = JSON.parse(hiveAccount.json_metadata);
-        const customVoteWeight = parsedMetadata?.extensions?.vote_weight;
-        const customDisableSlider = parsedMetadata?.extensions?.disable_slider;
-        
-        if (typeof customVoteWeight === 'number' && customVoteWeight >= 0 && customVoteWeight <= 100) {
-          setVoteWeight(customVoteWeight);
+        const rawMetadata = JSON.parse(hiveAccount.json_metadata);
+        const parsedMetadata = migrateLegacyMetadata(rawMetadata);
+        const weight = parsedMetadata.extensions?.settings?.voteSettings?.default_voting_weight;
+        const enableSlider = parsedMetadata.extensions?.settings?.voteSettings?.enable_slider;
+
+        if (typeof weight === 'number' && weight >= 0) {
+          setVoteWeight(Math.round(weight / 100));
         } else {
           setVoteWeight(DEFAULT_VOTE_WEIGHT);
         }
-        
-        if (typeof customDisableSlider === 'boolean') {
-          setDisableSlider(customDisableSlider);
+
+        if (typeof enableSlider === 'boolean') {
+          setDisableSlider(!enableSlider);
         } else {
           setDisableSlider(false);
         }
       } catch (error) {
-        console.error("❌ VoteWeightContext: Failed to parse vote weight preferences from metadata:", error);
+        console.error(
+          "❌ VoteWeightContext: Failed to parse vote weight preferences from metadata:",
+          error
+        );
         setVoteWeight(DEFAULT_VOTE_WEIGHT);
         setDisableSlider(false);
       }
     } else if (user) {
-      // If user is logged in but no metadata, use defaults
       setVoteWeight(DEFAULT_VOTE_WEIGHT);
       setDisableSlider(false);
     }

@@ -24,6 +24,8 @@ import { ProfileData } from "./ProfilePage";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { useAioha } from "@aioha/react-ui";
 import { KeychainSDK, KeychainKeyTypes, Broadcast } from "keychain-sdk";
+import { migrateLegacyMetadata } from "@/lib/utils/metadataMigration";
+import MergeAccountModal from "./MergeAccountModal";
 
 interface EditProfileProps {
   isOpen: boolean;
@@ -53,6 +55,7 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
     const { disconnect } = useDisconnect();
     const { user } = useAioha();
     const [isEditingEthAddress, setIsEditingEthAddress] = useState(false);
+    const [showMergeModal, setShowMergeModal] = useState(false);
 
     const countryOptions = useMemo(() => countryList().getData(), []);
 
@@ -72,6 +75,12 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
         setError(null);
       }
     }, [isOpen, profileData]);
+
+    useEffect(() => {
+      if (isOpen && isConnected) {
+        setShowMergeModal(true);
+      }
+    }, [isOpen, isConnected]);
 
     // Memoized form field handlers
     const handleFormChange = useCallback(
@@ -217,12 +226,37 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
           },
         };
 
-        const extMetadata = {
-          extensions: {
-            eth_address: profileData.ethereum_address || "",
-            video_parts: profileData.video_parts || [],
-          },
-        };
+        const accountResp = await fetch("https://api.hive.blog", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            method: "condenser_api.get_accounts",
+            params: [[username]],
+            id: 1,
+          }),
+        }).then((res) => res.json());
+
+        if (!accountResp.result || accountResp.result.length === 0) {
+          throw new Error("Account not found");
+        }
+
+        let currentMetadata: any = {};
+        try {
+          if (accountResp.result[0].json_metadata) {
+            currentMetadata = JSON.parse(accountResp.result[0].json_metadata);
+          }
+        } catch (error) {
+          console.log("No existing metadata or invalid JSON");
+        }
+
+        const migrated = migrateLegacyMetadata(currentMetadata);
+        migrated.extensions = migrated.extensions || {};
+        migrated.extensions.wallets = migrated.extensions.wallets || {};
+        migrated.extensions.wallets.primary_wallet = profileData.ethereum_address || "";
+        migrated.extensions.video_parts = profileData.video_parts || [];
+
+        const extMetadata = migrated;
 
         const formParamsAsObject = {
           data: {
@@ -498,6 +532,7 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
     );
 
     return (
+      <>
       <Modal isOpen={isOpen} onClose={onClose} size="lg">
         <ModalOverlay blur={"lg"} />
         <ModalContent bg={"background"}>
@@ -614,9 +649,15 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
             >
               Save Changes
             </Button>
-          </ModalFooter>
-        </ModalContent>
+      </ModalFooter>
+    </ModalContent>
       </Modal>
+      <MergeAccountModal
+        isOpen={showMergeModal}
+        onClose={() => setShowMergeModal(false)}
+        onMerge={() => setShowMergeModal(false)}
+      />
+      </>
     );
   }
 );
