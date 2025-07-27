@@ -3,7 +3,6 @@
 import { useState, useMemo } from "react";
 import {
   Box,
-  Flex,
   Text,
   Avatar,
   Badge,
