@@ -171,6 +171,18 @@ export default function AuthButton() {
         migrated.extensions.farcaster = migrated.extensions.farcaster || {};
         migrated.extensions.farcaster.username = farcasterProfile.username;
         migrated.extensions.farcaster.fid = farcasterProfile.fid;
+
+        migrated.extensions.wallets = migrated.extensions.wallets || {};
+        if (farcasterProfile.custody) {
+          migrated.extensions.wallets.custody_address = farcasterProfile.custody;
+        }
+        if (
+          Array.isArray(farcasterProfile.verifications) &&
+          farcasterProfile.verifications.length > 0
+        ) {
+          migrated.extensions.wallets.farcaster_verified_wallets =
+            farcasterProfile.verifications;
+        }
       }
 
       const operation: Operation = [
