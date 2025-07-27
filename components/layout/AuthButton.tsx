@@ -151,12 +151,22 @@ export default function AuthButton() {
       }
 
       let currentMetadata: any = {};
+      let postingMetadata: any = {};
       try {
         if (accountResp.result[0].json_metadata) {
           currentMetadata = JSON.parse(accountResp.result[0].json_metadata);
         }
       } catch {
         // ignore parse errors
+      }
+      try {
+        if (accountResp.result[0].posting_json_metadata) {
+          postingMetadata = JSON.parse(
+            accountResp.result[0].posting_json_metadata
+          );
+        }
+      } catch {
+        postingMetadata = {};
       }
 
       const migrated = migrateLegacyMetadata(currentMetadata);
@@ -171,6 +181,16 @@ export default function AuthButton() {
         migrated.extensions.farcaster = migrated.extensions.farcaster || {};
         migrated.extensions.farcaster.username = farcasterProfile.username;
         migrated.extensions.farcaster.fid = farcasterProfile.fid;
+        if (farcasterProfile.pfpUrl) {
+          migrated.extensions.farcaster.pfp_url = farcasterProfile.pfpUrl;
+          postingMetadata.profile = postingMetadata.profile || {};
+          postingMetadata.profile.profile_image = farcasterProfile.pfpUrl;
+        }
+        if (farcasterProfile.bio) {
+          migrated.extensions.farcaster.bio = farcasterProfile.bio;
+          postingMetadata.profile = postingMetadata.profile || {};
+          postingMetadata.profile.about = farcasterProfile.bio;
+        }
 
         migrated.extensions.wallets = migrated.extensions.wallets || {};
         if (farcasterProfile.custody) {
@@ -190,8 +210,7 @@ export default function AuthButton() {
         {
           account: user,
           json_metadata: JSON.stringify(migrated),
-          posting_json_metadata:
-            accountResp.result[0].posting_json_metadata || "{}",
+          posting_json_metadata: JSON.stringify(postingMetadata),
           extensions: [],
         },
       ];

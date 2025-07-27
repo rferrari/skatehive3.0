@@ -36,6 +36,7 @@ export function useFarcasterSession() {
         fid: profile.fid,
         username: profile.username,
         pfpUrl: profile.pfpUrl,
+        bio: profile.bio,
         displayName: profile.displayName,
         custody: profile.custody,
         verifications: profile.verifications,

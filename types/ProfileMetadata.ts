@@ -11,6 +11,8 @@ export interface SkatehiveExtensions {
   farcaster?: {
     fid?: number;
     username?: string;
+    pfp_url?: string;
+    bio?: string;
   };
   video_parts?: VideoPart[];
   other?: Record<string, any>;

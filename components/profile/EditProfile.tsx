@@ -24,6 +24,7 @@ import countryList from "react-select-country-list";
 import { ProfileData } from "./ProfilePage";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { useAioha } from "@aioha/react-ui";
+import { useFarcasterSession } from "@/hooks/useFarcasterSession";
 import { KeychainSDK, KeychainKeyTypes, Broadcast } from "keychain-sdk";
 import { Operation } from "@hiveio/dhive";
 import { migrateLegacyMetadata } from "@/lib/utils/metadataMigration";
@@ -56,6 +57,8 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
     const { connect, connectors, isPending } = useConnect();
     const { disconnect } = useDisconnect();
     const { user } = useAioha();
+    const { isAuthenticated: isFarcasterConnected, profile: farcasterProfile } =
+      useFarcasterSession();
     const [isEditingEthAddress, setIsEditingEthAddress] = useState(false);
     const [showMergeModal, setShowMergeModal] = useState(false);
     const toast = useToast();
@@ -80,10 +83,10 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
     }, [isOpen, profileData]);
 
     useEffect(() => {
-      if (isOpen && isConnected) {
+      if (isOpen && (isConnected || isFarcasterConnected)) {
         setShowMergeModal(true);
       }
-    }, [isOpen, isConnected]);
+    }, [isOpen, isConnected, isFarcasterConnected]);
 
     // Memoized form field handlers
     const handleFormChange = useCallback(
@@ -185,7 +188,7 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
     }, []);
 
     const handleMergeAccounts = useCallback(async () => {
-      if (!user || user !== username || !isConnected || !address) {
+      if (!user || user !== username || (!isConnected && !isFarcasterConnected)) {
         setShowMergeModal(false);
         return;
       }
@@ -207,6 +210,7 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
         }
 
         let currentMetadata: any = {};
+        let postingMetadata: any = {};
         try {
           if (accountResp.result[0].json_metadata) {
             currentMetadata = JSON.parse(accountResp.result[0].json_metadata);
@@ -214,19 +218,55 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
         } catch (error) {
           console.log("No existing metadata or invalid JSON");
         }
+        try {
+          if (accountResp.result[0].posting_json_metadata) {
+            postingMetadata = JSON.parse(
+              accountResp.result[0].posting_json_metadata
+            );
+          }
+        } catch {
+          postingMetadata = {};
+        }
 
         const migrated = migrateLegacyMetadata(currentMetadata);
         migrated.extensions = migrated.extensions || {};
         migrated.extensions.wallets = migrated.extensions.wallets || {};
-        migrated.extensions.wallets.primary_wallet = address;
+        if (isConnected && address) {
+          migrated.extensions.wallets.primary_wallet = address;
+        }
+
+        if (isFarcasterConnected && farcasterProfile) {
+          migrated.extensions.farcaster = migrated.extensions.farcaster || {};
+          migrated.extensions.farcaster.username = farcasterProfile.username;
+          migrated.extensions.farcaster.fid = farcasterProfile.fid;
+          if (farcasterProfile.pfpUrl) {
+            migrated.extensions.farcaster.pfp_url = farcasterProfile.pfpUrl;
+            postingMetadata.profile = postingMetadata.profile || {};
+            postingMetadata.profile.profile_image = farcasterProfile.pfpUrl;
+          }
+          if (farcasterProfile.bio) {
+            migrated.extensions.farcaster.bio = farcasterProfile.bio;
+            postingMetadata.profile = postingMetadata.profile || {};
+            postingMetadata.profile.about = farcasterProfile.bio;
+          }
+          if (farcasterProfile.custody) {
+            migrated.extensions.wallets.custody_address = farcasterProfile.custody;
+          }
+          if (
+            Array.isArray(farcasterProfile.verifications) &&
+            farcasterProfile.verifications.length > 0
+          ) {
+            migrated.extensions.wallets.farcaster_verified_wallets =
+              farcasterProfile.verifications;
+          }
+        }
 
         const operation: Operation = [
           "account_update2",
           {
             account: username,
             json_metadata: JSON.stringify(migrated),
-            posting_json_metadata:
-              accountResp.result[0].posting_json_metadata || "{}",
+            posting_json_metadata: JSON.stringify(postingMetadata),
             extensions: [],
           },
         ];
@@ -246,7 +286,11 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
           throw new Error("Merge failed");
         }
 
-        onProfileUpdate({ ethereum_address: address });
+        const updatedData: Partial<ProfileData> = {};
+        if (address) updatedData.ethereum_address = address;
+        if (farcasterProfile?.pfpUrl) updatedData.profileImage = farcasterProfile.pfpUrl;
+        if (farcasterProfile?.bio) updatedData.about = farcasterProfile.bio;
+        onProfileUpdate(updatedData);
         toast({
           title: "Wallet Linked",
           status: "success",
@@ -266,6 +310,8 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
     }, [
       address,
       isConnected,
+      isFarcasterConnected,
+      farcasterProfile,
       user,
       username,
       onProfileUpdate,
