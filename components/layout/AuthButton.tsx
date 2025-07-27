@@ -24,6 +24,8 @@ import ConnectionModal from "./ConnectionModal";
 import useHiveAccount from "@/hooks/useHiveAccount";
 import { migrateLegacyMetadata } from "@/lib/utils/metadataMigration";
 import MergeAccountModal from "../profile/MergeAccountModal";
+import { KeychainSDK, KeychainKeyTypes } from "keychain-sdk";
+import { Operation } from "@hiveio/dhive";
 
 // OnchainKit component class names
 const ONCHAIN_AVATAR_CLASS = "custom-onchain-avatar";
@@ -125,6 +127,95 @@ export default function AuthButton() {
   const [showMergeModal, setShowMergeModal] = useState(false);
   const prevEthRef = useRef(isEthereumConnected);
   const prevFcRef = useRef(isFarcasterConnected);
+
+  const handleMergeAccounts = async () => {
+    if (!user) {
+      setShowMergeModal(false);
+      return;
+    }
+
+    try {
+      const accountResp = await fetch("https://api.hive.blog", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          method: "condenser_api.get_accounts",
+          params: [[user]],
+          id: 1,
+        }),
+      }).then((res) => res.json());
+
+      if (!accountResp.result || accountResp.result.length === 0) {
+        throw new Error("Account not found");
+      }
+
+      let currentMetadata: any = {};
+      try {
+        if (accountResp.result[0].json_metadata) {
+          currentMetadata = JSON.parse(accountResp.result[0].json_metadata);
+        }
+      } catch {
+        // ignore parse errors
+      }
+
+      const migrated = migrateLegacyMetadata(currentMetadata);
+      migrated.extensions = migrated.extensions || {};
+
+      if (isEthereumConnected && ethereumAddress) {
+        migrated.extensions.wallets = migrated.extensions.wallets || {};
+        migrated.extensions.wallets.primary_wallet = ethereumAddress;
+      }
+
+      if (isFarcasterConnected && farcasterProfile) {
+        migrated.extensions.farcaster = migrated.extensions.farcaster || {};
+        migrated.extensions.farcaster.username = farcasterProfile.username;
+        migrated.extensions.farcaster.fid = farcasterProfile.fid;
+      }
+
+      const operation: Operation = [
+        "account_update2",
+        {
+          account: user,
+          json_metadata: JSON.stringify(migrated),
+          posting_json_metadata:
+            accountResp.result[0].posting_json_metadata || "{}",
+          extensions: [],
+        },
+      ];
+
+      const keychain = new KeychainSDK(window);
+      const formParams = {
+        data: {
+          username: user,
+          operations: [operation],
+          method: KeychainKeyTypes.active,
+        },
+      };
+
+      const result = await keychain.broadcast(formParams.data as any);
+
+      if (!result) {
+        throw new Error("Merge failed");
+      }
+
+      toast({
+        title: "Profile Updated",
+        status: "success",
+        duration: 3000,
+      });
+    } catch (err: any) {
+      console.error("Failed to merge accounts", err);
+      toast({
+        title: "Merge Failed",
+        description: err?.message || "Unable to update account",
+        status: "error",
+        duration: 3000,
+      });
+    } finally {
+      setShowMergeModal(false);
+    }
+  };
 
   // Hidden Farcaster sign-in state
   const hiddenSignInRef = React.useRef<HTMLDivElement>(null);
@@ -402,7 +493,7 @@ export default function AuthButton() {
       <MergeAccountModal
         isOpen={showMergeModal}
         onClose={() => setShowMergeModal(false)}
-        onMerge={() => setShowMergeModal(false)}
+        onMerge={handleMergeAccounts}
       />
     </>
   );

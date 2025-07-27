@@ -18,12 +18,14 @@ import {
   Select,
   Text,
   Flex,
+  useToast,
 } from "@chakra-ui/react";
 import countryList from "react-select-country-list";
 import { ProfileData } from "./ProfilePage";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { useAioha } from "@aioha/react-ui";
 import { KeychainSDK, KeychainKeyTypes, Broadcast } from "keychain-sdk";
+import { Operation } from "@hiveio/dhive";
 import { migrateLegacyMetadata } from "@/lib/utils/metadataMigration";
 import MergeAccountModal from "./MergeAccountModal";
 
@@ -56,6 +58,7 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
     const { user } = useAioha();
     const [isEditingEthAddress, setIsEditingEthAddress] = useState(false);
     const [showMergeModal, setShowMergeModal] = useState(false);
+    const toast = useToast();
 
     const countryOptions = useMemo(() => countryList().getData(), []);
 
@@ -180,6 +183,94 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
     const handleCancelEthEdit = useCallback(() => {
       setIsEditingEthAddress(false);
     }, []);
+
+    const handleMergeAccounts = useCallback(async () => {
+      if (!user || user !== username || !isConnected || !address) {
+        setShowMergeModal(false);
+        return;
+      }
+
+      try {
+        const accountResp = await fetch("https://api.hive.blog", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            method: "condenser_api.get_accounts",
+            params: [[username]],
+            id: 1,
+          }),
+        }).then((res) => res.json());
+
+        if (!accountResp.result || accountResp.result.length === 0) {
+          throw new Error("Account not found");
+        }
+
+        let currentMetadata: any = {};
+        try {
+          if (accountResp.result[0].json_metadata) {
+            currentMetadata = JSON.parse(accountResp.result[0].json_metadata);
+          }
+        } catch (error) {
+          console.log("No existing metadata or invalid JSON");
+        }
+
+        const migrated = migrateLegacyMetadata(currentMetadata);
+        migrated.extensions = migrated.extensions || {};
+        migrated.extensions.wallets = migrated.extensions.wallets || {};
+        migrated.extensions.wallets.primary_wallet = address;
+
+        const operation: Operation = [
+          "account_update2",
+          {
+            account: username,
+            json_metadata: JSON.stringify(migrated),
+            posting_json_metadata:
+              accountResp.result[0].posting_json_metadata || "{}",
+            extensions: [],
+          },
+        ];
+
+        const keychain = new KeychainSDK(window);
+        const formParams = {
+          data: {
+            username: username,
+            operations: [operation],
+            method: KeychainKeyTypes.active,
+          },
+        };
+
+        const result = await keychain.broadcast(formParams.data as any);
+
+        if (!result) {
+          throw new Error("Merge failed");
+        }
+
+        onProfileUpdate({ ethereum_address: address });
+        toast({
+          title: "Wallet Linked",
+          status: "success",
+          duration: 3000,
+        });
+      } catch (err: any) {
+        console.error("Failed to merge account data", err);
+        toast({
+          title: "Merge Failed",
+          description: err?.message || "Unable to update account",
+          status: "error",
+          duration: 3000,
+        });
+      } finally {
+        setShowMergeModal(false);
+      }
+    }, [
+      address,
+      isConnected,
+      user,
+      username,
+      onProfileUpdate,
+      toast,
+    ]);
 
     // Update handleSave to use Keychain SDK directly
     const handleSave = useCallback(async () => {
@@ -655,7 +746,7 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
       <MergeAccountModal
         isOpen={showMergeModal}
         onClose={() => setShowMergeModal(false)}
-        onMerge={() => setShowMergeModal(false)}
+        onMerge={handleMergeAccounts}
       />
       </>
     );
