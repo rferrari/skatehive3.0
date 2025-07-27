@@ -67,7 +67,7 @@ type SortOption =
   | "last_updated";
 
 export default function LeaderboardClient({ skatersData }: Props) {
-  const [sortBy, setSortBy] = useState<SortOption>("points");
+  const [sortBy, setSortBy] = useState<SortOption>("posts");
   const [isRulesOpen, setIsRulesOpen] = useState(false);
   const toast = useToast();
   const isMobile = useIsMobile();
@@ -116,16 +116,26 @@ export default function LeaderboardClient({ skatersData }: Props) {
         case "hive":
           return b.hive_balance - a.hive_balance;
         case "eth":
-          // Sort by eth address alphabetically (or you can implement a custom logic)
-          return (b.eth_address || "").localeCompare(a.eth_address || "");
+          // Sort by post count first, then by ETH address presence
+          // This shows active users who haven't connected ETH
+          const aHasEth = a.eth_address && a.eth_address !== "0x0000000000000000000000000000000000000000";
+          const bHasEth = b.eth_address && b.eth_address !== "0x0000000000000000000000000000000000000000";
+          
+          if (aHasEth === bHasEth) {
+            return b.post_count - a.post_count; // Same ETH status, sort by activity
+          }
+          return aHasEth ? 1 : -1; // Users without ETH rank higher
         case "gnars_balance":
           return b.gnars_balance - a.gnars_balance;
         case "giveth_donations_usd":
           return b.giveth_donations_usd - a.giveth_donations_usd;
         case "witness":
-          return (
-            (b.has_voted_in_witness ? 1 : 0) - (a.has_voted_in_witness ? 1 : 0)
-          );
+          // Sort by post count first, then by witness vote presence
+          // This shows active users who haven't voted for witness
+          if (a.has_voted_in_witness === b.has_voted_in_witness) {
+            return b.post_count - a.post_count; // Same witness status, sort by activity
+          }
+          return a.has_voted_in_witness ? 1 : -1; // Users without witness vote rank higher
         case "last_updated":
           return (
             new Date(b.last_updated).getTime() -
@@ -138,7 +148,27 @@ export default function LeaderboardClient({ skatersData }: Props) {
     return sorted.slice(0, 50); // Top 50
   }, [skatersData, sortBy]);
 
-  const getRankIcon = (rank: number) => {
+  const getRankIcon = (rank: number, sortBy: SortOption, skater: SkaterData) => {
+    // For binary filters, show checkmark/X instead of rankings
+    if (sortBy === "witness") {
+      return skater.has_voted_in_witness ? (
+        <Text fontSize="lg" color="green.400">✅</Text>
+      ) : (
+        <Text fontSize="lg" color="red.400">❌</Text>
+      );
+    }
+    
+    if (sortBy === "eth") {
+      const hasEthAddress = skater.eth_address && 
+        skater.eth_address !== "0x0000000000000000000000000000000000000000";
+      return hasEthAddress ? (
+        <Text fontSize="lg" color="green.400">✅</Text>
+      ) : (
+        <Text fontSize="lg" color="red.400">❌</Text>
+      );
+    }
+    
+    // For all other categories, show normal trophy rankings
     if (rank === 1) return <Text fontSize="xl">🏆</Text>;
     if (rank === 2) return <Text fontSize="xl">🥈</Text>;
     if (rank === 3) return <Text fontSize="xl">🥉</Text>;
@@ -324,15 +354,15 @@ export default function LeaderboardClient({ skatersData }: Props) {
               >
                 <option value="points">🏆 Points</option>
                 <option value="power">⚡ Power</option>
-                <option value="posts">💬 Posts</option>
-                <option value="nfts">🎨 NFTs</option>
-                <option value="gnars_balance">🟢 Gnars NFTs</option>
-                <option value="gnars">🪙 Gnars Votes</option>
+                <option value="posts">💻 Posts</option>
+                <option value="nfts">🎨 Skatehive NFTs</option>
+                <option value="gnars_balance">🖼️ Gnars NFTs</option>
+                <option value="gnars">🪙 Gnars Voters</option>
                 <option value="donations">🎁 Donations</option>
                 <option value="hive">💰 Hive</option>
-                <option value="eth">🦄 ETH</option>
+                <option value="eth">🦄 Missing ETH</option>
                 <option value="giveth_donations_usd">🎁 Donations ($)</option>
-                <option value="witness">🗳️ Witness</option>
+                <option value="witness">🗳️ Missing Witness</option>
                 <option value="last_updated">⏰ Last Updated</option>
               </Select>
             </HStack>
@@ -422,7 +452,7 @@ export default function LeaderboardClient({ skatersData }: Props) {
                       _groupHover={{ bg: "muted" }}
                     >
                       <HStack spacing={2}>
-                        <Box minW="30px">{getRankIcon(rank)}</Box>
+                        <Box minW="30px">{getRankIcon(rank, sortBy, skater)}</Box>
                         <Avatar
                           src={`https://images.hive.blog/u/${skater.hive_author}/avatar/small`}
                           name={skater.hive_author}

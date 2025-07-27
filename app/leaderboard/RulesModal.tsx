@@ -34,14 +34,13 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
               🛹 What is the Skatehive Leaderboard?
             </Text>
             <Text fontSize="sm" color="primary" mb={4}>
-              The leaderboard ranks top Skatehive contributors using data from
-              Hive and Ethereum. Points are determined by skatehive-centric
-              blockchain metrics. Your hive power, Skatehive NFTs and supporting
-              the Skatehive witness (hive node operator) are all factors in your
-              score.
+              The Skatehive Leaderboard ranks top contributors based on their activity and holdings across Hive and Ethereum blockchains. Your score is calculated using Skatehive-centric metrics, including Hive Power, Skatehive NFTs, witness votes, posts, snaps, and more. Show off your contributions and skate your way to the top!
             </Text>
             <Text fontWeight="bold" mb={2} color="primary">
               🌟 How You Earn Points
+            </Text>
+            <Text fontSize="sm" color="primary" mb={3}>
+              Points are calculated based on the following metrics, with caps and penalties applied to ensure fairness:
             </Text>
             <Box
               as="table"
@@ -75,7 +74,7 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
                       color: "var(--chakra-colors-background)",
                     }}
                   >
-                    Points
+                    Points Calculation
                   </th>
                 </tr>
               </thead>
@@ -83,74 +82,108 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
                 <tr>
                   <td style={{ padding: 6 }}>Hive Power (HP)</td>
                   <td style={{ padding: 6 }}>
-                    0.5 points per HP, capped at 12,000 HP (max 6,000 points)
+                    0.5 points per HP, capped at 12,000 HP (max 6,000 points). <strong>Zero HP</strong>: -5,000 points.
                   </td>
                 </tr>
                 <tr>
-                  <td style={{ padding: 6 }}>Number of Posts</td>
+                  <td style={{ padding: 6 }}>Posts and Snaps Score</td>
                   <td style={{ padding: 6 }}>
-                    0.1 points per post, capped at 3,000 posts (max 300 points)
+                    Posts score × 27 + Snaps score × 10 × (weekly snaps / total snaps, capped at 20 snaps). <strong>Zero score</strong>: -2,000 points.
                   </td>
                 </tr>
                 <tr>
                   <td style={{ padding: 6 }}>Skatehive NFTs</td>
-                  <td style={{ padding: 6 }}>50 points per Skatehive NFT</td>
-                </tr>
-                <tr>
-                  <td style={{ padding: 6 }}>Gnars NFTs</td>
-                  <td style={{ padding: 6 }}>25 points per Gnars NFT</td>
+                  <td style={{ padding: 6 }}>
+                    50 points per Skatehive NFT. <strong>Zero NFTs</strong>: -900 points.
+                  </td>
                 </tr>
                 <tr>
                   <td style={{ padding: 6 }}>Gnars Votes</td>
-                  <td style={{ padding: 6 }}>30 points per Gnars Vote</td>
+                  <td style={{ padding: 6 }}>
+                    30 points per Gnars Vote. <strong>Zero votes</strong>: -300 points.
+                  </td>
                 </tr>
                 <tr>
                   <td style={{ padding: 6 }}>HBD Savings</td>
                   <td style={{ padding: 6 }}>
-                    0.2 points per HBD in savings, capped at 1,000 HBD (max 200
-                    points)
+                    0.2 points per HBD in savings, capped at 1,000 HBD (max 200 points). <strong>Zero HBD</strong>: -200 points.
                   </td>
                 </tr>
                 <tr>
                   <td style={{ padding: 6 }}>Hive Balance</td>
                   <td style={{ padding: 6 }}>
-                    0.1 points per Hive, capped at 1,000 Hive (max 100 points)
+                    0.1 points per Hive, capped at 1,000 Hive (max 100 points). <strong>Zero Hive</strong>: -1,000 points.
                   </td>
                 </tr>
                 <tr>
                   <td style={{ padding: 6 }}>Giveth Donations</td>
                   <td style={{ padding: 6 }}>
-                    5 points per USD donated, capped at 1,000 USD (max 5,000
-                    points)
+                    5 points per USD donated, capped at 1,000 USD (max 5,000 points).
                   </td>
                 </tr>
                 <tr>
                   <td style={{ padding: 6 }}>Witness Vote</td>
                   <td style={{ padding: 6 }}>
-                    1000 points for voting for the Skatehive witness
+                    1,000 points for voting for the Skatehive witness. <strong>No vote</strong>: -3,500 points.
                   </td>
                 </tr>
                 <tr>
                   <td style={{ padding: 6 }}>Voting Mana</td>
                   <td style={{ padding: 6 }}>
-                    1000 points per USD of voting power
+                    1,000 points per USD of voting power.
                   </td>
                 </tr>
                 <tr>
                   <td style={{ padding: 6 }}>Last Post Activity</td>
                   <td style={{ padding: 6 }}>
-                    0 points deducted if last post within 7 days, up to 100
-                    points deducted
+                    Deduct 1 point per day since last post, up to 100 points.
                   </td>
                 </tr>
                 <tr>
                   <td style={{ padding: 6 }}>Ethereum Wallet Bonus</td>
                   <td style={{ padding: 6 }}>
-                    5000 points for having a valid Ethereum wallet
+                    5,000 points for a valid Ethereum wallet (non-zero, not starting with "donator"). <strong>No valid wallet</strong>: -2,000 points.
                   </td>
                 </tr>
               </tbody>
             </Box>
+            
+            <Text fontWeight="bold" mb={2} color="primary">
+              📊 Posts and Snaps Score Details
+            </Text>
+            <Box
+              bg="muted"
+              color="primary"
+              borderRadius="md"
+              p={3}
+              fontSize="sm"
+              mb={4}
+            >
+              <Text mb={2}>
+                <strong>Posts Score</strong>: Multiplied by 27 to calculate contribution to total points.
+              </Text>
+              <Text mb={2}>
+                <strong>Snaps Score</strong>: Multiplied by 10, adjusted by the ratio of weekly snaps (capped at 20) to total snaps. If total snaps is 0, the ratio is treated as 1 to avoid division by zero.
+              </Text>
+              <Text mb={2}>
+                <strong>Formula</strong>:
+              </Text>
+              <Box
+                bg="accent"
+                color="background"
+                borderRadius="md"
+                p={2}
+                fontSize="xs"
+                fontFamily="mono"
+                textAlign="center"
+              >
+                Posts and Snaps Score = (Posts Score × 27) + (Snaps Score × 10 × (Weekly Snaps / Total Snaps, capped at 20))
+              </Box>
+              <Text mt={2} fontSize="xs">
+                <strong>Zero Score Penalty</strong>: If both posts and snaps scores are 0, a -2,000-point penalty is applied.
+              </Text>
+            </Box>
+
             <Text fontWeight="bold" mb={2} color="primary">
               🧮 Total Points Formula
             </Text>
@@ -165,15 +198,22 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
               textAlign="center"
             >
               <Text color="inherit">
-                <b>Total Points</b> = All category points added together
-                <br />
-                <span style={{ fontSize: "0.95em" }}>
-                  (see table above) <br />
-                  <b>minus inactivity penalty</b> <br />
-                  <b>plus Ethereum wallet bonus</b>
-                </span>
+                <b>Total Points</b> = (Hive Power × 0.5, capped at 12,000) +<br />
+                (Posts Score × 27 + Snaps Score × 10 × (Weekly Snaps / Total Snaps, capped at 20)) +<br />
+                (Skatehive NFTs × 50) + (Gnars Votes × 30) +<br />
+                (HBD Savings × 0.2, capped at 1,000) + (Hive Balance × 0.1, capped at 1,000) +<br />
+                (Giveth Donations USD × 5, capped at 1,000) +<br />
+                (Witness Vote ? 1,000 : -3,500) + (Voting Mana USD × 1,000) +<br />
+                Ethereum Wallet Bonus (5,000 or -2,000) -<br />
+                Inactivity Penalty (min(days since last post, 100)) +<br />
+                Zero-Value Penalties (if applicable)
               </Text>
             </Box>
+            
+            <Text fontSize="xs" color="primary" mb={4} textAlign="center">
+              <strong>Note</strong>: Total points are capped at a minimum of 0.
+            </Text>
+
             <Text fontWeight="bold" mb={2} color="primary">
               📋 Quick Rules
             </Text>
@@ -188,6 +228,8 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
               <li>Top 50 skaters are shown.</li>
               <li>Sort by any stat using the selector.</li>
               <li>Rules and scoring may change to improve fairness.</li>
+              <li><strong>Penalties for Zero Values</strong>: Significant penalties apply for zero balances or activity in key metrics.</li>
+              <li><strong>Inactivity</strong>: Posting regularly (within 7 days) avoids the inactivity penalty, which increases daily up to 100 points.</li>
             </ul>
           </Box>
         </ModalBody>

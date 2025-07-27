@@ -98,27 +98,32 @@ export default function EmbeddedMap() {
         height="auto"
         overflow="visible"
       >
-        {/* Sticky Header Section */}
+        {/* Header Section */}
         <Box
-          position="sticky"
-          top={0}
+          position={{ base: "relative", md: "sticky" }}
+          top={{ base: "auto", md: 0 }}
           zIndex={10}
           bg="background"
           borderBottom="1px solid"
           borderColor="muted"
-          backdropFilter="blur(10px)"
+          backdropFilter={{ base: "none", md: "blur(10px)" }}
         >
           {/* Header Section */}
-          <Box p={{ base: 2, md: 4 }} pt={0} pb={0}>
+          <Box p={{ base: 3, md: 4 }} pt={{ base: 2, md: 0 }} pb={0}>
             <Text
               className="fretqwik-title"
-              fontSize={{ base: "6xl", md: "7xl" }}
+              fontSize={{ base: "4xl", sm: "5xl", md: "7xl" }}
               fontWeight="extrabold"
               color="primary"
-              letterSpacing="widest"
+              letterSpacing={{ base: "wide", md: "widest" }}
               textAlign="center"
-              mt={{ base: -2, md: -4 }}
-              style={{ lineHeight: 1.1, maxWidth: "100%", whiteSpace: "nowrap" }}
+              mt={{ base: 0, md: -4 }}
+              style={{ 
+                lineHeight: 1.1, 
+                maxWidth: "100%", 
+                wordBreak: "break-word",
+                overflowWrap: "break-word"
+              }}
             >
               skate spot map
             </Text>
@@ -126,15 +131,15 @@ export default function EmbeddedMap() {
 
           {/* Add Spot Button Section */}
           {user && (
-            <Box p={{ base: 2, md: 4 }} pt={{ base: 4, md: 6 }} pb={{ base: 2, md: 2 }} textAlign="center">
+            <Box p={{ base: 3, md: 4 }} pt={{ base: 3, md: 6 }} pb={{ base: 3, md: 2 }} textAlign="center">
               <Button
                 bg="background"
                 color="primary"
                 borderRadius="md"
-                px={4}
-                py={2}
+                px={{ base: 6, md: 4 }}
+                py={{ base: 3, md: 2 }}
                 fontWeight="bold"
-                fontSize="md"
+                fontSize={{ base: "lg", md: "md" }}
                 boxShadow="md"
                 _hover={{ bg: "primary", color: "background" }}
                 onClick={() => {
@@ -168,7 +173,8 @@ export default function EmbeddedMap() {
             flex="2"
             minW={0}
             w={{ base: "100%", md: "65%" }}
-            height={{ base: "300px", md: "100%" }}
+            height={{ base: "auto", md: "100%" }}
+            aspectRatio={{ base: "1 / 1", md: "auto" }}
             overflow="visible"
             borderRadius="10px"
             width="100%"
