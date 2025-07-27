@@ -8,8 +8,10 @@ import {
   Image,
   Flex,
   useToken,
+  Link as ChakraLink,
 } from "@chakra-ui/react";
 import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
 import { useAioha } from "@aioha/react-ui";
 import { useAccount } from "wagmi";
 import { useFarcasterSession } from "@/hooks/useFarcasterSession";
@@ -65,17 +67,52 @@ export default function Sidebar() {
     setBellAnimating(newNotificationCount > 0);
   }, [newNotificationCount]);
 
-  const handleNavigation = (path: string) => {
-    try {
-      if (path === "/" && pathname === "/") {
-        window.location.reload();
-        return;
-      }
-      router.push(path);
-    } catch (error) {
-      // Navigation error
-    }
-  };
+  const NavItem = ({
+    href,
+    icon,
+    children,
+    onClick,
+  }: {
+    href: string;
+    icon: any;
+    children: React.ReactNode;
+    onClick?: () => void;
+  }) => (
+    <Link href={href} passHref>
+      <ChakraLink
+        display="block"
+        w="full"
+        textDecoration="none"
+        onClick={onClick}
+      >
+        <Box
+          as="span"
+          display="flex"
+          alignItems="center"
+          px={1}
+          py={0.5}
+          mb={1}
+          borderRadius="md"
+          transition="background 0.2s"
+          cursor="pointer"
+          role="group"
+          _hover={{ bg: "transparent" }}
+        >
+          <Box
+            as="span"
+            display="flex"
+            alignItems="center"
+            px={1}
+            py={0.5}
+            borderRadius="md"
+          >
+            <Icon as={icon} boxSize={4} mr={2} />
+            {children}
+          </Box>
+        </Box>
+      </ChakraLink>
+    </Link>
+  );
 
   return (
     <Box
@@ -99,315 +136,86 @@ export default function Sidebar() {
             <SidebarLogo />
           </Box>
           <VStack spacing={0} align="start" ml={4} mt={2}>
-            <Button
-              onClick={() => handleNavigation("/")}
-              variant="ghost"
-              w="full"
-              justifyContent="flex-start"
-              pl={0}
-              pr={4}
-              py={3}
-              mb={1}
-              role="group"
-              _hover={{}}
-              _active={{ bg: "transparent" }}
-              _focus={{ bg: "transparent" }}
+            <NavItem
+              href="/"
+              icon={FiHome}
+              onClick={() =>
+                pathname === "/" ? window.location.reload() : undefined
+              }
             >
-              <Box
-                as="span"
-                display="flex"
-                alignItems="center"
-                px={1}
-                py={0.5}
-                borderRadius="md"
-                transition="background 0.2s"
-                _groupHover={{ bg: primaryBg, color: hoverTextColor }}
-              >
-                <Icon as={FiHome} boxSize={4} mr={2} />
-                Home
-              </Box>
-            </Button>
-            <Button
-              onClick={() => handleNavigation("/blog")}
-              variant="ghost"
-              w="full"
-              justifyContent="flex-start"
-              pl={0}
-              pr={4}
-              py={3}
-              mb={1}
-              role="group"
-              _hover={{}}
-              _active={{ bg: "transparent" }}
-              _focus={{ bg: "transparent" }}
-            >
-              <Box
-                as="span"
-                display="flex"
-                alignItems="center"
-                px={1}
-                py={0.5}
-                borderRadius="md"
-                transition="background 0.2s"
-                _groupHover={{ bg: primaryBg, color: hoverTextColor }}
-              >
-                <Icon as={FiBook} boxSize={4} mr={2} />
-                Magazine
-              </Box>
-            </Button>
-            <Button
-              onClick={() => handleNavigation("/leaderboard")}
-              variant="ghost"
-              w="full"
-              justifyContent="flex-start"
-              pl={0}
-              pr={4}
-              py={3}
-              mb={1}
-              role="group"
-              _hover={{}}
-              _active={{ bg: "transparent" }}
-              _focus={{ bg: "transparent" }}
-            >
-              <Box
-                as="span"
-                display="flex"
-                alignItems="center"
-                px={1}
-                py={0.5}
-                borderRadius="md"
-                transition="background 0.2s"
-                _groupHover={{ bg: primaryBg, color: hoverTextColor }}
-              >
-                <Icon as={FiAward} boxSize={4} mr={2} />
-                Leaderboard
-              </Box>
-            </Button>
-            <Button
-              onClick={() => handleNavigation("/skatespots")}
-              variant="ghost"
-              w="full"
-              justifyContent="flex-start"
-              pl={0}
-              pr={4}
-              py={3}
-              mb={1}
-              role="group"
-              _hover={{}}
-              _active={{ bg: "transparent" }}
-              _focus={{ bg: "transparent" }}
-            >
-              <Box
-                as="span"
-                display="flex"
-                alignItems="center"
-                px={1}
-                py={0.5}
-                borderRadius="md"
-                transition="background 0.2s"
-                _groupHover={{ bg: primaryBg, color: hoverTextColor }}
-              >
-                <Icon as={FiMap} boxSize={4} mr={2} />
-                Skatespots
-              </Box>
-            </Button>
-            <Button
-              onClick={() => handleNavigation("/bounties")}
-              variant="ghost"
-              w="full"
-              justifyContent="flex-start"
-              pl={0}
-              pr={4}
-              py={3}
-              mb={1}
-              role="group"
-              _hover={{}}
-              _active={{ bg: "transparent" }}
-              _focus={{ bg: "transparent" }}
-            >
-              <Box
-                as="span"
-                display="flex"
-                alignItems="center"
-                px={1}
-                py={0.5}
-                borderRadius="md"
-                transition="background 0.2s"
-                _groupHover={{ bg: primaryBg, color: hoverTextColor }}
-              >
-                <Icon as={FiTarget} boxSize={4} mr={2} />
-                Bounties
-              </Box>
-            </Button>
+              Home
+            </NavItem>
+            <NavItem href="/blog" icon={FiBook}>
+              Magazine
+            </NavItem>
+            <NavItem href="/leaderboard" icon={FiAward}>
+              Leaderboard
+            </NavItem>
+            <NavItem href="/skatespots" icon={FiMap}>
+              Skatespots
+            </NavItem>
+            <NavItem href="/bounties" icon={FiTarget}>
+              Bounties
+            </NavItem>
             {user && (
               <>
-                <Button
-                  onClick={() => handleNavigation("/notifications")}
-                  variant="ghost"
-                  w="full"
-                  justifyContent="flex-start"
-                  pl={0}
-                  pr={4}
-                  py={3}
-                  mb={1}
-                  role="group"
-                  _hover={{}}
-                  _active={{ bg: "transparent" }}
-                  _focus={{ bg: "transparent" }}
-                >
-                  <Box
-                    as="span"
-                    display="flex"
-                    alignItems="center"
-                    px={1}
-                    py={0.5}
-                    borderRadius="md"
-                    transition="background 0.2s"
-                    _groupHover={{ bg: primaryBg, color: hoverTextColor }}
-                  >
-                    {bellAnimating ? (
+                <Link href="/notifications" passHref>
+                  <ChakraLink display="block" w="full" textDecoration="none">
+                    <Box
+                      as="span"
+                      display="flex"
+                      alignItems="center"
+                      px={1}
+                      py={0.5}
+                      mb={1}
+                      borderRadius="md"
+                      transition="background 0.2s"
+                      cursor="pointer"
+                      role="group"
+                      _hover={{ bg: "transparent" }}
+                    >
                       <Box
-                        as={motion.div}
-                        animate={{ rotate: [0, 45, 0, -45, 0] }}
-                        transition={{ duration: 0.6, repeat: Infinity } as any}
-                        display="inline-block"
-                        mr={2}
+                        as="span"
+                        display="flex"
+                        alignItems="center"
+                        px={1}
+                        py={0.5}
+                        borderRadius="md"
                       >
-                        <Icon as={FiBell} boxSize={4} />
+                        {bellAnimating ? (
+                          <Box
+                            as={motion.div}
+                            animate={{ rotate: [0, 45, 0, -45, 0] }}
+                            transition={
+                              { duration: 0.6, repeat: Infinity } as any
+                            }
+                            display="inline-block"
+                            mr={2}
+                          >
+                            <Icon as={FiBell} boxSize={4} />
+                          </Box>
+                        ) : (
+                          <Icon as={FiBell} boxSize={4} mr={2} />
+                        )}
+                        Notifications
                       </Box>
-                    ) : (
-                      <Icon as={FiBell} boxSize={4} mr={2} />
-                    )}
-                    Notifications
-                  </Box>
-                </Button>
-                <Button
-                  onClick={() => handleNavigation("/@" + user)}
-                  variant="ghost"
-                  w="full"
-                  justifyContent="flex-start"
-                  pl={0}
-                  pr={4}
-                  py={3}
-                  mb={1}
-                  role="group"
-                  _hover={{}}
-                  _active={{ bg: "transparent" }}
-                  _focus={{ bg: "transparent" }}
-                >
-                  <Box
-                    as="span"
-                    display="flex"
-                    alignItems="center"
-                    px={1}
-                    py={0.5}
-                    borderRadius="md"
-                    transition="background 0.2s"
-                    _groupHover={{ bg: primaryBg, color: hoverTextColor }}
-                  >
-                    {user ? (
-                      <Image
-                        src={`https://images.hive.blog/u/${user}/avatar`}
-                        alt="Profile Image"
-                        boxSize={4}
-                        borderRadius="full"
-                        mr={2}
-                      />
-                    ) : (
-                      <Icon as={FiUser} boxSize={4} mr={2} />
-                    )}
-                    Profile
-                  </Box>
-                </Button>
+                    </Box>
+                  </ChakraLink>
+                </Link>
               </>
             )}
             {isAnyProtocolConnected && (
-              <Button
-                onClick={() => handleNavigation("/wallet")}
-                variant="ghost"
-                w="full"
-                justifyContent="flex-start"
-                pl={0}
-                pr={4}
-                py={3}
-                mb={1}
-                role="group"
-                _hover={{}}
-                _active={{ bg: "transparent" }}
-                _focus={{ bg: "transparent" }}
-              >
-                <Box
-                  as="span"
-                  display="flex"
-                  alignItems="center"
-                  px={1}
-                  py={0.5}
-                  borderRadius="md"
-                  transition="background 0.2s"
-                  _groupHover={{ bg: primaryBg, color: hoverTextColor }}
-                >
-                  <Icon as={FiCreditCard} boxSize={4} mr={2} />
-                  Wallet
-                </Box>
-              </Button>
+              <NavItem href="/wallet" icon={FiCreditCard}>
+                Wallet
+              </NavItem>
             )}
-            <Button
-              onClick={() => handleNavigation("/settings")}
-              variant="ghost"
-              w="full"
-              justifyContent="flex-start"
-              pl={0}
-              pr={4}
-              py={3}
-              mb={1}
-              role="group"
-              _hover={{}}
-              _active={{ bg: "transparent" }}
-              _focus={{ bg: "transparent" }}
-            >
-              <Box
-                as="span"
-                display="flex"
-                alignItems="center"
-                px={1}
-                py={0.5}
-                borderRadius="md"
-                transition="background 0.2s"
-                _groupHover={{ bg: primaryBg, color: hoverTextColor }}
-              >
-                <Icon as={FiSettings} boxSize={4} mr={2} />
-                Settings
-              </Box>
-            </Button>
+            <NavItem href="/settings" icon={FiSettings}>
+              Settings
+            </NavItem>
             {user && (
-              <Button
-                onClick={() => handleNavigation("/invite")}
-                variant="ghost"
-                w="full"
-                justifyContent="flex-start"
-                pl={0}
-                pr={4}
-                py={3}
-                mb={1}
-                role="group"
-                _hover={{}}
-                _active={{ bg: "transparent" }}
-                _focus={{ bg: "transparent" }}
-              >
-                <Box
-                  as="span"
-                  display="flex"
-                  alignItems="center"
-                  px={1}
-                  py={0.5}
-                  borderRadius="md"
-                  transition="background 0.2s"
-                  _groupHover={{ bg: primaryBg, color: hoverTextColor }}
-                >
-                  <Icon as={FiMail} boxSize={4} mr={2} />
-                  Invite
-                </Box>
-              </Button>
+              <NavItem href="/invite" icon={FiMail}>
+                Invite
+              </NavItem>
             )}
           </VStack>
         </Box>
