@@ -22,7 +22,7 @@ import {
   HStack,
   Textarea,
 } from "@chakra-ui/react";
-import React, { useState, useRef, useMemo, useCallback } from "react";
+import React, { useState, useRef, useMemo, useCallback, useEffect } from "react";
 import { Discussion } from "@hiveio/dhive";
 import { FaHeart, FaRegHeart, FaShareSquare, FaEdit } from "react-icons/fa";
 import { getPostDate } from "@/lib/utils/GetPostDate";
@@ -35,6 +35,7 @@ import { EnhancedMarkdownRenderer } from "@/components/markdown/EnhancedMarkdown
 import { usePostEdit } from "@/hooks/usePostEdit";
 import ThumbnailPicker from "@/components/compose/ThumbnailPicker";
 import { DEFAULT_VOTE_WEIGHT } from "@/lib/utils/constants";
+import useVoteWeight from "@/hooks/useVoteWeight";
 
 interface PostDetailsProps {
   post: Discussion;
@@ -48,7 +49,8 @@ export default function PostDetails({
   const { title, author, body, created } = post;
   const postDate = useMemo(() => getPostDate(created), [created]);
   const { aioha, user } = useAioha();
-  const [sliderValue, setSliderValue] = useState(DEFAULT_VOTE_WEIGHT);
+  const userVoteWeight = useVoteWeight(user || "");
+  const [sliderValue, setSliderValue] = useState(userVoteWeight);
   const [showSlider, setShowSlider] = useState(false);
   const [activeVotes, setActiveVotes] = useState(post.active_votes || []);
   const [payoutValue, setPayoutValue] = useState(
@@ -83,6 +85,11 @@ export default function PostDetails({
     error: hivePowerError,
     estimateVoteValue,
   } = useHivePower(user);
+
+  // Update slider value when user's vote weight changes
+  useEffect(() => {
+    setSliderValue(userVoteWeight);
+  }, [userVoteWeight]);
 
   // Process markdown content once
   const processedMarkdown = useMemo(() => {

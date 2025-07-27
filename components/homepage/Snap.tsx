@@ -412,6 +412,7 @@ const Snap = ({ discussion, onOpen, setReply, setConversation, onCommentAdded }:
                 }
               }}
               estimateVoteValue={estimateVoteValue}
+              isHivePowerLoading={isHivePowerLoading}
               variant="withSlider"
               size="sm"
             />
@@ -506,6 +507,7 @@ const Snap = ({ discussion, onOpen, setReply, setConversation, onCommentAdded }:
               }
             }}
             estimateVoteValue={estimateVoteValue}
+            isHivePowerLoading={isHivePowerLoading}
             variant="withSlider"
             size="sm"
           />

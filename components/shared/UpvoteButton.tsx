@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Box,
   Button,
@@ -19,7 +19,7 @@ import { useAioha } from "@aioha/react-ui";
 import { Discussion } from "@hiveio/dhive";
 import VoteListPopover from "@/components/blog/VoteListModal";
 import { DEFAULT_VOTE_WEIGHT } from "@/lib/utils/constants";
-import useVoteWeight from "@/hooks/useVoteWeight";
+import { useVoteWeightContext } from "@/contexts/VoteWeightContext";
 
 interface UpvoteButtonProps {
   discussion: Discussion;
@@ -29,6 +29,7 @@ interface UpvoteButtonProps {
   setActiveVotes: (votes: any[]) => void;
   onVoteSuccess?: (estimatedValue?: number) => void;
   estimateVoteValue?: (percentage: number) => Promise<number>;
+  isHivePowerLoading?: boolean;
   size?: "sm" | "md" | "lg";
   variant?: "simple" | "withSlider" | "withVoteCount";
   showSlider?: boolean;
@@ -44,6 +45,7 @@ const UpvoteButton = ({
   setActiveVotes,
   onVoteSuccess,
   estimateVoteValue,
+  isHivePowerLoading = false,
   size = "sm",
   variant = "simple",
   showSlider = false,
@@ -52,26 +54,47 @@ const UpvoteButton = ({
 }: UpvoteButtonProps) => {
   const { aioha, user } = useAioha();
   const toast = useToast();
-  const userVoteWeight = useVoteWeight(user || "");
+  const { voteWeight: userVoteWeight, disableSlider, isLoading } = useVoteWeightContext();
   const [sliderValue, setSliderValue] = useState(userVoteWeight);
   const [isVoting, setIsVoting] = useState(false);
 
-  // Deduplicate votes by voter (keep the last occurrence)
-  const uniqueVotesMap = new Map();
-  activeVotes.forEach((vote) => {
-    uniqueVotesMap.set(vote.voter, vote);
-  });
-  const uniqueVotes = Array.from(uniqueVotesMap.values());
+  // Update slider value when user's vote weight changes from context
+  useEffect(() => {
+    setSliderValue(userVoteWeight);
+  }, [userVoteWeight]);
 
-  const handleHeartClick = () => {
-    if (variant === "withSlider" && setShowSlider) {
-      setShowSlider(!showSlider);
-    } else if (variant === "simple" || variant === "withVoteCount") {
-      handleVote(userVoteWeight); // Use user's custom vote weight
+  // Memoize unique votes to prevent unnecessary recalculations
+  const uniqueVotes = useMemo(() => {
+    const uniqueVotesMap = new Map();
+    activeVotes.forEach((vote) => {
+      uniqueVotesMap.set(vote.voter, vote);
+    });
+    return Array.from(uniqueVotesMap.values());
+  }, [activeVotes]);
+
+  const handleHeartClick = useCallback(() => {
+    // Don't allow voting if user info is still loading
+    if (isLoading) {
+      toast({
+        title: "Please wait",
+        description: "Loading user preferences...",
+        status: "info",
+        duration: 2000,
+        isClosable: true,
+      });
+      return;
     }
-  };
 
-  const handleVote = async (votePercentage: number = sliderValue) => {
+    if (variant === "withSlider" && setShowSlider && !disableSlider) {
+      // Only show slider if it's not disabled in user preferences
+      setShowSlider(!showSlider);
+    } else if (variant === "simple" || variant === "withVoteCount" || disableSlider) {
+      // If slider is disabled or it's a simple variant, vote directly with preferred weight
+      handleVote(userVoteWeight);
+    }
+  }, [variant, setShowSlider, showSlider, userVoteWeight, disableSlider, isLoading, toast]);
+
+  const handleVote = useCallback(async (votePercentage: number = sliderValue) => {
     if (!user) {
       toast({
         title: "Please log in",
@@ -84,6 +107,7 @@ const UpvoteButton = ({
     }
 
     setIsVoting(true);
+    
     try {
       const vote = await aioha.vote(
         discussion.author,
@@ -96,7 +120,7 @@ const UpvoteButton = ({
         setActiveVotes([...activeVotes, { voter: user }]);
 
         // Estimate the value and call onVoteSuccess if provided
-        if (estimateVoteValue && onVoteSuccess) {
+        if (estimateVoteValue && onVoteSuccess && !isHivePowerLoading) {
           try {
             const estimatedValue = await estimateVoteValue(votePercentage);
             onVoteSuccess(estimatedValue);
@@ -128,7 +152,7 @@ const UpvoteButton = ({
         setShowSlider(false);
       }
     }
-  };
+  }, [user, aioha, discussion.author, discussion.permlink, sliderValue, userVoteWeight, setVoted, setActiveVotes, activeVotes, estimateVoteValue, onVoteSuccess, toast, variant, setShowSlider]);
 
   // Simple variant - just the upvote button (matches Snap styling)
   if (variant === "simple") {
@@ -210,6 +234,54 @@ const UpvoteButton = ({
 
   // With slider variant (matches Snap styling exactly)
   if (variant === "withSlider") {
+    // If slider is disabled in user preferences, don't show the slider
+    if (disableSlider) {
+      return (
+        <HStack>
+          <Tooltip label="upvote" hasArrow openDelay={1000}>
+            <Box
+              as="span"
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              cursor="pointer"
+              onClick={handleHeartClick}
+              p={1}
+              borderRadius="full"
+              bg={!voted ? "muted" : undefined}
+              _hover={!voted ? { bg: "primary" } : undefined}
+              transition="background 0.2s, border-radius 0.2s"
+              className={`${className} ${!voted ? "arrow-bg-fade" : ""}`}
+            >
+              <LuArrowUpRight
+                size={24}
+                color={voted ? "var(--chakra-colors-success)" : "var(--chakra-colors-accent)"}
+                style={{ opacity: 1 }}
+                className={!voted ? "arrow-pulse" : ""}
+              />
+            </Box>
+          </Tooltip>
+          <VoteListPopover
+            trigger={
+              <Button
+                variant="ghost"
+                size={size}
+                ml={1}
+                p={1}
+                _hover={{ textDecoration: "underline" }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {uniqueVotes.length}
+              </Button>
+            }
+            votes={activeVotes}
+            post={discussion}
+          />
+        </HStack>
+      );
+    }
+
+    // If slider is enabled, show the normal slider functionality
     if (showSlider) {
       return (
         <Flex mt={4} alignItems="center">

@@ -617,6 +617,7 @@ const BountySnap = ({
                   }
                 }}
                 estimateVoteValue={estimateVoteValue}
+                isHivePowerLoading={isHivePowerLoading}
                 variant="withSlider"
                 size="sm"
               />

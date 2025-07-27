@@ -150,21 +150,22 @@ const Settings = () => {
             </VStack>
           </Box>
 
+          {/* Vote Weight Slider */}
+          {userData.hiveUsername && (
+            <VoteWeightSlider
+              username={userData.hiveUsername}
+              onVoteWeightUpdate={(voteWeight) => {
+                console.log("Vote weight updated:", voteWeight);
+              }}
+            />
+          )}
+
           {/* Farcaster Account Link */}
           {userData.hiveUsername && (
             <>
               <FarcasterUniversalLink
                 hiveUsername={userData.hiveUsername}
                 postingKey={userData.postingKey}
-              />
-              
-              {/* Vote Weight Slider */}
-              <VoteWeightSlider
-                username={userData.hiveUsername}
-                currentVoteWeight={profileData.vote_weight || 51}
-                onVoteWeightUpdate={(voteWeight) => {
-                  console.log("Vote weight updated:", voteWeight);
-                }}
               />
               
               <Box
