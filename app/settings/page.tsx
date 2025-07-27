@@ -80,10 +80,10 @@ const Settings = () => {
   };
 
   const handleRestoreProfile = async () => {
-    if (!userData.hiveUsername || !userData.postingKey) {
+    if (!userData.hiveUsername) {
       toast({
         title: "Missing Credentials",
-        description: "Please log in with posting key",
+        description: "Please log in to your Hive account",
         status: "error",
         duration: 3000,
         isClosable: true,
