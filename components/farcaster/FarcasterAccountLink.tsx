@@ -219,7 +219,7 @@ export default function FarcasterAccountLink({
         {!preferences ? (
           <VStack spacing={4}>
             {/* Debug info - remove in production */}
-            {process.env.NODE_ENV === "development" && (
+            {/* {process.env.NODE_ENV === "development" && (
               <Box p={2} bg="gray.800" borderRadius="md">
                 <Text fontSize="xs" color="gray.400" mb={2}>
                   Debug: isAuthenticated={isAuthenticated.toString()},
@@ -230,7 +230,7 @@ export default function FarcasterAccountLink({
                   Clear Session
                 </Button>
               </Box>
-            )}
+            )} */}
 
             {/* Show sign in button if no valid profile data */}
             {!profile || !profile.fid || !profile.username ? (
