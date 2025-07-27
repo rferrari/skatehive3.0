@@ -22,61 +22,6 @@ import { SiFarcaster } from "react-icons/si";
 import { Name, Avatar } from "@coinbase/onchainkit/identity";
 import ConnectionModal from "./ConnectionModal";
 
-// OnchainKit component class names
-const ONCHAIN_AVATAR_CLASS = "custom-onchain-avatar";
-
-// Custom CSS to override OnchainKit styles
-const onchainKitStyles = `
-  /* OnchainKit Avatar root container: force size, roundness, and clipping */
-  [data-testid="ockAvatar"] {
-    width: 24px !important;
-    height: 24px !important;
-    min-width: 24px !important;
-    min-height: 24px !important;
-    max-width: 24px !important;
-    max-height: 24px !important;
-    border-radius: 50% !important;
-    overflow: hidden !important;
-    box-shadow: none !important;
-    background: transparent !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-  }
-  /* Target all children (img, svg, canvas, div) for size and roundness */
-  [data-testid="ockAvatar"] img,
-  [data-testid="ockAvatar"] svg,
-  [data-testid="ockAvatar"] canvas,
-  [data-testid="ockAvatar"] div {
-    width: 24px !important;
-    height: 24px !important;
-    min-width: 24px !important;
-    min-height: 24px !important;
-    max-width: 24px !important;
-    max-height: 24px !important;
-    border-radius: 50% !important;
-    overflow: hidden !important;
-    box-shadow: none !important;
-    background: transparent !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    object-fit: cover !important;
-    display: block !important;
-  }
-  
-  /* OnchainKit name component */
-  [data-testid="ockName"] {
-    font-size: 14px;
-    font-weight: normal;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 150px;
-  }
-`;
-
 interface ConnectionStatus {
   name: string;
   connected: boolean;
@@ -96,21 +41,6 @@ export default function AuthButton() {
   // Ensure client-side only rendering to prevent hydration mismatch
   React.useEffect(() => {
     setIsClientMounted(true);
-  }, []);
-
-  // Inject custom styles for OnchainKit components
-  React.useEffect(() => {
-    if (typeof document !== "undefined") {
-      const onchainKitStyleId = "onchainkit-button-override";
-      let existingOnchainKitStyle = document.getElementById(onchainKitStyleId);
-
-      if (!existingOnchainKitStyle) {
-        const style = document.createElement("style");
-        style.id = onchainKitStyleId;
-        style.textContent = onchainKitStyles;
-        document.head.appendChild(style);
-      }
-    }
   }, []);
 
   // Get connection states
@@ -245,7 +175,7 @@ export default function AuthButton() {
                 >
                   <Avatar
                     address={ethereumAddress as `0x${string}`}
-                    className={ONCHAIN_AVATAR_CLASS}
+                    className={"rounded-full"}
                   />
                 </Box>
               ) : (
@@ -282,7 +212,10 @@ export default function AuthButton() {
       >
         {primaryConnection && primaryUserInfo ? (
           primaryConnection.name === "Ethereum" ? (
-            <Name address={ethereumAddress as `0x${string}`} />
+            <Name
+              address={ethereumAddress as `0x${string}`}
+              className="text-sm text-white"
+            />
           ) : (
             <Text fontSize="sm" noOfLines={1}>
               {primaryUserInfo.displayName}
