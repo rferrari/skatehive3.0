@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Button,
   Box,
@@ -21,6 +21,9 @@ import { FaEthereum, FaHive } from "react-icons/fa";
 import { SiFarcaster } from "react-icons/si";
 import { Name, Avatar } from "@coinbase/onchainkit/identity";
 import ConnectionModal from "./ConnectionModal";
+import useHiveAccount from "@/hooks/useHiveAccount";
+import { migrateLegacyMetadata } from "@/lib/utils/metadataMigration";
+import MergeAccountModal from "../profile/MergeAccountModal";
 
 // OnchainKit component class names
 const ONCHAIN_AVATAR_CLASS = "custom-onchain-avatar";
@@ -118,6 +121,10 @@ export default function AuthButton() {
     useAccount();
   const { isAuthenticated: isFarcasterConnected, profile: farcasterProfile } =
     useFarcasterSession();
+  const { hiveAccount } = useHiveAccount(user || "");
+  const [showMergeModal, setShowMergeModal] = useState(false);
+  const prevEthRef = useRef(isEthereumConnected);
+  const prevFcRef = useRef(isFarcasterConnected);
 
   // Hidden Farcaster sign-in state
   const hiddenSignInRef = React.useRef<HTMLDivElement>(null);
@@ -148,6 +155,44 @@ export default function AuthButton() {
       priority: 3,
     },
   ];
+
+  useEffect(() => {
+    if (!user || !hiveAccount) {
+      prevEthRef.current = isEthereumConnected;
+      prevFcRef.current = isFarcasterConnected;
+      return;
+    }
+
+    try {
+      const raw = hiveAccount.json_metadata
+        ? JSON.parse(hiveAccount.json_metadata)
+        : {};
+      const parsed = migrateLegacyMetadata(raw);
+      const hasWallet = !!parsed.extensions?.wallets?.primary_wallet;
+      const hasFarcaster = !!parsed.extensions?.farcaster?.username;
+
+      if (
+        isEthereumConnected &&
+        !prevEthRef.current &&
+        !hasWallet
+      ) {
+        setShowMergeModal(true);
+      }
+
+      if (
+        isFarcasterConnected &&
+        !prevFcRef.current &&
+        !hasFarcaster
+      ) {
+        setShowMergeModal(true);
+      }
+    } catch (err) {
+      // ignore parse errors
+    }
+
+    prevEthRef.current = isEthereumConnected;
+    prevFcRef.current = isFarcasterConnected;
+  }, [isEthereumConnected, isFarcasterConnected, hiveAccount, user]);
 
   // Get primary connection (highest priority connected)
   const primaryConnection = connections
@@ -354,6 +399,11 @@ export default function AuthButton() {
           }}
         />
       </Box>
+      <MergeAccountModal
+        isOpen={showMergeModal}
+        onClose={() => setShowMergeModal(false)}
+        onMerge={() => setShowMergeModal(false)}
+      />
     </>
   );
 }
