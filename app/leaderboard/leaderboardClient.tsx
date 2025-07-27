@@ -94,7 +94,7 @@ export default function LeaderboardClient({ skatersData }: Props) {
       </HStack>
     );
   });
-  EthAddress.displayName = 'EthAddress';
+  EthAddress.displayName = "EthAddress";
 
   // Memoized skater row component
   const SkaterRow = React.memo(
@@ -175,7 +175,7 @@ export default function LeaderboardClient({ skatersData }: Props) {
       );
     }
   );
-  SkaterRow.displayName = 'SkaterRow';
+  SkaterRow.displayName = "SkaterRow";
 
   // Responsive values
   const headerFontSize = useBreakpointValue({
@@ -223,9 +223,13 @@ export default function LeaderboardClient({ skatersData }: Props) {
         case "eth":
           // Sort by post count first, then by ETH address presence
           // This shows active users who haven't connected ETH
-          const aHasEth = a.eth_address && a.eth_address !== "0x0000000000000000000000000000000000000000";
-          const bHasEth = b.eth_address && b.eth_address !== "0x0000000000000000000000000000000000000000";
-          
+          const aHasEth =
+            a.eth_address &&
+            a.eth_address !== "0x0000000000000000000000000000000000000000";
+          const bHasEth =
+            b.eth_address &&
+            b.eth_address !== "0x0000000000000000000000000000000000000000";
+
           if (aHasEth === bHasEth) {
             return b.post_count - a.post_count; // Same ETH status, sort by activity
           }
@@ -253,26 +257,39 @@ export default function LeaderboardClient({ skatersData }: Props) {
     return sorted.slice(0, 50); // Top 50
   }, [skatersData, sortBy]);
 
-  const getRankIcon = (rank: number, sortBy: SortOption, skater: SkaterData) => {
+  const getRankIcon = (
+    rank: number,
+    sortBy: SortOption,
+    skater: SkaterData
+  ) => {
     // For binary filters, show checkmark/X instead of rankings
     if (sortBy === "witness") {
       return skater.has_voted_in_witness ? (
-        <Text fontSize="lg" color="green.400">✅</Text>
+        <Text fontSize="lg" color="green.400">
+          ✅
+        </Text>
       ) : (
-        <Text fontSize="lg" color="red.400">❌</Text>
+        <Text fontSize="lg" color="red.400">
+          ❌
+        </Text>
       );
     }
-    
+
     if (sortBy === "eth") {
-      const hasEthAddress = skater.eth_address && 
+      const hasEthAddress =
+        skater.eth_address &&
         skater.eth_address !== "0x0000000000000000000000000000000000000000";
       return hasEthAddress ? (
-        <Text fontSize="lg" color="green.400">✅</Text>
+        <Text fontSize="lg" color="green.400">
+          ✅
+        </Text>
       ) : (
-        <Text fontSize="lg" color="red.400">❌</Text>
+        <Text fontSize="lg" color="red.400">
+          ❌
+        </Text>
       );
     }
-    
+
     // For all other categories, show normal trophy rankings
     if (rank === 1) return <Text fontSize="xl">🏆</Text>;
     if (rank === 2) return <Text fontSize="xl">🥈</Text>;
