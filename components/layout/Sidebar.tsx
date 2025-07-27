@@ -84,15 +84,15 @@ export default function Sidebar() {
     children: React.ReactNode;
     onClick?: () => void;
   }) => (
-    <Link 
+    <Link
       href={href}
       onClick={onClick}
       style={{
-        display: 'block',
-        width: '100%',
-        textDecoration: 'none',
-        color: 'inherit',
-        cursor: 'pointer'
+        display: "block",
+        width: "100%",
+        textDecoration: "none",
+        color: "inherit",
+        cursor: "pointer",
       }}
     >
       <Box
@@ -172,14 +172,14 @@ export default function Sidebar() {
             </NavItem>
             {user && (
               <>
-                <Link 
+                <Link
                   href="/notifications"
                   style={{
-                    display: 'block',
-                    width: '100%',
-                    textDecoration: 'none',
-                    color: 'inherit',
-                    cursor: 'pointer'
+                    display: "block",
+                    width: "100%",
+                    textDecoration: "none",
+                    color: "inherit",
+                    cursor: "pointer",
                   }}
                 >
                   <Box
