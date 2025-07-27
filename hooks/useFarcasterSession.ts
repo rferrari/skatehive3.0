@@ -9,6 +9,15 @@ interface FarcasterSession {
   pfpUrl?: string;
   bio?: string;
   displayName?: string;
+  /**
+   * Farcaster custody address associated with the user.
+   * Included when restoring a session from Auth Kit.
+   */
+  custody?: `0x${string}`;
+  /**
+   * Array of verified wallet addresses for this Farcaster account.
+   */
+  verifications?: string[];
   timestamp: number;
 }
 
@@ -28,6 +37,8 @@ export function useFarcasterSession() {
         username: profile.username,
         pfpUrl: profile.pfpUrl,
         displayName: profile.displayName,
+        custody: profile.custody,
+        verifications: profile.verifications,
         timestamp: Date.now(),
       };
       localStorage.setItem(SESSION_KEY, JSON.stringify(session));
