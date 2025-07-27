@@ -11,6 +11,7 @@ import {
   PopoverArrow,
   PopoverBody,
   useDisclosure,
+  Tooltip,
 } from "@chakra-ui/react";
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Discussion } from "@hiveio/dhive";
@@ -27,7 +28,6 @@ import {
   extractImageUrls,
 } from "@/lib/utils/extractImageUrls"; // Import YouTube extraction function
 import useHivePower from "@/hooks/useHivePower";
-import VoteListPopover from "./VoteListModal";
 import MatrixOverlay from "@/components/graphics/MatrixOverlay";
 import { UpvoteButton } from "@/components/shared";
 
@@ -255,7 +255,7 @@ export default function PostCard({
           <Box flex={1} overflow="hidden">
             <Link
               href={`/post/${author}/${post.permlink}`}
-              _hover={{ textDecoration: "underline" }}
+              _hover={{ textDecoration: "underline", color: "primary" }}
             >
               <Text
                 fontWeight="bold"
@@ -269,7 +269,7 @@ export default function PostCard({
                 {title}
               </Text>
             </Link>
-            <Text fontSize="xs" color="gray.500" mb={2} textAlign="right">
+            <Text fontSize="xs" color="muted" mb={2} textAlign="right">
               {postDate}
             </Text>
             <Text
@@ -632,7 +632,6 @@ export default function PostCard({
               >
                 <Text
                   className="post-title-text"
-                  fontWeight="bold"
                   fontSize={"16px"}
                   isTruncated={false}
                   whiteSpace="normal"
@@ -667,7 +666,12 @@ export default function PostCard({
                 size="sm"
               />
             ) : (
-              <Flex mt={4} justifyContent="center" alignItems="center" gap={6}>
+              <Flex
+                mt={4}
+                justifyContent="space-between"
+                alignItems="center"
+                gap={6}
+              >
                 <UpvoteButton
                   discussion={post}
                   voted={voted}
@@ -686,57 +690,44 @@ export default function PostCard({
                   variant="withSlider"
                   size="sm"
                 />
-                <Popover
-                  placement="top"
-                  isOpen={isPayoutOpen}
-                  onClose={closePayout}
-                  closeOnBlur={true}
-                >
-                  <PopoverTrigger>
-                    <span
-                      style={{ cursor: "pointer" }}
-                      onMouseDown={openPayout}
-                      onMouseUp={closePayout}
-                      onClick={stopPropagation}
-                    >
-                      <Text fontWeight="bold" fontSize="xl">
-                        ${payoutValue.toFixed(2)}
-                      </Text>
-                    </span>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    w="auto"
-                    bg="gray.800"
-                    color="white"
-                    borderRadius="md"
-                    boxShadow="lg"
-                    p={2}
-                  >
-                    <PopoverArrow />
-                    <PopoverBody>
-                      {isPending ? (
+                <Tooltip
+                  label={
+                    isPending ? (
+                      <Box>
                         <div>
-                          <div>
-                            <b>Pending</b>
-                          </div>
-                          <div>
-                            {daysRemaining} day{daysRemaining !== 1 ? "s" : ""}{" "}
-                            until payout
-                          </div>
+                          <b>Pending</b>
                         </div>
-                      ) : (
-                        <>
-                          <div>
-                            Author: <b>${authorPayout.toFixed(3)}</b>
-                          </div>
-                          <div>
-                            Curators: <b>${curatorPayout.toFixed(3)}</b>
-                          </div>
-                        </>
-                      )}
-                    </PopoverBody>
-                  </PopoverContent>
-                </Popover>
+                        <div>
+                          {daysRemaining} day{daysRemaining !== 1 ? "s" : ""}{" "}
+                          until payout
+                        </div>
+                      </Box>
+                    ) : (
+                      <Box>
+                        <div>
+                          Author: <b>${authorPayout.toFixed(3)}</b>
+                        </div>
+                        <div>
+                          Curators: <b>${curatorPayout.toFixed(3)}</b>
+                        </div>
+                      </Box>
+                    )
+                  }
+                  aria-label="Payout details"
+                  bg="background"
+                  color="primary"
+                  borderRadius="md"
+                  p={2}
+                  hasArrow
+                  placement="top"
+                  openDelay={200}
+                >
+                  <span style={{ cursor: "pointer" }}>
+                    <Text fontWeight="normal" fontSize="md">
+                      ${payoutValue.toFixed(2)}
+                    </Text>
+                  </span>
+                </Tooltip>
               </Flex>
             )}
           </Box>

@@ -54,7 +54,11 @@ const UpvoteButton = ({
 }: UpvoteButtonProps) => {
   const { aioha, user } = useAioha();
   const toast = useToast();
-  const { voteWeight: userVoteWeight, disableSlider, isLoading } = useVoteWeightContext();
+  const {
+    voteWeight: userVoteWeight,
+    disableSlider,
+    isLoading,
+  } = useVoteWeightContext();
   const [sliderValue, setSliderValue] = useState(userVoteWeight);
   const [isVoting, setIsVoting] = useState(false);
 
@@ -88,71 +92,101 @@ const UpvoteButton = ({
     if (variant === "withSlider" && setShowSlider && !disableSlider) {
       // Only show slider if it's not disabled in user preferences
       setShowSlider(!showSlider);
-    } else if (variant === "simple" || variant === "withVoteCount" || disableSlider) {
+    } else if (
+      variant === "simple" ||
+      variant === "withVoteCount" ||
+      disableSlider
+    ) {
       // If slider is disabled or it's a simple variant, vote directly with preferred weight
       handleVote(userVoteWeight);
     }
-  }, [variant, setShowSlider, showSlider, userVoteWeight, disableSlider, isLoading, toast]);
+  }, [
+    variant,
+    setShowSlider,
+    showSlider,
+    userVoteWeight,
+    disableSlider,
+    isLoading,
+    toast,
+  ]);
 
-  const handleVote = useCallback(async (votePercentage: number = sliderValue) => {
-    if (!user) {
-      toast({
-        title: "Please log in",
-        description: "You need to be logged in to vote.",
-        status: "warning",
-        duration: 3000,
-        isClosable: true,
-      });
-      return;
-    }
-
-    setIsVoting(true);
-    
-    try {
-      const vote = await aioha.vote(
-        discussion.author,
-        discussion.permlink,
-        votePercentage * 100
-      );
-
-      if (vote.success) {
-        setVoted(true);
-        setActiveVotes([...activeVotes, { voter: user }]);
-
-        // Estimate the value and call onVoteSuccess if provided
-        if (estimateVoteValue && onVoteSuccess && !isHivePowerLoading) {
-          try {
-            const estimatedValue = await estimateVoteValue(votePercentage);
-            onVoteSuccess(estimatedValue);
-          } catch (e) {
-            onVoteSuccess();
-          }
-        } else if (onVoteSuccess) {
-          onVoteSuccess();
-        }
-
+  const handleVote = useCallback(
+    async (votePercentage: number = sliderValue) => {
+      if (!user) {
         toast({
-          title: "Vote submitted!",
-          status: "success",
+          title: "Please log in",
+          description: "You need to be logged in to vote.",
+          status: "warning",
           duration: 3000,
           isClosable: true,
         });
+        return;
       }
-    } catch (error: any) {
-      toast({
-        title: "Failed to vote",
-        description: error.message || "Please try again",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
-    } finally {
-      setIsVoting(false);
-      if (variant === "withSlider" && setShowSlider) {
-        setShowSlider(false);
+
+      setIsVoting(true);
+
+      try {
+        const vote = await aioha.vote(
+          discussion.author,
+          discussion.permlink,
+          votePercentage * 100
+        );
+
+        if (vote.success) {
+          setVoted(true);
+          setActiveVotes([...activeVotes, { voter: user }]);
+
+          // Estimate the value and call onVoteSuccess if provided
+          if (estimateVoteValue && onVoteSuccess && !isHivePowerLoading) {
+            try {
+              const estimatedValue = await estimateVoteValue(votePercentage);
+              onVoteSuccess(estimatedValue);
+            } catch (e) {
+              onVoteSuccess();
+            }
+          } else if (onVoteSuccess) {
+            onVoteSuccess();
+          }
+
+          toast({
+            title: "Vote submitted!",
+            status: "success",
+            duration: 3000,
+            isClosable: true,
+          });
+        }
+      } catch (error: any) {
+        toast({
+          title: "Failed to vote",
+          description: error.message || "Please try again",
+          status: "error",
+          duration: 3000,
+          isClosable: true,
+        });
+      } finally {
+        setIsVoting(false);
+        if (variant === "withSlider" && setShowSlider) {
+          setShowSlider(false);
+        }
       }
-    }
-  }, [user, aioha, discussion.author, discussion.permlink, sliderValue, userVoteWeight, setVoted, setActiveVotes, activeVotes, estimateVoteValue, onVoteSuccess, toast, variant, setShowSlider]);
+    },
+    [
+      user,
+      aioha,
+      discussion.author,
+      discussion.permlink,
+      sliderValue,
+      userVoteWeight,
+      setVoted,
+      setActiveVotes,
+      activeVotes,
+      estimateVoteValue,
+      onVoteSuccess,
+      toast,
+      variant,
+      setShowSlider,
+    ]
+  );
 
   // Simple variant - just the upvote button (matches Snap styling)
   if (variant === "simple") {
@@ -175,7 +209,11 @@ const UpvoteButton = ({
           >
             <LuArrowUpRight
               size={24}
-              color={voted ? "var(--chakra-colors-success)" : "var(--chakra-colors-accent)"}
+              color={
+                voted
+                  ? "var(--chakra-colors-success)"
+                  : "var(--chakra-colors-accent)"
+              }
               style={{ opacity: 1 }}
               className={!voted ? "arrow-pulse" : ""}
             />
@@ -206,7 +244,11 @@ const UpvoteButton = ({
           >
             <LuArrowUpRight
               size={24}
-              color={voted ? "var(--chakra-colors-success)" : "var(--chakra-colors-accent)"}
+              color={
+                voted
+                  ? "var(--chakra-colors-success)"
+                  : "var(--chakra-colors-accent)"
+              }
               style={{ opacity: 1 }}
               className={!voted ? "arrow-pulse" : ""}
             />
@@ -217,7 +259,7 @@ const UpvoteButton = ({
             <Button
               variant="ghost"
               size={size}
-              ml={1}
+              ml={0}
               p={1}
               _hover={{ textDecoration: "underline" }}
               onClick={(e) => e.stopPropagation()}
@@ -255,7 +297,11 @@ const UpvoteButton = ({
             >
               <LuArrowUpRight
                 size={24}
-                color={voted ? "var(--chakra-colors-success)" : "var(--chakra-colors-accent)"}
+                color={
+                  voted
+                    ? "var(--chakra-colors-success)"
+                    : "var(--chakra-colors-accent)"
+                }
                 style={{ opacity: 1 }}
                 className={!voted ? "arrow-pulse" : ""}
               />
@@ -365,7 +411,11 @@ const UpvoteButton = ({
           >
             <LuArrowUpRight
               size={24}
-              color={voted ? "var(--chakra-colors-success)" : "var(--chakra-colors-accent)"}
+              color={
+                voted
+                  ? "var(--chakra-colors-success)"
+                  : "var(--chakra-colors-accent)"
+              }
               style={{ opacity: 1 }}
               className={!voted ? "arrow-pulse" : ""}
             />
@@ -412,7 +462,7 @@ const UpvoteButtonWithPulse = (props: UpvoteButtonProps) => {
             box-shadow: 0 0 0 0 rgba(72, 255, 128, 0);
           }
         }
-        
+
         .arrow-pulse {
           animation: arrow-pulse 3s ease-in-out infinite;
         }
@@ -461,4 +511,4 @@ const UpvoteButtonWithPulse = (props: UpvoteButtonProps) => {
   );
 };
 
-export default UpvoteButtonWithPulse; 
+export default UpvoteButtonWithPulse;
