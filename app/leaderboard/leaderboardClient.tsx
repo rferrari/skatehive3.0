@@ -10,9 +10,22 @@ import {
   useToast,
   Image,
   Link,
+  Table,
+  Thead,
+  Tbody,
+  Tr,
+  Th,
+  Td,
+  TableContainer,
+  Select,
+  Button,
+  VStack,
+  HStack,
+  useBreakpointValue,
 } from "@chakra-ui/react";
 import RulesModal from "./RulesModal";
 import React from "react";
+import useIsMobile from "@/hooks/useIsMobile";
 
 interface SkaterData {
   id: number;
@@ -57,6 +70,19 @@ export default function LeaderboardClient({ skatersData }: Props) {
   const [sortBy, setSortBy] = useState<SortOption>("points");
   const [isRulesOpen, setIsRulesOpen] = useState(false);
   const toast = useToast();
+  const isMobile = useIsMobile();
+
+  // Responsive values
+  const headerFontSize = useBreakpointValue({
+    base: "2xl",
+    md: "4xl",
+    lg: "6xl",
+  });
+  const tableHeight = useBreakpointValue({
+    base: "calc(100vh - 200px)",
+    md: "calc(100vh - 180px)",
+  });
+  const containerPadding = useBreakpointValue({ base: 2, md: 4 });
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -113,11 +139,11 @@ export default function LeaderboardClient({ skatersData }: Props) {
   }, [skatersData, sortBy]);
 
   const getRankIcon = (rank: number) => {
-    if (rank === 1) return <Text fontSize="2xl">🏆</Text>;
-    if (rank === 2) return <Text fontSize="2xl">🥈</Text>;
-    if (rank === 3) return <Text fontSize="2xl">🥉</Text>;
+    if (rank === 1) return <Text fontSize="xl">🏆</Text>;
+    if (rank === 2) return <Text fontSize="xl">🥈</Text>;
+    if (rank === 3) return <Text fontSize="xl">🥉</Text>;
     return (
-      <Badge colorScheme="primary" fontSize="lg" fontWeight="bold" px={2}>
+      <Badge colorScheme="primary" fontSize="sm" fontWeight="bold" px={2}>
         {rank}
       </Badge>
     );
@@ -143,31 +169,44 @@ export default function LeaderboardClient({ skatersData }: Props) {
     return `${Math.floor(diffInDays / 365)}y`;
   };
 
-  // Add more stat columns here
-  const statColumns = [
+  // Simplified columns for mobile
+  const mobileColumns = [
+    {
+      key: "points",
+      label: "Points",
+      value: (skater: SkaterData) => Math.round(skater.points),
+    },
+    {
+      key: "power",
+      label: "Power",
+      value: (skater: SkaterData) =>
+        formatNumber(skater.hp_balance + skater.max_voting_power_usd),
+    },
+    {
+      key: "posts",
+      label: "Posts",
+      value: (skater: SkaterData) => skater.post_count,
+    },
+  ];
+
+  // Full columns for desktop
+  const desktopColumns = [
     {
       key: "points",
       label: "🏆 Points",
-      color: "accent",
       value: (skater: SkaterData) => Math.round(skater.points),
     },
     {
       key: "power",
       label: (
-        <Image
-          src="/images/hp_logo.png"
-          alt="HP"
-          style={{ display: "inline", height: "18px", verticalAlign: "middle" }}
-        />
+        <Image src="/images/hp_logo.png" alt="HP" h="18px" display="inline" />
       ),
-      color: "primary",
       value: (skater: SkaterData) =>
         formatNumber(skater.hp_balance + skater.max_voting_power_usd),
     },
     {
       key: "voting_mana",
       label: "Voting Mana",
-      color: "primary",
       value: (skater: SkaterData) =>
         skater.max_voting_power_usd != null
           ? `$${skater.max_voting_power_usd.toFixed(2)}`
@@ -176,25 +215,21 @@ export default function LeaderboardClient({ skatersData }: Props) {
     {
       key: "posts",
       label: "Posts",
-      color: "primary",
       value: (skater: SkaterData) => skater.post_count,
     },
     {
       key: "nfts",
       label: "SKTHV NFTs",
-      color: "primary",
       value: (skater: SkaterData) => skater.skatehive_nft_balance,
     },
     {
       key: "gnars_balance",
       label: "Gnars NFTs",
-      color: "primary",
       value: (skater: SkaterData) => skater.gnars_balance,
     },
     {
       key: "gnars",
       label: "Gnars Votes",
-      color: "primary",
       value: (skater: SkaterData) => skater.gnars_votes,
     },
     {
@@ -203,115 +238,89 @@ export default function LeaderboardClient({ skatersData }: Props) {
         <Image
           src="/images/hbd_savings.png"
           alt="HBD"
-          style={{ display: "inline", height: "18px", verticalAlign: "middle" }}
+          h="18px"
+          display="inline"
         />
       ),
-      color: "primary",
       value: (skater: SkaterData) =>
         formatNumber(skater.hbd_balance + skater.hbd_savings_balance),
     },
     {
       key: "hive",
       label: "Hive",
-      color: "primary",
       value: (skater: SkaterData) => formatNumber(skater.hive_balance),
     },
     {
       key: "donations",
-      label: "Giveth Donation",
-      color: "primary",
+      label: "Giveth",
       value: (skater: SkaterData) => formatNumber(skater.giveth_donations_usd),
     },
     {
       key: "witness",
-      label: "Witness Vote",
-      color: "primary",
+      label: "Witness",
       value: (skater: SkaterData) =>
         skater.has_voted_in_witness ? "✅" : "❌",
     },
   ];
+
+  const columns = isMobile ? mobileColumns : desktopColumns;
   return (
-    <>
-      {isRulesOpen && (
-        <RulesModal
-          isOpen={isRulesOpen}
-          onClose={() => setIsRulesOpen(false)}
-        />
-      )}
-      {/* Main Container */}
+    <VStack
+      spacing={0}
+      h="100vh"
+      bg="background"
+      color="text"
+      overflow="hidden"
+    >
+      <RulesModal isOpen={isRulesOpen} onClose={() => setIsRulesOpen(false)} />
+
+      {/* Header */}
       <Box
-        bg={"background"}
-        color="primary"
-        fontFamily="mono"
-        transition="filter 0.3s, opacity 0.3s"
-        style={
-          isRulesOpen
-            ? { filter: "blur(8px)", opacity: 0.3, pointerEvents: "none" }
-            : {}
-        }
-        sx={{
-          "&::-webkit-scrollbar": { display: "none" },
-          scrollbarWidth: "none",
-        }}
+        w="full"
+        px={containerPadding}
+        py={4}
+        bg="background"
+        borderBottom="1px solid"
+        borderColor="border"
       >
-        {/* Header */}
-        <Box
-          px={{ base: 1, md: 2 }}
-          pt={2}
-          pb={2}
-          bg={"background"}
-          maxW="100wh"
-          mx="0"
-          borderRadius="xl"
-        >
-          <Flex direction="column" align="center" justify="center" mb={2}>
-            <Text
-              fontSize={{ base: "4xl", md: "7xl" }}
-              fontWeight="extrabold"
-              color="primary"
-              letterSpacing="wider"
-              textAlign="center"
-              mb={1}
-              style={{
-                textTransform: "uppercase",
-                fontFamily: "Dash, sans-serif",
-              }}
-            >
-              Skatehive Leaderboard
-            </Text>
-            <Text
-              color="primary"
-              fontSize={{ base: "xs", md: "sm" }}
-              fontStyle="italic"
-              textAlign="center"
-              mb={0}
-            >
-              We are {skatersData.length} skaters supporting each other. 🛹
-            </Text>
-          </Flex>
-          {/* Sort Options */}
-          <Flex justify="space-between" align="center" mb={4}>
-            <Flex align="center" gap={2}>
-              <Text color="primary" fontSize="sm" fontWeight="bold" mb={0}>
+        <VStack spacing={3}>
+          <Text
+            fontSize={headerFontSize}
+            fontWeight="extrabold"
+            color="primary"
+            textAlign="center"
+            fontFamily="heading"
+            textTransform="uppercase"
+            letterSpacing="wider"
+          >
+            Skatehive Leaderboard
+          </Text>
+
+          <Text
+            color="text"
+            fontSize={{ base: "xs", md: "sm" }}
+            textAlign="center"
+          >
+            We are {skatersData.length} skaters supporting each other. 🛹
+          </Text>
+
+          {/* Controls */}
+          <HStack spacing={4} w="full" justify="center" flexWrap="wrap">
+            <HStack spacing={2}>
+              <Text fontSize="sm" fontWeight="bold" color="text">
                 Sort by:
               </Text>
-              <select
+              <Select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as SortOption)}
-                style={{
-                  padding: "4px 10px",
-                  borderRadius: "8px",
-                  background: "var(--chakra-colors-background)",
-                  color: "var(--chakra-colors-primary)",
-                  border: "1px solid var(--chakra-colors-border)",
-                  fontFamily: "inherit",
-                  fontWeight: "bold",
-                  appearance: "none",
-                  outline: "none",
-                  cursor: "pointer",
-                  fontSize: "1em",
-                  minWidth: 0,
-                }}
+                size="sm"
+                w="auto"
+                minW="120px"
+                bg="background"
+                borderColor="border"
+                color="text"
+                _hover={{ borderColor: "primary" }}
+                _focus={{ borderColor: "primary", boxShadow: "outline" }}
               >
                 <option value="points">🏆 Points</option>
                 <option value="power">⚡ Power</option>
@@ -325,228 +334,155 @@ export default function LeaderboardClient({ skatersData }: Props) {
                 <option value="giveth_donations_usd">🎁 Donations ($)</option>
                 <option value="witness">🗳️ Witness</option>
                 <option value="last_updated">⏰ Last Updated</option>
-              </select>
-            </Flex>
-            <button
+              </Select>
+            </HStack>
+
+            <Button
               onClick={() => setIsRulesOpen(true)}
-              style={{
-                padding: "4px 16px",
-                borderRadius: "8px",
-                background: "var(--chakra-colors-background)",
-                color: "var(--chakra-colors-primary)",
-                border: "1px solid var(--chakra-colors-border)",
-                fontFamily: "inherit",
-                fontWeight: "bold",
-                fontSize: "0.95em",
-                cursor: "pointer",
-                marginLeft: "8px",
-                transition: "background 0.2s, color 0.2s",
-                minWidth: 0,
-                height: "32px",
-                lineHeight: 1,
-              }}
+              size="sm"
+              variant="outline"
+              borderColor="border"
+              color="text"
+              _hover={{ borderColor: "primary", color: "primary" }}
             >
               Rules
-            </button>
-          </Flex>
-        </Box>
-        {/* Leaderboard Table Scrollable Area */}
-        <Box
-          overflowX="hidden"
-          borderRadius="xl"
-          bg={"background"}
-          py={0}
-          maxH="70vh"
+            </Button>
+          </HStack>
+        </VStack>
+      </Box>
+
+      {/* Table Container */}
+      <Box flex="1" w="full" overflow="hidden">
+        <TableContainer
+          h="full"
           overflowY="auto"
+          overflowX="auto"
           sx={{
             "&::-webkit-scrollbar": {
-              display: "none",
+              width: "8px",
+              height: "8px",
             },
-            msOverflowStyle: "none", // IE and Edge
-            scrollbarWidth: "none", // Firefox
+            "&::-webkit-scrollbar-track": {
+              bg: "muted",
+            },
+            "&::-webkit-scrollbar-thumb": {
+              bg: "border",
+              borderRadius: "full",
+            },
+            "&::-webkit-scrollbar-thumb:hover": {
+              bg: "primary",
+            },
           }}
         >
-          <Box width="100%">
-            {/* Table Header */}
-            <Flex
-              position="sticky"
-              top={0}
-              zIndex={3}
-              bg="background"
-              boxShadow="sm"
-              borderBottom="2px solid var(--chakra-colors-border)"
-              m={0}
-            >
-              <Box
-                minW="240px"
-                maxW="240px"
-                position="sticky"
-                left={0}
-                zIndex={4}
-                bg={"background"}
-                display="flex"
-                alignItems="center"
-                px={2}
-                gap={2}
-                fontWeight="bold"
-                fontSize="sm"
-                borderRight="2px solid var(--chakra-colors-border)"
-                color="primary"
-                boxShadow="sm"
-                m={0}
-              >
-                Skater
-              </Box>
-              {statColumns.map((col, i) => (
-                <Box
-                  key={col.key}
-                  minW="73px"
-                  maxW="73px"
-                  h="48px"
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
+          <Table variant="simple" size={isMobile ? "sm" : "md"}>
+            <Thead position="sticky" top={0} bg="background" zIndex={2}>
+              <Tr>
+                <Th
+                  color="primary"
                   fontWeight="bold"
-                  fontSize="xs"
-                  color={col.color}
-                  textAlign="center"
-                  bg={"background"}
+                  borderColor="border"
+                  position="sticky"
+                  left={0}
+                  bg="background"
                   zIndex={3}
-                  boxShadow="sm"
-                  m={0}
-                  borderRight={
-                    i !== statColumns.length - 1
-                      ? "0.5px solid rgba(255,255,255,0.08)"
-                      : undefined
-                  }
+                  minW={isMobile ? "120px" : "200px"}
                 >
-                  {col.label}
-                </Box>
-              ))}
-            </Flex>
-            {/* Table Body */}
-            {sortedSkaters.map((skater, index) => {
-              const rank = index + 1;
-              return (
-                <React.Fragment key={skater.id}>
-                  <Flex
-                    align="center"
-                    transition="background 0.2s"
-                    borderTop={
-                      index !== 0
-                        ? "0.5px solid rgba(255,255,255,0.08)"
-                        : undefined
-                    }
+                  Skater
+                </Th>
+                {columns.map((col) => (
+                  <Th
+                    key={col.key}
+                    color="primary"
+                    fontWeight="bold"
+                    borderColor="border"
+                    textAlign="center"
+                    minW={isMobile ? "60px" : "80px"}
                   >
-                    {/* Sticky Skater Info */}
-                    <Box
-                      minW="240px"
-                      maxW="240px"
+                    {col.label}
+                  </Th>
+                ))}
+              </Tr>
+            </Thead>
+            <Tbody>
+              {sortedSkaters.map((skater, index) => {
+                const rank = index + 1;
+                return (
+                  <Tr
+                    key={skater.id}
+                    _hover={{ bg: "muted" }}
+                    transition="background 0.2s"
+                  >
+                    <Td
+                      borderColor="border"
                       position="sticky"
                       left={0}
+                      bg="background"
                       zIndex={1}
-                      bg={"background"}
-                      display="flex"
-                      alignItems="center"
-                      px={2}
-                      gap={2}
-                      borderRight="2px solid var(--chakra-colors-border)"
+                      minW={isMobile ? "120px" : "200px"}
+                      _groupHover={{ bg: "muted" }}
                     >
-                      <Box w="28px" textAlign="center">
-                        {getRankIcon(rank)}
-                      </Box>
-                      <Avatar
-                        src={`https://images.hive.blog/u/${skater.hive_author}/avatar/small`}
-                        name={skater.hive_author}
-                        size="sm"
-                        mr={1}
-                      />
-                      <Box minW={0} maxW="140px" overflow="hidden">
-                        <Text
-                          as={Link}
-                          href={`https://peakd.com/@${skater.hive_author}`}
-                          color="primary"
-                          fontWeight="bold"
-                          fontSize="sm"
-                          isTruncated
-                          maxW="100%"
-                          whiteSpace="nowrap"
-                          overflow="hidden"
-                          textOverflow="ellipsis"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {skater.hive_author}
-                        </Text>
-                        {/* Ethereum identity below username */}
-                        {skater.eth_address &&
-                        skater.eth_address !==
-                          "0x0000000000000000000000000000000000000000" ? (
-                          <span
-                            style={{
-                              fontSize: "10px",
-                              color: "#aaa",
-                              cursor: "pointer",
-                              userSelect: "all",
-                              marginTop: 0,
-                              textAlign: "left",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "2px",
-                              minHeight: "16px",
-                            }}
-                            onClick={() => copyToClipboard(skater.eth_address)}
-                            title="Click to copy address"
+                      <HStack spacing={2}>
+                        <Box minW="30px">{getRankIcon(rank)}</Box>
+                        <Avatar
+                          src={`https://images.hive.blog/u/${skater.hive_author}/avatar/small`}
+                          name={skater.hive_author}
+                          size={isMobile ? "xs" : "sm"}
+                        />
+                        <VStack spacing={0} align="start" minW={0}>
+                          <Text
+                            as={Link}
+                            href={`https://peakd.com/@${skater.hive_author}`}
+                            color="primary"
+                            fontWeight="bold"
+                            fontSize={isMobile ? "xs" : "sm"}
+                            isTruncated
+                            maxW="100px"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            _hover={{ color: "accent" }}
                           >
-                            <Image
-                              src="/images/ethvector.svg"
-                              alt="ETH"
-                              height="12px"
-                              width="12px"
-                              style={{ marginRight: "2px", display: "inline" }}
-                            />
-                          </span>
-                        ) : (
-                          <span
-                            style={{ display: "block", minHeight: "16px" }}
-                          ></span>
-                        )}
-                        <Text color="text" fontSize="xs" lineHeight={1}>
-                          Last: {getTimeSince(skater.last_post)}
-                        </Text>
-                      </Box>
-                    </Box>
-                    {/* Stats */}
-                    {statColumns.map((col, i) => (
-                      <Box
+                            {skater.hive_author}
+                          </Text>
+                          {!isMobile &&
+                            skater.eth_address &&
+                            skater.eth_address !==
+                              "0x0000000000000000000000000000000000000000" && (
+                              <HStack spacing={1}>
+                                <Image
+                                  src="/images/ethvector.svg"
+                                  alt="ETH"
+                                  h="10px"
+                                  w="10px"
+                                />
+                              </HStack>
+                            )}
+                          {!isMobile && (
+                            <Text color="muted" fontSize="2xs">
+                              Last: {getTimeSince(skater.last_post)}
+                            </Text>
+                          )}
+                        </VStack>
+                      </HStack>
+                    </Td>
+                    {columns.map((col) => (
+                      <Td
                         key={col.key}
-                        minW="73px"
-                        maxW="73px"
-                        h="48px"
-                        display="flex"
-                        alignItems="center"
-                        justifyContent="center"
-                        color={col.color}
+                        borderColor="border"
                         textAlign="center"
-                        fontWeight="semibold"
-                        fontSize="sm"
-                        bg={"background"}
-                        borderRight={
-                          i !== statColumns.length - 1
-                            ? "0.5px solid rgba(255,255,255,0.08)"
-                            : undefined
-                        }
+                        fontSize={isMobile ? "xs" : "sm"}
+                        color="text"
+                        fontWeight="medium"
                       >
                         {col.value(skater)}
-                      </Box>
+                      </Td>
                     ))}
-                  </Flex>
-                </React.Fragment>
-              );
-            })}
-          </Box>
-        </Box>
+                  </Tr>
+                );
+              })}
+            </Tbody>
+          </Table>
+        </TableContainer>
       </Box>
-    </>
+    </VStack>
   );
 }
