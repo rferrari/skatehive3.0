@@ -142,7 +142,7 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
                 <tr>
                   <td style={{ padding: 6 }}>Ethereum Wallet Bonus</td>
                   <td style={{ padding: 6 }}>
-                    5,000 points for a valid Ethereum wallet (non-zero, not starting with "donator"). <strong>No valid wallet</strong>: -2,000 points.
+                    5,000 points for a valid Ethereum wallet (non-zero, not starting with &quot;donator&quot;). <strong>No valid wallet</strong>: -2,000 points.
                   </td>
                 </tr>
               </tbody>
