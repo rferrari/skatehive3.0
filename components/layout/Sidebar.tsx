@@ -78,12 +78,29 @@ export default function Sidebar() {
     children: React.ReactNode;
     onClick?: () => void;
   }) => (
-    <Link href={href} passHref>
-      <ChakraLink
-        display="block"
-        w="full"
-        textDecoration="none"
-        onClick={onClick}
+    <Link 
+      href={href}
+      onClick={onClick}
+      style={{
+        display: 'block',
+        width: '100%',
+        textDecoration: 'none',
+        color: 'inherit',
+        cursor: 'pointer'
+      }}
+    >
+      <Box
+        as="span"
+        display="flex"
+        alignItems="center"
+        px={1}
+        py={0.5}
+        mb={1}
+        borderRadius="md"
+        transition="background 0.2s"
+        cursor="pointer"
+        role="group"
+        _hover={{ bg: primaryBg, color: hoverTextColor }}
       >
         <Box
           as="span"
@@ -91,26 +108,12 @@ export default function Sidebar() {
           alignItems="center"
           px={1}
           py={0.5}
-          mb={1}
           borderRadius="md"
-          transition="background 0.2s"
-          cursor="pointer"
-          role="group"
-          _hover={{ bg: "transparent" }}
         >
-          <Box
-            as="span"
-            display="flex"
-            alignItems="center"
-            px={1}
-            py={0.5}
-            borderRadius="md"
-          >
-            <Icon as={icon} boxSize={4} mr={2} />
-            {children}
-          </Box>
+          <Icon as={icon} boxSize={4} mr={2} />
+          {children}
         </Box>
-      </ChakraLink>
+      </Box>
     </Link>
   );
 
@@ -159,48 +162,55 @@ export default function Sidebar() {
             </NavItem>
             {user && (
               <>
-                <Link href="/notifications" passHref>
-                  <ChakraLink display="block" w="full" textDecoration="none">
+                <Link 
+                  href="/notifications"
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    textDecoration: 'none',
+                    color: 'inherit',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <Box
+                    as="span"
+                    display="flex"
+                    alignItems="center"
+                    px={1}
+                    py={0.5}
+                    mb={1}
+                    borderRadius="md"
+                    transition="background 0.2s"
+                    cursor="pointer"
+                    role="group"
+                    _hover={{ bg: primaryBg, color: hoverTextColor }}
+                  >
                     <Box
                       as="span"
                       display="flex"
                       alignItems="center"
                       px={1}
                       py={0.5}
-                      mb={1}
                       borderRadius="md"
-                      transition="background 0.2s"
-                      cursor="pointer"
-                      role="group"
-                      _hover={{ bg: "transparent" }}
                     >
-                      <Box
-                        as="span"
-                        display="flex"
-                        alignItems="center"
-                        px={1}
-                        py={0.5}
-                        borderRadius="md"
-                      >
-                        {bellAnimating ? (
-                          <Box
-                            as={motion.div}
-                            animate={{ rotate: [0, 45, 0, -45, 0] }}
-                            transition={
-                              { duration: 0.6, repeat: Infinity } as any
-                            }
-                            display="inline-block"
-                            mr={2}
-                          >
-                            <Icon as={FiBell} boxSize={4} />
-                          </Box>
-                        ) : (
-                          <Icon as={FiBell} boxSize={4} mr={2} />
-                        )}
-                        Notifications
-                      </Box>
+                      {bellAnimating ? (
+                        <Box
+                          as={motion.div}
+                          animate={{ rotate: [0, 45, 0, -45, 0] }}
+                          transition={
+                            { duration: 0.6, repeat: Infinity } as any
+                          }
+                          display="inline-block"
+                          mr={2}
+                        >
+                          <Icon as={FiBell} boxSize={4} />
+                        </Box>
+                      ) : (
+                        <Icon as={FiBell} boxSize={4} mr={2} />
+                      )}
+                      Notifications
                     </Box>
-                  </ChakraLink>
+                  </Box>
                 </Link>
               </>
             )}

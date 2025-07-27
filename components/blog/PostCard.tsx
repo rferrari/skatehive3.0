@@ -4,8 +4,6 @@ import {
   Text,
   Avatar,
   Flex,
-  Icon,
-  Button,
   Link,
   Popover,
   PopoverTrigger,
@@ -19,7 +17,6 @@ import { Discussion } from "@hiveio/dhive";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination } from "swiper/modules";
 import "swiper/swiper-bundle.css";
-import { FaComment } from "react-icons/fa";
 import { getPostDate } from "@/lib/utils/GetPostDate";
 import { useAioha } from "@aioha/react-ui";
 import { useRouter } from "next/navigation";
@@ -33,7 +30,6 @@ import useHivePower from "@/hooks/useHivePower";
 import VoteListPopover from "./VoteListModal";
 import MatrixOverlay from "@/components/graphics/MatrixOverlay";
 import { UpvoteButton } from "@/components/shared";
-
 
 interface PostCardProps {
   post: Discussion;
@@ -63,9 +59,8 @@ export default function PostCard({
   const [youtubeLinks, setYoutubeLinks] = useState<LinkWithDomain[]>([]);
   const [showSlider, setShowSlider] = useState(false);
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
-  const { aioha, user } = useAioha();
+  const { user } = useAioha();
   const {
-    hivePower,
     isLoading: isHivePowerLoading,
     error: hivePowerError,
     estimateVoteValue,
@@ -99,7 +94,6 @@ export default function PostCard({
   const daysRemaining = Math.max(0, 7 - Math.floor(timeDifferenceInDays));
   const isPending = timeDifferenceInDays < 7;
   // Calculate payout timestamp (creation + 7 days)
-  const payoutDate = new Date(createdDate.getTime() + 7 * 24 * 60 * 60 * 1000);
 
   useEffect(() => {
     let images: string[] = [];
@@ -113,7 +107,7 @@ export default function PostCard({
     images = images.concat(markdownImages);
 
     // Filter out failed images only
-    const validImages = images.filter(img => {
+    const validImages = images.filter((img) => {
       if (failedImages.has(img)) return false;
       return true;
     });
@@ -151,20 +145,20 @@ export default function PostCard({
   function handleImageError(e: React.SyntheticEvent<HTMLImageElement, Event>) {
     const img = e.currentTarget;
     const originalSrc = img.src;
-    
+
     // Track failed images to avoid retrying them
-    setFailedImages(prev => new Set(prev).add(originalSrc));
-    
+    setFailedImages((prev) => new Set(prev).add(originalSrc));
+
     // If this is not already the fallback image, try to set it
     if (img.src !== default_thumbnail) {
       img.src = default_thumbnail;
       img.onerror = null; // Prevent infinite loop
     }
-    
+
     // Prevent the error from bubbling up
     e.preventDefault();
     e.stopPropagation();
-    
+
     // Return false to prevent the default error handling
     return false;
   }
@@ -363,12 +357,6 @@ export default function PostCard({
                 </PopoverBody>
               </PopoverContent>
             </Popover>
-            <Flex alignItems="center">
-              <Icon as={FaComment} boxSize={4} />
-              <Text ml={1} fontSize="sm">
-                {post.children}
-              </Text>
-            </Flex>
           </Flex>
         </Flex>
       </Box>
@@ -679,12 +667,7 @@ export default function PostCard({
                 size="sm"
               />
             ) : (
-              <Flex
-                mt={4}
-                justifyContent="center"
-                alignItems="center"
-                gap={6}
-              >
+              <Flex mt={4} justifyContent="center" alignItems="center" gap={6}>
                 <UpvoteButton
                   discussion={post}
                   voted={voted}
@@ -703,12 +686,6 @@ export default function PostCard({
                   variant="withSlider"
                   size="sm"
                 />
-                <Flex alignItems="center" onClick={stopPropagation}>
-                  <Icon as={FaComment} />
-                  <Text ml={2} fontSize="sm">
-                    {post.children}
-                  </Text>
-                </Flex>
                 <Popover
                   placement="top"
                   isOpen={isPayoutOpen}
