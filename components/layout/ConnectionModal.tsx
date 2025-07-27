@@ -15,13 +15,14 @@ import {
   ModalCloseButton,
   Badge,
   Flex,
+  Tooltip,
 } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
 import { useAioha } from "@aioha/react-ui";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { useFarcasterSession } from "@/hooks/useFarcasterSession";
 import { useSignIn } from "@farcaster/auth-kit";
-import { FaEthereum, FaHive } from "react-icons/fa";
+import { FaEthereum, FaHive, FaInfoCircle } from "react-icons/fa";
 import { SiFarcaster } from "react-icons/si";
 
 interface ConnectionStatus {
@@ -31,6 +32,40 @@ interface ConnectionStatus {
   color: string;
   priority: number;
 }
+
+// Network information texts - easily editable
+const NETWORK_INFO = {
+  Hive: {
+    description:
+      "Create posts, vote on content, earn rewards, and access your Hive wallet",
+    features: [
+      "✍️ Create & share content",
+      "🗳️ Vote & earn rewards",
+      "💰 Access Hive wallet",
+      "🎯 Full platform access",
+    ],
+  },
+  Ethereum: {
+    description:
+      "Connect your Ethereum wallet for Web3 features and token interactions",
+    features: [
+      "💎 Access NFTs",
+      "🔗 Web3 integrations",
+      "💸 Token transactions",
+      "🛡️ Decentralized identity",
+    ],
+  },
+  Farcaster: {
+    description:
+      "Connect with the Farcaster ecosystem and cross-post your content",
+    features: [
+      "🌐 Cross-platform posting",
+      "👥 Farcaster community",
+      "📡 Protocol integrations",
+      "🔄 Social sync",
+    ],
+  },
+};
 
 interface ConnectionModalProps {
   isOpen: boolean;
@@ -178,7 +213,50 @@ export default function ConnectionModal({
                     color={connection.color}
                   />
                   <VStack align="start" spacing={0}>
-                    <Text fontWeight="medium">{connection.name}</Text>
+                    <HStack spacing={2} align="center">
+                      <Text fontWeight="medium">{connection.name}</Text>
+                      <Tooltip
+                        label={
+                          <VStack align="start" spacing={2} p={2}>
+                            <Text fontSize="sm" fontWeight="medium">
+                              {
+                                NETWORK_INFO[
+                                  connection.name as keyof typeof NETWORK_INFO
+                                ]?.description
+                              }
+                            </Text>
+                            <VStack align="start" spacing={1}>
+                              {NETWORK_INFO[
+                                connection.name as keyof typeof NETWORK_INFO
+                              ]?.features.map((feature, index) => (
+                                <Text
+                                  key={index}
+                                  fontSize="xs"
+                                  color="gray.300"
+                                >
+                                  {feature}
+                                </Text>
+                              ))}
+                            </VStack>
+                          </VStack>
+                        }
+                        placement="top"
+                        hasArrow
+                        bg="gray.800"
+                        color="white"
+                        borderRadius="md"
+                        p={3}
+                        maxW="300px"
+                      >
+                        <Icon
+                          as={FaInfoCircle}
+                          boxSize={3}
+                          color="gray.400"
+                          cursor="pointer"
+                          _hover={{ color: "primary" }}
+                        />
+                      </Tooltip>
+                    </HStack>
                     {connection.connected && (
                       <Badge size="sm" colorScheme="green" variant="subtle">
                         Connected
