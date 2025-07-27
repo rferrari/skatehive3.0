@@ -9,35 +9,32 @@ import {
   Icon,
   useToast,
   Avatar as ChakraAvatar,
+  Badge,
 } from "@chakra-ui/react";
-import { useRouter } from "next/navigation";
 import { AiohaModal, useAioha } from "@aioha/react-ui";
-import { useAccount, useConnect, useDisconnect } from "wagmi";
+import { useAccount } from "wagmi";
 import { KeyTypes } from "@aioha/aioha";
 import { useFarcasterSession } from "@/hooks/useFarcasterSession";
-import { SignInButton, useSignIn } from "@farcaster/auth-kit";
+import { SignInButton } from "@farcaster/auth-kit";
 import "@aioha/react-ui/dist/build.css";
 import { FaEthereum, FaHive } from "react-icons/fa";
 import { SiFarcaster } from "react-icons/si";
-import { IoLogOutSharp } from "react-icons/io5";
 import { Name, Avatar } from "@coinbase/onchainkit/identity";
+import ConnectionModal from "./ConnectionModal";
+
 // OnchainKit component class names
 const ONCHAIN_AVATAR_CLASS = "custom-onchain-avatar";
-const ONCHAIN_NAME_CLASS = "custom-onchain-name";
-const ONCHAIN_AVATAR_CONTAINER_CLASS = "onchainkit-avatar-container";
-const ONCHAIN_NAME_CONTAINER_CLASS = "onchainkit-name-container";
 
 // Custom CSS to override OnchainKit styles
-
 const onchainKitStyles = `
   /* OnchainKit Avatar root container: force size, roundness, and clipping */
   [data-testid="ockAvatar"] {
-    width: 20px !important;
-    height: 20px !important;
-    min-width: 20px !important;
-    min-height: 20px !important;
-    max-width: 20px !important;
-    max-height: 20px !important;
+    width: 24px !important;
+    height: 24px !important;
+    min-width: 24px !important;
+    min-height: 24px !important;
+    max-width: 24px !important;
+    max-height: 24px !important;
     border-radius: 50% !important;
     overflow: hidden !important;
     box-shadow: none !important;
@@ -53,12 +50,12 @@ const onchainKitStyles = `
   [data-testid="ockAvatar"] svg,
   [data-testid="ockAvatar"] canvas,
   [data-testid="ockAvatar"] div {
-    width: 20px !important;
-    height: 20px !important;
-    min-width: 20px !important;
-    min-height: 20px !important;
-    max-width: 20px !important;
-    max-height: 20px !important;
+    width: 24px !important;
+    height: 24px !important;
+    min-width: 24px !important;
+    min-height: 24px !important;
+    max-width: 24px !important;
+    max-height: 24px !important;
     border-radius: 50% !important;
     overflow: hidden !important;
     box-shadow: none !important;
@@ -69,41 +66,14 @@ const onchainKitStyles = `
     display: block !important;
   }
   
-  /* Balanced name/text styling */
-  .${ONCHAIN_NAME_CLASS} {
-    font-size: 12px;
-    font-weight: normal;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 150px;
-  }
-  
-  /* OnchainKit name component - more gentle styling */
+  /* OnchainKit name component */
   [data-testid="ockName"] {
-    font-size: 12px;
+    font-size: 14px;
     font-weight: normal;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 150px;
-  }
-  
-  /* Container styles for proper alignment */
-  .${ONCHAIN_AVATAR_CONTAINER_CLASS} {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    overflow: hidden;
-  }
-  
-  .${ONCHAIN_NAME_CONTAINER_CLASS} {
-    display: flex;
-    align-items: center;
-    overflow: hidden;
-    flex: 1;
   }
 `;
 
@@ -112,16 +82,15 @@ interface ConnectionStatus {
   connected: boolean;
   icon: any;
   color: string;
+  priority: number;
 }
 
 export default function AuthButton() {
   const { user, aioha } = useAioha();
   const { colorMode } = useColorMode();
-  const router = useRouter();
   const [modalDisplayed, setModalDisplayed] = useState(false);
-  const [showConnectionOptions, setShowConnectionOptions] = useState(false);
+  const [isConnectionModalOpen, setIsConnectionModalOpen] = useState(false);
   const [isClientMounted, setIsClientMounted] = useState(false);
-  const [isDrawerExpanded, setIsDrawerExpanded] = useState(false);
   const toast = useToast();
 
   // Ensure client-side only rendering to prevent hydration mismatch
@@ -132,7 +101,6 @@ export default function AuthButton() {
   // Inject custom styles for OnchainKit components
   React.useEffect(() => {
     if (typeof document !== "undefined") {
-      // Inject OnchainKit styles
       const onchainKitStyleId = "onchainkit-button-override";
       let existingOnchainKitStyle = document.getElementById(onchainKitStyleId);
 
@@ -148,67 +116,62 @@ export default function AuthButton() {
   // Get connection states
   const { isConnected: isEthereumConnected, address: ethereumAddress } =
     useAccount();
-  const { connect, connectors } = useConnect();
-  const { disconnect } = useDisconnect();
-  const {
-    isAuthenticated: isFarcasterConnected,
-    profile: farcasterProfile,
-    clearSession,
-  } = useFarcasterSession();
-  const { signIn, signOut } = useSignIn({});
+  const { isAuthenticated: isFarcasterConnected, profile: farcasterProfile } =
+    useFarcasterSession();
 
-  // Check if any connection exists or if user wants to see connection options
-  const hasAnyConnection = user || isEthereumConnected || isFarcasterConnected;
-  const shouldShowConnectionPanel =
-    isClientMounted && (hasAnyConnection || showConnectionOptions);
+  // Hidden Farcaster sign-in state
+  const hiddenSignInRef = React.useRef<HTMLDivElement>(null);
+  const [isFarcasterAuthInProgress, setIsFarcasterAuthInProgress] =
+    useState(false);
 
-  // Connection status data
-  const baseConnections: ConnectionStatus[] = [
+  // Connection status data with priority (Hive > Ethereum > Farcaster)
+  const connections: ConnectionStatus[] = [
     {
       name: "Hive",
       connected: !!user,
       icon: FaHive,
       color: "red",
+      priority: 1,
     },
     {
       name: "Ethereum",
       connected: isEthereumConnected,
       icon: FaEthereum,
-      color: "blue.200",
+      color: "blue",
+      priority: 2,
     },
     {
       name: "Farcaster",
       connected: isFarcasterConnected,
       icon: SiFarcaster,
-      color: "purple.400",
+      color: "purple",
+      priority: 3,
     },
   ];
 
-  // Always use the same order to prevent hydration mismatch
-  const connections = baseConnections;
+  // Get primary connection (highest priority connected)
+  const primaryConnection = connections
+    .filter((conn) => conn.connected)
+    .sort((a, b) => a.priority - b.priority)[0];
 
-  // Get the primary (first connected) connection for collapsed state
-  const primaryConnection =
-    connections.find((conn) => conn.connected) || connections[0];
+  // Get user display info for primary connection
+  const getPrimaryUserInfo = () => {
+    if (!primaryConnection) return null;
 
-  // Helper functions to get user display information
-  const getUserDisplayInfo = (connection: ConnectionStatus) => {
-    switch (connection.name) {
+    switch (primaryConnection.name) {
       case "Hive":
         if (user) {
           return {
             displayName: user,
             avatar: `https://images.hive.blog/u/${user}/avatar`,
-            address: user,
           };
         }
         break;
       case "Ethereum":
         if (ethereumAddress) {
           return {
-            displayName: ethereumAddress, // Will be resolved by OnchainKit Name component
-            avatar: ethereumAddress, // Will be resolved by OnchainKit Avatar component
-            address: ethereumAddress,
+            displayName: ethereumAddress,
+            avatar: ethereumAddress,
           };
         }
         break;
@@ -222,7 +185,6 @@ export default function AuthButton() {
             avatar:
               farcasterProfile.pfpUrl ||
               `https://api.dicebear.com/7.x/identicon/svg?seed=fid${farcasterProfile.fid}`,
-            address: farcasterProfile.username || `fid:${farcasterProfile.fid}`,
           };
         }
         break;
@@ -230,227 +192,51 @@ export default function AuthButton() {
     return null;
   };
 
-  const getConnectionButtonText = (connection: ConnectionStatus) => {
-    if (connection.connected) {
-      return getUserDisplayInfo(connection)?.displayName || "Connected";
-    } else {
-      switch (connection.name) {
-        case "Hive":
-          return "Login";
-        case "Ethereum":
-        case "Farcaster":
-          return "Connect";
-        default:
-          return "Connect";
-      }
-    }
-  };
-
-  const handleShowConnectionOptions = () => {
-    setShowConnectionOptions(true);
-  };
-
-  const handleProfileClick = () => {
-    if (user) {
-      router.push(`/user/${user}?view=snaps`);
-    }
-  };
-
+  // Connection handlers
   const handleHiveLogin = async () => {
+    setIsConnectionModalOpen(false);
     await aioha.logout();
     setModalDisplayed(true);
   };
 
-  const handleHiveLogout = async () => {
-    await aioha.logout();
-    toast({
-      status: "success",
-      title: "Logged out from Hive",
-      description: "You have been disconnected from Hive",
-    });
-  };
-
-  const handleEthereumConnect = async () => {
-    try {
-      const connector = connectors[0]; // Use first available connector
-      if (connector) {
-        connect({ connector });
-      }
-    } catch (error) {
-      toast({
-        status: "error",
-        title: "Connection failed",
-        description: "Failed to connect to Ethereum wallet",
-      });
-    }
-  };
-
-  const handleEthereumDisconnect = () => {
-    disconnect();
-    toast({
-      status: "success",
-      title: "Disconnected from Ethereum",
-      description: "Your Ethereum wallet has been disconnected",
-    });
-  };
-
-  // Alternative approach: Custom Farcaster button with hidden SignInButton
-  const hiddenSignInRef = React.useRef<HTMLDivElement>(null);
-  const [isFarcasterAuthInProgress, setIsFarcasterAuthInProgress] =
-    useState(false);
-
-  const handleCustomFarcasterSignIn = () => {
-    // Prevent multiple authentication attempts
+  const handleFarcasterConnect = () => {
     if (isFarcasterAuthInProgress || isFarcasterConnected) {
-      console.log("🚫 Farcaster auth already in progress or connected");
       return;
     }
 
-    console.log("🚀 Custom Farcaster Sign In triggered");
     setIsFarcasterAuthInProgress(true);
-
-    // Find and click the hidden SignInButton
     const hiddenButton = hiddenSignInRef.current?.querySelector("button");
     if (hiddenButton) {
       hiddenButton.click();
     }
   };
 
-  const handleFarcasterDisconnect = () => {
-    signOut();
-    clearSession();
-    toast({
-      status: "success",
-      title: "Disconnected from Farcaster",
-      description: "You have been signed out from Farcaster",
-    });
-  };
-
-  const getConnectionAction = (connection: ConnectionStatus) => {
-    if (connection.connected) {
-      switch (connection.name) {
-        case "Hive":
-          return handleHiveLogout;
-        case "Ethereum":
-          return handleEthereumDisconnect;
-        case "Farcaster":
-          return handleFarcasterDisconnect;
-        default:
-          return () => {};
-      }
-    } else {
-      switch (connection.name) {
-        case "Hive":
-          return handleHiveLogin;
-        case "Ethereum":
-          return handleEthereumConnect;
-        case "Farcaster":
-          return handleCustomFarcasterSignIn;
-        default:
-          return () => {};
-      }
-    }
-  };
-
-  if (!shouldShowConnectionPanel) {
-    return (
-      <>
-        <Button
-          onClick={handleShowConnectionOptions}
-          color="background"
-          w="full"
-          mt="auto"
-          mb={8}
-        >
-          Login
-        </Button>
-
-        <div className={colorMode}>
-          <AiohaModal
-            displayed={modalDisplayed}
-            loginOptions={{
-              msg: "Login",
-              keyType: KeyTypes.Posting,
-              loginTitle: "Login",
-            }}
-            onLogin={() => {}}
-            onClose={() => setModalDisplayed(false)}
-          />
-        </div>
-      </>
-    );
+  if (!isClientMounted) {
+    return null;
   }
 
-  const renderConnectionButton = (
-    connection: ConnectionStatus,
-    isPrimary = false
-  ) => {
-    if (connection.name === "Farcaster" && !connection.connected) {
-      return (
-        <Button
-          key={connection.name}
-          size="lg"
-          variant="ghost"
-          bg="transparent"
-          color="text"
-          onClick={handleCustomFarcasterSignIn}
-          w="full"
-          h="full"
-          fontSize="sm"
-          leftIcon={
-            <Icon as={connection.icon} boxSize={4} color={connection.color} />
-          }
-          isLoading={isFarcasterAuthInProgress}
-          loadingText="Connecting..."
-          isDisabled={isFarcasterAuthInProgress}
-          justifyContent="flex-start"
-          pl={3}
-          py={3}
-          _hover={{
-            bg: "success",
-            color: "background",
-          }}
-        >
-          <Text fontSize="sm" noOfLines={1} color={connection.color}>
-            Connect
-          </Text>
-        </Button>
-      );
-    }
+  const primaryUserInfo = getPrimaryUserInfo();
 
-    return (
+  return (
+    <>
+      {/* Main Login/Profile Button */}
       <Button
-        key={connection.name}
-        size="lg"
-        variant="ghost"
-        bg="transparent"
+        onClick={() => setIsConnectionModalOpen(true)}
         color="text"
-        onClick={getConnectionAction(connection)}
+        bg="background"
+        border="1px solid"
+        borderColor="border"
         w="full"
-        fontSize="sm"
-        _hover={
-          connection.connected
-            ? {
-                bg: "error",
-                color: "background",
-              }
-            : {
-                bg: "success",
-                color: "background",
-              }
-        }
+        mt="auto"
+        mb={8}
+        size="md"
         leftIcon={
-          connection.connected && getUserDisplayInfo(connection) ? (
-            <Box
-              position="relative"
-              display="inline-block"
-              minWidth="24px"
-              minHeight="24px"
-            >
-              {connection.name === "Ethereum" ? (
+          primaryConnection && primaryUserInfo ? (
+            <Box position="relative">
+              {primaryConnection.name === "Ethereum" ? (
                 <Box
-                  width="20px"
-                  height="20px"
+                  width="24px"
+                  height="24px"
                   borderRadius="50%"
                   overflow="hidden"
                   display="flex"
@@ -460,216 +246,62 @@ export default function AuthButton() {
                   <Avatar
                     address={ethereumAddress as `0x${string}`}
                     className={ONCHAIN_AVATAR_CLASS}
-                    style={{ width: 20, height: 20 }}
                   />
                 </Box>
               ) : (
                 <ChakraAvatar
-                  size="xs"
-                  src={getUserDisplayInfo(connection)?.avatar}
-                  name={getUserDisplayInfo(connection)?.displayName}
-                  className={ONCHAIN_AVATAR_CLASS}
-                  style={{ width: 20, height: 20 }}
+                  size="sm"
+                  src={primaryUserInfo.avatar}
+                  name={primaryUserInfo.displayName}
                 />
-              )}
-              {/* Only show platform icon in expanded form (not primary) */}
-              {!isPrimary && (
-                <Box
-                  position="absolute"
-                  bottom={-2}
-                  right={-2}
-                  bg="transparent"
-                  borderRadius="full"
-                  p={0}
-                >
-                  <Icon
-                    as={connection.icon}
-                    boxSize={3}
-                    color={connection.color}
-                  />
-                </Box>
               )}
             </Box>
-          ) : (
-            <Icon as={connection.icon} boxSize={3} />
-          )
+          ) : undefined
         }
-        justifyContent="flex-start"
-        pl={3}
-        py={3}
-        h="full"
+        rightIcon={
+          primaryConnection ? (
+            <HStack spacing={1}>
+              {connections
+                .filter((conn) => conn.connected)
+                .map((conn) => (
+                  <Badge
+                    key={conn.name}
+                    size="sm"
+                    colorScheme={conn.color}
+                    borderRadius="full"
+                  >
+                    <Icon as={conn.icon} boxSize={2} />
+                  </Badge>
+                ))}
+            </HStack>
+          ) : undefined
+        }
+        _hover={{
+          borderColor: "primary",
+        }}
       >
-        {connection.name === "Ethereum" && connection.connected ? (
-          <Box className={ONCHAIN_NAME_CONTAINER_CLASS}>
-            <Name
-              address={ethereumAddress as `0x${string}`}
-              className={ONCHAIN_NAME_CLASS}
-            />
-          </Box>
-        ) : (
-          <Box className={ONCHAIN_NAME_CONTAINER_CLASS}>
-            <Text
-              fontSize="sm"
-              noOfLines={1}
-              className={ONCHAIN_NAME_CLASS}
-              color={connection.connected ? "text" : connection.color}
-            >
-              {getConnectionButtonText(connection)}
+        {primaryConnection && primaryUserInfo ? (
+          primaryConnection.name === "Ethereum" ? (
+            <Name address={ethereumAddress as `0x${string}`} />
+          ) : (
+            <Text fontSize="sm" noOfLines={1}>
+              {primaryUserInfo.displayName}
             </Text>
-          </Box>
+          )
+        ) : (
+          "Login"
         )}
       </Button>
-    );
-  };
 
-  return (
-    <>
-      <Box
-        position="relative"
-        mt="auto"
-        mb={4}
-        onMouseEnter={() => setIsDrawerExpanded(true)}
-        onMouseLeave={() => setIsDrawerExpanded(false)}
-      >
-        {/* Collapsed State - Show only primary connection */}
-        <Box
-          bg="background"
-          borderRadius="md"
-          border="1px solid"
-          borderColor="border"
-          boxShadow="sm"
-          onClick={handleProfileClick}
-          cursor="pointer"
-          _hover={{ borderColor: "primary" }}
-          transition="border-color 0.2s ease-in-out"
-        >
-          <Button
-            size="xs"
-            variant="ghost"
-            bg="transparent"
-            color="text"
-            w="full"
-            fontSize="xs"
-            leftIcon={
-              primaryConnection.connected &&
-              getUserDisplayInfo(primaryConnection) ? (
-                <Box
-                  position="relative"
-                  display="inline-block"
-                  minWidth="24px"
-                  minHeight="24px"
-                >
-                  {primaryConnection.name === "Ethereum" ? (
-                    <Box
-                      width="20px"
-                      height="20px"
-                      borderRadius="50%"
-                      overflow="hidden"
-                      display="flex"
-                      alignItems="center"
-                      justifyContent="center"
-                    >
-                      <Avatar
-                        address={ethereumAddress as `0x${string}`}
-                        className={ONCHAIN_AVATAR_CLASS}
-                        style={{ width: 20, height: 20 }}
-                      />
-                    </Box>
-                  ) : (
-                    <ChakraAvatar
-                      size="xs"
-                      src={getUserDisplayInfo(primaryConnection)?.avatar}
-                      name={getUserDisplayInfo(primaryConnection)?.displayName}
-                      className={ONCHAIN_AVATAR_CLASS}
-                      style={{ width: 20, height: 20 }}
-                    />
-                  )}
-                </Box>
-              ) : (
-                <Icon as={primaryConnection.icon} boxSize={3} />
-              )
-            }
-            justifyContent="flex-start"
-            pl={3}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleProfileClick();
-            }}
-          >
-            {primaryConnection.name === "Ethereum" &&
-            primaryConnection.connected ? (
-              <Box className={ONCHAIN_NAME_CONTAINER_CLASS}>
-                <Name
-                  address={ethereumAddress as `0x${string}`}
-                  className={ONCHAIN_NAME_CLASS}
-                />
-              </Box>
-            ) : (
-              <Box className={ONCHAIN_NAME_CONTAINER_CLASS}>
-                <Text
-                  fontSize="xs"
-                  noOfLines={1}
-                  className={ONCHAIN_NAME_CLASS}
-                >
-                  {getConnectionButtonText(primaryConnection)}
-                </Text>
-              </Box>
-            )}
-          </Button>
-        </Box>
-
-        {/* Expanded State - Show all connections */}
-        <Box
-          position="absolute"
-          bottom="100%"
-          left={0}
-          right={0}
-          mb={2}
-          bg="background"
-          borderRadius="md"
-          boxShadow="lg"
-          border="1px solid"
-          borderColor="border"
-          opacity={isDrawerExpanded ? 1 : 0}
-          visibility={isDrawerExpanded ? "visible" : "hidden"}
-          transform={isDrawerExpanded ? "translateY(0)" : "translateY(10px)"}
-          transition="all 0.2s ease-in-out"
-          zIndex={1000}
-          p={0}
-        >
-          <Box pt={0} mt={0} h="full" display="flex" flexDirection="column">
-            {!hasAnyConnection && (
-              <HStack spacing={2} mb={1}>
-                <Button
-                  size="xs"
-                  variant="ghost"
-                  onClick={() => setShowConnectionOptions(false)}
-                  color="muted"
-                  _hover={{ color: "text" }}
-                  p={1}
-                  minH="auto"
-                >
-                  ✕
-                </Button>
-              </HStack>
-            )}
-
-            {connections.map((connection, index) => (
-              <Box
-                key={connection.name}
-                mt={0}
-                pt={0}
-                mb={0}
-                pb={0}
-                flex={1}
-                display="flex"
-              >
-                {renderConnectionButton(connection)}
-              </Box>
-            ))}
-          </Box>
-        </Box>
-      </Box>
+      {/* Connection Modal */}
+      <ConnectionModal
+        isOpen={isConnectionModalOpen}
+        onClose={() => setIsConnectionModalOpen(false)}
+        onHiveLogin={handleHiveLogin}
+        onFarcasterConnect={handleFarcasterConnect}
+        isFarcasterAuthInProgress={isFarcasterAuthInProgress}
+        primaryConnection={primaryConnection}
+      />
 
       {/* Hive Login Modal */}
       <div className={colorMode}>
@@ -685,7 +317,7 @@ export default function AuthButton() {
         />
       </div>
 
-      {/* Hidden Farcaster SignInButton for programmatic triggering */}
+      {/* Hidden Farcaster SignInButton */}
       <Box
         ref={hiddenSignInRef}
         position="absolute"
@@ -701,6 +333,7 @@ export default function AuthButton() {
               username,
             });
             setIsFarcasterAuthInProgress(false);
+            setIsConnectionModalOpen(false);
             toast({
               status: "success",
               title: "Connected to Farcaster!",
