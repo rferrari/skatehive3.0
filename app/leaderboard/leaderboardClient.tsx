@@ -94,6 +94,7 @@ export default function LeaderboardClient({ skatersData }: Props) {
       </HStack>
     );
   });
+  EthAddress.displayName = 'EthAddress';
 
   // Memoized skater row component
   const SkaterRow = React.memo(
@@ -120,7 +121,7 @@ export default function LeaderboardClient({ skatersData }: Props) {
             _groupHover={{ bg: "muted" }}
           >
             <HStack spacing={2}>
-              <Box minW="30px">{getRankIcon(rank)}</Box>
+              <Box minW="30px">{getRankIcon(rank, sortBy, skater)}</Box>
               <Avatar
                 src={`https://images.hive.blog/u/${skater.hive_author}/avatar/small`}
                 name={skater.hive_author}
@@ -174,6 +175,7 @@ export default function LeaderboardClient({ skatersData }: Props) {
       );
     }
   );
+  SkaterRow.displayName = 'SkaterRow';
 
   // Responsive values
   const headerFontSize = useBreakpointValue({
