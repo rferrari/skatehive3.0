@@ -236,6 +236,7 @@ export default function ConnectionModal({
                     src={`https://images.hive.blog/u/${user}/avatar/small`}
                     boxSize={5}
                     borderRadius="full"
+                    alt="Hive Profile Picture"
                   />
                 }
                 onClick={handleProfileClick}
@@ -254,6 +255,7 @@ export default function ConnectionModal({
                     src={finalFarcasterProfile.pfpUrl || ""}
                     boxSize={5}
                     borderRadius="full"
+                    alt="Farcaster Profile Picture"
                   />
                 }
                 onClick={() => {
