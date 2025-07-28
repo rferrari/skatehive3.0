@@ -67,6 +67,17 @@ export default function SnapComposer({
   const [uploadCount, setUploadCount] = useState(0);
   const isUploadingMedia = uploadCount > 0;
 
+  // Video duration error handling
+  const [videoDurationError, setVideoDurationError] = useState<string | null>(null);
+
+  const handleVideoDurationError = (duration: number) => {
+    const minutes = Math.floor(duration / 60);
+    const seconds = Math.floor(duration % 60);
+    setVideoDurationError(`Video is ${minutes}m ${seconds}s long. Maximum allowed duration is 1 minute.`);
+    // Clear error after 5 seconds
+    setTimeout(() => setVideoDurationError(null), 5000);
+  };
+
   const buttonText = submitLabel || (post ? "Reply" : "Post");
 
   // Function to extract hashtags from text
@@ -536,6 +547,19 @@ export default function SnapComposer({
             </Box>
           </HStack>
           <Box width="100%">
+            {videoDurationError && (
+              <Box 
+                bg="red.50" 
+                color="red.800" 
+                p={2} 
+                borderRadius="md" 
+                mb={2}
+                fontSize="sm"
+                textAlign="center"
+              >
+                {videoDurationError}
+              </Box>
+            )}
             <VideoUploader
               ref={videoUploaderRef}
               onUpload={setVideoUrl}
@@ -543,6 +567,8 @@ export default function SnapComposer({
               username={user || undefined}
               onUploadStart={handleVideoUploadStart}
               onUploadFinish={handleVideoUploadFinish}
+              maxDurationSeconds={60}
+              onDurationError={handleVideoDurationError}
             />
           </Box>
           <Wrap spacing={4}>

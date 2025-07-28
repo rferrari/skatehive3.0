@@ -87,6 +87,17 @@ export default function Composer() {
   const handleImageTrigger = createImageTrigger(imageCompressorRef);
   const handleVideoTrigger = createVideoTrigger(videoUploaderRef);
 
+  // Video duration error handling
+  const [videoDurationError, setVideoDurationError] = useState<string | null>(null);
+
+  const handleVideoDurationError = (duration: number) => {
+    const minutes = Math.floor(duration / 60);
+    const seconds = Math.floor(duration % 60);
+    setVideoDurationError(`Video is ${minutes}m ${seconds}s long. Long videos will be uploaded without compression to prevent crashes.`);
+    // Clear error after 5 seconds
+    setTimeout(() => setVideoDurationError(null), 5000);
+  };
+
   const {
     isProcessingGif,
     isUploadingGif,
@@ -182,9 +193,16 @@ export default function Composer() {
             ref={videoUploaderRef}
             onUpload={handleVideoUpload}
             isProcessing={isCompressingVideo}
+            onDurationError={handleVideoDurationError}
           />
         </Box>
       </Flex>
+
+      {videoDurationError && (
+        <Center bg="red.50" color="red.800" p={2} borderRadius="md" mb={2}>
+          {videoDurationError}
+        </Center>
+      )}
 
       <Flex
         flex="1"

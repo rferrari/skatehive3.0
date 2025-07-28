@@ -8,6 +8,9 @@ interface VideoUploaderProps {
   username?: string; // Add username prop for metadata
   onUploadStart?: () => void;
   onUploadFinish?: () => void;
+  skipCompression?: boolean; // Skip compression entirely
+  maxDurationSeconds?: number; // Maximum allowed video duration
+  onDurationError?: (duration: number) => void; // Callback for duration violations
 }
 
 export interface VideoUploaderRef {
@@ -16,7 +19,16 @@ export interface VideoUploaderRef {
 }
 
 const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
-  ({ onUpload, isProcessing = false, username, onUploadStart, onUploadFinish }, ref) => {
+  ({ 
+    onUpload, 
+    isProcessing = false, 
+    username, 
+    onUploadStart, 
+    onUploadFinish,
+    skipCompression = false,
+    maxDurationSeconds,
+    onDurationError
+  }, ref) => {
     const inputRef = useRef<HTMLInputElement>(null);
     const ffmpegRef = useRef<any>(null);
     const [status, setStatus] = useState<string>("");
@@ -27,6 +39,27 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
     const backgroundMuted = 'var(--chakra-colors-muted, #eee)';
     const backgroundPrimary = 'var(--chakra-colors-primary, #0070f3)';
     const backgroundAccent = 'var(--chakra-colors-accent, #00b894)';
+
+    // Function to get video duration using HTML5 video element
+    const getVideoDuration = (file: File): Promise<number> => {
+      return new Promise((resolve, reject) => {
+        const video = document.createElement('video');
+        video.preload = 'metadata';
+        
+        video.onloadedmetadata = () => {
+          const duration = video.duration;
+          URL.revokeObjectURL(video.src); // Clean up object URL
+          resolve(duration);
+        };
+        
+        video.onerror = () => {
+          URL.revokeObjectURL(video.src); // Clean up object URL
+          reject(new Error('Failed to load video metadata'));
+        };
+        
+        video.src = URL.createObjectURL(file);
+      });
+    };
 
     const compressVideo = async (file: File, shouldResize: boolean): Promise<Blob> => {
       setStatus("Compressing video...");
@@ -54,6 +87,38 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         ffmpegArgs.push("-vf", "scale=854:-2");
       }
       ffmpegArgs.push("output.mp4");
+
+      await ffmpeg.exec(ffmpegArgs);
+
+      const data = await ffmpeg.readFile("output.mp4");
+      setCompressionProgress(100);
+      return new Blob([data.buffer], { type: "video/mp4" });
+    };
+
+    // Function to convert video to MP4 format without compression (for browser compatibility)
+    const convertToMp4 = async (file: File): Promise<Blob> => {
+      setStatus("Converting to MP4 format...");
+      setCompressionProgress(0);
+      if (!ffmpegRef.current) {
+        ffmpegRef.current = new FFmpeg();
+        await ffmpegRef.current.load();
+      }
+      const ffmpeg = ffmpegRef.current;
+      
+      // Set up progress handler
+      ffmpeg.on('progress', ({ progress }: { progress: number }) => {
+        setCompressionProgress(Math.round(progress * 100));
+      });
+      
+      await ffmpeg.writeFile(file.name, await fetchFile(file));
+
+      // Minimal conversion to MP4 - copy streams without re-encoding
+      const ffmpegArgs = [
+        "-i", file.name,
+        "-c", "copy", // Copy streams without re-encoding (preserves quality)
+        "-f", "mp4",  // Force MP4 format
+        "output.mp4"
+      ];
 
       await ffmpeg.exec(ffmpegArgs);
 
@@ -155,14 +220,45 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
       }
       if (onUploadStart) onUploadStart();
       try {
+        // Check video duration if maxDurationSeconds is set
+        if (maxDurationSeconds) {
+          setStatus("Checking video duration...");
+          const duration = await getVideoDuration(file);
+          if (duration > maxDurationSeconds) {
+            setStatus(`Error: Video is too long. Maximum allowed duration is ${maxDurationSeconds} seconds.`);
+            if (onDurationError) onDurationError(duration);
+            onUpload(null);
+            if (onUploadFinish) onUploadFinish();
+            return;
+          }
+        }
+
         const twelveMB = 12 * 1024 * 1024;
         const shouldResize = file.size > twelveMB;
 
-        setStatus("Converting video...");
+        // Determine if we should skip compression
+        let shouldSkipCompression = skipCompression;
+        
+        // If not explicitly skipping, check duration for auto-skip (over 1 minute)
+        if (!shouldSkipCompression && !maxDurationSeconds) {
+          try {
+            const duration = await getVideoDuration(file);
+            if (duration > 60) { // Skip compression for videos over 1 minute
+              shouldSkipCompression = true;
+              console.log("Video is over 1 minute, skipping compression to prevent crashes.");
+            }
+          } catch (error) {
+            console.warn("Could not determine video duration, proceeding with compression:", error);
+          }
+        }
+
+        setStatus(shouldSkipCompression ? "Converting to MP4 format..." : "Converting video...");
         setCompressionProgress(0);
         setUploadProgress(0);
 
-        if (shouldResize) {
+        if (shouldSkipCompression) {
+          console.log("Skipping compression, converting to MP4 format for browser compatibility.");
+        } else if (shouldResize) {
           console.log("File is larger than 12MB, compressing with resize.");
         } else {
           console.log("File is smaller than 12MB, converting to MP4 without resize.");
@@ -171,29 +267,42 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         // Generate thumbnail first
         const thumbnailUrl = await generateThumbnail(file);
 
-        const compressedBlob = await compressVideo(file, shouldResize);
+        let processedFile: File;
+        if (shouldSkipCompression) {
+          // Convert to MP4 format without compression for browser compatibility
+          const mp4Blob = await convertToMp4(file);
+          console.log(`Original file size: ${file.size} bytes`);
+          console.log(`Converted MP4 size: ${mp4Blob.size} bytes`);
+          
+          processedFile = new File([mp4Blob], "converted.mp4", {
+            type: "video/mp4",
+          });
+        } else {
+          // Compress the video
+          const compressedBlob = await compressVideo(file, shouldResize);
+          console.log(`Original file size: ${file.size} bytes`);
+          console.log(`Compressed video size: ${compressedBlob.size} bytes`);
 
-        console.log(`Original file size: ${file.size} bytes`);
-        console.log(`Compressed video size: ${compressedBlob.size} bytes`);
+          if (compressedBlob.size === 0) {
+            setStatus("Error: Compression resulted in an empty file.");
+            onUpload(null);
+            if (onUploadFinish) onUploadFinish();
+            return;
+          }
+          if (shouldResize && compressedBlob.size > file.size) {
+            setStatus("Error: Compressed file is larger than the original.");
+            onUpload(null);
+            if (onUploadFinish) onUploadFinish();
+            return;
+          }
 
-        if (compressedBlob.size === 0) {
-          setStatus("Error: Compression resulted in an empty file.");
-          onUpload(null);
-          if (onUploadFinish) onUploadFinish();
-          return;
+          processedFile = new File([compressedBlob], "compressed.mp4", {
+            type: "video/mp4",
+          });
         }
-        if (shouldResize && compressedBlob.size > file.size) {
-          setStatus("Error: Compressed file is larger than the original.");
-          onUpload(null);
-          if (onUploadFinish) onUploadFinish();
-          return;
-        }
 
-        const compressedFile = new File([compressedBlob], "compressed.mp4", {
-          type: "video/mp4",
-        });
         const formData = new FormData();
-        formData.append("file", compressedFile);
+        formData.append("file", processedFile);
         if (username) {
           formData.append("creator", username);
         }
