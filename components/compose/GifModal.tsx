@@ -74,6 +74,7 @@ export default function GifModal({
             setGifUrl(null);
             setGifSize(null);
             setIsProcessingGif(false);
+            setShowGifMaker(false); // Reset to show initial options
             onClose();
         } catch (err) {
             alert("Failed to upload GIF to IPFS.");

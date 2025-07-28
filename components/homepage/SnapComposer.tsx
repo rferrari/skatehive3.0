@@ -15,7 +15,7 @@ import GiphySelector from "./GiphySelector";
 import VideoUploader, { VideoUploaderRef } from "./VideoUploader";
 import { IGif } from "@giphy/js-types";
 import { FaImage } from "react-icons/fa";
-import { MdGif } from "react-icons/md";
+import { MdGif, MdMovieCreation } from "react-icons/md";
 import { Discussion } from "@hiveio/dhive";
 import {
   getFileSignature,
@@ -27,6 +27,8 @@ import { FaTimes } from "react-icons/fa";
 import ImageCompressor from "@/lib/utils/ImageCompressor";
 import { ImageCompressorRef } from "@/lib/utils/ImageCompressor";
 import imageCompression from "browser-image-compression";
+import GifModal from "../compose/GifModal";
+import { GIFMakerRef as GIFMakerWithSelectorRef } from "./GIFMakerWithSelector";
 
 interface SnapComposerProps {
   pa: string;
@@ -61,6 +63,16 @@ export default function SnapComposer({
   >([]);
   const gifWebpInputRef = useRef<HTMLInputElement>(null);
   const imageUploadInputRef = useRef<HTMLInputElement>(null);
+
+  // GifModal state and refs
+  const [isGifModalOpen, setGifModalOpen] = useState(false);
+  const gifMakerWithSelectorRef = useRef<GIFMakerWithSelectorRef>(null);
+  const [isProcessingGif, setIsProcessingGif] = useState(false);
+  const [isUploadingGif, setIsUploadingGif] = useState(false);
+  const [gifUrl, setGifUrl] = useState<string | null>(null);
+  const [gifSize, setGifSize] = useState<number | null>(null);
+  const [gifCaption, setGifCaption] = useState<string>("skatehive-gif");
+  const [gifUrls, setGifUrls] = useState<{ url: string; caption: string }[]>([]);
 
   // Drag and drop state
   const [isDragOver, setIsDragOver] = useState(false);
@@ -241,6 +253,15 @@ export default function SnapComposer({
       commentBody += `\n\n<iframe src="${videoUrl}" frameborder="0" allowfullscreen></iframe>`;
     }
 
+    // Add GIF URLs from gifUrls array
+    if (gifUrls.length > 0) {
+      const gifMarkup = gifUrls
+        .map((gif) => `![${gif.caption || "gif"}](${gif.url})`)
+        .join("\n");
+      commentBody += `\n\n${gifMarkup}`;
+      validUrls = [...validUrls, ...gifUrls.map(gif => gif.url)];
+    }
+
     if (commentBody) {
       let snapsTags: string[] = [];
       try {
@@ -270,6 +291,12 @@ export default function SnapComposer({
           setCompressedImages([]);
           setSelectedGif(null);
           setVideoUrl(null);
+          setGifUrls([]);
+          setGifUrl(null);
+          setGifSize(null);
+          setGifCaption("skatehive-gif");
+          setIsProcessingGif(false);
+          setIsUploadingGif(false);
 
           // Set created to "just now" for optimistic update
           const newComment: Partial<Discussion> = {
@@ -371,6 +398,32 @@ export default function SnapComposer({
   // Video upload state integration
   const handleVideoUploadStart = () => startUpload();
   const handleVideoUploadFinish = () => finishUpload();
+
+  // GifModal handlers
+  const handleGifUpload = (url: string | null, caption?: string) => {
+    setIsProcessingGif(!!url);
+    setGifUrl(url);
+    if (url) {
+      fetch(url)
+        .then((res) => res.blob())
+        .then((blob) => setGifSize(blob.size))
+        .catch(() => setGifSize(null));
+    } else {
+      setGifSize(null);
+    }
+    setGifCaption(caption || "skatehive-gif");
+  };
+
+  // Custom insertAtCursor for snaps - adds GIFs to gifUrls array instead of inserting markdown
+  const insertAtCursor = (content: string) => {
+    // Parse the markdown content to extract the URL and caption
+    const match = content.match(/!\[([^\]]*)\]\(([^)]+)\)/);
+    if (match) {
+      const [, caption, url] = match;
+      // Add to gifUrls array for display below the text field
+      setGifUrls(prev => [...prev, { url, caption: caption || "gif" }]);
+    }
+  };
 
   // Only render the composer if user is logged in
   if (!user) return null;
@@ -514,6 +567,29 @@ export default function SnapComposer({
               >
                 <FaVideo color="var(--chakra-colors-primary)" size={22} />
               </Button>
+              {/* GIF Maker Button */}
+              <IconButton
+                aria-label="GIF Maker"
+                icon={
+                  <MdMovieCreation color="var(--chakra-colors-primary)" size={22} />
+                }
+                variant="ghost"
+                isDisabled={isLoading}
+                border="2px solid transparent"
+                borderRadius="full"
+                height="48px"
+                width="48px"
+                p={0}
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+                _hover={{
+                  borderColor: "primary",
+                  boxShadow: "0 0 0 2px var(--chakra-colors-primary)",
+                }}
+                _active={{ borderColor: "accent" }}
+                onClick={() => setGifModalOpen(true)}
+              />
             </HStack>
             <Box display={buttonSize === "sm" ? "inline-block" : undefined}>
               <Button
@@ -657,6 +733,43 @@ export default function SnapComposer({
                 />
               </Box>
             )}
+            {/* Display GIFs from gifUrls array */}
+            {gifUrls.map((gif, index) => (
+              <Box key={index} position="relative">
+                <Image
+                  alt={gif.caption || "gif"}
+                  src={gif.url}
+                  boxSize="100px"
+                  borderRadius="base"
+                />
+                <Input
+                  mt={2}
+                  placeholder="Enter caption"
+                  value={gif.caption}
+                  onChange={(e) => {
+                    const newGifUrls = [...gifUrls];
+                    newGifUrls[index].caption = e.target.value;
+                    setGifUrls(newGifUrls);
+                  }}
+                  size="sm"
+                  isDisabled={isLoading}
+                />
+                <IconButton
+                  aria-label="Remove GIF"
+                  icon={<FaTimes />}
+                  size="xs"
+                  position="absolute"
+                  top="0"
+                  right="0"
+                  onClick={() =>
+                    setGifUrls((prevGifUrls) =>
+                      prevGifUrls.filter((_, i) => i !== index)
+                    )
+                  }
+                  isDisabled={isLoading}
+                />
+              </Box>
+            ))}
           </Wrap>
           {isGiphyModalOpen && (
             <Box position="relative">
@@ -675,6 +788,23 @@ export default function SnapComposer({
           )}
         </Box>
       </Box>
+      {/* GifModal */}
+      <GifModal
+        isOpen={isGifModalOpen}
+        onClose={() => setGifModalOpen(false)}
+        gifMakerWithSelectorRef={gifMakerWithSelectorRef}
+        handleGifUpload={handleGifUpload}
+        isProcessingGif={isProcessingGif}
+        gifUrl={gifUrl}
+        gifSize={gifSize}
+        isUploadingGif={isUploadingGif}
+        setIsUploadingGif={setIsUploadingGif}
+        insertAtCursor={insertAtCursor}
+        gifCaption={gifCaption}
+        setGifUrl={setGifUrl}
+        setGifSize={setGifSize}
+        setIsProcessingGif={setIsProcessingGif}
+      />
       {/* Matrix Overlay and login prompt if not logged in */}
       {!user && <></>}
     </Box>

@@ -170,6 +170,7 @@ export default function Composer() {
           handleVideoTrigger={handleVideoTrigger}
           setGifModalOpen={setGifModalOpen}
           isUploading={isUploading}
+          isGifModalOpen={isGifModalOpen}
         />
       </Flex>
 

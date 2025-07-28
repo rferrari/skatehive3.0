@@ -194,11 +194,15 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
         const ffmpeg = ffmpegRef.current;
         setStatus("Converting to GIF...");
         await ffmpeg.writeFile(videoFile.name, await fetchFile(videoFile));
+        const vfCommand = `fps=${fps},scale=320:-1:flags=lanczos`;
+        
+        console.log("FFmpeg command:", vfCommand); // Debug log
+        
         await ffmpeg.exec([
           "-ss", startTime.toString(),
           "-i", videoFile.name,
           "-t", duration.toString(),
-          "-vf", `fps=${fps},scale=320:-1:flags=lanczos`,
+          "-vf", vfCommand,
           "-f", "gif",
           "output.gif",
         ]);
@@ -367,6 +371,7 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
                     <option value={20}>20</option>
                     <option value={24}>24</option>
                   </Select>
+
                 </Box>
                 {(() => {
                   const est = parseFloat(estimateGifSizeMB(endTime - startTime));
