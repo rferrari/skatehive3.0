@@ -7,12 +7,13 @@ import React, {
 } from "react";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile } from "@ffmpeg/util";
-import { Box, Input, Button, Text } from "@chakra-ui/react";
+import { Box, Input, Button, Text, Select } from "@chakra-ui/react";
 import { useTheme } from "@/app/themeProvider";
 
 interface GIFMakerWithSelectorProps {
   onUpload: (url: string | null, caption?: string) => void;
   isProcessing?: boolean;
+  onVideoSelected?: () => void;
 }
 
 export interface GIFMakerRef {
@@ -21,7 +22,7 @@ export interface GIFMakerRef {
 }
 
 const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
-  ({ onUpload, isProcessing = false }, ref) => {
+  ({ onUpload, isProcessing = false, onVideoSelected }, ref) => {
     const inputRef = useRef<HTMLInputElement>(null);
     const ffmpegRef = useRef<any>(null);
     const videoRef = useRef<HTMLVideoElement>(null);
@@ -32,9 +33,10 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
     const [startTime, setStartTime] = useState<number | null>(null);
     const [endTime, setEndTime] = useState<number | null>(null);
     const [canConvert, setCanConvert] = useState<boolean>(false);
+    const [isConverting, setIsConverting] = useState<boolean>(false);
+    const [fps, setFps] = useState<number>(10);
     // Ref to track if user is seeking
     const isSeekingRef = useRef(false);
-    const [caption, setCaption] = useState("");
 
     // THEME
     const { theme } = useTheme();
@@ -99,7 +101,7 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
         setStartTime(null);
         setEndTime(null);
         setCanConvert(false);
-        onUpload(null, caption);
+        onUpload(null);
         return;
       }
       setStatus("Validating video duration...");
@@ -112,7 +114,7 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
         setStartTime(null);
         setEndTime(null);
         setCanConvert(false);
-        onUpload(null, caption);
+        onUpload(null);
         return;
       }
       const url = URL.createObjectURL(file);
@@ -123,6 +125,10 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
       setEndTime(null);
       setCanConvert(false);
       setStatus("");
+      // Notify parent that video was selected
+      if (onVideoSelected) {
+        onVideoSelected();
+      }
     };
 
     const handleSetStart = () => {
@@ -177,6 +183,7 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
     const handleConvert = async () => {
       if (!videoFile || startTime === null || endTime === null) return;
       const duration = Math.max(0.1, endTime - startTime);
+      setIsConverting(true);
       setStatus("Preparing to convert...");
       try {
         if (!ffmpegRef.current) {
@@ -187,11 +194,15 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
         const ffmpeg = ffmpegRef.current;
         setStatus("Converting to GIF...");
         await ffmpeg.writeFile(videoFile.name, await fetchFile(videoFile));
+        const vfCommand = `fps=${fps},scale=320:-1:flags=lanczos`;
+        
+        console.log("FFmpeg command:", vfCommand); // Debug log
+        
         await ffmpeg.exec([
           "-ss", startTime.toString(),
           "-i", videoFile.name,
           "-t", duration.toString(),
-          "-vf", "fps=10,scale=320:-1:flags=lanczos",
+          "-vf", vfCommand,
           "-f", "gif",
           "output.gif",
         ]);
@@ -199,17 +210,24 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
         const gifBlob = new Blob([data.buffer], { type: "image/gif" });
         const gifUrl = URL.createObjectURL(gifBlob);
         setStatus("GIF created successfully!");
-        onUpload(gifUrl, caption || "skatehive-gif");
+        onUpload(gifUrl, "skatehive-gif");
       } catch (error) {
         setStatus("Error converting video.");
         console.error("Error during GIF conversion:", error);
-        onUpload(null, caption || "skatehive-gif");
+        onUpload(null, "skatehive-gif");
+      } finally {
+        setIsConverting(false);
       }
     };
 
-    // Estimate GIF size in MB for 320px wide, 10fps GIFs
+    // Estimate GIF size in MB for 320px wide GIFs (adjusted for FPS)
     const estimateGifSizeMB = (duration: number) => {
-      return (0.3 + 0.3 * duration).toFixed(2);
+      // More realistic estimation based on actual GIF compression
+      // Base size per second at 10 FPS, then adjust for actual FPS
+      const baseSizePerSecond = 0.18; // MB per second at 10 FPS (increased from 0.15)
+      const fpsMultiplier = fps / 10;
+      const estimatedSize = baseSizePerSecond * duration * fpsMultiplier;
+      return Math.max(0.1, estimatedSize).toFixed(2); // Minimum 0.1 MB
     };
 
     // Get color for estimated size using theme colors
@@ -252,61 +270,18 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
 
     return (
       <Box maxW={400} mx="auto" p={6} bg={colors.background} borderRadius={borderRadius} boxShadow={boxShadow} textAlign="center">
-        {/* Only show Select Video button if no video is selected */}
-        {!videoUrl && !videoFile && (
-          <>
-            <Button
-              onClick={() => inputRef.current && inputRef.current.click()}
-              bg={colors.background}
-              color={colors.primary}
-              borderWidth="2px"
-              borderColor={colors.primary}
-              fontWeight={fontWeightBold}
-              mb={4}
-              w="100%"
-              borderRadius={borderRadius}
-              _hover={{ bg: colors.primary, color: colors.background, borderColor: colors.primary }}
-              _active={{ bg: colors.primary, color: colors.background, borderColor: colors.primary }}
-              isDisabled={isProcessing}
-            >
-              Select Video (3–30s)
-            </Button>
-            <Input
-              type="file"
-              accept="video/*"
-              ref={inputRef}
-              display="none"
-              onChange={handleFileChange}
-              isDisabled={isProcessing}
-            />
-          </>
-        )}
-        {/* After video is selected, show the rest of the UI */}
+        {/* Hidden file input for video selection */}
+        <Input
+          type="file"
+          accept="video/*"
+          ref={inputRef}
+          display="none"
+          onChange={handleFileChange}
+          isDisabled={isProcessing}
+        />
+                {/* After video is selected, show the rest of the UI */}
         {videoUrl && videoFile && (
           <>
-            <Box mb={3}>
-              <Input
-                type="text"
-                placeholder="Enter GIF caption or title (filename)"
-                value={caption}
-                onChange={e => setCaption(e.target.value)}
-                width="100%"
-                px={3}
-                py={2}
-                borderRadius={theme.radii?.base || 6}
-                borderColor={colors.border}
-                fontSize={fontSizeMd}
-                mb={1}
-                maxLength={64}
-                isDisabled={isProcessing}
-                _placeholder={{ color: colors.muted, opacity: 1 }}
-                bg={colors.muted}
-                color={colors.text}
-              />
-              <Text fontSize={fontSizeSm} color={colors.text} opacity={0.7}>
-                This will be used as the GIF filename for Hive frontends.
-              </Text>
-            </Box>
             <Box as="video"
               ref={videoRef}
               src={videoUrl}
@@ -321,7 +296,7 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
               {/* Set Start Button */}
               <Button
                 onClick={handleSetStart}
-                isDisabled={isProcessing}
+                isDisabled={isConverting}
                 px={4}
                 py={2}
                 fontSize={fontSizeMd}
@@ -333,14 +308,14 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
                 fontWeight={fontWeightBold}
                 _hover={{ bg: colors.primary, color: colors.background, borderColor: colors.primary }}
                 _active={{ bg: colors.primary, color: colors.background, borderColor: colors.primary }}
-                cursor={isProcessing ? "not-allowed" : "pointer"}
+                cursor={isConverting ? "not-allowed" : "pointer"}
               >
                 Set Start
               </Button>
               {/* Set End Button */}
               <Button
                 onClick={handleSetEnd}
-                isDisabled={isProcessing}
+                isDisabled={isConverting}
                 px={4}
                 py={2}
                 fontSize={fontSizeMd}
@@ -352,7 +327,7 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
                 fontWeight={fontWeightBold}
                 _hover={{ bg: colors.primary, color: colors.background, borderColor: colors.primary }}
                 _active={{ bg: colors.primary, color: colors.background, borderColor: colors.primary }}
-                cursor={isProcessing ? "not-allowed" : "pointer"}
+                cursor={isConverting ? "not-allowed" : "pointer"}
               >
                 Set End
               </Button>
@@ -371,19 +346,54 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
               )}
             </Text>
             {startTime !== null && endTime !== null && (
-              (() => {
-                const est = parseFloat(estimateGifSizeMB(endTime - startTime));
-                return (
-                  <Text mt={1} fontSize={fontSizeSm} fontWeight={fontWeightMedium}>
-                    Estimated GIF size: <Box as="span" color={getEstimateColor(est)} bg={colors.muted} borderRadius={theme.radii?.base || 6} px={2} py={0.5} ml={2} display="inline-block">{est} MB</Box>
+              <>
+                <Box display="flex" alignItems="center" justifyContent="center" gap={3} mt={3}>
+                  <Text fontSize={fontSizeSm} color={colors.text}>
+                    FPS:
                   </Text>
-                );
-              })()
+                  <Select
+                    value={fps}
+                    onChange={(e) => setFps(Number(e.target.value))}
+                    size="sm"
+                    w="80px"
+                    bg={colors.background}
+                    color={colors.primary}
+                    borderColor={colors.primary}
+                    borderRadius={theme.radii?.base || 6}
+                    _hover={{ borderColor: colors.primary }}
+                    _focus={{ borderColor: colors.primary, boxShadow: `0 0 0 1px ${colors.primary}` }}
+                  >
+                    <option value={5}>5</option>
+                    <option value={8}>8</option>
+                    <option value={10}>10</option>
+                    <option value={12}>12</option>
+                    <option value={15}>15</option>
+                    <option value={20}>20</option>
+                    <option value={24}>24</option>
+                  </Select>
+
+                </Box>
+                {(() => {
+                  const est = parseFloat(estimateGifSizeMB(endTime - startTime));
+                  return (
+                    <>
+                      <Text mt={1} fontSize={fontSizeSm} fontWeight={fontWeightMedium}>
+                        Estimated GIF size: <Box as="span" color={getEstimateColor(est)} bg={colors.muted} borderRadius={theme.radii?.base || 6} px={2} py={0.5} ml={2} display="inline-block">{est} MB</Box>
+                      </Text>
+                      {est > 2 && (
+                        <Text mt={1} fontSize={fontSizeSm} color={colors.error || "#FF6B6B"} fontWeight={fontWeightMedium}>
+                          TRY TO KEEP THE SIZE UNDER 2MB, DICKHEAD!
+                        </Text>
+                      )}
+                    </>
+                  );
+                })()}
+              </>
             )}
             {/* Convert to GIF Button */}
             <Button
               onClick={handleConvert}
-              isDisabled={isProcessing || !canConvert}
+              isDisabled={isConverting || !canConvert}
               px={6}
               py={2.5}
               fontSize={fontSizeLg}
@@ -393,22 +403,17 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
               borderWidth="2px"
               borderColor={colors.primary}
               fontWeight={fontWeightBold}
-              cursor={isProcessing || !canConvert ? "not-allowed" : "pointer"}
+              cursor={isConverting || !canConvert ? "not-allowed" : "pointer"}
               mt={2}
               mb={2}
               _hover={{ bg: colors.primary, color: colors.background, borderColor: colors.primary }}
               _active={{ bg: colors.primary, color: colors.background, borderColor: colors.primary }}
             >
-              {isProcessing ? "Processing..." : "Convert to GIF"}
+              {isConverting ? "Processing..." : (startTime !== null && endTime !== null && parseFloat(estimateGifSizeMB(endTime - startTime)) > 2 ? "Suck it web-gnar!" : "Convert to GIF")}
             </Button>
           </>
         )}
-        {/* Status and info text always at the bottom */}
-        {!videoUrl && !videoFile && (
-          <Text mb={4} color={colors.text} opacity={0.7}>
-            Try to only use 2-3 GIFs per post. Often, selecting a GIF as a thumbnail is a fun way to get peoples attention.
-          </Text>
-        )}
+        {/* Status text */}
         {status && (
           <Text mt={2} color={status.startsWith("Error") ? colors.error : colors.text}>{status}</Text>
         )}

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Button, Flex, Tooltip, Box } from "@chakra-ui/react";
 import { FaImage, FaVideo } from "react-icons/fa";
 import { MdGif, MdMovieCreation } from "react-icons/md";
@@ -8,21 +8,29 @@ interface MediaUploadButtonsProps {
     user: any;
     handleImageTrigger: () => void;
     handleVideoTrigger: () => void;
-    gifWebpInputRef: React.RefObject<HTMLInputElement | null>;
-    handleGifWebpUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
     setGifModalOpen: (open: boolean) => void;
     isUploading: boolean;
+    isGifModalOpen?: boolean;
 }
 
 export default function MediaUploadButtons({
     user,
     handleImageTrigger,
     handleVideoTrigger,
-    gifWebpInputRef,
-    handleGifWebpUpload,
     setGifModalOpen,
     isUploading,
+    isGifModalOpen = false,
 }: MediaUploadButtonsProps) {
+    const [imageTooltipOpen, setImageTooltipOpen] = useState(false);
+    const [videoTooltipOpen, setVideoTooltipOpen] = useState(false);
+    const [gifTooltipOpen, setGifTooltipOpen] = useState(false);
+
+    // Reset tooltips when modals close
+    useEffect(() => {
+        if (!isGifModalOpen) {
+            setGifTooltipOpen(false);
+        }
+    }, [isGifModalOpen]);
     return (
         <Flex
             justify={{ base: "center", md: "flex-end" }}
@@ -51,7 +59,13 @@ export default function MediaUploadButtons({
             )}
 
             {/* Media upload buttons */}
-            <Tooltip label="Upload Image" placement="bottom">
+            <Tooltip 
+                label="Upload Image" 
+                placement="bottom"
+                isOpen={imageTooltipOpen}
+                onOpen={() => setImageTooltipOpen(true)}
+                onClose={() => setImageTooltipOpen(false)}
+            >
                 <Button
                     variant="unstyled"
                     size="lg"
@@ -65,13 +79,22 @@ export default function MediaUploadButtons({
                         alignItems: "center",
                         justifyContent: "center",
                     }}
-                    onClick={handleImageTrigger}
+                    onClick={() => {
+                        setImageTooltipOpen(false);
+                        handleImageTrigger();
+                    }}
                 >
                     <FaImage color="var(--chakra-colors-primary)" size={48} />
                 </Button>
             </Tooltip>
 
-            <Tooltip label="Upload Video" placement="bottom">
+            <Tooltip 
+                label="Upload Video" 
+                placement="bottom"
+                isOpen={videoTooltipOpen}
+                onOpen={() => setVideoTooltipOpen(true)}
+                onClose={() => setVideoTooltipOpen(false)}
+            >
                 <Button
                     variant="unstyled"
                     size="lg"
@@ -85,13 +108,22 @@ export default function MediaUploadButtons({
                         alignItems: "center",
                         justifyContent: "center",
                     }}
-                    onClick={handleVideoTrigger}
+                    onClick={() => {
+                        setVideoTooltipOpen(false);
+                        handleVideoTrigger();
+                    }}
                 >
                     <FaVideo color="var(--chakra-colors-primary)" size={48} />
                 </Button>
             </Tooltip>
 
-            <Tooltip label="Upload GIF or WEBP (max 5MB)" placement="bottom">
+            <Tooltip 
+                label="GIF Maker" 
+                placement="bottom"
+                isOpen={gifTooltipOpen}
+                onOpen={() => setGifTooltipOpen(true)}
+                onClose={() => setGifTooltipOpen(false)}
+            >
                 <Button
                     variant="unstyled"
                     size="lg"
@@ -105,37 +137,12 @@ export default function MediaUploadButtons({
                         alignItems: "center",
                         justifyContent: "center",
                     }}
-                    onClick={() => gifWebpInputRef.current?.click()}
-                    isDisabled={isUploading}
+                    onClick={() => {
+                        setGifTooltipOpen(false);
+                        setGifModalOpen(true);
+                    }}
                 >
                     <MdGif color="var(--chakra-colors-primary)" size={48} />
-                    <input
-                        type="file"
-                        accept=".gif,.webp"
-                        style={{ display: "none" }}
-                        ref={gifWebpInputRef}
-                        onChange={handleGifWebpUpload}
-                    />
-                </Button>
-            </Tooltip>
-
-            <Tooltip label="Create GIF From Video" placement="bottom">
-                <Button
-                    variant="unstyled"
-                    size="lg"
-                    borderRadius="full"
-                    p={2}
-                    _hover={{ color: "primary", bg: "muted" }}
-                    style={{
-                        height: 64,
-                        width: 64,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                    }}
-                    onClick={() => setGifModalOpen(true)}
-                >
-                    <MdMovieCreation color="var(--chakra-colors-primary)" size={48} />
                 </Button>
             </Tooltip>
         </Flex>
