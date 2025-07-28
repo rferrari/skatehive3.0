@@ -11,7 +11,6 @@ import {
   Text,
   Divider,
   Box,
-  useToast,
   Center,
 } from "@chakra-ui/react";
 import { Wallet, ConnectWallet } from "@coinbase/onchainkit/wallet";
