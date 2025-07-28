@@ -207,7 +207,7 @@ const UpvoteButton = ({
             borderColor={!voted ? "primary" : voted ? "muted" : undefined}
             _hover={!voted ? { bg: "muted" } : undefined}
             transition="background 0.2s, border-radius 0.2s"
-            className={`${className} ${!voted ? "arrow-bg-fade" : ""} ${voted ? "upvoted-container" : ""}`}
+            className={`upvote-container ${className} ${!voted ? "arrow-bg-fade" : ""} ${voted ? "upvoted-container" : ""}`}
           >
             <LuArrowUpRight
               size={24}
@@ -244,7 +244,7 @@ const UpvoteButton = ({
             borderColor={!voted ? "primary" : voted ? "muted" : undefined}
             _hover={!voted ? { bg: "muted" } : undefined}
             transition="background 0.2s, border-radius 0.2s"
-            className={`${className} ${!voted ? "arrow-bg-fade" : ""} ${voted ? "upvoted-container" : ""}`}
+            className={`upvote-container ${className} ${!voted ? "arrow-bg-fade" : ""} ${voted ? "upvoted-container" : ""}`}
           >
             <LuArrowUpRight
               size={24}
@@ -299,7 +299,7 @@ const UpvoteButton = ({
               borderColor={!voted ? "primary" : voted ? "muted" : undefined}
               _hover={!voted ? { bg: "muted" } : undefined}
               transition="background 0.2s, border-radius 0.2s"
-              className={`${className} ${!voted ? "arrow-bg-fade" : ""} ${voted ? "upvoted-container" : ""}`}
+              className={`upvote-container ${className} ${!voted ? "arrow-bg-fade" : ""} ${voted ? "upvoted-container" : ""}`}
             >
               <LuArrowUpRight
                 size={24}
@@ -415,7 +415,7 @@ const UpvoteButton = ({
             borderColor={!voted ? "primary" : voted ? "muted" : undefined}
             _hover={!voted ? { bg: "muted" } : undefined}
             transition="background 0.2s, border-radius 0.2s"
-            className={`${className} ${!voted ? "arrow-bg-fade" : ""} ${voted ? "upvoted-container" : ""}`}
+            className={`upvote-container ${className} ${!voted ? "arrow-bg-fade" : ""} ${voted ? "upvoted-container" : ""}`}
           >
             <LuArrowUpRight
               size={24}
@@ -481,6 +481,14 @@ const UpvoteButtonWithPulse = (props: UpvoteButtonProps) => {
           animation: arrow-bg-fade 3s ease-in-out infinite;
         }
         .arrow-bg-fade:hover {
+          animation: arrow-bg-fade-hover 3s ease-in-out infinite;
+        }
+        
+        /* Container hover effects - trigger arrow animation when hovering over the entire button */
+        .upvote-container:hover .arrow-pulse-hover {
+          animation: arrow-pulse 0.2s ease-in-out infinite;
+        }
+        .upvote-container:hover .arrow-bg-fade {
           animation: arrow-bg-fade-hover 3s ease-in-out infinite;
         }
         /* Original arrow animation - 3s ease-in-out, scale 1.1, translate(2px, -2px) */

@@ -8,8 +8,6 @@ interface MediaUploadButtonsProps {
     user: any;
     handleImageTrigger: () => void;
     handleVideoTrigger: () => void;
-    gifWebpInputRef: React.RefObject<HTMLInputElement | null>;
-    handleGifWebpUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
     setGifModalOpen: (open: boolean) => void;
     isUploading: boolean;
 }
@@ -18,8 +16,6 @@ export default function MediaUploadButtons({
     user,
     handleImageTrigger,
     handleVideoTrigger,
-    gifWebpInputRef,
-    handleGifWebpUpload,
     setGifModalOpen,
     isUploading,
 }: MediaUploadButtonsProps) {
@@ -91,35 +87,7 @@ export default function MediaUploadButtons({
                 </Button>
             </Tooltip>
 
-            <Tooltip label="Upload GIF or WEBP (max 5MB)" placement="bottom">
-                <Button
-                    variant="unstyled"
-                    size="lg"
-                    borderRadius="full"
-                    p={2}
-                    _hover={{ color: "primary", bg: "muted" }}
-                    style={{
-                        height: 64,
-                        width: 64,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                    }}
-                    onClick={() => gifWebpInputRef.current?.click()}
-                    isDisabled={isUploading}
-                >
-                    <MdGif color="var(--chakra-colors-primary)" size={48} />
-                    <input
-                        type="file"
-                        accept=".gif,.webp"
-                        style={{ display: "none" }}
-                        ref={gifWebpInputRef}
-                        onChange={handleGifWebpUpload}
-                    />
-                </Button>
-            </Tooltip>
-
-            <Tooltip label="Create GIF From Video" placement="bottom">
+            <Tooltip label="GIF Maker" placement="bottom">
                 <Button
                     variant="unstyled"
                     size="lg"
@@ -135,7 +103,7 @@ export default function MediaUploadButtons({
                     }}
                     onClick={() => setGifModalOpen(true)}
                 >
-                    <MdMovieCreation color="var(--chakra-colors-primary)" size={48} />
+                    <MdGif color="var(--chakra-colors-primary)" size={48} />
                 </Button>
             </Tooltip>
         </Flex>

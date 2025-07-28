@@ -66,7 +66,6 @@ export default function Composer() {
   const imageCompressorRef = useRef<ImageCompressorRef>(null);
   const videoUploaderRef = useRef<VideoUploaderRef>(null);
   const gifMakerWithSelectorRef = useRef<GIFMakerWithSelectorRef>(null);
-  const gifWebpInputRef = useRef<HTMLInputElement>(null);
 
   // Modal state
   const [isGifModalOpen, setGifModalOpen] = useState(false);
@@ -110,7 +109,6 @@ export default function Composer() {
     setGifSize,
     setGifCaption,
     handleGifUpload,
-    handleGifWebpUpload,
   } = useGifUpload();
 
   const { isUploading: isDropUploading, onDrop } = useFileDropUpload(
@@ -131,11 +129,7 @@ export default function Composer() {
     }
   }, [isGifModalOpen, setGifUrl, setGifSize, setIsProcessingGif]);
 
-  const handleGifWebpUploadWrapper = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    handleGifWebpUpload(e, insertAtCursorWrapper, setIsImageUploading);
-  };
+
 
   return (
     <Flex
@@ -174,8 +168,6 @@ export default function Composer() {
           user={user}
           handleImageTrigger={handleImageTrigger}
           handleVideoTrigger={handleVideoTrigger}
-          gifWebpInputRef={gifWebpInputRef}
-          handleGifWebpUpload={handleGifWebpUploadWrapper}
           setGifModalOpen={setGifModalOpen}
           isUploading={isUploading}
         />
