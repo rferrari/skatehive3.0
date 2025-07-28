@@ -343,7 +343,7 @@ export default function LeaderboardClient({ skatersData }: Props) {
     },
     {
       key: "posts",
-      label: "Posts",
+      label: "Posts Score",
       value: (skater: SkaterData) => skater.post_count,
     },
   ];
@@ -373,7 +373,7 @@ export default function LeaderboardClient({ skatersData }: Props) {
     },
     {
       key: "posts",
-      label: "Posts",
+      label: "Posts Score",
       value: (skater: SkaterData) => skater.post_count,
     },
     {
@@ -483,7 +483,7 @@ export default function LeaderboardClient({ skatersData }: Props) {
               >
                 <option value="points">🏆 Points</option>
                 <option value="power">⚡ Power</option>
-                <option value="posts">💻 Posts</option>
+                <option value="posts">💻 Post Score</option>
                 <option value="nfts">🎨 Skatehive NFTs</option>
                 <option value="gnars_balance">🖼️ Gnars NFTs</option>
                 <option value="gnars">🪙 Gnars Voters</option>
