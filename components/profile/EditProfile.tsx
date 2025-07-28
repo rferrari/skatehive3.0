@@ -31,6 +31,7 @@ import { migrateLegacyMetadata } from "@/lib/utils/metadataMigration";
 import MergeAccountModal from "./MergeAccountModal";
 import fetchAccount from "@/lib/hive/fetchAccount";
 
+import { uploadToIpfs } from "@/lib/markdown/composeUtils";
 interface EditProfileProps {
   isOpen: boolean;
   onClose: () => void;
@@ -146,29 +147,6 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
       []
     );
 
-    const uploadToIPFS = useCallback(
-      async (file: File): Promise<string | null> => {
-        const formDataForUpload = new FormData();
-        formDataForUpload.append("file", file);
-        try {
-          const response = await fetch("/api/pinata", {
-            method: "POST",
-            body: formDataForUpload,
-          });
-          if (!response.ok) throw new Error("Failed to upload file to IPFS");
-          const result = await response.json();
-          return result.IpfsHash
-            ? `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`
-            : null;
-        } catch (err) {
-          setError("Image upload failed");
-          return null;
-        }
-      },
-      []
-    );
-
-    // Check if user wants to update their Ethereum address
     const handleConnectEthWallet = useCallback(() => {
       if (isConnected && address) {
         const updatedData = {
@@ -310,11 +288,11 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
 
         // Upload images if files are selected
         if (profileImageFile) {
-          const url = await uploadToIPFS(profileImageFile);
+          const url = await uploadToIpfs(profileImageFile, profileImageFile.name);
           if (url) finalProfileImage = url;
         }
         if (coverImageFile) {
-          const url = await uploadToIPFS(coverImageFile);
+          const url = await uploadToIpfs(coverImageFile, coverImageFile.name);
           if (url) finalCoverImage = url;
         }
 
@@ -406,7 +384,6 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
       onProfileUpdate,
       username,
       onClose,
-      uploadToIPFS,
       user,
     ]);
 

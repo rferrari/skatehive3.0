@@ -8,6 +8,7 @@ import {
     ModalBody,
     Image,
 } from "@chakra-ui/react";
+import { uploadToIpfs } from "@/lib/markdown/composeUtils";
 import GIFMakerWithSelector, {
     GIFMakerRef as GIFMakerWithSelectorRef,
 } from "../homepage/GIFMakerWithSelector";
@@ -52,23 +53,12 @@ export default function GifModal({
         setIsUploadingGif(true);
         try {
             const blob = await fetch(gifUrl).then((res) => res.blob());
-            const formData = new FormData();
             const safeCaption = gifCaption
                 ? gifCaption.replace(/[^a-zA-Z0-9-_]/g, "-")
                 : "skatehive-gif";
             const filename = `${safeCaption}.gif`;
-            formData.append("file", blob, filename);
 
-            const response = await fetch("/api/pinata", {
-                method: "POST",
-                body: formData,
-            });
-
-            if (!response.ok) throw new Error("Failed to upload GIF to IPFS");
-
-            const result = await response.json();
-            let ipfsUrl = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash
-                }?filename=${encodeURIComponent(filename)}`;
+            const ipfsUrl = await uploadToIpfs(blob, filename);
 
             insertAtCursor(`\n![${filename}](${ipfsUrl})\n`);
             gifMakerWithSelectorRef.current?.reset();

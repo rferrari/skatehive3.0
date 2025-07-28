@@ -1,6 +1,6 @@
 import { useState } from "react";
 import imageCompression from "browser-image-compression";
-import { uploadToIPFS } from "@/lib/markdown/composeUtils";
+import { uploadToIpfs } from "@/lib/markdown/composeUtils";
 
 export const useImageUpload = (insertAtCursor: (content: string) => void) => {
     const [isUploading, setIsUploading] = useState(false);
@@ -12,25 +12,14 @@ export const useImageUpload = (insertAtCursor: (content: string) => void) => {
         if (url) {
             try {
                 const blob = await fetch(url).then((res) => res.blob());
-                const formData = new FormData();
-                formData.append("file", blob, fileName || "compressed-image.jpg");
-                const response = await fetch("/api/pinata", {
-                    method: "POST",
-                    body: formData,
-                });
-                if (!response.ok) {
-                    throw new Error("Failed to upload file to IPFS");
-                }
-                const result = await response.json();
-                let ipfsUrl = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`;
-                // If GIF, append filename param for better frontend compatibility
-                if (fileName && fileName.toLowerCase().endsWith(".gif")) {
-                    ipfsUrl += `?filename=${encodeURIComponent(fileName)}`;
-                }
+                const ipfsUrl = await uploadToIpfs(
+                    blob,
+                    fileName || "compressed-image.jpg"
+                );
                 insertAtCursor(`\n![${fileName || "image"}](${ipfsUrl})\n`);
-                setIsUploading(false);
             } catch (error) {
                 console.error("Error uploading compressed image to IPFS:", error);
+            } finally {
                 setIsUploading(false);
             }
         } else {
@@ -133,21 +122,7 @@ export const useGifUpload = () => {
         }
         setIsUploading(true);
         try {
-            const formData = new FormData();
-            formData.append("file", file);
-            const response = await fetch("/api/pinata", {
-                method: "POST",
-                body: formData,
-            });
-            if (!response.ok) {
-                throw new Error("Failed to upload GIF/WEBP to IPFS");
-            }
-            const result = await response.json();
-            let ipfsUrl = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`;
-            if (file.type === "image/gif") {
-                // Always append ?filename=skatehive.gif for GIFs
-                ipfsUrl += `?filename=skatehive.gif`;
-            }
+            const ipfsUrl = await uploadToIpfs(file, file.name);
             insertAtCursor(`\n![${file.name}](${ipfsUrl})\n`);
         } catch (error) {
             alert("Error uploading GIF/WEBP to IPFS.");
@@ -204,22 +179,9 @@ export const useFileDropUpload = (insertAtCursor: (content: string) => void) => 
                     continue;
                 }
             }
-            const formData = new FormData();
-            formData.append("file", fileToUpload, fileName);
             try {
-                const response = await fetch("/api/pinata", {
-                    method: "POST",
-                    body: formData,
-                });
-                if (!response.ok) {
-                    throw new Error("Failed to upload file");
-                }
-                const result = await response.json();
-                const url = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`;
-                if (file.type === "image/gif") {
-                    // Always append ?filename=skatehive.gif for GIFs
-                    insertAtCursor(`\n![${fileName}](${url}?filename=skatehive.gif)\n`);
-                } else if (file.type.startsWith("image/")) {
+                const url = await uploadToIpfs(fileToUpload, fileName);
+                if (file.type.startsWith("image/")) {
                     insertAtCursor(`\n![${fileName}](${url})\n`);
                 } else if (file.type.startsWith("video/")) {
                     insertAtCursor(

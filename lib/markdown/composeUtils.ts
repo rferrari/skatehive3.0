@@ -104,7 +104,7 @@ export const prepareImageArray = (
     return imageArray;
 };
 
-export const uploadToIPFS = async (
+export const uploadToIpfs = async (
     blob: Blob,
     fileName: string
 ): Promise<string> => {
@@ -126,3 +126,6 @@ export const uploadToIPFS = async (
     // Automatically add file extension to the IPFS URL
     return ensureImageFilename(ipfsUrl, blob.type, fileName);
 };
+
+// Deprecated name kept for backward compatibility
+export const uploadToIPFS = uploadToIpfs;
