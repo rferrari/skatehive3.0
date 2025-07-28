@@ -14,6 +14,8 @@ export const DAO_ADDRESSES = {
   governor: process.env.NEXT_PUBLIC_GOVERNOR as Address,
 };
 
+export const AIRDROP_CONTRACT_ADDRESS = "0x8bD8F0D46c84feCBFbF270bac4Ad28bFA2c78F05";
+
 export const USDC_CONTRACT_ADDRESS =
   '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913';
 export const SENDIT_CONTRACT_ADDRESS =

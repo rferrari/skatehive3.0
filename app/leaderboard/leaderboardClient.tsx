@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo } from "react";
 import {
   Box,
   Text,
@@ -21,8 +21,10 @@ import {
   VStack,
   HStack,
   useBreakpointValue,
+  useDisclosure,
 } from "@chakra-ui/react";
 import RulesModal from "./RulesModal";
+import AirdropModal from "@/components/airdrop/AirdropModal";
 import React from "react";
 import useIsMobile from "@/hooks/useIsMobile";
 import { Name } from "@coinbase/onchainkit/identity";
@@ -68,6 +70,11 @@ type SortOption =
 export default function LeaderboardClient({ skatersData }: Props) {
   const [sortBy, setSortBy] = useState<SortOption>("posts");
   const [isRulesOpen, setIsRulesOpen] = useState(false);
+  const {
+    isOpen: isAirdropOpen,
+    onOpen: onAirdropOpen,
+    onClose: onAirdropClose,
+  } = useDisclosure();
   const toast = useToast();
   const isMobile = useIsMobile();
 
@@ -499,6 +506,18 @@ export default function LeaderboardClient({ skatersData }: Props) {
             >
               Rules
             </Button>
+
+            <Button
+              onClick={onAirdropOpen}
+              size="sm"
+              colorScheme="green"
+              bg="primary"
+              color="background"
+              _hover={{ bg: "accent" }}
+              leftIcon={<Text>🎯</Text>}
+            >
+              Airdrop
+            </Button>
           </HStack>
         </VStack>
       </Box>
@@ -576,6 +595,13 @@ export default function LeaderboardClient({ skatersData }: Props) {
           </Table>
         </TableContainer>
       </Box>
+
+      {/* Airdrop Modal */}
+      <AirdropModal
+        isOpen={isAirdropOpen}
+        onClose={onAirdropClose}
+        leaderboardData={skatersData}
+      />
     </VStack>
   );
 }
