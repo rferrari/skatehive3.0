@@ -18,6 +18,7 @@ import {
   AlertDescription,
 } from "@chakra-ui/react";
 import { KeychainSDK, KeychainKeyTypes } from "keychain-sdk";
+import fetchAccount from "@/lib/hive/fetchAccount";
 
 interface AdvancedSettingsProps {
   userData: {
@@ -42,40 +43,9 @@ const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ userData }) => {
     }
 
     try {
-      const accountResp = await fetch("https://api.hive.blog", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          method: "condenser_api.get_accounts",
-          params: [[userData.hiveUsername]],
-          id: 1,
-        }),
-      }).then((res) => res.json());
-
-      if (!accountResp.result || accountResp.result.length === 0) {
-        throw new Error("Account not found");
-      }
-
-      let postingMetadata: any = {};
-      let jsonMetadata: any = {};
-      try {
-        if (accountResp.result[0].posting_json_metadata) {
-          postingMetadata = JSON.parse(
-            accountResp.result[0].posting_json_metadata
-          );
-        }
-      } catch {
-        postingMetadata = {};
-      }
-
-      try {
-        if (accountResp.result[0].json_metadata) {
-          jsonMetadata = JSON.parse(accountResp.result[0].json_metadata);
-        }
-      } catch {
-        jsonMetadata = {};
-      }
+      const { postingMetadata, jsonMetadata } = await fetchAccount(
+        userData.hiveUsername
+      );
 
       if (postingMetadata.skatehiveuser) delete postingMetadata.skatehiveuser;
       if (postingMetadata.extensions) delete postingMetadata.extensions;
