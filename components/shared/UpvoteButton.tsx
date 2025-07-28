@@ -18,7 +18,6 @@ import { LuArrowUpRight } from "react-icons/lu";
 import { useAioha } from "@aioha/react-ui";
 import { Discussion } from "@hiveio/dhive";
 import VoteListPopover from "@/components/blog/VoteListModal";
-import { DEFAULT_VOTE_WEIGHT } from "@/lib/utils/constants";
 import { useVoteWeightContext } from "@/contexts/VoteWeightContext";
 
 interface UpvoteButtonProps {
@@ -192,7 +191,11 @@ const UpvoteButton = ({
   if (variant === "simple") {
     return (
       <HStack>
-        <Tooltip label={voted ? "already upvoted" : "upvote"} hasArrow openDelay={1000}>
+        <Tooltip
+          label={voted ? "already upvoted" : "upvote"}
+          hasArrow
+          openDelay={1000}
+        >
           <Box
             as="span"
             display="flex"
@@ -207,7 +210,9 @@ const UpvoteButton = ({
             borderColor={!voted ? "primary" : voted ? "muted" : undefined}
             _hover={!voted ? { bg: "muted" } : undefined}
             transition="background 0.2s, border-radius 0.2s"
-            className={`upvote-container ${className} ${!voted ? "arrow-bg-fade" : ""} ${voted ? "upvoted-container" : ""}`}
+            className={`upvote-container ${className} ${
+              !voted ? "arrow-bg-fade" : ""
+            } ${voted ? "upvoted-container" : ""}`}
           >
             <LuArrowUpRight
               size={24}
@@ -217,7 +222,9 @@ const UpvoteButton = ({
                   : "var(--chakra-colors-primary)"
               }
               style={{ opacity: 1 }}
-              className={`${!voted ? "arrow-pulse-hover" : ""} ${voted ? "upvoted-icon" : ""}`}
+              className={`${!voted ? "arrow-pulse-hover" : ""} ${
+                voted ? "upvoted-icon" : ""
+              }`}
             />
           </Box>
         </Tooltip>
@@ -229,7 +236,11 @@ const UpvoteButton = ({
   if (variant === "withVoteCount") {
     return (
       <HStack>
-        <Tooltip label={voted ? "already upvoted" : "upvote"} hasArrow openDelay={1000}>
+        <Tooltip
+          label={voted ? "already upvoted" : "upvote"}
+          hasArrow
+          openDelay={1000}
+        >
           <Box
             as="span"
             display="flex"
@@ -244,7 +255,9 @@ const UpvoteButton = ({
             borderColor={!voted ? "primary" : voted ? "muted" : undefined}
             _hover={!voted ? { bg: "muted" } : undefined}
             transition="background 0.2s, border-radius 0.2s"
-            className={`upvote-container ${className} ${!voted ? "arrow-bg-fade" : ""} ${voted ? "upvoted-container" : ""}`}
+            className={`upvote-container ${className} ${
+              !voted ? "arrow-bg-fade" : ""
+            } ${voted ? "upvoted-container" : ""}`}
           >
             <LuArrowUpRight
               size={24}
@@ -254,7 +267,9 @@ const UpvoteButton = ({
                   : "var(--chakra-colors-primary)"
               }
               style={{ opacity: 1 }}
-              className={`${!voted ? "arrow-pulse-hover" : ""} ${voted ? "upvoted-icon" : ""}`}
+              className={`${!voted ? "arrow-pulse-hover" : ""} ${
+                voted ? "upvoted-icon" : ""
+              }`}
             />
           </Box>
         </Tooltip>
@@ -284,7 +299,11 @@ const UpvoteButton = ({
     if (disableSlider) {
       return (
         <HStack>
-          <Tooltip label={voted ? "already upvoted" : "upvote"} hasArrow openDelay={1000}>
+          <Tooltip
+            label={voted ? "already upvoted" : "upvote"}
+            hasArrow
+            openDelay={1000}
+          >
             <Box
               as="span"
               display="flex"
@@ -299,7 +318,9 @@ const UpvoteButton = ({
               borderColor={!voted ? "primary" : voted ? "muted" : undefined}
               _hover={!voted ? { bg: "muted" } : undefined}
               transition="background 0.2s, border-radius 0.2s"
-              className={`upvote-container ${className} ${!voted ? "arrow-bg-fade" : ""} ${voted ? "upvoted-container" : ""}`}
+              className={`upvote-container ${className} ${
+                !voted ? "arrow-bg-fade" : ""
+              } ${voted ? "upvoted-container" : ""}`}
             >
               <LuArrowUpRight
                 size={24}
@@ -309,7 +330,9 @@ const UpvoteButton = ({
                     : "var(--chakra-colors-primary)"
                 }
                 style={{ opacity: 1 }}
-                className={`${!voted ? "arrow-pulse-hover" : ""} ${voted ? "upvoted-icon" : ""}`}
+                className={`${!voted ? "arrow-pulse-hover" : ""} ${
+                  voted ? "upvoted-icon" : ""
+                }`}
               />
             </Box>
           </Tooltip>
@@ -400,7 +423,11 @@ const UpvoteButton = ({
 
     return (
       <HStack>
-        <Tooltip label={voted ? "already upvoted" : "upvote"} hasArrow openDelay={1000}>
+        <Tooltip
+          label={voted ? "already upvoted" : "upvote"}
+          hasArrow
+          openDelay={1000}
+        >
           <Box
             as="span"
             display="flex"
@@ -415,7 +442,9 @@ const UpvoteButton = ({
             borderColor={!voted ? "primary" : voted ? "muted" : undefined}
             _hover={!voted ? { bg: "muted" } : undefined}
             transition="background 0.2s, border-radius 0.2s"
-            className={`upvote-container ${className} ${!voted ? "arrow-bg-fade" : ""} ${voted ? "upvoted-container" : ""}`}
+            className={`upvote-container ${className} ${
+              !voted ? "arrow-bg-fade" : ""
+            } ${voted ? "upvoted-container" : ""}`}
           >
             <LuArrowUpRight
               size={24}
@@ -425,7 +454,9 @@ const UpvoteButton = ({
                   : "var(--chakra-colors-primary)"
               }
               style={{ opacity: 1 }}
-              className={`${!voted ? "arrow-pulse-hover" : ""} ${voted ? "upvoted-icon" : ""}`}
+              className={`${!voted ? "arrow-pulse-hover" : ""} ${
+                voted ? "upvoted-icon" : ""
+              }`}
             />
           </Box>
         </Tooltip>
@@ -483,7 +514,7 @@ const UpvoteButtonWithPulse = (props: UpvoteButtonProps) => {
         .arrow-bg-fade:hover {
           animation: arrow-bg-fade-hover 3s ease-in-out infinite;
         }
-        
+
         /* Container hover effects - trigger arrow animation when hovering over the entire button */
         .upvote-container:hover .arrow-pulse-hover {
           animation: arrow-pulse 0.2s ease-in-out infinite;
@@ -505,7 +536,7 @@ const UpvoteButtonWithPulse = (props: UpvoteButtonProps) => {
           }
         }
         */
-        
+
         /* New faster arrow animation - 0.2s ease-in-out, scale 1.15, translate(3px, -3px) - only moves up and right */
         @keyframes arrow-pulse {
           0% {
