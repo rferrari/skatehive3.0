@@ -298,7 +298,9 @@ export default function HiveUsernameInput({
                 >
                   <Avatar
                     size="xs"
-                    src={`https://images.hive.blog/u/${suggestion.username}/avatar/small`}
+                    src={`https://images.hive.blog/u/${encodeURIComponent(
+                      suggestion.username
+                    )}/avatar/small`}
                     name={suggestion.username}
                   />
                   <VStack align="start" spacing={0} flex="1">

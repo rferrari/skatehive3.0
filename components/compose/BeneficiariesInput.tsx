@@ -132,7 +132,7 @@ export default function BeneficiariesInput({
           validationErrors.push(
             `Beneficiary ${index + 1}: Account name is required`
           );
-        } else if (beneficiary.isValidAccount === false) {
+        } else if (beneficiary.isValidAccount !== true) {
           validationErrors.push(
             `Beneficiary ${index + 1}: Please enter a valid Hive username`
           );

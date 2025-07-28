@@ -3,9 +3,10 @@ import HiveClient from '@/lib/hive/hiveclient';
 /**
  * Check if a Hive account exists
  * @param username The username to check
+ * @param signal Optional AbortSignal for request cancellation
  * @returns Promise<boolean> - true if account exists, false otherwise
  */
-export async function checkHiveAccountExists(username: string): Promise<boolean> {
+export async function checkHiveAccountExists(username: string, signal?: AbortSignal): Promise<boolean> {
   if (!username || typeof username !== 'string') {
     return false;
   }
@@ -22,9 +23,23 @@ export async function checkHiveAccountExists(username: string): Promise<boolean>
   }
 
   try {
+    // Check if the request was aborted before making the API call
+    if (signal?.aborted) {
+      throw new Error('Request was aborted');
+    }
+
     const accounts = await HiveClient.database.getAccounts([trimmed]);
+    
+    // Check if the request was aborted after the API call
+    if (signal?.aborted) {
+      throw new Error('Request was aborted');
+    }
+    
     return accounts.length > 0;
   } catch (error) {
+    if (signal?.aborted || (error instanceof Error && error.message === 'Request was aborted')) {
+      throw error; // Re-throw abort errors
+    }
     console.error('Error checking account existence:', error);
     return false;
   }

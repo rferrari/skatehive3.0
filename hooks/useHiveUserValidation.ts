@@ -33,8 +33,8 @@ export function useHiveUserValidation() {
   /**
    * Check if username exists on Hive blockchain
    */
-  const checkUsernameExists = useCallback(async (username: string): Promise<boolean> => {
-    return await checkHiveAccountExists(username);
+  const checkUsernameExists = useCallback(async (username: string, signal?: AbortSignal): Promise<boolean> => {
+    return await checkHiveAccountExists(username, signal);
   }, []);
 
   /**
@@ -79,7 +79,7 @@ export function useHiveUserValidation() {
       }
       abortControllerRef.current = new AbortController();
 
-      const exists = await checkUsernameExists(trimmed);
+      const exists = await checkUsernameExists(trimmed, abortControllerRef.current.signal);
       
       const result: ValidationResult = {
         isValid: exists,
@@ -104,7 +104,7 @@ export function useHiveUserValidation() {
       setValidationCache(prev => new Map(prev).set(trimmed, result));
       return result;
     }
-  }, [validationCache, validateUsernameFormat, checkUsernameExists]);
+  }, [validateUsernameFormat, checkUsernameExists]);
 
   /**
    * Search for usernames that start with the given query
