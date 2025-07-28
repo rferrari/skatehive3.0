@@ -107,7 +107,7 @@ export default function FarcasterAccountLink({
               hiveUsername: hiveUsername,
               sourceUrl: `${
                 process.env.NEXT_PUBLIC_BASE_URL || "https://skatehive.app"
-              }/settings/farcaster`,
+              }/settings`,
             }),
           });
         } catch (notificationError) {
