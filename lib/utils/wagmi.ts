@@ -1,11 +1,11 @@
 import { cookieStorage, createConfig, createStorage, http } from 'wagmi';
-import { base, mainnet } from 'wagmi/chains';
+import { base } from 'wagmi/chains';
 import { injected, walletConnect } from 'wagmi/connectors';
 import { WC_PROJECT_ID } from './constants';
 
 export function getConfig() {
   return createConfig({
-    chains: [base, mainnet],
+    chains: [base],
     connectors: [
       injected(),
       // coinbaseWallet(),
@@ -17,7 +17,6 @@ export function getConfig() {
     ssr: true,
     transports: {
       [base.id]: http(),
-      [mainnet.id]: http(),
     },
   });
 }
