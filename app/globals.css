@@ -291,6 +291,49 @@ body.show-splash #splash-root {
   color: #fff !important;
 }
 
+/* Better contrast for modal buttons */
+#aioha-modal button,
+#aioha-modal .aioha-modal-button,
+#aioha-modal a[role="button"] {
+  background: #333 !important;
+  color: #7fff00 !important;
+  border: 1px solid #555 !important;
+  border-radius: 6px !important;
+  padding: 8px 16px !important;
+  font-family: 'VT323', monospace !important;
+  transition: all 0.2s ease !important;
+}
+
+#aioha-modal button:hover,
+#aioha-modal .aioha-modal-button:hover,
+#aioha-modal a[role="button"]:hover {
+  background: #555 !important;
+  color: #fff !important;
+  border-color: #7fff00 !important;
+}
+
+/* Back button specifically */
+#aioha-modal button[type="button"] {
+  background: #444 !important;
+  color: #b0ffb0 !important;
+}
+
+/* Close button styling */
+#aioha-modal .aioha-modal-close,
+#aioha-modal button.text-gray-400 {
+  background: transparent !important;
+  color: #7fff00 !important;
+  border: none !important;
+  font-size: 1.5rem !important;
+  padding: 4px !important;
+}
+
+#aioha-modal .aioha-modal-close:hover,
+#aioha-modal button.text-gray-400:hover {
+  background: rgba(127, 255, 0, 0.1) !important;
+  color: #fff !important;
+}
+
 #aioha-modal span.inline-flex.items-center.justify-center.px-2.py-0\.5 {
   background: #222 !important;
   color: #7fff00 !important;
