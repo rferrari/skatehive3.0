@@ -100,4 +100,6 @@ export interface HiveAirdropParams {
   user: any;
   updateStatus: (status: Partial<TransactionStatus>) => void;
   onProgress?: (step: string, progress: number) => void;
+  aiohaUser?: any;
+  aiohaInstance?: any;
 }

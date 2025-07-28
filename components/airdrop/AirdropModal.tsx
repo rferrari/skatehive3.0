@@ -33,7 +33,6 @@ import {
   StatNumber,
   StatGroup,
   Icon,
-  Tooltip,
   Table,
   Thead,
   Tbody,
@@ -43,7 +42,7 @@ import {
   TableContainer,
   Image,
 } from "@chakra-ui/react";
-import { useState, useMemo, useCallback } from "react";
+import { useState, useCallback } from "react";
 import {
   InfoIcon,
   WarningIcon,
@@ -58,6 +57,7 @@ import TransactionStatusDisplay from "./TransactionStatusDisplay";
 import { executeHiveAirdrop } from "@/services/hiveAirdrop";
 import { ERC20AirdropService } from "@/services/erc20Airdrop";
 import { SkaterData, SortOption, AirdropConfig } from "@/types/airdrop";
+import { useAioha } from "@aioha/react-ui";
 
 type ModalView = "main" | "filter" | "recipients";
 
@@ -94,6 +94,9 @@ export function AirdropModal({
 
   // Mobile detection
   const isMobile = useIsMobile();
+
+  // Aioha context
+  const { user, aioha } = useAioha();
 
   // Hooks
   const { airdropUsers, userCount, summary, validation, excludedUsers } =
@@ -176,6 +179,9 @@ export function AirdropModal({
   const handleExecuteAirdrop = async () => {
     if (!validation.isValid || isExecuting) return;
 
+    // Check if Aioha user is available for Hive operations
+    const tokenInfo = tokenDictionary[selectedToken];
+
     setIsExecuting(true);
     resetStatus();
 
@@ -189,8 +195,10 @@ export function AirdropModal({
           recipients: airdropUsers,
           totalAmount: parseFloat(totalAmount),
           customMessage: `SkateHive Community Airdrop - ${selectedToken} 🛹`,
-          user: "", // Will be determined by Keychain
+          user: { name: user }, // Pass as object with name property
           updateStatus,
+          aiohaUser: user,
+          aiohaInstance: aioha, // Also pass the aioha instance for fallback
         });
       } else {
         // Execute ERC-20 airdrop
@@ -234,11 +242,6 @@ export function AirdropModal({
 
   const selectedTokenInfo = tokenDictionary[selectedToken];
   const isHiveToken = selectedTokenInfo?.network === "hive";
-
-  const executionReady =
-    validation.isValid &&
-    airdropUsers.length > 0 &&
-    parseFloat(totalAmount) > 0;
 
   // Modal content based on current view
   const getModalContent = () => {
@@ -932,6 +935,20 @@ export function AirdropModal({
                 </Alert>
               )}
 
+              {/* Aioha Connection Warning for Hive Tokens */}
+              {isHiveToken && !user && (
+                <Alert status="warning">
+                  <AlertIcon />
+                  <Box>
+                    <AlertTitle>Hive Wallet Required!</AlertTitle>
+                    <AlertDescription>
+                      Please connect your Hive wallet (Keychain, HiveAuth, etc.)
+                      to perform airdrops on the Hive network.
+                    </AlertDescription>
+                  </Box>
+                </Alert>
+              )}
+
               {/* Excluded Users Info */}
               {excludedUsers.length > 0 && (
                 <Alert status="info">
@@ -1042,7 +1059,6 @@ export function AirdropModal({
                 onClick={handleExecuteAirdrop}
                 isLoading={isExecuting}
                 loadingText="Executing..."
-                disabled={!executionReady || isApproving}
                 leftIcon={isExecuting ? undefined : <CheckIcon />}
                 bg="primary"
                 color="background"

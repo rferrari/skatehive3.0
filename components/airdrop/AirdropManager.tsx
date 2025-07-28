@@ -28,7 +28,7 @@ import {
   Spacer,
 } from "@chakra-ui/react";
 import { ChevronDownIcon, ChevronUpIcon } from "@chakra-ui/icons";
-import { useAccount, useWriteContract } from "wagmi";
+import { useAccount } from "wagmi";
 import { useAioha } from "@aioha/react-ui";
 import { KeychainSDK, KeychainKeyTypes } from "keychain-sdk";
 import { Operation } from "@hiveio/dhive";
@@ -65,7 +65,6 @@ const AirdropManager: React.FC<AirdropManagerProps> = ({ leaderboardData }) => {
   });
 
   const { status, updateStatus, resetStatus } = useTransactionStatus();
-  const { writeContract } = useWriteContract();
   const { address, isConnected } = useAccount();
   const { user } = useAioha();
   const toast = useToast();
@@ -82,7 +81,7 @@ const AirdropManager: React.FC<AirdropManagerProps> = ({ leaderboardData }) => {
 
   // Aioha-based Hive airdrop execution
   const executeHiveAirdropWithAioha = async () => {
-    if (!user?.name) {
+    if (!user) {
       throw new Error("Hive user not connected");
     }
 
@@ -101,7 +100,7 @@ const AirdropManager: React.FC<AirdropManagerProps> = ({ leaderboardData }) => {
       const operations: Operation[] = airdropUsers.map((recipient) => [
         "transfer",
         {
-          from: user.name,
+          from: user,
           to: recipient.hive_author,
           amount: transferAmount,
           memo: memo,
@@ -113,14 +112,7 @@ const AirdropManager: React.FC<AirdropManagerProps> = ({ leaderboardData }) => {
         message: `Broadcasting ${operations.length} transfer operations...`,
       });
 
-      // Check if we have Keychain SDK available (fallback method)
-      const loginMethod = localStorage.getItem("LoginMethod");
-
-      if (
-        loginMethod === "keychain" &&
-        typeof window !== "undefined" &&
-        window.hive_keychain
-      ) {
+      if (typeof window !== "undefined" && window.hive_keychain) {
         // Use Keychain SDK for batch operations
         const keychain = new KeychainSDK(window);
 

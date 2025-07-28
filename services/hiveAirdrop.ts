@@ -1,74 +1,140 @@
 import { HiveAirdropParams, AirdropUser } from '@/types/airdrop';
 import { Operation } from "@hiveio/dhive";
+import { KeyTypes } from "@aioha/aioha";
 
-export const executeHiveAirdrop = async ({
+export async function executeHiveAirdrop({
   token,
   recipients,
   totalAmount,
   customMessage,
   user,
-  updateStatus
-}: HiveAirdropParams) => {
-  
-  updateStatus({
-    state: 'preparing',
-    message: 'Preparing Hive transfer operations...',
-    progress: 10
-  });
-  
+  updateStatus,
+  aiohaUser,
+  aiohaInstance,
+}: HiveAirdropParams): Promise<void> {
   try {
-    const perUserAmount = totalAmount / recipients.length;
-    const currency = token === "HBD" ? "HBD" : "HIVE";
-    const transferAmount = `${perUserAmount.toFixed(3)} ${currency}`;
-    
-    // Build operations array
-    const operations: Operation[] = recipients.map(recipient => [
+    console.log("Starting executeHiveAirdrop with params:", {
+      token,
+      recipients: recipients.length,
+      totalAmount,
+      user,
+      aiohaUser,
+      hasAiohaInstance: !!aiohaInstance,
+    });
+
+    // Extract username more carefully
+    let username: string;
+    if (typeof user === 'string') {
+      username = user;
+    } else if (user && user.name) {
+      username = user.name;
+    } else if (aiohaUser && aiohaUser.name) {
+      username = aiohaUser.name;
+    } else if (aiohaUser && typeof aiohaUser === 'string') {
+      username = aiohaUser;
+    } else {
+      throw new Error("No valid username found in user parameters");
+    }
+
+    console.log("Extracted username:", username);
+
+    // Calculate amount per user
+    const amountPerUser = totalAmount / recipients.length;
+    const formattedAmount = amountPerUser.toFixed(3);
+
+    updateStatus({ 
+      state: 'preparing', 
+      message: "Preparing airdrop transactions..." 
+    });
+
+    // Create transfer operations
+    const operations = recipients.map((recipient: AirdropUser) => [
       "transfer",
       {
-        from: user.name || user,
+        from: username, // Use the extracted username
         to: recipient.hive_author,
-        amount: transferAmount,
-        memo: customMessage || `SkateHive airdrop from ${user.name || user}`
-      }
-    ]);
-    
-    updateStatus({
-      state: 'transfer-pending',
-      message: 'Broadcasting transactions with Aioha...',
-      progress: 50
+        amount: `${formattedAmount} ${token}`,
+        memo: customMessage,
+      },
+    ]) as Operation[];
+
+    console.log("Created operations:", operations);
+
+    updateStatus({ 
+      state: 'transfer-pending', 
+      message: "Broadcasting transactions..." 
     });
-    
-    // Execute via Aioha
-    const result = await executeAiohaTransfer(operations, user.name || user, updateStatus);
-    
-    updateStatus({
-      state: 'completed',
-      message: `Successfully airdropped ${totalAmount} ${currency} to ${recipients.length} recipients!`,
-      progress: 100,
-      hash: result
+
+    // Try to use Aioha for broadcasting
+    await executeAiohaTransfer(operations, aiohaUser, aiohaInstance, updateStatus);
+
+    updateStatus({ 
+      state: 'completed', 
+      message: "Airdrop completed successfully!" 
     });
-    
-    return result;
-    
-  } catch (error: any) {
-    console.error('Hive Airdrop failed:', error);
-    updateStatus({
-      state: 'failed',
-      message: `Airdrop failed: ${error.message || 'Unknown error'}`,
-      error: error.message
+  } catch (error) {
+    console.error("Airdrop failed:", error);
+    updateStatus({ 
+      state: 'failed', 
+      message: `Airdrop failed: ${error instanceof Error ? error.message : String(error)}`,
+      error: error instanceof Error ? error.message : String(error)
     });
     throw error;
   }
-};
+}
 
 const executeAiohaTransfer = async (
   operations: Operation[], 
-  username: string,
+  aiohaUser: any,
+  aiohaInstance: any,
   updateStatus: (status: any) => void
 ) => {
   try {
-    // Import Aioha dynamically to avoid SSR issues
-    const { Aioha } = await import('@aioha/aioha');
+    // Debug information
+    console.log('Aioha Debug Info:', {
+      userExists: !!aiohaUser,
+      userName: aiohaUser?.name,
+      userHasBroadcast: !!(aiohaUser && typeof aiohaUser.broadcast === 'function'),
+      instanceExists: !!aiohaInstance,
+      instanceHasSignAndBroadcast: !!(aiohaInstance && typeof aiohaInstance.signAndBroadcastTx === 'function')
+    });
+    
+    // Try to determine which broadcaster to use
+    let broadcaster;
+    let broadcasterType;
+    let actualUserName;
+    
+    // Extract the actual user name from various possible structures
+    if (aiohaUser) {
+      if (aiohaUser.name) {
+        actualUserName = aiohaUser.name;
+      } else if (aiohaUser[0]?.name) {
+        actualUserName = aiohaUser[0].name;
+      } else if (typeof aiohaUser[0] === 'string') {
+        actualUserName = aiohaUser[0];
+      }
+    }
+    
+    console.log('User authentication check:', {
+      actualUserName,
+      aiohaUserStructure: aiohaUser ? Object.keys(aiohaUser) : 'none'
+    });
+    
+    if (!actualUserName) {
+      throw new Error('Hive user not authenticated. Please login with your Hive wallet.');
+    }
+    
+    if (aiohaUser && typeof aiohaUser.broadcast === 'function') {
+      broadcaster = aiohaUser;
+      broadcasterType = 'user';
+    } else if (aiohaInstance && typeof aiohaInstance.signAndBroadcastTx === 'function') {
+      broadcaster = aiohaInstance;
+      broadcasterType = 'instance';
+    } else {
+      throw new Error('No valid broadcast method found. Please ensure your Hive wallet is properly connected.');
+    }
+    
+    console.log('Using broadcaster:', broadcasterType);
     
     updateStatus({
       state: 'transfer-pending',
@@ -97,11 +163,19 @@ const executeAiohaTransfer = async (
       });
       
       try {
-        const result = await Aioha.broadcast({
-          operations: batch
-        });
+        let result;
         
-        results.push(result.result.id);
+        if (broadcasterType === 'user') {
+          // Use user.broadcast method (like in AirdropManager)
+          result = await broadcaster.broadcast(batch);
+        } else if (broadcasterType === 'instance') {
+          // Use aioha.signAndBroadcastTx method
+          result = await broadcaster.signAndBroadcastTx(batch, KeyTypes.Active);
+        }
+        
+        if (result?.result?.id) {
+          results.push(result.result.id);
+        }
         
         // Small delay between batches to be nice to the network
         if (i < batches.length - 1) {
