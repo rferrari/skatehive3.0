@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { CSSReset } from "@chakra-ui/react";
 import { Aioha } from "@aioha/aioha";
 import { AiohaProvider } from "@aioha/react-ui";
@@ -15,6 +14,18 @@ import { AuthKitProvider } from "@farcaster/auth-kit";
 import "@farcaster/auth-kit/styles.css";
 
 const aioha = new Aioha();
+
+if (typeof window !== "undefined") {
+  aioha.registerKeychain();
+  aioha.registerLedger();
+  aioha.registerPeakVault();
+  aioha.registerHiveAuth({
+    name: process.env.NEXT_PUBLIC_COMMUNITY_NAME || "skatehive",
+    description: "",
+  });
+  aioha.loadAuth();
+}
+
 const queryClient = new QueryClient();
 
 export const wagmiConfig = createConfig({
@@ -34,16 +45,6 @@ const farcasterAuthConfig = {
 };
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  useEffect(() => {
-    aioha.registerKeychain();
-    aioha.registerLedger();
-    aioha.registerPeakVault();
-    aioha.registerHiveAuth({
-      name: process.env.NEXT_PUBLIC_COMMUNITY_NAME || "skatehive",
-      description: "",
-    });
-    aioha.loadAuth();
-  }, []);
 
   return (
     <UserProvider>
