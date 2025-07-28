@@ -5,6 +5,7 @@ import { useAioha } from "@aioha/react-ui";
 import { KeyTypes } from "@aioha/aioha";
 import { generatePermlink, prepareImageArray, insertAtCursor } from "@/lib/markdown/composeUtils";
 import { Beneficiary } from "@/components/compose/BeneficiariesInput";
+import { validateHiveUsernameFormat } from "@/lib/utils/hiveAccountUtils";
 
 export const useComposeForm = () => {
     const [markdown, setMarkdown] = useState("");
@@ -146,14 +147,14 @@ export const useComposeForm = () => {
                         throw new Error("Total beneficiary percentage cannot exceed 100%");
                     }
 
-                    // Filter out invalid beneficiaries
-                    const validBeneficiaries = beneficiaries.filter(b => 
-                        b.account.trim() !== "" && 
-                        b.weight > 0 &&
-                        /^[a-z][a-z0-9.-]*[a-z0-9]$/.test(b.account) &&
-                        b.account.length >= 3 &&
-                        b.account.length <= 16
-                    );
+                    // Filter out invalid beneficiaries using centralized validation
+                    const validBeneficiaries = beneficiaries.filter(b => {
+                        if (!b.account.trim() || b.weight <= 0) {
+                            return false;
+                        }
+                        const validation = validateHiveUsernameFormat(b.account);
+                        return validation.isValid;
+                    });
 
                     console.log("🔍 useComposeForm: Filtered beneficiaries", {
                         originalCount: beneficiaries.length,

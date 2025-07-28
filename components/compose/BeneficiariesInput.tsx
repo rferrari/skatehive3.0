@@ -16,10 +16,12 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 import { FaPlus, FaTrash, FaPercentage } from "react-icons/fa";
+import HiveUsernameInput from "@/components/shared/HiveUsernameInput";
 
 export interface Beneficiary {
   account: string;
   weight: number; // Weight in basis points (100 = 1%)
+  isValidAccount?: boolean; // Track if the account has been validated
 }
 
 interface BeneficiariesInputProps {
@@ -37,7 +39,7 @@ export default function BeneficiariesInput({
   const [errors, setErrors] = useState<string[]>([]);
 
   const addBeneficiary = useCallback(() => {
-    const newBeneficiary = { account: "", weight: 500 };
+    const newBeneficiary = { account: "", weight: 500, isValidAccount: false };
     const updatedBeneficiaries = [...beneficiaries, newBeneficiary];
     console.log("🎯 BeneficiariesInput: Adding new beneficiary", {
       newBeneficiary,
@@ -66,14 +68,20 @@ export default function BeneficiariesInput({
   );
 
   const updateBeneficiary = useCallback(
-    (index: number, field: keyof Beneficiary, value: string | number) => {
+    (
+      index: number,
+      field: keyof Beneficiary,
+      value: string | number | boolean
+    ) => {
       const oldBeneficiary = beneficiaries[index];
       const newBeneficiaries = [...beneficiaries];
 
       if (field === "weight") {
         // Convert percentage to basis points (1% = 100 basis points)
         const percentage =
-          typeof value === "string" ? parseFloat(value) || 0 : value;
+          typeof value === "string"
+            ? parseFloat(value) || 0
+            : (value as number);
         const weightInBasisPoints = Math.round(percentage * 100);
         newBeneficiaries[index][field] = weightInBasisPoints;
 
@@ -88,7 +96,7 @@ export default function BeneficiariesInput({
           oldBeneficiary,
           newBeneficiary: newBeneficiaries[index],
         });
-      } else {
+      } else if (field === "account") {
         newBeneficiaries[index][field] = value as string;
 
         console.log("👤 BeneficiariesInput: Updating beneficiary account", {
@@ -100,6 +108,8 @@ export default function BeneficiariesInput({
           oldBeneficiary,
           newBeneficiary: newBeneficiaries[index],
         });
+      } else if (field === "isValidAccount") {
+        newBeneficiaries[index][field] = value as boolean;
       }
 
       setBeneficiaries(newBeneficiaries);
@@ -116,19 +126,15 @@ export default function BeneficiariesInput({
 
       const validationErrors: string[] = [];
 
-      // Check for empty accounts
+      // Check for empty accounts and invalid usernames
       beneficiariesList.forEach((beneficiary, index) => {
         if (!beneficiary.account.trim()) {
           validationErrors.push(
             `Beneficiary ${index + 1}: Account name is required`
           );
-        } else if (
-          !/^[a-z][a-z0-9.-]*[a-z0-9]$/.test(beneficiary.account) ||
-          beneficiary.account.length < 3 ||
-          beneficiary.account.length > 16
-        ) {
+        } else if (beneficiary.isValidAccount === false) {
           validationErrors.push(
-            `Beneficiary ${index + 1}: Invalid Hive account name`
+            `Beneficiary ${index + 1}: Please enter a valid Hive username`
           );
         }
       });
@@ -240,14 +246,17 @@ export default function BeneficiariesInput({
                   <FormLabel fontSize="xs" mb={1}>
                     Account
                   </FormLabel>
-                  <Input
-                    placeholder="hive-username"
+                  <HiveUsernameInput
                     value={beneficiary.account}
-                    onChange={(e) =>
-                      updateBeneficiary(index, "account", e.target.value)
-                    }
+                    onChange={(value, isValid) => {
+                      updateBeneficiary(index, "account", value);
+                      updateBeneficiary(index, "isValidAccount", isValid);
+                    }}
+                    placeholder="hive-username"
                     size="sm"
                     isDisabled={isSubmitting}
+                    validateOnChange={true}
+                    showSuggestions={true}
                   />
                 </FormControl>
 

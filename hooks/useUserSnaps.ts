@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Discussion } from '@hiveio/dhive';
 import HiveClient from '@/lib/hive/hiveclient';
+import { validateHiveUsernameFormat } from '@/lib/utils/hiveAccountUtils';
 
 // Debug utility that only logs in development mode
 const debug = (...args: any[]) => {
@@ -279,17 +280,10 @@ export default function useUserSnaps(username: string) {
             return [];
         }
 
-        // Username validation: only allow alphanumeric characters, underscores, hyphens, and dots
-        // This matches typical Hive username patterns
-        const usernamePattern = /^[a-zA-Z0-9._-]+$/;
-        if (!usernamePattern.test(username)) {
-            console.error('Invalid username format: contains unsafe characters', username);
-            return [];
-        }
-
-        // Additional length validation (Hive usernames are typically 3-16 characters)
-        if (username.length < 3 || username.length > 16) {
-            console.error('Invalid username length: must be between 3-16 characters', username);
+        // Validate username format using centralized validation
+        const validation = validateHiveUsernameFormat(username);
+        if (!validation.isValid) {
+            console.error('Invalid username format:', validation.error, username);
             return [];
         }
 

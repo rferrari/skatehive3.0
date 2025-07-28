@@ -1,4 +1,5 @@
 import * as dhive from '@hiveio/dhive';
+import { validateHiveUsernameFormat, checkHiveAccountExists } from '@/lib/utils/hiveAccountUtils';
 
 export const client = new dhive.Client([
     "https://api.deathwing.me",
@@ -44,44 +45,14 @@ export const getPrivateKeys = (username: string, password: string, roles = ['own
 };
 
 export function validateAccountName(value: string) {
-    let i, label, len, suffix;
-    suffix = "Account name should ";
-    if (!value) {
-      return suffix + "not be empty.";
-    }
-    const length = value.length;
-    if (length < 3) {
-      return suffix + "be longer.";
-    }
-    if (length > 16) {
-      return suffix + "be shorter.";
-    }
-    if (/\./.test(value)) {
-      suffix = "Each account segment should ";
-    }
-    const ref = value.split(".");
-    for (i = 0, len = ref.length; i < len; i++) {
-      label = ref[i];
-      if (!/^[a-z]/.test(label)) {
-        return suffix + "start with a lowercase letter.";
-      }
-      if (!/^[a-z0-9-]*$/.test(label)) {
-        return suffix + "have only lowercase letters, digits, or dashes.";
-      }
-      if (!/[a-z0-9]$/.test(label)) {
-        return suffix + "end with a lowercase letter or digit.";
-      }
-      if (!(label.length >= 3)) {
-        return suffix + "be longer";
-      }
-    }
-    return null;
+    const result = validateHiveUsernameFormat(value);
+    return result.error; // Returns null if valid, error message if invalid
 }
 
 export const checkAccountExists = async (desiredUsername: string) => {
     try {
-        const accounts = await client.database.getAccounts([desiredUsername]);
-        return accounts.length === 0;
+        const exists = await checkHiveAccountExists(desiredUsername);
+        return !exists; // Note: invite logic expects TRUE when available (account doesn't exist)
     } catch (error) {
         console.error('Error checking account:', error);
         return false;

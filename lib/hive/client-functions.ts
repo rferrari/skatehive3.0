@@ -220,18 +220,6 @@ export async function checkFollow(follower: string, following: string): Promise<
   }
 }
 
-export async function checkAccountName(username: string) {
-  try {
-    const users = await HiveClient.call('condenser_api', 'lookup_accounts', [
-      username, 1
-    ]);
-    return users[0]
-  } catch (error) {
-    console.log(error)
-    //return false
-  }
-}
-
 export async function changeFollow(follower: string, following: string) {
   const keychain = new KeychainSDK(window);
   const status = await checkFollow(follower, following)
