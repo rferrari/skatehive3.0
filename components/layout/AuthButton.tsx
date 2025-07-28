@@ -26,6 +26,7 @@ import { migrateLegacyMetadata } from "@/lib/utils/metadataMigration";
 import MergeAccountModal from "../profile/MergeAccountModal";
 import { KeychainSDK, KeychainKeyTypes } from "keychain-sdk";
 import { Operation } from "@hiveio/dhive";
+import fetchAccount from "@/lib/hive/fetchAccount";
 
 interface ConnectionStatus {
   name: string;
@@ -65,39 +66,8 @@ export default function AuthButton() {
     }
 
     try {
-      const accountResp = await fetch("https://api.hive.blog", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          method: "condenser_api.get_accounts",
-          params: [[user]],
-          id: 1,
-        }),
-      }).then((res) => res.json());
-
-      if (!accountResp.result || accountResp.result.length === 0) {
-        throw new Error("Account not found");
-      }
-
-      let currentMetadata: any = {};
-      let postingMetadata: any = {};
-      try {
-        if (accountResp.result[0].json_metadata) {
-          currentMetadata = JSON.parse(accountResp.result[0].json_metadata);
-        }
-      } catch {
-        // ignore parse errors
-      }
-      try {
-        if (accountResp.result[0].posting_json_metadata) {
-          postingMetadata = JSON.parse(
-            accountResp.result[0].posting_json_metadata
-          );
-        }
-      } catch {
-        postingMetadata = {};
-      }
+      const { jsonMetadata: currentMetadata, postingMetadata } =
+        await fetchAccount(user);
 
       const migrated = migrateLegacyMetadata(currentMetadata);
       migrated.extensions = migrated.extensions || {};

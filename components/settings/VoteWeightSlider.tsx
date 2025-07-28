@@ -22,6 +22,7 @@ import { DEFAULT_VOTE_WEIGHT } from "@/lib/utils/constants";
 import { migrateLegacyMetadata } from "@/lib/utils/metadataMigration";
 import { Operation } from "@hiveio/dhive";
 import { useVoteWeightContext } from "@/contexts/VoteWeightContext";
+import fetchAccount from "@/lib/hive/fetchAccount";
 
 interface VoteWeightSliderProps {
   username: string;
@@ -79,31 +80,9 @@ const VoteWeightSlider: React.FC<VoteWeightSliderProps> = ({
       const keychain = new KeychainSDK(window);
 
       // Get current profile metadata
-      const accounts = await fetch(`https://api.hive.blog`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          method: "condenser_api.get_accounts",
-          params: [[username]],
-          id: 1,
-        }),
-      }).then((res) => res.json());
-
-      if (!accounts.result || accounts.result.length === 0) {
-        throw new Error("Account not found");
-      }
-
-      const account = accounts.result[0];
-      let currentMetadata: any = {};
-
-      try {
-        if (account.json_metadata) {
-          currentMetadata = JSON.parse(account.json_metadata);
-        }
-      } catch (error) {
-        console.log("No existing metadata or invalid JSON");
-      }
+      const { account, jsonMetadata: currentMetadata } = await fetchAccount(
+        username
+      );
 
       const migrated = migrateLegacyMetadata(currentMetadata);
       migrated.extensions = migrated.extensions || {};
