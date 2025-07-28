@@ -23,7 +23,7 @@ import { Name, Avatar } from "@coinbase/onchainkit/identity";
 import ConnectionModal from "./ConnectionModal";
 import useHiveAccount from "@/hooks/useHiveAccount";
 import { migrateLegacyMetadata } from "@/lib/utils/metadataMigration";
-import MergeAccountModal from "../profile/MergeAccountModal";
+import MergeAccountModal, { MergeType } from "../profile/MergeAccountModal";
 import { KeychainSDK, KeychainKeyTypes } from "keychain-sdk";
 import { Operation } from "@hiveio/dhive";
 import fetchAccount from "@/lib/hive/fetchAccount";
@@ -56,6 +56,7 @@ export default function AuthButton() {
     useFarcasterSession();
   const { hiveAccount } = useHiveAccount(user || "");
   const [showMergeModal, setShowMergeModal] = useState(false);
+  const [mergeType, setMergeType] = useState<MergeType>("ethereum");
   const prevEthRef = useRef(isEthereumConnected);
   const prevFcRef = useRef(isFarcasterConnected);
 
@@ -94,7 +95,8 @@ export default function AuthButton() {
 
         migrated.extensions.wallets = migrated.extensions.wallets || {};
         if (farcasterProfile.custody) {
-          migrated.extensions.wallets.custody_address = farcasterProfile.custody;
+          migrated.extensions.wallets.custody_address =
+            farcasterProfile.custody;
         }
         if (
           Array.isArray(farcasterProfile.verifications) &&
@@ -193,19 +195,13 @@ export default function AuthButton() {
       const hasWallet = !!parsed.extensions?.wallets?.primary_wallet;
       const hasFarcaster = !!parsed.extensions?.farcaster?.username;
 
-      if (
-        isEthereumConnected &&
-        !prevEthRef.current &&
-        !hasWallet
-      ) {
+      if (isEthereumConnected && !prevEthRef.current && !hasWallet) {
+        setMergeType("ethereum");
         setShowMergeModal(true);
       }
 
-      if (
-        isFarcasterConnected &&
-        !prevFcRef.current &&
-        !hasFarcaster
-      ) {
+      if (isFarcasterConnected && !prevFcRef.current && !hasFarcaster) {
+        setMergeType("farcaster");
         setShowMergeModal(true);
       }
     } catch (err) {
@@ -428,6 +424,7 @@ export default function AuthButton() {
         isOpen={showMergeModal}
         onClose={() => setShowMergeModal(false)}
         onMerge={handleMergeAccounts}
+        mergeType={mergeType}
       />
     </>
   );
