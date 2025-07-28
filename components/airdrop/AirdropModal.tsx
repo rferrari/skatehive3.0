@@ -249,12 +249,19 @@ export function AirdropModal({
           content: (
             <VStack spacing={6} align="stretch">
               <Box>
-                <Text fontSize="lg" fontWeight="bold" mb={4} color="primary">
+                <Text
+                  fontSize={isMobile ? "md" : "lg"}
+                  fontWeight="bold"
+                  mb={4}
+                  color="primary"
+                >
                   Filter Options
                 </Text>
                 <VStack spacing={4}>
                   <FormControl>
-                    <FormLabel color="text">Sort By</FormLabel>
+                    <FormLabel color="text" fontSize={isMobile ? "sm" : "md"}>
+                      Sort By
+                    </FormLabel>
                     <Select
                       value={sortOption}
                       onChange={(e) =>
@@ -262,6 +269,7 @@ export function AirdropModal({
                       }
                       bg="cardBg"
                       borderColor="border"
+                      size={isMobile ? "sm" : "md"}
                     >
                       <option value="points">Points</option>
                       <option value="hp_balance">Hive Power</option>
@@ -284,12 +292,15 @@ export function AirdropModal({
                   </FormControl>
 
                   <FormControl>
-                    <FormLabel color="text">Limit Recipients</FormLabel>
+                    <FormLabel color="text" fontSize={isMobile ? "sm" : "md"}>
+                      Limit Recipients
+                    </FormLabel>
                     <NumberInput
                       value={limit}
                       onChange={(_, num) => setLimit(num)}
                       min={1}
                       max={1000}
+                      size={isMobile ? "sm" : "md"}
                     >
                       <NumberInputField bg="cardBg" borderColor="border" />
                       <NumberInputStepper>
@@ -302,23 +313,57 @@ export function AirdropModal({
               </Box>
 
               <Box>
-                <Text fontSize="lg" fontWeight="bold" mb={2} color="primary">
+                <Text
+                  fontSize={isMobile ? "md" : "lg"}
+                  fontWeight="bold"
+                  mb={2}
+                  color="primary"
+                >
                   Preview
                 </Text>
-                <StatGroup>
-                  <Stat>
-                    <StatLabel color="textSecondary">Total Users</StatLabel>
-                    <StatNumber color="text">{userCount.total}</StatNumber>
-                  </Stat>
-                  <Stat>
-                    <StatLabel color="textSecondary">Eligible</StatLabel>
-                    <StatNumber color="text">{userCount.eligible}</StatNumber>
-                  </Stat>
-                  <Stat>
-                    <StatLabel color="textSecondary">Selected</StatLabel>
-                    <StatNumber color="text">{userCount.limited}</StatNumber>
-                  </Stat>
-                </StatGroup>
+                {isMobile ? (
+                  <VStack spacing={2} align="stretch">
+                    <Stat textAlign="left">
+                      <StatLabel color="textSecondary" fontSize="xs">
+                        Total Users
+                      </StatLabel>
+                      <StatNumber color="text" fontSize="lg">
+                        {userCount.total}
+                      </StatNumber>
+                    </Stat>
+                    <Stat textAlign="left">
+                      <StatLabel color="textSecondary" fontSize="xs">
+                        Eligible
+                      </StatLabel>
+                      <StatNumber color="text" fontSize="lg">
+                        {userCount.eligible}
+                      </StatNumber>
+                    </Stat>
+                    <Stat textAlign="left">
+                      <StatLabel color="textSecondary" fontSize="xs">
+                        Selected
+                      </StatLabel>
+                      <StatNumber color="text" fontSize="lg">
+                        {userCount.limited}
+                      </StatNumber>
+                    </Stat>
+                  </VStack>
+                ) : (
+                  <StatGroup>
+                    <Stat>
+                      <StatLabel color="textSecondary">Total Users</StatLabel>
+                      <StatNumber color="text">{userCount.total}</StatNumber>
+                    </Stat>
+                    <Stat>
+                      <StatLabel color="textSecondary">Eligible</StatLabel>
+                      <StatNumber color="text">{userCount.eligible}</StatNumber>
+                    </Stat>
+                    <Stat>
+                      <StatLabel color="textSecondary">Selected</StatLabel>
+                      <StatNumber color="text">{userCount.limited}</StatNumber>
+                    </Stat>
+                  </StatGroup>
+                )}
               </Box>
             </VStack>
           ),
@@ -528,53 +573,110 @@ export function AirdropModal({
                 </Text>
 
                 <VStack spacing={4}>
-                  <HStack spacing={4} width="100%">
-                    <FormControl flex={1}>
-                      <FormLabel color="text">Token</FormLabel>
-                      <Select
-                        value={selectedToken}
-                        onChange={(e) =>
-                          handleConfigChange({ selectedToken: e.target.value })
-                        }
-                        bg="cardBg"
-                        borderColor="border"
-                      >
-                        {tokenOptions.map((option) => (
-                          <option
-                            key={option.value}
-                            value={option.value}
-                            disabled={option.disabled}
-                          >
-                            {option.label}
-                          </option>
-                        ))}
-                      </Select>
-                    </FormControl>
+                  {isMobile ? (
+                    <VStack spacing={4} width="100%">
+                      <FormControl>
+                        <FormLabel color="text" fontSize="sm">
+                          Token
+                        </FormLabel>
+                        <Select
+                          value={selectedToken}
+                          onChange={(e) =>
+                            handleConfigChange({
+                              selectedToken: e.target.value,
+                            })
+                          }
+                          bg="cardBg"
+                          borderColor="border"
+                          size="sm"
+                        >
+                          {tokenOptions.map((option) => (
+                            <option
+                              key={option.value}
+                              value={option.value}
+                              disabled={option.disabled}
+                            >
+                              {option.label}
+                            </option>
+                          ))}
+                        </Select>
+                      </FormControl>
 
-                    <FormControl
-                      flex={1}
-                      isInvalid={parseFloat(totalAmount) <= 0}
-                    >
-                      <FormLabel color="text">Total Amount</FormLabel>
-                      <NumberInput
-                        value={totalAmount}
-                        onChange={(value) =>
-                          handleConfigChange({ totalAmount: value })
-                        }
-                        min={0}
-                        precision={6}
+                      <FormControl isInvalid={parseFloat(totalAmount) <= 0}>
+                        <FormLabel color="text" fontSize="sm">
+                          Total Amount
+                        </FormLabel>
+                        <NumberInput
+                          value={totalAmount}
+                          onChange={(value) =>
+                            handleConfigChange({ totalAmount: value })
+                          }
+                          min={0}
+                          precision={6}
+                          size="sm"
+                        >
+                          <NumberInputField bg="cardBg" borderColor="border" />
+                          <NumberInputStepper>
+                            <NumberIncrementStepper />
+                            <NumberDecrementStepper />
+                          </NumberInputStepper>
+                        </NumberInput>
+                        <FormErrorMessage fontSize="xs">
+                          Amount must be greater than 0
+                        </FormErrorMessage>
+                      </FormControl>
+                    </VStack>
+                  ) : (
+                    <HStack spacing={4} width="100%">
+                      <FormControl flex={1}>
+                        <FormLabel color="text">Token</FormLabel>
+                        <Select
+                          value={selectedToken}
+                          onChange={(e) =>
+                            handleConfigChange({
+                              selectedToken: e.target.value,
+                            })
+                          }
+                          bg="cardBg"
+                          borderColor="border"
+                        >
+                          {tokenOptions.map((option) => (
+                            <option
+                              key={option.value}
+                              value={option.value}
+                              disabled={option.disabled}
+                            >
+                              {option.label}
+                            </option>
+                          ))}
+                        </Select>
+                      </FormControl>
+
+                      <FormControl
+                        flex={1}
+                        isInvalid={parseFloat(totalAmount) <= 0}
                       >
-                        <NumberInputField bg="cardBg" borderColor="border" />
-                        <NumberInputStepper>
-                          <NumberIncrementStepper />
-                          <NumberDecrementStepper />
-                        </NumberInputStepper>
-                      </NumberInput>
-                      <FormErrorMessage>
-                        Amount must be greater than 0
-                      </FormErrorMessage>
-                    </FormControl>
-                  </HStack>
+                        <FormLabel color="text">Total Amount</FormLabel>
+                        <NumberInput
+                          value={totalAmount}
+                          onChange={(value) =>
+                            handleConfigChange({ totalAmount: value })
+                          }
+                          min={0}
+                          precision={6}
+                        >
+                          <NumberInputField bg="cardBg" borderColor="border" />
+                          <NumberInputStepper>
+                            <NumberIncrementStepper />
+                            <NumberDecrementStepper />
+                          </NumberInputStepper>
+                        </NumberInput>
+                        <FormErrorMessage>
+                          Amount must be greater than 0
+                        </FormErrorMessage>
+                      </FormControl>
+                    </HStack>
+                  )}
 
                   <HStack spacing={3} width="100%">
                     <Button
@@ -589,7 +691,9 @@ export function AirdropModal({
                       fontSize={isMobile ? "xs" : "sm"}
                       px={isMobile ? 2 : 4}
                     >
-                      {isMobile ? `Configure (${airdropUsers.length})` : `Configure Recipients (${airdropUsers.length})`}
+                      {isMobile
+                        ? `Configure (${airdropUsers.length})`
+                        : `Configure Recipients (${airdropUsers.length})`}
                     </Button>
 
                     {airdropUsers.length > 0 && (
@@ -623,12 +727,16 @@ export function AirdropModal({
                       <AlertTitle>Approval Required!</AlertTitle>
                       <AlertDescription>
                         ERC-20 tokens require approval before airdrops. Click
-                        "Approve Tokens" to allow the airdrop contract to spend
-                        your {selectedToken} tokens.
+                        &quot;Approve Tokens&quot; to allow the airdrop contract
+                        to spend your {selectedToken} tokens.
                       </AlertDescription>
                     </Box>
                   </Alert>
-                  <HStack spacing={3} mt={3} flexWrap={isMobile ? "wrap" : "nowrap"}>
+                  <HStack
+                    spacing={3}
+                    mt={3}
+                    flexWrap={isMobile ? "wrap" : "nowrap"}
+                  >
                     <Button
                       onClick={handleApproveToken}
                       isLoading={isApproving}
@@ -649,11 +757,15 @@ export function AirdropModal({
                     >
                       {isApproving
                         ? "Approving..."
-                        : isMobile 
-                          ? `Approve ${selectedToken}`
-                          : `Approve ${selectedToken} Tokens`}
+                        : isMobile
+                        ? `Approve ${selectedToken}`
+                        : `Approve ${selectedToken} Tokens`}
                     </Button>
-                    <Text fontSize={isMobile ? "xs" : "sm"} color="textSecondary" flex={isMobile ? "1" : "auto"}>
+                    <Text
+                      fontSize={isMobile ? "xs" : "sm"}
+                      color="textSecondary"
+                      flex={isMobile ? "1" : "auto"}
+                    >
                       Amount: {totalAmount} {selectedToken}
                     </Text>
                   </HStack>
@@ -662,45 +774,90 @@ export function AirdropModal({
 
               {/* Summary Section */}
               <Box>
-                <HStack justify="space-between" mb={4}>
-                  <Text fontSize="lg" fontWeight="bold" color="primary">
+                <HStack
+                  justify="space-between"
+                  mb={4}
+                  flexWrap={isMobile ? "wrap" : "nowrap"}
+                >
+                  <Text
+                    fontSize={isMobile ? "md" : "lg"}
+                    fontWeight="bold"
+                    color="primary"
+                  >
                     Airdrop Summary
                   </Text>
                   <Button
-                    size="sm"
+                    size={isMobile ? "xs" : "sm"}
                     onClick={handleEstimateCost}
                     isLoading={isEstimating}
                     loadingText="Estimating..."
                     variant="ghost"
                     color="primary"
+                    fontSize={isMobile ? "xs" : "sm"}
                   >
-                    Estimate Cost
+                    {isMobile ? "Estimate" : "Estimate Cost"}
                   </Button>
                 </HStack>
 
-                <StatGroup>
-                  <Stat>
-                    <StatLabel color="textSecondary">Recipients</StatLabel>
-                    <StatNumber color="text">{airdropUsers.length}</StatNumber>
-                  </Stat>
-                  <Stat>
-                    <StatLabel color="textSecondary">Per User</StatLabel>
-                    <StatNumber color="text">
-                      {airdropUsers.length > 0
-                        ? (
-                            parseFloat(totalAmount) / airdropUsers.length
-                          ).toFixed(6)
-                        : "0.000000"}{" "}
-                      {selectedToken}
-                    </StatNumber>
-                  </Stat>
-                  <Stat>
-                    <StatLabel color="textSecondary">Total Cost</StatLabel>
-                    <StatNumber color="text">
-                      {totalAmount} {selectedToken}
-                    </StatNumber>
-                  </Stat>
-                </StatGroup>
+                {isMobile ? (
+                  <VStack spacing={2} align="stretch">
+                    <Stat textAlign="left">
+                      <StatLabel color="textSecondary" fontSize="xs">
+                        Recipients
+                      </StatLabel>
+                      <StatNumber color="text" fontSize="lg">
+                        {airdropUsers.length}
+                      </StatNumber>
+                    </Stat>
+                    <Stat textAlign="left">
+                      <StatLabel color="textSecondary" fontSize="xs">
+                        Per User
+                      </StatLabel>
+                      <StatNumber color="text" fontSize="lg">
+                        {airdropUsers.length > 0
+                          ? (
+                              parseFloat(totalAmount) / airdropUsers.length
+                            ).toFixed(6)
+                          : "0.000000"}{" "}
+                        {selectedToken}
+                      </StatNumber>
+                    </Stat>
+                    <Stat textAlign="left">
+                      <StatLabel color="textSecondary" fontSize="xs">
+                        Total Cost
+                      </StatLabel>
+                      <StatNumber color="text" fontSize="lg">
+                        {totalAmount} {selectedToken}
+                      </StatNumber>
+                    </Stat>
+                  </VStack>
+                ) : (
+                  <StatGroup>
+                    <Stat>
+                      <StatLabel color="textSecondary">Recipients</StatLabel>
+                      <StatNumber color="text">
+                        {airdropUsers.length}
+                      </StatNumber>
+                    </Stat>
+                    <Stat>
+                      <StatLabel color="textSecondary">Per User</StatLabel>
+                      <StatNumber color="text">
+                        {airdropUsers.length > 0
+                          ? (
+                              parseFloat(totalAmount) / airdropUsers.length
+                            ).toFixed(6)
+                          : "0.000000"}{" "}
+                        {selectedToken}
+                      </StatNumber>
+                    </Stat>
+                    <Stat>
+                      <StatLabel color="textSecondary">Total Cost</StatLabel>
+                      <StatNumber color="text">
+                        {totalAmount} {selectedToken}
+                      </StatNumber>
+                    </Stat>
+                  </StatGroup>
+                )}
 
                 {/* Cost Estimate Display */}
                 {costEstimate && (
@@ -837,7 +994,11 @@ export function AirdropModal({
             </VStack>
           ),
           footer: (
-            <HStack spacing={isMobile ? 2 : 3} flexWrap={isMobile ? "wrap" : "nowrap"} w="100%">
+            <HStack
+              spacing={isMobile ? 2 : 3}
+              flexWrap={isMobile ? "wrap" : "nowrap"}
+              w="100%"
+            >
               <Button
                 variant="ghost"
                 onClick={handleClose}
@@ -868,7 +1029,11 @@ export function AirdropModal({
                     fontSize={isMobile ? "sm" : "md"}
                     flex={isMobile ? "1" : "auto"}
                   >
-                    {isApproving ? "Approving..." : isMobile ? "Approve" : "Approve Tokens"}
+                    {isApproving
+                      ? "Approving..."
+                      : isMobile
+                      ? "Approve"
+                      : "Approve Tokens"}
                   </Button>
                 )}
 
@@ -886,7 +1051,11 @@ export function AirdropModal({
                 fontSize={isMobile ? "sm" : "md"}
                 flex={isMobile ? "1" : "auto"}
               >
-                {isExecuting ? "Processing..." : isMobile ? "Execute" : `Execute Airdrop`}
+                {isExecuting
+                  ? "Processing..."
+                  : isMobile
+                  ? "Execute"
+                  : `Execute Airdrop`}
               </Button>
             </HStack>
           ),
