@@ -113,7 +113,7 @@ export function useWalletActions() {
 
   const handleClaimHbdInterest = async () => {
     if (!user) {
-      console.error("Username is not available.");
+      console.error("User is not available.");
       return;
     }
 

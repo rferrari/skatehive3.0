@@ -69,16 +69,16 @@ export async function executeHiveAirdrop({
 
 const executeAiohaTransfer = async (
   operations: Operation[], 
-  aiohaUser: any,
+  user: string,
   aiohaInstance: any,
   updateStatus: (status: any) => void
 ) => {
   try {
     // Debug information
     console.log('Aioha Debug Info:', {
-      userExists: !!aiohaUser,
-      userName: aiohaUser?.name,
-      userHasBroadcast: !!(aiohaUser && typeof aiohaUser.broadcast === 'function'),
+      userExists: !!user,
+      userName: user,
+      userHasBroadcast: !!(user && typeof aiohaInstance.broadcast === 'function'),
       instanceExists: !!aiohaInstance,
       instanceHasSignAndBroadcast: !!(aiohaInstance && typeof aiohaInstance.signAndBroadcastTx === 'function')
     });
@@ -88,8 +88,8 @@ const executeAiohaTransfer = async (
     let broadcasterType;
     
  
-    if (aiohaUser && typeof aiohaUser.broadcast === 'function') {
-      broadcaster = aiohaUser;
+    if (user && typeof aiohaInstance.broadcast === 'function') {
+      broadcaster = user;
       broadcasterType = 'user';
     } else if (aiohaInstance && typeof aiohaInstance.signAndBroadcastTx === 'function') {
       broadcaster = aiohaInstance;

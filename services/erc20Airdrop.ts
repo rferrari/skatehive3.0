@@ -13,7 +13,6 @@ import { wagmiConfig } from '@/app/providers';
 import { tokenDictionary } from '@/lib/utils/tokenDictionary';
 import { AirdropUser, TransactionStatus } from '@/types/airdrop';
 import { airdropABI } from '@/lib/utils/abis/airdropABI';
-import { useAccount } from 'wagmi';
 
 const AIRDROP_CONTRACT = '0x8bD8F0D46c84feCBFbF270bac4Ad28bFA2c78F05';
 
@@ -121,7 +120,8 @@ export class ERC20AirdropService {
   async estimateAirdropCost(
     tokenSymbol: string,
     recipients: AirdropUser[],
-    totalAmount: string
+    totalAmount: string,
+    userAddress?: string
   ): Promise<{
     tokenAmount: bigint;
     canExecute: boolean;
@@ -131,8 +131,8 @@ export class ERC20AirdropService {
 
     try {
       await this.validateNetwork();
-      const account = useAccount();
-      if (!account.address) {
+      
+      if (!userAddress) {
         errors.push('Wallet not connected');
         return {
           tokenAmount: BigInt(0),
@@ -140,8 +140,6 @@ export class ERC20AirdropService {
           errors
         };
       }
-
-      const userAddress = account.address as Address;
 
       const tokenInfo = tokenDictionary[tokenSymbol];
       if (!tokenInfo) {
@@ -214,7 +212,7 @@ export class ERC20AirdropService {
 
       // Pre-flight checks
       onStatusUpdate?.({ state: 'preparing', message: 'Checking balances and allowances...' });
-      const costEstimate = await this.estimateAirdropCost(tokenSymbol, recipients, totalAmount);
+      const costEstimate = await this.estimateAirdropCost(tokenSymbol, recipients, totalAmount, userAddress);
       
 
       // Prepare transaction data
