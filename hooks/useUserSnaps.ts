@@ -38,14 +38,14 @@ export default function useUserSnaps(username: string) {
                 const result = hasMarkdownImages || hasIframes;
 
                 // Debug logging for each snap
-                if (body.length > 0) {
-                    debug(`Media check for snap ${snap.permlink}:`, {
-                        hasMarkdownImages,
-                        hasIframes,
-                        result,
-                        bodyPreview: body.substring(0, 200)
-                    });
-                }
+                // if (body.length > 0) {
+                //     debug(`Media check for snap ${snap.permlink}:`, {
+                //         hasMarkdownImages,
+                //         hasIframes,
+                //         result,
+                //         bodyPreview: body.substring(0, 200)
+                //     });
+                // }
 
                 return result;
             } catch (error) {
@@ -164,7 +164,7 @@ export default function useUserSnaps(username: string) {
         }
 
         const data = await response.json();
-        debug('User feed API response:', data);
+        // debug('User feed API response:', data);
 
         // Handle different possible response structures
         let userSnaps = [];
@@ -181,7 +181,7 @@ export default function useUserSnaps(username: string) {
             return [];
         }
 
-        debug(`Found ${userSnaps.length} total snaps for user ${username}`);
+        // debug(`Found ${userSnaps.length} total snaps for user ${username}`);
 
         if (userSnaps.length === 0) {
             setHasMore(false);
@@ -193,20 +193,20 @@ export default function useUserSnaps(username: string) {
             return snap && snap.permlink && !fetchedPermlinksRef.current.has(snap.permlink);
         });
 
-        debug(`${newSnaps.length} new snaps after deduplication`);
+        // debug(`${newSnaps.length} new snaps after deduplication`);
 
         if (newSnaps.length > 0) {
-            debug('New user snaps:', newSnaps.map((snap: any) => ({
-                author: snap.author,
-                permlink: snap.permlink,
-                created: snap.created,
-                bodyPreview: (snap.body || '').substring(0, 200),
-                hasBody: !!(snap.body),
-                hasIframe: /<iframe[^>]*>/gi.test(snap.body || ''),
-                hasMarkdown: /!\[.*?\]\([^\)]+\)/gi.test(snap.body || ''),
-                hasIpfs: /ipfs\.skatehive\.app/gi.test(snap.body || ''),
-                hasImagesHive: /images\.hive\.blog/gi.test(snap.body || '')
-            })));
+            // debug('New user snaps:', newSnaps.map((snap: any) => ({
+            //     author: snap.author,
+            //     permlink: snap.permlink,
+            //     created: snap.created,
+            //     bodyPreview: (snap.body || '').substring(0, 200),
+            //     hasBody: !!(snap.body),
+            //     hasIframe: /<iframe[^>]*>/gi.test(snap.body || ''),
+            //     hasMarkdown: /!\[.*?\]\([^\)]+\)/gi.test(snap.body || ''),
+            //     hasIpfs: /ipfs\.skatehive\.app/gi.test(snap.body || ''),
+            //     hasImagesHive: /images\.hive\.blog/gi.test(snap.body || '')
+            // })));
 
             // Convert to Discussion format
             const discussions: Discussion[] = newSnaps.map((snap: any) => ({
@@ -227,27 +227,27 @@ export default function useUserSnaps(username: string) {
             // Filter for media snaps
             const mediaSnaps = filterMediaSnaps(discussions);
 
-            debug(`Filtered to ${mediaSnaps.length} snaps with media`);
+            // debug(`Filtered to ${mediaSnaps.length} snaps with media`);
 
-            if (mediaSnaps.length > 0) {
-                debug('Media snaps with extracted media:', mediaSnaps.map(snap => ({
-                    author: snap.author,
-                    permlink: snap.permlink,
-                    bodyPreview: snap.body.substring(0, 200),
-                    media: extractMediaFromSnap(snap)
-                })));
-            } else if (newSnaps.length > 0) {
-                debug('Snaps filtered out (no media detected):', newSnaps.map((snap: any) => ({
-                    author: snap.author,
-                    permlink: snap.permlink,
-                    bodyPreview: (snap.body || '').substring(0, 200),
-                    bodyFull: snap.body,
-                    hasIpfsSkate: /ipfs\.skatehive\.app/gi.test(snap.body || ''),
-                    hasImagesHive: /images\.hive\.blog/gi.test(snap.body || ''),
-                    hasMarkdown: /!\[.*?\]\([^\)]+\)/gi.test(snap.body || ''),
-                    hasIframe: /<iframe[^>]*>/gi.test(snap.body || '')
-                })));
-            }
+            // if (mediaSnaps.length > 0) {
+            //     debug('Media snaps with extracted media:', mediaSnaps.map(snap => ({
+            //         author: snap.author,
+            //         permlink: snap.permlink,
+            //         bodyPreview: snap.body.substring(0, 200),
+            //         media: extractMediaFromSnap(snap)
+            //     })));
+            // } else if (newSnaps.length > 0) {
+            //     debug('Snaps filtered out (no media detected):', newSnaps.map((snap: any) => ({
+            //         author: snap.author,
+            //         permlink: snap.permlink,
+            //         bodyPreview: (snap.body || '').substring(0, 200),
+            //         bodyFull: snap.body,
+            //         hasIpfsSkate: /ipfs\.skatehive\.app/gi.test(snap.body || ''),
+            //         hasImagesHive: /images\.hive\.blog/gi.test(snap.body || ''),
+            //         hasMarkdown: /!\[.*?\]\([^\)]+\)/gi.test(snap.body || ''),
+            //         hasIframe: /<iframe[^>]*>/gi.test(snap.body || '')
+            //     })));
+            // }
 
             // Mark as fetched
             mediaSnaps.forEach(snap => {
@@ -299,7 +299,6 @@ export default function useUserSnaps(username: string) {
             // Try Hive blockchain method first
             try {
                 userSnaps = await fetchUserSnapsFromHive(username);
-                console.log('Successfully fetched user snaps from Hive blockchain');
 
                 // If Hive returns no results, try API as fallback
                 if (userSnaps.length === 0) {
