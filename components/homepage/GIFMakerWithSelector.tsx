@@ -7,7 +7,7 @@ import React, {
 } from "react";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile } from "@ffmpeg/util";
-import { Box, Input, Button, Text } from "@chakra-ui/react";
+import { Box, Input, Button, Text, Select } from "@chakra-ui/react";
 import { useTheme } from "@/app/themeProvider";
 
 interface GIFMakerWithSelectorProps {
@@ -34,6 +34,7 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
     const [endTime, setEndTime] = useState<number | null>(null);
     const [canConvert, setCanConvert] = useState<boolean>(false);
     const [isConverting, setIsConverting] = useState<boolean>(false);
+    const [fps, setFps] = useState<number>(10);
     // Ref to track if user is seeking
     const isSeekingRef = useRef(false);
 
@@ -197,7 +198,7 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
           "-ss", startTime.toString(),
           "-i", videoFile.name,
           "-t", duration.toString(),
-          "-vf", "fps=10,scale=320:-1:flags=lanczos",
+          "-vf", `fps=${fps},scale=320:-1:flags=lanczos`,
           "-f", "gif",
           "output.gif",
         ]);
@@ -215,9 +216,14 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
       }
     };
 
-    // Estimate GIF size in MB for 320px wide, 10fps GIFs
+    // Estimate GIF size in MB for 320px wide GIFs (adjusted for FPS)
     const estimateGifSizeMB = (duration: number) => {
-      return (0.3 + 0.3 * duration).toFixed(2);
+      // More realistic estimation based on actual GIF compression
+      // Base size per second at 10 FPS, then adjust for actual FPS
+      const baseSizePerSecond = 0.18; // MB per second at 10 FPS (increased from 0.15)
+      const fpsMultiplier = fps / 10;
+      const estimatedSize = baseSizePerSecond * duration * fpsMultiplier;
+      return Math.max(0.1, estimatedSize).toFixed(2); // Minimum 0.1 MB
     };
 
     // Get color for estimated size using theme colors
@@ -298,7 +304,7 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
                 fontWeight={fontWeightBold}
                 _hover={{ bg: colors.primary, color: colors.background, borderColor: colors.primary }}
                 _active={{ bg: colors.primary, color: colors.background, borderColor: colors.primary }}
-                cursor={isProcessing ? "not-allowed" : "pointer"}
+                cursor={isConverting ? "not-allowed" : "pointer"}
               >
                 Set Start
               </Button>
@@ -336,14 +342,48 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
               )}
             </Text>
             {startTime !== null && endTime !== null && (
-              (() => {
-                const est = parseFloat(estimateGifSizeMB(endTime - startTime));
-                return (
-                  <Text mt={1} fontSize={fontSizeSm} fontWeight={fontWeightMedium}>
-                    Estimated GIF size: <Box as="span" color={getEstimateColor(est)} bg={colors.muted} borderRadius={theme.radii?.base || 6} px={2} py={0.5} ml={2} display="inline-block">{est} MB</Box>
+              <>
+                <Box display="flex" alignItems="center" justifyContent="center" gap={3} mt={3}>
+                  <Text fontSize={fontSizeSm} color={colors.text}>
+                    FPS:
                   </Text>
-                );
-              })()
+                  <Select
+                    value={fps}
+                    onChange={(e) => setFps(Number(e.target.value))}
+                    size="sm"
+                    w="80px"
+                    bg={colors.background}
+                    color={colors.primary}
+                    borderColor={colors.primary}
+                    borderRadius={theme.radii?.base || 6}
+                    _hover={{ borderColor: colors.primary }}
+                    _focus={{ borderColor: colors.primary, boxShadow: `0 0 0 1px ${colors.primary}` }}
+                  >
+                    <option value={5}>5</option>
+                    <option value={8}>8</option>
+                    <option value={10}>10</option>
+                    <option value={12}>12</option>
+                    <option value={15}>15</option>
+                    <option value={20}>20</option>
+                    <option value={24}>24</option>
+                  </Select>
+                </Box>
+                {(() => {
+                  const est = parseFloat(estimateGifSizeMB(endTime - startTime));
+                  return (
+                    <>
+                      <Text mt={1} fontSize={fontSizeSm} fontWeight={fontWeightMedium}>
+                        Estimated GIF size: <Box as="span" color={getEstimateColor(est)} bg={colors.muted} borderRadius={theme.radii?.base || 6} px={2} py={0.5} ml={2} display="inline-block">{est} MB</Box>
+                      </Text>
+                      {est > 2 && (
+                        <Text mt={1} fontSize={fontSizeSm} color={colors.error || "#FF6B6B"} fontWeight={fontWeightMedium}>
+                          TRY TO KEEP THE SIZE UNDER 2MB, DICKHEAD!
+                        </Text>
+                      )}
+                    </>
+                  );
+                })()}
+              </>
             )}
             {/* Convert to GIF Button */}
             <Button
@@ -364,7 +404,7 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
               _hover={{ bg: colors.primary, color: colors.background, borderColor: colors.primary }}
               _active={{ bg: colors.primary, color: colors.background, borderColor: colors.primary }}
             >
-              {isConverting ? "Processing..." : "Convert to GIF"}
+              {isConverting ? "Processing..." : (startTime !== null && endTime !== null && parseFloat(estimateGifSizeMB(endTime - startTime)) > 2 ? "Suck it web-gnar!" : "Convert to GIF")}
             </Button>
           </>
         )}
