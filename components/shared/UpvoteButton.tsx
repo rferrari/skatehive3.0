@@ -192,7 +192,7 @@ const UpvoteButton = ({
   if (variant === "simple") {
     return (
       <HStack>
-        <Tooltip label="upvote" hasArrow openDelay={1000}>
+        <Tooltip label={voted ? "already upvoted" : "upvote"} hasArrow openDelay={1000}>
           <Box
             as="span"
             display="flex"
@@ -203,19 +203,21 @@ const UpvoteButton = ({
             p={1}
             borderRadius="full"
             bg={!voted ? "muted" : undefined}
-            _hover={!voted ? { bg: "primary" } : undefined}
+            border={!voted ? "1px solid" : voted ? "1px solid" : undefined}
+            borderColor={!voted ? "primary" : voted ? "muted" : undefined}
+            _hover={!voted ? { bg: "muted" } : undefined}
             transition="background 0.2s, border-radius 0.2s"
-            className={`${className} ${!voted ? "arrow-bg-fade" : ""}`}
+            className={`${className} ${!voted ? "arrow-bg-fade" : ""} ${voted ? "upvoted-container" : ""}`}
           >
             <LuArrowUpRight
               size={24}
               color={
                 voted
-                  ? "var(--chakra-colors-success)"
-                  : "var(--chakra-colors-accent)"
+                  ? "var(--chakra-colors-muted)"
+                  : "var(--chakra-colors-primary)"
               }
               style={{ opacity: 1 }}
-              className={!voted ? "arrow-pulse" : ""}
+              className={`${!voted ? "arrow-pulse-hover" : ""} ${voted ? "upvoted-icon" : ""}`}
             />
           </Box>
         </Tooltip>
@@ -227,7 +229,7 @@ const UpvoteButton = ({
   if (variant === "withVoteCount") {
     return (
       <HStack>
-        <Tooltip label="upvote" hasArrow openDelay={1000}>
+        <Tooltip label={voted ? "already upvoted" : "upvote"} hasArrow openDelay={1000}>
           <Box
             as="span"
             display="flex"
@@ -238,19 +240,21 @@ const UpvoteButton = ({
             p={1}
             borderRadius="full"
             bg={!voted ? "muted" : undefined}
-            _hover={!voted ? { bg: "primary" } : undefined}
+            border={!voted ? "1px solid" : voted ? "1px solid" : undefined}
+            borderColor={!voted ? "primary" : voted ? "muted" : undefined}
+            _hover={!voted ? { bg: "muted" } : undefined}
             transition="background 0.2s, border-radius 0.2s"
-            className={`${className} ${!voted ? "arrow-bg-fade" : ""}`}
+            className={`${className} ${!voted ? "arrow-bg-fade" : ""} ${voted ? "upvoted-container" : ""}`}
           >
             <LuArrowUpRight
               size={24}
               color={
                 voted
-                  ? "var(--chakra-colors-success)"
-                  : "var(--chakra-colors-accent)"
+                  ? "var(--chakra-colors-muted)"
+                  : "var(--chakra-colors-primary)"
               }
               style={{ opacity: 1 }}
-              className={!voted ? "arrow-pulse" : ""}
+              className={`${!voted ? "arrow-pulse-hover" : ""} ${voted ? "upvoted-icon" : ""}`}
             />
           </Box>
         </Tooltip>
@@ -280,7 +284,7 @@ const UpvoteButton = ({
     if (disableSlider) {
       return (
         <HStack>
-          <Tooltip label="upvote" hasArrow openDelay={1000}>
+          <Tooltip label={voted ? "already upvoted" : "upvote"} hasArrow openDelay={1000}>
             <Box
               as="span"
               display="flex"
@@ -291,19 +295,21 @@ const UpvoteButton = ({
               p={1}
               borderRadius="full"
               bg={!voted ? "muted" : undefined}
-              _hover={!voted ? { bg: "primary" } : undefined}
+              border={!voted ? "1px solid" : voted ? "1px solid" : undefined}
+              borderColor={!voted ? "primary" : voted ? "muted" : undefined}
+              _hover={!voted ? { bg: "muted" } : undefined}
               transition="background 0.2s, border-radius 0.2s"
-              className={`${className} ${!voted ? "arrow-bg-fade" : ""}`}
+              className={`${className} ${!voted ? "arrow-bg-fade" : ""} ${voted ? "upvoted-container" : ""}`}
             >
               <LuArrowUpRight
                 size={24}
                 color={
                   voted
-                    ? "var(--chakra-colors-success)"
-                    : "var(--chakra-colors-accent)"
+                    ? "var(--chakra-colors-muted)"
+                    : "var(--chakra-colors-primary)"
                 }
                 style={{ opacity: 1 }}
-                className={!voted ? "arrow-pulse" : ""}
+                className={`${!voted ? "arrow-pulse-hover" : ""} ${voted ? "upvoted-icon" : ""}`}
               />
             </Box>
           </Tooltip>
@@ -394,7 +400,7 @@ const UpvoteButton = ({
 
     return (
       <HStack>
-        <Tooltip label="upvote" hasArrow openDelay={1000}>
+        <Tooltip label={voted ? "already upvoted" : "upvote"} hasArrow openDelay={1000}>
           <Box
             as="span"
             display="flex"
@@ -405,19 +411,21 @@ const UpvoteButton = ({
             p={1}
             borderRadius="full"
             bg={!voted ? "muted" : undefined}
-            _hover={!voted ? { bg: "primary" } : undefined}
+            border={!voted ? "1px solid" : voted ? "1px solid" : undefined}
+            borderColor={!voted ? "primary" : voted ? "muted" : undefined}
+            _hover={!voted ? { bg: "muted" } : undefined}
             transition="background 0.2s, border-radius 0.2s"
-            className={`${className} ${!voted ? "arrow-bg-fade" : ""}`}
+            className={`${className} ${!voted ? "arrow-bg-fade" : ""} ${voted ? "upvoted-container" : ""}`}
           >
             <LuArrowUpRight
               size={24}
               color={
                 voted
-                  ? "var(--chakra-colors-success)"
-                  : "var(--chakra-colors-accent)"
+                  ? "var(--chakra-colors-muted)"
+                  : "var(--chakra-colors-primary)"
               }
               style={{ opacity: 1 }}
-              className={!voted ? "arrow-pulse" : ""}
+              className={`${!voted ? "arrow-pulse-hover" : ""} ${voted ? "upvoted-icon" : ""}`}
             />
           </Box>
         </Tooltip>
@@ -464,7 +472,10 @@ const UpvoteButtonWithPulse = (props: UpvoteButtonProps) => {
         }
 
         .arrow-pulse {
-          animation: arrow-pulse 3s ease-in-out infinite;
+          animation: arrow-pulse 0.2s ease-in-out infinite;
+        }
+        .arrow-pulse-hover:hover {
+          animation: arrow-pulse 0.2s ease-in-out infinite;
         }
         .arrow-bg-fade {
           animation: arrow-bg-fade 3s ease-in-out infinite;
@@ -472,12 +483,28 @@ const UpvoteButtonWithPulse = (props: UpvoteButtonProps) => {
         .arrow-bg-fade:hover {
           animation: arrow-bg-fade-hover 3s ease-in-out infinite;
         }
+        /* Original arrow animation - 3s ease-in-out, scale 1.1, translate(2px, -2px) */
+        /*
         @keyframes arrow-pulse {
           0% {
             transform: scale(1) translate(0, 0);
           }
           50% {
             transform: scale(1.1) translate(2px, -2px);
+          }
+          100% {
+            transform: scale(1) translate(0, 0);
+          }
+        }
+        */
+        
+        /* New faster arrow animation - 0.2s ease-in-out, scale 1.15, translate(3px, -3px) - only moves up and right */
+        @keyframes arrow-pulse {
+          0% {
+            transform: scale(1) translate(0, 0);
+          }
+          50% {
+            transform: scale(1.15) translate(3px, -3px);
           }
           100% {
             transform: scale(1) translate(0, 0);
@@ -496,14 +523,18 @@ const UpvoteButtonWithPulse = (props: UpvoteButtonProps) => {
         }
         @keyframes arrow-bg-fade-hover {
           0% {
-            background-color: var(--chakra-colors-primary);
+            background-color: var(--chakra-colors-muted);
           }
           50% {
             background-color: transparent;
           }
           100% {
-            background-color: var(--chakra-colors-primary);
+            background-color: var(--chakra-colors-muted);
           }
+        }
+
+        .upvoted-container:hover .upvoted-icon {
+          color: var(--chakra-colors-primary) !important;
         }
       `}</style>
       <UpvoteButton {...props} />
