@@ -9,6 +9,7 @@ import {
   HStack,
   IconButton,
   Image,
+  useToast,
 } from "@chakra-ui/react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAioha } from "@aioha/react-ui";
@@ -17,7 +18,10 @@ import { AiohaModal } from "@aioha/react-ui";
 import { KeyTypes } from "@aioha/aioha";
 import { useTheme } from "../../app/themeProvider";
 import { useNotifications } from "@/contexts/NotificationContext";
-
+import { useFarcasterSession } from "@/hooks/useFarcasterSession";
+import { useFarcasterMiniapp } from "@/hooks/useFarcasterMiniapp";
+import { useSignIn } from "@farcaster/auth-kit";
+import ConnectionModal from "./ConnectionModal";
 // Modular Rive Button for Menu Items -- what is that , why do we call the hook again ?
 const MenuRiveButton = ({
   src,
@@ -63,15 +67,355 @@ export default function FooterNavButtons() {
   const { user } = useAioha();
   const [modalDisplayed, setModalDisplayed] = useState(false);
   const { themeName } = useTheme();
+  const toast = useToast();
+
+  // Farcaster integration with proper callbacks and mobile detection
+  const { signIn, signOut, connect, reconnect, isSuccess, isError } = useSignIn(
+    {
+      onSuccess: ({ fid, username, bio, displayName, pfpUrl }) => {
+        console.log("[FarcasterConnect] Auth success callback triggered", {
+          fid,
+          username,
+        });
+        console.log(
+          "[FarcasterConnect] Success callback - clearing state and preventing modal reopening"
+        );
+
+        // Clear safety timeout and auth progress state first
+        clearAuthTimeout();
+        setIsFarcasterAuthInProgress(false);
+
+        // Reset Auth Kit state immediately to prevent modal reopening
+        setTimeout(() => {
+          console.log(
+            "[FarcasterConnect] Resetting Auth Kit state after success"
+          );
+          signOut();
+        }, 100);
+
+        // Close modal and show success toast
+        safeCloseConnectionModal();
+        setTimeout(() => {
+          console.log("[FarcasterConnect] Showing success toast");
+          toast({
+            title: "Farcaster Connected",
+            description: `Successfully connected as @${username}`,
+            status: "success",
+            duration: 3000,
+          });
+        }, 500);
+      },
+      onError: (error) => {
+        console.error("[FarcasterConnect] Auth error callback:", error);
+        // Clear safety timeout and auth progress state
+        clearAuthTimeout();
+        setIsFarcasterAuthInProgress(false);
+        safeCloseConnectionModal();
+        toast({
+          title: "Connection Failed",
+          description: "Failed to connect to Farcaster. Please try again.",
+          status: "error",
+          duration: 3000,
+        });
+      },
+      onStatusResponse: (res) => {
+        console.log("[FarcasterConnect] Status update:", res);
+
+        // Log the full response to understand the structure
+        console.log(
+          "[FarcasterConnect] Full status response:",
+          JSON.stringify(res, null, 2)
+        );
+      },
+    }
+  );
+  const {
+    isAuthenticated: isFarcasterConnected,
+    profile: farcasterProfile,
+    clearSession,
+  } = useFarcasterSession();
+  const { isInMiniapp, user: miniappUser, isReady } = useFarcasterMiniapp();
+  const [isFarcasterAuthInProgress, setIsFarcasterAuthInProgress] =
+    useState(false);
+
+  // Safety timeout ref to prevent stuck loading states
+  const authTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Clear auth timeout when component unmounts or auth completes
+  const clearAuthTimeout = useCallback(() => {
+    if (authTimeoutRef.current) {
+      clearTimeout(authTimeoutRef.current);
+      authTimeoutRef.current = null;
+    }
+  }, []);
+
+  // Safety timeout to reset auth progress if callbacks don't fire
+  const setAuthTimeoutSafety = useCallback(() => {
+    clearAuthTimeout(); // Clear any existing timeout
+
+    // Set a safety timeout for abandoned auth attempts
+    authTimeoutRef.current = setTimeout(() => {
+      console.log(
+        "[FarcasterConnect] Safety timeout triggered - user likely abandoned auth"
+      );
+      setIsFarcasterAuthInProgress(false);
+      // Optional: Show a gentle message that auth was cancelled
+      toast({
+        title: "Authentication Cancelled",
+        description: "Farcaster connection was cancelled or timed out",
+        status: "info",
+        duration: 2000,
+      });
+    }, 10000); // 10 seconds - more reasonable for abandoned auth
+  }, [clearAuthTimeout, toast]);
+
+  // Determine combined Farcaster status
+  const actualFarcasterConnection =
+    isFarcasterConnected || (isInMiniapp && !!miniappUser);
+  const actualFarcasterProfile = farcasterProfile || miniappUser;
+
+  // Connection modal state with proper management
+  const [isConnectionModalOpen, setIsConnectionModalOpen] = useState(false);
+  const [isModalTransitioning, setIsModalTransitioning] = useState(false);
 
   // Client-side only rendering to avoid hydration issues
   const [isClient, setIsClient] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [touchTimer, setTouchTimer] = useState<NodeJS.Timeout | null>(null);
   const [isHolding, setIsHolding] = useState(false);
   const [isSnapping, setIsSnapping] = useState(false);
   const dragRef = useRef<HTMLDivElement>(null);
+
+  // Safe modal close handler to prevent conflicts
+  const safeCloseConnectionModal = useCallback(() => {
+    if (isModalTransitioning) {
+      console.log(
+        "[FarcasterConnect] Modal close ignored - already transitioning"
+      );
+      return; // Prevent multiple close calls
+    }
+
+    console.log("[FarcasterConnect] safeCloseConnectionModal called", {
+      isSuccess,
+      actualFarcasterConnection,
+      isFarcasterAuthInProgress,
+    });
+
+    setIsModalTransitioning(true);
+    setIsConnectionModalOpen(false);
+    clearAuthTimeout(); // Clear any pending auth timeout
+    setIsFarcasterAuthInProgress(false); // Clear auth progress when closing
+
+    // Only reset Auth Kit state if user manually closes modal while connected
+    // Don't interfere with success callback flow
+    if (isSuccess && actualFarcasterConnection && !isFarcasterAuthInProgress) {
+      console.log(
+        "[FarcasterConnect] Manual modal close - resetting Auth Kit state"
+      );
+      signOut();
+    }
+
+    // Clear transition flag after modal animation
+    setTimeout(() => {
+      setIsModalTransitioning(false);
+    }, 300);
+  }, [
+    isModalTransitioning,
+    isSuccess,
+    actualFarcasterConnection,
+    signOut,
+    clearAuthTimeout,
+    isFarcasterAuthInProgress,
+  ]);
+
+  // Track previous connection state to detect disconnections (still needed for reconnection logic)
+  const [previousFarcasterConnection, setPreviousFarcasterConnection] =
+    useState(false);
+
+  // Handle connection state changes for disconnection detection only (removed mobile auth timeout logic)
+  React.useEffect(() => {
+    const currentConnection =
+      isFarcasterConnected || (isInMiniapp && !!miniappUser);
+
+    // Only track connection state changes for disconnection detection
+    // Don't interfere with auth progress state - let callbacks handle that
+    setPreviousFarcasterConnection(currentConnection);
+  }, [isFarcasterConnected, isInMiniapp, miniappUser]);
+
+  // Reset Auth Kit state when modal opens if user is already connected (but not during auth flow)
+  React.useEffect(() => {
+    if (
+      isConnectionModalOpen &&
+      actualFarcasterConnection &&
+      (isSuccess || isError) &&
+      !isFarcasterAuthInProgress // Only reset if not currently authenticating
+    ) {
+      console.log(
+        "[FarcasterConnect] Modal opened with existing connection, resetting Auth Kit state"
+      );
+      // Reset the Auth Kit state to prevent automatic modal reopening
+      if (isSuccess) {
+        setTimeout(() => {
+          signOut();
+        }, 100);
+      }
+    }
+  }, [
+    isConnectionModalOpen,
+    actualFarcasterConnection,
+    isSuccess,
+    isError,
+    signOut,
+    isFarcasterAuthInProgress,
+  ]);
+
+  // Monitor Auth Kit state to detect when modal is closed without completing auth
+  React.useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    let visibilityTimeoutId: NodeJS.Timeout;
+
+    if (isFarcasterAuthInProgress && !isSuccess && !isError) {
+      // Only check for modal dismissal on desktop - mobile doesn't show modals
+      if (!isMobile) {
+        // Set a shorter check interval to detect Auth Kit modal dismissal on desktop
+        timeoutId = setTimeout(() => {
+          // If we're still in auth progress but no Auth Kit modal appears to be active
+          // This is a heuristic - we assume if enough time passes without success/error,
+          // the user has dismissed the modal
+          const authKitModalExists = document.querySelector(
+            '[class*="fc-authkit-signin-modal"], [data-testid*="farcaster"], .farcaster-auth-modal'
+          );
+
+          if (!authKitModalExists && isFarcasterAuthInProgress) {
+            console.log(
+              "[FarcasterConnect] Auth Kit modal not found but auth in progress - assuming user closed modal"
+            );
+            clearAuthTimeout();
+            setIsFarcasterAuthInProgress(false);
+          }
+        }, 2000); // Check after 2 seconds
+
+        // Listen for escape key presses that might close the modal (desktop only)
+        const handleEscapeKey = (event: KeyboardEvent) => {
+          if (
+            event.key === "Escape" &&
+            isFarcasterAuthInProgress &&
+            !isSuccess &&
+            !isError
+          ) {
+            // Small delay to allow modal to actually close before checking
+            setTimeout(() => {
+              const authKitModalExists = document.querySelector(
+                '[class*="fc-authkit-signin-modal"], [data-testid*="farcaster"], .farcaster-auth-modal'
+              );
+              if (!authKitModalExists) {
+                console.log(
+                  "[FarcasterConnect] Escape key pressed and modal closed - cancelling auth"
+                );
+                clearAuthTimeout();
+                setIsFarcasterAuthInProgress(false);
+              }
+            }, 100);
+          }
+        };
+
+        document.addEventListener("keydown", handleEscapeKey);
+
+        return () => {
+          if (timeoutId) clearTimeout(timeoutId);
+          if (visibilityTimeoutId) clearTimeout(visibilityTimeoutId);
+          document.removeEventListener("keydown", handleEscapeKey);
+        };
+      } else {
+        // Mobile-specific handling: Auth Kit redirects to external apps
+        // Don't check for modal existence, just rely on callbacks and safety timeout
+        console.log(
+          "[FarcasterConnect] Mobile auth flow - no modal detection, relying on callbacks and safety timeout"
+        );
+      }
+
+      // Focus/visibility detection works for both desktop and mobile
+      // This catches cases where users switch apps/tabs during auth
+      const handleVisibilityChange = () => {
+        if (
+          !document.hidden &&
+          isFarcasterAuthInProgress &&
+          !isSuccess &&
+          !isError
+        ) {
+          // User returned focus to main document - on desktop, check if modal still exists
+          // On mobile, this might indicate return from external app
+          visibilityTimeoutId = setTimeout(() => {
+            if (!isMobile) {
+              // Desktop: check for modal
+              const authKitModalExists = document.querySelector(
+                '[class*="fc-authkit-signin-modal"], [data-testid*="farcaster"], .farcaster-auth-modal'
+              );
+              if (!authKitModalExists && isFarcasterAuthInProgress) {
+                console.log(
+                  "[FarcasterConnect] Focus returned but no modal found - user likely closed modal"
+                );
+                clearAuthTimeout();
+                setIsFarcasterAuthInProgress(false);
+              }
+            }
+            // Mobile: don't do anything here, let callbacks handle it
+          }, 500);
+        }
+      };
+
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+      window.addEventListener("focus", handleVisibilityChange);
+
+      return () => {
+        if (timeoutId) clearTimeout(timeoutId);
+        if (visibilityTimeoutId) clearTimeout(visibilityTimeoutId);
+        document.removeEventListener(
+          "visibilitychange",
+          handleVisibilityChange
+        );
+        window.removeEventListener("focus", handleVisibilityChange);
+      };
+    }
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      if (visibilityTimeoutId) clearTimeout(visibilityTimeoutId);
+    };
+  }, [
+    isFarcasterAuthInProgress,
+    isSuccess,
+    isError,
+    clearAuthTimeout,
+    isMobile,
+  ]);
+
+  // Detect mobile browser (not miniapp)
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      const checkMobile = () => {
+        const userAgent = navigator.userAgent.toLowerCase();
+        const isMobileDevice =
+          /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(
+            userAgent
+          );
+        const isMobileBrowser = isMobileDevice && window.innerWidth <= 768;
+        setIsMobile(isMobileBrowser);
+        console.log("[Mobile Detection]", {
+          isMobileDevice,
+          isMobileBrowser,
+          userAgent,
+          width: window.innerWidth,
+        });
+      };
+
+      checkMobile();
+      window.addEventListener("resize", checkMobile);
+      return () => window.removeEventListener("resize", checkMobile);
+    }
+  }, []);
 
   // Calculate initial position for client-side
   const getInitialPosition = useCallback(() => {
@@ -275,7 +619,113 @@ export default function FooterNavButtons() {
 
     setIsHolding(false);
     setIsDragging(false);
-  }, [ isDragging, touchTimer, position.x]);
+  }, [touchTimer, position.x]);
+
+  // Connection modal handlers
+  const handleHiveLogin = () => {
+    safeCloseConnectionModal();
+    // Add a small delay to ensure the ConnectionModal closes first
+    setTimeout(() => {
+      setModalDisplayed(true);
+    }, 400); // Increased delay to ensure modal transition completes
+  };
+
+  const handleFarcasterConnect = async () => {
+    // Prevent rapid clicks during auth process
+    if (isFarcasterAuthInProgress || isModalTransitioning) {
+      console.log(
+        "[FarcasterConnect] Auth already in progress or modal transitioning, ignoring click"
+      );
+      return;
+    }
+
+    console.log("[FarcasterConnect] Starting connection process...", {
+      isInMiniapp,
+      miniappUser,
+      isFarcasterConnected,
+      farcasterProfile,
+      actualFarcasterConnection,
+      isMobile,
+      userAgent: typeof window !== "undefined" ? navigator.userAgent : "SSR",
+    });
+
+    setIsFarcasterAuthInProgress(true);
+    setAuthTimeoutSafety(); // Start safety timeout
+
+    try {
+      // Check if already connected
+      if (actualFarcasterConnection) {
+        const connectedProfile = actualFarcasterProfile;
+        clearAuthTimeout(); // Clear safety timeout since we're exiting early
+        setIsFarcasterAuthInProgress(false); // Clear the loading state
+        safeCloseConnectionModal();
+        toast({
+          title: "Already Connected",
+          description: `Already connected as @${
+            connectedProfile?.username || "unknown"
+          }`,
+          status: "info",
+          duration: 3000,
+        });
+        return;
+      }
+
+      // Scenario 1: Farcaster Miniapp - Auto-authenticated
+      if (isInMiniapp && miniappUser) {
+        clearAuthTimeout(); // Clear safety timeout since we're exiting early
+        safeCloseConnectionModal();
+        toast({
+          title: "Already Connected",
+          description: `Connected as @${miniappUser.username} via Farcaster miniapp`,
+          status: "success",
+          duration: 3000,
+        });
+        return;
+      }
+
+      // Scenario 2: In miniapp but no user context
+      if (isInMiniapp && !miniappUser) {
+        clearAuthTimeout(); // Clear safety timeout since we're exiting early
+        toast({
+          title: "Authentication Error",
+          description: "Please ensure you're signed into Farcaster",
+          status: "error",
+          duration: 3000,
+        });
+        return;
+      }
+
+      // Scenario 3: Regular web auth (Desktop & Mobile browsers)
+      console.log("[FarcasterConnect] Calling signIn()...");
+      console.log("[FarcasterConnect] Context:", {
+        isMobile,
+        isInMiniapp,
+        platform: isMobile ? "mobile-browser" : "desktop-browser",
+      });
+
+      // The signIn() function opens the Farcaster Auth Kit modal
+      // On desktop: Shows QR code modal
+      // On mobile: Shows deep link options and redirects
+      // Success/error handling is done via the onSuccess/onError callbacks above
+      signIn();
+
+      console.log(
+        "[FarcasterConnect] signIn() called - Auth Kit modal should be open"
+      );
+    } catch (error) {
+      console.error("Farcaster auth error:", error);
+      clearAuthTimeout(); // Clear safety timeout on error
+      setIsFarcasterAuthInProgress(false); // Reset immediately on error
+      safeCloseConnectionModal();
+      toast({
+        title: "Connection Failed",
+        description: "Failed to connect to Farcaster. Please try again.",
+        status: "error",
+        duration: 3000,
+      });
+    }
+    // Note: No finally block - let callbacks handle state reset for successful flows
+  };
 
   // Only render on client to avoid hydration mismatch
   React.useEffect(() => {
@@ -323,14 +773,15 @@ export default function FooterNavButtons() {
     }
   }, [isDragging, handleTouchMove, handleTouchEnd]);
 
-  // Cleanup timer on unmount
+  // Cleanup timers on unmount
   React.useEffect(() => {
     return () => {
       if (touchTimer) {
         clearTimeout(touchTimer);
       }
+      clearAuthTimeout(); // Also cleanup auth timeout
     };
-  }, [touchTimer]);
+  }, [touchTimer, clearAuthTimeout]);
 
   // Don't render anything on server side - MOVED TO END AFTER ALL HOOKS
   if (!isClient) {
@@ -408,7 +859,7 @@ export default function FooterNavButtons() {
         if (user) {
           router.push(`/user/${user}?view=snaps`);
         } else {
-          setModalDisplayed(true);
+          setIsConnectionModalOpen(true);
         }
       },
       name: user ? "Profile" : "Login",
@@ -716,15 +1167,29 @@ export default function FooterNavButtons() {
           </MenuList>
         </Menu>
       </Box>
-      <AiohaModal
-        displayed={modalDisplayed}
-        loginOptions={{
-          msg: "Login",
-          keyType: KeyTypes.Posting,
-          loginTitle: "Login",
-        }}
-        onLogin={() => {}}
-        onClose={() => setModalDisplayed(false)}
+      {modalDisplayed && (
+        <div style={{ zIndex: 10000 }}>
+          <AiohaModal
+            displayed={modalDisplayed}
+            loginOptions={{
+              msg: "Login to SkateHive",
+              keyType: KeyTypes.Posting,
+              loginTitle: "Connect Your SkateHive Account",
+            }}
+            onLogin={() => setModalDisplayed(false)}
+            onClose={() => setModalDisplayed(false)}
+          />
+        </div>
+      )}
+      <ConnectionModal
+        isOpen={isConnectionModalOpen}
+        onClose={safeCloseConnectionModal}
+        onHiveLogin={handleHiveLogin}
+        onFarcasterConnect={handleFarcasterConnect}
+        isFarcasterAuthInProgress={isFarcasterAuthInProgress}
+        // Pass the actual connection states to avoid hook duplication
+        actualFarcasterConnection={actualFarcasterConnection}
+        actualFarcasterProfile={actualFarcasterProfile}
       />
     </>
   );

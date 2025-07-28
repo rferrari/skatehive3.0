@@ -45,7 +45,6 @@ const farcasterAuthConfig = {
 };
 
 export function Providers({ children }: { children: React.ReactNode }) {
-
   return (
     <UserProvider>
       <ThemeProvider>

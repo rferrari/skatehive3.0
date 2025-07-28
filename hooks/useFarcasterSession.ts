@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useProfile, useSignIn } from '@farcaster/auth-kit';
 
 interface FarcasterSession {
@@ -28,6 +28,7 @@ export function useFarcasterSession() {
   const { isAuthenticated, profile } = useProfile();
   const [hasPersistedSession, setHasPersistedSession] = useState(false);
   const [isRestoring, setIsRestoring] = useState(true);
+  const [sessionData, setSessionData] = useState<FarcasterSession | null>(null);
 
   // Save session to localStorage when authenticated
   useEffect(() => {
@@ -42,18 +43,28 @@ export function useFarcasterSession() {
         verifications: profile.verifications,
         timestamp: Date.now(),
       };
-      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-      setHasPersistedSession(true);
-      console.log('[FarcasterSession] Saved session:', session);
+      
+      // Avoid unnecessary localStorage writes and state updates
+      const currentSessionString = localStorage.getItem(SESSION_KEY);
+      const newSessionString = JSON.stringify(session);
+      
+      if (currentSessionString !== newSessionString) {
+        localStorage.setItem(SESSION_KEY, newSessionString);
+        setSessionData(session);
+        if (!hasPersistedSession) {
+          setHasPersistedSession(true);
+        }
+        console.log('[FarcasterSession] Saved session:', session);
+      }
     }
-  }, [isAuthenticated, profile]);
+  }, [isAuthenticated, profile?.fid, profile?.username, hasPersistedSession]);
 
   // Restore session from localStorage on mount
   useEffect(() => {
     const restoreSession = () => {
       try {
         const savedSession = localStorage.getItem(SESSION_KEY);
-        console.log('[FarcasterSession] Restoring session, found:', savedSession);
+        console.log('[FarcasterSession] Restoring session, found:', !!savedSession);
         if (savedSession) {
           const session: FarcasterSession = JSON.parse(savedSession);
           const isExpired = Date.now() - session.timestamp > SESSION_EXPIRY;
@@ -62,14 +73,21 @@ export function useFarcasterSession() {
             console.log('[FarcasterSession] Session expired, removing');
             localStorage.removeItem(SESSION_KEY);
             setHasPersistedSession(false);
+            setSessionData(null);
           } else {
-            console.log('[FarcasterSession] Session restored:', session);
+            console.log('[FarcasterSession] Session restored:', session.username);
             setHasPersistedSession(true);
+            setSessionData(session);
           }
+        } else {
+          setHasPersistedSession(false);
+          setSessionData(null);
         }
       } catch (error) {
         console.warn('Failed to restore Farcaster session:', error);
         localStorage.removeItem(SESSION_KEY);
+        setHasPersistedSession(false);
+        setSessionData(null);
       } finally {
         setIsRestoring(false);
       }
@@ -79,13 +97,38 @@ export function useFarcasterSession() {
   }, []);
 
   // Clear session on sign out
-  const clearSession = () => {
+  const clearSession = useCallback(() => {
+    console.log('[FarcasterSession] Clearing session explicitly');
+    console.log('[FarcasterSession] Before clear - hasPersistedSession:', hasPersistedSession);
+    
+    // Clear localStorage
     localStorage.removeItem(SESSION_KEY);
+    
+    // Also try to clear any other Farcaster-related localStorage items
+    try {
+      // Check for any keys that might be related to Farcaster Auth Kit
+      Object.keys(localStorage).forEach(key => {
+        if (key.includes('farcaster') || key.includes('authkit') || key.includes('fc_')) {
+          console.log('[FarcasterSession] Removing potential auth key:', key);
+          localStorage.removeItem(key);
+        }
+      });
+    } catch (error) {
+      console.warn('[FarcasterSession] Error clearing additional storage:', error);
+    }
+    
+    // Update state
     setHasPersistedSession(false);
-  };
+    setSessionData(null);
+    
+    console.log('[FarcasterSession] After clear - session removed');
+  }, [hasPersistedSession]);
 
   // Get persisted session data
-  const getPersistedSession = (): FarcasterSession | null => {
+  const getPersistedSession = useCallback((): FarcasterSession | null => {
+    // Return cached sessionData if available
+    if (sessionData) return sessionData;
+    
     try {
       const savedSession = localStorage.getItem(SESSION_KEY);
       if (savedSession) {
@@ -102,18 +145,27 @@ export function useFarcasterSession() {
       console.warn('Failed to get persisted session:', error);
     }
     return null;
-  };
+  }, [sessionData]);
+
+  // Memoize the final authentication state
+  const finalIsAuthenticated = useMemo(() => {
+    return isAuthenticated || hasPersistedSession;
+  }, [isAuthenticated, hasPersistedSession]);
+
+  // Memoize the profile computation
+  const computedProfile = useMemo(() => {
+    // Prioritize Auth Kit profile if available
+    if (isAuthenticated && profile) return profile;
+    // Fall back to persisted session data
+    if (hasPersistedSession && sessionData) return sessionData;
+    // No profile available
+    return null;
+  }, [isAuthenticated, profile, hasPersistedSession, sessionData]);
+
 
   return {
-    isAuthenticated: isAuthenticated || hasPersistedSession,
-    profile: (() => {
-      // Prioritize Auth Kit profile if available
-      if (isAuthenticated && profile) return profile;
-      // Fall back to persisted session
-      if (hasPersistedSession) return getPersistedSession();
-      // No profile available
-      return null;
-    })(),
+    isAuthenticated: finalIsAuthenticated,
+    profile: computedProfile,
     hasPersistedSession,
     isRestoring,
     clearSession,

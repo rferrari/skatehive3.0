@@ -22,6 +22,7 @@ import { useRouter } from "next/navigation";
 import { useAioha } from "@aioha/react-ui";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { useFarcasterSession } from "@/hooks/useFarcasterSession";
+import { useFarcasterMiniapp } from "@/hooks/useFarcasterMiniapp";
 import { useSignIn } from "@farcaster/auth-kit";
 import { FaEthereum, FaHive, FaInfoCircle } from "react-icons/fa";
 import { SiFarcaster } from "react-icons/si";
@@ -75,6 +76,9 @@ interface ConnectionModalProps {
   onFarcasterConnect: () => void;
   isFarcasterAuthInProgress: boolean;
   primaryConnection?: ConnectionStatus | undefined;
+  // Add props for Farcaster connection state to avoid hook duplication
+  actualFarcasterConnection?: boolean;
+  actualFarcasterProfile?: any;
 }
 
 export default function ConnectionModal({
@@ -84,6 +88,8 @@ export default function ConnectionModal({
   onFarcasterConnect,
   isFarcasterAuthInProgress,
   primaryConnection,
+  actualFarcasterConnection,
+  actualFarcasterProfile,
 }: ConnectionModalProps) {
   const { user, aioha } = useAioha();
   const router = useRouter();
@@ -97,7 +103,18 @@ export default function ConnectionModal({
     profile: farcasterProfile,
     clearSession,
   } = useFarcasterSession();
+  const { isInMiniapp, user: miniappUser } = useFarcasterMiniapp();
   const { signOut } = useSignIn({});
+
+  // Use passed props if available, otherwise fall back to hook values
+  const finalFarcasterConnection =
+    actualFarcasterConnection !== undefined
+      ? actualFarcasterConnection
+      : isFarcasterConnected || (isInMiniapp && !!miniappUser);
+  const finalFarcasterProfile =
+    actualFarcasterProfile !== undefined
+      ? actualFarcasterProfile
+      : farcasterProfile || miniappUser;
 
   // Connection status data with priority (Hive > Ethereum > Farcaster)
   const connections: ConnectionStatus[] = [
@@ -117,7 +134,7 @@ export default function ConnectionModal({
     },
     {
       name: "Farcaster",
-      connected: isFarcasterConnected,
+      connected: finalFarcasterConnection,
       icon: SiFarcaster,
       color: "purple.400",
       priority: 3,
@@ -159,14 +176,39 @@ export default function ConnectionModal({
     });
   };
 
-  const handleFarcasterDisconnect = () => {
-    signOut();
-    clearSession();
-    toast({
-      status: "success",
-      title: "Disconnected from Farcaster",
-      description: "You have been signed out from Farcaster",
-    });
+  const handleFarcasterDisconnect = async () => {
+    if (isInMiniapp) {
+      toast({
+        status: "info",
+        title: "Miniapp Context",
+        description:
+          "You're connected via Farcaster miniapp. Close the app to disconnect.",
+      });
+    } else {
+      console.log("[FarcasterDisconnect] Starting disconnect process...");
+
+      // Step 1: Clear the custom session first
+      clearSession();
+      console.log("[FarcasterDisconnect] Custom session cleared");
+
+      // Step 2: Sign out from Auth Kit
+      signOut();
+      console.log("[FarcasterDisconnect] Auth Kit signOut called");
+
+      // Step 3: Force a small delay and try to clear again to ensure it sticks
+      setTimeout(() => {
+        clearSession();
+        console.log(
+          "[FarcasterDisconnect] Second clearSession call for safety"
+        );
+      }, 200);
+
+      toast({
+        status: "success",
+        title: "Disconnected from Farcaster",
+        description: "You have been signed out from Farcaster",
+      });
+    }
   };
 
   const handleProfileClick = () => {
@@ -178,7 +220,7 @@ export default function ConnectionModal({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} isCentered>
-      <ModalOverlay />
+      <ModalOverlay bg="blackAlpha.700" backdropFilter="blur(8px)" />{" "}
       <ModalContent bg={"background"}>
         <ModalHeader>
           {primaryConnection ? "Manage Connections" : "Connect to SkateHive"}
@@ -205,11 +247,11 @@ export default function ConnectionModal({
             )}
 
             {/* Show Farcaster profile option if connected to Farcaster but not Hive */}
-            {!user && farcasterProfile && (
+            {!user && finalFarcasterProfile && (
               <Button
                 leftIcon={
                   <Image
-                    src={farcasterProfile.pfpUrl || ""}
+                    src={finalFarcasterProfile.pfpUrl || ""}
                     boxSize={5}
                     borderRadius="full"
                   />
@@ -221,7 +263,9 @@ export default function ConnectionModal({
                 variant="outline"
                 justifyContent="flex-start"
               >
-                Farcaster Profile
+                @
+                {finalFarcasterProfile.username ||
+                  finalFarcasterProfile.displayName}
               </Button>
             )}
 
@@ -344,6 +388,26 @@ export default function ConnectionModal({
                 )}
               </Flex>
             ))}
+            {!connections.some((conn) => conn.connected) && (
+              <Button
+                colorScheme="green"
+                onClick={() =>
+                  window.open(
+                    "https://docs.skatehive.app/docs/create-account",
+                    "_blank"
+                  )
+                }
+                leftIcon={<Icon as={FaInfoCircle} />}
+                variant="outline"
+              >
+                <Text display={{ base: "none", md: "inline" }}>
+                  How the F. I connect to this shit?
+                </Text>
+                <Text display={{ base: "inline", md: "none" }}>
+                  How to connect?
+                </Text>
+              </Button>
+            )}
           </VStack>
         </ModalBody>
       </ModalContent>
