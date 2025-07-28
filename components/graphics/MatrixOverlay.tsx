@@ -32,7 +32,7 @@ const MatrixOverlay: React.FC<{ coverMode?: boolean }> = ({
 
     // Matrix characters
     const letters =
-      "アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズヅブプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッンABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+      "アァカサタナハマヤャラワガザダバパキシチヒミリギジビツヌムルグズヅエケセテネヘレヱゼデペオコホヨロヲボポABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ΘΨΟΠΣΔΦΓΛΞ";
     const fontSize = 16;
     let columns = Math.floor((canvas?.width || 0) / fontSize);
     let drops = Array(columns).fill(1);

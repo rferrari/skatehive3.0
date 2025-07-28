@@ -225,7 +225,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
           setStatus("Checking video duration...");
           const duration = await getVideoDuration(file);
           if (duration > maxDurationSeconds) {
-            setStatus(`Error: Video is too long. Maximum allowed duration is ${maxDurationSeconds} seconds.`);
+            setStatus(""); // Clear the status message
             if (onDurationError) onDurationError(duration);
             onUpload(null);
             if (onUploadFinish) onUploadFinish();

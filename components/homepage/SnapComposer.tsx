@@ -71,11 +71,9 @@ export default function SnapComposer({
   const [videoDurationError, setVideoDurationError] = useState<string | null>(null);
 
   const handleVideoDurationError = (duration: number) => {
-    const minutes = Math.floor(duration / 60);
-    const seconds = Math.floor(duration % 60);
-    setVideoDurationError(`Video is ${minutes}m ${seconds}s long. Maximum allowed duration is 1 minute.`);
-    // Clear error after 5 seconds
-    setTimeout(() => setVideoDurationError(null), 5000);
+    setVideoDurationError("Error. Short form video only here. Max 60 sec. Use Mag for longer video.");
+    // Clear error after 7 seconds
+    setTimeout(() => setVideoDurationError(null), 7000);
   };
 
   const buttonText = submitLabel || (post ? "Reply" : "Post");
@@ -549,10 +547,8 @@ export default function SnapComposer({
           <Box width="100%">
             {videoDurationError && (
               <Box 
-                bg="red.50" 
-                color="red.800" 
+                color="error" 
                 p={2} 
-                borderRadius="md" 
                 mb={2}
                 fontSize="sm"
                 textAlign="center"
