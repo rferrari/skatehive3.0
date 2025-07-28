@@ -16,6 +16,7 @@ import {
   Badge,
   Flex,
   Tooltip,
+  Image,
 } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
 import { useAioha } from "@aioha/react-ui";
@@ -87,12 +88,11 @@ export default function ConnectionModal({
   const { user, aioha } = useAioha();
   const router = useRouter();
   const toast = useToast();
-
   // Get connection states
   const { isConnected: isEthereumConnected } = useAccount();
   const { connect, connectors } = useConnect();
   const { disconnect } = useDisconnect();
-  const { isAuthenticated: isFarcasterConnected, clearSession } =
+  const { isAuthenticated: isFarcasterConnected, profile: farcasterProfile, clearSession } =
     useFarcasterSession();
   const { signOut } = useSignIn({});
 
@@ -109,14 +109,14 @@ export default function ConnectionModal({
       name: "Ethereum",
       connected: isEthereumConnected,
       icon: FaEthereum,
-      color: "blue",
+      color: "blue.200",
       priority: 2,
     },
     {
       name: "Farcaster",
       connected: isFarcasterConnected,
       icon: SiFarcaster,
-      color: "purple",
+      color: "purple.400",
       priority: 3,
     },
   ];
@@ -186,12 +186,27 @@ export default function ConnectionModal({
             {/* Show profile option if connected to Hive */}
             {user && (
               <Button
+                leftIcon={<Image src={`https://images.hive.blog/u/${user}/avatar/small`} boxSize={5} borderRadius="full" />}
                 onClick={handleProfileClick}
                 variant="outline"
-                leftIcon={<Icon as={FaHive} color="red" />}
                 justifyContent="flex-start"
               >
                 View Profile
+              </Button>
+            )}
+
+            {/* Show Farcaster profile option if connected to Farcaster but not Hive */}
+            {!user && farcasterProfile && (
+              <Button
+                leftIcon={<Image src={farcasterProfile.pfpUrl || ""} boxSize={5} borderRadius="full" />}
+                onClick={() => {
+                  // Could navigate to a Farcaster-specific page or close modal
+                  onClose();
+                }}
+                variant="outline"
+                justifyContent="flex-start"
+              >
+                Farcaster Profile
               </Button>
             )}
 
