@@ -19,7 +19,7 @@ export default function NoResults({
   return (
     <Box p={4} textAlign="center">
       <Text color="primary" fontSize="md">
-        No results found for "{query}"
+        No results found for &ldquo;{query}&rdquo;
       </Text>
       {!query.startsWith("/") && (
         <Text color="secondary" fontSize="sm" mt={1}>
