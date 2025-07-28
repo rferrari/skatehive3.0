@@ -53,6 +53,7 @@ import {
 import { tokenDictionary } from "@/lib/utils/tokenDictionary";
 import { useAirdropManager } from "@/hooks/useAirdropManager";
 import { useTransactionStatus } from "@/hooks/useTransactionStatus";
+import useIsMobile from "@/hooks/useIsMobile";
 import TransactionStatusDisplay from "./TransactionStatusDisplay";
 import { executeHiveAirdrop } from "@/services/hiveAirdrop";
 import { ERC20AirdropService } from "@/services/erc20Airdrop";
@@ -90,6 +91,9 @@ export function AirdropModal({
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [costEstimate, setCostEstimate] = useState<any>(null);
   const [isEstimating, setIsEstimating] = useState(false);
+
+  // Mobile detection
+  const isMobile = useIsMobile();
 
   // Hooks
   const { airdropUsers, userCount, summary, validation, excludedUsers } =
@@ -576,27 +580,31 @@ export function AirdropModal({
                     <Button
                       onClick={() => setCurrentView("filter")}
                       variant="outline"
-                      size="sm"
+                      size={isMobile ? "xs" : "sm"}
                       leftIcon={<Icon as={InfoIcon} />}
                       borderColor="primary"
                       color="primary"
                       _hover={{ bg: "primary", color: "background" }}
                       flex={1}
+                      fontSize={isMobile ? "xs" : "sm"}
+                      px={isMobile ? 2 : 4}
                     >
-                      Configure Recipients ({airdropUsers.length})
+                      {isMobile ? `Configure (${airdropUsers.length})` : `Configure Recipients (${airdropUsers.length})`}
                     </Button>
 
                     {airdropUsers.length > 0 && (
                       <Button
                         onClick={() => setCurrentView("recipients")}
                         variant="outline"
-                        size="sm"
+                        size={isMobile ? "xs" : "sm"}
                         borderColor="primary"
                         color="primary"
                         _hover={{ bg: "primary", color: "background" }}
                         flex={1}
+                        fontSize={isMobile ? "xs" : "sm"}
+                        px={isMobile ? 2 : 4}
                       >
-                        View Recipients
+                        {isMobile ? "View" : "View Recipients"}
                       </Button>
                     )}
                   </HStack>
@@ -620,7 +628,7 @@ export function AirdropModal({
                       </AlertDescription>
                     </Box>
                   </Alert>
-                  <HStack spacing={3} mt={3}>
+                  <HStack spacing={3} mt={3} flexWrap={isMobile ? "wrap" : "nowrap"}>
                     <Button
                       onClick={handleApproveToken}
                       isLoading={isApproving}
@@ -630,16 +638,22 @@ export function AirdropModal({
                       }
                       leftIcon={isApproving ? undefined : <WarningIcon />}
                       colorScheme="orange"
-                      size="sm"
+                      size={isMobile ? "xs" : "sm"}
                       bg="orange.500"
                       color="white"
                       _hover={{ bg: "orange.600" }}
+                      fontSize={isMobile ? "xs" : "sm"}
+                      px={isMobile ? 2 : 4}
+                      flex={isMobile ? "1" : "auto"}
+                      minW={isMobile ? "auto" : "fit-content"}
                     >
                       {isApproving
                         ? "Approving..."
-                        : `Approve ${selectedToken} Tokens`}
+                        : isMobile 
+                          ? `Approve ${selectedToken}`
+                          : `Approve ${selectedToken} Tokens`}
                     </Button>
-                    <Text fontSize="sm" color="textSecondary">
+                    <Text fontSize={isMobile ? "xs" : "sm"} color="textSecondary" flex={isMobile ? "1" : "auto"}>
                       Amount: {totalAmount} {selectedToken}
                     </Text>
                   </HStack>
@@ -823,13 +837,15 @@ export function AirdropModal({
             </VStack>
           ),
           footer: (
-            <HStack spacing={3}>
+            <HStack spacing={isMobile ? 2 : 3} flexWrap={isMobile ? "wrap" : "nowrap"} w="100%">
               <Button
                 variant="ghost"
                 onClick={handleClose}
                 disabled={isExecuting || isApproving}
                 color="textSecondary"
                 _hover={{ color: "text" }}
+                size={isMobile ? "sm" : "md"}
+                flex={isMobile ? "1" : "auto"}
               >
                 Cancel
               </Button>
@@ -848,8 +864,11 @@ export function AirdropModal({
                     bg="orange.500"
                     color="white"
                     _hover={{ bg: "orange.600" }}
+                    size={isMobile ? "sm" : "md"}
+                    fontSize={isMobile ? "sm" : "md"}
+                    flex={isMobile ? "1" : "auto"}
                   >
-                    {isApproving ? "Approving..." : "Approve Tokens"}
+                    {isApproving ? "Approving..." : isMobile ? "Approve" : "Approve Tokens"}
                   </Button>
                 )}
 
@@ -863,8 +882,11 @@ export function AirdropModal({
                 bg="primary"
                 color="background"
                 _hover={{ bg: "primaryDark" }}
+                size={isMobile ? "sm" : "md"}
+                fontSize={isMobile ? "sm" : "md"}
+                flex={isMobile ? "1" : "auto"}
               >
-                {isExecuting ? "Processing..." : `Execute Airdrop`}
+                {isExecuting ? "Processing..." : isMobile ? "Execute" : `Execute Airdrop`}
               </Button>
             </HStack>
           ),
@@ -878,19 +900,20 @@ export function AirdropModal({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      size="xl"
+      size={isMobile ? "full" : "xl"}
       scrollBehavior="inside"
     >
       <ModalOverlay bg="blackAlpha.600" backdropFilter="blur(10px)" />
       <ModalContent
         bg="background"
         color="text"
-        borderRadius="20px"
+        borderRadius={isMobile ? "0" : "20px"}
         border="1px solid"
         borderColor="border"
         shadow="2xl"
-        mx={4}
-        maxH="90vh"
+        mx={isMobile ? 0 : 4}
+        maxH={isMobile ? "100vh" : "90vh"}
+        h={isMobile ? "100vh" : "auto"}
       >
         <ModalHeader
           textAlign="center"
@@ -907,7 +930,7 @@ export function AirdropModal({
           borderRadius="full"
         />
 
-        <ModalBody px={8} pb={8}>
+        <ModalBody px={isMobile ? 4 : 8} pb={isMobile ? 4 : 8}>
           {modalContent.content}
         </ModalBody>
 
