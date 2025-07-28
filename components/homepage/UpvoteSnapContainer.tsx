@@ -9,6 +9,7 @@ import {
   IconButton,
   Tooltip,
   Image,
+  useBreakpointValue,
 } from "@chakra-ui/react";
 import { useAioha } from "@aioha/react-ui";
 import { getLastSnapsContainer, getPost } from "@/lib/hive/client-functions";
@@ -33,6 +34,13 @@ export default function UpvoteSnapContainer({
   const [hasVoted, setHasVoted] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const toast = useToast();
+
+  // Responsive values
+  const buttonSize = useBreakpointValue({ base: "xs", md: "sm" });
+  const textSize = useBreakpointValue({ base: "xs", md: "sm" });
+  const containerTextSize = useBreakpointValue({ base: "2xs", md: "xs" });
+  const padding = useBreakpointValue({ base: 2, md: 3 });
+  const gap = useBreakpointValue({ base: 1, md: 2 });
 
   const fetchSnapContainerData = useCallback(async () => {
     try {
@@ -162,7 +170,7 @@ export default function UpvoteSnapContainer({
   }
 
   return (
-    <Box borderWidth="1px" borderRadius="md" p={2} position="relative">
+    <Box borderWidth="1px" borderRadius="md" p={padding} position="relative">
       <Tooltip label="dismiss" placement="top" fontSize="xs">
         <IconButton
           aria-label="Dismiss"
@@ -170,7 +178,7 @@ export default function UpvoteSnapContainer({
             <Image
               src="/images/finger.svg"
               alt="Dismiss"
-              style={{ width: 20, height: 20 }}
+              style={{ width: 16, height: 16 }}
             />
           }
           size="xs"
@@ -183,23 +191,36 @@ export default function UpvoteSnapContainer({
         />
       </Tooltip>
 
-      <Text fontSize="xs" mb={2}>
+      <Text fontSize={textSize} mb={2}>
         Help the community by upvoting the main post where all snaps are stored.
       </Text>
-      <Box display="flex" alignItems="center" gap={2}>
+      <Box 
+        display="flex" 
+        alignItems="center" 
+        gap={gap}
+        flexDirection={{ base: "column", sm: "row" }}
+        width="100%"
+      >
         <Button
           onClick={handleUpvote}
           isLoading={isVoting}
           loadingText="Voting..."
           colorScheme={hasVoted ? "green" : "blue"}
           disabled={!user || isVoting || hasVoted}
-          size="sm"
-          fontSize="sm"
+          size={buttonSize}
+          fontSize={textSize}
           mb={0}
+          width={{ base: "100%", sm: "auto" }}
+          minWidth={{ base: "auto", sm: "fit-content" }}
         >
           {hasVoted ? "Already Voted" : "Upvote Container Post"}
         </Button>
-        <Text fontSize="2xs" mt={0}>
+        <Text 
+          fontSize={containerTextSize} 
+          mt={0}
+          textAlign={{ base: "center", sm: "left" }}
+          wordBreak="break-all"
+        >
           Container: {snapContainer.author}/{snapContainer.permlink}
         </Text>
       </Box>
