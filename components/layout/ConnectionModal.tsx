@@ -92,8 +92,11 @@ export default function ConnectionModal({
   const { isConnected: isEthereumConnected } = useAccount();
   const { connect, connectors } = useConnect();
   const { disconnect } = useDisconnect();
-  const { isAuthenticated: isFarcasterConnected, profile: farcasterProfile, clearSession } =
-    useFarcasterSession();
+  const {
+    isAuthenticated: isFarcasterConnected,
+    profile: farcasterProfile,
+    clearSession,
+  } = useFarcasterSession();
   const { signOut } = useSignIn({});
 
   // Connection status data with priority (Hive > Ethereum > Farcaster)
@@ -186,7 +189,13 @@ export default function ConnectionModal({
             {/* Show profile option if connected to Hive */}
             {user && (
               <Button
-                leftIcon={<Image src={`https://images.hive.blog/u/${user}/avatar/small`} boxSize={5} borderRadius="full" />}
+                leftIcon={
+                  <Image
+                    src={`https://images.hive.blog/u/${user}/avatar/small`}
+                    boxSize={5}
+                    borderRadius="full"
+                  />
+                }
                 onClick={handleProfileClick}
                 variant="outline"
                 justifyContent="flex-start"
@@ -198,7 +207,13 @@ export default function ConnectionModal({
             {/* Show Farcaster profile option if connected to Farcaster but not Hive */}
             {!user && farcasterProfile && (
               <Button
-                leftIcon={<Image src={farcasterProfile.pfpUrl || ""} boxSize={5} borderRadius="full" />}
+                leftIcon={
+                  <Image
+                    src={farcasterProfile.pfpUrl || ""}
+                    boxSize={5}
+                    borderRadius="full"
+                  />
+                }
                 onClick={() => {
                   // Could navigate to a Farcaster-specific page or close modal
                   onClose();
