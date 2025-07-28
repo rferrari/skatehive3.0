@@ -1,12 +1,10 @@
 import { useAioha } from "@aioha/react-ui";
 import { KeyTypes } from "@aioha/aioha";
 import { KeychainSDK, KeychainKeyTypes } from "keychain-sdk";
-import { useHiveUser } from "@/contexts/UserContext";
 import { Operation } from "@hiveio/dhive";
 
 export function useWalletActions() {
   const { user, aioha } = useAioha();
-  const { hiveUser } = useHiveUser();
 
   const handleConfirm = async (
     amount: number,
@@ -114,7 +112,7 @@ export function useWalletActions() {
   };
 
   const handleClaimHbdInterest = async () => {
-    if (!hiveUser || !hiveUser.name) {
+    if (!user) {
       console.error("Username is not available.");
       return;
     }
@@ -122,8 +120,8 @@ export function useWalletActions() {
     const op: Operation = [
       "transfer_to_savings",
       {
-        from: hiveUser.name,
-        to: hiveUser.name,
+        from: user,
+        to: user,
         amount: "0.001 HBD",
         memo: "Trigger HBD interest payment",
       },
@@ -132,7 +130,7 @@ export function useWalletActions() {
     try {
       const keychain = new KeychainSDK(window);
       const response = await keychain.broadcast({
-        username: hiveUser.name,
+        username: user,
         operations: [op],
         method: KeychainKeyTypes.active,
       });

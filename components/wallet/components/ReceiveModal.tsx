@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Modal,
   ModalOverlay,
@@ -48,37 +48,40 @@ const ReceiveModal: React.FC<ReceiveModalProps> = ({ isOpen, onClose }) => {
     address || ""
   );
   const { hasCopied: hasHiveCopied, onCopy: onHiveCopy } = useClipboard(
-    user?.name || ""
+    user || ""
   );
 
-  const generateQRCode = async (text: string, type: "ethereum" | "hive") => {
-    try {
-      setIsGeneratingQR(true);
-      const qrDataURL = await QRCode.toDataURL(text, {
-        width: 256,
-        margin: 2,
-        color: {
-          dark: "#000000",
-          light: "#ffffff",
-        },
-      });
-      if (type === "ethereum") {
-        setEthereumQR(qrDataURL);
-      } else {
-        setHiveQR(qrDataURL);
+  const generateQRCode = useCallback(
+    async (text: string, type: "ethereum" | "hive") => {
+      try {
+        setIsGeneratingQR(true);
+        const qrDataURL = await QRCode.toDataURL(text, {
+          width: 256,
+          margin: 2,
+          color: {
+            dark: "#000000",
+            light: "#ffffff",
+          },
+        });
+        if (type === "ethereum") {
+          setEthereumQR(qrDataURL);
+        } else {
+          setHiveQR(qrDataURL);
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to generate QR code",
+          status: "error",
+          duration: 3000,
+          isClosable: true,
+        });
+      } finally {
+        setIsGeneratingQR(false);
       }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to generate QR code",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
-    } finally {
-      setIsGeneratingQR(false);
-    }
-  };
+    },
+    [toast]
+  );
 
   useEffect(() => {
     // Only generate QR if address changes and modal is open
@@ -89,24 +92,18 @@ const ReceiveModal: React.FC<ReceiveModalProps> = ({ isOpen, onClose }) => {
     if (!isOpen && ethereumQR !== "") {
       setEthereumQR("");
     }
-  }, [isOpen, address, ethereumQR]);
+  }, [isOpen, address, ethereumQR, generateQRCode]);
 
   useEffect(() => {
     // Only generate QR if username changes and modal is open, and username is not empty
-    if (
-      isOpen &&
-      user &&
-      typeof user === "string" &&
-      user.trim() !== "" &&
-      hiveQR === ""
-    ) {
+    if (isOpen && user.trim() !== "" && hiveQR === "") {
       generateQRCode(user, "hive");
     }
     // Reset QR when modal closes
     if (!isOpen && hiveQR !== "") {
       setHiveQR("");
     }
-  }, [isOpen, user, hiveQR]);
+  }, [isOpen, user?.name, hiveQR, generateQRCode]);
 
   const shortenAddress = (addr: string) => {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;

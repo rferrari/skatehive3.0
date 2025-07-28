@@ -94,7 +94,7 @@ const AirdropManager: React.FC<AirdropManagerProps> = ({ leaderboardData }) => {
       const perUserAmount = parseFloat(amount) / userCount.limited;
       const currency = selectedToken === "HBD" ? "HBD" : "HIVE";
       const transferAmount = `${perUserAmount.toFixed(3)} ${currency}`;
-      const memo = customMessage || `SkateHive airdrop from ${user.name} 🛹`;
+      const memo = customMessage || `SkateHive airdrop from ${user} 🛹`;
 
       // Build operations array for batch transfer
       const operations: Operation[] = airdropUsers.map((recipient) => [
@@ -117,7 +117,7 @@ const AirdropManager: React.FC<AirdropManagerProps> = ({ leaderboardData }) => {
         const keychain = new KeychainSDK(window);
 
         const result = await keychain.broadcast({
-          username: user.name,
+          username: user,
           operations,
           method: KeychainKeyTypes.active,
         });

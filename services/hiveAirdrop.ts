@@ -9,7 +9,6 @@ export async function executeHiveAirdrop({
   customMessage,
   user,
   updateStatus,
-  aiohaUser,
   aiohaInstance,
 }: HiveAirdropParams): Promise<void> {
   try {
@@ -18,25 +17,10 @@ export async function executeHiveAirdrop({
       recipients: recipients.length,
       totalAmount,
       user,
-      aiohaUser,
       hasAiohaInstance: !!aiohaInstance,
     });
 
-    // Extract username more carefully
-    let username: string;
-    if (typeof user === 'string') {
-      username = user;
-    } else if (user && user.name) {
-      username = user.name;
-    } else if (aiohaUser && aiohaUser.name) {
-      username = aiohaUser.name;
-    } else if (aiohaUser && typeof aiohaUser === 'string') {
-      username = aiohaUser;
-    } else {
-      throw new Error("No valid username found in user parameters");
-    }
 
-    console.log("Extracted username:", username);
 
     // Calculate amount per user
     const amountPerUser = totalAmount / recipients.length;
@@ -51,7 +35,7 @@ export async function executeHiveAirdrop({
     const operations = recipients.map((recipient: AirdropUser) => [
       "transfer",
       {
-        from: username, // Use the extracted username
+        from: user, // Use the extracted username
         to: recipient.hive_author,
         amount: `${formattedAmount} ${token}`,
         memo: customMessage,
@@ -66,7 +50,7 @@ export async function executeHiveAirdrop({
     });
 
     // Try to use Aioha for broadcasting
-    await executeAiohaTransfer(operations, aiohaUser, aiohaInstance, updateStatus);
+    await executeAiohaTransfer(operations, user, aiohaInstance, updateStatus);
 
     updateStatus({ 
       state: 'completed', 
@@ -102,28 +86,8 @@ const executeAiohaTransfer = async (
     // Try to determine which broadcaster to use
     let broadcaster;
     let broadcasterType;
-    let actualUserName;
     
-    // Extract the actual user name from various possible structures
-    if (aiohaUser) {
-      if (aiohaUser.name) {
-        actualUserName = aiohaUser.name;
-      } else if (aiohaUser[0]?.name) {
-        actualUserName = aiohaUser[0].name;
-      } else if (typeof aiohaUser[0] === 'string') {
-        actualUserName = aiohaUser[0];
-      }
-    }
-    
-    console.log('User authentication check:', {
-      actualUserName,
-      aiohaUserStructure: aiohaUser ? Object.keys(aiohaUser) : 'none'
-    });
-    
-    if (!actualUserName) {
-      throw new Error('Hive user not authenticated. Please login with your Hive wallet.');
-    }
-    
+ 
     if (aiohaUser && typeof aiohaUser.broadcast === 'function') {
       broadcaster = aiohaUser;
       broadcasterType = 'user';

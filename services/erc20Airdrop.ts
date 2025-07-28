@@ -7,12 +7,13 @@ import {
   getBalance,
   readContract
 } from '@wagmi/core';
-import { parseUnits, parseEther, erc20Abi } from 'viem';
+import { parseUnits, parseEther, erc20Abi, Address } from 'viem';
 import { base } from 'wagmi/chains';
 import { wagmiConfig } from '@/app/providers';
 import { tokenDictionary } from '@/lib/utils/tokenDictionary';
 import { AirdropUser, TransactionStatus } from '@/types/airdrop';
 import { airdropABI } from '@/lib/utils/abis/airdropABI';
+import { useAccount } from 'wagmi';
 
 const AIRDROP_CONTRACT = '0x8bD8F0D46c84feCBFbF270bac4Ad28bFA2c78F05';
 
@@ -130,7 +131,17 @@ export class ERC20AirdropService {
 
     try {
       await this.validateNetwork();
-      const userAddress = await this.validateConnection();
+      const account = useAccount();
+      if (!account.address) {
+        errors.push('Wallet not connected');
+        return {
+          tokenAmount: BigInt(0),
+          canExecute: false,
+          errors
+        };
+      }
+
+      const userAddress = account.address as Address;
 
       const tokenInfo = tokenDictionary[tokenSymbol];
       if (!tokenInfo) {
