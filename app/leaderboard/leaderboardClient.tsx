@@ -82,11 +82,8 @@ export default function LeaderboardClient({ skatersData }: Props) {
   const renderCount = React.useRef(0);
   renderCount.current += 1;
 
-  console.log(`LeaderboardClient render #${renderCount.current}`);
-
   // Memoized component for ETH address to prevent unnecessary re-renders
   const EthAddress = React.memo(({ address }: { address: string }) => {
-    console.log(`Rendering Name component for address: ${address}`);
     return (
       <HStack spacing={1}>
         <Image src="/images/ethvector.svg" alt="ETH" h="10px" w="10px" />
@@ -114,8 +111,6 @@ export default function LeaderboardClient({ skatersData }: Props) {
       rank: number;
       columns: typeof mobileColumns | typeof desktopColumns;
     }) => {
-      console.log(`Rendering SkaterRow for: ${skater.hive_author}`);
-
       return (
         <Tr _hover={{ bg: "muted" }} transition="background 0.2s">
           <Td
