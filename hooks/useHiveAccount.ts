@@ -17,17 +17,10 @@ export default function useHiveAccount(username: string) {
 
     useEffect(() => {
         const handleGetHiveAccount = async () => {
-            console.log("🔄 useHiveAccount: Starting to fetch account for:", username);
             setIsLoading(true)
             setError(null)
             try {
                 const userData = await HiveClient.database.getAccounts([username])
-                console.log("📊 useHiveAccount: Received user data:", {
-                    hasData: !!userData[0],
-                    hasJsonMetadata: !!userData[0]?.json_metadata,
-                    hasPostingJsonMetadata: !!userData[0]?.posting_json_metadata
-                });
-                
                 const userAccount: HiveAccount = {
                     ...userData[0],
                 }
@@ -38,16 +31,11 @@ export default function useHiveAccount(username: string) {
                 } else {
                     userAccount.metadata = {} 
                 }
-                console.log("✅ useHiveAccount: Setting hive account with metadata:", {
-                    hasMetadata: !!userAccount.metadata,
-                    metadataKeys: userAccount.metadata ? Object.keys(userAccount.metadata) : []
-                });
                 setHiveAccount(userAccount)
             } catch (error) {
                 console.error("❌ useHiveAccount: Error loading account:", error);
                 setError("Loading account error!")
             } finally {
-                console.log("🏁 useHiveAccount: Finished loading, setting isLoading to false");
                 setIsLoading(false)
             }
         }
