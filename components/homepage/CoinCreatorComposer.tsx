@@ -1,0 +1,398 @@
+"use client";
+
+import React, { useState, useRef } from "react";
+import {
+  Box,
+  Textarea,
+  Button,
+  HStack,
+  VStack,
+  Text,
+  Alert,
+  AlertIcon,
+  Input,
+  FormControl,
+  FormLabel,
+  useColorModeValue,
+  IconButton,
+  Tooltip,
+  Progress,
+  Image,
+  Spinner,
+} from "@chakra-ui/react";
+import { FaImage, FaCoins, FaEthereum } from "react-icons/fa";
+import { useAccount } from "wagmi";
+import { useCoinCreation } from "@/hooks/useCoinCreation";
+import { createPostAsSkatedev } from "@/lib/hive/server-actions";
+import { getFileSignature, uploadImage } from "@/lib/hive/client-functions";
+import imageCompression from "browser-image-compression";
+
+interface CoinCreatorComposerProps {
+  onClose?: () => void;
+}
+
+export default function CoinCreatorComposer({ onClose }: CoinCreatorComposerProps) {
+  const { address, isConnected } = useAccount();
+  const { createCoin, isCreating } = useCoinCreation();
+  
+  // Form state
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [symbol, setSymbol] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [images, setImages] = useState<{ url: string; fileName: string }[]>([]);
+  const [uploadProgress, setUploadProgress] = useState<number[]>([]);
+  
+  // Refs
+  const imageUploadRef = useRef<HTMLInputElement>(null);
+  
+  // Theme colors
+  const bgColor = useColorModeValue("white", "gray.800");
+  const borderColor = useColorModeValue("gray.200", "gray.600");
+  const placeholderColor = useColorModeValue("gray.500", "gray.400");
+
+  // Image upload handler
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    setIsLoading(true);
+    
+    for (const [index, file] of files.entries()) {
+      if (!file.type.startsWith("image/")) {
+        alert("Please select only image files.");
+        continue;
+      }
+
+      try {
+        // Compress image
+        const options = {
+          maxSizeMB: 2,
+          maxWidthOrHeight: 1920,
+          useWebWorker: true,
+        };
+        const compressedFile = await imageCompression(file, options);
+        
+        // Upload to IPFS/storage
+        const signature = await getFileSignature(compressedFile);
+        const uploadUrl = await uploadImage(
+          compressedFile,
+          signature,
+          index,
+          setUploadProgress
+        );
+
+        if (uploadUrl) {
+          setImages(prev => [
+            ...prev,
+            { url: uploadUrl, fileName: compressedFile.name }
+          ]);
+        }
+      } catch (error) {
+        console.error("Error uploading image:", error);
+        alert("Failed to upload image. Please try again.");
+      }
+    }
+    
+    setIsLoading(false);
+    setUploadProgress([]);
+    e.target.value = ""; // Reset input
+  };
+
+  // Remove image
+  const removeImage = (index: number) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Handle coin creation
+  const handleCreateCoin = async () => {
+    if (!isConnected || !address) {
+      alert("Please connect your Ethereum wallet first.");
+      return;
+    }
+
+    if (!title.trim() || !description.trim() || !symbol.trim()) {
+      alert("Please fill in all required fields (title, description, and symbol).");
+      return;
+    }
+
+    if (symbol.length > 8) {
+      alert("Symbol must be 8 characters or less.");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // First, create the Hive post under skatedev account
+      console.log("Creating Hive post for Ethereum user...");
+      
+      const postBody = `${description}\n\n${images.length > 0 ? images.map(img => `![image](${img.url})`).join('\n\n') : ''}
+
+---
+
+*This post was created by an Ethereum user who wanted to create a coin. The coin creator's Ethereum address: \`${address}\`*
+
+*Once the coin is created, it will be available for trading on Zora.*`;
+
+      const hivePostResult = await createPostAsSkatedev({
+        title,
+        body: postBody,
+        tags: ['coin-creation', 'ethereum', symbol.toLowerCase()],
+        images: images.map(img => img.url),
+        ethereumAddress: address,
+      });
+
+      if (!hivePostResult.success) {
+        throw new Error(hivePostResult.error || "Failed to create Hive post");
+      }
+
+      console.log("✅ Hive post created:", hivePostResult);
+
+      // Now create the coin using the coin creation hook
+      const coinData = {
+        name: title,
+        symbol: symbol.toUpperCase(),
+        description: description,
+        mediaUrl: images[0]?.url || "",
+        postTitle: title,
+        postBody: postBody,
+        postAuthor: hivePostResult.author,
+        postPermlink: hivePostResult.permlink,
+        postJsonMetadata: JSON.stringify({
+          app: "Skatehive App 3.0",
+          tags: ['coin-creation', 'ethereum', symbol.toLowerCase()],
+          images: images.map(img => img.url),
+          creator_ethereum_address: address,
+        }),
+        postParentAuthor: "",
+        postParentPermlink: process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || 'hive-173115',
+      };
+
+      console.log("Creating coin with data:", coinData);
+      
+      await createCoin(coinData);
+
+      // Clear form
+      setTitle("");
+      setDescription("");
+      setSymbol("");
+      setImages([]);
+      
+      if (onClose) onClose();
+
+    } catch (error) {
+      console.error("Error creating coin:", error);
+      alert(error instanceof Error ? error.message : "Failed to create coin. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (!isConnected) {
+    return (
+      <Box
+        p={6}
+        bg={bgColor}
+        borderRadius="md"
+        border="1px solid"
+        borderColor={borderColor}
+        textAlign="center"
+      >
+        <VStack spacing={3}>
+          <FaEthereum size={32} color="#627eea" />
+          <Text fontSize="lg" fontWeight="bold">
+            Connect Ethereum Wallet
+          </Text>
+          <Text color={placeholderColor}>
+            Connect your Ethereum wallet to create coins on Skatehive
+          </Text>
+        </VStack>
+      </Box>
+    );
+  }
+
+  return (
+    <Box
+      p={4}
+      bg={bgColor}
+      borderRadius="md"
+      border="1px solid"
+      borderColor={borderColor}
+      mb={4}
+    >
+      <VStack spacing={4} align="stretch">
+        {/* Header */}
+        <HStack justify="space-between" align="center">
+          <HStack spacing={2}>
+            <FaCoins color="#f7931a" />
+            <Text fontSize="lg" fontWeight="bold">
+              Create a Coin
+            </Text>
+          </HStack>
+          <HStack spacing={2}>
+            <FaEthereum color="#627eea" />
+            <Text fontSize="sm" color={placeholderColor}>
+              {address?.slice(0, 6)}...{address?.slice(-4)}
+            </Text>
+          </HStack>
+        </HStack>
+
+        {/* Alert about automatic posting */}
+        <Alert status="info" size="sm" borderRadius="md">
+          <AlertIcon />
+          <Text fontSize="sm">
+            Your coin will be posted to Skatehive automatically. Once created, you can share and trade it on Zora.
+          </Text>
+        </Alert>
+
+        {/* Title Input */}
+        <FormControl isRequired>
+          <FormLabel fontSize="sm" fontWeight="bold">
+            Coin Name
+          </FormLabel>
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Enter coin name (e.g., My Skate Trick)"
+            size="md"
+            disabled={isLoading || isCreating}
+          />
+        </FormControl>
+
+        {/* Symbol Input */}
+        <FormControl isRequired>
+          <FormLabel fontSize="sm" fontWeight="bold">
+            Symbol
+          </FormLabel>
+          <Input
+            value={symbol}
+            onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+            placeholder="e.g., TRICK (max 8 chars)"
+            maxLength={8}
+            size="md"
+            disabled={isLoading || isCreating}
+          />
+        </FormControl>
+
+        {/* Description Textarea */}
+        <FormControl isRequired>
+          <FormLabel fontSize="sm" fontWeight="bold">
+            Description
+          </FormLabel>
+          <Textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Describe your coin, trick, or content..."
+            minHeight="100px"
+            resize="vertical"
+            disabled={isLoading || isCreating}
+          />
+        </FormControl>
+
+        {/* Image Upload */}
+        <FormControl>
+          <FormLabel fontSize="sm" fontWeight="bold">
+            Images (Optional)
+          </FormLabel>
+          <HStack spacing={2}>
+            <Input
+              type="file"
+              ref={imageUploadRef}
+              onChange={handleImageUpload}
+              accept="image/*"
+              multiple
+              style={{ display: "none" }}
+              disabled={isLoading || isCreating}
+            />
+            <Button
+              leftIcon={<FaImage />}
+              size="sm"
+              variant="outline"
+              onClick={() => imageUploadRef.current?.click()}
+              disabled={isLoading || isCreating}
+            >
+              Add Images
+            </Button>
+            {images.length > 0 && (
+              <Text fontSize="sm" color={placeholderColor}>
+                {images.length} image{images.length > 1 ? 's' : ''} added
+              </Text>
+            )}
+          </HStack>
+        </FormControl>
+
+        {/* Image Preview */}
+        {images.length > 0 && (
+          <VStack spacing={2} align="stretch">
+            <Text fontSize="sm" fontWeight="bold">
+              Image Preview:
+            </Text>
+            <HStack spacing={2} flexWrap="wrap">
+              {images.map((image, index) => (
+                <Box key={index} position="relative">
+                  <Image
+                    src={image.url}
+                    alt={`Preview ${index + 1}`}
+                    width="60px"
+                    height="60px"
+                    objectFit="cover"
+                    borderRadius="md"
+                    border="1px solid"
+                    borderColor={borderColor}
+                  />
+                  <IconButton
+                    aria-label="Remove image"
+                    icon={<Text fontSize="xs">×</Text>}
+                    size="xs"
+                    position="absolute"
+                    top="-1"
+                    right="-1"
+                    colorScheme="red"
+                    borderRadius="full"
+                    onClick={() => removeImage(index)}
+                  />
+                </Box>
+              ))}
+            </HStack>
+          </VStack>
+        )}
+
+        {/* Upload Progress */}
+        {uploadProgress.some(p => p > 0) && (
+          <VStack spacing={1}>
+            <Text fontSize="sm">Uploading images...</Text>
+            {uploadProgress.map((progress, index) => (
+              progress > 0 && (
+                <Progress
+                  key={index}
+                  value={progress}
+                  size="sm"
+                  width="100%"
+                  colorScheme="blue"
+                />
+              )
+            ))}
+          </VStack>
+        )}
+
+        {/* Create Button */}
+        <Button
+          colorScheme="orange"
+          size="lg"
+          onClick={handleCreateCoin}
+          disabled={isLoading || isCreating || !title.trim() || !description.trim() || !symbol.trim()}
+          leftIcon={isLoading || isCreating ? <Spinner size="sm" /> : <FaCoins />}
+        >
+          {isLoading || isCreating ? "Creating Coin..." : "Create Coin"}
+        </Button>
+
+        {/* Info */}
+        <Text fontSize="xs" color={placeholderColor} textAlign="center">
+          Your coin will be created on Zora and posted to Skatehive automatically.
+          Make sure your wallet is connected and has sufficient Base ETH for gas fees.
+        </Text>
+      </VStack>
+    </Box>
+  );
+}

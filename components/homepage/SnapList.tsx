@@ -3,10 +3,13 @@ import InfiniteScroll from "react-infinite-scroll-component";
 import { Box, Spinner, VStack } from "@chakra-ui/react";
 import Snap from "./Snap";
 import SnapComposer from "./SnapComposer";
+import CoinCreatorComposer from "./CoinCreatorComposer";
 import { Discussion } from "@hiveio/dhive"; // Add this import for consistency
 import LogoMatrix from "../graphics/LogoMatrix";
 import UpvoteSnapContainer from "./UpvoteSnapContainer";
 import { countDownvotes } from "@/lib/utils/postUtils";
+import { useAioha } from "@aioha/react-ui";
+import { useAccount } from "wagmi";
 
 interface SnapListProps {
   author: string;
@@ -42,6 +45,10 @@ export default function SnapList({
 }: SnapListProps) {
   const { comments, loadNextPage, isLoading, hasMore } = data;
   const [displayedComments, setDisplayedComments] = useState<Discussion[]>([]);
+  
+  // Get authentication status
+  const { user } = useAioha(); // Hive connection
+  const { isConnected } = useAccount(); // Ethereum connection
 
   // Mounted state
   const [hasMounted, setHasMounted] = useState(false);
@@ -118,14 +125,22 @@ export default function SnapList({
       ) : (
         <>
           {!hideComposer && (
-            <SnapComposer
-              pa={author}
-              pp={permlink}
-              onNewComment={
-                handleNewComment as (newComment: Partial<Discussion>) => void
-              } // Cast handler to expected type
-              onClose={() => null}
-            />
+            <>
+              {user ? (
+                // User is connected to Hive - show SnapComposer
+                <SnapComposer
+                  pa={author}
+                  pp={permlink}
+                  onNewComment={
+                    handleNewComment as (newComment: Partial<Discussion>) => void
+                  }
+                  onClose={() => null}
+                />
+              ) : isConnected ? (
+                // User is connected to Ethereum but not Hive - show CoinCreatorComposer
+                <CoinCreatorComposer onClose={() => null} />
+              ) : null}
+            </>
           )}
 
           <UpvoteSnapContainer hideIfVoted />
