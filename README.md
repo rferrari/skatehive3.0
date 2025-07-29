@@ -27,8 +27,8 @@ This repo contains a `.devcontainer` folder so you can work in
 [GitHub Codespaces](https://github.com/features/codespaces). Launch a
 new codespace from the **Code** menu on GitHub and the container will
 install dependencies with `pnpm install` and forward port `3000` for the
-Next.js dev server.
-
+Next.js dev server. The container installs Node.js 20 with pnpm 9 via the
+official Node feature so the environment matches local development.
 Once setup completes, run `pnpm dev` to launch the application.
 
 
