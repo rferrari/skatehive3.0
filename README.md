@@ -1,9 +1,12 @@
-<div align="center">
+<div align="center" >
   <img width="487" height="130" alt="Skatehive Logo" src="https://github.com/user-attachments/assets/a06eedb7-46bd-4d06-b050-c6a0fabc2084" />
 </div>
+<br/>
 
+Skatehive 3.0 is a Next.js application for the [Skatehive](https://www.skatehive.app) community. It lets users post content to the Hive blockchain and interact with Farcaster and Ethereum protocols, share skate spots, view community bounties and leaderboards. The project uses Chakra UI for styling along with Tailwind utilities and integrates with Aioha, Wagmi/Viem and React Query.
 
-Skatehive 3.0 is a Next.js application for the [Skatehive](https://www.skatehive.app) community. It lets users post content to the Hive blockchain, share skate spots, view community bounties and leaderboards and receive Farcaster notifications. The project uses Chakra UI for styling along with Tailwind utilities and integrates with Aioha, Wagmi/Viem and React Query.
+<img width="1440" height="1045" alt="image" src="https://github.com/user-attachments/assets/8e195188-d2cb-4144-b1b5-9eb8adb6e749" />
+
 
 ## Local Development
 
