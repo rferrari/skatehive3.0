@@ -1,6 +1,12 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Box, Container, Flex, useBreakpointValue, useDisclosure } from "@chakra-ui/react";
+import {
+  Box,
+  Container,
+  Flex,
+  useBreakpointValue,
+  useDisclosure,
+} from "@chakra-ui/react";
 import Sidebar from "@/components/layout/Sidebar";
 import FooterNavButtons from "@/components/layout/FooterNavButtons";
 import SplashScreen from "@/components/layout/SplashScreen";
@@ -41,7 +47,11 @@ export default function RootLayoutClient({
   const [loading, setLoading] = useState(true);
   const [isHydrated, setIsHydrated] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const { isOpen: isAirdropOpen, onOpen: onAirdropOpen, onClose: onAirdropClose } = useDisclosure();
+  const {
+    isOpen: isAirdropOpen,
+    onOpen: onAirdropOpen,
+    onClose: onAirdropClose,
+  } = useDisclosure();
   const [leaderboardData, setLeaderboardData] = useState<SkaterData[]>([]);
 
   useEffect(() => {
@@ -102,9 +112,14 @@ export default function RootLayoutClient({
         <Analytics />
         <Providers>
           <NotificationProvider>
-            <InnerLayout 
+            <InnerLayout
               searchProps={{ isSearchOpen, setIsSearchOpen }}
-              airdropProps={{ isAirdropOpen, onAirdropOpen, onAirdropClose, leaderboardData }}
+              airdropProps={{
+                isAirdropOpen,
+                onAirdropOpen,
+                onAirdropClose,
+                leaderboardData,
+              }}
             >
               {children}
             </InnerLayout>
@@ -122,9 +137,14 @@ export default function RootLayoutClient({
       <Analytics />
       <Providers>
         <NotificationProvider>
-          <InnerLayout 
+          <InnerLayout
             searchProps={{ isSearchOpen, setIsSearchOpen }}
-            airdropProps={{ isAirdropOpen, onAirdropOpen, onAirdropClose, leaderboardData }}
+            airdropProps={{
+              isAirdropOpen,
+              onAirdropOpen,
+              onAirdropClose,
+              leaderboardData,
+            }}
           >
             {children}
           </InnerLayout>
@@ -182,7 +202,7 @@ function InnerLayout({
           onOpenAirdrop={handleOpenAirdrop}
         />
       )}
-      
+
       {/* Airdrop Modal */}
       {airdropProps && (
         <AirdropModal
@@ -191,7 +211,7 @@ function InnerLayout({
           leaderboardData={airdropProps.leaderboardData}
         />
       )}
-      
+
       <Flex direction={{ base: "column", md: "row" }} minH="100vh">
         <Sidebar />
         <Box

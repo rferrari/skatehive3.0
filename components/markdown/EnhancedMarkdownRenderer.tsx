@@ -31,7 +31,7 @@ export function EnhancedMarkdownRenderer({
 function renderContentWithVideos(
   processed: ProcessedMarkdown
 ): React.ReactNode[] {
-  // Split on all supported video and social media placeholders
+  // Split on supported video, social media, and Zora coin placeholders
   const parts = processed.contentWithPlaceholders.split(
     /(\[\[(VIDEO|ODYSEE|YOUTUBE|VIMEO|INSTAGRAM|ZORACOIN):([^\]]+)\]\])/g
   );
@@ -58,10 +58,10 @@ function renderContentWithVideos(
       }
 
       // Handle Zora coin placeholders
-      const zoraMatch = part.match(/^\[\[ZORACOIN:([^\]]+)\]\]$/);
-      if (zoraMatch) {
-        const addr = zoraMatch[1];
-        return <ZoraCoinPreview key={`zora-${idx}`} address={addr} />;
+      const zoraCoinMatch = part.match(/^\[\[ZORACOIN:([^\]]+)\]\]$/);
+      if (zoraCoinMatch) {
+        const address = zoraCoinMatch[1];
+        return <ZoraCoinPreview key={`zora-${idx}`} address={address} />;
       }
 
       // Skip empty parts or parts that are just whitespace
@@ -95,15 +95,22 @@ function cleanMarkdownPart(part: string): string {
   return part
     .replace(/^https?:\/\/(?:www\.)?odysee\.com\/.*$/gm, "")
     .replace(/^https?:\/\/(?:www\.)?instagram\.com\/.*$/gm, "")
-    .replace(/^https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/).*$/gm, "")
+    .replace(
+      /^https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/).*$/gm,
+      ""
+    )
     .replace(/^https?:\/\/(?:www\.)?(?:vimeo\.com\/).*$/gm, "")
+    .replace(/^https?:\/\/(?:www\.)?zora\.co\/coin\/.*$/gm, "") // Remove Zora coin URLs
     .replace(/^ODYSEE\s*$/gm, "")
     .replace(/^VIDEO\s*$/gm, "")
     .replace(/^YOUTUBE\s*$/gm, "")
     .replace(/^VIMEO\s*$/gm, "")
     .replace(/^INSTAGRAM\s*$/gm, "")
+    .replace(/^ZORACOIN\s*$/gm, "") // Remove ZORACOIN text
     .replace(/^[a-zA-Z0-9_-]{11}$/gm, "") // YouTube video IDs (11 characters)
     .replace(/^[0-9]{8,}$/gm, "") // Vimeo video IDs (8+ digits)
     .replace(/^(Qm[1-9A-HJ-NP-Za-km-z]{44,})$/gm, "")
-    .replace(/^(bafy[0-9a-z]{50,})$/gm, "");
+    .replace(/^(bafy[0-9a-z]{50,})$/gm, "")
+    .replace(/^0x[a-fA-F0-9]{40}$/gm, "") // Ethereum addresses
+    .replace(/^\?referrer=0x[a-fA-F0-9]{40}$/gm, ""); // Referrer parameters
 }

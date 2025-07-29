@@ -27,9 +27,17 @@ import {
   PageResult as PageResultType,
   SearchOverlayProps,
 } from "./search/types";
-import { STATIC_PAGES, COMMAND_PAGES, getPopularPages } from "./search/constants";
+import {
+  STATIC_PAGES,
+  COMMAND_PAGES,
+  getPopularPages,
+} from "./search/constants";
 
-export default function SearchOverlay({ isOpen, onClose, onOpenAirdrop }: SearchOverlayProps) {
+export default function SearchOverlay({
+  isOpen,
+  onClose,
+  onOpenAirdrop,
+}: SearchOverlayProps) {
   const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [skaters, setSkaters] = useState<SkaterData[]>([]);
@@ -138,14 +146,20 @@ export default function SearchOverlay({ isOpen, onClose, onOpenAirdrop }: Search
   );
 
   // Also search commands when not using "/" prefix
-  const filteredCommands = !query.startsWith("/") && query.trim()
-    ? COMMAND_PAGES.filter((page) =>
-        page.title.toLowerCase().includes(query.toLowerCase()) ||
-        page.description.toLowerCase().includes(query.toLowerCase())
-      )
-    : [];
+  const filteredCommands =
+    !query.startsWith("/") && query.trim()
+      ? COMMAND_PAGES.filter(
+          (page) =>
+            page.title.toLowerCase().includes(query.toLowerCase()) ||
+            page.description.toLowerCase().includes(query.toLowerCase())
+        )
+      : [];
 
-  const allResults = [...filteredPages, ...filteredSkaters, ...filteredCommands];
+  const allResults = [
+    ...filteredPages,
+    ...filteredSkaters,
+    ...filteredCommands,
+  ];
   const initialSuggestions = query
     ? allResults
     : [...popularPages, ...topSkaters];
@@ -281,7 +295,8 @@ export default function SearchOverlay({ isOpen, onClose, onOpenAirdrop }: Search
                       query
                         ? query.startsWith("/")
                           ? FaSearch
-                          : filteredCommands.length > 0 && filteredSkaters.length === 0
+                          : filteredCommands.length > 0 &&
+                            filteredSkaters.length === 0
                           ? FaGift
                           : FaUser
                         : FaHome
@@ -290,7 +305,8 @@ export default function SearchOverlay({ isOpen, onClose, onOpenAirdrop }: Search
                       query
                         ? query.startsWith("/")
                           ? "Pages & Features"
-                          : filteredCommands.length > 0 && filteredSkaters.length === 0
+                          : filteredCommands.length > 0 &&
+                            filteredSkaters.length === 0
                           ? "Commands"
                           : filteredCommands.length > 0
                           ? "Users & Commands"
@@ -345,19 +361,22 @@ export default function SearchOverlay({ isOpen, onClose, onOpenAirdrop }: Search
                           ))}
                         </>
                       )}
-                      {!query.startsWith("/") && filteredCommands.length > 0 && (
-                        <>
-                          {filteredCommands.map((command, index) => (
-                            <PageResult
-                              key={`command-${command.path}`}
-                              page={command}
-                              index={index + filteredSkaters.slice(0, 8).length}
-                              highlightedIndex={highlightedIndex}
-                              onSelect={handleSelect}
-                            />
-                          ))}
-                        </>
-                      )}
+                      {!query.startsWith("/") &&
+                        filteredCommands.length > 0 && (
+                          <>
+                            {filteredCommands.map((command, index) => (
+                              <PageResult
+                                key={`command-${command.path}`}
+                                page={command}
+                                index={
+                                  index + filteredSkaters.slice(0, 8).length
+                                }
+                                highlightedIndex={highlightedIndex}
+                                onSelect={handleSelect}
+                              />
+                            ))}
+                          </>
+                        )}
                       {query.startsWith("/") && filteredPages.length > 0 && (
                         <>
                           {filteredPages.map((page, index) => (
@@ -374,7 +393,10 @@ export default function SearchOverlay({ isOpen, onClose, onOpenAirdrop }: Search
                       <NoResults
                         query={query}
                         hasPages={filteredPages.length > 0}
-                        hasSkaters={filteredSkaters.length > 0 || filteredCommands.length > 0}
+                        hasSkaters={
+                          filteredSkaters.length > 0 ||
+                          filteredCommands.length > 0
+                        }
                       />
                     </>
                   )}

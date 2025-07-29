@@ -193,10 +193,15 @@ interface SnapProps {
   onCommentAdded?: () => void;
 }
 
-const Snap = ({ discussion, onOpen, setReply, setConversation, onCommentAdded }: SnapProps) => {
+const Snap = ({
+  discussion,
+  onOpen,
+  setReply,
+  setConversation,
+  onCommentAdded,
+}: SnapProps) => {
   const { user } = useAioha();
   const {
-    hivePower,
     isLoading: isHivePowerLoading,
     error: hivePowerError,
     estimateVoteValue,
@@ -228,7 +233,7 @@ const Snap = ({ discussion, onOpen, setReply, setConversation, onCommentAdded }:
   const [inlineComposerStates, setInlineComposerStates] = useState<
     Record<string, boolean>
   >({});
-  
+
   // State to track comment count for optimistic updates
   const [commentCount, setCommentCount] = useState(discussion.children ?? 0);
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { useProfile, useSignIn } from '@farcaster/auth-kit';
+import { useProfile } from '@farcaster/auth-kit';
 
 interface FarcasterSession {
   fid: number;
@@ -64,18 +64,18 @@ export function useFarcasterSession() {
     const restoreSession = () => {
       try {
         const savedSession = localStorage.getItem(SESSION_KEY);
-        console.log('[FarcasterSession] Restoring session, found:', !!savedSession);
+        // console.log('[FarcasterSession] Restoring session, found:', !!savedSession);
         if (savedSession) {
           const session: FarcasterSession = JSON.parse(savedSession);
           const isExpired = Date.now() - session.timestamp > SESSION_EXPIRY;
           
           if (isExpired) {
-            console.log('[FarcasterSession] Session expired, removing');
+            // console.log('[FarcasterSession] Session expired, removing');
             localStorage.removeItem(SESSION_KEY);
             setHasPersistedSession(false);
             setSessionData(null);
           } else {
-            console.log('[FarcasterSession] Session restored:', session.username);
+            // console.log('[FarcasterSession] Session restored:', session.username);
             setHasPersistedSession(true);
             setSessionData(session);
           }
@@ -84,7 +84,7 @@ export function useFarcasterSession() {
           setSessionData(null);
         }
       } catch (error) {
-        console.warn('Failed to restore Farcaster session:', error);
+        // console.warn('Failed to restore Farcaster session:', error);
         localStorage.removeItem(SESSION_KEY);
         setHasPersistedSession(false);
         setSessionData(null);
@@ -98,8 +98,8 @@ export function useFarcasterSession() {
 
   // Clear session on sign out
   const clearSession = useCallback(() => {
-    console.log('[FarcasterSession] Clearing session explicitly');
-    console.log('[FarcasterSession] Before clear - hasPersistedSession:', hasPersistedSession);
+    // console.log('[FarcasterSession] Clearing session explicitly');
+    // console.log('[FarcasterSession] Before clear - hasPersistedSession:', hasPersistedSession);
     
     // Clear localStorage
     localStorage.removeItem(SESSION_KEY);
@@ -109,7 +109,7 @@ export function useFarcasterSession() {
       // Check for any keys that might be related to Farcaster Auth Kit
       Object.keys(localStorage).forEach(key => {
         if (key.includes('farcaster') || key.includes('authkit') || key.includes('fc_')) {
-          console.log('[FarcasterSession] Removing potential auth key:', key);
+          // console.log('[FarcasterSession] Removing potential auth key:', key);
           localStorage.removeItem(key);
         }
       });

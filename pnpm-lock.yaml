@@ -104,6 +104,9 @@ importers:
       '@wagmi/core':
         specifier: ^2.17.2
         version: 2.18.0(@tanstack/query-core@5.83.0)(@types/react@19.1.8)(immer@10.1.1)(react@18.3.1)(typescript@5.8.3)(use-sync-external-store@1.4.0(react@18.3.1))(viem@2.30.6(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.25.76))
+      '@zoralabs/coins-sdk':
+        specifier: ^0.2.9
+        version: 0.2.9(abitype@1.0.8(typescript@5.8.3)(zod@3.25.76))(viem@2.30.6(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.25.76))
       browser-image-compression:
         specifier: ^2.0.2
         version: 2.0.2
@@ -791,6 +794,10 @@ packages:
     resolution: {integrity: sha512-mB9oAsNCm9aM3/SOv4YtBMqZbYj10R7dkq8byBqxGY/ncFwhf2oQzMV+LCRlWoDSEBJ3COiR1yeDvMtsoOsuFQ==}
     peerDependencies:
       graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
+
+  '@hey-api/client-fetch@0.8.4':
+    resolution: {integrity: sha512-SWtUjVEFIUdiJGR2NiuF0njsSrSdTe7WHWkp3BLH3DEl2bRhiflOnBo29NSDdrY90hjtTQiTQkBxUgGOF29Xzg==}
+    deprecated: Starting with v0.73.0, this package is bundled directly inside @hey-api/openapi-ts.
 
   '@hiveio/content-renderer@2.3.1':
     resolution: {integrity: sha512-YE8Lj4LycKxig+2z8VQXNiedQq0lx0pQk9q6USsbHZIFaZePWvkZAJAFy2q9qmLFH5Ca5Nu/TGTiZFQbmbLOVQ==}
@@ -1943,6 +1950,16 @@ packages:
 
   '@zag-js/focus-visible@0.31.1':
     resolution: {integrity: sha512-dbLksz7FEwyFoANbpIlNnd3bVm0clQSUsnP8yUVQucStZPsuWjCrhL2jlAbGNrTrahX96ntUMXHb/sM68TibFg==}
+
+  '@zoralabs/coins-sdk@0.2.9':
+    resolution: {integrity: sha512-e7EIBxadmLxjdaK2DX7UL/WUbmsunQw5+EyAAWd7mRMAAP5eGKnJY2hRlxvlDZ6t/A9ersBSyttTzrSiKliVAQ==}
+    engines: {node: '>=22'}
+    peerDependencies:
+      abitype: ^1.0.8
+      viem: ^2.21.55
+
+  '@zoralabs/protocol-deployments@0.6.1':
+    resolution: {integrity: sha512-iDO5EhLrqDw0keudRq9omuSdvHG852de5/apY2p7QLBDxitQuJ/6/jOaq2WB4B6GPVUh2fTd5+CdoSsbJhJv5g==}
 
   abitype@1.0.8:
     resolution: {integrity: sha512-ZeiI6h3GnW06uYDLx0etQtX/p8E24UaHHBj57RSjK7YBFe7iuVn07EDpOeP451D06sF27VOz9JJPlIKJmXgkEg==}
@@ -6412,6 +6429,8 @@ snapshots:
     dependencies:
       graphql: 16.11.0
 
+  '@hey-api/client-fetch@0.8.4': {}
+
   '@hiveio/content-renderer@2.3.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@xmldom/xmldom': 0.8.10
@@ -8371,6 +8390,15 @@ snapshots:
   '@zag-js/focus-visible@0.31.1':
     dependencies:
       '@zag-js/dom-query': 0.31.1
+
+  '@zoralabs/coins-sdk@0.2.9(abitype@1.0.8(typescript@5.8.3)(zod@3.25.76))(viem@2.30.6(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.25.76))':
+    dependencies:
+      '@hey-api/client-fetch': 0.8.4
+      '@zoralabs/protocol-deployments': 0.6.1
+      abitype: 1.0.8(typescript@5.8.3)(zod@3.25.76)
+      viem: 2.30.6(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.25.76)
+
+  '@zoralabs/protocol-deployments@0.6.1': {}
 
   abitype@1.0.8(typescript@5.8.3)(zod@3.22.4):
     optionalDependencies:

@@ -1,4 +1,5 @@
 import { processMediaContent } from "@/lib/markdown/MarkdownRenderer";
+import { extractZoraCoinLinks } from "@/lib/utils/extractImageUrls";
 
 export interface ProcessedMarkdown {
   originalContent: string;
@@ -9,7 +10,7 @@ export interface ProcessedMarkdown {
 }
 
 export interface VideoPlaceholder {
-  type: 'VIDEO' | 'ODYSEE' | 'YOUTUBE' | 'VIMEO';
+  type: 'VIDEO' | 'ODYSEE' | 'YOUTUBE' | 'VIMEO' | 'ZORACOIN';
   id: string;
   placeholder: string;
 }
@@ -27,16 +28,16 @@ export class MarkdownProcessor {
     // Step 1: Process media content (from existing MarkdownRenderer)
     const processedContent = processMediaContent(content);
 
-    // Insert placeholders after Zora coin links
-    const withZora = this.addZoraCoinPlaceholders(processedContent);
+    // Step 2: Convert Zora coin links to placeholders  
+    const contentWithZoraPlaceholders = this.convertZoraCoinLinksToPlaceholders(processedContent);
 
-    // Step 2: Extract video placeholders and convert to our format
-    const contentWithPlaceholders = this.convertToVideoPlaceholders(withZora);
+    // Step 3: Extract video placeholders and convert to our format
+    const contentWithPlaceholders = this.convertToVideoPlaceholders(contentWithZoraPlaceholders);
 
-    // Step 3: Detect Instagram embeds
+    // Step 4: Detect Instagram embeds
     const hasInstagramEmbeds = processedContent.includes("<!--INSTAGRAM_EMBED_SCRIPT-->");
 
-    // Step 4: Extract video placeholder information
+    // Step 5: Extract video placeholder information
     const videoPlaceholders = this.extractVideoPlaceholders(contentWithPlaceholders);
 
     const result: ProcessedMarkdown = {
@@ -52,6 +53,23 @@ export class MarkdownProcessor {
     return result;
   }
 
+  private static convertZoraCoinLinksToPlaceholders(content: string): string {
+    const zoraCoinLinks = extractZoraCoinLinks(content);
+    
+    let processedContent = content;
+    
+    zoraCoinLinks.forEach(addressWithChain => {
+      // Extract just the address part (remove chain prefix if present)
+      const address = addressWithChain.includes(':') ? addressWithChain.split(':')[1] : addressWithChain;
+      const originalUrl = `https://zora.co/coin/${addressWithChain}`;
+      const placeholder = `[[ZORACOIN:${address}]]`;
+      
+      processedContent = processedContent.replace(originalUrl, placeholder);
+    });
+    
+    return processedContent;
+  }
+
   private static convertToVideoPlaceholders(content: string): string {
     return content.replace(
       /<div class="video-embed" data-ipfs-hash="([^"]+)">[\s\S]*?<\/div>/g,
@@ -61,12 +79,12 @@ export class MarkdownProcessor {
 
   private static extractVideoPlaceholders(content: string): VideoPlaceholder[] {
     const placeholders: VideoPlaceholder[] = [];
-    const regex = /\[\[(VIDEO|ODYSEE|YOUTUBE|VIMEO):([^\]]+)\]\]/g;
+    const regex = /\[\[(VIDEO|ODYSEE|YOUTUBE|VIMEO|ZORACOIN):([^\]]+)\]\]/g;
     let match;
 
     while ((match = regex.exec(content)) !== null) {
       placeholders.push({
-        type: match[1] as 'VIDEO' | 'ODYSEE' | 'YOUTUBE' | 'VIMEO',
+        type: match[1] as 'VIDEO' | 'ODYSEE' | 'YOUTUBE' | 'VIMEO' | 'ZORACOIN',
         id: match[2],
         placeholder: match[0],
       });
@@ -77,12 +95,5 @@ export class MarkdownProcessor {
 
   static clearCache(): void {
     markdownProcessingCache.clear();
-  }
-
-  private static addZoraCoinPlaceholders(content: string): string {
-    return content.replace(
-      /(https:\/\/zora\.co\/coin\/([a-zA-Z0-9:]+))/g,
-      (_match, url, addr) => `${url} [[ZORACOIN:${addr}]]`
-    );
   }
 }
