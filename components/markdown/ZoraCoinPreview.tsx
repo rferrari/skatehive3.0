@@ -1,8 +1,17 @@
-import { Box, HStack, Image, Link, Text } from "@chakra-ui/react";
+import {
+  Box,
+  HStack,
+  Image,
+  Link,
+  Text,
+  Button,
+  useDisclosure,
+} from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { getCoin } from "@zoralabs/coins-sdk";
 import { base } from "viem/chains";
 import type { Address } from "viem";
+import ZoraTradingModal from "./ZoraTradingModal";
 
 interface ZoraCoinPreviewProps {
   address: string;
@@ -23,6 +32,7 @@ interface TokenData {
 export default function ZoraCoinPreview({ address }: ZoraCoinPreviewProps) {
   const [token, setToken] = useState<TokenData | null>(null);
   const [loading, setLoading] = useState(true);
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   useEffect(() => {
     let ignore = false;
@@ -84,38 +94,65 @@ export default function ZoraCoinPreview({ address }: ZoraCoinPreviewProps) {
   if (!token) return null;
 
   return (
-    <Box border="1px" borderColor="gray.600" borderRadius="md" p={3} my={4}>
-      <HStack spacing={3} align="center">
-        {token.image && (
-          <Image
-            src={token.image}
-            alt={token.name}
-            boxSize="80px"
-            borderRadius="none"
-          />
-        )}
-        <Box>
-          <Link
-            href={`https://zora.co/coin/base:${address}`}
-            isExternal
-            fontWeight="bold"
+    <>
+      <Box border="1px" borderColor="gray.600" borderRadius="md" p={3} my={4}>
+        <HStack spacing={3} align="center">
+          {token.image && (
+            <Image
+              src={token.image}
+              alt={token.name}
+              boxSize="80px"
+              borderRadius="none"
+            />
+          )}
+          <Box flex={1}>
+            <Link
+              href={`https://zora.co/coin/base:${address}`}
+              isExternal
+              fontWeight="bold"
+            >
+              {token.name || address}
+            </Link>
+            {token.symbol && (
+              <Text fontSize="sm" color="gray.400">
+                {token.symbol}
+                {token.marketCap && ` • Market Cap: ${token.marketCap}`}
+                {token.uniqueHolders && ` • ${token.uniqueHolders} holders`}
+              </Text>
+            )}
+            {token.description && (
+              <Text fontSize="xs" color="gray.500" mt={1} noOfLines={2}>
+                {token.description}
+              </Text>
+            )}
+          </Box>
+          <Button
+            colorScheme="blue"
+            size="sm"
+            onClick={onOpen}
+            variant="solid"
+            borderRadius="md"
+            _hover={{ transform: "scale(1.05)" }}
+            transition="all 0.2s"
           >
-            {token.name || address}
-          </Link>
-          {token.symbol && (
-            <Text fontSize="sm" color="gray.400">
-              {token.symbol}
-              {token.marketCap && ` • Market Cap: ${token.marketCap}`}
-              {token.uniqueHolders && ` • ${token.uniqueHolders} holders`}
-            </Text>
-          )}
-          {token.description && (
-            <Text fontSize="xs" color="gray.500" mt={1} noOfLines={2}>
-              {token.description}
-            </Text>
-          )}
-        </Box>
-      </HStack>
-    </Box>
+            🔄 Trade
+          </Button>
+        </HStack>
+      </Box>
+
+      {/* Trading Modal */}
+      <ZoraTradingModal
+        isOpen={isOpen}
+        onClose={onClose}
+        coinAddress={address}
+        coinData={{
+          name: token?.name,
+          symbol: token?.symbol,
+          image: token?.image,
+          marketCap: token?.marketCap,
+          uniqueHolders: token?.uniqueHolders,
+        }}
+      />
+    </>
   );
 }
