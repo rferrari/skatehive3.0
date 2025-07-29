@@ -1,6 +1,7 @@
 {
   "name": "Skatehive 3.0",
   "image": "mcr.microsoft.com/devcontainers/base:debian",
+  "remoteUser": "vscode",
   "features": {
     "ghcr.io/devcontainers/features/node:1": {
       "version": "20"
