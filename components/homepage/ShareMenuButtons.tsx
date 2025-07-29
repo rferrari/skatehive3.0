@@ -85,6 +85,24 @@ const ShareMenuButtons = ({ comment }: ShareMenuButtonsProps) => {
     return hasMetadataImages || hasMarkdownImages;
   }, [parsedMetadata.image, comment.body]);
 
+  // Extract image URLs from markdown content
+  const extractImageUrls = useMemo(() => {
+    if (!comment.body) return [];
+
+    const imageRegex = /!\[.*?\]\((.*?)\)/g;
+    const urls: string[] = [];
+    let match;
+
+    while ((match = imageRegex.exec(comment.body)) !== null) {
+      const url = match[1].trim();
+      if (url && !url.includes("[object") && !url.includes("undefined")) {
+        urls.push(url);
+      }
+    }
+
+    return urls;
+  }, [comment.body]);
+
   // Validate permlink to prevent [object Object] URLs
   if (typeof comment.permlink !== "string") {
     console.error(
@@ -209,24 +227,6 @@ const ShareMenuButtons = ({ comment }: ShareMenuButtonsProps) => {
       window.open(shareUrl, "_blank");
     }
   };
-
-  // Extract image URLs from markdown content
-  const extractImageUrls = useMemo(() => {
-    if (!comment.body) return [];
-
-    const imageRegex = /!\[.*?\]\((.*?)\)/g;
-    const urls: string[] = [];
-    let match;
-
-    while ((match = imageRegex.exec(comment.body)) !== null) {
-      const url = match[1].trim();
-      if (url && !url.includes("[object") && !url.includes("undefined")) {
-        urls.push(url);
-      }
-    }
-
-    return urls;
-  }, [comment.body]);
 
   // Prepare post data for coin creation modal
   const postData = {
