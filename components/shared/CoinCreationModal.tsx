@@ -33,6 +33,9 @@ interface CoinCreationModalProps {
     body: string;
     author: string;
     permlink: string;
+    parent_author: string;
+    parent_permlink: string;
+    json_metadata: string;
     images: string[];
   };
 }
@@ -117,6 +120,11 @@ export function CoinCreationModal({
       image: imageFile,
       postAuthor: postData.author,
       postPermlink: postData.permlink,
+      postBody: postData.body,
+      postJsonMetadata: postData.json_metadata,
+      postTitle: postData.title,
+      postParentAuthor: postData.parent_author,
+      postParentPermlink: postData.parent_permlink,
     };
 
     try {

@@ -17,6 +17,8 @@ interface ShareablePost {
   permlink: string;
   title?: string;
   body?: string;
+  parent_author?: string;
+  parent_permlink?: string;
   json_metadata?:
     | string
     | {
@@ -232,6 +234,11 @@ const ShareMenuButtons = ({ comment }: ShareMenuButtonsProps) => {
     body: comment.body || "",
     author: comment.author,
     permlink: comment.permlink,
+    parent_author: comment.parent_author || "",
+    parent_permlink: comment.parent_permlink || "",
+    json_metadata: typeof comment.json_metadata === 'string' 
+      ? comment.json_metadata 
+      : JSON.stringify(comment.json_metadata || {}),
     images: [...(parsedMetadata.image || []), ...extractImageUrls].filter(
       Boolean
     ),
