@@ -4,6 +4,24 @@
 import { PrivateKey, Operation } from '@hiveio/dhive';
 import HiveClient from "./hiveclient";
 
+// Import client functions that we need for server-side operations
+// Note: This is a workaround since getLastSnapsContainer is in client-functions
+// In a real app, you might want to extract this to a shared utilities file
+async function getLastSnapsContainer() {
+  const author = "peak.snaps";
+  const beforeDate = new Date().toISOString().split('.')[0];
+  const permlink = '';
+  const limit = 1;
+
+  const result = await HiveClient.database.call('get_discussions_by_author_before_date',
+    [author, permlink, beforeDate, limit]);
+
+  return {
+    author,
+    permlink: result[0].permlink
+  };
+}
+
 /**
  * Create a post on Hive using the skatedev account posting key
  * @param title Post title
@@ -86,6 +104,110 @@ export async function createPostAsSkatedev({
 
   } catch (error) {
     console.error('❌ Failed to create post as skatedev:', error);
+    return {
+      success: false,
+      author: '',
+      permlink: '',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+/**
+ * Create a snap comment on Hive using the skatedev account posting key
+ * @param body Comment body content
+ * @param tags Array of tags
+ * @param images Array of image URLs
+ * @param ethereumAddress The Ethereum address of the coin creator
+ * @param coinAddress The Zora coin address if available
+ * @param coinUrl The Zora coin URL if available
+ * @returns Promise with success status and comment details
+ */
+export async function createSnapAsSkatedev({
+  body,
+  tags = [],
+  images = [],
+  ethereumAddress,
+  coinAddress,
+  coinUrl,
+}: {
+  body: string;
+  tags?: string[];
+  images?: string[];
+  ethereumAddress: string;
+  coinAddress?: string;
+  coinUrl?: string;
+}): Promise<{ success: boolean; author: string; permlink: string; error?: string }> {
+  try {
+    const postingKey = process.env.HIVE_POSTING_KEY;
+    const author = process.env.NEXT_PUBLIC_HIVE_USER || 'skatedev';
+
+    if (!postingKey) {
+      throw new Error("HIVE_POSTING_KEY is not set in the environment");
+    }
+
+    // Get the latest snaps container for parent
+    let parentAuthor = "peak.snaps";
+    let parentPermlink = "snaps";
+    
+    try {
+      const lastSnapsContainer = await getLastSnapsContainer();
+      parentPermlink = lastSnapsContainer.permlink;
+    } catch (error) {
+      console.warn("Failed to get last snaps container, using default");
+    }
+
+    // Generate permlink based on timestamp
+    const timestamp = new Date().toISOString().replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+    const permlink = `snap-${timestamp}`;
+
+    // Prepare metadata
+    const jsonMetadata = {
+      app: "Skatehive App 3.0",
+      tags: [
+        process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || 'hive-173115',
+        'snaps',
+        'skatehive',
+        'ethereum',
+        'coin-creation',
+        ...tags
+      ],
+      images,
+      creator_ethereum_address: ethereumAddress,
+      ...(coinAddress && { zora_coin_address: coinAddress }),
+      ...(coinUrl && { zora_coin_url: coinUrl }),
+      created_via: 'ethereum_wallet',
+      snap_type: 'coin_creation'
+    };
+
+    // Create the comment operation (snap comment)
+    const operation: Operation = [
+      'comment',
+      {
+        parent_author: parentAuthor,
+        parent_permlink: parentPermlink,
+        author,
+        permlink,
+        title: '', // Snaps don't have titles
+        body,
+        json_metadata: JSON.stringify(jsonMetadata),
+      }
+    ];
+
+    // Broadcast the operation
+    const privateKey = PrivateKey.fromString(postingKey);
+    await HiveClient.broadcast.sendOperations([operation], privateKey);
+
+    console.log(`✅ Posted snap to Hive as ${author}/${permlink} for Ethereum user ${ethereumAddress}`);
+
+    return {
+      success: true,
+      author,
+      permlink
+    };
+
+  } catch (error) {
+    console.error('❌ Failed to create snap as skatedev:', error);
     return {
       success: false,
       author: '',

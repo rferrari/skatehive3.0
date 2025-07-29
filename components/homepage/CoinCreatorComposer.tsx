@@ -23,7 +23,7 @@ import {
 import { FaImage, FaCoins, FaEthereum } from "react-icons/fa";
 import { useAccount } from "wagmi";
 import { useCoinCreation } from "@/hooks/useCoinCreation";
-import { createPostAsSkatedev } from "@/lib/hive/server-actions";
+import { createSnapAsSkatedev } from "@/lib/hive/server-actions";
 import { getFileSignature, uploadImage } from "@/lib/hive/client-functions";
 import imageCompression from "browser-image-compression";
 
@@ -124,54 +124,72 @@ export default function CoinCreatorComposer({ onClose }: CoinCreatorComposerProp
     setIsLoading(true);
 
     try {
-      // First, create the Hive post under skatedev account
-      console.log("Creating Hive post for Ethereum user...");
+      console.log("Creating coin for Ethereum user...");
       
-      const postBody = `${description}\n\n${images.length > 0 ? images.map(img => `![image](${img.url})`).join('\n\n') : ''}
-
----
-
-*This post was created by an Ethereum user who wanted to create a coin. The coin creator's Ethereum address: \`${address}\`*
-
-*Once the coin is created, it will be available for trading on Zora.*`;
-
-      const hivePostResult = await createPostAsSkatedev({
-        title,
-        body: postBody,
-        tags: ['coin-creation', 'ethereum', symbol.toLowerCase()],
-        images: images.map(img => img.url),
-        ethereumAddress: address,
-      });
-
-      if (!hivePostResult.success) {
-        throw new Error(hivePostResult.error || "Failed to create Hive post");
-      }
-
-      console.log("✅ Hive post created:", hivePostResult);
-
-      // Now create the coin using the coin creation hook
+      // Prepare coin data without post information (we'll create the snap after)
       const coinData = {
         name: title,
         symbol: symbol.toUpperCase(),
         description: description,
         mediaUrl: images[0]?.url || "",
         postTitle: title,
-        postBody: postBody,
-        postAuthor: hivePostResult.author,
-        postPermlink: hivePostResult.permlink,
+        postBody: "", // We'll set this later
         postJsonMetadata: JSON.stringify({
           app: "Skatehive App 3.0",
-          tags: ['coin-creation', 'ethereum', symbol.toLowerCase()],
+          tags: ['coin-creation', 'ethereum', 'snaps', symbol.toLowerCase()],
           images: images.map(img => img.url),
           creator_ethereum_address: address,
         }),
         postParentAuthor: "",
-        postParentPermlink: process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || 'hive-173115',
+        postParentPermlink: "",
       };
 
       console.log("Creating coin with data:", coinData);
       
-      await createCoin(coinData);
+      // Create the coin first
+      const coinResult = await createCoin(coinData);
+      
+      if (!coinResult?.address) {
+        throw new Error("Failed to get coin address from creation result");
+      }
+
+      console.log("✅ Coin created:", coinResult);
+
+      // Generate Zora URL for the coin
+      const zoraUrl = `https://zora.co/collect/base:${coinResult.address}`;
+
+      // Now create the snap comment with the coin URL
+      const snapBody = `🪙 **New Coin Created: ${title} (${symbol.toUpperCase()})**
+
+${description}
+
+${images.length > 0 ? images.map(img => `![image](${img.url})`).join('\n\n') : ''}
+
+🎯 **[Collect this coin on Zora ↗](${zoraUrl})**
+
+---
+
+*Created by Ethereum user: \`${address}\`*
+
+#skatehive #ethereum #zora #coins`;
+
+      console.log("Creating snap with coin URL...");
+
+      const snapResult = await createSnapAsSkatedev({
+        body: snapBody,
+        tags: ['coin-creation', 'ethereum', 'zora', symbol.toLowerCase()],
+        images: images.map(img => img.url),
+        ethereumAddress: address,
+        coinAddress: coinResult.address,
+        coinUrl: zoraUrl,
+      });
+
+      if (!snapResult.success) {
+        console.warn("Coin created but snap creation failed:", snapResult.error);
+        // Don't throw here - coin was created successfully
+      } else {
+        console.log("✅ Snap created:", snapResult);
+      }
 
       // Clear form
       setTitle("");
@@ -242,7 +260,7 @@ export default function CoinCreatorComposer({ onClose }: CoinCreatorComposerProp
         <Alert status="info" size="sm" borderRadius="md">
           <AlertIcon />
           <Text fontSize="sm">
-            Your coin will be posted to Skatehive automatically. Once created, you can share and trade it on Zora.
+            Your coin will be posted as a snap to Skatehive automatically. Once created, you can share and trade it on Zora.
           </Text>
         </Alert>
 
@@ -389,7 +407,7 @@ export default function CoinCreatorComposer({ onClose }: CoinCreatorComposerProp
 
         {/* Info */}
         <Text fontSize="xs" color={placeholderColor} textAlign="center">
-          Your coin will be created on Zora and posted to Skatehive automatically.
+          Your coin will be created on Zora and posted as a snap to Skatehive automatically.
           Make sure your wallet is connected and has sufficient Base ETH for gas fees.
         </Text>
       </VStack>
