@@ -29,6 +29,9 @@ new codespace from the **Code** menu on GitHub and the container will
 install dependencies with `pnpm install` and forward port `3000` for the
 Next.js dev server.
 
+Once setup completes, run `pnpm dev` to launch the application.
+
+
 ## Environment Variables
 
 The app relies on a number of environment variables. The most common ones are provided in `.env.local.example`:
