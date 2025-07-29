@@ -99,38 +99,63 @@ export default function ZoraCoinPreview({ address }: ZoraCoinPreviewProps) {
 
   return (
     <>
-      <Box border="1px" borderColor="gray.600" borderRadius="md" p={3} my={4}>
+      <Box
+        border="1px"
+        borderColor="gray.600"
+        borderRadius="md"
+        p={3}
+        my={4}
+        overflow="hidden"
+        wordBreak="break-word"
+      >
         <Center>
-          <VStack>
+          <VStack spacing={2} width="full">
             {token.image && (
               <Image
                 src={token.image}
                 alt={token.name}
                 width="full"
-                borderRadius="none"
+                borderRadius="md"
               />
             )}
             <Link
               href={`https://zora.co/coin/base:${address}`}
               isExternal
               fontWeight="bold"
+              textAlign="center"
+              wordBreak="break-word"
+              whiteSpace="normal"
+              overflow="hidden"
+              maxWidth="full"
             >
               {token.name || address}
             </Link>
           </VStack>
         </Center>
         <Divider my={3} />
-        <HStack spacing={3} align="center">
-          <Box flex={1}>
+        <HStack spacing={3} align="center" width="full">
+          <Box flex={1} overflow="hidden">
             {token.symbol && (
-              <Text fontSize="sm" color="gray.400">
+              <Text
+                fontSize="sm"
+                color="gray.400"
+                wordBreak="break-word"
+                whiteSpace="normal"
+              >
                 {token.symbol}
                 {token.marketCap && ` • MCap: ${token.marketCap}`}
                 {token.uniqueHolders && ` • ${token.uniqueHolders} holders`}
               </Text>
             )}
             {token.description && (
-              <Text fontSize="xs" color="gray.500" mt={1} noOfLines={2}>
+              <Text
+                fontSize="xs"
+                color="gray.500"
+                mt={1}
+                noOfLines={3}
+                wordBreak="break-word"
+                whiteSpace="normal"
+              >
                 {token.description}
               </Text>
             )}
