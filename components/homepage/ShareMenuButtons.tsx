@@ -1,8 +1,29 @@
-import { MenuItem, useClipboard, useToast } from "@chakra-ui/react";
+import {
+  Image,
+  MenuItem,
+  useClipboard,
+  useToast,
+  useDisclosure,
+} from "@chakra-ui/react";
 import { FaTwitter, FaLink, FaThumbsDown } from "react-icons/fa";
-import React from "react";
+import React, { useMemo } from "react";
 import { useFarcasterContext } from "@/hooks/useFarcasterContext";
 import { useAioha } from "@aioha/react-ui";
+import { CoinCreationModal } from "@/components/shared/CoinCreationModal";
+
+// Minimal interface for what we need for sharing and coin creation
+interface ShareablePost {
+  author: string;
+  permlink: string;
+  title?: string;
+  body?: string;
+  json_metadata?:
+    | string
+    | {
+        image?: string[];
+        [key: string]: any;
+      };
+}
 
 // Custom Farcaster Icon Component
 const FarcasterIcon = ({ size = 16 }: { size?: number }) => (
@@ -19,7 +40,7 @@ const FarcasterIcon = ({ size = 16 }: { size?: number }) => (
 );
 
 interface ShareMenuButtonsProps {
-  comment: { author: string; permlink: string };
+  comment: ShareablePost;
 }
 
 const ShareMenuButtons = ({ comment }: ShareMenuButtonsProps) => {
@@ -31,6 +52,36 @@ const ShareMenuButtons = ({ comment }: ShareMenuButtonsProps) => {
   const toast = useToast();
   const { isInFrame, composeCast } = useFarcasterContext();
   const { aioha, user } = useAioha();
+  const {
+    isOpen: isCoinModalOpen,
+    onOpen: onCoinModalOpen,
+    onClose: onCoinModalClose,
+  } = useDisclosure();
+
+  // Parse json_metadata if it's a string
+  const parsedMetadata = useMemo(() => {
+    if (typeof comment.json_metadata === "string") {
+      try {
+        return JSON.parse(comment.json_metadata);
+      } catch {
+        return {};
+      }
+    }
+    return comment.json_metadata || {};
+  }, [comment.json_metadata]);
+
+  // Check if the post has media (images)
+  const hasMedia = useMemo(() => {
+    // Check metadata first
+    const hasMetadataImages = (parsedMetadata.image?.length ?? 0) > 0;
+
+    // Check for markdown image syntax in post body
+    const hasMarkdownImages = comment.body
+      ? /!\[.*?\]\([^\)]+\)/gi.test(comment.body)
+      : false;
+
+    return hasMetadataImages || hasMarkdownImages;
+  }, [parsedMetadata.image, comment.body]);
 
   // Validate permlink to prevent [object Object] URLs
   if (typeof comment.permlink !== "string") {
@@ -44,6 +95,20 @@ const ShareMenuButtons = ({ comment }: ShareMenuButtonsProps) => {
   const postLink = `${
     typeof window !== "undefined" ? window.location.origin : ""
   }/post/${comment.author}/${comment.permlink}`;
+
+  const handleCoinCreation = () => {
+    if (!hasMedia) {
+      toast({
+        title: "Media required",
+        description: "Only posts with images can be used to create coins",
+        status: "warning",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+    onCoinModalOpen();
+  };
 
   const handleDownvote = async () => {
     if (!user) {
@@ -143,6 +208,35 @@ const ShareMenuButtons = ({ comment }: ShareMenuButtonsProps) => {
     }
   };
 
+  // Extract image URLs from markdown content
+  const extractImageUrls = useMemo(() => {
+    if (!comment.body) return [];
+
+    const imageRegex = /!\[.*?\]\((.*?)\)/g;
+    const urls: string[] = [];
+    let match;
+
+    while ((match = imageRegex.exec(comment.body)) !== null) {
+      const url = match[1].trim();
+      if (url && !url.includes("[object") && !url.includes("undefined")) {
+        urls.push(url);
+      }
+    }
+
+    return urls;
+  }, [comment.body]);
+
+  // Prepare post data for coin creation modal
+  const postData = {
+    title: comment.title || "",
+    body: comment.body || "",
+    author: comment.author,
+    permlink: comment.permlink,
+    images: [...(parsedMetadata.image || []), ...extractImageUrls].filter(
+      Boolean
+    ),
+  };
+
   return (
     <>
       <MenuItem
@@ -154,6 +248,22 @@ const ShareMenuButtons = ({ comment }: ShareMenuButtonsProps) => {
         <span style={{ marginLeft: "8px" }}>
           {isInFrame ? "Cast" : "Share on Farcaster"}
         </span>
+      </MenuItem>
+      <MenuItem
+        onClick={handleCoinCreation}
+        bg={"background"}
+        color={hasMedia ? "primary" : "gray.400"}
+        cursor={hasMedia ? "pointer" : "not-allowed"}
+        opacity={hasMedia ? 1 : 0.6}
+      >
+        <Image
+          src="/logos/Zorb.png"
+          alt="Zora Logo"
+          boxSize="16px"
+          mr={2}
+          display="inline-block"
+        />
+        Create Coin {!hasMedia && "(Requires Image)"}
       </MenuItem>
       <MenuItem
         onClick={() => handleShare("x")}
@@ -175,6 +285,13 @@ const ShareMenuButtons = ({ comment }: ShareMenuButtonsProps) => {
         <FaThumbsDown style={{ marginRight: "8px" }} />
         Downvote Post
       </MenuItem>
+
+      {/* Coin Creation Modal */}
+      <CoinCreationModal
+        isOpen={isCoinModalOpen}
+        onClose={onCoinModalClose}
+        postData={postData}
+      />
     </>
   );
 };

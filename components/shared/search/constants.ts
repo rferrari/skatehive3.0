@@ -17,6 +17,9 @@ import {
 } from "react-icons/fa";
 import { PageResult } from "./types";
 
+// Platform configuration
+export const SKATEHIVE_PLATFORM_REFERRER = "0xB4964e1ecA55Db36a94e8aeFfBFBAb48529a2f6c";
+
 export const STATIC_PAGES: PageResult[] = [
   {
     title: "Home",

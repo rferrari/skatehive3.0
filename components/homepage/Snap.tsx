@@ -367,12 +367,7 @@ const Snap = ({
                   Edit
                 </MenuItem>
               )}
-              <ShareMenuButtons
-                comment={{
-                  author: discussion.author,
-                  permlink: discussion.permlink,
-                }}
-              />
+              <ShareMenuButtons comment={discussion} />
             </MenuList>
           </Menu>
         </HStack>

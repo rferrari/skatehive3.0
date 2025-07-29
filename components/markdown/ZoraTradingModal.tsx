@@ -636,7 +636,7 @@ export default function ZoraTradingModal({
                     Advanced
                   </Text>
                 </Button>
-                
+
                 {showAdvanced && (
                   <Box mt={3} p={3} bg="muted" borderRadius="md">
                     <VStack spacing={3}>
@@ -649,7 +649,9 @@ export default function ZoraTradingModal({
                           <Input
                             type="number"
                             value={slippage}
-                            onChange={(e) => setSlippage(Number(e.target.value))}
+                            onChange={(e) =>
+                              setSlippage(Number(e.target.value))
+                            }
                             min="0.1"
                             max="50"
                             step="0.1"
