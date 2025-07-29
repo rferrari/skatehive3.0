@@ -29,4 +29,5 @@ export interface PageResult {
 export interface SearchOverlayProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenAirdrop?: () => void;
 }

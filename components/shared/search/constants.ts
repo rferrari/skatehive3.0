@@ -13,6 +13,7 @@ import {
   FaShareAlt,
   FaGavel,
   FaUser,
+  FaGift,
 } from "react-icons/fa";
 import { PageResult } from "./types";
 
@@ -103,9 +104,27 @@ export const STATIC_PAGES: PageResult[] = [
   },
 ];
 
-export const getPopularPages = () => 
-  STATIC_PAGES.filter((page) =>
+// Special commands that trigger modal actions
+export const COMMAND_PAGES: PageResult[] = [
+  {
+    title: "Airdrop",
+    path: "command:airdrop",
+    description: "Open airdrop modal to distribute tokens",
+    icon: FaGift,
+  },
+];
+
+export const getPopularPages = () => {
+  const popularStaticPages = STATIC_PAGES.filter((page) =>
     ["Home", "Blog", "Bounties", "Leaderboard", "Create Post"].includes(
       page.title
     )
   );
+  
+  // Add airdrop command to popular pages
+  const popularCommands = COMMAND_PAGES.filter((page) =>
+    ["Airdrop"].includes(page.title)
+  );
+  
+  return [...popularStaticPages, ...popularCommands];
+};
