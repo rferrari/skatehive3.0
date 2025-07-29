@@ -15,6 +15,7 @@ import { getCoin } from "@zoralabs/coins-sdk";
 import { base } from "viem/chains";
 import type { Address } from "viem";
 import ZoraTradingModal from "./ZoraTradingModal";
+import { CgArrowsExchange } from "react-icons/cg";
 
 interface ZoraCoinPreviewProps {
   address: string;
@@ -135,6 +136,7 @@ export default function ZoraCoinPreview({ address }: ZoraCoinPreviewProps) {
             )}
           </Box>
           <Button
+            leftIcon={<CgArrowsExchange />}
             colorScheme="blue"
             size="sm"
             onClick={onOpen}
@@ -143,7 +145,7 @@ export default function ZoraCoinPreview({ address }: ZoraCoinPreviewProps) {
             _hover={{ transform: "scale(1.05)" }}
             transition="all 0.2s"
           >
-            🔄 Trade
+            Trade
           </Button>
         </HStack>
       </Box>
