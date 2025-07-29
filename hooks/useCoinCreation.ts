@@ -97,7 +97,7 @@ export function useCoinCreation() {
           
           if (isPostAuthor && aioha) {
             // User created the post and coin - update via Aioha
-            const updatedBody = `${coinData.postBody}\n\n---\n🪙 **This post is now a Zora Coin!** \n[Collect it here: ${zoraUrl}](${zoraUrl})`;
+            const updatedBody = `${coinData.postBody}\n\n---\n  Collect it here \n ${zoraUrl}`;
             
             // Parse and update metadata
             let updatedMetadata: any = {};
