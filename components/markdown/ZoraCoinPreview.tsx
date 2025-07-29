@@ -6,6 +6,9 @@ import {
   Text,
   Button,
   useDisclosure,
+  Center,
+  VStack,
+  Divider,
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { getCoin } from "@zoralabs/coins-sdk";
@@ -96,16 +99,16 @@ export default function ZoraCoinPreview({ address }: ZoraCoinPreviewProps) {
   return (
     <>
       <Box border="1px" borderColor="gray.600" borderRadius="md" p={3} my={4}>
-        <HStack spacing={3} align="center">
-          {token.image && (
-            <Image
-              src={token.image}
-              alt={token.name}
-              boxSize="80px"
-              borderRadius="none"
-            />
-          )}
-          <Box flex={1}>
+        <Center>
+          <VStack>
+            {token.image && (
+              <Image
+                src={token.image}
+                alt={token.name}
+                width="full"
+                borderRadius="none"
+              />
+            )}
             <Link
               href={`https://zora.co/coin/base:${address}`}
               isExternal
@@ -113,10 +116,15 @@ export default function ZoraCoinPreview({ address }: ZoraCoinPreviewProps) {
             >
               {token.name || address}
             </Link>
+          </VStack>
+        </Center>
+        <Divider my={3} />
+        <HStack spacing={3} align="center">
+          <Box flex={1}>
             {token.symbol && (
               <Text fontSize="sm" color="gray.400">
                 {token.symbol}
-                {token.marketCap && ` • Market Cap: ${token.marketCap}`}
+                {token.marketCap && ` • MCap: ${token.marketCap}`}
                 {token.uniqueHolders && ` • ${token.uniqueHolders} holders`}
               </Text>
             )}
