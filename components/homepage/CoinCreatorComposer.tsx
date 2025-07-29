@@ -15,7 +15,6 @@ import {
   FormLabel,
   useColorModeValue,
   IconButton,
-  Tooltip,
   Progress,
   Image,
   Spinner,
@@ -260,15 +259,6 @@ ${zoraUrl}
             </Text>
           </HStack>
         </HStack>
-
-        {/* Alert about automatic posting */}
-        <Alert status="info" size="sm" borderRadius="md">
-          <AlertIcon />
-          <Text fontSize="sm">
-            Your coin will be posted as a snap to Skatehive automatically. Once
-            created, you can share and trade it on Zora.
-          </Text>
-        </Alert>
 
         {/* Title Input */}
         <FormControl isRequired>
