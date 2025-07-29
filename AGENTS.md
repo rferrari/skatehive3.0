@@ -11,7 +11,6 @@ This repository contains the **Skatehive 3.0** web application. It is a Next.js 
 - **Tailwind CSS** 4
 - **React Query** for data caching
 - **Wagmi** and **Viem** for Ethereum connectivity
-- **Whisk SDK** for identity resolution
 - **Aioha** for Hive authentication and wallet support
 - TypeScript is enabled via `tsconfig.json`.
 - The project deploys on **Vercel** using the default Next.js build.
