@@ -21,6 +21,14 @@ Open `http://localhost:3000` in your browser.
 
 Run `pnpm lint` to check lint rules and `pnpm build` to create a production build.
 
+## GitHub Codespaces
+
+This repo contains a `.devcontainer` folder so you can work in
+[GitHub Codespaces](https://github.com/features/codespaces). Launch a
+new codespace from the **Code** menu on GitHub and the container will
+install dependencies with `pnpm install` and forward port `3000` for the
+Next.js dev server.
+
 ## Environment Variables
 
 The app relies on a number of environment variables. The most common ones are provided in `.env.local.example`:
