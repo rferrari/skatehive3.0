@@ -72,6 +72,7 @@ Additional variables used by specific features:
 - `ADMIN_USERS` – comma-separated list of usernames with admin privileges for Farcaster notifications (e.g., `user1,user2,user3`)
 - `PINATA_API_KEY` and `PINATA_SECRET_API_KEY` – upload media to Pinata/IPFS
 - `GIPHY_API_KEY` – GIF search in the composer
+- `NEXT_PUBLIC_ZORA_API_KEY` – obtain a Zora API key to enable Zora embeds
 - `EMAIL_USER`, `EMAIL_PASS`, `EMAIL_COMMUNITY`, `EMAIL_RECOVERYACC` – sending invite emails
 - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLIC_KEY`, `SUPABASE_PRIVATE_KEY` – Supabase integration
 - Ethereum/Wagmi keys such as `NEXT_PUBLIC_WC_PROJECT_ID`, `ETHERSCAN_API_KEY`, `NEXT_PUBLIC_ALCHEMY_KEY` and DAO addresses (`NEXT_PUBLIC_TOKEN`, `NEXT_PUBLIC_METADATA`, `NEXT_PUBLIC_AUCTION`, `NEXT_PUBLIC_TREASURY`, `NEXT_PUBLIC_GOVERNOR`)
