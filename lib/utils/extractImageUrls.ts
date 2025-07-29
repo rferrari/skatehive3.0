@@ -104,3 +104,14 @@ export function extractVideoUrls(markdown: string): string[] {
     }
     return videoUrls;
 }
+
+// Extract Zora coin contract addresses from text
+export function extractZoraCoinLinks(text: string): string[] {
+    const regex = /https:\/\/zora\.co\/coin\/([a-zA-Z0-9:]+)/g
+    const addresses: string[] = []
+    let match
+    while ((match = regex.exec(text)) !== null) {
+        addresses.push(match[1])
+    }
+    return addresses
+}
