@@ -31,10 +31,12 @@ interface CoinCreatorComposerProps {
   onClose?: () => void;
 }
 
-export default function CoinCreatorComposer({ onClose }: CoinCreatorComposerProps) {
+export default function CoinCreatorComposer({
+  onClose,
+}: CoinCreatorComposerProps) {
   const { address, isConnected } = useAccount();
   const { createCoin, isCreating } = useCoinCreation();
-  
+
   // Form state
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -42,10 +44,10 @@ export default function CoinCreatorComposer({ onClose }: CoinCreatorComposerProp
   const [isLoading, setIsLoading] = useState(false);
   const [images, setImages] = useState<{ url: string; fileName: string }[]>([]);
   const [uploadProgress, setUploadProgress] = useState<number[]>([]);
-  
+
   // Refs
   const imageUploadRef = useRef<HTMLInputElement>(null);
-  
+
   // Theme colors
   const bgColor = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.600");
@@ -57,7 +59,7 @@ export default function CoinCreatorComposer({ onClose }: CoinCreatorComposerProp
     if (files.length === 0) return;
 
     setIsLoading(true);
-    
+
     for (const [index, file] of files.entries()) {
       if (!file.type.startsWith("image/")) {
         alert("Please select only image files.");
@@ -72,7 +74,7 @@ export default function CoinCreatorComposer({ onClose }: CoinCreatorComposerProp
           useWebWorker: true,
         };
         const compressedFile = await imageCompression(file, options);
-        
+
         // Upload to IPFS/storage
         const signature = await getFileSignature(compressedFile);
         const uploadUrl = await uploadImage(
@@ -83,9 +85,9 @@ export default function CoinCreatorComposer({ onClose }: CoinCreatorComposerProp
         );
 
         if (uploadUrl) {
-          setImages(prev => [
+          setImages((prev) => [
             ...prev,
-            { url: uploadUrl, fileName: compressedFile.name }
+            { url: uploadUrl, fileName: compressedFile.name },
           ]);
         }
       } catch (error) {
@@ -93,7 +95,7 @@ export default function CoinCreatorComposer({ onClose }: CoinCreatorComposerProp
         alert("Failed to upload image. Please try again.");
       }
     }
-    
+
     setIsLoading(false);
     setUploadProgress([]);
     e.target.value = ""; // Reset input
@@ -101,7 +103,7 @@ export default function CoinCreatorComposer({ onClose }: CoinCreatorComposerProp
 
   // Remove image
   const removeImage = (index: number) => {
-    setImages(prev => prev.filter((_, i) => i !== index));
+    setImages((prev) => prev.filter((_, i) => i !== index));
   };
 
   // Handle coin creation
@@ -112,7 +114,9 @@ export default function CoinCreatorComposer({ onClose }: CoinCreatorComposerProp
     }
 
     if (!title.trim() || !description.trim() || !symbol.trim()) {
-      alert("Please fill in all required fields (title, description, and symbol).");
+      alert(
+        "Please fill in all required fields (title, description, and symbol)."
+      );
       return;
     }
 
@@ -125,7 +129,7 @@ export default function CoinCreatorComposer({ onClose }: CoinCreatorComposerProp
 
     try {
       console.log("Creating coin for Ethereum user...");
-      
+
       // Prepare coin data without post information (we'll create the snap after)
       const coinData = {
         name: title,
@@ -136,8 +140,8 @@ export default function CoinCreatorComposer({ onClose }: CoinCreatorComposerProp
         postBody: "", // We'll set this later
         postJsonMetadata: JSON.stringify({
           app: "Skatehive App 3.0",
-          tags: ['coin-creation', 'ethereum', 'snaps', symbol.toLowerCase()],
-          images: images.map(img => img.url),
+          tags: ["coin-creation", "ethereum", "snaps", symbol.toLowerCase()],
+          images: images.map((img) => img.url),
           creator_ethereum_address: address,
         }),
         postParentAuthor: "",
@@ -145,10 +149,10 @@ export default function CoinCreatorComposer({ onClose }: CoinCreatorComposerProp
       };
 
       console.log("Creating coin with data:", coinData);
-      
+
       // Create the coin first
       const coinResult = await createCoin(coinData);
-      
+
       if (!coinResult?.address) {
         throw new Error("Failed to get coin address from creation result");
       }
@@ -156,36 +160,34 @@ export default function CoinCreatorComposer({ onClose }: CoinCreatorComposerProp
       console.log("✅ Coin created:", coinResult);
 
       // Generate Zora URL for the coin
-      const zoraUrl = `https://zora.co/collect/base:${coinResult.address}`;
+      const zoraUrl = `https://zora.co/coin/base:${coinResult.address}`;
 
       // Now create the snap comment with the coin URL
       const snapBody = `🪙 **New Coin Created: ${title} (${symbol.toUpperCase()})**
 
 ${description}
 
-${images.length > 0 ? images.map(img => `![image](${img.url})`).join('\n\n') : ''}
-
-🎯 **[Collect this coin on Zora ↗](${zoraUrl})**
-
 ---
 
-*Created by Ethereum user: \`${address}\`*
-
-#skatehive #ethereum #zora #coins`;
+${zoraUrl}
+`;
 
       console.log("Creating snap with coin URL...");
 
       const snapResult = await createSnapAsSkatedev({
         body: snapBody,
-        tags: ['coin-creation', 'ethereum', 'zora', symbol.toLowerCase()],
-        images: images.map(img => img.url),
+        tags: ["coin-creation", "ethereum", "zora", symbol.toLowerCase()],
+        images: images.map((img) => img.url),
         ethereumAddress: address,
         coinAddress: coinResult.address,
         coinUrl: zoraUrl,
       });
 
       if (!snapResult.success) {
-        console.warn("Coin created but snap creation failed:", snapResult.error);
+        console.warn(
+          "Coin created but snap creation failed:",
+          snapResult.error
+        );
         // Don't throw here - coin was created successfully
       } else {
         console.log("✅ Snap created:", snapResult);
@@ -196,12 +198,15 @@ ${images.length > 0 ? images.map(img => `![image](${img.url})`).join('\n\n') : '
       setDescription("");
       setSymbol("");
       setImages([]);
-      
-      if (onClose) onClose();
 
+      if (onClose) onClose();
     } catch (error) {
       console.error("Error creating coin:", error);
-      alert(error instanceof Error ? error.message : "Failed to create coin. Please try again.");
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to create coin. Please try again."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -260,7 +265,8 @@ ${images.length > 0 ? images.map(img => `![image](${img.url})`).join('\n\n') : '
         <Alert status="info" size="sm" borderRadius="md">
           <AlertIcon />
           <Text fontSize="sm">
-            Your coin will be posted as a snap to Skatehive automatically. Once created, you can share and trade it on Zora.
+            Your coin will be posted as a snap to Skatehive automatically. Once
+            created, you can share and trade it on Zora.
           </Text>
         </Alert>
 
@@ -334,7 +340,7 @@ ${images.length > 0 ? images.map(img => `![image](${img.url})`).join('\n\n') : '
             </Button>
             {images.length > 0 && (
               <Text fontSize="sm" color={placeholderColor}>
-                {images.length} image{images.length > 1 ? 's' : ''} added
+                {images.length} image{images.length > 1 ? "s" : ""} added
               </Text>
             )}
           </HStack>
@@ -377,20 +383,21 @@ ${images.length > 0 ? images.map(img => `![image](${img.url})`).join('\n\n') : '
         )}
 
         {/* Upload Progress */}
-        {uploadProgress.some(p => p > 0) && (
+        {uploadProgress.some((p) => p > 0) && (
           <VStack spacing={1}>
             <Text fontSize="sm">Uploading images...</Text>
-            {uploadProgress.map((progress, index) => (
-              progress > 0 && (
-                <Progress
-                  key={index}
-                  value={progress}
-                  size="sm"
-                  width="100%"
-                  colorScheme="blue"
-                />
-              )
-            ))}
+            {uploadProgress.map(
+              (progress, index) =>
+                progress > 0 && (
+                  <Progress
+                    key={index}
+                    value={progress}
+                    size="sm"
+                    width="100%"
+                    colorScheme="blue"
+                  />
+                )
+            )}
           </VStack>
         )}
 
@@ -399,16 +406,25 @@ ${images.length > 0 ? images.map(img => `![image](${img.url})`).join('\n\n') : '
           colorScheme="orange"
           size="lg"
           onClick={handleCreateCoin}
-          disabled={isLoading || isCreating || !title.trim() || !description.trim() || !symbol.trim()}
-          leftIcon={isLoading || isCreating ? <Spinner size="sm" /> : <FaCoins />}
+          disabled={
+            isLoading ||
+            isCreating ||
+            !title.trim() ||
+            !description.trim() ||
+            !symbol.trim()
+          }
+          leftIcon={
+            isLoading || isCreating ? <Spinner size="sm" /> : <FaCoins />
+          }
         >
           {isLoading || isCreating ? "Creating Coin..." : "Create Coin"}
         </Button>
 
         {/* Info */}
         <Text fontSize="xs" color={placeholderColor} textAlign="center">
-          Your coin will be created on Zora and posted as a snap to Skatehive automatically.
-          Make sure your wallet is connected and has sufficient Base ETH for gas fees.
+          Your coin will be created on Zora and posted as a snap to Skatehive
+          automatically. Make sure your wallet is connected and has sufficient
+          Base ETH for gas fees.
         </Text>
       </VStack>
     </Box>
