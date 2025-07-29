@@ -1,6 +1,6 @@
 # Skatehive 3.0
 
-Skatehive 3.0 is a Next.js application for the [Skatehive](https://www.skatehive.app) community. It lets users post content to the Hive blockchain, share skate spots, view community bounties and leaderboards and receive Farcaster notifications. The project uses Chakra UI for styling along with Tailwind utilities and integrates with Aioha, Whisk, Wagmi/Viem and React Query.
+Skatehive 3.0 is a Next.js application for the [Skatehive](https://www.skatehive.app) community. It lets users post content to the Hive blockchain, share skate spots, view community bounties and leaderboards and receive Farcaster notifications. The project uses Chakra UI for styling along with Tailwind utilities and integrates with Aioha, Wagmi/Viem and React Query.
 
 ## Local Development
 
@@ -63,7 +63,6 @@ Additional variables used by specific features:
 - `ADMIN_USERS` – comma-separated list of usernames with admin privileges for Farcaster notifications (e.g., `user1,user2,user3`)
 - `PINATA_API_KEY` and `PINATA_SECRET_API_KEY` – upload media to Pinata/IPFS
 - `GIPHY_API_KEY` – GIF search in the composer
-- `NEXT_PUBLIC_WHISK_API_KEY` – Whisk social identity resolution
 - `EMAIL_USER`, `EMAIL_PASS`, `EMAIL_COMMUNITY`, `EMAIL_RECOVERYACC` – sending invite emails
 - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLIC_KEY`, `SUPABASE_PRIVATE_KEY` – Supabase integration
 - Ethereum/Wagmi keys such as `NEXT_PUBLIC_WC_PROJECT_ID`, `ETHERSCAN_API_KEY`, `NEXT_PUBLIC_ALCHEMY_KEY` and DAO addresses (`NEXT_PUBLIC_TOKEN`, `NEXT_PUBLIC_METADATA`, `NEXT_PUBLIC_AUCTION`, `NEXT_PUBLIC_TREASURY`, `NEXT_PUBLIC_GOVERNOR`)
