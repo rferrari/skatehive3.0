@@ -27,8 +27,11 @@ export class MarkdownProcessor {
     // Step 1: Process media content (from existing MarkdownRenderer)
     const processedContent = processMediaContent(content);
 
+    // Insert placeholders after Zora coin links
+    const withZora = this.addZoraCoinPlaceholders(processedContent);
+
     // Step 2: Extract video placeholders and convert to our format
-    const contentWithPlaceholders = this.convertToVideoPlaceholders(processedContent);
+    const contentWithPlaceholders = this.convertToVideoPlaceholders(withZora);
 
     // Step 3: Detect Instagram embeds
     const hasInstagramEmbeds = processedContent.includes("<!--INSTAGRAM_EMBED_SCRIPT-->");
@@ -74,5 +77,12 @@ export class MarkdownProcessor {
 
   static clearCache(): void {
     markdownProcessingCache.clear();
+  }
+
+  private static addZoraCoinPlaceholders(content: string): string {
+    return content.replace(
+      /(https:\/\/zora\.co\/coin\/([a-zA-Z0-9:]+))/g,
+      (_match, url, addr) => `${url} [[ZORACOIN:${addr}]]`
+    );
   }
 }

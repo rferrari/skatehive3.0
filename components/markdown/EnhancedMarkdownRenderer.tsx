@@ -5,6 +5,7 @@ import {
 } from "@/lib/markdown/MarkdownProcessor";
 import { VideoEmbed } from "./VideoEmbed";
 import InstagramEmbed from "./InstagramEmbed";
+import ZoraCoinPreview from "./ZoraCoinPreview";
 import HiveMarkdown from "@/components/shared/HiveMarkdown";
 
 interface EnhancedMarkdownRendererProps {
@@ -32,7 +33,7 @@ function renderContentWithVideos(
 ): React.ReactNode[] {
   // Split on all supported video and social media placeholders
   const parts = processed.contentWithPlaceholders.split(
-    /(\[\[(VIDEO|ODYSEE|YOUTUBE|VIMEO|INSTAGRAM):([^\]]+)\]\])/g
+    /(\[\[(VIDEO|ODYSEE|YOUTUBE|VIMEO|INSTAGRAM|ZORACOIN):([^\]]+)\]\])/g
   );
 
   return parts
@@ -54,6 +55,13 @@ function renderContentWithVideos(
       if (instagramMatch) {
         const url = instagramMatch[1];
         return <InstagramEmbed key={`instagram-${idx}`} url={url} />;
+      }
+
+      // Handle Zora coin placeholders
+      const zoraMatch = part.match(/^\[\[ZORACOIN:([^\]]+)\]\]$/);
+      if (zoraMatch) {
+        const addr = zoraMatch[1];
+        return <ZoraCoinPreview key={`zora-${idx}`} address={addr} />;
       }
 
       // Skip empty parts or parts that are just whitespace
