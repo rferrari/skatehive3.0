@@ -47,10 +47,10 @@ export default function DAOPage() {
             <div className="absolute -top-2 -right-2 w-4 h-4 bg-orange-400 rounded-full animate-pulse"></div>
           </div>
 
-          <p className="text-gray-300 text-lg md:text-xl leading-relaxed mb-8"></p>
-            We&#39;re building something awesome for the Skatehive community. Our
-            DAO governance system will give you the power to shape the future of
-            skateboarding culture.
+          <p className="text-gray-300 text-lg md:text-xl leading-relaxed mb-8">
+            We&#39;re building something awesome for the Skatehive community.
+            Our DAO governance system will give you the power to shape the
+            future of skateboarding culture.
           </p>
 
           {/* Construction Icon */}
