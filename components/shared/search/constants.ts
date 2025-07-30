@@ -59,7 +59,7 @@ export const STATIC_PAGES: PageResult[] = [
   },
   {
     title: "Skate Spots",
-    path: "/skatespots",
+    path: "/map",
     description: "Discover skateboarding spots around the world",
     icon: FaMapMarkerAlt,
   },

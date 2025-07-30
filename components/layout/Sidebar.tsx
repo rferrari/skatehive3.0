@@ -164,7 +164,7 @@ export default function Sidebar() {
             <NavItem href="/leaderboard" icon={FiAward}>
               Leaderboard
             </NavItem>
-            <NavItem href="/skatespots" icon={FiMap}>
+            <NavItem href="/map" icon={FiMap}>
               Skatespots
             </NavItem>
             <NavItem href="/bounties" icon={FiTarget}>

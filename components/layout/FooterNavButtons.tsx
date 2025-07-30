@@ -815,7 +815,7 @@ export default function FooterNavButtons() {
     },
     {
       src: "/buttons/map.riv",
-      onClick: () => router.push("/skatespots"),
+      onClick: () => router.push("/map"),
       name: "Skate Spots",
     },
     {
