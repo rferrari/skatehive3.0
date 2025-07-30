@@ -24,6 +24,72 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             changeFrequency: 'weekly',
             priority: 0.7,
         },
+        {
+            url: `${baseUrl}/bounties`,
+            lastModified: new Date(),
+            changeFrequency: 'daily',
+            priority: 0.7,
+        },
+        {
+            url: `${baseUrl}/auction`,
+            lastModified: new Date(),
+            changeFrequency: 'daily',
+            priority: 0.7,
+        },
+        {
+            url: `${baseUrl}/map`,
+            lastModified: new Date(),
+            changeFrequency: 'weekly',
+            priority: 0.6,
+        },
+        {
+            url: `${baseUrl}/magazine`,
+            lastModified: new Date(),
+            changeFrequency: 'weekly',
+            priority: 0.6,
+        },
+        {
+            url: `${baseUrl}/wallet`,
+            lastModified: new Date(),
+            changeFrequency: 'monthly',
+            priority: 0.5,
+        },
+        {
+            url: `${baseUrl}/compose`,
+            lastModified: new Date(),
+            changeFrequency: 'monthly',
+            priority: 0.5,
+        },
+        {
+            url: `${baseUrl}/settings`,
+            lastModified: new Date(),
+            changeFrequency: 'monthly',
+            priority: 0.4,
+        },
+        {
+            url: `${baseUrl}/join`,
+            lastModified: new Date(),
+            changeFrequency: 'monthly',
+            priority: 0.6,
+        },
+        {
+            url: `${baseUrl}/invite`,
+            lastModified: new Date(),
+            changeFrequency: 'monthly',
+            priority: 0.4,
+        },
+        {
+            url: `${baseUrl}/notifications`,
+            lastModified: new Date(),
+            changeFrequency: 'monthly',
+            priority: 0.3,
+        },
+        {
+            url: `${baseUrl}/share`,
+            lastModified: new Date(),
+            changeFrequency: 'monthly',
+            priority: 0.3,
+        },
     ];
 
     try {
@@ -47,7 +113,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
                 priority: 0.6,
             }));
 
-        return [...staticPages, ...snapPages];
+        // Add individual post pages
+        const postPages: MetadataRoute.Sitemap = recentPosts
+            .slice(0, 30) // Limit to most recent 30 posts
+            .map((post: any) => ({
+                url: `${baseUrl}/post/${post.author}/${post.permlink}`,
+                lastModified: new Date(post.created),
+                changeFrequency: 'monthly' as const,
+                priority: 0.5,
+            }));
+
+        return [...staticPages, ...snapPages, ...postPages];
     } catch (error) {
         console.error('Error generating sitemap:', error);
         // Return at least static pages if dynamic generation fails
