@@ -47,11 +47,6 @@ export default function CoinCreatorComposer({
   // Refs
   const imageUploadRef = useRef<HTMLInputElement>(null);
 
-  // Theme colors
-  const bgColor = useColorModeValue("white", "gray.800");
-  const borderColor = useColorModeValue("gray.200", "gray.600");
-  const placeholderColor = useColorModeValue("gray.500", "gray.400");
-
   // Image upload handler
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -215,10 +210,10 @@ ${zoraUrl}
     return (
       <Box
         p={6}
-        bg={bgColor}
+        bg={"background"}
         borderRadius="md"
         border="1px solid"
-        borderColor={borderColor}
+        borderColor={"primary"}
         textAlign="center"
       >
         <VStack spacing={3}>
@@ -226,7 +221,7 @@ ${zoraUrl}
           <Text fontSize="lg" fontWeight="bold">
             Connect Ethereum Wallet
           </Text>
-          <Text color={placeholderColor}>
+          <Text color={"muted"}>
             Connect your Ethereum wallet to create coins on Skatehive
           </Text>
         </VStack>
@@ -237,10 +232,10 @@ ${zoraUrl}
   return (
     <Box
       p={4}
-      bg={bgColor}
+      bg={"background"}
       borderRadius="md"
       border="1px solid"
-      borderColor={borderColor}
+      borderColor={"primary"}
       mb={4}
     >
       <VStack spacing={4} align="stretch">
@@ -254,7 +249,7 @@ ${zoraUrl}
           </HStack>
           <HStack spacing={2}>
             <FaEthereum color="#627eea" />
-            <Text fontSize="sm" color={placeholderColor}>
+            <Text fontSize="sm" color={"primary"}>
               {address?.slice(0, 6)}...{address?.slice(-4)}
             </Text>
           </HStack>
@@ -329,7 +324,7 @@ ${zoraUrl}
               Add Images
             </Button>
             {images.length > 0 && (
-              <Text fontSize="sm" color={placeholderColor}>
+              <Text fontSize="sm" color={"primary"}>
                 {images.length} image{images.length > 1 ? "s" : ""} added
               </Text>
             )}
@@ -353,7 +348,7 @@ ${zoraUrl}
                     objectFit="cover"
                     borderRadius="md"
                     border="1px solid"
-                    borderColor={borderColor}
+                    borderColor={"primary"}
                   />
                   <IconButton
                     aria-label="Remove image"
@@ -411,7 +406,7 @@ ${zoraUrl}
         </Button>
 
         {/* Info */}
-        <Text fontSize="xs" color={placeholderColor} textAlign="center">
+        <Text fontSize="xs" color={"muted"} textAlign="center">
           Your coin will be created on Zora and posted as a snap to Skatehive
           automatically. Make sure your wallet is connected and has sufficient
           Base ETH for gas fees.

@@ -61,9 +61,6 @@ export function CoinCreationModal({
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-  const bgColor = useColorModeValue("white", "gray.800");
-  const borderColor = useColorModeValue("gray.200", "gray.600");
-
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
 
@@ -150,7 +147,7 @@ export function CoinCreationModal({
   return (
     <Modal isOpen={isOpen} onClose={handleClose} size="lg">
       <ModalOverlay />
-      <ModalContent bg={bgColor} border="1px" borderColor={borderColor}>
+      <ModalContent bg={"background"} border="1px" borderColor={"primary"}>
         <ModalHeader>Create Coin from Post</ModalHeader>
         <ModalCloseButton />
         <ModalBody pb={6}>
@@ -213,7 +210,7 @@ export function CoinCreationModal({
                 {postData.images.length > 0 ? (
                   <Box
                     border="1px"
-                    borderColor={borderColor}
+                    borderColor={"primary"}
                     borderRadius="md"
                     p={2}
                     w="full"
