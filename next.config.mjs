@@ -50,6 +50,12 @@ const nextConfig = {
                 destination: '/user/:username',
                 permanent: true,
             },
+            // Old profile page: /skater/author -> /user/author
+            {
+                source: '/skater/:author',
+                destination: '/user/:author',
+                permanent: true,
+            },
             // Post redirects: /@author/permlink -> /post/author/permlink
             {
                 source: '/@:author/:permlink',
@@ -61,8 +67,7 @@ const nextConfig = {
                 source: '/:category/@:author/:permlink',
                 destination: '/post/:author/:permlink',
                 permanent: true,
-            }
-            ,
+            },
             {
                 source: '/post/hive-173115/@:author/:permlink',
                 destination: '/post/:author/:permlink',
