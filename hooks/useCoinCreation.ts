@@ -110,24 +110,14 @@ export function useCoinCreation() {
         const isVideo = fileType.startsWith("video/");
         const isImage = fileType.startsWith("image/");
 
-        console.log('Media file detected:', {
-          name: coinData.mediaFile.name,
-          type: fileType,
-          size: coinData.mediaFile.size,
-          isVideo,
-          isImage
-        });
-
         if (isVideo) {
           // For videos, use withMedia() which sets animation_url
           metadataBuilder.withMedia(coinData.mediaFile);
-          console.log('✅ Added video as media (animation_url)');
           
           try {
             // Auto-generate thumbnail for video
             const thumbnail = await generateVideoThumbnail(coinData.mediaFile);
             metadataBuilder.withImage(thumbnail);
-            console.log('✅ Generated and added thumbnail image');
           } catch (thumbnailError) {
             console.warn('Failed to generate video thumbnail:', thumbnailError);
             // Continue without thumbnail - video will still work
@@ -136,7 +126,6 @@ export function useCoinCreation() {
         } else if (isImage) {
           // For images, use the standard image method
           metadataBuilder.withImage(coinData.mediaFile);
-          console.log('✅ Added image as image');
         } else {
           console.warn('Unsupported file type:', fileType);
           // Try to add as media anyway as fallback
@@ -152,26 +141,16 @@ export function useCoinCreation() {
           const isImage = contentType.startsWith('image/');
           const isVideo = contentType.startsWith('video/');
           
-          console.log('Fetched media URL for coin creation:', {
-            url: coinData.mediaUrl,
-            contentType,
-            isImage,
-            isVideo,
-            size: blob.size,
-          });
-          
           if (isVideo) {
             // Handle video from URL
             const filename = 'coin-video.mp4';
             const file = new File([blob], filename, { type: contentType });
             metadataBuilder.withMedia(file);
-            console.log('✅ Using IPFS video for coin:', filename, file.size, 'bytes');
             
             // Try to generate thumbnail for video from URL
             try {
               const thumbnail = await generateVideoThumbnail(file);
               metadataBuilder.withImage(thumbnail);
-              console.log('✅ Generated thumbnail for video from URL');
             } catch (thumbnailError) {
               console.warn('Failed to generate thumbnail for video from URL:', thumbnailError);
             }
@@ -180,7 +159,6 @@ export function useCoinCreation() {
             const filename = coinData.mediaUrl.includes('thumbnail') ? 'coin-thumbnail.jpg' : 'coin-image.jpg';
             const file = new File([blob], filename, { type: contentType });
             metadataBuilder.withImage(file);
-            console.log('✅ Using IPFS image for coin:', filename, file.size, 'bytes');
           } else {
             console.warn('Unsupported media type from URL:', contentType);
           }
@@ -191,9 +169,6 @@ export function useCoinCreation() {
       } else if (coinData.image) {
         // Use image file directly (legacy support for direct file uploads)
         metadataBuilder.withImage(coinData.image);
-        console.log('✅ Using direct image file for coin');
-      } else {
-        console.log('No media provided for coin - creating text-only coin');
       }
 
       const { createMetadataParameters } = await metadataBuilder
@@ -274,7 +249,6 @@ export function useCoinCreation() {
             });
             
             if (updateResult.success) {
-              console.log('✅ Post updated with coin link via server action');
               toast({
                 title: 'Post updated with Zora coin!',
                 description: 'Your post has been updated to include the coin collection link.',
@@ -318,25 +292,6 @@ export function useCoinCreation() {
 
     } catch (error: any) {
       console.error('Failed to create coin:', error);
-      console.error('Error details:', {
-        message: error.message,
-        stack: error.stack,
-        name: error.name,
-        cause: error.cause,
-        code: error.code,
-        data: error.data,
-      });
-      
-      // Log the coin data that caused the error
-      console.error('Coin data that failed:', {
-        name: coinData.name,
-        symbol: coinData.symbol,
-        hasImage: !!coinData.image,
-        hasMediaFile: !!coinData.mediaFile,
-        mediaFileType: coinData.mediaFile?.type,
-        mediaFileSize: coinData.mediaFile?.size,
-        hasMediaUrl: !!coinData.mediaUrl,
-      });
       
       toast({
         title: 'Failed to create coin',

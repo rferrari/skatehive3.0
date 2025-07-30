@@ -310,37 +310,6 @@ export default function CoinCreatorComposer({
     setVideoThumbnail(null);
   };
 
-  // Upload file to IPFS via Pinata
-  const uploadToIPFS = async (
-    file: File,
-    filename: string
-  ): Promise<string> => {
-    console.log("Uploading file to IPFS...", {
-      name: file.name,
-      size: file.size,
-      type: file.type,
-      customFilename: filename,
-    });
-
-    const formData = new FormData();
-    formData.append("file", file, filename);
-    formData.append("creator", address || "skatehive");
-
-    const response = await fetch("/api/pinata", {
-      method: "POST",
-      body: formData,
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to upload file to IPFS: ${response.status}`);
-    }
-
-    const result = await response.json();
-    console.log("File uploaded to IPFS:", result);
-
-    return `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`;
-  };
-
   // Handle coin creation
   const handleCreateCoin = async () => {
     if (!isConnected || !address) {
@@ -363,8 +332,6 @@ export default function CoinCreatorComposer({
     setIsLoading(true);
 
     try {
-      console.log("Creating coin for Ethereum user...");
-
       // Prepare coin data for Zora SDK - pass files directly to Zora uploader
       const coinData = {
         name: title,
@@ -391,16 +358,12 @@ export default function CoinCreatorComposer({
         postParentPermlink: "",
       };
 
-      console.log("Creating coin with data:", coinData);
-
       // Create the coin using Zora's native video support
       const coinResult = await createCoin(coinData);
 
       if (!coinResult?.address) {
         throw new Error("Failed to get coin address from creation result");
       }
-
-      console.log("✅ Coin created:", coinResult);
 
       // Generate Zora URL for the coin
       const zoraUrl = `https://zora.co/coin/base:${coinResult.address}`;
@@ -415,8 +378,6 @@ ${videoFile ? `🎥 **Video coin with ${videoFile.type} media**\n\n` : ""}---
 ${zoraUrl}
 `;
 
-      console.log("Creating snap with coin URL...");
-
       const snapResult = await createSnapAsSkatedev({
         body: snapBody,
         tags: ["coin-creation", "ethereum", "zora", symbol.toLowerCase()],
@@ -427,13 +388,8 @@ ${zoraUrl}
       });
 
       if (!snapResult.success) {
-        console.warn(
-          "Coin created but snap creation failed:",
-          snapResult.error
-        );
+        console.warn("Coin created but snap creation failed:", snapResult.error);
         // Don't throw here - coin was created successfully
-      } else {
-        console.log("✅ Snap created:", snapResult);
       }
 
       // Clear form
