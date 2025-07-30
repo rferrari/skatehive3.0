@@ -15,6 +15,8 @@ import { getCoin } from "@zoralabs/coins-sdk";
 import { base } from "viem/chains";
 import type { Address } from "viem";
 import ZoraTradingModal from "./ZoraTradingModalClient";
+import VideoRenderer from "../layout/VideoRenderer";
+import { convertIpfsUrl } from "@/lib/utils/ipfsMetadata";
 import { CgArrowsExchange } from "react-icons/cg";
 
 interface ZoraCoinPreviewProps {
@@ -25,6 +27,8 @@ interface TokenData {
   name?: string;
   symbol?: string;
   image?: string;
+  videoUrl?: string;
+  hasVideo?: boolean;
   price?: number;
   marketCap?: string;
   volume24h?: string;
@@ -41,24 +45,108 @@ export default function ZoraCoinPreview({ address }: ZoraCoinPreviewProps) {
   useEffect(() => {
     let ignore = false;
 
+    console.log("🎬 ZoraCoinPreview - Component mounted for address:", address);
+
     async function fetchCoinData() {
       try {
         setLoading(true);
+        console.log("🎬 ZoraCoinPreview - Fetching coin data for:", address);
 
         const response = await getCoin({
           address: address as Address,
           chain: base.id, // Default to Base chain since most Zora coins are on Base
         });
 
+        console.log("🎬 ZoraCoinPreview - Raw API response:", response);
+
         const coin = response.data?.zora20Token;
 
         if (!ignore && coin) {
+          console.log("🎬 ZoraCoinPreview - Coin data received:", {
+            name: coin.name,
+            symbol: coin.symbol,
+            mediaContent: coin.mediaContent,
+            address: address,
+          });
+
+          // Check for video content based on MIME type and URI
+          let videoUrl: string | undefined = undefined;
+          let hasVideo = false;
+
+          if (coin.mediaContent) {
+            const { mimeType, originalUri } = coin.mediaContent;
+
+            console.log("🎬 ZoraCoinPreview - Media content details:", {
+              mimeType,
+              originalUri,
+              isVideoMimeType: mimeType && mimeType.startsWith("video/"),
+            });
+
+            // Check if the MIME type indicates video content
+            if (mimeType && mimeType.startsWith("video/")) {
+              videoUrl = convertIpfsUrl(originalUri);
+              hasVideo = true;
+              console.log("✅ ZoraCoinPreview - Video detected by MIME type:", {
+                originalUri,
+                convertedUrl: videoUrl,
+                gateway: "ipfs.io (public gateway)",
+              });
+            }
+            // Also check URI for video file extensions as fallback
+            else if (
+              originalUri &&
+              (originalUri.includes(".mp4") ||
+                originalUri.includes(".webm") ||
+                originalUri.includes(".mov") ||
+                originalUri.includes(".avi"))
+            ) {
+              videoUrl = convertIpfsUrl(originalUri);
+              hasVideo = true;
+              console.log(
+                "✅ ZoraCoinPreview - Video detected by file extension:",
+                {
+                  originalUri,
+                  convertedUrl: videoUrl,
+                  gateway: "ipfs.io (public gateway)",
+                }
+              );
+            } else {
+              console.log("❌ ZoraCoinPreview - No video detected:", {
+                mimeType,
+                originalUri,
+                hasVideoExtension:
+                  originalUri &&
+                  (originalUri.includes(".mp4") ||
+                    originalUri.includes(".webm") ||
+                    originalUri.includes(".mov") ||
+                    originalUri.includes(".avi")),
+              });
+            }
+          } else {
+            console.log("❌ ZoraCoinPreview - No mediaContent found");
+          }
+
+          const imageUrl = coin.mediaContent?.previewImage?.medium
+            ? convertIpfsUrl(coin.mediaContent.previewImage.medium)
+            : coin.mediaContent?.previewImage?.small
+            ? convertIpfsUrl(coin.mediaContent.previewImage.small)
+            : undefined;
+
+          console.log("🎬 ZoraCoinPreview - Final token data:", {
+            hasVideo,
+            videoUrl,
+            imageUrl,
+            name: coin.name,
+            symbol: coin.symbol,
+            usingGateway: "ipfs.io",
+          });
+
           setToken({
             name: coin.name,
             symbol: coin.symbol,
-            image:
-              coin.mediaContent?.previewImage?.medium ||
-              coin.mediaContent?.previewImage?.small,
+            image: imageUrl,
+            videoUrl,
+            hasVideo,
             price: undefined, // Price might not be directly available in this response
             marketCap: coin.marketCap,
             volume24h: coin.volume24h,
@@ -68,7 +156,11 @@ export default function ZoraCoinPreview({ address }: ZoraCoinPreviewProps) {
           });
         }
       } catch (error) {
-        console.error("Error fetching coin data:", error);
+        console.error("🎬 ZoraCoinPreview - Error fetching coin data:", {
+          error,
+          address,
+          errorMessage: error instanceof Error ? error.message : String(error),
+        });
         // Silently fail for preview components
       } finally {
         if (!ignore) {
@@ -80,7 +172,6 @@ export default function ZoraCoinPreview({ address }: ZoraCoinPreviewProps) {
     fetchCoinData();
 
     return () => {
-      console.log("🧹 ZoraCoinPreview cleanup for address:", address);
       ignore = true;
     };
   }, [address]);
@@ -110,13 +201,31 @@ export default function ZoraCoinPreview({ address }: ZoraCoinPreviewProps) {
       >
         <Center>
           <VStack spacing={2} width="full">
-            {token.image && (
-              <Image
-                src={token.image}
-                alt={token.name}
-                width="full"
-                borderRadius="md"
-              />
+            {token.hasVideo && token.videoUrl ? (
+              <>
+                {console.log(
+                  "🎬 ZoraCoinPreview - Rendering Video with gateway fallback for:",
+                  token.videoUrl
+                )}
+                <Box width="full" borderRadius="md" overflow="hidden">
+                  <VideoRenderer src={convertIpfsUrl(token.videoUrl)} />
+                </Box>
+              </>
+            ) : token.image ? (
+              <>
+                {console.log(
+                  "🎬 ZoraCoinPreview - Rendering Image with:",
+                  token.image
+                )}
+                <Image
+                  src={token.image}
+                  alt={token.name}
+                  width="full"
+                  borderRadius="md"
+                />
+              </>
+            ) : (
+              <>{console.log("🎬 ZoraCoinPreview - No media to render")}</>
             )}
             <Link
               href={`https://zora.co/coin/base:${address}`}

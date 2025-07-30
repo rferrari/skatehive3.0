@@ -388,7 +388,10 @@ ${zoraUrl}
       });
 
       if (!snapResult.success) {
-        console.warn("Coin created but snap creation failed:", snapResult.error);
+        console.warn(
+          "Coin created but snap creation failed:",
+          snapResult.error
+        );
         // Don't throw here - coin was created successfully
       }
 

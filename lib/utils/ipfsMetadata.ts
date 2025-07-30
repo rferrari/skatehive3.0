@@ -46,6 +46,49 @@ export function extractIPFSHash(url: string): string | null {
 }
 
 /**
+ * Convert IPFS URLs to HTTP gateway URLs with multiple gateway fallbacks
+ * @param url The URL to convert (can be ipfs:// or regular HTTP)
+ * @param preferredGateway Optional preferred gateway (defaults to trying multiple)
+ * @returns HTTP URL that browsers can load
+ */
+export function convertIpfsUrl(url: string, preferredGateway?: string): string {
+    if (!url.startsWith('ipfs://')) {
+        return url;
+    }
+
+    const hash = url.replace('ipfs://', '');
+    
+    // If a preferred gateway is specified, use it
+    if (preferredGateway) {
+        return `${preferredGateway}/ipfs/${hash}`;
+    }
+    
+    // Default to Zora's gateway for best coverage of Zora content
+    return `https://magic.decentralized-content.com/ipfs/${hash}`;
+}
+
+/**
+ * Get multiple IPFS gateway URLs for fallback loading
+ * @param url The IPFS URL to convert
+ * @returns Array of gateway URLs to try
+ */
+export function getIpfsGatewayUrls(url: string): string[] {
+    if (!url.startsWith('ipfs://')) {
+        return [url];
+    }
+
+    const hash = url.replace('ipfs://', '');
+    
+    return [
+        `https://magic.decentralized-content.com/ipfs/${hash}`, // Zora's gateway (best for Zora content)
+        `https://ipfs.io/ipfs/${hash}`,           // Public IPFS gateway (most reliable)
+        `https://cloudflare-ipfs.com/ipfs/${hash}`, // Cloudflare IPFS gateway
+        `https://gateway.pinata.cloud/ipfs/${hash}`, // Pinata public gateway
+        `https://ipfs.skatehive.app/ipfs/${hash}`,   // SkateHive gateway (as fallback)
+    ];
+}
+
+/**
  * Get thumbnail URL for a video IPFS hash or URL
  * @param input Either an IPFS hash or full IPFS URL
  * @returns The thumbnail URL or null if not available
