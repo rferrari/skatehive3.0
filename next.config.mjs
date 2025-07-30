@@ -72,6 +72,12 @@ const nextConfig = {
                 source: '/post/hive-173115/@:author/:permlink',
                 destination: '/post/:author/:permlink',
                 permanent: true,
+            },
+            // Redirect /skatespots to /map
+            {
+                source: '/skatespots',
+                destination: '/map',
+                permanent: true,
             }
         ];
     },
