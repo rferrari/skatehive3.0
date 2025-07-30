@@ -1,5 +1,3 @@
-'use client';
-
 import { useState, useCallback } from 'react';
 import { createCoin, DeployCurrency, createMetadataBuilder, createZoraUploaderForCreator, setApiKey } from '@zoralabs/coins-sdk';
 import { useAccount, useWalletClient, usePublicClient } from 'wagmi';
@@ -11,12 +9,63 @@ import { KeyTypes } from "@aioha/aioha";
 import { Operation } from "@hiveio/dhive";
 import { updatePostWithCoinInfo } from "@/lib/hive/server-actions";
 
+// Utility function to generate thumbnail from video file
+const generateVideoThumbnail = async (videoFile: File): Promise<File> => {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement('video');
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx) {
+      reject(new Error('Failed to get canvas context'));
+      return;
+    }
+
+    video.onloadedmetadata = () => {
+      // Set canvas dimensions to video dimensions
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      
+      // Seek to 1 second (or 10% of video duration, whichever is smaller)
+      const seekTime = Math.min(1, video.duration * 0.1);
+      video.currentTime = seekTime;
+    };
+
+    video.onseeked = () => {
+      // Draw the current frame to canvas
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      // Convert canvas to blob
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const thumbnailFile = new File([blob], `${videoFile.name}_thumbnail.jpg`, {
+            type: 'image/jpeg'
+          });
+          resolve(thumbnailFile);
+        } else {
+          reject(new Error('Failed to generate thumbnail blob'));
+        }
+      }, 'image/jpeg', 0.8);
+    };
+
+    video.onerror = () => {
+      reject(new Error('Failed to load video for thumbnail generation'));
+    };
+
+    // Load the video
+    video.src = URL.createObjectURL(videoFile);
+    video.load();
+  });
+};
+
 export interface CoinCreationData {
   name: string;
   symbol: string;
   description: string;
   image?: File;
   mediaUrl?: string;
+  mediaFile?: File;
+  animationUrl?: string; // For video content
   postAuthor?: string;
   postPermlink?: string;
   postBody: string;
@@ -55,20 +104,96 @@ export function useCoinCreation() {
         .withSymbol(coinData.symbol)
         .withDescription(coinData.description);
 
-      // Add image if provided (File object takes priority over URL)
-      if (coinData.image) {
-        metadataBuilder.withImage(coinData.image);
-      } else if (coinData.mediaUrl) {
-        // For mediaUrl (string), we need to fetch and convert to File
+      // Add media - prioritize direct files (including videos) then URLs
+      if (coinData.mediaFile) {
+        const fileType = coinData.mediaFile.type;
+        const isVideo = fileType.startsWith("video/");
+        const isImage = fileType.startsWith("image/");
+
+        console.log('Media file detected:', {
+          name: coinData.mediaFile.name,
+          type: fileType,
+          size: coinData.mediaFile.size,
+          isVideo,
+          isImage
+        });
+
+        if (isVideo) {
+          // For videos, use withMedia() which sets animation_url
+          metadataBuilder.withMedia(coinData.mediaFile);
+          console.log('✅ Added video as media (animation_url)');
+          
+          try {
+            // Auto-generate thumbnail for video
+            const thumbnail = await generateVideoThumbnail(coinData.mediaFile);
+            metadataBuilder.withImage(thumbnail);
+            console.log('✅ Generated and added thumbnail image');
+          } catch (thumbnailError) {
+            console.warn('Failed to generate video thumbnail:', thumbnailError);
+            // Continue without thumbnail - video will still work
+          }
+          
+        } else if (isImage) {
+          // For images, use the standard image method
+          metadataBuilder.withImage(coinData.mediaFile);
+          console.log('✅ Added image as image');
+        } else {
+          console.warn('Unsupported file type:', fileType);
+          // Try to add as media anyway as fallback
+          metadataBuilder.withMedia(coinData.mediaFile);
+        }
+      } else if (coinData.mediaUrl && coinData.mediaUrl.trim()) {
+        // For URLs (including IPFS URLs), we need to fetch and convert to File for the metadata builder
         try {
           const response = await fetch(coinData.mediaUrl);
           const blob = await response.blob();
-          const file = new File([blob], 'coin-image.jpg', { type: blob.type });
-          metadataBuilder.withImage(file);
+          // Use actual content type from response
+          const contentType = blob.type || 'application/octet-stream';
+          const isImage = contentType.startsWith('image/');
+          const isVideo = contentType.startsWith('video/');
+          
+          console.log('Fetched media URL for coin creation:', {
+            url: coinData.mediaUrl,
+            contentType,
+            isImage,
+            isVideo,
+            size: blob.size,
+          });
+          
+          if (isVideo) {
+            // Handle video from URL
+            const filename = 'coin-video.mp4';
+            const file = new File([blob], filename, { type: contentType });
+            metadataBuilder.withMedia(file);
+            console.log('✅ Using IPFS video for coin:', filename, file.size, 'bytes');
+            
+            // Try to generate thumbnail for video from URL
+            try {
+              const thumbnail = await generateVideoThumbnail(file);
+              metadataBuilder.withImage(thumbnail);
+              console.log('✅ Generated thumbnail for video from URL');
+            } catch (thumbnailError) {
+              console.warn('Failed to generate thumbnail for video from URL:', thumbnailError);
+            }
+          } else if (isImage) {
+            // This should be our thumbnail from IPFS for video coins, or regular image for image coins
+            const filename = coinData.mediaUrl.includes('thumbnail') ? 'coin-thumbnail.jpg' : 'coin-image.jpg';
+            const file = new File([blob], filename, { type: contentType });
+            metadataBuilder.withImage(file);
+            console.log('✅ Using IPFS image for coin:', filename, file.size, 'bytes');
+          } else {
+            console.warn('Unsupported media type from URL:', contentType);
+          }
         } catch (error) {
           console.warn('Failed to fetch media URL for coin image:', error);
           // Continue without image
         }
+      } else if (coinData.image) {
+        // Use image file directly (legacy support for direct file uploads)
+        metadataBuilder.withImage(coinData.image);
+        console.log('✅ Using direct image file for coin');
+      } else {
+        console.log('No media provided for coin - creating text-only coin');
       }
 
       const { createMetadataParameters } = await metadataBuilder
@@ -193,6 +318,25 @@ export function useCoinCreation() {
 
     } catch (error: any) {
       console.error('Failed to create coin:', error);
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+        cause: error.cause,
+        code: error.code,
+        data: error.data,
+      });
+      
+      // Log the coin data that caused the error
+      console.error('Coin data that failed:', {
+        name: coinData.name,
+        symbol: coinData.symbol,
+        hasImage: !!coinData.image,
+        hasMediaFile: !!coinData.mediaFile,
+        mediaFileType: coinData.mediaFile?.type,
+        mediaFileSize: coinData.mediaFile?.size,
+        hasMediaUrl: !!coinData.mediaUrl,
+      });
       
       toast({
         title: 'Failed to create coin',

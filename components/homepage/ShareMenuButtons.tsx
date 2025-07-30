@@ -11,6 +11,21 @@ import { useFarcasterContext } from "@/hooks/useFarcasterContext";
 import { useAioha } from "@aioha/react-ui";
 import { CoinCreationModal } from "@/components/shared/CoinCreationModal";
 
+// Utility function to check if a URL might be a video by making a HEAD request
+const checkIfUrlIsVideo = async (url: string): Promise<boolean> => {
+  try {
+    const response = await fetch(url, {
+      method: "HEAD",
+      mode: "cors",
+    });
+    const contentType = response.headers.get("content-type") || "";
+    return contentType.startsWith("video/");
+  } catch (error) {
+    // If we can't check, assume IPFS URLs might be videos if they're from skatehive
+    return url.includes("ipfs.skatehive.app");
+  }
+};
+
 // Minimal interface for what we need for sharing and coin creation
 interface ShareablePost {
   author: string;
@@ -72,18 +87,45 @@ const ShareMenuButtons = ({ comment }: ShareMenuButtonsProps) => {
     return comment.json_metadata || {};
   }, [comment.json_metadata]);
 
-  // Check if the post has media (images)
+  // Check if the post has media (images or videos)
   const hasMedia = useMemo(() => {
     // Check metadata first
     const hasMetadataImages = (parsedMetadata.image?.length ?? 0) > 0;
+    const hasVideoFlag = parsedMetadata.has_video === true;
 
     // Check for markdown image syntax in post body
     const hasMarkdownImages = comment.body
       ? /!\[.*?\]\([^\)]+\)/gi.test(comment.body)
       : false;
 
-    return hasMetadataImages || hasMarkdownImages;
-  }, [parsedMetadata.image, comment.body]);
+    // Check for video file extensions in post body (mp4, webm, mov, etc.)
+    const hasMarkdownVideos = comment.body
+      ? /\.(mp4|webm|mov|avi|mkv|flv|wmv|m4v|ogv)(\?[^\s]*)?/gi.test(
+          comment.body
+        )
+      : false;
+
+    // Check for IPFS video URLs (common pattern: ipfs.skatehive.app or other IPFS gateways)
+    const hasIPFSVideos = comment.body
+      ? /https?:\/\/(?:ipfs\.skatehive\.app|gateway\.ipfs\.io|ipfs\.io\/ipfs)\/[^\s]+/gi.test(
+          comment.body
+        )
+      : false;
+
+    // Check for HTML5 video tags
+    const hasVideoTags = comment.body
+      ? /<video[^>]*>[\s\S]*?<\/video>/gi.test(comment.body)
+      : false;
+
+    return (
+      hasMetadataImages ||
+      hasMarkdownImages ||
+      hasVideoFlag ||
+      hasMarkdownVideos ||
+      hasIPFSVideos ||
+      hasVideoTags
+    );
+  }, [parsedMetadata.image, parsedMetadata.has_video, comment.body]);
 
   // Extract image URLs from markdown content
   const extractImageUrls = useMemo(() => {
@@ -103,6 +145,84 @@ const ShareMenuButtons = ({ comment }: ShareMenuButtonsProps) => {
     return urls;
   }, [comment.body]);
 
+  // Extract video URLs from markdown content and HTML video tags
+  // Note: IPFS videos from skatehive.app often don't have file extensions,
+  // so we use metadata flags and URL patterns to detect them
+  const extractVideoUrls = useMemo(() => {
+    if (!comment.body) return [];
+
+    const videoUrls: string[] = [];
+
+    // Extract from markdown links that point to video files
+    const videoFileRegex =
+      /\[.*?\]\((.*?\.(mp4|webm|mov|avi|mkv|flv|wmv|m4v|ogv)(\?[^\s]*)?)\)/gi;
+    let match;
+    while ((match = videoFileRegex.exec(comment.body)) !== null) {
+      const url = match[1].trim();
+      if (url && !url.includes("[object") && !url.includes("undefined")) {
+        videoUrls.push(url);
+      }
+    }
+
+    // Extract from HTML5 video tags
+    const videoTagRegex = /<video[^>]*src=["']([^"']+)["'][^>]*>/gi;
+    while ((match = videoTagRegex.exec(comment.body)) !== null) {
+      const url = match[1].trim();
+      if (url && !url.includes("[object") && !url.includes("undefined")) {
+        videoUrls.push(url);
+      }
+    }
+
+    // Extract from direct video URLs in text (with extensions)
+    const directVideoRegex =
+      /https?:\/\/[^\s]+\.(mp4|webm|mov|avi|mkv|flv|wmv|m4v|ogv)(\?[^\s]*)?/gi;
+    while ((match = directVideoRegex.exec(comment.body)) !== null) {
+      const url = match[0].trim();
+      if (url && !url.includes("[object") && !url.includes("undefined")) {
+        videoUrls.push(url);
+      }
+    }
+
+    // Extract IPFS URLs and other potential video URLs
+    const ipfsRegex =
+      /https?:\/\/(?:ipfs\.skatehive\.app|gateway\.ipfs\.io|ipfs\.io\/ipfs)\/[^\s\)]+/gi;
+    while ((match = ipfsRegex.exec(comment.body)) !== null) {
+      const url = match[0].trim();
+      if (url && !url.includes("[object") && !url.includes("undefined")) {
+        videoUrls.push(url);
+      }
+    }
+
+    // Extract from markdown image syntax that might actually be videos (common with IPFS)
+    const markdownMediaRegex = /!\[.*?\]\((https?:\/\/[^\)]+)\)/gi;
+    while ((match = markdownMediaRegex.exec(comment.body)) !== null) {
+      const url = match[1].trim();
+      if (url && !url.includes("[object") && !url.includes("undefined")) {
+        // Add IPFS URLs from markdown syntax too - these could be videos
+        if (
+          url.includes("ipfs.skatehive.app") ||
+          url.includes("gateway.ipfs.io") ||
+          url.includes("ipfs.io/ipfs")
+        ) {
+          videoUrls.push(url);
+        }
+      }
+    }
+
+    // Extract any URL that might be a video based on common video hosting patterns
+    const potentialVideoUrls =
+      /https?:\/\/(?:(?:www\.)?(?:youtube\.com\/watch|youtu\.be\/|vimeo\.com\/|dailymotion\.com\/video\/)|[^\s]+\/[^\s]*(?:video|stream|media)[^\s]*)/gi;
+    while ((match = potentialVideoUrls.exec(comment.body)) !== null) {
+      const url = match[0].trim();
+      if (url && !url.includes("[object") && !url.includes("undefined")) {
+        videoUrls.push(url);
+      }
+    }
+
+    // Remove duplicates
+    return [...new Set(videoUrls)];
+  }, [comment.body]);
+
   // Validate permlink to prevent [object Object] URLs
   if (typeof comment.permlink !== "string") {
     console.error(
@@ -120,7 +240,8 @@ const ShareMenuButtons = ({ comment }: ShareMenuButtonsProps) => {
     if (!hasMedia) {
       toast({
         title: "Media required",
-        description: "Only posts with images can be used to create coins",
+        description:
+          "Only posts with images or videos can be used to create coins",
         status: "warning",
         duration: 3000,
         isClosable: true,
@@ -236,12 +357,14 @@ const ShareMenuButtons = ({ comment }: ShareMenuButtonsProps) => {
     permlink: comment.permlink,
     parent_author: comment.parent_author || "",
     parent_permlink: comment.parent_permlink || "",
-    json_metadata: typeof comment.json_metadata === 'string' 
-      ? comment.json_metadata 
-      : JSON.stringify(comment.json_metadata || {}),
+    json_metadata:
+      typeof comment.json_metadata === "string"
+        ? comment.json_metadata
+        : JSON.stringify(comment.json_metadata || {}),
     images: [...(parsedMetadata.image || []), ...extractImageUrls].filter(
       Boolean
     ),
+    videos: extractVideoUrls,
   };
 
   return (
@@ -270,7 +393,7 @@ const ShareMenuButtons = ({ comment }: ShareMenuButtonsProps) => {
           mr={2}
           display="inline-block"
         />
-        Create Coin {!hasMedia && "(Requires Image)"}
+        Create Coin {!hasMedia && "(Requires Media)"}
       </MenuItem>
       <MenuItem
         onClick={() => handleShare("x")}
