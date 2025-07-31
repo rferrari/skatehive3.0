@@ -23,6 +23,7 @@ import {
 } from "@coinbase/onchainkit/identity";
 import { useAccount } from "wagmi";
 import FarcasterUniversalWallet from "@/components/farcaster/FarcasterUniversalWallet";
+import useIsMobile from "@/hooks/useIsMobile";
 
 export default function ConnectModal({
   isOpen,
@@ -32,18 +33,22 @@ export default function ConnectModal({
   onClose: () => void;
 }) {
   const { address, isConnected } = useAccount();
+  const isMobile = useIsMobile();
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} isCentered size="lg">
+    <Modal isOpen={isOpen} onClose={onClose} isCentered size={isMobile ? "full" : "lg"}>
       <ModalOverlay bg="muted" backdropFilter="blur(10px)" />
       <ModalContent
         bg="background"
         color="text"
-        borderRadius="20px"
+        borderRadius={isMobile ? "0" : "20px"}
         border="1px solid"
         borderColor="border"
         shadow="2xl"
-        mx={4}
+        mx={isMobile ? 0 : 4}
+        h={isMobile ? "100vh" : "auto"}
+        display="flex"
+        flexDirection="column"
       >
         <ModalHeader
           textAlign="center"
@@ -51,6 +56,7 @@ export default function ConnectModal({
           fontWeight="bold"
           color="primary"
           pb={2}
+          flexShrink={0}
         >
           🛹 Connect Wallet & Social
         </ModalHeader>
@@ -59,7 +65,12 @@ export default function ConnectModal({
           _hover={{ color: "background", bg: "primary" }}
           borderRadius="full"
         />
-        <ModalBody px={8} pb={8}>
+        <ModalBody 
+          px={isMobile ? 4 : 8} 
+          pb={isMobile ? "calc(2rem + env(safe-area-inset-bottom))" : 8}
+          flex="1"
+          overflowY="auto"
+        >
           <VStack spacing={6} align="stretch">
             {/* Unified Wallet Section */}
             <Box

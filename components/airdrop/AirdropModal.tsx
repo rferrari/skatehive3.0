@@ -273,6 +273,7 @@ export function AirdropModal({
                       bg="cardBg"
                       borderColor="border"
                       size={isMobile ? "sm" : "md"}
+                      fontSize={isMobile ? "16px" : "md"}
                     >
                       <option value="points">Points</option>
                       <option value="hp_balance">Hive Power</option>
@@ -305,7 +306,11 @@ export function AirdropModal({
                       max={1000}
                       size={isMobile ? "sm" : "md"}
                     >
-                      <NumberInputField bg="cardBg" borderColor="border" />
+                      <NumberInputField
+                        bg="cardBg"
+                        borderColor="border"
+                        fontSize={isMobile ? "16px" : "md"}
+                      />
                       <NumberInputStepper>
                         <NumberIncrementStepper />
                         <NumberDecrementStepper />
@@ -478,7 +483,7 @@ export function AirdropModal({
                 <VStack
                   spacing={2}
                   align="stretch"
-                  maxH="400px"
+                  maxH={isMobile ? "60vh" : "400px"}
                   overflowY="auto"
                 >
                   {airdropUsers.map((user, index) => (
@@ -568,7 +573,7 @@ export function AirdropModal({
             </HStack>
           ),
           content: (
-            <VStack spacing={6} align="stretch">
+            <VStack spacing={isMobile ? 4 : 6} align="stretch">
               {/* Configuration Section */}
               <Box>
                 <Text fontSize="lg" fontWeight="bold" mb={4} color="primary">
@@ -592,6 +597,7 @@ export function AirdropModal({
                           bg="cardBg"
                           borderColor="border"
                           size="sm"
+                          fontSize="16px"
                         >
                           {tokenOptions.map((option) => (
                             <option
@@ -618,7 +624,11 @@ export function AirdropModal({
                           precision={6}
                           size="sm"
                         >
-                          <NumberInputField bg="cardBg" borderColor="border" />
+                          <NumberInputField
+                            bg="cardBg"
+                            borderColor="border"
+                            fontSize="16px"
+                          />
                           <NumberInputStepper>
                             <NumberIncrementStepper />
                             <NumberDecrementStepper />
@@ -642,6 +652,7 @@ export function AirdropModal({
                           }
                           bg="cardBg"
                           borderColor="border"
+                          fontSize={isMobile ? "16px" : "md"}
                         >
                           {tokenOptions.map((option) => (
                             <option
@@ -668,7 +679,11 @@ export function AirdropModal({
                           min={0}
                           precision={6}
                         >
-                          <NumberInputField bg="cardBg" borderColor="border" />
+                          <NumberInputField
+                            bg="cardBg"
+                            borderColor="border"
+                            fontSize={isMobile ? "16px" : "md"}
+                          />
                           <NumberInputStepper>
                             <NumberIncrementStepper />
                             <NumberDecrementStepper />
@@ -1045,7 +1060,7 @@ export function AirdropModal({
       isOpen={isOpen}
       onClose={handleClose}
       size={isMobile ? "full" : "xl"}
-      scrollBehavior="inside"
+      scrollBehavior={isMobile ? "outside" : "inside"}
     >
       <ModalOverlay bg="blackAlpha.600" backdropFilter="blur(10px)" />
       <ModalContent
@@ -1056,8 +1071,10 @@ export function AirdropModal({
         borderColor="border"
         shadow="2xl"
         mx={isMobile ? 0 : 4}
-        maxH={isMobile ? "100vh" : "90vh"}
-        h={isMobile ? "100vh" : "auto"}
+        maxH={isMobile ? "95vh" : "90vh"}
+        h={isMobile ? "95vh" : "auto"}
+        display="flex"
+        flexDirection="column"
       >
         <ModalHeader
           textAlign="center"
@@ -1065,6 +1082,7 @@ export function AirdropModal({
           fontWeight="bold"
           color="primary"
           pb={2}
+          flexShrink={0}
         >
           {modalContent.title}
         </ModalHeader>
@@ -1074,11 +1092,30 @@ export function AirdropModal({
           borderRadius="full"
         />
 
-        <ModalBody px={isMobile ? 4 : 8} pb={isMobile ? 4 : 8}>
+        <ModalBody
+          px={isMobile ? 4 : 8}
+          pb={isMobile ? 2 : 8}
+          flex="1"
+          overflowY="auto"
+          display="flex"
+          flexDirection="column"
+          minH={0}
+        >
           {modalContent.content}
         </ModalBody>
 
-        <ModalFooter>{modalContent.footer}</ModalFooter>
+        <ModalFooter
+          flexShrink={0}
+          px={isMobile ? 4 : 6}
+          py={isMobile ? 6 : 6}
+          pb={isMobile ? "calc(1.5rem + env(safe-area-inset-bottom))" : 6}
+          borderTop={isMobile ? "1px solid" : "none"}
+          borderTopColor={isMobile ? "border" : "transparent"}
+          bg={isMobile ? "rgba(0, 0, 0, 0.05)" : "transparent"}
+          backdropFilter={isMobile ? "blur(10px)" : "none"}
+        >
+          {modalContent.footer}
+        </ModalFooter>
       </ModalContent>
     </Modal>
   );

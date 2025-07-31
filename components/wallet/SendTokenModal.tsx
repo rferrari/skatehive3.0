@@ -29,6 +29,7 @@ import {
 import { parseUnits, isAddress } from "viem";
 import { TokenDetail } from "../../types/portfolio";
 import { formatBalance } from "../../lib/utils/portfolioUtils";
+import useIsMobile from "@/hooks/useIsMobile";
 
 interface SendTokenModalProps {
   isOpen: boolean;
@@ -60,6 +61,7 @@ export default function SendTokenModal({
   const [amount, setAmount] = useState("");
   const toast = useToast();
   const { address } = useAccount();
+  const isMobile = useIsMobile();
 
   // For ERC20 transfers
   const {
@@ -196,10 +198,19 @@ export default function SendTokenModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} size="md">
+    <Modal isOpen={isOpen} onClose={handleClose} size={isMobile ? "full" : "md"}>
       <ModalOverlay />
-      <ModalContent bg="background" color="text" borderRadius="lg" border="1px solid" borderColor="border">
-        <ModalHeader>
+      <ModalContent 
+        bg="background" 
+        color="text" 
+        borderRadius={isMobile ? "0" : "lg"} 
+        border="1px solid" 
+        borderColor="border"
+        h={isMobile ? "100vh" : "auto"}
+        display="flex"
+        flexDirection="column"
+      >
+        <ModalHeader flexShrink={0}>
           <HStack spacing={3}>
             {tokenLogo && (
               <Image
@@ -215,7 +226,7 @@ export default function SendTokenModal({
         </ModalHeader>
         <ModalCloseButton color="text" _hover={{ color: "background", bg: "primary" }} />
 
-        <ModalBody>
+        <ModalBody flex="1" overflowY="auto">
           <VStack spacing={4}>
             <Alert status="info" borderRadius="md" bg="muted" color="text">
               <AlertIcon color="primary" />
@@ -235,6 +246,7 @@ export default function SendTokenModal({
                 border="1px solid"
                 borderColor="border"
                 color="text"
+                fontSize={isMobile ? "16px" : "md"}
               />
             </FormControl>
 
@@ -250,6 +262,7 @@ export default function SendTokenModal({
                 border="1px solid"
                 borderColor="border"
                 color="text"
+                fontSize={isMobile ? "16px" : "md"}
               />
               <Text fontSize="xs" color="muted" mt={1}>
                 Decimals: {token.token.decimals}
@@ -258,7 +271,10 @@ export default function SendTokenModal({
           </VStack>
         </ModalBody>
 
-        <ModalFooter>
+        <ModalFooter 
+          flexShrink={0}
+          pb={isMobile ? "calc(1.5rem + env(safe-area-inset-bottom))" : 4}
+        >
           <Button variant="ghost" mr={3} onClick={handleClose} color="primary" _hover={{ color: "background", bg: "primary" }}>
             Cancel
           </Button>

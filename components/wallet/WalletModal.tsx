@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Box, Button, Input, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Text, IconButton, Flex } from '@chakra-ui/react';
 import { ArrowForwardIcon } from '@chakra-ui/icons';
+import useIsMobile from '@/hooks/useIsMobile';
 
 interface WalletModalProps {
     isOpen: boolean;
@@ -17,6 +18,7 @@ export default function WalletModal({ isOpen, onClose, title, description, showM
     const [memo, setMemo] = useState<string>('');
     const [username, setUsername] = useState<string>(''); // State to hold username
     const [direction, setDirection] = useState<'HIVE_TO_HBD' | 'HBD_TO_HIVE'>('HIVE_TO_HBD');
+    const isMobile = useIsMobile();
 
     const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setAmount(e.target.value);
@@ -41,12 +43,21 @@ export default function WalletModal({ isOpen, onClose, title, description, showM
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose}>
+        <Modal isOpen={isOpen} onClose={onClose} size={isMobile ? "full" : "md"}>
             <ModalOverlay />
-            <ModalContent bg="background" color="text" borderRadius="lg" border="1px solid" borderColor="border">
-                <ModalHeader color="primary">{title}</ModalHeader>
+            <ModalContent 
+                bg="background" 
+                color="text" 
+                borderRadius={isMobile ? "0" : "lg"} 
+                border="1px solid" 
+                borderColor="border"
+                h={isMobile ? "100vh" : "auto"}
+                display="flex"
+                flexDirection="column"
+            >
+                <ModalHeader color="primary" flexShrink={0}>{title}</ModalHeader>
                 <ModalCloseButton color="text" _hover={{ color: "background", bg: "primary" }} />
-                <ModalBody>
+                <ModalBody flex="1" overflowY="auto">
                     {description && <Text fontSize={'small'} mb={4} color="text">{description}</Text>}
                     {title.toLowerCase().includes('convert') && (
                         <Flex mb={4} align="center" justify="center" gap={4}>
@@ -78,6 +89,7 @@ export default function WalletModal({ isOpen, onClose, title, description, showM
                             border="1px solid"
                             borderColor="border"
                             color="text"
+                            fontSize={isMobile ? "16px" : "md"}
                         />
                     </Box>
                     {showUsernameField && (
@@ -90,6 +102,7 @@ export default function WalletModal({ isOpen, onClose, title, description, showM
                                 border="1px solid"
                                 borderColor="border"
                                 color="text"
+                                fontSize={isMobile ? "16px" : "md"}
                             />
                         </Box>
                     )}
@@ -103,11 +116,15 @@ export default function WalletModal({ isOpen, onClose, title, description, showM
                                 border="1px solid"
                                 borderColor="border"
                                 color="text"
+                                fontSize={isMobile ? "16px" : "md"}
                             />
                         </Box>
                     )}
                 </ModalBody>
-                <ModalFooter>
+                <ModalFooter 
+                    flexShrink={0}
+                    pb={isMobile ? "calc(1.5rem + env(safe-area-inset-bottom))" : 4}
+                >
                     <Button variant="ghost" onClick={onClose} color="primary" _hover={{ color: "background", bg: "primary" }}>Cancel</Button>
                     <Button ml={3} onClick={handleConfirm} color="background" bg="primary" _hover={{ bg: "accent", color: "background" }}>Confirm</Button>
                 </ModalFooter>

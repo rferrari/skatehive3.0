@@ -6,12 +6,14 @@ import BountyComposer from "./BountyComposer";
 import BountyList from "./BountyList";
 import { Discussion } from "@hiveio/dhive";
 import Image from "next/image";
+import useIsMobile from "@/hooks/useIsMobile";
 
 export default function BountiesClient() {
   const [newBounty, setNewBounty] = useState<Partial<Discussion> | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [showRules, setShowRules] = useState(false);
+  const isMobile = useIsMobile();
 
   return (
     <Box maxW="900px" mx="auto" py={{ base: 4, md: 8 }} px={{ base: 2, md: 4 }} className="hide-scrollbar" style={{ overflowY: 'auto', height: '100vh' }}>
@@ -108,9 +110,17 @@ export default function BountiesClient() {
         )}
       </Box>
       <BountyList newBounty={newBounty as any} refreshTrigger={refreshTrigger} />
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} size="2xl" isCentered>
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} size={isMobile ? "full" : "2xl"} isCentered>
         <ModalOverlay />
-        <ModalContent bg="background" color="text" p={0} borderRadius="xl">
+        <ModalContent 
+          bg="background" 
+          color="text" 
+          p={0} 
+          borderRadius={isMobile ? "0" : "xl"}
+          h={isMobile ? "100vh" : "auto"}
+          display="flex"
+          flexDirection="column"
+        >
           <BountyComposer
             onNewBounty={(bounty) => {
               setNewBounty(bounty);

@@ -222,7 +222,7 @@ export function CoinCreationModal({
   const { createCoinFromPost, isCreating } = useCoinCreation();
   const toast = useToast();
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  
+
   // Network validation hooks
   const { isConnected } = useAccount();
   const chainId = useChainId();
@@ -332,7 +332,8 @@ export function CoinCreationModal({
       } catch (error) {
         toast({
           title: "Network Switch Required",
-          description: "Please switch to Base network to create coins. Go to your wallet and switch networks manually.",
+          description:
+            "Please switch to Base network to create coins. Go to your wallet and switch networks manually.",
           status: "error",
           duration: 5000,
           isClosable: true,
@@ -512,7 +513,7 @@ export function CoinCreationModal({
           <HStack justify="space-between" align="center">
             <Text>Create Coin from Post</Text>
             {isConnected && (
-              <Badge 
+              <Badge
                 colorScheme={chainId === base.id ? "green" : "red"}
                 fontSize="xs"
               >
@@ -537,7 +538,8 @@ export function CoinCreationModal({
               <Alert status="warning" borderRadius="md">
                 <AlertIcon />
                 <Text fontSize="sm">
-                  Please connect your wallet to create coins. Make sure you're on the Base network.
+                  Please connect your wallet to create coins. Make sure you're
+                  on the Base network.
                 </Text>
               </Alert>
             )}
@@ -547,10 +549,11 @@ export function CoinCreationModal({
                 <AlertIcon />
                 <VStack align="start" spacing={2}>
                   <Text fontSize="sm">
-                    You're connected to the wrong network. Please switch to Base network to create coins.
+                    You're connected to the wrong network. Please switch to Base
+                    network to create coins.
                   </Text>
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     colorScheme="blue"
                     onClick={() => validateNetwork()}
                     isLoading={isCreating}
@@ -589,12 +592,11 @@ export function CoinCreationModal({
                 isDisabled={!isConnected || chainId !== base.id}
                 flex={1}
               >
-                {!isConnected 
-                  ? "Connect Wallet" 
-                  : chainId !== base.id 
-                    ? "Switch to Base Network" 
-                    : "Create Coin"
-                }
+                {!isConnected
+                  ? "Connect Wallet"
+                  : chainId !== base.id
+                  ? "Switch to Base Network"
+                  : "Create Coin"}
               </Button>
             </HStack>
           </VStack>

@@ -15,6 +15,7 @@ import {
 } from "@chakra-ui/react";
 import { Discussion } from "@hiveio/dhive";
 import { EnhancedMarkdownRenderer } from "@/components/markdown/EnhancedMarkdownRenderer";
+import useIsMobile from "@/hooks/useIsMobile";
 
 interface EditPostModalProps {
   isOpen: boolean;
@@ -39,12 +40,20 @@ const EditPostModal = ({
   const primaryColor = useColorModeValue("primary", "primary");
   const mutedColor = useColorModeValue("muted", "muted");
   const secondaryColor = useColorModeValue("secondary", "secondary");
+  const isMobile = useIsMobile();
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="xl">
+    <Modal isOpen={isOpen} onClose={onClose} size={isMobile ? "full" : "xl"}>
       <ModalOverlay />
-      <ModalContent bg={bgColor} borderColor={mutedColor}>
-        <ModalHeader color={primaryColor}>Edit Post</ModalHeader>
+      <ModalContent 
+        bg={bgColor} 
+        borderColor={mutedColor}
+        h={isMobile ? "100vh" : "auto"}
+        borderRadius={isMobile ? "0" : "md"}
+        display="flex"
+        flexDirection="column"
+      >
+        <ModalHeader color={primaryColor} flexShrink={0}>Edit Post</ModalHeader>
         <ModalCloseButton
           color="red.500"
           bg="none"
@@ -57,7 +66,7 @@ const EditPostModal = ({
             color: "red.700",
           }}
         />
-        <ModalBody>
+        <ModalBody flex="1" overflowY="auto">
           <VStack spacing={4}>
             <Textarea
               value={editedContent}
@@ -68,6 +77,7 @@ const EditPostModal = ({
               bg={bgColor}
               borderColor={mutedColor}
               color={primaryColor}
+              fontSize={isMobile ? "16px" : "md"}
               _placeholder={{ color: mutedColor }}
               _focus={{ borderColor: secondaryColor }}
             />
@@ -93,7 +103,11 @@ const EditPostModal = ({
             </Box>
           </VStack>
         </ModalBody>
-        <ModalFooter borderTopColor={mutedColor}>
+        <ModalFooter 
+          borderTopColor={mutedColor}
+          flexShrink={0}
+          pb={isMobile ? "calc(1.5rem + env(safe-area-inset-bottom))" : 4}
+        >
           <Button
             variant="ghost"
             mr={3}

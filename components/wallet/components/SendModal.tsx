@@ -26,6 +26,7 @@ import { FaPaperPlane } from "react-icons/fa";
 import { TokenDetail, blockchainDictionary } from "../../../types/portfolio";
 import { formatBalance, formatValue } from "../../../lib/utils/portfolioUtils";
 import TokenLogo from "./TokenLogo";
+import useIsMobile from "@/hooks/useIsMobile";
 
 interface SendModalProps {
   isOpen: boolean;
@@ -38,6 +39,7 @@ export default function SendModal({ isOpen, onClose, token }: SendModalProps) {
   const [amount, setAmount] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const toast = useToast();
+  const isMobile = useIsMobile();
 
   // Reset form when modal closes or token changes
   useEffect(() => {
@@ -115,10 +117,18 @@ export default function SendModal({ isOpen, onClose, token }: SendModalProps) {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="md">
+    <Modal isOpen={isOpen} onClose={onClose} size={isMobile ? "full" : "md"}>
       <ModalOverlay />
-      <ModalContent bg="gray.900" border="1px solid" borderColor="gray.700">
-        <ModalHeader>
+      <ModalContent 
+        bg="gray.900" 
+        border="1px solid" 
+        borderColor="gray.700"
+        h={isMobile ? "100vh" : "auto"}
+        borderRadius={isMobile ? "0" : "md"}
+        display="flex"
+        flexDirection="column"
+      >
+        <ModalHeader flexShrink={0}>
           <HStack spacing={3}>
             <TokenLogo
               token={token}
@@ -138,7 +148,11 @@ export default function SendModal({ isOpen, onClose, token }: SendModalProps) {
         </ModalHeader>
         <ModalCloseButton />
 
-        <ModalBody pb={6}>
+        <ModalBody 
+          pb={isMobile ? "calc(1.5rem + env(safe-area-inset-bottom))" : 6} 
+          flex="1" 
+          overflowY="auto"
+        >
           <VStack spacing={4} align="stretch">
             {/* Available Balance */}
             <Box
@@ -176,6 +190,7 @@ export default function SendModal({ isOpen, onClose, token }: SendModalProps) {
                 border="1px solid"
                 borderColor="gray.600"
                 color="white"
+                fontSize={isMobile ? "16px" : "md"}
                 _placeholder={{ color: "gray.500" }}
                 _focus={{
                   borderColor: "blue.400",
@@ -198,6 +213,7 @@ export default function SendModal({ isOpen, onClose, token }: SendModalProps) {
                   bg="gray.800"
                   border="1px solid"
                   borderColor="gray.600"
+                  fontSize={isMobile ? "16px" : "md"}
                   color="white"
                   _placeholder={{ color: "gray.500" }}
                   _focus={{
