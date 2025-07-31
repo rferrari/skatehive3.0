@@ -418,103 +418,51 @@ ${zoraUrl}
 
   if (!isConnected) {
     return (
-      <Box
-        p={6}
-        bg={"background"}
-        borderRadius="md"
-        border="1px solid"
-        borderColor={"primary"}
-        textAlign="center"
-      >
-        <VStack spacing={3}>
-          <FaEthereum size={32} color="#627eea" />
-          <Text fontSize="lg" fontWeight="bold">
-            Connect Ethereum Wallet
-          </Text>
-          <Text color={"muted"}>
-            Connect your Ethereum wallet to create coins on Skatehive
-          </Text>
-        </VStack>
-      </Box>
+      <VStack spacing={3} textAlign="center">
+        <FaEthereum size={32} color="#627eea" />
+        <Text fontSize="lg" fontWeight="bold">
+          Connect Ethereum Wallet
+        </Text>
+        <Text color={"muted"}>
+          Connect your Ethereum wallet to create coins on Skatehive
+        </Text>
+      </VStack>
     );
   }
 
   return (
-    <Box
-      p={4}
-      bg={"background"}
-      borderRadius="md"
-      border="1px solid"
-      borderColor={"primary"}
-      mb={4}
-    >
-      <VStack spacing={4} align="stretch">
-        {/* Header */}
-        <HStack justify="space-between" align="center">
-          <HStack spacing={2}>
-            <FaCoins color="#f7931a" />
-            <Text fontSize="lg" fontWeight="bold">
-              Create a Coin
-            </Text>
-          </HStack>
-          <HStack spacing={2}>
-            <FaEthereum color="#627eea" />
-            <Text fontSize="sm" color={"primary"}>
-              {address?.slice(0, 6)}...{address?.slice(-4)}
-            </Text>
-          </HStack>
+    <VStack spacing={6} align="stretch">
+      {/* Wallet Info */}
+      <HStack justify="flex-end" align="center">
+        <HStack spacing={2}>
+          <FaEthereum color="#627eea" />
+          <Text fontSize="sm" color={"muted"}>
+            {address?.slice(0, 6)}...{address?.slice(-4)}
+          </Text>
         </HStack>
+      </HStack>
 
-        {/* Title Input */}
-        <FormControl isRequired>
-          <FormLabel fontSize="sm" fontWeight="bold">
-            Coin Name
-          </FormLabel>
-          <Input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Enter coin name (e.g., My Skate Trick)"
-            size="md"
-            disabled={isLoading || isCreating}
-          />
-        </FormControl>
-
-        {/* Symbol Input */}
-        <FormControl isRequired>
-          <FormLabel fontSize="sm" fontWeight="bold">
-            Symbol
-          </FormLabel>
-          <Input
-            value={symbol}
-            onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-            placeholder="e.g., TRICK (max 8 chars)"
-            maxLength={8}
-            size="md"
-            disabled={isLoading || isCreating}
-          />
-        </FormControl>
-
-        {/* Description Textarea */}
-        <FormControl isRequired>
-          <FormLabel fontSize="sm" fontWeight="bold">
-            Description
-          </FormLabel>
-          <Textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Describe your coin, trick, or content..."
-            minHeight="100px"
-            resize="vertical"
-            disabled={isLoading || isCreating}
-          />
-        </FormControl>
-
-        {/* Image Upload */}
-        <FormControl>
-          <FormLabel fontSize="sm" fontWeight="bold">
-            Images (Optional)
-          </FormLabel>
-          <HStack spacing={2}>
+      {/* Media Upload Section - Zora Style */}
+      <VStack spacing={4}>
+        {!videoFile && images.length === 0 ? (
+          <Box
+            border="2px dashed"
+            borderColor="gray.300"
+            borderRadius="xl"
+            p={12}
+            textAlign="center"
+            bg="gray.50"
+            _dark={{ bg: "gray.800", borderColor: "gray.600" }}
+            position="relative"
+            cursor="pointer"
+            transition="all 0.2s"
+            _hover={{
+              borderColor: "blue.400",
+              bg: "gray.100",
+              _dark: { bg: "gray.700" },
+            }}
+            onClick={() => imageUploadRef.current?.click()}
+          >
             <Input
               type="file"
               ref={imageUploadRef}
@@ -524,65 +472,6 @@ ${zoraUrl}
               style={{ display: "none" }}
               disabled={isLoading || isCreating}
             />
-            <Button
-              leftIcon={<FaImage />}
-              size="sm"
-              variant="outline"
-              onClick={() => imageUploadRef.current?.click()}
-              disabled={isLoading || isCreating}
-            >
-              Add Images
-            </Button>
-            {images.length > 0 && (
-              <Text fontSize="sm" color={"primary"}>
-                {images.length} image{images.length > 1 ? "s" : ""} added
-              </Text>
-            )}
-          </HStack>
-        </FormControl>
-
-        {/* Image Preview */}
-        {images.length > 0 && (
-          <VStack spacing={2} align="stretch">
-            <Text fontSize="sm" fontWeight="bold">
-              Image Preview:
-            </Text>
-            <HStack spacing={2} flexWrap="wrap">
-              {images.map((image, index) => (
-                <Box key={index} position="relative">
-                  <Image
-                    src={image.url}
-                    alt={`Preview ${index + 1}`}
-                    width="60px"
-                    height="60px"
-                    objectFit="cover"
-                    borderRadius="md"
-                    border="1px solid"
-                    borderColor={"primary"}
-                  />
-                  <IconButton
-                    aria-label="Remove image"
-                    icon={<Text fontSize="xs">×</Text>}
-                    size="xs"
-                    position="absolute"
-                    top="-1"
-                    right="-1"
-                    colorScheme="red"
-                    borderRadius="full"
-                    onClick={() => removeImage(index)}
-                  />
-                </Box>
-              ))}
-            </HStack>
-          </VStack>
-        )}
-
-        {/* Video Upload */}
-        <FormControl>
-          <FormLabel fontSize="sm" fontWeight="bold">
-            Video (Optional)
-          </FormLabel>
-          <HStack spacing={2}>
             <Input
               type="file"
               ref={videoUploadRef}
@@ -591,148 +480,250 @@ ${zoraUrl}
               style={{ display: "none" }}
               disabled={isLoading || isCreating}
             />
-            <Button
-              leftIcon={<FaVideo />}
-              size="sm"
-              variant="outline"
-              onClick={() => videoUploadRef.current?.click()}
-              disabled={isLoading || isCreating}
-            >
-              Add Video File
-            </Button>
-            {videoFile && (
-              <Text fontSize="sm" color={"primary"}>
-                {videoFile.name} ({(videoFile.size / (1024 * 1024)).toFixed(1)}
-                MB)
-              </Text>
-            )}
-          </HStack>
-        </FormControl>
 
-        {/* Video Preview */}
-        {videoFile && (
-          <VStack spacing={2} align="stretch">
-            <Text fontSize="sm" fontWeight="bold">
-              Video Preview:
-            </Text>
-            {isGeneratingThumbnail ? (
-              <HStack spacing={2} align="center">
-                <Spinner size="sm" />
-                <Text fontSize="xs" color="blue.500">
-                  Generating thumbnail for coin...
+            <VStack spacing={4}>
+              <Box
+                w={12}
+                h={12}
+                bg="blue.100"
+                _dark={{ bg: "blue.900" }}
+                borderRadius="lg"
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+              >
+                <Text fontSize="2xl">📁</Text>
+              </Box>
+              <VStack spacing={2}>
+                <Text fontSize="lg" fontWeight="semibold">
+                  Upload photos and videos
                 </Text>
-              </HStack>
-            ) : videoThumbnail ? (
-              <Text fontSize="xs" color="green.500" mb={2}>
-                ✓ Thumbnail generated - video will be uploaded to IPFS and used
-                as coin media
-              </Text>
-            ) : (
-              <Text fontSize="xs" color="blue.400" mb={2}>
-                ✨ A thumbnail will be generated for preview - video will be
-                uploaded to IPFS for coin
-              </Text>
-            )}
-            <Box position="relative" maxWidth="300px">
-              <video
-                src={URL.createObjectURL(videoFile)}
-                controls
-                style={{
-                  width: "100%",
-                  maxHeight: "200px",
-                  borderRadius: "8px",
-                  border: "1px solid",
-                  borderColor: "var(--chakra-colors-primary)",
+                <Text color="gray.500" fontSize="sm">
+                  Drag or select up to 10 files to create a coin. Max 6GB.
+                </Text>
+              </VStack>
+              <Button
+                colorScheme="gray"
+                variant="solid"
+                size="md"
+                bg="white"
+                color="black"
+                _hover={{ bg: "gray.100" }}
+                _dark={{
+                  bg: "gray.700",
+                  color: "white",
+                  _hover: { bg: "gray.600" },
                 }}
-              />
-              <IconButton
-                aria-label="Remove video"
-                icon={<Text fontSize="xs">×</Text>}
-                size="xs"
-                position="absolute"
-                top="-1"
-                right="-1"
-                colorScheme="red"
-                borderRadius="full"
-                onClick={removeVideo}
-              />
-            </Box>
-            {videoThumbnail && (
-              <VStack spacing={1} align="stretch">
-                <Text fontSize="xs" color="gray.500">
-                  Generated thumbnail:
-                </Text>
-                <Box maxWidth="150px">
-                  <Image
-                    src={URL.createObjectURL(videoThumbnail)}
-                    alt="Video thumbnail"
-                    width="100%"
-                    height="auto"
-                    borderRadius="md"
-                    border="1px solid"
-                    borderColor="green.300"
+              >
+                Browse files
+              </Button>
+              <Text fontSize="xs" color="gray.400">
+                or{" "}
+                <Button
+                  variant="link"
+                  size="xs"
+                  color="blue.500"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    videoUploadRef.current?.click();
+                  }}
+                >
+                  upload video
+                </Button>
+              </Text>
+            </VStack>
+          </Box>
+        ) : (
+          <VStack spacing={3} align="stretch">
+            {/* Show uploaded media */}
+            {images.length > 0 && (
+              <VStack spacing={2}>
+                <HStack spacing={2} flexWrap="wrap" justify="center">
+                  {images.map((image, index) => (
+                    <Box key={index} position="relative">
+                      <Image
+                        src={image.url}
+                        alt={`Upload ${index + 1}`}
+                        maxW="200px"
+                        maxH="200px"
+                        objectFit="cover"
+                        borderRadius="md"
+                        border="1px solid"
+                        borderColor="gray.200"
+                        _dark={{ borderColor: "gray.600" }}
+                      />
+                      <IconButton
+                        aria-label="Remove image"
+                        icon={<Text fontSize="xs">×</Text>}
+                        size="xs"
+                        position="absolute"
+                        top="-1"
+                        right="-1"
+                        colorScheme="red"
+                        borderRadius="full"
+                        onClick={() => removeImage(index)}
+                      />
+                    </Box>
+                  ))}
+                </HStack>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => imageUploadRef.current?.click()}
+                  disabled={isLoading || isCreating}
+                >
+                  Add more images
+                </Button>
+              </VStack>
+            )}
+
+            {videoFile && (
+              <VStack spacing={3}>
+                <Box position="relative" textAlign="center">
+                  <Text fontSize="sm" color="green.500" mb={2}>
+                    ✓ Video selected: {videoFile.name}
+                  </Text>
+                  {isGeneratingThumbnail && (
+                    <HStack spacing={2} justify="center">
+                      <Spinner size="sm" />
+                      <Text fontSize="sm">Generating preview...</Text>
+                    </HStack>
+                  )}
+                  {videoThumbnail && (
+                    <Image
+                      src={URL.createObjectURL(videoThumbnail)}
+                      alt="Video preview"
+                      maxW="200px"
+                      maxH="200px"
+                      objectFit="cover"
+                      borderRadius="md"
+                      border="2px solid"
+                      borderColor="green.300"
+                      mx="auto"
+                    />
+                  )}
+                  <IconButton
+                    aria-label="Remove video"
+                    icon={<Text fontSize="xs">×</Text>}
+                    size="xs"
+                    position="absolute"
+                    top="-1"
+                    right="calc(50% - 100px)"
+                    colorScheme="red"
+                    borderRadius="full"
+                    onClick={removeVideo}
                   />
                 </Box>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => videoUploadRef.current?.click()}
+                  disabled={isLoading || isCreating}
+                >
+                  Replace video
+                </Button>
               </VStack>
             )}
           </VStack>
         )}
-
-        {/* Upload Progress */}
-        {uploadProgress.some((p) => p > 0) && (
-          <VStack spacing={1}>
-            <Text fontSize="sm">Uploading images...</Text>
-            {uploadProgress.map(
-              (progress, index) =>
-                progress > 0 && (
-                  <Progress
-                    key={index}
-                    value={progress}
-                    size="sm"
-                    width="100%"
-                    colorScheme="blue"
-                  />
-                )
-            )}
-          </VStack>
-        )}
-
-        {/* Create Button */}
-        <Button
-          colorScheme="orange"
-          size="lg"
-          onClick={handleCreateCoin}
-          disabled={
-            isLoading ||
-            isCreating ||
-            !title.trim() ||
-            !description.trim() ||
-            !symbol.trim()
-          }
-          leftIcon={
-            isLoading || isCreating ? <Spinner size="sm" /> : <FaCoins />
-          }
-        >
-          {isLoading || isCreating ? "Creating Coin..." : "Create Coin"}
-        </Button>
-
-        {/* Info */}
-        <Text fontSize="xs" color={"muted"} textAlign="center">
-          Your coin will be created on Zora and posted as a snap to Skatehive
-          automatically. Make sure your wallet is connected and has sufficient
-          Base ETH for gas fees.
-          {videoFile && (
-            <>
-              {" "}
-              <Text as="span" color="orange.400">
-                Videos will be uploaded to IPFS and the IPFS URL will be used as
-                coin media on Zora. Full video content will be available through
-                the coin.
-              </Text>
-            </>
-          )}
-        </Text>
       </VStack>
-    </Box>
+
+      {/* Coin Details Form */}
+      <VStack spacing={4} align="stretch">
+        <FormControl isRequired>
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Coin name"
+            size="lg"
+            variant="flushed"
+            fontSize="xl"
+            fontWeight="bold"
+            disabled={isLoading || isCreating}
+            _placeholder={{ color: "gray.400" }}
+          />
+        </FormControl>
+
+        <FormControl>
+          <Textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Write a caption..."
+            minHeight="80px"
+            resize="none"
+            variant="flushed"
+            disabled={isLoading || isCreating}
+            _placeholder={{ color: "gray.400" }}
+          />
+        </FormControl>
+
+        <FormControl isRequired>
+          <HStack>
+            <Text fontSize="lg" color="gray.500">
+              $
+            </Text>
+            <Input
+              value={symbol}
+              onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+              placeholder="Add ticker"
+              maxLength={8}
+              size="lg"
+              variant="flushed"
+              disabled={isLoading || isCreating}
+              _placeholder={{ color: "gray.400" }}
+            />
+          </HStack>
+        </FormControl>
+      </VStack>
+
+      {/* Upload Progress */}
+      {uploadProgress.some((p) => p > 0) && (
+        <VStack spacing={1}>
+          <Text fontSize="sm">Uploading images...</Text>
+          {uploadProgress.map(
+            (progress, index) =>
+              progress > 0 && (
+                <Progress
+                  key={index}
+                  value={progress}
+                  size="sm"
+                  width="100%"
+                  colorScheme="blue"
+                />
+              )
+          )}
+        </VStack>
+      )}
+
+      {/* Create Button - Zora Style */}
+      <Button
+        w="full"
+        size="lg"
+        bg="black"
+        color="white"
+        _hover={{ bg: "gray.800" }}
+        _dark={{ bg: "white", color: "black", _hover: { bg: "gray.100" } }}
+        onClick={handleCreateCoin}
+        disabled={
+          isLoading ||
+          isCreating ||
+          !title.trim() ||
+          !description.trim() ||
+          !symbol.trim()
+        }
+        leftIcon={isLoading || isCreating ? <Spinner size="sm" /> : undefined}
+        borderRadius="full"
+        py={6}
+      >
+        {isLoading || isCreating ? "Creating..." : "Post"}
+      </Button>
+
+      {/* Info */}
+      <Text fontSize="xs" color={"gray.500"} textAlign="center">
+        Your coin will be created on Zora and posted as a snap to Skatehive
+        automatically.
+        {videoFile && " Video will be uploaded to IPFS."}
+      </Text>
+    </VStack>
   );
 }

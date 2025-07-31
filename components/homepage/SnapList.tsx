@@ -1,15 +1,35 @@
 import React, { useState, useEffect } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
-import { Box, Spinner, VStack } from "@chakra-ui/react";
+import {
+  Box,
+  Spinner,
+  VStack,
+  Button,
+  HStack,
+  Text,
+  SimpleGrid,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalCloseButton,
+  useDisclosure,
+  Image,
+} from "@chakra-ui/react";
+import { FaCoins, FaGift, FaUser, FaGavel, FaHive } from "react-icons/fa";
+import { useRouter } from "next/navigation";
 import Snap from "./Snap";
 import SnapComposer from "./SnapComposer";
 import CoinCreatorComposer from "./CoinCreatorComposer";
+import { AirdropModal } from "../airdrop/AirdropModal";
 import { Discussion } from "@hiveio/dhive"; // Add this import for consistency
 import LogoMatrix from "../graphics/LogoMatrix";
 import UpvoteSnapContainer from "./UpvoteSnapContainer";
 import { countDownvotes } from "@/lib/utils/postUtils";
 import { useAioha } from "@aioha/react-ui";
 import { useAccount } from "wagmi";
+import SidebarLogo from "../graphics/SidebarLogo";
 
 interface SnapListProps {
   author: string;
@@ -35,7 +55,7 @@ export default function SnapList({
   author,
   permlink,
   setConversation,
-  onOpen,
+  onOpen: onOpenConversation,
   setReply,
   newComment,
   setNewComment,
@@ -49,6 +69,17 @@ export default function SnapList({
   // Get authentication status
   const { user } = useAioha(); // Hive connection
   const { isConnected } = useAccount(); // Ethereum connection
+  const router = useRouter(); // Next.js navigation
+
+  // Modal state for coin creator
+  const { isOpen, onOpen, onClose } = useDisclosure();
+
+  // Modal state for airdrop
+  const {
+    isOpen: isAirdropOpen,
+    onOpen: onAirdropOpen,
+    onClose: onAirdropClose,
+  } = useDisclosure();
 
   // Mounted state
   const [hasMounted, setHasMounted] = useState(false);
@@ -131,13 +162,260 @@ export default function SnapList({
                   onClose={() => null}
                 />
               ) : isConnected ? (
-                // User is connected to Ethereum but not Hive - show CoinCreatorComposer
-                <CoinCreatorComposer onClose={() => null} />
-              ) : null}
+                // User is connected to Ethereum but not Hive - show action buttons
+                <Box
+                  p={2}
+                  borderRadius="xl"
+                  _dark={{ borderColor: "gray.600" }}
+                  mb={4}
+                >
+                  <VStack spacing={6}>
+                    {/* Action Buttons Grid */}
+                    <SimpleGrid columns={2} spacing={4} w="full">
+                      {/* Create a Coin Button */}
+                      <Box
+                        w="full"
+                        p={3}
+                        bg="primary.50"
+                        _dark={{
+                          bg: "primary.900",
+                          borderColor: "primary.700",
+                        }}
+                        borderRadius="lg"
+                        border="1px solid"
+                        borderColor="primary.200"
+                        cursor="pointer"
+                        transition="all 0.2s"
+                        _hover={{
+                          transform: "translateY(-2px)",
+                          boxShadow: "lg",
+                          borderColor: "primary.300",
+                        }}
+                        onClick={onOpen}
+                      >
+                        <HStack spacing={3}>
+                          <Box
+                            w={10}
+                            h={10}
+                            bg="primary.100"
+                            _dark={{ bg: "primary.800" }}
+                            borderRadius="lg"
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="center"
+                          >
+                            <Image
+                              src="/logos/Zorb.png"
+                              alt="Coin Icon"
+                              boxSize="20px"
+                              objectFit="contain"
+                            />
+                          </Box>
+                          <VStack align="start" spacing={0} flex={1}>
+                            <Text
+                              fontSize="md"
+                              fontWeight="semibold"
+                              color="primary.600"
+                              _dark={{ color: "primary.200" }}
+                            >
+                              Create a Post
+                            </Text>
+                          </VStack>
+                        </HStack>
+                      </Box>
+
+                      {/* Create Airdrop Button */}
+                      <Box
+                        w="full"
+                        p={3}
+                        bg="primary.100"
+                        _dark={{
+                          bg: "primary.800",
+                          borderColor: "primary.600",
+                        }}
+                        borderRadius="lg"
+                        border="1px solid"
+                        borderColor="primary.300"
+                        cursor="pointer"
+                        transition="all 0.2s"
+                        _hover={{
+                          transform: "translateY(-2px)",
+                          boxShadow: "lg",
+                          borderColor: "primary.400",
+                        }}
+                        onClick={() => {
+                          onAirdropOpen();
+                        }}
+                      >
+                        <HStack spacing={3}>
+                          <Box
+                            w={10}
+                            h={10}
+                            bg="primary.200"
+                            _dark={{ bg: "primary.700" }}
+                            borderRadius="lg"
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="center"
+                          >
+                            <FaGift
+                              size={20}
+                              color="var(--chakra-colors-primary-500)"
+                            />
+                          </Box>
+                          <VStack align="start" spacing={0} flex={1}>
+                            <Text
+                              fontSize="md"
+                              fontWeight="semibold"
+                              color="primary.700"
+                              _dark={{ color: "primary.100" }}
+                            >
+                              Create Airdrop
+                            </Text>
+                          </VStack>
+                        </HStack>
+                      </Box>
+
+                      {/* Get Skatehive Account Button */}
+                      <Box
+                        w="full"
+                        p={3}
+                        bg="primary.200"
+                        _dark={{
+                          bg: "primary.700",
+                          borderColor: "primary.500",
+                        }}
+                        borderRadius="lg"
+                        border="1px solid"
+                        borderColor="primary.400"
+                        cursor="pointer"
+                        transition="all 0.2s"
+                        _hover={{
+                          transform: "translateY(-2px)",
+                          boxShadow: "lg",
+                          borderColor: "primary.500",
+                        }}
+                        onClick={() => {
+                          window.open(
+                            "https://base.skatehive.app",
+                            "_blank",
+                            "noopener,noreferrer"
+                          );
+                        }}
+                      >
+                        <HStack spacing={3}>
+                          <Box
+                            w={10}
+                            h={10}
+                            bg="primary.300"
+                            _dark={{ bg: "primary.600" }}
+                            borderRadius="lg"
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="center"
+                          >
+                            <FaHive
+                              size={20}
+                              color="var(--chakra-colors-primary-600)"
+                            />
+                          </Box>
+                          <VStack align="start" spacing={0} flex={1}>
+                            <Text
+                              fontSize="md"
+                              fontWeight="semibold"
+                              color="primary.800"
+                              _dark={{ color: "primary.50" }}
+                            >
+                              Get Hive Account
+                            </Text>
+                          </VStack>
+                        </HStack>
+                      </Box>
+
+                      {/* Auction Button */}
+                      <Box
+                        w="full"
+                        p={3}
+                        bg="primary.300"
+                        _dark={{
+                          bg: "primary.600",
+                          borderColor: "primary.400",
+                        }}
+                        borderRadius="lg"
+                        border="1px solid"
+                        borderColor="primary.500"
+                        cursor="pointer"
+                        transition="all 0.2s"
+                        _hover={{
+                          transform: "translateY(-2px)",
+                          boxShadow: "lg",
+                          borderColor: "primary.600",
+                        }}
+                        onClick={() => {
+                          router.push("/auction");
+                        }}
+                      >
+                        <HStack spacing={3} alignContent={"center"}>
+                          <Box
+                            w={10}
+                            h={10}
+                            bg="primary.400"
+                            _dark={{ bg: "primary.500" }}
+                            borderRadius="lg"
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="center"
+                          >
+                            <SidebarLogo prioritizeAuctionImage={true} />{" "}
+                          </Box>
+                          <VStack align="start" spacing={0} flex={1}>
+                            <Text
+                              fontSize="md"
+                              fontWeight="semibold"
+                              color="primary.900"
+                            >
+                              Bid on Auction
+                            </Text>
+                          </VStack>
+                        </HStack>
+                      </Box>
+                    </SimpleGrid>
+                  </VStack>
+                </Box>
+              ) : (
+                // User is not connected to anything - show welcome message
+                <></>
+              )}
             </>
           )}
 
           <UpvoteSnapContainer hideIfVoted />
+
+          {/* Coin Creator Modal */}
+          <Modal
+            isOpen={isOpen}
+            onClose={onClose}
+            size="2xl"
+            scrollBehavior="inside"
+            isCentered
+          >
+            <ModalOverlay bg="blackAlpha.600" />
+            <ModalContent mx={4} my={8}>
+              <ModalHeader pb={2}>Create a Coin</ModalHeader>
+              <ModalCloseButton />
+              <ModalBody pb={6}>
+                <CoinCreatorComposer onClose={onClose} />
+              </ModalBody>
+            </ModalContent>
+          </Modal>
+
+          {/* Airdrop Modal */}
+          <AirdropModal
+            isOpen={isAirdropOpen}
+            onClose={onAirdropClose}
+            leaderboardData={[]} // You'll need to pass actual leaderboard data here
+            initialSortOption="points"
+          />
 
           <InfiniteScroll
             dataLength={filteredAndSortedComments.length}
@@ -156,7 +434,7 @@ export default function SnapList({
                 <Snap
                   key={discussion.permlink}
                   discussion={discussion}
-                  onOpen={onOpen}
+                  onOpen={onOpenConversation}
                   setReply={setReply}
                   {...(!post ? { setConversation } : {})}
                 />
