@@ -63,8 +63,8 @@ export function convertIpfsUrl(url: string, preferredGateway?: string): string {
         return `${preferredGateway}/ipfs/${hash}`;
     }
     
-    // Default to Zora's gateway for best coverage of Zora content
-    return `https://magic.decentralized-content.com/ipfs/${hash}`;
+    // Default to public IPFS gateway with better coverage for Zora content
+    return `https://ipfs.io/ipfs/${hash}`;
 }
 
 /**

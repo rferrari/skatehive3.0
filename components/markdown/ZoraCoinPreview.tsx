@@ -16,8 +16,52 @@ import { base } from "viem/chains";
 import type { Address } from "viem";
 import ZoraTradingModal from "./ZoraTradingModalClient";
 import VideoRenderer from "../layout/VideoRenderer";
-import { convertIpfsUrl } from "@/lib/utils/ipfsMetadata";
+import { convertIpfsUrl, getIpfsGatewayUrls } from "@/lib/utils/ipfsMetadata";
 import { CgArrowsExchange } from "react-icons/cg";
+
+// Component that tries multiple IPFS gateways for video loading
+function IPFSVideoRenderer({ originalUrl }: { originalUrl: string }) {
+  const [currentUrlIndex, setCurrentUrlIndex] = useState(0);
+  const [gatewayUrls] = useState(() => {
+    const urls = getIpfsGatewayUrls(originalUrl);
+    console.log("🎬 IPFSVideoRenderer - Available gateways:", urls);
+    return urls;
+  });
+
+  const handleVideoError = () => {
+    console.log(
+      `🎬 Video failed to load from gateway ${currentUrlIndex + 1}/${
+        gatewayUrls.length
+      }:`,
+      gatewayUrls[currentUrlIndex]
+    );
+
+    if (currentUrlIndex < gatewayUrls.length - 1) {
+      setCurrentUrlIndex(currentUrlIndex + 1);
+      console.log(`🎬 Trying next gateway:`, gatewayUrls[currentUrlIndex + 1]);
+    } else {
+      console.error("🎬 All IPFS gateways failed for video:", originalUrl);
+    }
+  };
+
+  const handleVideoLoad = () => {
+    console.log(
+      `✅ Video loaded successfully from gateway ${currentUrlIndex + 1}:`,
+      gatewayUrls[currentUrlIndex]
+    );
+  };
+
+  return (
+    <video
+      src={gatewayUrls[currentUrlIndex]}
+      onError={handleVideoError}
+      onLoadedData={handleVideoLoad}
+      controls
+      style={{ width: "100%", borderRadius: "8px" }}
+      preload="metadata"
+    />
+  );
+}
 
 interface ZoraCoinPreviewProps {
   address: string;
@@ -188,6 +232,16 @@ export default function ZoraCoinPreview({ address }: ZoraCoinPreviewProps) {
 
   if (!token) return null;
 
+  // Debug log for rendering decision
+  console.log("🎬 ZoraCoinPreview - Rendering decision:", {
+    hasVideo: token.hasVideo,
+    videoUrl: token.videoUrl,
+    hasImage: !!token.image,
+    imageUrl: token.image,
+    tokenName: token.name,
+    address: address,
+  });
+
   return (
     <>
       <Box
@@ -204,11 +258,14 @@ export default function ZoraCoinPreview({ address }: ZoraCoinPreviewProps) {
             {token.hasVideo && token.videoUrl ? (
               <>
                 {console.log(
-                  "🎬 ZoraCoinPreview - Rendering Video with gateway fallback for:",
+                  "🎬 ZoraCoinPreview - Rendering IPFS Video with fallback gateways for:",
                   token.videoUrl
                 )}
                 <Box width="full" borderRadius="md" overflow="hidden">
-                  <VideoRenderer src={convertIpfsUrl(token.videoUrl)} />
+                  {/* Try our custom IPFS video renderer first */}
+                  <IPFSVideoRenderer originalUrl={token.videoUrl} />
+                  {/* Fallback to regular VideoRenderer if needed */}
+                  {/* <VideoRenderer src={convertIpfsUrl(token.videoUrl)} /> */}
                 </Box>
               </>
             ) : token.image ? (
