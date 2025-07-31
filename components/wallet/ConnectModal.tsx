@@ -36,7 +36,12 @@ export default function ConnectModal({
   const isMobile = useIsMobile();
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} isCentered size={isMobile ? "full" : "lg"}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      isCentered
+      size={isMobile ? "full" : "lg"}
+    >
       <ModalOverlay bg="muted" backdropFilter="blur(10px)" />
       <ModalContent
         bg="background"
@@ -65,8 +70,8 @@ export default function ConnectModal({
           _hover={{ color: "background", bg: "primary" }}
           borderRadius="full"
         />
-        <ModalBody 
-          px={isMobile ? 4 : 8} 
+        <ModalBody
+          px={isMobile ? 4 : 8}
           pb={isMobile ? "calc(2rem + env(safe-area-inset-bottom))" : 8}
           flex="1"
           overflowY="auto"

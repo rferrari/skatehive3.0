@@ -45,15 +45,17 @@ const EditPostModal = ({
   return (
     <Modal isOpen={isOpen} onClose={onClose} size={isMobile ? "full" : "xl"}>
       <ModalOverlay />
-      <ModalContent 
-        bg={bgColor} 
+      <ModalContent
+        bg={bgColor}
         borderColor={mutedColor}
         h={isMobile ? "100vh" : "auto"}
         borderRadius={isMobile ? "0" : "md"}
         display="flex"
         flexDirection="column"
       >
-        <ModalHeader color={primaryColor} flexShrink={0}>Edit Post</ModalHeader>
+        <ModalHeader color={primaryColor} flexShrink={0}>
+          Edit Post
+        </ModalHeader>
         <ModalCloseButton
           color="red.500"
           bg="none"
@@ -103,7 +105,7 @@ const EditPostModal = ({
             </Box>
           </VStack>
         </ModalBody>
-        <ModalFooter 
+        <ModalFooter
           borderTopColor={mutedColor}
           flexShrink={0}
           pb={isMobile ? "calc(1.5rem + env(safe-area-inset-bottom))" : 4}

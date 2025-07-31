@@ -198,13 +198,17 @@ export default function SendTokenModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} size={isMobile ? "full" : "md"}>
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      size={isMobile ? "full" : "md"}
+    >
       <ModalOverlay />
-      <ModalContent 
-        bg="background" 
-        color="text" 
-        borderRadius={isMobile ? "0" : "lg"} 
-        border="1px solid" 
+      <ModalContent
+        bg="background"
+        color="text"
+        borderRadius={isMobile ? "0" : "lg"}
+        border="1px solid"
         borderColor="border"
         h={isMobile ? "100vh" : "auto"}
         display="flex"
@@ -224,7 +228,10 @@ export default function SendTokenModal({
             <Text color="primary">Send {token.token.symbol}</Text>
           </HStack>
         </ModalHeader>
-        <ModalCloseButton color="text" _hover={{ color: "background", bg: "primary" }} />
+        <ModalCloseButton
+          color="text"
+          _hover={{ color: "background", bg: "primary" }}
+        />
 
         <ModalBody flex="1" overflowY="auto">
           <VStack spacing={4}>
@@ -271,11 +278,17 @@ export default function SendTokenModal({
           </VStack>
         </ModalBody>
 
-        <ModalFooter 
+        <ModalFooter
           flexShrink={0}
           pb={isMobile ? "calc(1.5rem + env(safe-area-inset-bottom))" : 4}
         >
-          <Button variant="ghost" mr={3} onClick={handleClose} color="primary" _hover={{ color: "background", bg: "primary" }}>
+          <Button
+            variant="ghost"
+            mr={3}
+            onClick={handleClose}
+            color="primary"
+            _hover={{ color: "background", bg: "primary" }}
+          >
             Cancel
           </Button>
           <Button
@@ -287,7 +300,11 @@ export default function SendTokenModal({
             disabled={!recipient || !amount}
             _hover={{ bg: "accent", color: "background" }}
           >
-            {isPending || isConfirming ? <Spinner size="sm" color="background" /> : "Send"}
+            {isPending || isConfirming ? (
+              <Spinner size="sm" color="background" />
+            ) : (
+              "Send"
+            )}
           </Button>
         </ModalFooter>
       </ModalContent>

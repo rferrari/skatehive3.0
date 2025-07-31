@@ -25,11 +25,15 @@ interface HiveToken {
 interface MobileActionButtonsProps {
   onSend: (token: TokenDetail | HiveToken) => void;
   onSwap: (token: TokenDetail | HiveToken) => void;
+  onHiveSend?: (hiveToken: HiveToken) => void;
+  onHiveSwap?: (hiveToken: HiveToken) => void;
 }
 
 export default function MobileActionButtons({
   onSend,
   onSwap,
+  onHiveSend,
+  onHiveSwap,
 }: MobileActionButtonsProps) {
   const { isConnected } = useAccount();
   const [isMounted, setIsMounted] = useState(false);
@@ -60,8 +64,22 @@ export default function MobileActionButtons({
     closeSendModal();
   };
 
+  const handleSendHiveTokenSelect = (hiveToken: HiveToken) => {
+    if (onHiveSend) {
+      onHiveSend(hiveToken);
+    }
+    closeSendModal();
+  };
+
   const handleSwapTokenSelect = (token: TokenDetail | HiveToken) => {
     onSwap(token);
+    closeSwapModal();
+  };
+
+  const handleSwapHiveTokenSelect = (hiveToken: HiveToken) => {
+    if (onHiveSwap) {
+      onHiveSwap(hiveToken);
+    }
     closeSwapModal();
   };
 
@@ -183,6 +201,7 @@ export default function MobileActionButtons({
         isOpen={isSendModalOpen}
         onClose={closeSendModal}
         onTokenSelect={handleSendTokenSelect}
+        onHiveTokenSelect={handleSendHiveTokenSelect}
         title="Send Token"
       />
 
@@ -192,6 +211,7 @@ export default function MobileActionButtons({
         isOpen={isSwapModalOpen}
         onClose={closeSwapModal}
         onTokenSelect={handleSwapTokenSelect}
+        onHiveTokenSelect={handleSwapHiveTokenSelect}
         title="Swap Token"
       />
     </>

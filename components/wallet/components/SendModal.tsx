@@ -119,9 +119,9 @@ export default function SendModal({ isOpen, onClose, token }: SendModalProps) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} size={isMobile ? "full" : "md"}>
       <ModalOverlay />
-      <ModalContent 
-        bg="gray.900" 
-        border="1px solid" 
+      <ModalContent
+        bg="gray.900"
+        border="1px solid"
         borderColor="gray.700"
         h={isMobile ? "100vh" : "auto"}
         borderRadius={isMobile ? "0" : "md"}
@@ -148,9 +148,9 @@ export default function SendModal({ isOpen, onClose, token }: SendModalProps) {
         </ModalHeader>
         <ModalCloseButton />
 
-        <ModalBody 
-          pb={isMobile ? "calc(1.5rem + env(safe-area-inset-bottom))" : 6} 
-          flex="1" 
+        <ModalBody
+          pb={isMobile ? "calc(1.5rem + env(safe-area-inset-bottom))" : 6}
+          flex="1"
           overflowY="auto"
         >
           <VStack spacing={4} align="stretch">

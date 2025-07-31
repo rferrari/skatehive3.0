@@ -25,6 +25,7 @@ import "@aioha/react-ui/dist/build.css";
 import { convertVestToHive } from "@/lib/hive/client-functions";
 import { extractNumber } from "@/lib/utils/extractNumber";
 import WalletModal from "@/components/wallet/WalletModal";
+import SendTokenModal from "@/components/wallet/SendTokenModal";
 import ConnectModal from "../wallet/ConnectModal";
 import { Asset } from "@hiveio/dhive";
 import HivePowerSection from "./HivePowerSection";
@@ -84,6 +85,13 @@ export default function MainWallet({ username }: MainWalletProps) {
     onOpen: openHiveModal,
     onClose: closeHiveModal,
   } = useDisclosure();
+  const {
+    isOpen: isSendTokenModalOpen,
+    onOpen: openSendTokenModal,
+    onClose: closeSendTokenModal,
+  } = useDisclosure();
+
+  const [selectedToken, setSelectedToken] = useState<TokenDetail | null>(null);
 
   const [modalContent, setModalContent] = useState<{
     title: string;
@@ -290,12 +298,42 @@ export default function MainWallet({ username }: MainWalletProps) {
   // Mobile action handlers
   const handleMobileSend = useCallback((token: TokenDetail | HiveToken) => {
     console.log("Send token:", token);
-    // TODO: Open send modal with selected token
-  }, []);
+    if ('network' in token && token.network === 'hive') {
+      // This is a Hive token, open WalletModal
+      const hiveToken = token as HiveToken;
+      setModalContent({
+        title: `Send ${hiveToken.symbol}`,
+        description: `Transfer your ${hiveToken.name} to another account`,
+        showMemoField: true,
+        showUsernameField: true
+      });
+      onOpen();
+    } else {
+      // This is an Ethereum token, open SendTokenModal
+      const ethToken = token as TokenDetail;
+      setSelectedToken(ethToken);
+      openSendTokenModal();
+    }
+  }, [onOpen, openSendTokenModal]);
 
   const handleMobileSwap = useCallback((token: TokenDetail | HiveToken) => {
     console.log("Swap token:", token);
     // TODO: Open swap interface with selected token
+  }, []);
+
+  const handleMobileHiveSend = useCallback((hiveToken: HiveToken) => {
+    setModalContent({
+      title: `Send ${hiveToken.symbol}`,
+      description: `Transfer your ${hiveToken.name} to another account`,
+      showMemoField: true,
+      showUsernameField: true
+    });
+    onOpen();
+  }, [onOpen]);
+
+  const handleMobileHiveSwap = useCallback((hiveToken: HiveToken) => {
+    console.log("Swap Hive token:", hiveToken);
+    // TODO: Open Hive swap interface with selected token
   }, []);
 
   // Only show loading if user is trying to access Hive data
@@ -413,6 +451,8 @@ export default function MainWallet({ username }: MainWalletProps) {
                         <MobileActionButtons
                           onSend={handleMobileSend}
                           onSwap={handleMobileSwap}
+                          onHiveSend={handleMobileHiveSend}
+                          onHiveSwap={handleMobileHiveSwap}
                         />
                       </Box>
 
@@ -452,6 +492,8 @@ export default function MainWallet({ username }: MainWalletProps) {
                       <MobileActionButtons
                         onSend={handleMobileSend}
                         onSwap={handleMobileSwap}
+                        onHiveSend={handleMobileHiveSend}
+                        onHiveSwap={handleMobileHiveSwap}
                       />
                     )}
                     {/* Ethereum Assets Section - Show if connected to Ethereum OR have Farcaster data */}
@@ -637,6 +679,15 @@ export default function MainWallet({ username }: MainWalletProps) {
               onClose={() => closeHiveModal()}
             />
           </div>
+
+          {/* SendTokenModal for Ethereum tokens */}
+          {selectedToken && (
+            <SendTokenModal
+              isOpen={isSendTokenModalOpen}
+              onClose={closeSendTokenModal}
+              token={selectedToken}
+            />
+          )}
         </Box>
       </PortfolioProvider>
     </>

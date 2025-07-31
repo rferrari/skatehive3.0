@@ -3,7 +3,6 @@ import { FaPaperPlane, FaArrowUp, FaQuestionCircle } from "react-icons/fa";
 import { useState, useCallback, useMemo, memo } from "react";
 import { CustomHiveIcon } from "./CustomHiveIcon";
 import { useTheme } from "@/app/themeProvider";
-import useIsMobile from "@/hooks/useIsMobile";
 
 interface HiveSectionProps {
   balance: string;
@@ -23,7 +22,6 @@ const HiveSection = memo(function HiveSection({
 }: HiveSectionProps) {
   const { theme } = useTheme();
   const [showInfo, setShowInfo] = useState(false);
-  const isMobile = useIsMobile();
 
   // Memoize USD value calculation
   const usdValue = useMemo(() => {

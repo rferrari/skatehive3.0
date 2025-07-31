@@ -24,6 +24,7 @@ import { usePortfolioContext } from "../../../contexts/PortfolioContext";
 import { consolidateTokensBySymbol } from "../../../lib/utils/portfolioUtils";
 import { useAioha } from "@aioha/react-ui";
 import useHiveAccount from "../../../hooks/useHiveAccount";
+import useIsMobile from "@/hooks/useIsMobile";
 
 interface HiveToken {
   symbol: string;
@@ -32,13 +33,14 @@ interface HiveToken {
   balanceUSD: number;
   logo: string;
   network: "hive";
-  type: "liquid" | "savings" | "power";
+  type: "liquid" | "power";
 }
 
 interface TokenSearchModalProps {
   isOpen: boolean;
   onClose: () => void;
   onTokenSelect: (token: TokenDetail | HiveToken) => void;
+  onHiveTokenSelect?: (token: HiveToken) => void; // New prop for Hive token handling
   title: string;
 }
 
@@ -46,13 +48,14 @@ export default function TokenSearchModal({
   isOpen,
   onClose,
   onTokenSelect,
+  onHiveTokenSelect,
   title,
 }: TokenSearchModalProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const { aggregatedPortfolio } = usePortfolioContext();
   const { user } = useAioha();
   const { hiveAccount } = useHiveAccount(user || "");
-  const { colorMode } = useColorMode();
+  const isMobile = useIsMobile();
 
   // Reset search when modal opens/closes
   useEffect(() => {
@@ -70,13 +73,15 @@ export default function TokenSearchModal({
     // HIVE liquid balance
     if (hiveAccount.balance) {
       const balance = parseFloat(String(hiveAccount.balance).split(" ")[0]);
-      if (balance > 0) {
+      const balanceUSD = balance * 0.2; // You might want to get real price
+      if (balance > 0 && balanceUSD >= 1) {
+        // Filter out less than $1
         tokens.push({
           symbol: "HIVE",
           name: "Hive",
           balance: balance.toFixed(3),
-          balanceUSD: balance * 0.2, // You might want to get real price
-          logo: "/logos/hive-logo.png",
+          balanceUSD,
+          logo: "/logos/hiveLogo.png",
           network: "hive",
           type: "liquid",
         });
@@ -86,44 +91,35 @@ export default function TokenSearchModal({
     // HBD liquid balance
     if (hiveAccount.hbd_balance) {
       const balance = parseFloat(String(hiveAccount.hbd_balance).split(" ")[0]);
-      if (balance > 0) {
+      const balanceUSD = balance * 1.0; // HBD is pegged to $1
+      if (balance > 0 && balanceUSD >= 1) {
+        // Filter out less than $1
         tokens.push({
           symbol: "HBD",
           name: "Hive Backed Dollar",
           balance: balance.toFixed(3),
-          balanceUSD: balance * 1.0, // HBD is pegged to $1
-          logo: "/logos/hbd-logo.png",
+          balanceUSD,
+          logo: "/logos/hbd.svg",
           network: "hive",
           type: "liquid",
         });
       }
     }
 
-    // HBD savings balance
-    if (hiveAccount.savings_hbd_balance) {
-      const balance = parseFloat(
-        String(hiveAccount.savings_hbd_balance).split(" ")[0]
-      );
-      if (balance > 0) {
-        tokens.push({
-          symbol: "HBD",
-          name: "HBD Savings (15% APR)",
-          balance: balance.toFixed(3),
-          balanceUSD: balance * 1.0,
-          logo: "/logos/hbd-logo.png",
-          network: "hive",
-          type: "savings",
-        });
-      }
-    }
-
-    return tokens;
+    // Sort by balance USD descending
+    return tokens.sort((a, b) => b.balanceUSD - a.balanceUSD);
   }, [user, hiveAccount]);
 
   // Prepare Ethereum tokens
   const ethereumTokens = useMemo(() => {
     if (!aggregatedPortfolio?.tokens) return [];
-    return consolidateTokensBySymbol(aggregatedPortfolio.tokens);
+
+    const consolidated = consolidateTokensBySymbol(aggregatedPortfolio.tokens);
+
+    // Filter out tokens with less than $1 value and sort by balance USD descending
+    return consolidated
+      .filter((token) => token.totalBalanceUSD >= 1)
+      .sort((a, b) => b.totalBalanceUSD - a.totalBalanceUSD);
   }, [aggregatedPortfolio?.tokens]);
 
   // Filter tokens based on search query
@@ -150,23 +146,37 @@ export default function TokenSearchModal({
   }, [searchQuery, hiveTokens, ethereumTokens]);
 
   const handleTokenClick = (token: TokenDetail | HiveToken) => {
-    onTokenSelect(token);
-    onClose();
-  };
-
-  const isHiveToken = (token: any): token is HiveToken => {
-    return token.network === "hive";
+    // Check if it's a Hive token and we have a specific handler for it
+    if ("network" in token && token.network === "hive" && onHiveTokenSelect) {
+      onHiveTokenSelect(token as HiveToken);
+      // Don't close automatically for Hive tokens - let the parent handle it
+    } else {
+      onTokenSelect(token);
+      onClose();
+    }
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="lg">
+    <Modal isOpen={isOpen} onClose={onClose} size={isMobile ? "full" : "lg"}>
       <ModalOverlay />
-      <ModalContent bg="background" border="1px solid" borderColor="muted">
-        <ModalHeader color="primary" fontFamily="Joystix">
+      <ModalContent
+        bg="background"
+        border="1px solid"
+        borderColor="muted"
+        h={isMobile ? "100vh" : "auto"}
+        borderRadius={isMobile ? "0" : "md"}
+        display="flex"
+        flexDirection="column"
+      >
+        <ModalHeader color="primary" fontFamily="Joystix" flexShrink={0}>
           {title}
         </ModalHeader>
         <ModalCloseButton />
-        <ModalBody pb={6}>
+        <ModalBody
+          pb={isMobile ? "calc(1.5rem + env(safe-area-inset-bottom))" : 6}
+          flex="1"
+          overflowY="auto"
+        >
           <VStack spacing={4} align="stretch">
             {/* Search Input */}
             <InputGroup>
@@ -180,6 +190,7 @@ export default function TokenSearchModal({
                 bg="muted"
                 border="1px solid"
                 borderColor="border"
+                fontSize={isMobile ? "16px" : "md"}
                 _focus={{
                   borderColor: "primary",
                   boxShadow: "0 0 0 1px var(--chakra-colors-primary)",
@@ -188,7 +199,12 @@ export default function TokenSearchModal({
             </InputGroup>
 
             {/* Token Lists */}
-            <VStack spacing={4} align="stretch" maxH="400px" overflowY="auto">
+            <VStack
+              spacing={4}
+              align="stretch"
+              maxH={isMobile ? "60vh" : "400px"}
+              overflowY="auto"
+            >
               {/* Hive Tokens */}
               {filteredTokens.hive.length > 0 && (
                 <Box>
@@ -227,11 +243,7 @@ export default function TokenSearchModal({
                               <Text fontWeight="bold" color="text">
                                 {token.symbol}
                               </Text>
-                              {token.type === "savings" && (
-                                <Badge colorScheme="green" size="sm">
-                                  Savings
-                                </Badge>
-                              )}
+
                               {token.type === "power" && (
                                 <Badge colorScheme="purple" size="sm">
                                   Power
