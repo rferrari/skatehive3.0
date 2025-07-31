@@ -395,7 +395,7 @@ export default function SnapList({
             isCentered
           >
             <ModalOverlay bg="blackAlpha.600" />
-            <ModalContent mx={4} my={8}>
+            <ModalContent mx={4} my={8} bg="background">
               <ModalHeader pb={2}>Create a Coin</ModalHeader>
               <ModalCloseButton />
               <ModalBody pb={6}>
