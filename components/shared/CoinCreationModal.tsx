@@ -21,9 +21,12 @@ import {
   FormErrorMessage,
   Box,
   useToast,
+  Badge,
 } from "@chakra-ui/react";
 import { useState, useRef, useCallback } from "react";
 import { useCoinCreation, CoinCreationData } from "@/hooks/useCoinCreation";
+import { useAccount, useChainId, useSwitchChain } from "wagmi";
+import { base } from "wagmi/chains";
 
 interface CoinCreationModalProps {
   isOpen: boolean;
@@ -219,6 +222,11 @@ export function CoinCreationModal({
   const { createCoinFromPost, isCreating } = useCoinCreation();
   const toast = useToast();
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  
+  // Network validation hooks
+  const { isConnected } = useAccount();
+  const chainId = useChainId();
+  const { switchChain } = useSwitchChain();
 
   // Create post link for description
   const postLink = `${
@@ -297,6 +305,45 @@ export function CoinCreationModal({
     }
   }, [thumbnailFile, handleThumbnailCapture]);
 
+  // Network validation
+  const validateNetwork = useCallback(async (): Promise<boolean> => {
+    if (!isConnected) {
+      toast({
+        title: "Wallet Not Connected",
+        description: "Please connect your wallet to create coins.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+      return false;
+    }
+
+    if (chainId !== base.id) {
+      try {
+        await switchChain({ chainId: base.id });
+        toast({
+          title: "Network Switched",
+          description: "Successfully switched to Base network.",
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+        });
+        return true;
+      } catch (error) {
+        toast({
+          title: "Network Switch Required",
+          description: "Please switch to Base network to create coins. Go to your wallet and switch networks manually.",
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
+        return false;
+      }
+    }
+
+    return true;
+  }, [isConnected, chainId, switchChain, toast]);
+
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
     if (!formData.name.trim()) {
@@ -328,6 +375,10 @@ export function CoinCreationModal({
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
+
+    // Check network before proceeding
+    const isNetworkValid = await validateNetwork();
+    if (!isNetworkValid) return;
 
     let imageFile: File | undefined;
     let videoUrl: string | undefined;
@@ -457,7 +508,19 @@ export function CoinCreationModal({
     <Modal isOpen={isOpen} onClose={handleClose} size="lg">
       <ModalOverlay />
       <ModalContent bg={"background"} border="1px" borderColor={"primary"}>
-        <ModalHeader>Create Coin from Post</ModalHeader>
+        <ModalHeader>
+          <HStack justify="space-between" align="center">
+            <Text>Create Coin from Post</Text>
+            {isConnected && (
+              <Badge 
+                colorScheme={chainId === base.id ? "green" : "red"}
+                fontSize="xs"
+              >
+                {chainId === base.id ? "✓ Base Network" : "⚠️ Wrong Network"}
+              </Badge>
+            )}
+          </HStack>
+        </ModalHeader>
         <ModalCloseButton />
         <ModalBody pb={6}>
           <VStack spacing={4}>
@@ -468,6 +531,35 @@ export function CoinCreationModal({
                 deploy a new coin contract on the blockchain.
               </Text>
             </Alert>
+
+            {/* Network Connection Alert */}
+            {!isConnected && (
+              <Alert status="warning" borderRadius="md">
+                <AlertIcon />
+                <Text fontSize="sm">
+                  Please connect your wallet to create coins. Make sure you're on the Base network.
+                </Text>
+              </Alert>
+            )}
+
+            {isConnected && chainId !== base.id && (
+              <Alert status="error" borderRadius="md">
+                <AlertIcon />
+                <VStack align="start" spacing={2}>
+                  <Text fontSize="sm">
+                    You're connected to the wrong network. Please switch to Base network to create coins.
+                  </Text>
+                  <Button 
+                    size="sm" 
+                    colorScheme="blue"
+                    onClick={() => validateNetwork()}
+                    isLoading={isCreating}
+                  >
+                    Switch to Base Network
+                  </Button>
+                </VStack>
+              </Alert>
+            )}
 
             <CoinForm
               formData={formData}
@@ -494,9 +586,15 @@ export function CoinCreationModal({
                 onClick={handleSubmit}
                 isLoading={isCreating}
                 loadingText="Creating Coin..."
+                isDisabled={!isConnected || chainId !== base.id}
                 flex={1}
               >
-                Create Coin
+                {!isConnected 
+                  ? "Connect Wallet" 
+                  : chainId !== base.id 
+                    ? "Switch to Base Network" 
+                    : "Create Coin"
+                }
               </Button>
             </HStack>
           </VStack>

@@ -193,11 +193,11 @@ export function useCoinCreation() {
       if ((isPostAuthor || isServerSidePost) && result.address) {
         try {
           // Generate Zora URL for the coin
-          const zoraUrl = `https://zora.co/collect/base:${result.address}`;
+          const zoraUrl = `https://zora.co/coin/base:${result.address}`;
           
           if (isPostAuthor && aioha) {
             // User created the post and coin - update via Aioha
-            const updatedBody = `${coinData.postBody}\n\n---\n  Collect it here \n ${zoraUrl}`;
+            const updatedBody = `${coinData.postBody}\n\n---\n \n ${zoraUrl}`;
             
             // Parse and update metadata
             let updatedMetadata: any = {};
