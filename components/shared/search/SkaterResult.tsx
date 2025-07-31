@@ -28,6 +28,7 @@ export default function SkaterResult({
       transition="all 0.2s ease"
       _hover={{ bg: "muted", color: "primary" }}
       onClick={() => onSelect(skater)}
+      data-index={index}
     >
       <HStack spacing={3}>
         <Avatar

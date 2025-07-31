@@ -21,22 +21,41 @@ export default function SearchInput({
   onQueryChange,
   inputRef,
 }: SearchInputProps) {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Prevent arrow keys from moving cursor when we want to navigate results
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+    }
+  };
+
   return (
-    <Box p={4} borderBottom="1px solid" borderColor="secondary">
+    <Box borderBottom="1px solid" borderColor="secondary">
       <InputGroup size="lg">
-        <InputLeftElement pointerEvents="none">
-          <Icon as={FaSearch} color="secondary" />
+        <InputLeftElement
+          pointerEvents="none"
+          width="48px"
+          height="100%"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <Icon as={FaSearch} color="secondary" boxSize="16px" />
         </InputLeftElement>
         <Input
           ref={inputRef}
           placeholder="Search users or type / for pages..."
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
+          onKeyDown={handleKeyDown}
           variant="unstyled"
           fontSize="md"
-          pl="40px"
+          px={4}
+          py={4}
+          pl="52px"
+          height="56px"
           color="primary"
           _placeholder={{ color: "secondary", opacity: 0.7 }}
+          _focus={{ outline: "none" }}
         />
       </InputGroup>
     </Box>

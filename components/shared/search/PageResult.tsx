@@ -28,6 +28,7 @@ export default function PageResult({
       transition="all 0.2s ease"
       _hover={{ bg: "muted", color: "primary" }}
       onClick={() => onSelect(page)}
+      data-index={index}
     >
       <HStack spacing={3}>
         <Box

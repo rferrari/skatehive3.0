@@ -16,7 +16,7 @@ import {
   Box,
 } from "@chakra-ui/react";
 import { FaSearch, FaUser, FaHome, FaTrophy, FaGift } from "react-icons/fa";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 // Import smaller components
 import SearchInput from "./search/SearchInput";
@@ -52,10 +52,14 @@ export default function SearchOverlay({
   const [isLoadingTopSkaters, setIsLoadingTopSkaters] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const router = useRouter();
+  const pathname = usePathname();
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const resultsContainerRef = useRef<HTMLDivElement>(null);
 
-  const popularPages = getPopularPages();
+  const popularPages = useMemo(() => {
+    return getPopularPages().filter((page) => page.path !== pathname);
+  }, [pathname]);
 
   const fetchTopSkaters = useCallback(async () => {
     setIsLoadingTopSkaters(true);
@@ -125,9 +129,10 @@ export default function SearchOverlay({
       const allPages = [...STATIC_PAGES, ...COMMAND_PAGES];
       const filtered = allPages.filter(
         (page) =>
-          page.title.toLowerCase().includes(searchTerm) ||
-          page.description.toLowerCase().includes(searchTerm) ||
-          page.path.toLowerCase().includes(searchTerm)
+          page.path !== pathname &&
+          (page.title.toLowerCase().includes(searchTerm) ||
+            page.description.toLowerCase().includes(searchTerm) ||
+            page.path.toLowerCase().includes(searchTerm))
       );
       setFilteredPages(filtered);
       setSkaters([]);
@@ -156,8 +161,9 @@ export default function SearchOverlay({
     !query.startsWith("/") && query.trim()
       ? COMMAND_PAGES.filter(
           (page) =>
-            page.title.toLowerCase().includes(query.toLowerCase()) ||
-            page.description.toLowerCase().includes(query.toLowerCase())
+            page.path !== pathname &&
+            (page.title.toLowerCase().includes(query.toLowerCase()) ||
+              page.description.toLowerCase().includes(query.toLowerCase()))
         )
       : [];
 
@@ -203,15 +209,49 @@ export default function SearchOverlay({
       switch (e.key) {
         case "ArrowDown":
           e.preventDefault();
-          setHighlightedIndex((prev) =>
-            prev < initialSuggestions.length - 1 ? prev + 1 : 0
-          );
+          setHighlightedIndex((prev) => {
+            const newIndex =
+              prev < initialSuggestions.length - 1 ? prev + 1 : 0;
+            // Scroll the highlighted item into view
+            setTimeout(() => {
+              const container = resultsContainerRef.current;
+              if (container) {
+                const highlightedElement = container.querySelector(
+                  `[data-index="${newIndex}"]`
+                );
+                if (highlightedElement) {
+                  highlightedElement.scrollIntoView({
+                    behavior: "smooth",
+                    block: "nearest",
+                  });
+                }
+              }
+            }, 0);
+            return newIndex;
+          });
           break;
         case "ArrowUp":
           e.preventDefault();
-          setHighlightedIndex((prev) =>
-            prev > 0 ? prev - 1 : initialSuggestions.length - 1
-          );
+          setHighlightedIndex((prev) => {
+            const newIndex =
+              prev > 0 ? prev - 1 : initialSuggestions.length - 1;
+            // Scroll the highlighted item into view
+            setTimeout(() => {
+              const container = resultsContainerRef.current;
+              if (container) {
+                const highlightedElement = container.querySelector(
+                  `[data-index="${newIndex}"]`
+                );
+                if (highlightedElement) {
+                  highlightedElement.scrollIntoView({
+                    behavior: "smooth",
+                    block: "nearest",
+                  });
+                }
+              }
+            }, 0);
+            return newIndex;
+          });
           break;
         case "Enter":
           e.preventDefault();
@@ -222,6 +262,13 @@ export default function SearchOverlay({
         case "Escape":
           onClose();
           setQuery("");
+          break;
+        case "Tab":
+          e.preventDefault();
+          // Cycle through suggestions with Tab
+          setHighlightedIndex((prev) =>
+            prev < initialSuggestions.length - 1 ? prev + 1 : 0
+          );
           break;
       }
     };
@@ -283,6 +330,7 @@ export default function SearchOverlay({
             {/* Results */}
             {(query || popularPages.length > 0) && !isLoading && (
               <Box
+                ref={resultsContainerRef}
                 maxH={{ base: "60vh", md: "400px" }}
                 overflowY="auto"
                 sx={{
