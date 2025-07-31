@@ -13,9 +13,7 @@ import {
   Box,
   Text,
   Image,
-  Spinner,
   Badge,
-  useColorMode,
 } from "@chakra-ui/react";
 import { useState, useMemo, useEffect } from "react";
 import { FaSearch } from "react-icons/fa";
