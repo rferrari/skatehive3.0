@@ -45,7 +45,7 @@ export default function SnapList({
 }: SnapListProps) {
   const { comments, loadNextPage, isLoading, hasMore } = data;
   const [displayedComments, setDisplayedComments] = useState<Discussion[]>([]);
-  
+
   // Get authentication status
   const { user } = useAioha(); // Hive connection
   const { isConnected } = useAccount(); // Ethereum connection
@@ -89,14 +89,6 @@ export default function SnapList({
     }
   };
 
-  // Callback to update comment count when a new comment is added to the main post
-  const handleMainPostCommentAdded = () => {
-    // This will be called when a comment is added to the main post
-    // The count is already updated optimistically in the Snap component
-  };
-
-  // Filter out posts with 2 or more downvotes (community disapproval)
-  // This helps maintain content quality by hiding posts the community has rejected
   const filteredAndSortedComments = [...displayedComments]
     .filter((discussion: Discussion) => {
       const downvoteCount = countDownvotes(discussion.active_votes);
@@ -132,7 +124,9 @@ export default function SnapList({
                   pa={author}
                   pp={permlink}
                   onNewComment={
-                    handleNewComment as (newComment: Partial<Discussion>) => void
+                    handleNewComment as (
+                      newComment: Partial<Discussion>
+                    ) => void
                   }
                   onClose={() => null}
                 />

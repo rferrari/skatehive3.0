@@ -103,7 +103,7 @@ const ReceiveModal: React.FC<ReceiveModalProps> = ({ isOpen, onClose }) => {
     if (!isOpen && hiveQR !== "") {
       setHiveQR("");
     }
-  }, [isOpen, user?.name, hiveQR, generateQRCode]);
+  }, [isOpen, user, hiveQR, generateQRCode]);
 
   const shortenAddress = (addr: string) => {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;

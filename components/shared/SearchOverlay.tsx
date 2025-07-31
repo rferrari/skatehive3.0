@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import {
   Modal,
   ModalOverlay,
@@ -160,9 +160,12 @@ export default function SearchOverlay({
     ...filteredSkaters,
     ...filteredCommands,
   ];
-  const initialSuggestions = query
-    ? allResults
-    : [...popularPages, ...topSkaters];
+  
+  const initialSuggestions = useMemo(() => {
+    return query
+      ? allResults
+      : [...popularPages, ...topSkaters];
+  }, [query, allResults, popularPages, topSkaters]);
 
   const handleSelect = useCallback(
     (item: PageResultType | SkaterData) => {

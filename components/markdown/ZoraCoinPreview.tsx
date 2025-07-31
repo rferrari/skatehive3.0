@@ -19,17 +19,30 @@ import VideoRenderer from "../layout/VideoRenderer";
 import { convertIpfsUrl, getIpfsGatewayUrls } from "@/lib/utils/ipfsMetadata";
 import { CgArrowsExchange } from "react-icons/cg";
 
+// Debug utility that only logs in development mode
+const debug = (...args: any[]) => {
+  if (process.env.NODE_ENV === "development") {
+    console.log(...args);
+  }
+};
+
+const debugError = (...args: any[]) => {
+  if (process.env.NODE_ENV === "development") {
+    console.error(...args);
+  }
+};
+
 // Component that tries multiple IPFS gateways for video loading
 function IPFSVideoRenderer({ originalUrl }: { originalUrl: string }) {
   const [currentUrlIndex, setCurrentUrlIndex] = useState(0);
   const [gatewayUrls] = useState(() => {
     const urls = getIpfsGatewayUrls(originalUrl);
-    console.log("🎬 IPFSVideoRenderer - Available gateways:", urls);
+    debug("🎬 IPFSVideoRenderer - Available gateways:", urls);
     return urls;
   });
 
   const handleVideoError = () => {
-    console.log(
+    debug(
       `🎬 Video failed to load from gateway ${currentUrlIndex + 1}/${
         gatewayUrls.length
       }:`,
@@ -38,14 +51,14 @@ function IPFSVideoRenderer({ originalUrl }: { originalUrl: string }) {
 
     if (currentUrlIndex < gatewayUrls.length - 1) {
       setCurrentUrlIndex(currentUrlIndex + 1);
-      console.log(`🎬 Trying next gateway:`, gatewayUrls[currentUrlIndex + 1]);
+      debug(`🎬 Trying next gateway:`, gatewayUrls[currentUrlIndex + 1]);
     } else {
-      console.error("🎬 All IPFS gateways failed for video:", originalUrl);
+      debugError("🎬 All IPFS gateways failed for video:", originalUrl);
     }
   };
 
   const handleVideoLoad = () => {
-    console.log(
+    debug(
       `✅ Video loaded successfully from gateway ${currentUrlIndex + 1}:`,
       gatewayUrls[currentUrlIndex]
     );
@@ -89,24 +102,24 @@ export default function ZoraCoinPreview({ address }: ZoraCoinPreviewProps) {
   useEffect(() => {
     let ignore = false;
 
-    console.log("🎬 ZoraCoinPreview - Component mounted for address:", address);
+    debug("🎬 ZoraCoinPreview - Component mounted for address:", address);
 
     async function fetchCoinData() {
       try {
         setLoading(true);
-        console.log("🎬 ZoraCoinPreview - Fetching coin data for:", address);
+        debug("🎬 ZoraCoinPreview - Fetching coin data for:", address);
 
         const response = await getCoin({
           address: address as Address,
           chain: base.id, // Default to Base chain since most Zora coins are on Base
         });
 
-        console.log("🎬 ZoraCoinPreview - Raw API response:", response);
+        debug("🎬 ZoraCoinPreview - Raw API response:", response);
 
         const coin = response.data?.zora20Token;
 
         if (!ignore && coin) {
-          console.log("🎬 ZoraCoinPreview - Coin data received:", {
+          debug("🎬 ZoraCoinPreview - Coin data received:", {
             name: coin.name,
             symbol: coin.symbol,
             mediaContent: coin.mediaContent,
@@ -120,7 +133,7 @@ export default function ZoraCoinPreview({ address }: ZoraCoinPreviewProps) {
           if (coin.mediaContent) {
             const { mimeType, originalUri } = coin.mediaContent;
 
-            console.log("🎬 ZoraCoinPreview - Media content details:", {
+            debug("🎬 ZoraCoinPreview - Media content details:", {
               mimeType,
               originalUri,
               isVideoMimeType: mimeType && mimeType.startsWith("video/"),
@@ -130,7 +143,7 @@ export default function ZoraCoinPreview({ address }: ZoraCoinPreviewProps) {
             if (mimeType && mimeType.startsWith("video/")) {
               videoUrl = convertIpfsUrl(originalUri);
               hasVideo = true;
-              console.log("✅ ZoraCoinPreview - Video detected by MIME type:", {
+              debug("✅ ZoraCoinPreview - Video detected by MIME type:", {
                 originalUri,
                 convertedUrl: videoUrl,
                 gateway: "ipfs.io (public gateway)",
@@ -146,16 +159,13 @@ export default function ZoraCoinPreview({ address }: ZoraCoinPreviewProps) {
             ) {
               videoUrl = convertIpfsUrl(originalUri);
               hasVideo = true;
-              console.log(
-                "✅ ZoraCoinPreview - Video detected by file extension:",
-                {
-                  originalUri,
-                  convertedUrl: videoUrl,
-                  gateway: "ipfs.io (public gateway)",
-                }
-              );
+              debug("✅ ZoraCoinPreview - Video detected by file extension:", {
+                originalUri,
+                convertedUrl: videoUrl,
+                gateway: "ipfs.io (public gateway)",
+              });
             } else {
-              console.log("❌ ZoraCoinPreview - No video detected:", {
+              debug("❌ ZoraCoinPreview - No video detected:", {
                 mimeType,
                 originalUri,
                 hasVideoExtension:
@@ -167,7 +177,7 @@ export default function ZoraCoinPreview({ address }: ZoraCoinPreviewProps) {
               });
             }
           } else {
-            console.log("❌ ZoraCoinPreview - No mediaContent found");
+            debug("❌ ZoraCoinPreview - No mediaContent found");
           }
 
           const imageUrl = coin.mediaContent?.previewImage?.medium
@@ -176,7 +186,7 @@ export default function ZoraCoinPreview({ address }: ZoraCoinPreviewProps) {
             ? convertIpfsUrl(coin.mediaContent.previewImage.small)
             : undefined;
 
-          console.log("🎬 ZoraCoinPreview - Final token data:", {
+          debug("🎬 ZoraCoinPreview - Final token data:", {
             hasVideo,
             videoUrl,
             imageUrl,
@@ -200,7 +210,7 @@ export default function ZoraCoinPreview({ address }: ZoraCoinPreviewProps) {
           });
         }
       } catch (error) {
-        console.error("🎬 ZoraCoinPreview - Error fetching coin data:", {
+        debugError("🎬 ZoraCoinPreview - Error fetching coin data:", {
           error,
           address,
           errorMessage: error instanceof Error ? error.message : String(error),
@@ -233,7 +243,7 @@ export default function ZoraCoinPreview({ address }: ZoraCoinPreviewProps) {
   if (!token) return null;
 
   // Debug log for rendering decision
-  console.log("🎬 ZoraCoinPreview - Rendering decision:", {
+  debug("🎬 ZoraCoinPreview - Rendering decision:", {
     hasVideo: token.hasVideo,
     videoUrl: token.videoUrl,
     hasImage: !!token.image,
@@ -256,34 +266,17 @@ export default function ZoraCoinPreview({ address }: ZoraCoinPreviewProps) {
         <Center>
           <VStack spacing={2} width="full">
             {token.hasVideo && token.videoUrl ? (
-              <>
-                {console.log(
-                  "🎬 ZoraCoinPreview - Rendering IPFS Video with fallback gateways for:",
-                  token.videoUrl
-                )}
-                <Box width="full" borderRadius="md" overflow="hidden">
-                  {/* Try our custom IPFS video renderer first */}
-                  <IPFSVideoRenderer originalUrl={token.videoUrl} />
-                  {/* Fallback to regular VideoRenderer if needed */}
-                  {/* <VideoRenderer src={convertIpfsUrl(token.videoUrl)} /> */}
-                </Box>
-              </>
+              <Box width="full" borderRadius="md" overflow="hidden">
+                <IPFSVideoRenderer originalUrl={token.videoUrl} />
+              </Box>
             ) : token.image ? (
-              <>
-                {console.log(
-                  "🎬 ZoraCoinPreview - Rendering Image with:",
-                  token.image
-                )}
-                <Image
-                  src={token.image}
-                  alt={token.name}
-                  width="full"
-                  borderRadius="md"
-                />
-              </>
-            ) : (
-              <>{console.log("🎬 ZoraCoinPreview - No media to render")}</>
-            )}
+              <Image
+                src={token.image}
+                alt={token.name}
+                width="full"
+                borderRadius="md"
+              />
+            ) : null}
             <Link
               href={`https://zora.co/coin/base:${address}`}
               isExternal

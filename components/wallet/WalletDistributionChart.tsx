@@ -1,14 +1,7 @@
 "use client";
 import React, { useMemo } from "react";
 import { Box, Text, VStack, HStack, Badge } from "@chakra-ui/react";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  Tooltip,
-  Legend,
-} from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { formatValue } from "../../lib/utils/portfolioUtils";
 import { useTheme } from "@/app/themeProvider";
 
@@ -124,6 +117,7 @@ export function WalletDistributionChart({
     farcasterProfile,
     connectedEthAddress,
     THEME_COLORS,
+    farcasterPortfolio,
   ]);
 
   // Custom tooltip component
