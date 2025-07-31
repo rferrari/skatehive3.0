@@ -47,13 +47,7 @@ interface ImagePreviewProps {
 }
 
 const ImagePreview: React.FC<ImagePreviewProps> = ({ images }) => (
-  <Box
-    border="1px"
-    borderColor={"primary"}
-    borderRadius="md"
-    p={2}
-    w="full"
-  >
+  <Box border="1px" borderColor={"primary"} borderRadius="md" p={2} w="full">
     <Text fontSize="xs" mb={2} color="muted">
       Using post image
     </Text>
@@ -67,12 +61,7 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({ images }) => (
       display="block"
     />
     {images[0].toLowerCase().endsWith(".gif") && (
-      <Text
-        fontSize="xs"
-        color="primary"
-        mt={2}
-        textAlign="center"
-      >
+      <Text fontSize="xs" color="primary" mt={2} textAlign="center">
         GIF will be used as coin image
       </Text>
     )}
@@ -88,25 +77,25 @@ interface VideoPreviewProps {
   onVideoLoad: () => void;
 }
 
-const VideoPreview: React.FC<VideoPreviewProps> = ({ 
-  videos, 
-  thumbnailUrl, 
-  thumbnailFile, 
-  onThumbnailCapture, 
+const VideoPreview: React.FC<VideoPreviewProps> = ({
+  videos,
+  thumbnailUrl,
+  thumbnailFile,
+  onThumbnailCapture,
   videoRef,
-  onVideoLoad
+  onVideoLoad,
 }) => {
   // Process video URL
   const videoUrl = videos[0];
   const iframeSrcMatch = videoUrl.match(/src=["']([^"']+)["']/);
   let src = iframeSrcMatch ? iframeSrcMatch[1] : videoUrl;
   src = src.replace(/^['"]+|['"]+$/g, "");
-  
+
   try {
     src = src.replace(/&amp;/g, "&");
     src = decodeURIComponent(src);
   } catch (e) {}
-  
+
   let finalSrc = src;
   if (src.startsWith("/ipfs/")) {
     finalSrc = `https://ipfs.skatehive.app${src}`;
@@ -115,13 +104,7 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({
   }
 
   return (
-    <Box
-      border="1px"
-      borderColor={"primary"}
-      borderRadius="md"
-      p={2}
-      w="full"
-    >
+    <Box border="1px" borderColor={"primary"} borderRadius="md" p={2} w="full">
       <Text fontSize="xs" mb={2} color="muted">
         Video content detected
       </Text>
@@ -141,7 +124,7 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({
             width: "100%",
             maxHeight: "200px",
             borderRadius: "8px",
-            background: "#111"
+            background: "#111",
           }}
           poster={thumbnailUrl}
           onLoadedData={onVideoLoad}
@@ -150,14 +133,16 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({
             target.poster = "https://placehold.co/300x200?text=Video+not+found";
           }}
         >
-          Sorry, your browser doesn't support embedded videos.
+          Sorry, your browser doesnt support embedded videos.
         </video>
         <Button size="xs" mt={2} onClick={onThumbnailCapture}>
           Capture Thumbnail from Current Frame (Optional)
         </Button>
         {thumbnailUrl && (
           <Box mt={2} textAlign="center">
-            <Text fontSize="xs" color="primary">Selected Thumbnail Preview:</Text>
+            <Text fontSize="xs" color="primary">
+              Selected Thumbnail Preview:
+            </Text>
             <Image
               src={thumbnailUrl}
               alt="Selected thumbnail"
@@ -169,12 +154,7 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({
           </Box>
         )}
       </Box>
-      <Text
-        fontSize="xs"
-        color="primary"
-        mt={2}
-        textAlign="center"
-      >
+      <Text fontSize="xs" color="primary" mt={2} textAlign="center">
         ✨ Video will be used as animation, thumbnail generation is optional
       </Text>
     </Box>
@@ -191,13 +171,17 @@ interface CoinFormProps {
   onFormChange: (field: string, value: string) => void;
 }
 
-const CoinForm: React.FC<CoinFormProps> = ({ formData, errors, onFormChange }) => (
+const CoinForm: React.FC<CoinFormProps> = ({
+  formData,
+  errors,
+  onFormChange,
+}) => (
   <>
     <FormControl isInvalid={!!errors.name}>
       <FormLabel>Coin Name</FormLabel>
       <Input
         value={formData.name}
-        onChange={(e) => onFormChange('name', e.target.value)}
+        onChange={(e) => onFormChange("name", e.target.value)}
         placeholder="Enter coin name (e.g., My Skate Trick)"
       />
       <FormErrorMessage>{errors.name}</FormErrorMessage>
@@ -207,7 +191,7 @@ const CoinForm: React.FC<CoinFormProps> = ({ formData, errors, onFormChange }) =
       <FormLabel>Symbol</FormLabel>
       <Input
         value={formData.symbol}
-        onChange={(e) => onFormChange('symbol', e.target.value.toUpperCase())}
+        onChange={(e) => onFormChange("symbol", e.target.value.toUpperCase())}
         placeholder="Enter symbol (e.g., TRICK)"
         maxLength={8}
       />
@@ -218,7 +202,7 @@ const CoinForm: React.FC<CoinFormProps> = ({ formData, errors, onFormChange }) =
       <FormLabel>Description</FormLabel>
       <Textarea
         value={formData.description}
-        onChange={(e) => onFormChange('description', e.target.value)}
+        onChange={(e) => onFormChange("description", e.target.value)}
         placeholder="Describe your coin..."
         rows={4}
       />
@@ -250,17 +234,21 @@ export function CoinCreationModal({
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   // For video thumbnail picker
-  const [thumbnailFile, setThumbnailFile] = useState<File | undefined>(undefined);
-  const [thumbnailUrl, setThumbnailUrl] = useState<string | undefined>(undefined);
+  const [thumbnailFile, setThumbnailFile] = useState<File | undefined>(
+    undefined
+  );
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | undefined>(
+    undefined
+  );
 
   const handleFormChange = useCallback((field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   }, []);
 
   const handleThumbnailCapture = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
-    
+
     // For cross-origin videos (like IPFS), we can't use canvas due to CORS
     // Instead, we'll use a different approach or let the backend handle it
     try {
@@ -268,24 +256,31 @@ export function CoinCreationModal({
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       const ctx = canvas.getContext("2d");
-      
+
       if (ctx) {
         // This will fail for cross-origin videos due to CORS
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
-        canvas.toBlob((blob) => {
-          if (blob) {
-            const url = URL.createObjectURL(blob);
-            setThumbnailUrl(url);
-            setThumbnailFile(new File([blob], "thumbnail.jpg", { type: blob.type }));
-          }
-        }, "image/jpeg", 0.92);
+
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              const url = URL.createObjectURL(blob);
+              setThumbnailUrl(url);
+              setThumbnailFile(
+                new File([blob], "thumbnail.jpg", { type: blob.type })
+              );
+            }
+          },
+          "image/jpeg",
+          0.92
+        );
       }
     } catch (error) {
       console.warn("Failed to capture thumbnail due to CORS:", error);
       toast({
         title: "Thumbnail Capture Failed",
-        description: "Cannot capture thumbnail from cross-origin video. The coin will be created without a custom thumbnail.",
+        description:
+          "Cannot capture thumbnail from cross-origin video. The coin will be created without a custom thumbnail.",
         status: "warning",
         duration: 3000,
       });
@@ -336,7 +331,7 @@ export function CoinCreationModal({
 
     let imageFile: File | undefined;
     let videoUrl: string | undefined;
-    
+
     // Handle images
     if (postData.images.length > 0) {
       try {
@@ -346,7 +341,7 @@ export function CoinCreationModal({
         return;
       }
     }
-    
+
     // Handle videos - similar to CoinCreatorComposer
     if (postData.videos && postData.videos.length > 0) {
       // Extract and clean video URL
@@ -354,20 +349,23 @@ export function CoinCreationModal({
       const iframeSrcMatch = rawVideoUrl.match(/src=["']([^"']+)["']/);
       let cleanVideoUrl = iframeSrcMatch ? iframeSrcMatch[1] : rawVideoUrl;
       cleanVideoUrl = cleanVideoUrl.replace(/^['"]+|['"]+$/g, "");
-      
+
       try {
         cleanVideoUrl = cleanVideoUrl.replace(/&amp;/g, "&");
         cleanVideoUrl = decodeURIComponent(cleanVideoUrl);
       } catch (e) {}
-      
+
       if (cleanVideoUrl.startsWith("/ipfs/")) {
         cleanVideoUrl = `https://ipfs.skatehive.app${cleanVideoUrl}`;
       } else if (cleanVideoUrl.startsWith("ipfs://")) {
-        cleanVideoUrl = `https://ipfs.skatehive.app/ipfs/${cleanVideoUrl.replace("ipfs://", "")}`;
+        cleanVideoUrl = `https://ipfs.skatehive.app/ipfs/${cleanVideoUrl.replace(
+          "ipfs://",
+          ""
+        )}`;
       }
-      
+
       videoUrl = cleanVideoUrl;
-      
+
       // If user captured a thumbnail, use it. Otherwise, let Zora SDK handle it
       if (thumbnailFile) {
         imageFile = thumbnailFile;
@@ -377,7 +375,10 @@ export function CoinCreationModal({
 
     // Ensure we have either an image or video
     if (!imageFile && !videoUrl) {
-      setErrors((prev) => ({ ...prev, image: "Post must have images or videos to create a coin" }));
+      setErrors((prev) => ({
+        ...prev,
+        image: "Post must have images or videos to create a coin",
+      }));
       return;
     }
 
@@ -427,11 +428,11 @@ export function CoinCreationModal({
   const getMediaContent = () => {
     const hasImages = postData.images.length > 0;
     const hasVideos = postData.videos && postData.videos.length > 0;
-    
+
     if (hasImages && !hasVideos) {
       return <ImagePreview images={postData.images} />;
     }
-    
+
     if (hasVideos && !hasImages) {
       return (
         <VideoPreview
@@ -444,7 +445,7 @@ export function CoinCreationModal({
         />
       );
     }
-    
+
     return (
       <Text color="error" fontSize="sm">
         No images or videos found in post
