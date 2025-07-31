@@ -457,9 +457,9 @@ ${zoraUrl}
             cursor="pointer"
             transition="all 0.2s"
             _hover={{
-              borderColor: "blue.400",
-              bg: "gray.100",
-              _dark: { bg: "gray.700" },
+              borderColor: "background.400",
+              bg: "background.100",
+              _dark: { bg: "background.700" },
             }}
             onClick={() => imageUploadRef.current?.click()}
           >
@@ -485,8 +485,8 @@ ${zoraUrl}
               <Box
                 w={12}
                 h={12}
-                bg="blue.100"
-                _dark={{ bg: "blue.900" }}
+                bg="background.100"
+                _dark={{ bg: "background.900" }}
                 borderRadius="lg"
                 display="flex"
                 alignItems="center"
@@ -497,9 +497,6 @@ ${zoraUrl}
               <VStack spacing={2}>
                 <Text fontSize="lg" fontWeight="semibold">
                   Upload photos and videos
-                </Text>
-                <Text color="gray.500" fontSize="sm">
-                  Drag or select up to 10 files to create a coin. Max 6GB.
                 </Text>
               </VStack>
               <Button
@@ -522,7 +519,7 @@ ${zoraUrl}
                 <Button
                   variant="link"
                   size="xs"
-                  color="blue.500"
+                  color="background.500"
                   onClick={(e) => {
                     e.stopPropagation();
                     videoUploadRef.current?.click();
@@ -688,7 +685,7 @@ ${zoraUrl}
                   value={progress}
                   size="sm"
                   width="100%"
-                  colorScheme="blue"
+                  colorScheme="background"
                 />
               )
           )}

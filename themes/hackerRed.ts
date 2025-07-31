@@ -1,4 +1,5 @@
 import { extendTheme } from '@chakra-ui/react';
+import { COLORS } from './colors';
 
 const hackerRedTheme = extendTheme({
   config: {
@@ -12,16 +13,16 @@ const hackerRedTheme = extendTheme({
     },
   },
   colors: {
-    background: '#1A1A1A',       // Dark gray for a sleek court-like feel
-    text: '#FF6200',             // Vibrant basketball orange
-    primary: '#FF6200',          // Bold orange for primary elements
-    secondary: '#1E3A8A',        // Deep navy blue for contrast
-    accent: '#DAF7A6',           // Light green for highlights
-    muted: '#2D2D2D',            // Muted dark gray for subtle backgrounds
-    border: '#FF6200',           // Orange border to match primary
-    error: '#EF4444',
-    success: '#22C55E',
-    warning: '#F59E0B',
+    background: COLORS.GRAY_900,       // Dark gray for a sleek court-like feel
+    text: COLORS.YELLOW_600,             // Vibrant basketball orange
+    primary: COLORS.YELLOW_600,          // Bold orange for primary elements
+    secondary: COLORS.BLUE_800,        // Deep navy blue for contrast
+    accent: COLORS.GREEN_300,           // Light green for highlights
+    muted: COLORS.GRAY_800,            // Muted dark gray for subtle backgrounds
+    border: COLORS.YELLOW_600,           // Orange border to match primary
+    error: COLORS.RED_500,
+    success: COLORS.GREEN_500,
+    warning: COLORS.YELLOW_500,
   },
   fonts: {
     heading: '"Fira Code", monospace',

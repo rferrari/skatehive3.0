@@ -18,6 +18,7 @@ import ZoraTradingModal from "./ZoraTradingModalClient";
 import VideoRenderer from "../layout/VideoRenderer";
 import { convertIpfsUrl, getIpfsGatewayUrls } from "@/lib/utils/ipfsMetadata";
 import { CgArrowsExchange } from "react-icons/cg";
+import { FaChartLine } from "react-icons/fa";
 
 // Debug utility that only logs in development mode
 const debug = (...args: any[]) => {
@@ -64,16 +65,7 @@ function IPFSVideoRenderer({ originalUrl }: { originalUrl: string }) {
     );
   };
 
-  return (
-    <video
-      src={gatewayUrls[currentUrlIndex]}
-      onError={handleVideoError}
-      onLoadedData={handleVideoLoad}
-      controls
-      style={{ width: "100%", borderRadius: "8px" }}
-      preload="metadata"
-    />
-  );
+  return <VideoRenderer src={gatewayUrls[currentUrlIndex]} loop={true} />;
 }
 
 interface ZoraCoinPreviewProps {
@@ -265,18 +257,6 @@ export default function ZoraCoinPreview({ address }: ZoraCoinPreviewProps) {
       >
         <Center>
           <VStack spacing={2} width="full">
-            {token.hasVideo && token.videoUrl ? (
-              <Box width="full" borderRadius="md" overflow="hidden">
-                <IPFSVideoRenderer originalUrl={token.videoUrl} />
-              </Box>
-            ) : token.image ? (
-              <Image
-                src={token.image}
-                alt={token.name}
-                width="full"
-                borderRadius="md"
-              />
-            ) : null}
             <Link
               href={`https://zora.co/coin/base:${address}`}
               isExternal
@@ -289,23 +269,35 @@ export default function ZoraCoinPreview({ address }: ZoraCoinPreviewProps) {
             >
               {token.name || address}
             </Link>
+            {token.hasVideo && token.videoUrl ? (
+              <Box width="full" borderRadius="md" overflow="hidden">
+                <IPFSVideoRenderer originalUrl={token.videoUrl} />
+              </Box>
+            ) : token.image ? (
+              <Image
+                src={token.image}
+                alt={token.name}
+                width="full"
+                borderRadius="md"
+              />
+            ) : null}
           </VStack>
         </Center>
         <Divider my={3} />
         <HStack spacing={3} align="center" width="full">
           <Box flex={1} overflow="hidden">
-            {token.symbol && (
-              <Text
-                fontSize="sm"
-                color="gray.400"
-                wordBreak="break-word"
-                whiteSpace="normal"
-              >
-                {token.symbol}
-                {token.marketCap && ` • MCap: ${token.marketCap}`}
-                {token.uniqueHolders && ` • ${token.uniqueHolders} holders`}
-              </Text>
+            {token.marketCap && (
+              <HStack spacing={2} align="center">
+                <Text as="span" color="primary.400">
+                  MarketCap: ${token.marketCap}
+                </Text>
+                <FaChartLine color="primary.400" />
+                <Text as="span" color="gray.400" ml={1}>
+                  {`  • ${token.uniqueHolders} holders`}
+                </Text>
+              </HStack>
             )}
+
             {token.description && (
               <Text
                 fontSize="xs"

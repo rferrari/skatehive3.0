@@ -25,32 +25,31 @@ const SidebarLogo = ({ prioritizeAuctionImage = false }: SidebarLogoProps) => {
         objectFit: "cover",
         cursor: "pointer",
       }}
-      onClick={() =>
-        router.push(
-          `/auction`
-        )
-      }
+      onClick={() => router.push(`/auction`)}
     />
   );
 
   const auctionImageContent = (
     <Image
-      src={activeAuction?.token?.image || "https://www.skatehive.app/SKATE_HIVE_VECTOR_FIN.svg"}
+      src={
+        activeAuction?.token?.image ||
+        "https://www.skatehive.app/SKATE_HIVE_VECTOR_FIN.svg"
+      }
       alt="SkateHive Hover Logo"
       style={{ width: "100%", height: "100%", objectFit: "cover" }}
-      onClick={() =>
-        router.push(
-          `/auction`
-        )
-      }
+      onClick={() => router.push(`/auction`)}
       cursor={"pointer"}
     />
   );
 
   return (
     <PixelTransition
-      firstContent={prioritizeAuctionImage ? auctionImageContent : skateHiveLogoContent}
-      secondContent={prioritizeAuctionImage ? skateHiveLogoContent : auctionImageContent}
+      firstContent={
+        prioritizeAuctionImage ? auctionImageContent : skateHiveLogoContent
+      }
+      secondContent={
+        prioritizeAuctionImage ? skateHiveLogoContent : auctionImageContent
+      }
       pixelColor={pixelColor}
       animationStepDuration={0.4}
     />

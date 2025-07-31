@@ -181,7 +181,7 @@ export default function SnapList({
                           bg: "primary.900",
                           borderColor: "primary.700",
                         }}
-                        borderRadius="lg"
+                        borderRadius="none"
                         border="1px solid"
                         borderColor="primary.200"
                         cursor="pointer"
@@ -199,7 +199,6 @@ export default function SnapList({
                             h={10}
                             bg="primary.100"
                             _dark={{ bg: "primary.800" }}
-                            borderRadius="lg"
                             display="flex"
                             alignItems="center"
                             justifyContent="center"
@@ -218,7 +217,7 @@ export default function SnapList({
                               color="primary.600"
                               _dark={{ color: "primary.200" }}
                             >
-                              Create a Post
+                              Post with Zora
                             </Text>
                           </VStack>
                         </HStack>
@@ -233,7 +232,6 @@ export default function SnapList({
                           bg: "primary.800",
                           borderColor: "primary.600",
                         }}
-                        borderRadius="lg"
                         border="1px solid"
                         borderColor="primary.300"
                         cursor="pointer"
@@ -253,7 +251,6 @@ export default function SnapList({
                             h={10}
                             bg="primary.200"
                             _dark={{ bg: "primary.700" }}
-                            borderRadius="lg"
                             display="flex"
                             alignItems="center"
                             justifyContent="center"
@@ -285,7 +282,6 @@ export default function SnapList({
                           bg: "primary.700",
                           borderColor: "primary.500",
                         }}
-                        borderRadius="lg"
                         border="1px solid"
                         borderColor="primary.400"
                         cursor="pointer"
@@ -309,7 +305,6 @@ export default function SnapList({
                             h={10}
                             bg="primary.300"
                             _dark={{ bg: "primary.600" }}
-                            borderRadius="lg"
                             display="flex"
                             alignItems="center"
                             justifyContent="center"
@@ -341,7 +336,6 @@ export default function SnapList({
                           bg: "primary.600",
                           borderColor: "primary.400",
                         }}
-                        borderRadius="lg"
                         border="1px solid"
                         borderColor="primary.500"
                         cursor="pointer"
@@ -361,12 +355,13 @@ export default function SnapList({
                             h={10}
                             bg="primary.400"
                             _dark={{ bg: "primary.500" }}
-                            borderRadius="lg"
+                            borderRadius="full"
+                            overflow="hidden"
                             display="flex"
                             alignItems="center"
                             justifyContent="center"
                           >
-                            <SidebarLogo prioritizeAuctionImage={true} />{" "}
+                            <SidebarLogo prioritizeAuctionImage={true} />
                           </Box>
                           <VStack align="start" spacing={0} flex={1}>
                             <Text

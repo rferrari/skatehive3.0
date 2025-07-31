@@ -1,6 +1,7 @@
 import { extendTheme } from '@chakra-ui/react';
 import { swiperStyles } from './swiperStyles';
 import { Londrina_Solid } from 'next/font/google'
+import { COLORS } from './colors';
 
 const londrinaSolid = Londrina_Solid({
     weight: ['100', '300', '400', '900'],
@@ -9,16 +10,16 @@ const londrinaSolid = Londrina_Solid({
 
 const nounsDaoTheme = extendTheme({
     colors: {
-        background: 'linear-gradient(45deg, #ffcc00, #f7f7f7)',  // Cool gradient background
-        text: '#909090',  // Dark gray text
-        primary: '#1B1F3B',
-        secondary: '#ffcc00',  // Nouns yellow
-        accent: '#9d0040',  // Deep burgundy for accent
-        muted: '#f7f7f7',  // Muted background
-        border: '#dddddd',  // Light gray border
-        error: '#e53e3e',  // Red for error states
-        success: '#38a169',  // Green for success states
-        warning: '#dd6b20',  // Orange for warnings
+        background: `linear-gradient(45deg, ${COLORS.YELLOW_400}, ${COLORS.GRAY_100})`,  // Cool gradient background
+        text: COLORS.GRAY_500,  // Dark gray text
+        primary: COLORS.GRAY_900,
+        secondary: COLORS.YELLOW_400,  // Nouns yellow
+        accent: COLORS.RED_800,  // Deep burgundy for accent
+        muted: COLORS.GRAY_100,  // Muted background
+        border: COLORS.GRAY_300,  // Light gray border
+        error: COLORS.RED_500,  // Red for error states
+        success: COLORS.GREEN_500,  // Green for success states
+        warning: COLORS.YELLOW_600,  // Orange for warning states
     },
     fonts: {
         heading: londrinaSolid.style.fontFamily + ', cursive',
@@ -52,7 +53,7 @@ const nounsDaoTheme = extendTheme({
         taller: '2',
     },
     borders: {
-        tb1: '1px solid #ffcc00',  // Nouns yellow border
+        tb1: `1px solid ${COLORS.YELLOW_400}`,  // Nouns yellow border
         borderRadius: '8px',
     },
     space: {

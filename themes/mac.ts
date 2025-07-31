@@ -1,19 +1,20 @@
 import { extendTheme } from '@chakra-ui/react';
 import { swiperStyles } from './swiperStyles';
+import { COLORS } from './colors';
 
 const macTheme = extendTheme({
     initialColorMode: 'light',
     useSystemColorMode: false,
     colors: {
-        background: '#9D9CE0', // BV-T3, muted violet
-        text: '#3D3D3F', // GRAY 7.5, approximated mid-tone gray
-        primary: '#2E2E2E', // BG-P1-1, dark gray
-        secondary: '#AEAEAB', // GRAY 7, closest to muted gray
-        accent: '#73CBCC', // BV-T2, closest to muted lavender blue
-        muted: '#726FA4', // GRAY 9, closest to light gray
-        error: '#D82E4B', // R-T1, closest to tomato red
-        success: '#8ECB62', // YG-T1, closest to yellow-green
-        warning: '#F94F02', // O-HUE, closest to orange
+        background: COLORS.MAC_VIOLET, // BV-T3, muted violet
+        text: COLORS.GRAY_700, // GRAY 7.5, approximated mid-tone gray
+        primary: COLORS.GRAY_800, // BG-P1-1, dark gray
+        secondary: COLORS.GRAY_400, // GRAY 7, closest to muted gray
+        accent: COLORS.MAC_LAVENDER, // BV-T2, closest to muted lavender blue
+        muted: COLORS.GRAY_500, // GRAY 9, closest to light gray
+        error: COLORS.RED_600, // R-T1, closest to tomato red
+        success: COLORS.GREEN_500, // YG-T1, closest to yellow-green
+        warning: COLORS.YELLOW_600, // O-HUE, closest to orange
     },
     fonts: {
         heading: '"Chicago", "OCR-A", "Courier New", sans-serif', // Authentic Chicago font for Mac theme
@@ -47,8 +48,8 @@ const macTheme = extendTheme({
         taller: '2',
     },
     borders: {
-        tb1: '1px solid #A9A9A9', // Muted gray border
-        borderRadius: '4px', // Rounded corners typical of early Mac UI
+        tb1: `1px solid ${COLORS.GRAY_500}`,
+        borderRadius: '4px',
     },
     radii: {
         none: '0',

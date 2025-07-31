@@ -1,6 +1,7 @@
 import { swiperStyles } from './swiperStyles';
 import { extendTheme } from '@chakra-ui/react';
 import { Montserrat, Poppins } from 'next/font/google';
+import { COLORS } from './colors';
 
 const montserrat = Montserrat({
     weight: ['400', '700'],
@@ -14,16 +15,16 @@ const poppins = Poppins({
 
 const limeTheme = extendTheme({
     colors: {
-        background: 'linear-gradient(45deg, rgb(167, 212, 57), rgb(200, 229, 101))', // YGw-HUE to YGw-T1
-        text: 'rgb(1, 1, 1)', // BLACK
-        primary: 'rgb(126, 14, 86)', // M-HUE (hot pink)
-        secondary: 'rgb(99, 174, 56)', // YG-HUE
-        accent: 'rgb(15, 98, 90)', // G-HUE
-        muted: 'rgb(218, 218, 216)', // GRAY 9
-        border: 'rgb(125, 125, 125)', // GRAY 5
-        error: 'rgb(178, 22, 54)', // R-HUE
-        success: 'rgb(142, 203, 98)', // YG-T1
-        warning: 'rgb(249, 79, 2)', // O-HUE
+        background: `linear-gradient(45deg, ${COLORS.LIME_GREEN}, ${COLORS.LIME_YELLOW_GREEN})`, // YGw-HUE to YGw-T1
+        text: COLORS.BLACK, // BLACK
+        primary: COLORS.PURPLE_800, // M-HUE (hot pink)
+        secondary: COLORS.LIME_YELLOW_GREEN, // YG-HUE
+        accent: COLORS.GREEN_700, // G-HUE
+        muted: COLORS.GRAY_200, // GRAY 9
+        border: COLORS.GRAY_500, // GRAY 5
+        error: COLORS.RED_600, // R-HUE
+        success: COLORS.GREEN_400, // YG-T1
+        warning: COLORS.YELLOW_600, // O-HUE
     },
     fonts: {
         heading: montserrat.style.fontFamily + ', sans-serif',
@@ -57,7 +58,7 @@ const limeTheme = extendTheme({
         taller: '2',
     },
     borders: {
-        tb1: '1px solid linear-gradient(90deg, rgb(248, 229, 30), rgb(250, 230, 81))', // Y-HUE to Y-T1
+        tb1: `1px solid linear-gradient(90deg, ${COLORS.YELLOW_400}, ${COLORS.YELLOW_300})`, // Y-HUE to Y-T1
         borderRadius: '8px',
     },
     space: {
@@ -113,7 +114,7 @@ const limeTheme = extendTheme({
         lg: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
         xl: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
         '2xl': '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-        outline: '0 0 0 3px linear-gradient(90deg, rgb(23, 75, 175), rgb(43, 97, 200))', // B-HUE to B-T1
+        outline: `0 0 0 3px linear-gradient(90deg, ${COLORS.BLUE_700}, ${COLORS.BLUE_600})`, // B-HUE to B-T1
         inner: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)',
         none: 'none',
         'dark-lg': 'rgba(0, 0, 0, 0.4) 0px 10px 15px -3px, rgba(0, 0, 0, 0.3) 0px 4px 6px -2px',
@@ -145,7 +146,7 @@ const limeTheme = extendTheme({
             variants: {
                 solid: {
                     bg: 'primary',
-                    color: 'rgb(247, 247, 237)', // WHITE 10 for contrast
+                    color: COLORS.GRAY_50, // WHITE 10 for contrast
                     _hover: {
                         bg: 'secondary',
                     },

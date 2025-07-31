@@ -1,4 +1,5 @@
 import { extendTheme } from '@chakra-ui/react';
+import { COLORS } from './colors';
 
 const retroPaperTheme = extendTheme({
   config: {
@@ -12,16 +13,16 @@ const retroPaperTheme = extendTheme({
     },
   },
   colors: {
-    background: '#F9F3C1', // Y-LP, warm paper-like off-white for retro feel
-    text: '#252527',       // GRAY 2, dark gray for readable text
-    primary: '#A13A1C',    // RO-S1, muted rusty orange for primary elements
-    secondary: '#315B58',  // G-S3, deep teal for contrast
-    accent: '#A12637',     // R-S1, retro red for highlights
-    muted: '#D6D3A1',      // Y-P4-3, muted yellowish for subtle backgrounds
-    border: '#252527',     // GRAY 2, dark gray border for definition
-    error: '#BC0D14',      // R-EX, bold red for errors
-    success: '#378B47',    // Gw-T1, retro green for success
-    warning: '#F89A04',    // YO-EX, warm yellow-orange for warnings
+    background: COLORS.PAPER_WARM, // Y-LP, warm paper-like off-white for retro feel
+    text: COLORS.GRAY_800,       // GRAY 2, dark gray for readable text
+    primary: COLORS.PAPER_RUSTY,    // RO-S1, muted rusty orange for primary elements
+    secondary: COLORS.PAPER_TEAL,  // G-S3, deep teal for contrast
+    accent: COLORS.RED_700,     // R-S1, retro red for highlights
+    muted: COLORS.YELLOW_200,      // Y-P4-3, muted yellowish for subtle backgrounds
+    border: COLORS.GRAY_800,     // GRAY 2, dark gray border for definition
+    error: COLORS.RED_700,      // R-EX, bold red for errors
+    success: COLORS.GREEN_600,    // Gw-T1, retro green for success
+    warning: COLORS.YELLOW_600,    // YO-EX, warm yellow-orange for warnings
   },
   fonts: {
     heading: 'Mechanical, "Courier New", monospace',
@@ -51,8 +52,8 @@ const retroPaperTheme = extendTheme({
     tall: 1.7,
   },
   borders: {
-    tb1: '1px solid #252527', // GRAY 2, dark gray border
-    tb2: '2px solid #A12637', // R-S1, retro red border
+    tb1: `1px solid ${COLORS.GRAY_800}`, // GRAY 2, dark gray border
+    tb2: `2px solid ${COLORS.RED_700}`, // R-S1, retro red border
     borderRadius: '4px',      // Slightly sharper for retro aesthetic
   },
   shadows: {

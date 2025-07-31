@@ -379,22 +379,24 @@ const ShareMenuButtons = ({ comment }: ShareMenuButtonsProps) => {
           {isInFrame ? "Cast" : "Share on Farcaster"}
         </span>
       </MenuItem>
-      <MenuItem
-        onClick={handleCoinCreation}
-        bg={"background"}
-        color={hasMedia ? "primary" : "gray.400"}
-        cursor={hasMedia ? "pointer" : "not-allowed"}
-        opacity={hasMedia ? 1 : 0.6}
-      >
-        <Image
-          src="/logos/Zorb.png"
-          alt="Zora Logo"
-          boxSize="16px"
-          mr={2}
-          display="inline-block"
-        />
-        Create Coin {!hasMedia && "(Requires Media)"}
-      </MenuItem>
+      {user === comment.author && (
+        <MenuItem
+          onClick={handleCoinCreation}
+          bg={"background"}
+          color={hasMedia ? "primary" : "gray.400"}
+          cursor={hasMedia ? "pointer" : "not-allowed"}
+          opacity={hasMedia ? 1 : 0.6}
+        >
+          <Image
+            src="/logos/Zorb.png"
+            alt="Zora Logo"
+            boxSize="16px"
+            mr={2}
+            display="inline-block"
+          />
+          Create Coin {!hasMedia && "(Requires Media)"}
+        </MenuItem>
+      )}
       <MenuItem
         onClick={() => handleShare("x")}
         bg={"background"}

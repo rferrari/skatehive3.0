@@ -2,6 +2,7 @@
 import { swiperStyles } from './swiperStyles';
 import { extendTheme } from '@chakra-ui/react';
 import { Montserrat, Poppins } from 'next/font/google';
+import { COLORS } from './colors';
 
 const montserrat = Montserrat({
     weight: ['400', '700'],
@@ -15,16 +16,16 @@ const poppins = Poppins({
 
 const hiveBRTheme = extendTheme({
     colors: {
-        background: 'linear-gradient(45deg, #dbf5d0, #f7f7f7)',  // Clean white background
-        text: '#212121',  // Dark neutral text color
-        primary: '#0033a0',  // Brazil flag blue for primary elements
-        secondary: '#ffcc29',  // Brazil flag yellow for attention elements
-        accent: '#00a859',  // Brazil flag green for subtle accents
-        muted: '#dadfeb',  // Light gray for muted elements or backgrounds
-        border: '#e0e0e0',  // Light gray border for cards or sections
-        error: '#d32f2f',  // Red for errors
-        success: '#66bb6a',  // Green for success messages
-        warning: '#ffb300',  // Orange for warnings
+        background: `linear-gradient(45deg, ${COLORS.GREEN_200}, ${COLORS.GRAY_100})`,  // Clean white background
+        text: COLORS.GRAY_800,  // Dark neutral text color
+        primary: COLORS.BRAZIL_BLUE,  // Brazil flag blue for primary elements
+        secondary: COLORS.BRAZIL_YELLOW,  // Brazil flag yellow for attention elements
+        accent: COLORS.BRAZIL_GREEN,  // Brazil flag green for subtle accents
+        muted: COLORS.GRAY_200,  // Light gray for muted elements or backgrounds
+        border: COLORS.GRAY_300,
+        error: COLORS.RED_600,
+        success: COLORS.GREEN_500,
+        warning: COLORS.YELLOW_500,
     },
     fonts: {
         heading: montserrat.style.fontFamily + ', sans-serif',
@@ -58,7 +59,7 @@ const hiveBRTheme = extendTheme({
         taller: '2',
     },
     borders: {
-        tb1: '1px solid #ffcc00',  // Nouns yellow border
+        tb1: `1px solid ${COLORS.BRAZIL_YELLOW}`,  // Brazil yellow border
         borderRadius: '8px',
     },
     space: {

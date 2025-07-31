@@ -82,7 +82,7 @@ export function AirdropModal({
   // Airdrop configuration
   const [sortOption, setSortOption] = useState<SortOption>(initialSortOption);
   const [limit, setLimit] = useState(10);
-  const [selectedToken, setSelectedToken] = useState("HIVE");
+  const [selectedToken, setSelectedToken] = useState("HIGHER");
   const [totalAmount, setTotalAmount] = useState("10");
 
   // UI state
@@ -959,47 +959,6 @@ export function AirdropModal({
                   </AlertDescription>
                 </Alert>
               )}
-
-              {/* Advanced Options */}
-              <Box>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowAdvanced(!showAdvanced)}
-                  rightIcon={<Icon as={InfoIcon} />}
-                  color="primary"
-                >
-                  Advanced Options
-                </Button>
-                {showAdvanced && (
-                  <Box
-                    mt={4}
-                    p={4}
-                    bg="cardBg"
-                    borderRadius="md"
-                    border="1px solid"
-                    borderColor="border"
-                  >
-                    <VStack
-                      align="start"
-                      spacing={2}
-                      fontSize="sm"
-                      color="text"
-                    >
-                      <Text fontWeight="bold" color="primary">
-                        Network Details:
-                      </Text>
-                      <Text>• Network: {selectedTokenInfo?.network}</Text>
-                      <Text>• Decimals: {selectedTokenInfo?.decimals}</Text>
-                      {selectedTokenInfo?.address && (
-                        <Text>• Contract: {selectedTokenInfo.address}</Text>
-                      )}
-                      <Text>• Total eligible users: {userCount.eligible}</Text>
-                      <Text>• Filtered users: {userCount.limited}</Text>
-                    </VStack>
-                  </Box>
-                )}
-              </Box>
 
               {/* Transaction Status */}
               {(status.state !== "idle" || isExecuting) && (

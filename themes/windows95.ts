@@ -1,19 +1,20 @@
 import { extendTheme } from '@chakra-ui/react';
 import { swiperStyles } from './swiperStyles';
+import { COLORS } from './colors';
 
 const windows95Theme = extendTheme({
     initialColorMode: 'light',
     useSystemColorMode: false,
     colors: {
-        background: '#C0C0C0', // Light gray background
-        text: '#000000', // Black text
-        primary: '#000080', // Navy blue for primary actions
-        secondary: '#008080', // Teal for secondary elements
-        accent: '#800080', // Purple for accents
-        muted: '#D3D3D3', // Light gray for muted elements
-        error: '#FF0000', // Bright red for errors
-        success: '#008000', // Green for success messages
-        warning: '#FFA500', // Orange for warnings
+        background: COLORS.WINDOWS_95_GRAY, // Light gray background
+        text: COLORS.BLACK, // Black text
+        primary: COLORS.WINDOWS_95_NAVY, // Navy blue for primary actions
+        secondary: COLORS.WINDOWS_95_TEAL, // Teal for secondary elements
+        accent: COLORS.PURPLE_600, // Purple for accents
+        muted: COLORS.GRAY_300, // Light gray for muted elements
+        error: COLORS.RED_500, // Bright red for errors
+        success: COLORS.GREEN_600, // Green for success messages
+        warning: COLORS.YELLOW_500, // Orange for warnings
     },
     fonts: {
         heading: '"Tahoma", sans-serif', // Tahoma was commonly used in Windows 95
@@ -47,8 +48,8 @@ const windows95Theme = extendTheme({
         taller: '2',
     },
     borders: {
-        tb1: '1px solid #A9A9A9', // Solid dark gray border
-        borderRadius: 'full', // Sharp, rectangular corners typical of Windows 95
+        tb1: `1px solid ${COLORS.GRAY_500}`, // Solid dark gray border
+        borderRadius: 'full',
     },
     radii: {
         none: '0',

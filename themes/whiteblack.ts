@@ -1,4 +1,5 @@
 import { extendTheme } from '@chakra-ui/react';
+import { COLORS } from './colors';
 
 const whiteBlackTheme = extendTheme({
   config: {
@@ -12,17 +13,17 @@ const whiteBlackTheme = extendTheme({
     },
   },
   colors: {
-    background: '#FFFFFF',       // Pure white background
-    text: '#000000',             // Pure black text
-    primary: '#000000',          // Black for primary elements
-    'primary-alpha': '#00000080', // Semi-transparent black
-    secondary: '#808080',        // Medium gray for secondary elements
-    accent: '#404040',          // Dark gray for highlights
-    muted: '#F5F5F5',           // Very light gray for muted backgrounds
-    border: '#000000',          // Black borders
-    error: '#000000',           // Black for errors (monochrome)
-    success: '#000000',         // Black for success
-    warning: '#404040',         // Dark gray for warnings
+    background: COLORS.WHITE,       // Pure white background
+    text: COLORS.BLACK,             // Pure black text
+    primary: COLORS.BLACK,          // Black for primary elements
+    'primary-alpha': COLORS.BLACK + '80', // Semi-transparent black
+    secondary: COLORS.GRAY_500,        // Medium gray for secondary elements
+    accent: COLORS.GRAY_700,          // Dark gray for highlights
+    muted: COLORS.GRAY_100,           // Very light gray for muted backgrounds
+    border: COLORS.BLACK,          // Black borders
+    error: COLORS.BLACK,           // Black for errors (monochrome)
+    success: COLORS.BLACK,         // Black for success
+    warning: COLORS.GRAY_700,         // Dark gray for warnings
   },
   fonts: {
     heading: '"Helvetica Neue", Arial, sans-serif',
@@ -52,8 +53,8 @@ const whiteBlackTheme = extendTheme({
     tall: 1.8,
   },
   borders: {
-    tb1: '1px solid #000000',
-    tb2: '2px solid #000000',
+    tb1: `1px solid ${COLORS.BLACK}`,
+    tb2: `2px solid ${COLORS.BLACK}`,
     borderRadius: '4px',
   },
   shadows: {
