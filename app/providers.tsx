@@ -6,7 +6,7 @@ import { AiohaProvider } from "@aioha/react-ui";
 import { ThemeProvider } from "./themeProvider";
 import { OnchainKitProvider } from "@coinbase/onchainkit";
 import { WagmiProvider, http, createConfig } from "wagmi";
-import { base } from "wagmi/chains";
+import { base, mainnet } from "wagmi/chains";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { UserProvider } from "@/contexts/UserContext";
 import { VoteWeightProvider } from "@/contexts/VoteWeightContext";
@@ -29,9 +29,10 @@ if (typeof window !== "undefined") {
 const queryClient = new QueryClient();
 
 export const wagmiConfig = createConfig({
-  chains: [base],
+  chains: [base, mainnet],
   transports: {
     [base.id]: http(),
+    [mainnet.id]: http(),
   },
 });
 

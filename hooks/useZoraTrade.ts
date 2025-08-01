@@ -2,9 +2,10 @@
 
 import { useState, useCallback } from 'react';
 import { tradeCoin, TradeParameters, createTradeCall, getOnchainCoinDetails } from '@zoralabs/coins-sdk';
-import { useAccount, useWalletClient, usePublicClient, useBalance } from 'wagmi';
+import { useAccount, useWalletClient, usePublicClient, useBalance, useChainId } from 'wagmi';
 import { Address, formatEther, formatUnits } from 'viem';
 import { useToast } from '@chakra-ui/react';
+import { base } from 'wagmi/chains';
 
 export interface TradeConfig {
   fromToken: {
@@ -24,8 +25,9 @@ export function useZoraTrade() {
   const [tradeResult, setTradeResult] = useState<any>(null);
   
   const { address, isConnected } = useAccount();
-  const { data: walletClient } = useWalletClient();
-  const publicClient = usePublicClient();
+  const { data: walletClient } = useWalletClient({ chainId: base.id });
+  const publicClient = usePublicClient({ chainId: base.id });
+  const chainId = useChainId();
   const toast = useToast();
 
   // Get ETH balance
@@ -177,6 +179,26 @@ export function useZoraTrade() {
       throw new Error('Wallet not connected');
     }
 
+    // Verify we're on Base chain
+    if (chainId !== base.id) {
+      const error = new Error(`Wrong chain: expected Base (${base.id}), got ${chainId}`);
+      console.error('Chain mismatch in executeTrade:', error.message);
+      toast({
+        title: 'Wrong Network',
+        description: `Please switch to Base network. Currently on chain ${chainId}`,
+        status: 'error',
+        duration: 5000,
+      });
+      throw error;
+    }
+
+    console.log('Executing trade on Base chain:', {
+      chainId,
+      walletClient: walletClient ? 'connected' : 'disconnected',
+      publicClient: publicClient ? 'connected' : 'disconnected',
+      config
+    });
+
     setIsTrading(true);
     setTradeResult(null);
 
@@ -220,19 +242,59 @@ export function useZoraTrade() {
       return receipt;
 
     } catch (error: any) {
+      console.error('Trade execution error:', error);
+      
+      // Handle specific error types
+      let title = 'Trade failed';
+      let description = 'An error occurred during the trade';
+      let status: 'error' | 'warning' = 'error';
+      
+      if (error?.message) {
+        const errorMessage = error.message.toLowerCase();
+        
+        if (errorMessage.includes('user denied') || errorMessage.includes('user rejected')) {
+          title = 'Transaction cancelled';
+          description = 'You cancelled the transaction in your wallet';
+          status = 'warning';
+        } else if (errorMessage.includes('insufficient funds') || errorMessage.includes('insufficient balance')) {
+          title = 'Insufficient funds';
+          description = 'You don\'t have enough balance to complete this trade';
+        } else if (errorMessage.includes('network') || errorMessage.includes('chain')) {
+          title = 'Network error';
+          description = 'Please check your network connection and try again';
+        } else if (errorMessage.includes('slippage')) {
+          title = 'Slippage error';
+          description = 'Price moved too much. Try increasing slippage tolerance';
+        } else if (errorMessage.includes('gas')) {
+          title = 'Gas estimation failed';
+          description = 'Unable to estimate gas. The transaction might fail';
+        } else {
+          // For other errors, show a sanitized version
+          description = error.message.length > 100 
+            ? error.message.substring(0, 100) + '...' 
+            : error.message;
+        }
+      }
+      
       toast({
-        title: 'Trade failed',
-        description: error.message || 'An error occurred during the trade',
-        status: 'error',
-        duration: 5000,
+        title,
+        description,
+        status,
+        duration: status === 'warning' ? 3000 : 5000,
         isClosable: true,
       });
+      
+      // Don't re-throw user cancellation errors as they're not really "errors"
+      if (error?.message?.toLowerCase().includes('user denied') || 
+          error?.message?.toLowerCase().includes('user rejected')) {
+        return null;
+      }
       
       throw error;
     } finally {
       setIsTrading(false);
     }
-  }, [isConnected, address, walletClient, publicClient, toast]);
+  }, [isConnected, address, walletClient, publicClient, toast, chainId]);
 
   const resetTrade = useCallback(() => {
     setTradeResult(null);

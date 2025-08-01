@@ -408,7 +408,7 @@ export default function SnapList({
           <AirdropModal
             isOpen={isAirdropOpen}
             onClose={onAirdropClose}
-            leaderboardData={[]} // You'll need to pass actual leaderboard data here
+            leaderboardData={[]}
             initialSortOption="points"
           />
 

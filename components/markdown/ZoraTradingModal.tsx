@@ -34,6 +34,8 @@ import {
 } from "viem";
 import { useZoraTrade } from "@/hooks/useZoraTrade";
 import { ChevronDownIcon, ChevronUpIcon } from "@chakra-ui/icons";
+import { useSwitchChain, useChainId } from "wagmi";
+import { base } from "wagmi/chains";
 
 // Simple inline debounce hook
 function useDebounce<T>(value: T, delay: number): T {
@@ -131,6 +133,8 @@ export default function ZoraTradingModal({
     isConnected,
     ethBalance,
   } = useZoraTrade();
+  const { switchChain } = useSwitchChain();
+  const chainId = useChainId();
   const toast = useToast();
   const debouncedAmount = useDebounce(amount, 500); // Debounce amount input
 
@@ -154,6 +158,21 @@ export default function ZoraTradingModal({
     }
   }, [amount, fromBalance, fromCurrency]);
 
+  // Check if we're on the correct chain (Base)
+  const isWrongChain = isConnected && chainId !== base.id;
+
+  // Debug logging
+  React.useEffect(() => {
+    if (isConnected) {
+      console.log("Chain info:", { 
+        currentChainId: chainId, 
+        baseChainId: base.id, 
+        isWrongChain,
+        chainName: chainId === 1 ? "Ethereum Mainnet" : chainId === 8453 ? "Base" : `Chain ${chainId}`
+      });
+    }
+  }, [chainId, isConnected, isWrongChain]);
+
   // Update currencies when trade type changes
   useEffect(() => {
     const creatorCoin: Currency = {
@@ -165,11 +184,19 @@ export default function ZoraTradingModal({
     };
 
     if (tradeType === "buy") {
-      setFromCurrency(SUPPORTED_CURRENCIES[0]); // Default to ETH
+      // For buying, user can choose between ETH and USDC
+      // Keep current selection if it's already ETH or USDC
+      if (fromCurrency.type === "erc20" && fromCurrency.address === coinAddress) {
+        setFromCurrency(SUPPORTED_CURRENCIES[0]); // Default to ETH
+      }
       setToCurrency(creatorCoin);
     } else {
+      // For selling, from currency is always the creator coin
       setFromCurrency(creatorCoin);
-      setToCurrency(SUPPORTED_CURRENCIES[0]); // Default to ETH
+      // To currency can be ETH or USDC, keep current selection if valid
+      if (toCurrency.type === "erc20" && toCurrency.address === coinAddress) {
+        setToCurrency(SUPPORTED_CURRENCIES[0]); // Default to ETH
+      }
     }
   }, [tradeType, coinAddress, coinData]);
 
@@ -312,11 +339,101 @@ export default function ZoraTradingModal({
     }
   };
 
+  const handleSwitchToBase = async () => {
+    try {
+      console.log("Attempting to switch to Base network...", { currentChain: chainId, targetChain: base.id });
+      
+      // Show loading state
+      toast({
+        title: "Switching to Base",
+        description: "Please confirm the network switch in your wallet",
+        status: "info",
+        duration: 3000,
+      });
+      
+      await switchChain({ chainId: base.id });
+      
+      // Wait for chain change to be reflected in the hook
+      let attempts = 0;
+      const maxAttempts = 20; // 2 seconds max wait
+      
+      while (chainId !== base.id && attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempts++;
+      }
+      
+      if (chainId === base.id) {
+        console.log("Chain switch successful, now on Base");
+        toast({
+          title: "Switched to Base",
+          description: "You're now connected to Base network",
+          status: "success",
+          duration: 3000,
+        });
+        
+        // Refresh balance after successful chain switch
+        setTimeout(async () => {
+          try {
+            const newBalance = await getFormattedBalance(
+              fromCurrency.type,
+              fromCurrency.address
+            );
+            setFromBalance(newBalance);
+          } catch (error) {
+            console.error("Error refreshing balance after chain switch:", error);
+          }
+        }, 500);
+      } else {
+        throw new Error("Chain switch timeout - still not on Base network");
+      }
+      
+    } catch (error: any) {
+      console.error("Chain switch failed:", error);
+      
+      // More specific error messages
+      let errorMessage = "Please switch to Base network manually in your wallet";
+      let status: 'error' | 'warning' = 'error';
+      let title = "Failed to switch network";
+      
+      if (error?.message?.includes("User rejected") || error?.message?.includes("User denied")) {
+        title = "Network switch cancelled";
+        errorMessage = "You cancelled the network switch. You can try again or switch manually in your wallet";
+        status = 'warning';
+      } else if (error?.message?.includes("Unrecognized chain")) {
+        errorMessage = "Base network not found in wallet. Please add Base network first";
+      } else if (error?.message?.includes("timeout")) {
+        errorMessage = "Chain switch timed out. Please try again or switch manually";
+      } else if (error?.code === 4902) {
+        errorMessage = "Base network not found. Please add Base network to your wallet first";
+      } else if (error?.code === -32002) {
+        errorMessage = "Switch request already pending. Please check your wallet";
+      }
+      
+      toast({
+        title,
+        description: errorMessage,
+        status,
+        duration: status === 'warning' ? 3000 : 5000,
+      });
+    }
+  };
+
   const handleTrade = async () => {
     if (!isConnected) {
       toast({
         title: "Wallet not connected",
         description: "Please connect your wallet to trade",
+        status: "error",
+        duration: 3000,
+      });
+      return;
+    }
+
+    // Double-check chain before executing trade
+    if (chainId !== base.id) {
+      toast({
+        title: "Wrong network",
+        description: "Please switch to Base network first",
         status: "error",
         duration: 3000,
       });
@@ -354,11 +471,50 @@ export default function ZoraTradingModal({
     }
 
     try {
+      // Final chain verification with detailed logging
+      console.log("Pre-trade chain verification:", {
+        currentChainId: chainId,
+        expectedChainId: base.id,
+        isOnBase: chainId === base.id,
+        fromCurrency: fromCurrency.symbol,
+        toCurrency: toCurrency.symbol,
+        amount
+      });
+
+      // Last-second chain check
+      if (chainId !== base.id) {
+        console.error("Chain mismatch detected at trade execution:", {
+          current: chainId,
+          expected: base.id
+        });
+        toast({
+          title: "Chain mismatch detected",
+          description: `Still on chain ${chainId}, need to be on Base (${base.id})`,
+          status: "error",
+          duration: 5000,
+        });
+        return;
+      }
+
       // Parse amount based on actual decimals
       const amountIn =
         fromCurrency.type === "eth"
           ? parseEther(amount)
           : parseUnits(amount, fromBalance?.decimals || fromCurrency.decimals);
+
+      console.log("Executing trade with:", {
+        fromToken: {
+          type: fromCurrency.type,
+          address: fromCurrency.address,
+          amount: amountIn.toString(),
+        },
+        toToken: {
+          type: toCurrency.type,
+          address: toCurrency.address,
+        },
+        slippage,
+        chainId
+      });
 
       await executeTrade({
         fromToken: {
@@ -372,6 +528,24 @@ export default function ZoraTradingModal({
         },
         slippage,
       });
+
+      const result = await executeTrade({
+        fromToken: {
+          type: fromCurrency.type,
+          address: fromCurrency.address,
+          amount: amountIn,
+        },
+        toToken: {
+          type: toCurrency.type,
+          address: toCurrency.address,
+        },
+        slippage,
+      });
+
+      // If user cancelled the transaction, just return without further action
+      if (result === null) {
+        return;
+      }
 
       // Refresh balances after successful trade
       toast({
@@ -403,8 +577,15 @@ export default function ZoraTradingModal({
       setAmount("");
       setEstimatedOutput("");
       onClose();
-    } catch (error) {
-      // Error handling is done in the hook
+    } catch (error: any) {
+      // Additional error handling for edge cases not covered in the hook
+      console.error('Trade execution error in modal:', error);
+      
+      // Only show additional error if it's not a user cancellation
+      if (!error?.message?.toLowerCase().includes('user denied') && 
+          !error?.message?.toLowerCase().includes('user rejected')) {
+        // The hook already showed a toast, but we might want to do additional UI updates here
+      }
     }
   };
 
@@ -422,260 +603,266 @@ export default function ZoraTradingModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="md">
-      <ModalOverlay />
-      <ModalContent bg={"background"} color={"primary"}>
-        <ModalHeader>
-          <HStack>
-            {coinData.image && (
-              <Image
-                src={coinData.image}
-                alt={coinData.name}
-                boxSize="32px"
-                borderRadius="md"
-              />
-            )}
-            <Text>Trade {coinData.symbol || "Coin"}</Text>
-          </HStack>
-        </ModalHeader>
-        <ModalCloseButton />
+    <Modal isOpen={isOpen} onClose={onClose} size="sm">
+      <ModalOverlay bg="blackAlpha.800" />
+      <ModalContent bg="background" color="primary" mx={4} borderRadius="xl">
+        <ModalCloseButton color="primary" />
 
-        <ModalBody>
+        <ModalBody p={6}>
           {!isHydrated ? (
             <VStack spacing={4} align="center" py={8}>
               <Spinner size="lg" />
               <Text>Loading trading interface...</Text>
             </VStack>
           ) : (
-            <VStack spacing={4}>
-              {/* Trade Type Selector */}
-              <HStack spacing={2} width="100%">
+            <VStack spacing={6} align="stretch">
+              {/* Trade Type Toggle */}
+              <HStack spacing={0} bg="muted" borderRadius="xl" p={1}>
                 <Button
                   flex={1}
-                  variant={tradeType === "buy" ? "solid" : "outline"}
-                  colorScheme="green"
+                  variant={tradeType === "buy" ? "solid" : "ghost"}
+                  bg={tradeType === "buy" ? "green.500" : "transparent"}
+                  color={tradeType === "buy" ? "white" : "primary"}
+                  borderRadius="lg"
                   onClick={() => setTradeType("buy")}
+                  _hover={{
+                    bg: tradeType === "buy" ? "green.600" : "muted"
+                  }}
                 >
-                  Buy {coinData.symbol}
+                  Buy
                 </Button>
                 <Button
                   flex={1}
-                  variant={tradeType === "sell" ? "solid" : "outline"}
-                  colorScheme="red"
+                  variant={tradeType === "sell" ? "solid" : "ghost"}
+                  bg={tradeType === "sell" ? "pink.500" : "transparent"}
+                  color={tradeType === "sell" ? "white" : "primary"}
+                  borderRadius="lg"
                   onClick={() => setTradeType("sell")}
+                  _hover={{
+                    bg: tradeType === "sell" ? "pink.600" : "muted"
+                  }}
                 >
-                  Sell {coinData.symbol}
+                  Sell
                 </Button>
               </HStack>
 
-              {/* From Currency */}
-              <Box width="100%">
-                <HStack justify="space-between" mb={2}>
-                  <Text fontSize="sm" color="gray.400">
-                    From
-                  </Text>
-                  {fromBalance && (
-                    <Text fontSize="xs" color="gray.500">
-                      Balance: {Number(fromBalance.formatted).toFixed(6)}{" "}
-                      {fromBalance.symbol !== "TOKEN"
-                        ? fromBalance.symbol
-                        : fromCurrency.symbol}
-                    </Text>
-                  )}
-                </HStack>
-                <VStack spacing={2}>
-                  <HStack width="100%">
-                    <Select
-                      value={`${fromCurrency.type}-${
-                        fromCurrency.address || "eth"
-                      }`}
-                      onChange={(e) => {
-                        const [type, addr] = e.target.value.split("-");
-                        if (type === "eth") {
-                          setFromCurrency(SUPPORTED_CURRENCIES[0]);
-                        } else {
-                          const currency = SUPPORTED_CURRENCIES.find(
-                            (c) => c.address === addr
-                          ) || {
-                            type: "erc20" as const,
-                            address: coinAddress as Address,
-                            symbol: coinData.symbol || "COIN",
-                            decimals: 18,
-                            name: coinData.name || "Creator Coin",
-                          };
-                          setFromCurrency(currency);
-                        }
-                      }}
-                      disabled={tradeType === "buy"}
-                    >
-                      {SUPPORTED_CURRENCIES.map((currency) => (
-                        <option
-                          key={`${currency.type}-${currency.address || "eth"}`}
-                          value={`${currency.type}-${
-                            currency.address || "eth"
-                          }`}
-                        >
-                          {currency.symbol} - {currency.name}
-                        </option>
-                      ))}
-                      <option value={`erc20-${coinAddress}`}>
-                        {coinData.symbol} - {coinData.name}
-                      </option>
-                    </Select>
-                  </HStack>
+              {/* Balance Display */}
+              <HStack justify="space-between">
+                <Text fontSize="sm" color="gray.400">Balance</Text>
+                <Text fontSize="sm" color="primary">
+                  {fromBalance 
+                    ? `${Number(fromBalance.formatted).toFixed(fromCurrency.symbol === "USDC" ? 2 : 6)} ${fromCurrency.symbol}`
+                    : `0.${"0".repeat(fromCurrency.symbol === "USDC" ? 2 : 6)} ${fromCurrency.symbol}`
+                  }
+                </Text>
+              </HStack>
+
+              {/* Amount Input */}
+              <VStack spacing={4} align="stretch">
+                <HStack>
                   <Input
-                    placeholder="0.0"
+                    placeholder="0,000111"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     type="number"
                     step="any"
+                    fontSize="2xl"
+                    fontWeight="light"
+                    bg="transparent"
+                    border="none"
+                    _focus={{ border: "none", boxShadow: "none" }}
+                    flex={1}
                   />
+                  <Select
+                    value={tradeType === "buy" ? 
+                      `${fromCurrency.type}-${fromCurrency.address || "eth"}` : 
+                      `${toCurrency.type}-${toCurrency.address || "eth"}`
+                    }
+                    onChange={(e) => {
+                      const [type, addr] = e.target.value.split("-");
+                      const selectedCurrency = SUPPORTED_CURRENCIES.find(
+                        c => (c.type === "eth" && addr === "eth") || 
+                             (c.type === "erc20" && c.address === addr)
+                      );
+                      
+                      if (selectedCurrency) {
+                        if (tradeType === "buy") {
+                          setFromCurrency(selectedCurrency);
+                        } else {
+                          setToCurrency(selectedCurrency);
+                        }
+                      }
+                    }}
+                    bg="muted"
+                    color="primary"
+                    borderRadius="full"
+                    border="none"
+                    size="md"
+                    width="120px"
+                    _focus={{ border: "none", boxShadow: "none" }}
+                  >
+                    {SUPPORTED_CURRENCIES.map((currency) => (
+                      <option
+                        key={`${currency.type}-${currency.address || "eth"}`}
+                        value={`${currency.type}-${currency.address || "eth"}`}
+                        style={{ backgroundColor: 'var(--chakra-colors-background)', color: 'var(--chakra-colors-primary)' }}
+                      >
+                        {currency.symbol}
+                      </option>
+                    ))}
+                  </Select>
+                </HStack>
 
-                  {/* Percentage Buttons */}
-                  {fromBalance && isConnected && isHydrated && (
-                    <HStack spacing={2} width="100%">
-                      {[25, 50, 75, 100].map((percentage) => (
+                {/* Quick Amount Buttons */}
+                <HStack spacing={2}>
+                  {tradeType === "buy" 
+                    ? // For buying, show preset amounts in the selected currency
+                      (tradeType === "buy" ? fromCurrency.symbol : toCurrency.symbol) === "ETH" 
+                        ? [0.001, 0.01, 0.1].map((val) => (
+                            <Button
+                              key={val}
+                              size="sm"
+                              variant="outline"
+                              borderColor="muted"
+                              color="primary"
+                              flex={1}
+                              onClick={() => setAmount(val.toString())}
+                            >
+                              {val} ETH
+                            </Button>
+                          ))
+                        : [1, 10, 100].map((val) => (
+                            <Button
+                              key={val}
+                              size="sm"
+                              variant="outline"
+                              borderColor="muted"
+                              color="primary"
+                              flex={1}
+                              onClick={() => setAmount(val.toString())}
+                            >
+                              {val} USDC
+                            </Button>
+                          ))
+                    : // For selling, show percentage buttons
+                      [25, 50, 75].map((percentage) => (
                         <Button
                           key={percentage}
-                          size="xs"
+                          size="sm"
                           variant="outline"
-                          onClick={() => handlePercentageClick(percentage)}
+                          borderColor="muted"
+                          color="primary"
                           flex={1}
-                          colorScheme="blue"
-                          isDisabled={fromBalance.raw === BigInt(0)}
+                          onClick={() => handlePercentageClick(percentage)}
+                          isDisabled={!fromBalance || fromBalance.raw === BigInt(0)}
                         >
                           {percentage}%
                         </Button>
-                      ))}
-                    </HStack>
-                  )}
-                </VStack>
-              </Box>
-
-              {/* Swap Button */}
-              <Button variant="ghost" onClick={handleCurrencySwap} size="sm">
-                ↕️ Swap
-              </Button>
-
-              {/* To Currency */}
-              <Box width="100%">
-                <Text fontSize="sm" color="gray.400" mb={2}>
-                  To (estimated)
-                </Text>
-                <VStack spacing={2}>
-                  <HStack width="100%">
-                    <Select
-                      value={`${toCurrency.type}-${
-                        toCurrency.address || "eth"
-                      }`}
-                      onChange={(e) => {
-                        const [type, addr] = e.target.value.split("-");
-                        if (type === "eth") {
-                          setToCurrency(SUPPORTED_CURRENCIES[0]);
-                        } else {
-                          const currency = SUPPORTED_CURRENCIES.find(
-                            (c) => c.address === addr
-                          ) || {
-                            type: "erc20" as const,
-                            address: coinAddress as Address,
-                            symbol: coinData.symbol || "COIN",
-                            decimals: 18,
-                            name: coinData.name || "Creator Coin",
-                          };
-                          setToCurrency(currency);
-                        }
-                      }}
-                      disabled={tradeType === "sell"}
-                    >
-                      {SUPPORTED_CURRENCIES.map((currency) => (
-                        <option
-                          key={`${currency.type}-${currency.address || "eth"}`}
-                          value={`${currency.type}-${
-                            currency.address || "eth"
-                          }`}
-                        >
-                          {currency.symbol} - {currency.name}
-                        </option>
-                      ))}
-                      <option value={`erc20-${coinAddress}`}>
-                        {coinData.symbol} - {coinData.name}
-                      </option>
-                    </Select>
-                  </HStack>
-                  <InputGroup>
-                    <Input
-                      placeholder={isGettingQuote ? "Getting quote..." : "0.0"}
-                      value={estimatedOutput}
-                      readOnly
-                      bg="muted"
-                    />
-                    {isGettingQuote && (
-                      <InputRightElement>
-                        <Spinner size="sm" />
-                      </InputRightElement>
-                    )}
-                  </InputGroup>
-                </VStack>
-              </Box>
-
-              <Divider />
-
-              {/* Advanced Settings */}
-              <Box width="100%">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  width="100%"
-                  justifyContent="space-between"
-                  onClick={() => setShowAdvanced(!showAdvanced)}
-                  rightIcon={
-                    showAdvanced ? <ChevronUpIcon /> : <ChevronDownIcon />
+                      ))
                   }
+                  <Button
+                    size="sm" 
+                    variant="outline"
+                    borderColor="muted"
+                    color="primary"
+                    onClick={() => {
+                      if (fromBalance) {
+                        const maxAmount = fromCurrency.type === "eth"
+                          ? formatEther(fromBalance.raw)
+                          : formatUnits(fromBalance.raw, fromBalance.decimals);
+                        setAmount(Number(maxAmount).toFixed(6).replace(/\.?0+$/, ""));
+                      }
+                    }}
+                    isDisabled={!fromBalance || fromBalance.raw === BigInt(0)}
+                  >
+                    {tradeType === "buy" ? "Max" : "100%"}
+                  </Button>
+                </HStack>
+
+                {/* Comment Input */}
+                <Input
+                  placeholder="Add a comment..."
+                  bg="muted"
+                  border="none"
+                  borderRadius="lg"
+                  _focus={{ border: "none", boxShadow: "none" }}
+                />
+
+                {/* Trade Button */}
+                <Button
+                  size="lg"
+                  bg={isWrongChain ? "orange.500" : (tradeType === "buy" ? "green.500" : "pink.500")}
+                  color="white"
+                  borderRadius="xl"
+                  onClick={isWrongChain ? handleSwitchToBase : handleTrade}
+                  isLoading={isTrading}
+                  loadingText="Trading..."
+                  isDisabled={
+                    !isConnected ||
+                    (!isWrongChain && (!amount || parseFloat(amount) <= 0 || isAmountExceedsBalance))
+                  }
+                  _hover={{
+                    bg: isWrongChain ? "orange.600" : (tradeType === "buy" ? "green.600" : "pink.600")
+                  }}
+                  py={6}
                 >
-                  <Text fontSize="sm" color="primary">
-                    Advanced
-                  </Text>
+                  {isWrongChain 
+                    ? "Switch to Base Network" 
+                    : (tradeType === "buy" ? "Buy" : "Sell")
+                  }
                 </Button>
 
-                {showAdvanced && (
-                  <Box mt={3} p={3} bg="muted" borderRadius="md">
-                    <VStack spacing={3}>
-                      {/* Slippage */}
-                      <Box width="100%">
-                        <Text fontSize="sm" color="primary" mb={2}>
-                          Slippage Tolerance
-                        </Text>
-                        <HStack>
-                          <Input
-                            type="number"
-                            value={slippage}
-                            onChange={(e) =>
-                              setSlippage(Number(e.target.value))
-                            }
-                            min="0.1"
-                            max="50"
-                            step="0.1"
-                            width="100px"
-                          />
-                          <Text fontSize="sm">%</Text>
-                        </HStack>
-                      </Box>
-                    </VStack>
-                  </Box>
-                )}
-              </Box>
+                {/* Minimum Received / Output Info */}
+                <HStack justify="space-between">
+                  <Text fontSize="sm" color="gray.400">
+                    {tradeType === "buy" ? "Minimum received" : "Only"} 
+                  </Text>
+                  <HStack>
+                    <Text fontSize="sm" color="green.400">
+                      {estimatedOutput || (tradeType === "sell" ? "7,856,810" : "3,205")}
+                    </Text>
+                    {coinData.image && (
+                      <Image
+                        src={coinData.image}
+                        alt={coinData.name}
+                        boxSize="16px"
+                        borderRadius="sm"
+                      />
+                    )}
+                  </HStack>
+                </HStack>
 
-              {/* Wallet Connection Warning */}
+                {tradeType === "sell" && (
+                  <Text fontSize="xs" color="gray.500" textAlign="center">
+                    can be sold right now
+                  </Text>
+                )}
+              </VStack>
+
+              {/* Error Messages */}
               {!isConnected && (
-                <Alert status="warning">
+                <Alert status="warning" borderRadius="lg">
                   <AlertIcon />
                   <Text fontSize="sm">Please connect your wallet to trade</Text>
                 </Alert>
               )}
 
-              {/* Insufficient Balance Warning */}
+              {isWrongChain && (
+                <Alert status="warning" borderRadius="lg">
+                  <AlertIcon />
+                  <VStack align="start" spacing={1}>
+                    <Text fontSize="sm">
+                      Wrong network detected. Zora trading requires Base network.
+                    </Text>
+                    <Text fontSize="xs" color="gray.400">
+                      Current: {chainId === 1 ? "Ethereum Mainnet" : `Chain ${chainId}`} | Required: Base (8453)
+                    </Text>
+                  </VStack>
+                </Alert>
+              )}
+
               {isAmountExceedsBalance && (
-                <Alert status="error">
+                <Alert status="error" borderRadius="lg">
                   <AlertIcon />
                   <Text fontSize="sm">
                     Insufficient balance. You only have{" "}
@@ -684,49 +871,9 @@ export default function ZoraTradingModal({
                   </Text>
                 </Alert>
               )}
-
-              {/* Coin Info */}
-              <Box width="100%" p={3} bg="muted" borderRadius="md">
-                <VStack spacing={1} align="start" color={"primary"}>
-                  <Text fontSize="sm" fontWeight="bold">
-                    {coinData.name}
-                  </Text>
-                  <Text fontSize="xs">
-                    Market Cap: {coinData.marketCap || "N/A"}
-                  </Text>
-                  <Text fontSize="xs">
-                    Holders: {coinData.uniqueHolders || 0}
-                  </Text>
-                </VStack>
-              </Box>
             </VStack>
           )}
         </ModalBody>
-
-        <ModalFooter>
-          <Button variant="ghost" mr={3} onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            colorScheme={tradeType === "buy" ? "green" : "red"}
-            onClick={handleTrade}
-            isLoading={isTrading}
-            loadingText="Trading..."
-            isDisabled={
-              !isConnected ||
-              !amount ||
-              parseFloat(amount) <= 0 ||
-              isAmountExceedsBalance
-            }
-            size="lg"
-          >
-            {isTrading ? (
-              <Spinner size="sm" />
-            ) : (
-              `${tradeType === "buy" ? "Buy" : "Sell"} ${coinData.symbol}`
-            )}
-          </Button>
-        </ModalFooter>
       </ModalContent>
     </Modal>
   );
