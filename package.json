@@ -73,6 +73,7 @@
     "react-markdown": "^10.1.0",
     "react-pageflip": "^2.0.3",
     "react-select-country-list": "^2.2.3",
+    "reactflow": "^11.11.4",
     "recharts": "^3.1.0",
     "swiper": "^11.2.8",
     "url": "^0.11.4",

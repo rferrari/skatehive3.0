@@ -118,20 +118,6 @@ const TransactionStatusDisplay: React.FC<TransactionStatusDisplayProps> = ({
             </AlertDescription>
           </Alert>
         )}
-
-        {(status.state === "completed" || status.state === "failed") &&
-          onReset && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={onReset}
-              borderColor="border"
-              color="text"
-              _hover={{ borderColor: "primary", color: "primary" }}
-            >
-              Start New Airdrop
-            </Button>
-          )}
       </VStack>
     </Box>
   );

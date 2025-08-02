@@ -33,29 +33,41 @@ export default function EmbeddedMap() {
   const sidebarRef = useRef<HTMLDivElement>(null);
   const { user } = useAioha();
 
-  const { spots: allSpots, isLoading, hasMore, loadNextPage, error, refresh } = useSkatespots();
+  const {
+    spots: allSpots,
+    isLoading,
+    hasMore,
+    loadNextPage,
+    error,
+    refresh,
+  } = useSkatespots();
 
   // Debug: Track newSpot changes (client-side only)
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      console.log('EmbeddedMap: newSpot changed', { 
-        newSpot: newSpot ? { author: newSpot.author, permlink: newSpot.permlink } : null 
+    if (typeof window !== "undefined") {
+      console.log("EmbeddedMap: newSpot changed", {
+        newSpot: newSpot
+          ? { author: newSpot.author, permlink: newSpot.permlink }
+          : null,
       });
     }
   }, [newSpot]);
 
   // Handler to accept Partial<Discussion> and cast to Discussion
   const handleNewSpot = (newComment: Partial<Discussion>) => {
-    if (typeof window !== 'undefined') {
-      console.log('EmbeddedMap: handleNewSpot called', { 
-        newComment: { author: newComment.author, permlink: newComment.permlink } 
+    if (typeof window !== "undefined") {
+      console.log("EmbeddedMap: handleNewSpot called", {
+        newComment: {
+          author: newComment.author,
+          permlink: newComment.permlink,
+        },
       });
     }
     setNewSpot(newComment as Discussion); // Optimistic update, safe for UI
     // Clear the newSpot after 5 seconds to prevent conflicts
     setTimeout(() => {
-      if (typeof window !== 'undefined') {
-        console.log('EmbeddedMap: Clearing newSpot');
+      if (typeof window !== "undefined") {
+        console.log("EmbeddedMap: Clearing newSpot");
       }
       setNewSpot(null);
     }, 5000);
@@ -103,10 +115,7 @@ export default function EmbeddedMap() {
           }
         `}
       />
-      <Box
-        height="auto"
-        overflow="visible"
-      >
+      <Box height="auto" overflow="visible">
         {/* Header Section */}
         <Box
           position={{ base: "relative", md: "sticky" }}
@@ -127,11 +136,11 @@ export default function EmbeddedMap() {
               letterSpacing={{ base: "wide", md: "widest" }}
               textAlign="center"
               mt={{ base: 0, md: -4 }}
-              style={{ 
-                lineHeight: 1.1, 
-                maxWidth: "100%", 
+              style={{
+                lineHeight: 1.1,
+                maxWidth: "100%",
                 wordBreak: "break-word",
-                overflowWrap: "break-word"
+                overflowWrap: "break-word",
               }}
             >
               skate spot map
@@ -140,7 +149,12 @@ export default function EmbeddedMap() {
 
           {/* Add Spot Button Section */}
           {user && (
-            <Box p={{ base: 3, md: 4 }} pt={{ base: 3, md: 6 }} pb={{ base: 3, md: 2 }} textAlign="center">
+            <Box
+              p={{ base: 3, md: 4 }}
+              pt={{ base: 3, md: 6 }}
+              pb={{ base: 3, md: 2 }}
+              textAlign="center"
+            >
               <Button
                 bg="background"
                 color="primary"
@@ -167,7 +181,7 @@ export default function EmbeddedMap() {
 
         {/* Main Content Section */}
         <Flex
-          height={{ base: 'auto', md: '600px' }}
+          height={{ base: "auto", md: "600px" }}
           flexDirection={{ base: "column", md: "row" }}
           align="flex-start"
           justifyContent="center"
@@ -206,7 +220,8 @@ export default function EmbeddedMap() {
                   height: "100%",
                   padding: 0,
                   margin: "auto",
-                  boxShadow: "0px 4px 10px var(--chakra-colors-muted, rgba(0, 0, 0, 0.5))",
+                  boxShadow:
+                    "0px 4px 10px var(--chakra-colors-muted, rgba(0, 0, 0, 0.5))",
                   display: "block",
                 }}
                 allowFullScreen
@@ -228,21 +243,34 @@ export default function EmbeddedMap() {
             height={{ base: "auto", md: "100%" }}
             overflowY="visible"
           >
-            <SpotSnapComposer onNewComment={handleNewSpot} onClose={handleClose} />
+            <SpotSnapComposer
+              onNewComment={handleNewSpot}
+              onClose={handleClose}
+            />
           </Box>
         </Flex>
 
         {/* Spot List Section - 3 Column Grid */}
         <Box p={4} pt={0}>
           {error && (
-            <Box textAlign="center" my={4} p={4} bg="red.50" borderRadius="md" border="1px solid" borderColor="red.200">
-              <Text color="red.600" fontWeight="bold">Error loading spots:</Text>
+            <Box
+              textAlign="center"
+              my={4}
+              p={4}
+              bg="red.50"
+              borderRadius="md"
+              border="1px solid"
+              borderColor="red.200"
+            >
+              <Text color="red.600" fontWeight="bold">
+                Error loading spots:
+              </Text>
               <Text color="red.500">{error}</Text>
             </Box>
           )}
-          <SpotList 
-            spots={allSpots} 
-            newSpot={newSpot} 
+          <SpotList
+            spots={allSpots}
+            newSpot={newSpot}
             isLoading={isLoading}
             hasMore={hasMore}
             onLoadMore={loadNextPage}
@@ -251,4 +279,4 @@ export default function EmbeddedMap() {
       </Box>
     </>
   );
-} 
+}

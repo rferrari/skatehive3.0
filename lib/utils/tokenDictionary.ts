@@ -12,22 +12,15 @@ export const tokenDictionary: { [key: string]: TokenInfo } = {
   HIGHER: {
     address: '0x0578d8A44db98B23BF096A382e016e29a5Ce0ffe',
     abi: ERC20ABI,
-    tokenLogo: "/higher.png",
+    tokenLogo: "/logos/higher.png",
     decimals: 18,
     network: "base"
   },
   USDC: {
     address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
     abi: ERC20ABI,
-    tokenLogo: "/usdc.png",
+    tokenLogo: "/logos/usdc.png",
     decimals: 6,
-    network: "base"
-  },
-  SENDIT: {
-    address: '0xba5b9b2d2d06a9021eb3190ea5fb0e02160839a4',
-    abi: ERC20ABI,
-    tokenLogo: "/sendit.png",
-    decimals: 18,
     network: "base"
   },
   HIVE: {
