@@ -61,6 +61,7 @@ export function AirdropModal({
   const [selectedToken, setSelectedToken] = useState("HIGHER");
   const [totalAmount, setTotalAmount] = useState("1000");
   const [includeSkateHive, setIncludeSkateHive] = useState(false);
+  const [isWeightedAirdrop, setIsWeightedAirdrop] = useState(false);
 
   // UI state
   const [isExecuting, setIsExecuting] = useState(false);
@@ -91,6 +92,7 @@ export function AirdropModal({
       enablePreviews: false,
       confirmationRequired: true,
       includeSkateHive,
+      isWeightedAirdrop,
     },
   });
 
@@ -337,11 +339,13 @@ export function AirdropModal({
               selectedToken={selectedToken}
               totalAmount={totalAmount}
               includeSkateHive={includeSkateHive}
+              isWeightedAirdrop={isWeightedAirdrop}
               userCount={userCount}
               airdropUsers={airdropUsers}
               onSortOptionChange={setSortOption}
               onLimitChange={setLimit}
               onIncludeSkateHiveChange={setIncludeSkateHive}
+              onWeightedAirdropChange={setIsWeightedAirdrop}
               onBack={() => goToStep(1, "tokenSelection")}
               onNext={() => goToStep(3, "preview")}
             />

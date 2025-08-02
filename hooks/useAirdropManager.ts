@@ -1,6 +1,7 @@
 import { useMemo, useCallback } from 'react';
 import { SkaterData, SortOption, AirdropUser, AirdropSummary, AirdropConfig } from '@/types/airdrop';
 import { tokenDictionary } from '@/lib/utils/tokenDictionary';
+import { SKATEHIVE_HOT_ADDRESS } from '@/lib/utils/constants';
 
 interface AirdropManagerProps {
   leaderboardData: SkaterData[];
@@ -8,7 +9,7 @@ interface AirdropManagerProps {
 }
 
 export const useAirdropManager = ({ leaderboardData, config }: AirdropManagerProps) => {
-  const { sortOption, limit, selectedToken, totalAmount, includeSkateHive } = config;
+  const { sortOption, limit, selectedToken, totalAmount, includeSkateHive, isWeightedAirdrop } = config;
 
   // Enhanced user processing with better validation
   const processedData = useMemo(() => {
@@ -82,7 +83,7 @@ export const useAirdropManager = ({ leaderboardData, config }: AirdropManagerPro
       const skateHiveEntry = {
         id: -1,
         hive_author: 'skatehive',
-        eth_address: '0xB4964e1ecA55Db36a94e8aeFfBFBAb48529a2f6c',
+        eth_address: SKATEHIVE_HOT_ADDRESS,
         points: 0,
         hive_balance: 0,
         hp_balance: 0,
@@ -106,20 +107,48 @@ export const useAirdropManager = ({ leaderboardData, config }: AirdropManagerPro
     
     // Step 7: Apply limit and return
     return workingData.slice(0, limit);
-  }, [leaderboardData, sortOption, limit, selectedToken, includeSkateHive]);
+  }, [leaderboardData, sortOption, limit, selectedToken, includeSkateHive, isWeightedAirdrop]);
   
-  // Enhanced airdrop users with individual amounts
+  // Enhanced airdrop users with individual amounts (equal or weighted)
   const airdropUsers: AirdropUser[] = useMemo(() => {
     const amount = parseFloat(totalAmount) || 0;
-    const perUserAmount = processedData.length > 0 ? amount / processedData.length : 0;
     
-    return processedData.map(user => ({
-      hive_author: user.hive_author,
-      eth_address: user.eth_address,
-      points: user.points,
-      amount: perUserAmount.toFixed(6)
-    }));
-  }, [processedData, totalAmount]);
+    if (!isWeightedAirdrop || processedData.length === 0) {
+      // Equal distribution
+      const perUserAmount = processedData.length > 0 ? amount / processedData.length : 0;
+      return processedData.map(user => ({
+        hive_author: user.hive_author,
+        eth_address: user.eth_address,
+        points: user.points,
+        amount: perUserAmount.toFixed(6)
+      }));
+    }
+    
+    // Weighted distribution based on sort criteria
+    const getWeightValue = (user: any, criteria: string): number => {
+      const value = (user as any)[criteria] ?? 0;
+      // Ensure minimum weight of 0.1 to avoid zero distributions
+      return Math.max(typeof value === 'number' ? value : 0, 0.1);
+    };
+    
+    // Calculate total weight for normalization
+    const totalWeight = processedData.reduce((sum, user) => {
+      return sum + getWeightValue(user, sortOption);
+    }, 0);
+    
+    // Distribute proportionally
+    return processedData.map(user => {
+      const userWeight = getWeightValue(user, sortOption);
+      const userAmount = totalWeight > 0 ? (amount * userWeight) / totalWeight : 0;
+      
+      return {
+        hive_author: user.hive_author,
+        eth_address: user.eth_address,
+        points: user.points,
+        amount: userAmount.toFixed(6)
+      };
+    });
+  }, [processedData, totalAmount, isWeightedAirdrop, sortOption]);
   
   const userCount = {
     total: leaderboardData.length,

@@ -80,6 +80,7 @@ export interface AirdropConfig {
   enablePreviews: boolean;
   confirmationRequired: boolean;
   includeSkateHive?: boolean;
+  isWeightedAirdrop?: boolean;
 }
 
 export interface ERC20AirdropParams {

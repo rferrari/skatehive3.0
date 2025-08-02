@@ -248,7 +248,7 @@ export function PreviewStep({
       });
 
     // Edges with explicit center handle anchoring and amount labels
-    const nodeEdges: Edge[] = airdropUsers.slice(0, 12).map((_, index) => ({
+    const nodeEdges: Edge[] = airdropUsers.slice(0, 12).map((user, index) => ({
       id: `edge-${index}`,
       source: "sender",
       target: `user-${index}`,
@@ -256,9 +256,7 @@ export function PreviewStep({
       targetHandle: "center-target",
       type: "straight",
       animated: true,
-      label: `${(parseFloat(totalAmount) / airdropUsers.length).toFixed(
-        2
-      )} ${selectedToken}`,
+      label: `${parseFloat(user.amount || "0").toFixed(2)} ${selectedToken}`,
       labelStyle: {
         fill: index < 3 ? "#ffd700" : index < 8 ? "#4a90e2" : "#cd7f32",
         fontWeight: "bold",
@@ -376,9 +374,7 @@ export function PreviewStep({
                           color="primary"
                           fontWeight="semibold"
                         >
-                          {(
-                            parseFloat(totalAmount) / airdropUsers.length
-                          ).toFixed(2)}{" "}
+                          {parseFloat(user.amount || "0").toFixed(2)}{" "}
                           {selectedToken}
                         </Text>
                       </Td>
@@ -436,8 +432,7 @@ export function PreviewStep({
                     </VStack>
                   </HStack>
                   <Text fontSize="sm" color="primary" fontWeight="semibold">
-                    {(parseFloat(totalAmount) / airdropUsers.length).toFixed(2)}{" "}
-                    {selectedToken}
+                    {parseFloat(user.amount || "0").toFixed(2)} {selectedToken}
                   </Text>
                 </HStack>
               ))}

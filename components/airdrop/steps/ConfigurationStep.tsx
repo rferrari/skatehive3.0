@@ -31,6 +31,7 @@ interface ConfigurationStepProps {
   selectedToken: string;
   totalAmount: string;
   includeSkateHive: boolean;
+  isWeightedAirdrop: boolean;
   userCount: {
     total: number;
     eligible: number;
@@ -40,6 +41,7 @@ interface ConfigurationStepProps {
   onSortOptionChange: (value: SortOption) => void;
   onLimitChange: (value: number) => void;
   onIncludeSkateHiveChange: (value: boolean) => void;
+  onWeightedAirdropChange: (value: boolean) => void;
   onBack: () => void;
   onNext: () => void;
 }
@@ -50,11 +52,13 @@ export function ConfigurationStep({
   selectedToken,
   totalAmount,
   includeSkateHive,
+  isWeightedAirdrop,
   userCount,
   airdropUsers,
   onSortOptionChange,
   onLimitChange,
   onIncludeSkateHiveChange,
+  onWeightedAirdropChange,
   onBack,
   onNext,
 }: ConfigurationStepProps) {
@@ -150,6 +154,42 @@ export function ConfigurationStep({
               </Checkbox>
               <Text fontSize="xs" color="textSecondary" mt={1} ml={6}>
                 {getSkateHiveHelperText()}
+              </Text>
+            </FormControl>
+
+            <FormControl>
+              <Checkbox
+                isChecked={isWeightedAirdrop}
+                onChange={(e) => onWeightedAirdropChange(e.target.checked)}
+                colorScheme="purple"
+                size={isMobile ? "sm" : "md"}
+              >
+                <Text color="text" fontSize={isMobile ? "sm" : "md"}>
+                  Weighted Airdrop
+                </Text>
+              </Checkbox>
+              <Text fontSize="xs" color="textSecondary" mt={1} ml={6}>
+                Distribute tokens proportionally based on{" "}
+                {sortOption === "points"
+                  ? "points"
+                  : sortOption === "hp_balance"
+                  ? "Hive Power"
+                  : sortOption === "hive_balance"
+                  ? "Hive Balance"
+                  : sortOption === "hbd_savings_balance"
+                  ? "HBD Savings"
+                  : sortOption === "post_count"
+                  ? "post count"
+                  : sortOption === "gnars_balance"
+                  ? "Gnars balance"
+                  : sortOption === "skatehive_nft_balance"
+                  ? "NFT holdings"
+                  : sortOption === "gnars_votes"
+                  ? "Gnars votes"
+                  : sortOption === "giveth_donations_usd"
+                  ? "donations"
+                  : "selected criteria"}
+                {!isWeightedAirdrop && " (equal distribution)"}
               </Text>
             </FormControl>
           </VStack>
