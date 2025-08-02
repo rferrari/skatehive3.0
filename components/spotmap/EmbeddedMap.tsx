@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import {
   Box,
   Button,
@@ -12,8 +12,7 @@ import {
 import { Global } from "@emotion/react";
 import SpotSnapComposer from "@/components/spotmap/SpotSnapComposer";
 import SpotList from "@/components/spotmap/SpotList";
-import { useSnaps } from "@/hooks/useSnaps";
-import { useComments } from "@/hooks/useComments";
+import { useSkatespots } from "@/hooks/useSkatespots";
 import { Discussion } from "@hiveio/dhive";
 import { useAioha } from "@aioha/react-ui";
 
@@ -34,22 +33,32 @@ export default function EmbeddedMap() {
   const sidebarRef = useRef<HTMLDivElement>(null);
   const { user } = useAioha();
 
-  const { comments: mainSnaps, isLoading, hasMore, loadNextPage } = useSnaps();
-  // Only show snaps from the main container with BOTH skatespot and hive-173115 tags
-  const allSpots = mainSnaps
-    .filter(snap => {
-      try {
-        const tags = JSON.parse(snap.json_metadata || "{}" ).tags || [];
-        return tags.includes("skatespot") && tags.includes("hive-173115");
-      } catch {
-        return false;
-      }
-    })
-    .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime());
+  const { spots: allSpots, isLoading, hasMore, loadNextPage, error, refresh } = useSkatespots();
+
+  // Debug: Track newSpot changes (client-side only)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      console.log('EmbeddedMap: newSpot changed', { 
+        newSpot: newSpot ? { author: newSpot.author, permlink: newSpot.permlink } : null 
+      });
+    }
+  }, [newSpot]);
 
   // Handler to accept Partial<Discussion> and cast to Discussion
   const handleNewSpot = (newComment: Partial<Discussion>) => {
+    if (typeof window !== 'undefined') {
+      console.log('EmbeddedMap: handleNewSpot called', { 
+        newComment: { author: newComment.author, permlink: newComment.permlink } 
+      });
+    }
     setNewSpot(newComment as any); // Optimistic update, safe for UI
+    // Clear the newSpot after 5 seconds to prevent conflicts
+    setTimeout(() => {
+      if (typeof window !== 'undefined') {
+        console.log('EmbeddedMap: Clearing newSpot');
+      }
+      setNewSpot(null);
+    }, 5000);
   };
 
   const handleClose = () => {
@@ -225,6 +234,12 @@ export default function EmbeddedMap() {
 
         {/* Spot List Section - 3 Column Grid */}
         <Box p={4} pt={0}>
+          {error && (
+            <Box textAlign="center" my={4} p={4} bg="red.50" borderRadius="md" border="1px solid" borderColor="red.200">
+              <Text color="red.600" fontWeight="bold">Error loading spots:</Text>
+              <Text color="red.500">{error}</Text>
+            </Box>
+          )}
           <SpotList 
             spots={allSpots} 
             newSpot={newSpot} 

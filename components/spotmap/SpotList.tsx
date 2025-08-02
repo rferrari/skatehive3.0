@@ -35,32 +35,86 @@ export default function SpotList({
   const [conversation, setConversation] = useState<Discussion | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Debug: Track displayedSpots changes (client-side only)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      console.log('SpotList: displayedSpots changed', { 
+        count: displayedSpots.length,
+        spots: displayedSpots.map(s => ({ author: s.author, permlink: s.permlink }))
+      });
+    }
+  }, [displayedSpots]);
+
   // Update displayed spots when spots or newSpot changes
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      console.log('SpotList: spots or newSpot changed', { 
+        spotsCount: spots.length, 
+        newSpot: newSpot ? { author: newSpot.author, permlink: newSpot.permlink } : null 
+      });
+    }
+    
     let baseSpots = [...spots];
     if (newSpot) {
       // Prepend new spot if not already in the list
       const exists = baseSpots.some((c) => c.permlink === newSpot.permlink);
       if (!exists) {
         baseSpots = [newSpot, ...baseSpots];
+        if (typeof window !== 'undefined') {
+          console.log('SpotList: Added new spot to baseSpots');
+        }
       }
     }
-    // Sort by created date, newest first
-    baseSpots.sort(
-      (a, b) => new Date(b.created).getTime() - new Date(a.created).getTime()
-    );
+    // Sort by created date, newest first, handling invalid dates
+    baseSpots.sort((a, b) => {
+      const dateA = a.created === "just now" ? new Date() : new Date(a.created);
+      const dateB = b.created === "just now" ? new Date() : new Date(b.created);
+      return dateB.getTime() - dateA.getTime();
+    });
+    if (typeof window !== 'undefined') {
+      console.log('SpotList: Setting displayedSpots', { count: baseSpots.length });
+    }
     setDisplayedSpots(baseSpots);
+    
+    // Reset visibleCount when spots change (new data loaded)
+    if (spots.length > 0) {
+      setVisibleCount(10);
+    }
   }, [spots, newSpot]);
 
   const handleLoadMore = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      console.log('SpotList: handleLoadMore called', { 
+        hasOnLoadMore: !!onLoadMore, 
+        hasMore, 
+        isLoading,
+        visibleCount,
+        displayedSpotsLength: displayedSpots.length
+      });
+    }
+    
     if (onLoadMore && hasMore && !isLoading) {
       // If we have a loadMore function, use it to fetch more data
+      if (typeof window !== 'undefined') {
+        console.log('SpotList: Calling onLoadMore to fetch more data');
+      }
       onLoadMore();
     } else if (!onLoadMore) {
       // Fallback to just showing more items from current data
+      if (typeof window !== 'undefined') {
+        console.log('SpotList: Using fallback - increasing visibleCount');
+      }
       setVisibleCount((prev) => prev + 10);
+    } else {
+      if (typeof window !== 'undefined') {
+        console.log('SpotList: handleLoadMore conditions not met', {
+          hasOnLoadMore: !!onLoadMore,
+          hasMore,
+          isLoading
+        });
+      }
     }
-  }, [onLoadMore, hasMore, isLoading]);
+  }, [onLoadMore, hasMore, isLoading, visibleCount, displayedSpots.length]);
 
   // Infinite scroll functionality
   useEffect(() => {
