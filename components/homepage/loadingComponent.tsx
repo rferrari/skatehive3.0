@@ -7,7 +7,6 @@ import "../../lib/utils/fonts.css";
 const matrixCharacters =
   "FUCKアイウエオカキクケコサシスセソタチツテトナニFUCKヌネノSK8GRINDOLLIEΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ180360KICKFLIPNOSENDBOARD";
 const randomSentences = [
-  "skate or dont",
   "F-u-c-k instagram",
   "Praise skatevideosite",
   "Loading Stokenomics...",
@@ -20,7 +19,6 @@ const randomSentences = [
   "support your local skateshops",
   "The Peoples Thrasher",
   "Stack HP, buy with HBD",
-  "bless up",
   "Connecting with Uganda Nodes",
   "If it takes to long, your connection sucks",
   "Macba Lives",
@@ -32,7 +30,8 @@ const randomSentences = [
   "Nobody owns Skatehive",
   "Drop hills not bombs!",
   "Praise skatevideosite",
-  "Ready to grind on chain?",
+  "Ready to grind onchain?",
+  "Press Ctrl + K for quick menu",
 ];
 
 function getRandomChar() {
@@ -63,9 +62,7 @@ const LoadingComponent = () => {
 
     // Periodically flip characters in columns
     const interval = setInterval(() => {
-      setColumns((prev) =>
-        prev.map(() => generateColumnLines(50))
-      );
+      setColumns((prev) => prev.map(() => generateColumnLines(50)));
     }, 5000);
 
     return () => clearInterval(interval);
@@ -76,10 +73,13 @@ const LoadingComponent = () => {
     const switchMessage = setInterval(() => {
       setMessageVisible(false);
       setTimeout(() => {
-        setRandomSentence(prev => {
+        setRandomSentence((prev) => {
           let next;
           do {
-            next = randomSentences[Math.floor(Math.random() * randomSentences.length)];
+            next =
+              randomSentences[
+                Math.floor(Math.random() * randomSentences.length)
+              ];
           } while (next === prev && randomSentences.length > 1);
           return next;
         });
@@ -151,14 +151,15 @@ const LoadingComponent = () => {
             background: `linear-gradient(to right, var(--chakra-colors-primary, #00FF00), var(--chakra-colors-secondary, #00FFFF))`,
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
-            animation: "ghost-glitch 1.5s infinite, ghost-flicker 1.1s infinite, ghost-stretch 2.5s infinite",
+            animation:
+              "ghost-glitch 1.5s infinite, ghost-flicker 1.1s infinite, ghost-stretch 2.5s infinite",
             clipPath: "inset(2px 0)",
             opacity: 0.2,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             zIndex: 1,
-            transformOrigin: "center center"
+            transformOrigin: "center center",
           }}
         >
           {randomSentence}
@@ -178,10 +179,12 @@ const LoadingComponent = () => {
             }
           }
           @keyframes ghost-glitch {
-            0%, 100% {
+            0%,
+            100% {
               transform: translate(-50%, -50%) skew(0deg);
             }
-            10%, 90% {
+            10%,
+            90% {
               transform: translate(-50%, -50%) skew(0deg);
             }
             15% {
@@ -207,23 +210,52 @@ const LoadingComponent = () => {
             }
           }
           @keyframes ghost-flicker {
-            0% { opacity: 0.2; }
-            7% { opacity: 0; }
-            13% { opacity: 0.3; }
-            19% { opacity: 0.1; }
-            27% { opacity: 0.4; }
-            33% { opacity: 0; }
-            41% { opacity: 0.2; }
-            52% { opacity: 0.05; }
-            60% { opacity: 0.3; }
-            68% { opacity: 0; }
-            75% { opacity: 0.25; }
-            82% { opacity: 0.1; }
-            90% { opacity: 0.3; }
-            100% { opacity: 0.2; }
+            0% {
+              opacity: 0.2;
+            }
+            7% {
+              opacity: 0;
+            }
+            13% {
+              opacity: 0.3;
+            }
+            19% {
+              opacity: 0.1;
+            }
+            27% {
+              opacity: 0.4;
+            }
+            33% {
+              opacity: 0;
+            }
+            41% {
+              opacity: 0.2;
+            }
+            52% {
+              opacity: 0.05;
+            }
+            60% {
+              opacity: 0.3;
+            }
+            68% {
+              opacity: 0;
+            }
+            75% {
+              opacity: 0.25;
+            }
+            82% {
+              opacity: 0.1;
+            }
+            90% {
+              opacity: 0.3;
+            }
+            100% {
+              opacity: 0.2;
+            }
           }
           @keyframes ghost-stretch {
-            0%, 100% {
+            0%,
+            100% {
               transform: translate(-50%, -50%) scaleY(1);
             }
             25% {

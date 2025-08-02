@@ -72,7 +72,9 @@ export default function SnapComposer({
   const [gifUrl, setGifUrl] = useState<string | null>(null);
   const [gifSize, setGifSize] = useState<number | null>(null);
   const [gifCaption, setGifCaption] = useState<string>("skatehive-gif");
-  const [gifUrls, setGifUrls] = useState<{ url: string; caption: string }[]>([]);
+  const [gifUrls, setGifUrls] = useState<{ url: string; caption: string }[]>(
+    []
+  );
 
   // Drag and drop state
   const [isDragOver, setIsDragOver] = useState(false);
@@ -80,10 +82,14 @@ export default function SnapComposer({
   const isUploadingMedia = uploadCount > 0;
 
   // Video duration error handling
-  const [videoDurationError, setVideoDurationError] = useState<string | null>(null);
+  const [videoDurationError, setVideoDurationError] = useState<string | null>(
+    null
+  );
 
   const handleVideoDurationError = (duration: number) => {
-    setVideoDurationError("Error. Short form video only here. Max 60 sec. Use Mag for longer video.");
+    setVideoDurationError(
+      "Error. Short form video only here. Max 60 sec. Use Mag for longer video."
+    );
     // Clear error after 7 seconds
     setTimeout(() => setVideoDurationError(null), 7000);
   };
@@ -259,7 +265,7 @@ export default function SnapComposer({
         .map((gif) => `![${gif.caption || "gif"}](${gif.url})`)
         .join("\n");
       commentBody += `\n\n${gifMarkup}`;
-      validUrls = [...validUrls, ...gifUrls.map(gif => gif.url)];
+      validUrls = [...validUrls, ...gifUrls.map((gif) => gif.url)];
     }
 
     if (commentBody) {
@@ -421,7 +427,7 @@ export default function SnapComposer({
     if (match) {
       const [, caption, url] = match;
       // Add to gifUrls array for display below the text field
-      setGifUrls(prev => [...prev, { url, caption: caption || "gif" }]);
+      setGifUrls((prev) => [...prev, { url, caption: caption || "gif" }]);
     }
   };
 
@@ -472,6 +478,8 @@ export default function SnapComposer({
           borderColor="muted"
         >
           <Textarea
+            id="snap-composer-textarea"
+            data-testid="snap-composer-textarea"
             placeholder="Write here"
             bg="background"
             borderRadius={"base"}
@@ -487,6 +495,8 @@ export default function SnapComposer({
               {/* Image Upload Button */}
               <Box position="relative">
                 <IconButton
+                  id="snap-composer-image-upload-btn"
+                  data-testid="snap-composer-image-upload"
                   aria-label="Upload Image"
                   icon={
                     <FaImage color="var(--chakra-colors-primary)" size={22} />
@@ -520,6 +530,8 @@ export default function SnapComposer({
               {/* Giphy Button (only in reply modal) */}
               {post && (
                 <IconButton
+                  id="snap-composer-giphy-btn"
+                  data-testid="snap-composer-giphy"
                   aria-label="Add GIF from Giphy"
                   icon={
                     <MdGif size={22} color="var(--chakra-colors-primary)" />
@@ -548,6 +560,8 @@ export default function SnapComposer({
                 isProcessing={isLoading}
               />
               <Button
+                id="snap-composer-video-upload-btn"
+                data-testid="snap-composer-video-upload"
                 variant="ghost"
                 isDisabled={isLoading}
                 border="2px solid transparent"
@@ -569,9 +583,14 @@ export default function SnapComposer({
               </Button>
               {/* GIF Maker Button */}
               <IconButton
+                id="snap-composer-gif-maker-btn"
+                data-testid="snap-composer-gif-maker"
                 aria-label="GIF Maker"
                 icon={
-                  <MdMovieCreation color="var(--chakra-colors-primary)" size={22} />
+                  <MdMovieCreation
+                    color="var(--chakra-colors-primary)"
+                    size={22}
+                  />
                 }
                 variant="ghost"
                 isDisabled={isLoading}
@@ -593,9 +612,11 @@ export default function SnapComposer({
             </HStack>
             <Box display={buttonSize === "sm" ? "inline-block" : undefined}>
               <Button
+                id="snap-composer-submit-btn"
+                data-testid="snap-composer-submit"
                 bg="primary"
                 color="background"
-                _hover={{ bg: "accent", color: "text" }}
+                _hover={{ bg: "muted", color: "text", border: "tb1" }}
                 isLoading={isLoading}
                 isDisabled={isLoading || isUploadingMedia}
                 onClick={handleComment}
@@ -622,13 +643,7 @@ export default function SnapComposer({
           </HStack>
           <Box width="100%">
             {videoDurationError && (
-              <Box 
-                color="error" 
-                p={2} 
-                mb={2}
-                fontSize="sm"
-                textAlign="center"
-              >
+              <Box color="error" p={2} mb={2} fontSize="sm" textAlign="center">
                 {videoDurationError}
               </Box>
             )}
@@ -665,6 +680,8 @@ export default function SnapComposer({
                   isDisabled={isLoading}
                 />
                 <IconButton
+                  id={`snap-composer-remove-image-${index}`}
+                  data-testid={`snap-composer-remove-image-${index}`}
                   aria-label="Remove image"
                   icon={<FaTimes />}
                   size="xs"
@@ -695,6 +712,8 @@ export default function SnapComposer({
                   borderRadius="base"
                 />
                 <IconButton
+                  id="snap-composer-remove-gif"
+                  data-testid="snap-composer-remove-gif"
                   aria-label="Remove GIF"
                   icon={<FaTimes />}
                   size="xs"
@@ -722,6 +741,8 @@ export default function SnapComposer({
                   allowFullScreen
                 />
                 <IconButton
+                  id="snap-composer-remove-video"
+                  data-testid="snap-composer-remove-video"
                   aria-label="Remove video"
                   icon={<FaTimes />}
                   size="xs"
@@ -755,6 +776,8 @@ export default function SnapComposer({
                   isDisabled={isLoading}
                 />
                 <IconButton
+                  id={`snap-composer-remove-gif-${index}`}
+                  data-testid={`snap-composer-remove-gif-${index}`}
                   aria-label="Remove GIF"
                   icon={<FaTimes />}
                   size="xs"

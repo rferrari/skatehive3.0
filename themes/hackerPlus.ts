@@ -16,8 +16,8 @@ const hackerPlusTheme = extendTheme({
     text: '#A8FF60',             // Muted green for better readability
     primary: '#a7ff00',
     'primary-alpha': '#a7ff00',
-    secondary: '#00BCD4',        // Slight contrast layer
-    accent: '#C586C0',           // purple for highlights
+    secondary: '#651368ff',        // Slight contrast layer
+    accent: 'rgba(255, 242, 2, 1)',           // purple for highlights
     muted: '#202020',            // Muted background
     border: '#A8FF60',           // Harmonized with primary
     error: '#FF5C57',

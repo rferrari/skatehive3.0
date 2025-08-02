@@ -255,7 +255,7 @@ export default function PostCard({
           <Box flex={1} overflow="hidden">
             <Link
               href={`/post/${author}/${post.permlink}`}
-              _hover={{ textDecoration: "underline", color: "primary" }}
+              _hover={{ textDecoration: "underline" }}
             >
               <Text
                 fontWeight="bold"
