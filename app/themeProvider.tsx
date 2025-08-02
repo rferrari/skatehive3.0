@@ -67,7 +67,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const defaultTheme =
     (process.env.NEXT_PUBLIC_THEME as ThemeName) || "hackerPlus";
   const [themeName, setThemeName] = useState<ThemeName>(
-    themeMap[defaultTheme] ? defaultTheme : "hacker"
+    themeMap[defaultTheme] ? defaultTheme : "hackerPlus"
   );
   const [theme, setTheme] = useState(themeMap[themeName]);
 

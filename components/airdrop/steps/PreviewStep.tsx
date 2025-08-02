@@ -247,9 +247,9 @@ export function PreviewStep({
         if (idx < 10) return "#4a90e2"; // Blue for top 10
         return "#cd7f32"; // Bronze for others
       };
-      
+
       const edgeColor = getColor(index);
-      
+
       return {
         id: `edge-${index}`,
         source: "sender",
@@ -507,8 +507,8 @@ export function PreviewStep({
               minZoom={0.5}
               maxZoom={2}
               defaultEdgeOptions={{
-                style: { strokeWidth: 4, stroke: '#4a90e2' },
-                type: 'smoothstep',
+                style: { strokeWidth: 4, stroke: "#4a90e2" },
+                type: "smoothstep",
                 animated: true,
               }}
               style={{
@@ -517,11 +517,7 @@ export function PreviewStep({
                 zIndex: 1,
               }}
             >
-              <Background 
-                color="rgba(235, 35, 208, 0.3)" 
-                gap={30} 
-                size={0.8}
-              />
+              <Background color="rgba(235, 35, 208, 0.3)" gap={30} size={0.8} />
 
               <Controls
                 position="top-right"
