@@ -8,12 +8,6 @@ import {
   VStack,
   Tooltip,
   useToast,
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-  PopoverArrow,
-  PopoverBody,
-  useDisclosure,
   IconButton,
   MenuButton,
   MenuItem,
@@ -304,11 +298,6 @@ const Snap = ({
   const authorPayout = parsePayout(discussion.total_payout_value);
   const curatorPayout = parsePayout(discussion.curator_payout_value);
   const { daysRemaining, isPending } = calculatePayoutDays(discussion.created);
-  const {
-    isOpen: isPayoutOpen,
-    onOpen: openPayout,
-    onClose: closePayout,
-  } = useDisclosure();
 
   return (
     <Box pl={effectiveDepth > 1 ? 1 : 0} ml={effectiveDepth > 1 ? 2 : 0}>
@@ -434,57 +423,23 @@ const Snap = ({
                 </Button>
               </Tooltip>
             </HStack>
-            <Tooltip label="reward amount" hasArrow openDelay={1000}>
-              <Popover
-                placement="top"
-                isOpen={isPayoutOpen}
-                onClose={closePayout}
-                closeOnBlur={true}
-              >
-                <PopoverTrigger>
-                  <span
-                    style={{ cursor: "pointer" }}
-                    onMouseDown={openPayout}
-                    onMouseUp={closePayout}
-                  >
-                    <Text fontWeight="bold" fontSize="xl">
-                      ${rewardAmount.toFixed(2)}
-                    </Text>
-                  </span>
-                </PopoverTrigger>
-                <PopoverContent
-                  w="auto"
-                  bg="gray.800"
-                  color="white"
-                  borderRadius="md"
-                  boxShadow="lg"
-                  p={2}
-                >
-                  <PopoverArrow />
-                  <PopoverBody>
-                    {isPending ? (
-                      <div>
-                        <div>
-                          <b>Pending</b>
-                        </div>
-                        <div>
-                          {daysRemaining} day{daysRemaining !== 1 ? "s" : ""}{" "}
-                          until payout
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        <div>
-                          Author: <b>${authorPayout.toFixed(3)}</b>
-                        </div>
-                        <div>
-                          Curators: <b>${curatorPayout.toFixed(3)}</b>
-                        </div>
-                      </>
-                    )}
-                  </PopoverBody>
-                </PopoverContent>
-              </Popover>
+            <Tooltip
+              label={
+                isPending
+                  ? `Pending - ${daysRemaining} day${
+                      daysRemaining !== 1 ? "s" : ""
+                    } until payout`
+                  : `Author: $${authorPayout.toFixed(
+                      3
+                    )} | Curators: $${curatorPayout.toFixed(3)}`
+              }
+              hasArrow
+              openDelay={500}
+              placement="top"
+            >
+              <Text fontWeight="bold" fontSize="sm" cursor="pointer">
+                ${rewardAmount.toFixed(2)}
+              </Text>
             </Tooltip>
           </HStack>
         )}
