@@ -21,8 +21,6 @@ import { useState, useMemo } from "react";
 import { getPayoutValue } from "@/lib/hive/client-functions";
 import { EnhancedMarkdownRenderer } from "@/components/markdown/EnhancedMarkdownRenderer";
 import { getPostDate } from "@/lib/utils/GetPostDate";
-import useHiveAccount from "@/hooks/useHiveAccount";
-import VideoRenderer from "../layout/VideoRenderer";
 import SnapComposer from "./SnapComposer";
 import { UpvoteButton } from "@/components/shared";
 import EditPostModal from "./EditPostModal";
@@ -38,146 +36,7 @@ import {
   deduplicateVotes,
 } from "@/lib/utils/postUtils";
 import { BiDotsHorizontal } from "react-icons/bi";
-import MediaCarousel from "../shared/MediaCarousel";
-
-interface MediaItem {
-  type: "image" | "video" | "iframe";
-  content: string;
-  src?: string;
-}
-
-const parseMediaContent = (mediaContent: string): MediaItem[] => {
-  const mediaItems: MediaItem[] = [];
-
-  mediaContent.split("\n").forEach((item: string) => {
-    const trimmedItem = item.trim();
-    if (!trimmedItem) return;
-
-    // Handle markdown images with IPFS
-    if (
-      trimmedItem.includes("![") &&
-      trimmedItem.includes("ipfs.skatehive.app/ipfs/")
-    ) {
-      mediaItems.push({
-        type: "image",
-        content: trimmedItem,
-      });
-      return;
-    }
-
-    // Handle other markdown images
-    if (
-      trimmedItem.includes("![") &&
-      (trimmedItem.includes("http") || trimmedItem.includes("ipfs:"))
-    ) {
-      mediaItems.push({
-        type: "image",
-        content: trimmedItem,
-      });
-      return;
-    }
-
-    // Handle iframes
-    if (trimmedItem.includes("<iframe") && trimmedItem.includes("</iframe>")) {
-      const srcMatch = trimmedItem.match(/src=["']([^"']+)["']/i);
-      if (srcMatch && srcMatch[1]) {
-        const url = srcMatch[1];
-
-        // Skip YouTube iframes (handled by auto-embed logic)
-        if (
-          url.includes("youtube.com/embed/") ||
-          url.includes("youtube-nocookie.com/embed/") ||
-          url.includes("youtu.be/")
-        ) {
-          return;
-        }
-
-        // Handle IPFS videos
-        if (url.includes("gateway.pinata.cloud/ipfs/")) {
-          const ipfsHash = url.match(/\/ipfs\/([\w-]+)/)?.[1];
-          if (ipfsHash) {
-            const skatehiveUrl = `https://ipfs.skatehive.app/ipfs/${ipfsHash}`;
-            mediaItems.push({
-              type: "video",
-              content: trimmedItem,
-              src: skatehiveUrl,
-            });
-            return;
-          }
-        } else if (url.includes("ipfs.skatehive.app/ipfs/")) {
-          mediaItems.push({
-            type: "video",
-            content: trimmedItem,
-            src: url,
-          });
-          return;
-        }
-      }
-
-      // Other iframes
-      mediaItems.push({
-        type: "iframe",
-        content: trimmedItem,
-      });
-      return;
-    }
-  });
-
-  return mediaItems;
-};
-
-const renderMedia = (mediaContent: string) => {
-  const mediaItems = parseMediaContent(mediaContent);
-
-  // If we have 2 or more media items, use carousel
-  if (mediaItems.length >= 2) {
-    return <MediaCarousel mediaItems={mediaItems} />;
-  }
-
-  // If we have only one item, render it directly with the original styling
-  if (mediaItems.length === 1) {
-    const item = mediaItems[0];
-
-    if (item.type === "image") {
-      return (
-        <Box
-          sx={{
-            img: {
-              width: "100%",
-              height: "auto",
-              objectFit: "contain",
-              marginTop: "0.5rem",
-              marginBottom: "0.5rem",
-            },
-          }}
-        >
-          <EnhancedMarkdownRenderer content={item.content} />
-        </Box>
-      );
-    }
-
-    if (item.type === "video" && item.src) {
-      return <VideoRenderer src={item.src} />;
-    }
-
-    if (item.type === "iframe") {
-      return (
-        <Box
-          dangerouslySetInnerHTML={{ __html: item.content }}
-          sx={{
-            iframe: {
-              width: "100%",
-              height: "auto",
-              minHeight: "300px",
-            },
-          }}
-        />
-      );
-    }
-  }
-
-  return null;
-};
+import MediaRenderer from "../shared/MediaRenderer";
 
 interface SnapProps {
   discussion: Discussion;
@@ -237,7 +96,6 @@ const Snap = ({
     () => separateContent(discussion.body),
     [discussion.body]
   );
-  const renderedMedia = useMemo(() => renderMedia(media), [media]);
 
   const [voted, setVoted] = useState(
     discussion.active_votes?.some(
@@ -368,7 +226,9 @@ const Snap = ({
           >
             <EnhancedMarkdownRenderer content={text} />
           </Box>
-          <Box>{renderedMedia}</Box>
+          <Box>
+            <MediaRenderer mediaContent={media} fullContent={discussion.body} />
+          </Box>
         </Box>
 
         {/* Edit Modal */}

@@ -115,3 +115,42 @@ export function extractZoraCoinLinks(text: string): string[] {
     }
     return addresses
 }
+
+// Extract general URLs from text (excluding images, videos, and already handled services)
+export function extractGeneralUrls(text: string): string[] {
+    const urlRegex = /https?:\/\/[^\s<>"'`]+/g;
+    const urls: string[] = [];
+    let match;
+    
+    while ((match = urlRegex.exec(text)) !== null) {
+        const url = match[0];
+        
+        // Skip if it's already handled by other extractors
+        if (
+            // Skip image URLs
+            isValidImageUrl(url) ||
+            // Skip video URLs
+            url.match(/\.(mp4|webm|mov|avi|wmv|flv|mkv)$/i) ||
+            // Skip YouTube URLs (handled by extractYoutubeLinks)
+            url.includes('youtube.com') ||
+            url.includes('youtu.be') ||
+            // Skip 3speak URLs (handled by extractCustomLinks)
+            url.includes('3speak.tv') ||
+            // Skip Zora URLs (handled by extractZoraCoinLinks)
+            url.includes('zora.co/coin') ||
+            // Skip Instagram URLs (handled by markdown processor)
+            url.includes('instagram.com') ||
+            // Skip Vimeo URLs (handled by markdown processor)
+            url.includes('vimeo.com') ||
+            // Skip Odysee URLs (handled by markdown processor)
+            url.includes('odysee.com')
+        ) {
+            continue;
+        }
+        
+        urls.push(url);
+    }
+    
+    // Return only the last URL to avoid cluttering
+    return urls.length > 0 ? [urls[urls.length - 1]] : [];
+}
