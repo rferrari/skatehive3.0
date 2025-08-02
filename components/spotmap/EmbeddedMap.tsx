@@ -28,7 +28,7 @@ export default function EmbeddedMap() {
   });
   const paddingX = useBreakpointValue({ base: 2, sm: 4, md: 6 });
   const isMobile = useBreakpointValue({ base: true, md: false });
-  const [newSpot, setNewSpot] = useState(null);
+  const [newSpot, setNewSpot] = useState<Discussion | null>(null);
   const [composerKey, setComposerKey] = useState<number>(0);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const { user } = useAioha();
@@ -51,7 +51,7 @@ export default function EmbeddedMap() {
         newComment: { author: newComment.author, permlink: newComment.permlink } 
       });
     }
-    setNewSpot(newComment as any); // Optimistic update, safe for UI
+    setNewSpot(newComment as Discussion); // Optimistic update, safe for UI
     // Clear the newSpot after 5 seconds to prevent conflicts
     setTimeout(() => {
       if (typeof window !== 'undefined') {

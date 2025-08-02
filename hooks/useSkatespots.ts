@@ -46,7 +46,7 @@ export const useSkatespots = () => {
       const result: SkatespotsResponse = await response.json();
       
       if (!result.success) {
-        throw new Error(result.error || 'Failed to fetch skatespots');
+        throw new Error('Failed to fetch skatespots');
       }
       
       // Filter out duplicates only when appending
