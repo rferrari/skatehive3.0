@@ -79,6 +79,7 @@ export interface AirdropConfig {
   customMessage: string;
   enablePreviews: boolean;
   confirmationRequired: boolean;
+  includeSkateHive?: boolean;
 }
 
 export interface ERC20AirdropParams {

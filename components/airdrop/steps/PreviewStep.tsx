@@ -40,6 +40,7 @@ import { useAioha } from "@aioha/react-ui";
 import { useAccount } from "wagmi";
 import { Avatar, Name } from "@coinbase/onchainkit/identity";
 import { memo } from "react";
+import { tokenDictionary } from "@/lib/utils/tokenDictionary";
 
 // Custom centered node component for perfect edge anchoring
 const CenteredNode = memo(({ data }: any) => {
@@ -103,12 +104,16 @@ export function PreviewStep({
   airdropUsers,
 }: PreviewStepProps) {
   const isMobile = useIsMobile();
-  const [viewMode, setViewMode] = useState<"table" | "flow">("table");
+  const [viewMode, setViewMode] = useState<"table" | "flow">("flow");
 
   // Get user connection status
   const { user } = useAioha();
   const { isConnected: isEthereumConnected, address: ethereumAddress } =
     useAccount();
+
+  // Determine if it's a Hive token
+  const selectedTokenInfo = tokenDictionary[selectedToken];
+  const isHiveToken = selectedTokenInfo?.network === "hive";
 
   // Create React Flow nodes and edges for neural network visualization
   const { nodes, edges } = useMemo(() => {
@@ -193,25 +198,42 @@ export function PreviewStep({
           position: { x, y },
           data: {
             label: (
-              <Box
-                w="50px"
-                h="50px"
-                borderRadius="full"
-                overflow="hidden"
-                border={`2px solid ${
-                  index < 3 ? "#ffd700" : index < 8 ? "#4a90e2" : "#cd7f32"
-                }`}
-                bg="white"
-                position="relative"
-              >
-                <Image
-                  src={`https://images.hive.blog/u/${user.hive_author}/avatar/small`}
-                  alt={user.hive_author}
-                  w="100%"
-                  h="100%"
-                  objectFit="cover"
-                />
-              </Box>
+              <VStack spacing={1} align="center">
+                <Box
+                  w="50px"
+                  h="50px"
+                  borderRadius="full"
+                  overflow="hidden"
+                  border={`2px solid ${
+                    index < 3 ? "#ffd700" : index < 8 ? "#4a90e2" : "#cd7f32"
+                  }`}
+                  bg="white"
+                  position="relative"
+                >
+                  <Image
+                    src={`https://images.hive.blog/u/${user.hive_author}/avatar/small`}
+                    alt={user.hive_author}
+                    w="100%"
+                    h="100%"
+                    objectFit="cover"
+                  />
+                </Box>
+                {/* Show username for Hive tokens */}
+                {isHiveToken && (
+                  <Text
+                    fontSize="xs"
+                    fontWeight="bold"
+                    color="white"
+                    bg="blackAlpha.700"
+                    px={2}
+                    py={1}
+                    borderRadius="md"
+                    whiteSpace="nowrap"
+                  >
+                    @{user.hive_author}
+                  </Text>
+                )}
+              </VStack>
             ),
           },
           style: {
@@ -234,7 +256,9 @@ export function PreviewStep({
       targetHandle: "center-target",
       type: "straight",
       animated: true,
-      label: `${(parseFloat(totalAmount) / airdropUsers.length).toFixed(2)} ${selectedToken}`,
+      label: `${(parseFloat(totalAmount) / airdropUsers.length).toFixed(
+        2
+      )} ${selectedToken}`,
       labelStyle: {
         fill: index < 3 ? "#ffd700" : index < 8 ? "#4a90e2" : "#cd7f32",
         fontWeight: "bold",

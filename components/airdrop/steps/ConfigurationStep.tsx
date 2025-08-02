@@ -18,16 +18,19 @@ import {
   StatLabel,
   StatNumber,
   StatGroup,
+  Checkbox,
 } from "@chakra-ui/react";
 import { ArrowBackIcon } from "@chakra-ui/icons";
 import { SortOption } from "@/types/airdrop";
 import useIsMobile from "@/hooks/useIsMobile";
+import { tokenDictionary } from "@/lib/utils/tokenDictionary";
 
 interface ConfigurationStepProps {
   sortOption: SortOption;
   limit: number;
   selectedToken: string;
   totalAmount: string;
+  includeSkateHive: boolean;
   userCount: {
     total: number;
     eligible: number;
@@ -36,6 +39,7 @@ interface ConfigurationStepProps {
   airdropUsers: any[];
   onSortOptionChange: (value: SortOption) => void;
   onLimitChange: (value: number) => void;
+  onIncludeSkateHiveChange: (value: boolean) => void;
   onBack: () => void;
   onNext: () => void;
 }
@@ -45,14 +49,34 @@ export function ConfigurationStep({
   limit,
   selectedToken,
   totalAmount,
+  includeSkateHive,
   userCount,
   airdropUsers,
   onSortOptionChange,
   onLimitChange,
+  onIncludeSkateHiveChange,
   onBack,
   onNext,
 }: ConfigurationStepProps) {
   const isMobile = useIsMobile();
+
+  // Get token info for better logic
+  const selectedTokenInfo = tokenDictionary[selectedToken];
+  const isHiveToken = selectedTokenInfo?.network === "hive";
+
+  // Generate helper text based on token network
+  const getSkateHiveHelperText = () => {
+    if (isHiveToken) {
+      return "Will include @skatehive account";
+    } else if (
+      selectedTokenInfo?.network === "base" ||
+      selectedTokenInfo?.network === "ethereum"
+    ) {
+      return "Will include the dao address";
+    } else {
+      return "Will include SkateHive account";
+    }
+  };
 
   return (
     <>
@@ -111,6 +135,22 @@ export function ConfigurationStep({
                   <NumberDecrementStepper />
                 </NumberInputStepper>
               </NumberInput>
+            </FormControl>
+
+            <FormControl>
+              <Checkbox
+                isChecked={includeSkateHive}
+                onChange={(e) => onIncludeSkateHiveChange(e.target.checked)}
+                colorScheme="blue"
+                size={isMobile ? "sm" : "md"}
+              >
+                <Text color="text" fontSize={isMobile ? "sm" : "md"}>
+                  Include SkateHive in airdrop
+                </Text>
+              </Checkbox>
+              <Text fontSize="xs" color="textSecondary" mt={1} ml={6}>
+                {getSkateHiveHelperText()}
+              </Text>
             </FormControl>
           </VStack>
         </Box>

@@ -8,7 +8,7 @@ interface AirdropManagerProps {
 }
 
 export const useAirdropManager = ({ leaderboardData, config }: AirdropManagerProps) => {
-  const { sortOption, limit, selectedToken, totalAmount } = config;
+  const { sortOption, limit, selectedToken, totalAmount, includeSkateHive } = config;
 
   // Enhanced user processing with better validation
   const processedData = useMemo(() => {
@@ -74,9 +74,39 @@ export const useAirdropManager = ({ leaderboardData, config }: AirdropManagerPro
       return true;
     });
     
-    // Step 6: Apply limit and return
+    // Step 6: Add SkateHive if requested
+    if (includeSkateHive) {
+      const tokenInfo = tokenDictionary[selectedToken];
+      const isERC20 = tokenInfo?.network !== 'hive';
+      
+      const skateHiveEntry = {
+        id: -1,
+        hive_author: 'skatehive',
+        eth_address: '0xB4964e1ecA55Db36a94e8aeFfBFBAb48529a2f6c',
+        points: 0,
+        hive_balance: 0,
+        hp_balance: 0,
+        hbd_balance: 0,
+        hbd_savings_balance: 0,
+        has_voted_in_witness: false,
+        gnars_balance: 0,
+        gnars_votes: 0,
+        skatehive_nft_balance: 0,
+        max_voting_power_usd: 0,
+        last_updated: new Date().toISOString(),
+        last_post: '',
+        post_count: 0,
+        giveth_donations_usd: 0,
+        giveth_donations_amount: 0,
+      };
+
+      // Add SkateHive to the beginning of the list (highest priority)
+      workingData.unshift(skateHiveEntry);
+    }
+    
+    // Step 7: Apply limit and return
     return workingData.slice(0, limit);
-  }, [leaderboardData, sortOption, limit, selectedToken]);
+  }, [leaderboardData, sortOption, limit, selectedToken, includeSkateHive]);
   
   // Enhanced airdrop users with individual amounts
   const airdropUsers: AirdropUser[] = useMemo(() => {

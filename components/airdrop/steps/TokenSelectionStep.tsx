@@ -61,8 +61,6 @@ export function TokenSelectionStep({
               boxSize={isMobile ? "64px" : "80px"}
               objectFit="cover"
               borderRadius="full"
-              border="3px solid"
-              borderColor="primary"
             />
           </Center>
         )}
