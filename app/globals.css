@@ -4,6 +4,8 @@
 
 /* Import markdown styles */
 @import '../styles/markdown.css';
+/* Import snap component styles */
+@import '../styles/snap.css';
 
 :root {
   --foreground-rgb: 0, 0, 0;

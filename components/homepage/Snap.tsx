@@ -429,7 +429,6 @@ const Snap = ({
                     }
                   }}
                   size="sm"
-                  _hover={{ bg: "secondary" }}
                 >
                   {commentCount}
                 </Button>
@@ -560,58 +559,3 @@ const Snap = ({
 };
 
 export default Snap;
-
-<style jsx global>{`
-  .pulse-green {
-    animation: pulse-green 1.5s infinite;
-    background: var(--chakra-colors-primary, #38ff8e);
-    color: var(--chakra-colors-background, black);
-    font-weight: bold;
-    border: none;
-  }
-  @keyframes pulse-green {
-    0% {
-      box-shadow: 0 0 0 0 var(--chakra-colors-accent, rgba(72, 255, 128, 0.7));
-    }
-    70% {
-      box-shadow: 0 0 0 10px var(--chakra-colors-accent, rgba(72, 255, 128, 0));
-    }
-    100% {
-      box-shadow: 0 0 0 0 var(--chakra-colors-accent, rgba(72, 255, 128, 0));
-    }
-  }
-  /* Media Carousel Styles */
-  .media-carousel {
-    width: 100%;
-    border-radius: 8px;
-    overflow: hidden;
-  }
-  .media-carousel .swiper-button-next,
-  .media-carousel .swiper-button-prev {
-    background: rgba(0, 0, 0, 0.5);
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    margin-top: -20px;
-  }
-  .media-carousel .swiper-button-next:after,
-  .media-carousel .swiper-button-prev:after {
-    font-size: 16px;
-    font-weight: bold;
-  }
-  .media-carousel .swiper-pagination {
-    bottom: 10px;
-  }
-  .media-carousel .swiper-pagination-bullet {
-    background: rgba(255, 255, 255, 0.7);
-    opacity: 1;
-  }
-  .media-carousel .swiper-pagination-bullet-active {
-    background: var(--chakra-colors-primary, #38ff8e);
-  }
-  .media-carousel .swiper-slide {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-`}</style>;
