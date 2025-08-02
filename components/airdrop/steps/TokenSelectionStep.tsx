@@ -94,16 +94,6 @@ export function TokenSelectionStep({
 
           {/* Connection Status */}
           <VStack spacing={2} mt={3} align="start">
-            {isHiveConnected && (
-              <Badge colorScheme="green" size="sm">
-                ✓ Hive Wallet Connected
-              </Badge>
-            )}
-            {isEthereumConnected && (
-              <Badge colorScheme="blue" size="sm">
-                ✓ Ethereum Wallet Connected
-              </Badge>
-            )}
             {!isHiveConnected && !isEthereumConnected && (
               <Badge colorScheme="orange" size="sm">
                 ⚠ No Wallets Connected

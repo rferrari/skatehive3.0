@@ -31,6 +31,7 @@ import ReactFlow, {
   useEdgesState,
   Position,
   MarkerType,
+  Handle,
 } from "reactflow";
 import "reactflow/dist/style.css";
 import { SortOption } from "@/types/airdrop";
@@ -38,6 +39,53 @@ import useIsMobile from "@/hooks/useIsMobile";
 import { useAioha } from "@aioha/react-ui";
 import { useAccount } from "wagmi";
 import { Avatar, Name } from "@coinbase/onchainkit/identity";
+import { memo } from "react";
+
+// Custom centered node component for perfect edge anchoring
+const CenteredNode = memo(({ data }: any) => {
+  return (
+    <Box position="relative">
+      {data.label}
+      {/* Invisible handles positioned at the exact center */}
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="center-source"
+        style={{
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          background: "transparent",
+          border: "none",
+          width: "1px",
+          height: "1px",
+        }}
+      />
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="center-target"
+        style={{
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          background: "transparent",
+          border: "none",
+          width: "1px",
+          height: "1px",
+        }}
+      />
+    </Box>
+  );
+});
+
+CenteredNode.displayName = "CenteredNode";
+
+// Define nodeTypes and edgeTypes outside component to prevent recreation
+const nodeTypes = {
+  centered: CenteredNode,
+};
+const edgeTypes = {};
 
 interface PreviewStepProps {
   selectedToken: string;
@@ -52,11 +100,7 @@ interface PreviewStepProps {
 export function PreviewStep({
   selectedToken,
   totalAmount,
-  sortOption,
   airdropUsers,
-  isHiveToken,
-  onBack,
-  onNext,
 }: PreviewStepProps) {
   const isMobile = useIsMobile();
   const [viewMode, setViewMode] = useState<"table" | "flow">("table");
@@ -68,132 +112,97 @@ export function PreviewStep({
 
   // Create React Flow nodes and edges for neural network visualization
   const { nodes, edges } = useMemo(() => {
-    const centerX = 400;
-    const centerY = 300;
-    const radius = 250;
+    const centerX = 0;
+    const centerY = 0;
+    const radius = 220;
+    const senderNodeSize = 64;
+    const recipientNodeSize = 54;
+    const angleStep = (2 * Math.PI) / Math.min(airdropUsers.length, 12);
 
-    // Central node (airdropper/sender)
+    // Central node (airdropper/sender) - with centered handles
     const centralNode: Node = {
       id: "sender",
-      type: "default",
-      position: { x: centerX - 40, y: centerY - 40 },
+      type: "centered",
+      position: { x: centerX - 30, y: centerY - 30 }, // 60px avatar centered
       data: {
-        label: (
-          <Box
-            w="80px"
-            h="80px"
+        label: user ? (
+          <Image
+            src={`https://images.hive.blog/u/${user}/avatar`}
+            alt={user}
+            w="60px"
+            h="60px"
             borderRadius="full"
+            objectFit="cover"
+            border="3px solid #667eea"
+            boxShadow="0 4px 16px rgba(102, 126, 234, 0.5)"
+            bg="white"
+          />
+        ) : isEthereumConnected && ethereumAddress ? (
+          <Box
+            w="60px"
+            h="60px"
+            borderRadius="full"
+            border="3px solid #667eea"
+            boxShadow="0 4px 16px rgba(102, 126, 234, 0.5)"
             overflow="hidden"
-            border="4px solid #667eea"
-            boxShadow="0 8px 32px rgba(102, 126, 234, 0.4)"
+            bg="white"
           >
-            {/* Show Hive user avatar if connected */}
-            {user ? (
-              <Image
-                src={`https://images.hive.blog/u/${user}/avatar`}
-                alt={user}
-                w="100%"
-                h="100%"
-                objectFit="cover"
-                fallback={
-                  <Box
-                    w="100%"
-                    h="100%"
-                    bg="#667eea"
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
-                    color="white"
-                    fontSize="2xl"
-                    fontWeight="bold"
-                  >
-                    {user.charAt(0).toUpperCase()}
-                  </Box>
-                }
-              />
-            ) : isEthereumConnected && ethereumAddress ? (
-              /* Show Ethereum avatar if connected */
-              <Box
-                w="100%"
-                h="100%"
-                borderRadius="full"
-                overflow="hidden"
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-              >
-                <Avatar
-                  address={ethereumAddress as `0x${string}`}
-                  className="w-full h-full rounded-full"
-                />
-              </Box>
-            ) : (
-              /* Fallback to skateboard logo */
-              <Image
-                src="/logo.png"
-                alt="Sender"
-                w="100%"
-                h="100%"
-                objectFit="cover"
-                fallback={
-                  <Box
-                    w="100%"
-                    h="100%"
-                    bg="#667eea"
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
-                    color="white"
-                    fontSize="2xl"
-                    fontWeight="bold"
-                  >
-                    🛹
-                  </Box>
-                }
-              />
-            )}
+            <Avatar
+              address={ethereumAddress as `0x${string}`}
+              className="w-full h-full"
+            />
+          </Box>
+        ) : (
+          <Box
+            w="60px"
+            h="60px"
+            borderRadius="full"
+            border="3px solid #667eea"
+            boxShadow="0 4px 16px rgba(102, 126, 234, 0.5)"
+            bg="#667eea"
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            fontSize="xl"
+            color="white"
+          >
+            🛹
           </Box>
         ),
       },
       style: {
         background: "transparent",
         border: "none",
-        width: 80,
-        height: 80,
+        width: 60,
+        height: 60,
+        zIndex: 10,
       },
-      sourcePosition: Position.Right,
-      targetPosition: Position.Left,
     };
 
-    // Recipient nodes in a circular pattern with avatars only
+    // Recipient nodes - perfectly balanced circular pattern
     const recipientNodes: Node[] = airdropUsers
-      .slice(0, 20)
+      .slice(0, 12)
       .map((user, index) => {
-        const angle = (index / Math.min(airdropUsers.length, 20)) * 2 * Math.PI;
-        const x = centerX + Math.cos(angle) * radius;
-        const y = centerY + Math.sin(angle) * radius;
+        const angle = index * angleStep;
+        const x = centerX + Math.cos(angle) * radius - recipientNodeSize / 2;
+        const y = centerY + Math.sin(angle) * radius - recipientNodeSize / 2;
 
         return {
           id: `user-${index}`,
-          type: "default",
-          position: { x: x - 30, y: y - 30 },
+          type: "centered",
+          position: { x, y },
           data: {
             label: (
               <Box
-                w="60px"
-                h="60px"
+                w="50px"
+                h="50px"
                 borderRadius="full"
                 overflow="hidden"
-                border={`3px solid ${
-                  index < 3 ? "#ffd700" : index < 10 ? "#4a90e2" : "#cd7f32"
+                border={`2px solid ${
+                  index < 3 ? "#ffd700" : index < 8 ? "#4a90e2" : "#cd7f32"
                 }`}
-                boxShadow={`0 4px 20px ${
-                  index < 3
-                    ? "rgba(255, 215, 0, 0.4)"
-                    : index < 10
-                    ? "rgba(74, 144, 226, 0.4)"
-                    : "rgba(205, 127, 50, 0.4)"
-                }`}
+                bg="white"
+                position="relative"
               >
                 <Image
                   src={`https://images.hive.blog/u/${user.hive_author}/avatar/small`}
@@ -201,27 +210,6 @@ export function PreviewStep({
                   w="100%"
                   h="100%"
                   objectFit="cover"
-                  fallback={
-                    <Box
-                      w="100%"
-                      h="100%"
-                      bg={
-                        index < 3
-                          ? "#ffd700"
-                          : index < 10
-                          ? "#4a90e2"
-                          : "#cd7f32"
-                      }
-                      display="flex"
-                      alignItems="center"
-                      justifyContent="center"
-                      color="white"
-                      fontSize="lg"
-                      fontWeight="bold"
-                    >
-                      {user.hive_author.charAt(0).toUpperCase()}
-                    </Box>
-                  }
                 />
               </Box>
             ),
@@ -229,57 +217,44 @@ export function PreviewStep({
           style: {
             background: "transparent",
             border: "none",
-            width: 60,
-            height: 60,
+            width: recipientNodeSize,
+            height: recipientNodeSize,
+            padding: 2,
+            zIndex: 5,
           },
-          sourcePosition: Position.Left,
-          targetPosition: Position.Right,
         };
       });
 
-    // Create edges from sender to all recipients
-    const amountPerRecipient = (
-      parseFloat(totalAmount) / airdropUsers.length
-    ).toFixed(2);
-    const nodeEdges: Edge[] = airdropUsers.slice(0, 20).map((_, index) => {
-      const getColor = (idx: number) => {
-        if (idx < 3) return "#ffd700"; // Gold for top 3
-        if (idx < 10) return "#4a90e2"; // Blue for top 10
-        return "#cd7f32"; // Bronze for others
-      };
-
-      const edgeColor = getColor(index);
-
-      return {
-        id: `edge-${index}`,
-        source: "sender",
-        target: `user-${index}`,
-        type: "smoothstep",
-        animated: true,
-        label: `${amountPerRecipient} ${selectedToken}`,
-        labelStyle: {
-          fill: edgeColor,
-          fontWeight: 600,
-          fontSize: 12,
-        },
-        labelBgStyle: {
-          fill: "rgba(255, 255, 255, 0.95)",
-          fillOpacity: 0.95,
-        },
-        style: {
-          stroke: edgeColor,
-          strokeWidth: index < 3 ? 10 : index < 10 ? 7 : 4,
-          opacity: 1,
-          strokeDasharray: "8,4",
-        },
-        markerEnd: {
-          type: MarkerType.ArrowClosed,
-          color: edgeColor,
-          width: 30,
-          height: 30,
-        },
-      };
-    });
+    // Edges with explicit center handle anchoring and amount labels
+    const nodeEdges: Edge[] = airdropUsers.slice(0, 12).map((_, index) => ({
+      id: `edge-${index}`,
+      source: "sender",
+      target: `user-${index}`,
+      sourceHandle: "center-source",
+      targetHandle: "center-target",
+      type: "straight",
+      animated: true,
+      label: `${(parseFloat(totalAmount) / airdropUsers.length).toFixed(2)} ${selectedToken}`,
+      labelStyle: {
+        fill: index < 3 ? "#ffd700" : index < 8 ? "#4a90e2" : "#cd7f32",
+        fontWeight: "bold",
+        fontSize: "10px",
+        background: "rgba(0, 0, 0, 0.8)",
+        padding: "2px 6px",
+        borderRadius: "4px",
+        color: "white",
+      },
+      labelBgStyle: {
+        fill: "rgba(0, 0, 0, 0.8)",
+        fillOpacity: 0.9,
+      },
+      style: {
+        stroke: index < 3 ? "#ffd700" : index < 8 ? "#4a90e2" : "#cd7f32",
+        strokeWidth: 2, // Consistent thickness for all lines
+        strokeOpacity: 0.9,
+        strokeDasharray: "6,3",
+      },
+    }));
 
     return {
       nodes: [centralNode, ...recipientNodes],
@@ -455,27 +430,6 @@ export function PreviewStep({
             overflow="hidden"
             bg="transparent"
             position="relative"
-            sx={{
-              "& .react-flow": {
-                "--xy-edge-stroke-default": "#4a90e2",
-                "--xy-edge-stroke-width-default": "4",
-                "--xy-connectionline-stroke-default": "#667eea",
-                "--xy-connectionline-stroke-width-default": "3",
-              },
-              "& .react-flow__handle": {
-                display: "none !important",
-              },
-              "& .react-flow__edge": {
-                zIndex: 1000,
-              },
-              "& .react-flow__edge-path": {
-                strokeWidth: "inherit !important",
-              },
-              "& .react-flow__connectionline": {
-                stroke: "#667eea !important",
-                strokeWidth: "3px !important",
-              },
-            }}
           >
             <Box
               position="absolute"
@@ -490,11 +444,19 @@ export function PreviewStep({
             <ReactFlow
               nodes={flowNodes}
               edges={flowEdges}
+              nodeTypes={nodeTypes}
+              edgeTypes={edgeTypes}
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
-              connectionLineType={ConnectionLineType.SmoothStep}
+              connectionLineType={ConnectionLineType.Straight}
               fitView
-              fitViewOptions={{ padding: 0.2 }}
+              fitViewOptions={{
+                padding: 0.2,
+                includeHiddenNodes: true,
+                minZoom: 0.5,
+                maxZoom: 1.5,
+              }}
+              defaultViewport={{ x: 0, y: 0, zoom: 1 }}
               attributionPosition="bottom-left"
               nodesDraggable={false}
               nodesConnectable={false}
@@ -504,20 +466,15 @@ export function PreviewStep({
               zoomOnPinch={true}
               zoomOnScroll={true}
               preventScrolling={false}
-              minZoom={0.5}
+              minZoom={0.3}
               maxZoom={2}
-              defaultEdgeOptions={{
-                style: { strokeWidth: 4, stroke: "#4a90e2" },
-                type: "smoothstep",
-                animated: true,
-              }}
               style={{
                 background: "transparent",
                 position: "relative",
                 zIndex: 1,
               }}
             >
-              <Background color="rgba(235, 35, 208, 0.3)" gap={30} size={0.8} />
+              <Background color="rgba(235, 35, 208, 1)" gap={100} size={0.5} />
 
               <Controls
                 position="top-right"
@@ -552,18 +509,16 @@ export function PreviewStep({
               </HStack>
               <HStack spacing={2}>
                 <Box w={3} h={3} bg="#4a90e2" borderRadius="full" />
-                <Text fontSize="xs">Top 10 Recipients</Text>
+                <Text fontSize="xs">Top 8 Recipients</Text>
               </HStack>
               <HStack spacing={2}>
                 <Box w={3} h={3} bg="#cd7f32" borderRadius="full" />
                 <Text fontSize="xs">Other Recipients</Text>
               </HStack>
             </HStack>
-            {airdropUsers.length > 20 && (
-              <Text fontSize="xs" color="textSecondary" mt={2}>
-                * Showing top 20 recipients in network view
-              </Text>
-            )}
+            <Text fontSize="xs" color="textSecondary" mt={2}>
+              * Showing top 12 recipients in network view for clarity
+            </Text>
           </Box>
         )}
       </VStack>
