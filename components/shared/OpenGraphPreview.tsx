@@ -125,12 +125,12 @@ const OpenGraphPreview: React.FC<OpenGraphPreviewProps> = ({ url }) => {
                 <Box
                   width="100%"
                   height="200px"
-                  bg="gray.100"
+                  bg="background"
                   display="flex"
                   alignItems="center"
                   justifyContent="center"
                 >
-                  <ExternalLinkIcon color="gray.400" boxSize={8} />
+                  <ExternalLinkIcon color="primary" boxSize={8} />
                 </Box>
               }
             />
