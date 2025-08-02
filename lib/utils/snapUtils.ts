@@ -51,6 +51,8 @@ export const extractLastUrl = (content: string): string | null => {
       url.includes('odysee.com') ||
       // Skip IPFS URLs
       url.includes('ipfs')
+      // Skip Hive Imaages URLs
+        || url.includes('images.hive.blog')
     ) {
       continue;
     }
