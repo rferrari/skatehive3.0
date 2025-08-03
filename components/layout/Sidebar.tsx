@@ -84,19 +84,8 @@ export default function Sidebar() {
     children: React.ReactNode;
     onClick?: () => void;
   }) => (
-    <Link
-      href={href}
-      onClick={onClick}
-      style={{
-        display: "block",
-        width: "100%",
-        textDecoration: "none",
-        color: "inherit",
-        cursor: "pointer",
-      }}
-    >
+    <Link href={href} onClick={onClick} passHref>
       <Box
-        as="span"
         display="flex"
         alignItems="center"
         px={1}
@@ -106,10 +95,18 @@ export default function Sidebar() {
         transition="background 0.2s"
         cursor="pointer"
         role="group"
-        _hover={{ bg: primaryBg, color: hoverTextColor }}
+        width="100%"
+        ml={4}
+        textDecoration="none"
+        color="inherit"
+        _hover={{
+          "& > div": {
+            bg: primaryBg,
+            color: hoverTextColor,
+          }
+        }}
       >
         <Box
-          as="span"
           display="flex"
           alignItems="center"
           px={1}
@@ -148,7 +145,7 @@ export default function Sidebar() {
           <Box ml={4} mt={2} mb={4} width="164px" height="164px">
             <SidebarLogo />
           </Box>
-          <VStack spacing={0} align="start" ml={4} mt={2}>
+          <VStack spacing={0} align="stretch" mt={2}>
             <NavItem
               href="/"
               icon={FiHome}
@@ -171,58 +168,9 @@ export default function Sidebar() {
               Bounties
             </NavItem>
             {user && (
-              <>
-                <Link
-                  href="/notifications"
-                  style={{
-                    display: "block",
-                    width: "100%",
-                    textDecoration: "none",
-                    color: "inherit",
-                    cursor: "pointer",
-                  }}
-                >
-                  <Box
-                    as="span"
-                    display="flex"
-                    alignItems="center"
-                    px={1}
-                    py={0.5}
-                    mb={1}
-                    borderRadius="md"
-                    transition="background 0.2s"
-                    cursor="pointer"
-                    role="group"
-                    _hover={{ bg: primaryBg, color: hoverTextColor }}
-                  >
-                    <Box
-                      as="span"
-                      display="flex"
-                      alignItems="center"
-                      px={1}
-                      py={0.5}
-                      borderRadius="md"
-                    >
-                      {bellAnimating ? (
-                        <Box
-                          as={motion.div}
-                          animate={{ rotate: [0, 45, 0, -45, 0] }}
-                          transition={
-                            { duration: 0.6, repeat: Infinity } as any
-                          }
-                          display="inline-block"
-                          mr={2}
-                        >
-                          <Icon as={FiBell} boxSize={4} />
-                        </Box>
-                      ) : (
-                        <Icon as={FiBell} boxSize={4} mr={2} />
-                      )}
-                      Notifications
-                    </Box>
-                  </Box>
-                </Link>
-              </>
+              <NavItem href="/notifications" icon={FiBell}>
+                Notifications
+              </NavItem>
             )}
             {isAnyProtocolConnected && (
               <NavItem href="/wallet" icon={FiCreditCard}>
