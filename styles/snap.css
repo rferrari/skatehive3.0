@@ -100,7 +100,7 @@
 }
 
 .arrow-bg-fade:hover {
-  animation: arrow-bg-fade-hover 3s ease-in-out infinite;
+  animation: arrow-bg-fade-hover 2s ease-in-out infinite;
 }
 
 /* Container hover effects - trigger arrow animation when hovering over the entire button */
@@ -109,7 +109,7 @@
 }
 
 .upvote-container:hover .arrow-bg-fade {
-  animation: arrow-bg-fade-hover 3s ease-in-out infinite;
+  animation: arrow-bg-fade-hover 2s ease-in-out infinite;
 }
 
 /* Arrow pulse animation - 0.2s ease-in-out, scale 1.15, translate(3px, -3px) - only moves up and right */
@@ -139,13 +139,13 @@
 
 @keyframes arrow-bg-fade-hover {
   0% {
-    background-color: var(--chakra-colors-secondary);
+    background-color: color-mix(in srgb, var(--chakra-colors-accent) 75%, transparent);
   }
   50% {
     background-color: transparent;
   }
   100% {
-    background-color: var(--chakra-colors-secondary);
+    background-color: color-mix(in srgb, var(--chakra-colors-accent) 75%, transparent);
   }
 }
 

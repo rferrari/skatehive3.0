@@ -90,7 +90,6 @@ export default function Sidebar() {
         alignItems="center"
         px={1}
         py={0.5}
-        mb={1}
         borderRadius="md"
         transition="background 0.2s"
         cursor="pointer"
@@ -140,7 +139,7 @@ export default function Sidebar() {
           alignItems="center"
           px={0.25}
           py={0}
-          my={0.25}
+          my={0.5}
         >
           <Icon as={icon} boxSize={4} mr={2} />
           {children}
