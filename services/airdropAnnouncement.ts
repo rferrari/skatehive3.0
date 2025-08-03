@@ -72,8 +72,8 @@ export function generateAnnouncementContent(params: AirdropAnnouncementParams, i
     content += `${creator?.hiveUsername} says: \n >${customMessage}\n\n`;
   }
 
-  // Add congrats with tagged users (up to 10)
-  content += `Congrats: ${generateRecipientMentions(recipients, 10)}\n\n`;
+  // Add sponsored skaters with tagged users (up to 10)
+  content += `Sponsored Skaters: ${generateRecipientMentions(recipients, 10)}\n\n`;
 
   content += `Thanks for being part of skatehive cult`;
 
@@ -133,7 +133,7 @@ export async function createAirdropAnnouncement(params: AirdropAnnouncementParam
     });
     
     if (snapResult.success && snapResult.permlink) {
-      const postUrl = `https://peakd.com/@skatedev/${snapResult.permlink}`;
+      const postUrl = `https://skatehive.app/post/skatedev/${snapResult.permlink}`;
       
       return {
         postUrl,
