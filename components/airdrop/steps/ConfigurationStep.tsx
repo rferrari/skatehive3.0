@@ -214,7 +214,7 @@ export function ConfigurationStep({
                 </Text>
               </Checkbox>
               <Text fontSize="xs" color="textSecondary" mt={1} ml={6}>
-                Don't mention your username in the announcement post
+                Don&apos;t mention your username in the announcement post
               </Text>
             </FormControl>
 
@@ -224,7 +224,9 @@ export function ConfigurationStep({
               </FormLabel>
               <Textarea
                 value={customMessage}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => onCustomMessageChange(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                  onCustomMessageChange(e.target.value)
+                }
                 placeholder="Add a personal message for the airdrop announcement post..."
                 bg="cardBg"
                 borderColor="border"

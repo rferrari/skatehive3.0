@@ -165,8 +165,8 @@ export function NetworkScreenshotDebug({
                   <Text fontWeight="bold">No screenshot data available</Text>
                   <Text fontSize="sm">
                     Try switching to the Network Flow view and wait a moment for
-                    auto-capture, or click the "Capture Now" button in the
-                    network view.
+                    auto-capture, or click the &quot;Capture Now&quot; button in
+                    the network view.
                   </Text>
                 </VStack>
               </Alert>
@@ -181,12 +181,12 @@ export function NetworkScreenshotDebug({
                 color="textSecondary"
               >
                 <Text>
-                  • Make sure you're in Network Flow view (not Table view)
+                  • Make sure you&apos;re in Network Flow view (not Table view)
                 </Text>
                 <Text>• Wait 2-3 seconds for the network to fully render</Text>
                 <Text>
-                  • Use the "Capture Now" button in the bottom-right of the
-                  network
+                  • Use the &quot;Capture Now&quot; button in the bottom-right
+                  of the network
                 </Text>
                 <Text>• Check browser console for screenshot errors</Text>
               </VStack>

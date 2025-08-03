@@ -526,7 +526,8 @@ export function PreviewStep({
                     color="yellow.600"
                     _dark={{ color: "yellow.200" }}
                   >
-                    📸 Screenshot will be captured when you click "Next"
+                    📸 Screenshot will be captured when you click
+                    &quot;Next&quot;
                   </Text>
                 </HStack>
               </Box>
