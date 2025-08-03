@@ -64,12 +64,18 @@ export function generateAnnouncementContent(params: AirdropAnnouncementParams, i
     }
   }
 
+  // Start with image if available
+  let content = '';
+  if (imageUrl) {
+    content += `![Airdrop Network Visualization](${imageUrl})\n\n`;
+  }
+
   // Compose the main message
-  let content = `${userDisplay} just made an airdrop of ${totalAmount} ${token} tokens.  \n\n`;
+  content += `${userDisplay} just made an airdrop of ${totalAmount} ${token} tokens.  \n\n`;
 
   // Add custom message if provided
   if (customMessage && customMessage.trim()) {
-    content += `${creator?.hiveUsername} says: \n >${customMessage}\n\n`;
+    content += `${creator?.hiveUsername} says: \n > ${customMessage}\n\n`;
   }
 
   // Add sponsored skaters with tagged users (up to 10)
@@ -108,16 +114,22 @@ export async function createAirdropAnnouncement(params: AirdropAnnouncementParam
   try {
     let imageUrl: string | undefined;
     
-    // Upload screenshot if provided
+    // Check if screenshotDataUrl is already a URL (uploaded) or raw data
     if (params.screenshotDataUrl) {
-      try {
-        const uploadResult = await uploadToHiveImagesWithRetry(
-          params.screenshotDataUrl,
-          `airdrop-${params.token.toLowerCase()}-${Date.now()}.png`
-        );
-        imageUrl = uploadResult.url;
-      } catch (uploadError) {
-        // Continue without image - don't fail the entire announcement
+      if (params.screenshotDataUrl.startsWith('http')) {
+        // Already uploaded URL
+        imageUrl = params.screenshotDataUrl;
+      } else {
+        // Raw screenshot data - upload it
+        try {
+          const uploadResult = await uploadToHiveImagesWithRetry(
+            params.screenshotDataUrl,
+            `airdrop-${params.token.toLowerCase()}-${Date.now()}.png`
+          );
+          imageUrl = uploadResult.url;
+        } catch (uploadError) {
+          // Continue without image - don't fail the entire announcement
+        }
       }
     }
     

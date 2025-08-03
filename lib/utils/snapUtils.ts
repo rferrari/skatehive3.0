@@ -53,6 +53,12 @@ export const extractLastUrl = (content: string): string | null => {
       url.includes('ipfs')
       // Skip Hive Imaages URLs
         || url.includes('images.hive.blog')
+      // Skip Farcaster Urls
+      || url.includes('farcaster.xyz')
+      // Skip imgbb urls 
+      || url.includes('ibb.co')
+      // skip imgurl urls
+      || url.includes('imgurl')
     ) {
       continue;
     }

@@ -33,6 +33,7 @@ import {
   TokenSelectionStep,
   ConfigurationStep,
   PreviewStep,
+  AnnouncementPreviewStep,
   ConfirmationStep,
 } from "./steps";
 import { StepHeader } from "./steps/StepHeader";
@@ -41,6 +42,7 @@ type ModalView =
   | "tokenSelection"
   | "configuration"
   | "preview"
+  | "announcementPreview"
   | "confirmation";
 
 interface AirdropModalProps {
@@ -93,6 +95,7 @@ export function AirdropModal({
   const [costEstimate, setCostEstimate] = useState<any>(null);
   const [isEstimating, setIsEstimating] = useState(false);
   const [networkScreenshot, setNetworkScreenshot] = useState<string>("");
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string>("");
   const [isCapturingScreenshot, setIsCapturingScreenshot] = useState(false);
 
   // Hooks
@@ -261,7 +264,7 @@ export function AirdropModal({
           totalAmount: parseFloat(totalAmount),
           sortOption,
           customMessage,
-          screenshotDataUrl: networkScreenshot,
+          screenshotDataUrl: uploadedImageUrl, // Use uploaded image URL instead of raw screenshot
           isWeighted: isWeightedAirdrop,
           includeSkateHive,
           creator: {
@@ -318,44 +321,51 @@ export function AirdropModal({
       if (step === 1) {
         // Reset everything when going back to token selection
         setNetworkScreenshot("");
+        setUploadedImageUrl("");
         setCostEstimate(null);
         resetStatus();
       } else if (step === 2) {
         // Reset preview-related states when going back to configuration
         setNetworkScreenshot("");
+        setUploadedImageUrl("");
         setCostEstimate(null);
       } else if (step === 3) {
-        // Reset execution states when going back to preview
+        // Reset announcement and execution states when going back to preview
+        setUploadedImageUrl("");
+        resetStatus();
+      } else if (step === 4) {
+        // Reset execution states when going back to announcement preview
         resetStatus();
       }
     }
   };
 
-  // Handle moving from preview to confirmation with screenshot capture
-  const handlePreviewToConfirmation = async () => {
-    // If we don't have a screenshot yet, capture it now
-    if (!networkScreenshot && !isCapturingScreenshot) {
-      setIsCapturingScreenshot(true);
+  // Handle moving from preview to announcement preview with screenshot capture
+  const handlePreviewToAnnouncementPreview = async () => {
+    // Always capture screenshot when moving to announcement preview
+    setIsCapturingScreenshot(true);
 
-      try {
-        const screenshot = await captureAirdropNetworkScreenshot();
-        setNetworkScreenshot(screenshot);
-        goToStep(4, "confirmation");
-      } catch (error) {
-        // Continue to confirmation even if screenshot fails
-        goToStep(4, "confirmation");
-      } finally {
-        setIsCapturingScreenshot(false);
-      }
-    } else {
-      // Already have screenshot or currently capturing, just proceed
-      goToStep(4, "confirmation");
+    try {
+      const screenshot = await captureAirdropNetworkScreenshot();
+      setNetworkScreenshot(screenshot);
+      goToStep(4, "announcementPreview");
+    } catch (error) {
+      console.error("Screenshot capture failed:", error);
+      // Continue to announcement preview even if screenshot fails
+      goToStep(4, "announcementPreview");
+    } finally {
+      setIsCapturingScreenshot(false);
     }
+  };
+
+  // Handle moving from announcement preview to confirmation
+  const handleAnnouncementPreviewToConfirmation = () => {
+    goToStep(5, "confirmation");
   };
 
   // Modal content based on current view
   const getModalContent = () => {
-    const totalSteps = 4;
+    const totalSteps = 5;
 
     const stepHeaders = {
       tokenSelection: {
@@ -372,6 +382,11 @@ export function AirdropModal({
         title: "Preview Recipients",
         subtitle: "Review who will receive the airdrop",
         emoji: "👥",
+      },
+      announcementPreview: {
+        title: "Preview Announcement",
+        subtitle: "Review the announcement post with network visualization",
+        emoji: "📝",
       },
       confirmation: {
         title: "Final Confirmation",
@@ -502,7 +517,7 @@ export function AirdropModal({
                 sortOption={sortOption}
                 airdropUsers={airdropUsers}
                 onBack={() => goToStep(2, "configuration")}
-                onNext={handlePreviewToConfirmation}
+                onNext={handlePreviewToAnnouncementPreview}
                 isCapturingScreenshot={isCapturingScreenshot}
                 networkScreenshot={networkScreenshot}
               />
@@ -524,7 +539,7 @@ export function AirdropModal({
               </Button>
               <Button
                 colorScheme="blue"
-                onClick={handlePreviewToConfirmation}
+                onClick={handlePreviewToAnnouncementPreview}
                 bg="primary"
                 color="background"
                 _hover={{ bg: "primaryDark" }}
@@ -535,7 +550,56 @@ export function AirdropModal({
               >
                 {isCapturingScreenshot
                   ? "Capturing Screenshot..."
-                  : "Next: Confirm & Execute"}
+                  : "Next: Preview Announcement"}
+              </Button>
+            </HStack>
+          ),
+        };
+
+      case "announcementPreview":
+        return {
+          title,
+          content: (
+            <AnnouncementPreviewStep
+              selectedToken={selectedToken}
+              totalAmount={totalAmount}
+              sortOption={sortOption}
+              customMessage={customMessage}
+              includeSkateHive={includeSkateHive}
+              isWeightedAirdrop={isWeightedAirdrop}
+              isAnonymous={isAnonymous}
+              airdropUsers={airdropUsers}
+              networkScreenshot={networkScreenshot}
+              uploadedImageUrl={uploadedImageUrl}
+              onUploadedImageUrlChange={setUploadedImageUrl}
+              onBack={() => goToStep(3, "preview")}
+              onNext={handleAnnouncementPreviewToConfirmation}
+            />
+          ),
+          footer: (
+            <HStack spacing={3} width="100%">
+              <Button
+                variant="outline"
+                onClick={() => goToStep(3, "preview")}
+                leftIcon={<ArrowBackIcon />}
+                color="primary"
+                borderColor="primary"
+                _hover={{ bg: "primary", color: "background" }}
+                size={isMobile ? "sm" : "md"}
+                flex="1"
+              >
+                Back
+              </Button>
+              <Button
+                colorScheme="blue"
+                onClick={handleAnnouncementPreviewToConfirmation}
+                bg="primary"
+                color="background"
+                _hover={{ bg: "primaryDark" }}
+                size={isMobile ? "sm" : "md"}
+                flex="2"
+              >
+                Next: Confirm & Execute
               </Button>
             </HStack>
           ),
@@ -558,7 +622,7 @@ export function AirdropModal({
               costEstimate={costEstimate}
               validation={validation}
               status={status}
-              onBack={() => goToStep(3, "preview")}
+              onBack={() => goToStep(4, "announcementPreview")}
               onStartOver={() => goToStep(1, "tokenSelection")}
               onExecute={handleExecuteAirdrop}
               onApprove={handleApproveToken}
@@ -570,7 +634,7 @@ export function AirdropModal({
             <HStack spacing={3} width="100%">
               <Button
                 variant="outline"
-                onClick={() => goToStep(3, "preview")}
+                onClick={() => goToStep(4, "announcementPreview")}
                 leftIcon={<ArrowBackIcon />}
                 color="primary"
                 borderColor="primary"
