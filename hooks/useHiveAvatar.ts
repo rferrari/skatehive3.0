@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 
 /**
  * Custom hook to provide a robust Hive avatar URL with automatic fallback
- * Falls back to Ecency service if Hive Images fails
+ * Uses Ecency service as primary, falls back to Hive Images if needed
  */
 export function useHiveAvatar(username: string, size: 'small' | 'sm' | '' = 'small') {
   const [avatarUrl, setAvatarUrl] = useState<string>('');
@@ -19,27 +19,27 @@ export function useHiveAvatar(username: string, size: 'small' | 'sm' | '' = 'sma
     setIsLoading(true);
     setHasError(false);
 
-    // Primary: Hive Images
-    const hiveImageUrl = `https://images.hive.blog/u/${username}/avatar${size ? `/${size}` : ''}`;
+    // Primary: Ecency Images
+    const ecencyUrl = `https://images.ecency.com/webp/u/${username}/avatar${size ? `/${size}` : ''}`;
     
-    // Test if Hive Images works
+    // Test if Ecency Images works
     const testImage = new Image();
     testImage.crossOrigin = 'anonymous';
     
     testImage.onload = () => {
-      setAvatarUrl(hiveImageUrl);
+      setAvatarUrl(ecencyUrl);
       setIsLoading(false);
     };
     
     testImage.onerror = () => {
-      // Fallback to Ecency
-      const ecencyUrl = `https://images.ecency.com/webp/u/${username}/avatar${size ? `/${size}` : ''}`;
+      // Fallback to Hive Images
+      const hiveImageUrl = `https://images.hive.blog/u/${username}/avatar${size ? `/${size}` : ''}`;
       
       const fallbackImage = new Image();
       fallbackImage.crossOrigin = 'anonymous';
       
       fallbackImage.onload = () => {
-        setAvatarUrl(ecencyUrl);
+        setAvatarUrl(hiveImageUrl);
         setIsLoading(false);
       };
       
@@ -49,10 +49,10 @@ export function useHiveAvatar(username: string, size: 'small' | 'sm' | '' = 'sma
         setIsLoading(false);
       };
       
-      fallbackImage.src = ecencyUrl;
+      fallbackImage.src = hiveImageUrl;
     };
     
-    testImage.src = hiveImageUrl;
+    testImage.src = ecencyUrl;
   }, [username, size]);
 
   return { avatarUrl, isLoading, hasError };
@@ -61,13 +61,14 @@ export function useHiveAvatar(username: string, size: 'small' | 'sm' | '' = 'sma
 /**
  * Utility function to get Hive avatar URL with error handling
  * Returns an object with primary and fallback URLs for onError handling
+ * Uses Ecency as primary, Hive Images as fallback
  */
 export function getHiveAvatarUrls(username: string, size: 'small' | 'sm' | '' = 'small') {
   const sizeParam = size ? `/${size}` : '';
   
   return {
-    primary: `https://images.hive.blog/u/${username}/avatar${sizeParam}`,
-    fallback: `https://images.ecency.com/webp/u/${username}/avatar${sizeParam}`,
+    primary: `https://images.ecency.com/webp/u/${username}/avatar${sizeParam}`,
+    fallback: `https://images.hive.blog/u/${username}/avatar${sizeParam}`,
   };
 }
 
