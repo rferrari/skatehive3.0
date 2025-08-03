@@ -19,6 +19,7 @@ import {
   StatNumber,
   StatGroup,
   Checkbox,
+  Textarea,
 } from "@chakra-ui/react";
 import { ArrowBackIcon } from "@chakra-ui/icons";
 import { SortOption } from "@/types/airdrop";
@@ -30,8 +31,10 @@ interface ConfigurationStepProps {
   limit: number;
   selectedToken: string;
   totalAmount: string;
+  customMessage: string;
   includeSkateHive: boolean;
   isWeightedAirdrop: boolean;
+  isAnonymous: boolean;
   userCount: {
     total: number;
     eligible: number;
@@ -40,8 +43,10 @@ interface ConfigurationStepProps {
   airdropUsers: any[];
   onSortOptionChange: (value: SortOption) => void;
   onLimitChange: (value: number) => void;
+  onCustomMessageChange: (value: string) => void;
   onIncludeSkateHiveChange: (value: boolean) => void;
   onWeightedAirdropChange: (value: boolean) => void;
+  onAnonymousChange: (value: boolean) => void;
   onBack: () => void;
   onNext: () => void;
 }
@@ -51,14 +56,18 @@ export function ConfigurationStep({
   limit,
   selectedToken,
   totalAmount,
+  customMessage,
   includeSkateHive,
   isWeightedAirdrop,
+  isAnonymous,
   userCount,
   airdropUsers,
   onSortOptionChange,
   onLimitChange,
+  onCustomMessageChange,
   onIncludeSkateHiveChange,
   onWeightedAirdropChange,
+  onAnonymousChange,
   onBack,
   onNext,
 }: ConfigurationStepProps) {
@@ -190,6 +199,42 @@ export function ConfigurationStep({
                   ? "donations"
                   : "selected criteria"}
                 {!isWeightedAirdrop && " (equal distribution)"}
+              </Text>
+            </FormControl>
+
+            <FormControl>
+              <Checkbox
+                isChecked={isAnonymous}
+                onChange={(e) => onAnonymousChange(e.target.checked)}
+                colorScheme="gray"
+                size={isMobile ? "sm" : "md"}
+              >
+                <Text color="text" fontSize={isMobile ? "sm" : "md"}>
+                  Anonymous Airdrop
+                </Text>
+              </Checkbox>
+              <Text fontSize="xs" color="textSecondary" mt={1} ml={6}>
+                Don't mention your username in the announcement post
+              </Text>
+            </FormControl>
+
+            <FormControl>
+              <FormLabel color="text" fontSize={isMobile ? "sm" : "md"}>
+                Custom Message for Announcement (Optional)
+              </FormLabel>
+              <Textarea
+                value={customMessage}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => onCustomMessageChange(e.target.value)}
+                placeholder="Add a personal message for the airdrop announcement post..."
+                bg="cardBg"
+                borderColor="border"
+                size={isMobile ? "sm" : "md"}
+                fontSize={isMobile ? "16px" : "md"}
+                resize="vertical"
+                rows={3}
+              />
+              <Text fontSize="xs" color="textSecondary" mt={1}>
+                This message will be included in the automated announcement post
               </Text>
             </FormControl>
           </VStack>

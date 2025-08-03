@@ -84,8 +84,6 @@ export function ConfirmationStep({
               boxSize="64px"
               objectFit="cover"
               borderRadius="full"
-              border="2px solid"
-              borderColor="primary"
             />
 
             <VStack spacing={2} textAlign="center">

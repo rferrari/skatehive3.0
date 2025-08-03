@@ -19,7 +19,7 @@ import {
   Tooltip,
 } from "@chakra-ui/react";
 import { ViewIcon, ViewOffIcon } from "@chakra-ui/icons";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import ReactFlow, {
   Node,
   Edge,
@@ -85,8 +85,9 @@ CenteredNode.displayName = "CenteredNode";
 // Define nodeTypes and edgeTypes outside component to prevent recreation
 const nodeTypes = {
   centered: CenteredNode,
-};
-const edgeTypes = {};
+} as const;
+
+const edgeTypes = {} as const;
 
 interface PreviewStepProps {
   selectedToken: string;
@@ -96,12 +97,16 @@ interface PreviewStepProps {
   isHiveToken: boolean;
   onBack: () => void;
   onNext: () => void;
+  isCapturingScreenshot?: boolean;
+  networkScreenshot?: string;
 }
 
 export function PreviewStep({
   selectedToken,
   totalAmount,
   airdropUsers,
+  isCapturingScreenshot = false,
+  networkScreenshot,
 }: PreviewStepProps) {
   const isMobile = useIsMobile();
   const [viewMode, setViewMode] = useState<"table" | "flow">("flow");
@@ -115,8 +120,10 @@ export function PreviewStep({
   const selectedTokenInfo = tokenDictionary[selectedToken];
   const isHiveToken = selectedTokenInfo?.network === "hive";
 
-  // Create React Flow nodes and edges for neural network visualization
-  const { nodes, edges } = useMemo(() => {
+  // Memoize React Flow data to prevent unnecessary recomputation
+  const { nodes: flowNodes, edges: flowEdges } = useMemo(() => {
+    if (airdropUsers.length === 0) return { nodes: [], edges: [] };
+
     const centerX = 0;
     const centerY = 0;
     const radius = 220;
@@ -285,14 +292,21 @@ export function PreviewStep({
   }, [
     airdropUsers,
     selectedToken,
-    totalAmount,
     user,
     isEthereumConnected,
     ethereumAddress,
+    isHiveToken,
   ]);
 
-  const [flowNodes, setFlowNodes, onNodesChange] = useNodesState(nodes);
-  const [flowEdges, setFlowEdges, onEdgesChange] = useEdgesState(edges);
+  // Memoize React Flow state handlers to prevent recreation
+  const [nodes, setNodes, onNodesChange] = useNodesState(flowNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(flowEdges);
+
+  // Update nodes and edges when computed data changes
+  useEffect(() => {
+    setNodes(flowNodes);
+    setEdges(flowEdges);
+  }, [flowNodes, flowEdges, setNodes, setEdges]);
 
   return (
     <>
@@ -440,69 +454,154 @@ export function PreviewStep({
           )
         ) : (
           // React Flow Network View
-          <Box
-            h="500px"
-            w="100%"
-            border="1px solid"
-            borderColor="border"
-            borderRadius="md"
-            overflow="hidden"
-            bg="transparent"
-            position="relative"
-          >
-            <Box
-              position="absolute"
-              inset={0}
-              zIndex={0}
-              pointerEvents="none"
-              bgImage="url('/ogimage.png')"
-              bgSize="cover"
-              bgPosition="center"
-              opacity={0.15}
-            />
-            <ReactFlow
-              nodes={flowNodes}
-              edges={flowEdges}
-              nodeTypes={nodeTypes}
-              edgeTypes={edgeTypes}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              connectionLineType={ConnectionLineType.Straight}
-              fitView
-              fitViewOptions={{
-                padding: 0.2,
-                includeHiddenNodes: true,
-                minZoom: 0.5,
-                maxZoom: 1.5,
-              }}
-              defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-              attributionPosition="bottom-left"
-              nodesDraggable={false}
-              nodesConnectable={false}
-              elementsSelectable={false}
-              zoomOnDoubleClick={false}
-              panOnDrag={true}
-              zoomOnPinch={true}
-              zoomOnScroll={true}
-              preventScrolling={false}
-              minZoom={0.3}
-              maxZoom={2}
-              style={{
-                background: "transparent",
-                position: "relative",
-                zIndex: 1,
-              }}
-            >
-              <Background color="rgba(235, 35, 208, 1)" gap={100} size={0.5} />
+          <VStack spacing={3} align="stretch">
+            {/* Screenshot Status Indicator */}
+            {isCapturingScreenshot ? (
+              <Box
+                p={3}
+                bg="blue.50"
+                _dark={{ bg: "blue.900" }}
+                borderRadius="md"
+                border="1px solid"
+                borderColor="blue.200"
+              >
+                <HStack spacing={3}>
+                  <Box
+                    w={4}
+                    h={4}
+                    borderRadius="full"
+                    border="2px solid"
+                    borderColor="blue.500"
+                    borderTopColor="transparent"
+                    sx={{
+                      animation: "spin 1s linear infinite",
+                      "@keyframes spin": {
+                        "0%": { transform: "rotate(0deg)" },
+                        "100%": { transform: "rotate(360deg)" },
+                      },
+                    }}
+                  />
+                  <Text
+                    fontSize="sm"
+                    color="blue.600"
+                    _dark={{ color: "blue.200" }}
+                  >
+                    📸 Capturing network visualization for announcement...
+                  </Text>
+                </HStack>
+              </Box>
+            ) : networkScreenshot ? (
+              <Box
+                p={3}
+                bg="green.50"
+                _dark={{ bg: "green.900" }}
+                borderRadius="md"
+                border="1px solid"
+                borderColor="green.200"
+              >
+                <HStack spacing={3}>
+                  <Box w={4} h={4} bg="green.500" borderRadius="full" />
+                  <Text
+                    fontSize="sm"
+                    color="green.600"
+                    _dark={{ color: "green.200" }}
+                  >
+                    ✅ Network visualization captured successfully!
+                  </Text>
+                </HStack>
+              </Box>
+            ) : (
+              <Box
+                p={3}
+                bg="yellow.50"
+                _dark={{ bg: "yellow.900" }}
+                borderRadius="md"
+                border="1px solid"
+                borderColor="yellow.200"
+              >
+                <HStack spacing={3}>
+                  <Box w={4} h={4} bg="yellow.500" borderRadius="full" />
+                  <Text
+                    fontSize="sm"
+                    color="yellow.600"
+                    _dark={{ color: "yellow.200" }}
+                  >
+                    📸 Screenshot will be captured when you click "Next"
+                  </Text>
+                </HStack>
+              </Box>
+            )}
 
-              <Controls
-                position="top-right"
-                showInteractive={false}
-                showZoom={true}
-                showFitView={true}
+            <Box
+              h="500px"
+              w="100%"
+              border="1px solid"
+              borderColor="border"
+              borderRadius="md"
+              overflow="hidden"
+              bg="transparent"
+              position="relative"
+              id="airdrop-network-visualization"
+              className="airdrop-react-flow-container"
+            >
+              <Box
+                position="absolute"
+                inset={0}
+                zIndex={0}
+                pointerEvents="none"
+                bgImage="url('/ogimage.png')"
+                bgSize="cover"
+                bgPosition="center"
+                opacity={0.15}
               />
-            </ReactFlow>
-          </Box>
+              <ReactFlow
+                nodes={nodes}
+                edges={edges}
+                nodeTypes={nodeTypes}
+                edgeTypes={edgeTypes}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                connectionLineType={ConnectionLineType.Straight}
+                fitView
+                fitViewOptions={{
+                  padding: 0.2,
+                  includeHiddenNodes: true,
+                  minZoom: 0.5,
+                  maxZoom: 1.5,
+                }}
+                defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+                attributionPosition="bottom-left"
+                nodesDraggable={false}
+                nodesConnectable={false}
+                elementsSelectable={false}
+                zoomOnDoubleClick={false}
+                panOnDrag={true}
+                zoomOnPinch={true}
+                zoomOnScroll={true}
+                preventScrolling={false}
+                minZoom={0.3}
+                maxZoom={2}
+                style={{
+                  background: "transparent",
+                  position: "relative",
+                  zIndex: 1,
+                }}
+              >
+                <Background
+                  color="rgba(235, 35, 208, 1)"
+                  gap={100}
+                  size={0.5}
+                />
+
+                <Controls
+                  position="top-right"
+                  showInteractive={false}
+                  showZoom={true}
+                  showFitView={true}
+                />
+              </ReactFlow>
+            </Box>
+          </VStack>
         )}
 
         {/* Legend for Network View */}

@@ -9,6 +9,7 @@ export async function executeHiveAirdrop({
   customMessage,
   user,
   updateStatus,
+  aiohaUser,
   aiohaInstance,
 }: HiveAirdropParams): Promise<void> {
   try {
@@ -17,10 +18,15 @@ export async function executeHiveAirdrop({
       recipients: recipients.length,
       totalAmount,
       user,
+      aiohaUser,
       hasAiohaInstance: !!aiohaInstance,
     });
 
-
+    // Extract username from user object or use directly
+    const username = typeof user === 'string' ? user : user;
+    if (!username) {
+      throw new Error('No username provided for airdrop');
+    }
 
     // Calculate amount per user
     const amountPerUser = totalAmount / recipients.length;
@@ -35,10 +41,10 @@ export async function executeHiveAirdrop({
     const operations = recipients.map((recipient: AirdropUser) => [
       "transfer",
       {
-        from: user, // Use the extracted username
+        from: username, // Use the extracted username
         to: recipient.hive_author,
         amount: `${formattedAmount} ${token}`,
-        memo: customMessage,
+        memo: customMessage || `SkateHive Community Airdrop - ${token} 🛹`,
       },
     ]) as Operation[];
 
@@ -50,7 +56,7 @@ export async function executeHiveAirdrop({
     });
 
     // Try to use Aioha for broadcasting
-    await executeAiohaTransfer(operations, user, aiohaInstance, updateStatus);
+    await executeAiohaTransfer(operations, aiohaUser || user, aiohaInstance, updateStatus);
 
     updateStatus({ 
       state: 'completed', 
@@ -69,16 +75,15 @@ export async function executeHiveAirdrop({
 
 const executeAiohaTransfer = async (
   operations: Operation[], 
-  user: string,
+  aiohaUser: any,
   aiohaInstance: any,
   updateStatus: (status: any) => void
 ) => {
   try {
     // Debug information
     console.log('Aioha Debug Info:', {
-      userExists: !!user,
-      userName: user,
-      userHasBroadcast: !!(user && typeof aiohaInstance.broadcast === 'function'),
+      aiohaUserExists: !!aiohaUser,
+      aiohaUserName: aiohaUser,
       instanceExists: !!aiohaInstance,
       instanceHasSignAndBroadcast: !!(aiohaInstance && typeof aiohaInstance.signAndBroadcastTx === 'function')
     });
@@ -88,14 +93,11 @@ const executeAiohaTransfer = async (
     let broadcasterType;
     
  
-    if (user && typeof aiohaInstance.broadcast === 'function') {
-      broadcaster = user;
-      broadcasterType = 'user';
-    } else if (aiohaInstance && typeof aiohaInstance.signAndBroadcastTx === 'function') {
+    if (aiohaInstance && typeof aiohaInstance.signAndBroadcastTx === 'function') {
       broadcaster = aiohaInstance;
       broadcasterType = 'instance';
     } else {
-      throw new Error('No valid broadcast method found. Please ensure your Hive wallet is properly connected.');
+      throw new Error('No valid Aioha instance found. Please ensure your Hive wallet is properly connected.');
     }
     
     console.log('Using broadcaster:', broadcasterType);
@@ -129,16 +131,13 @@ const executeAiohaTransfer = async (
       try {
         let result;
         
-        if (broadcasterType === 'user') {
-          // Use user.broadcast method (like in AirdropManager)
-          result = await broadcaster.broadcast(batch);
-        } else if (broadcasterType === 'instance') {
-          // Use aioha.signAndBroadcastTx method
-          result = await broadcaster.signAndBroadcastTx(batch, KeyTypes.Active);
-        }
+        // Use aioha.signAndBroadcastTx method with Active key for transfers
+        result = await broadcaster.signAndBroadcastTx(batch, KeyTypes.Active);
         
         if (result?.result?.id) {
           results.push(result.result.id);
+        } else if (result?.id) {
+          results.push(result.id);
         }
         
         // Small delay between batches to be nice to the network
@@ -147,7 +146,7 @@ const executeAiohaTransfer = async (
         }
       } catch (batchError: any) {
         console.error(`Batch ${batchNumber} failed:`, batchError);
-        throw new Error(`Batch ${batchNumber} failed: ${batchError.message}`);
+        throw new Error(`Batch ${batchNumber} failed: ${batchError.message || 'Unknown error'}`);
       }
     }
     
@@ -155,6 +154,6 @@ const executeAiohaTransfer = async (
     
   } catch (error: any) {
     console.error('Aioha transfer failed:', error);
-    throw new Error(`Aioha operation failed: ${error.message}`);
+    throw new Error(`Aioha operation failed: ${error?.message || 'Unknown error'}`);
   }
 };

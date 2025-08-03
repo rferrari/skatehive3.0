@@ -403,12 +403,6 @@ export default function FooterNavButtons() {
           );
         const isMobileBrowser = isMobileDevice && window.innerWidth <= 768;
         setIsMobile(isMobileBrowser);
-        console.log("[Mobile Detection]", {
-          isMobileDevice,
-          isMobileBrowser,
-          userAgent,
-          width: window.innerWidth,
-        });
       };
 
       checkMobile();

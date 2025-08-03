@@ -10,6 +10,8 @@ import {
   ModalCloseButton,
   HStack,
   Button,
+  Box,
+  Text,
 } from "@chakra-ui/react";
 import { ArrowBackIcon, CheckIcon } from "@chakra-ui/icons";
 import { useState, useCallback } from "react";
@@ -20,6 +22,11 @@ import { useTransactionStatus } from "@/hooks/useTransactionStatus";
 import useIsMobile from "@/hooks/useIsMobile";
 import { executeHiveAirdrop } from "@/services/hiveAirdrop";
 import { ERC20AirdropService } from "@/services/erc20Airdrop";
+import {
+  createAirdropAnnouncement,
+  generateAnnouncementContent,
+} from "../../services/airdropAnnouncement";
+import { captureAirdropNetworkScreenshot } from "@/lib/utils/screenshotCapture";
 import { SkaterData, SortOption } from "@/types/airdrop";
 import { useAioha } from "@aioha/react-ui";
 import {
@@ -27,8 +34,9 @@ import {
   ConfigurationStep,
   PreviewStep,
   ConfirmationStep,
-  StepHeader,
 } from "./steps";
+import { StepHeader } from "./steps/StepHeader";
+import { AnnouncementPreview } from "./AnnouncementPreview";
 
 type ModalView =
   | "tokenSelection"
@@ -60,14 +68,22 @@ export function AirdropModal({
   const [limit, setLimit] = useState(10);
   const [selectedToken, setSelectedToken] = useState("HIGHER");
   const [totalAmount, setTotalAmount] = useState("1000");
+  const [customMessage, setCustomMessage] = useState("");
   const [includeSkateHive, setIncludeSkateHive] = useState(false);
   const [isWeightedAirdrop, setIsWeightedAirdrop] = useState(false);
+  const [isAnonymous, setIsAnonymous] = useState(false);
 
   // UI state
   const [isExecuting, setIsExecuting] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
   const [costEstimate, setCostEstimate] = useState<any>(null);
   const [isEstimating, setIsEstimating] = useState(false);
+  const [networkScreenshot, setNetworkScreenshot] = useState<string>("");
+  const [isCapturingScreenshot, setIsCapturingScreenshot] = useState(false);
+  const [previewStepVisited, setPreviewStepVisited] = useState(false);
+  const [showAnnouncementPreview, setShowAnnouncementPreview] = useState(false);
+  const [announcementPreviewData, setAnnouncementPreviewData] =
+    useState<any>(null);
 
   // Mobile detection
   const isMobile = useIsMobile();
@@ -88,7 +104,7 @@ export function AirdropModal({
       limit,
       selectedToken,
       totalAmount,
-      customMessage: "",
+      customMessage,
       enablePreviews: false,
       confirmationRequired: true,
       includeSkateHive,
@@ -203,10 +219,12 @@ export function AirdropModal({
           token: selectedToken,
           recipients: airdropUsers,
           totalAmount: parseFloat(totalAmount),
-          customMessage: `SkateHive Community Airdrop - ${selectedToken} 🛹`,
-          user: { name: user }, // Pass as object with name property
+          customMessage:
+            customMessage ||
+            `SkateHive Community Airdrop - ${selectedToken} 🛹`,
+          user: user, // Pass username string directly
           updateStatus,
-          aiohaUser: user,
+          aiohaUser: user, // Pass the username for broadcasting
           aiohaInstance: aioha, // Also pass the aioha instance for fallback
         });
       } else {
@@ -218,11 +236,123 @@ export function AirdropModal({
           updateStatus
         );
       }
+
+      // After successful airdrop, prepare announcement preview
+      updateStatus({
+        state: "completed",
+        message: "✍️ Preparing announcement preview...",
+      });
+
+      // Show announcement preview instead of posting directly
+      try {
+        // Generate the announcement content for preview
+        const announcementContent = generateAnnouncementContent(
+          {
+            token: selectedToken,
+            recipients: airdropUsers,
+            totalAmount: parseFloat(totalAmount),
+            sortOption,
+            customMessage,
+            isWeighted: isWeightedAirdrop,
+            includeSkateHive,
+            creator: {
+              hiveUsername: user,
+              ethereumAddress,
+            },
+            isAnonymous,
+          },
+          networkScreenshot
+        );
+
+        // Set up preview data
+        setAnnouncementPreviewData({
+          content: announcementContent,
+          networkImage: networkScreenshot,
+          airdropData: {
+            selectedToken,
+            recipients: airdropUsers,
+            amounts: airdropUsers.map(
+              (user) => parseFloat(totalAmount) / airdropUsers.length
+            ),
+            totalAmount: parseFloat(totalAmount),
+            distributionMethod: isWeightedAirdrop ? "weighted" : "equal",
+          },
+          creatorName: user,
+          isAnonymous,
+        });
+
+        // Show the preview modal
+        setShowAnnouncementPreview(true);
+
+        updateStatus({
+          state: "completed",
+          message:
+            "🎉 Airdrop completed! Review your announcement before posting.",
+        });
+      } catch (previewError) {
+        console.warn("Announcement preview preparation failed:", previewError);
+        updateStatus({
+          state: "completed",
+          message:
+            "Airdrop completed successfully! (Announcement preview failed)",
+        });
+      }
     } catch (error) {
       console.error("Airdrop execution failed:", error);
     } finally {
       setIsExecuting(false);
     }
+  };
+
+  const handleAnnouncementApprove = async () => {
+    if (!announcementPreviewData) return;
+
+    setShowAnnouncementPreview(false);
+
+    try {
+      const announcementResult = await createAirdropAnnouncement({
+        token: selectedToken,
+        recipients: airdropUsers,
+        totalAmount: parseFloat(totalAmount),
+        sortOption,
+        customMessage,
+        screenshotDataUrl: announcementPreviewData.networkImage,
+        isWeighted: isWeightedAirdrop,
+        includeSkateHive,
+        creator: {
+          hiveUsername: user,
+          ethereumAddress,
+        },
+        isAnonymous,
+      });
+
+      if (announcementResult.success && announcementResult.postUrl) {
+        updateStatus({
+          state: "completed",
+          message: `✅ Announcement snap posted successfully! ${announcementResult.postUrl}`,
+        });
+      } else {
+        updateStatus({
+          state: "completed",
+          message: `⚠️ Announcement snap failed: ${announcementResult.error}`,
+        });
+      }
+    } catch (error) {
+      console.error("Announcement posting failed:", error);
+      updateStatus({
+        state: "completed",
+        message: "⚠️ Announcement snap posting failed",
+      });
+    }
+  };
+
+  const handleAnnouncementCancel = () => {
+    setShowAnnouncementPreview(false);
+    setAnnouncementPreviewData(null);
+    updateStatus({
+      state: "completed",
+      message: "✅ Airdrop completed! Announcement cancelled.",
+    });
   };
 
   const handleApproveToken = async () => {
@@ -244,6 +374,45 @@ export function AirdropModal({
   const goToStep = (step: number, view: ModalView) => {
     setCurrentStep(step);
     setCurrentView(view);
+
+    // Smart state resets when going back
+    if (step < currentStep) {
+      if (step === 1) {
+        // Reset everything when going back to token selection
+        setNetworkScreenshot("");
+        setCostEstimate(null);
+        resetStatus();
+      } else if (step === 2) {
+        // Reset preview-related states when going back to configuration
+        setNetworkScreenshot("");
+        setCostEstimate(null);
+      } else if (step === 3) {
+        // Reset execution states when going back to preview
+        resetStatus();
+      }
+    }
+  };
+
+  // Handle moving from preview to confirmation with screenshot capture
+  const handlePreviewToConfirmation = async () => {
+    // If we don't have a screenshot yet, capture it now
+    if (!networkScreenshot && !isCapturingScreenshot) {
+      setIsCapturingScreenshot(true);
+
+      try {
+        const screenshot = await captureAirdropNetworkScreenshot();
+        setNetworkScreenshot(screenshot);
+        goToStep(4, "confirmation");
+      } catch (error) {
+        // Continue to confirmation even if screenshot fails
+        goToStep(4, "confirmation");
+      } finally {
+        setIsCapturingScreenshot(false);
+      }
+    } else {
+      // Already have screenshot or currently capturing, just proceed
+      goToStep(4, "confirmation");
+    }
   };
 
   // Modal content based on current view
@@ -338,14 +507,18 @@ export function AirdropModal({
               limit={limit}
               selectedToken={selectedToken}
               totalAmount={totalAmount}
+              customMessage={customMessage}
               includeSkateHive={includeSkateHive}
               isWeightedAirdrop={isWeightedAirdrop}
+              isAnonymous={isAnonymous}
               userCount={userCount}
               airdropUsers={airdropUsers}
               onSortOptionChange={setSortOption}
               onLimitChange={setLimit}
+              onCustomMessageChange={setCustomMessage}
               onIncludeSkateHiveChange={setIncludeSkateHive}
               onWeightedAirdropChange={setIsWeightedAirdrop}
+              onAnonymousChange={setIsAnonymous}
               onBack={() => goToStep(1, "tokenSelection")}
               onNext={() => goToStep(3, "preview")}
             />
@@ -384,15 +557,19 @@ export function AirdropModal({
         return {
           title,
           content: (
-            <PreviewStep
-              selectedToken={selectedToken}
-              totalAmount={totalAmount}
-              sortOption={sortOption}
-              airdropUsers={airdropUsers}
-              isHiveToken={isHiveToken}
-              onBack={() => goToStep(2, "configuration")}
-              onNext={() => goToStep(4, "confirmation")}
-            />
+            <>
+              <PreviewStep
+                selectedToken={selectedToken}
+                totalAmount={totalAmount}
+                sortOption={sortOption}
+                airdropUsers={airdropUsers}
+                isHiveToken={isHiveToken}
+                onBack={() => goToStep(2, "configuration")}
+                onNext={handlePreviewToConfirmation}
+                isCapturingScreenshot={isCapturingScreenshot}
+                networkScreenshot={networkScreenshot}
+              />
+            </>
           ),
           footer: (
             <HStack spacing={3} width="100%">
@@ -410,14 +587,18 @@ export function AirdropModal({
               </Button>
               <Button
                 colorScheme="blue"
-                onClick={() => goToStep(4, "confirmation")}
+                onClick={handlePreviewToConfirmation}
                 bg="primary"
                 color="background"
                 _hover={{ bg: "primaryDark" }}
                 size={isMobile ? "sm" : "md"}
                 flex="2"
+                isLoading={isCapturingScreenshot}
+                loadingText="Capturing..."
               >
-                Next: Confirm & Execute
+                {isCapturingScreenshot
+                  ? "Capturing Screenshot..."
+                  : "Next: Confirm & Execute"}
               </Button>
             </HStack>
           ),
@@ -504,71 +685,93 @@ export function AirdropModal({
   const modalContent = getModalContent();
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={handleClose}
-      size={isMobile ? "full" : "xl"}
-      scrollBehavior={isMobile ? "outside" : "inside"}
-    >
-      <ModalOverlay bg="blackAlpha.600" backdropFilter="blur(10px)" />
-      <ModalContent
-        bg="background"
-        color="text"
-        borderRadius={isMobile ? "0" : "20px"}
-        border="1px solid"
-        borderColor="border"
-        shadow="2xl"
-        mx={isMobile ? 0 : 4}
-        maxH={isMobile ? "95vh" : "90vh"}
-        h={isMobile ? "95vh" : "auto"}
-        display="flex"
-        flexDirection="column"
+    <>
+      <Modal
+        isOpen={isOpen}
+        onClose={handleClose}
+        size={isMobile ? "full" : "xl"}
+        scrollBehavior={isMobile ? "outside" : "inside"}
       >
-        <ModalHeader
-          textAlign="center"
-          fontSize="2xl"
-          fontWeight="bold"
-          color="primary"
-          pb={2}
-          flexShrink={0}
-        >
-          {modalContent.title}
-        </ModalHeader>
-        {/* Only show close button on first step to prevent accidental modal closure */}
-        {currentView === "tokenSelection" && (
-          <ModalCloseButton
-            color="red"
-            _hover={{ color: "background", bg: "primary" }}
-            borderRadius="full"
-          />
-        )}
-
-        <ModalBody
-          px={isMobile ? 4 : 8}
-          pb={isMobile ? 2 : 8}
-          flex="1"
-          overflowY="auto"
+        <ModalOverlay bg="blackAlpha.600" backdropFilter="blur(10px)" />
+        <ModalContent
+          bg="background"
+          color="text"
+          borderRadius={isMobile ? "0" : "20px"}
+          border="1px solid"
+          borderColor="border"
+          shadow="2xl"
+          mx={isMobile ? 0 : 4}
+          maxH={isMobile ? "95vh" : "90vh"}
+          h={isMobile ? "95vh" : "auto"}
           display="flex"
           flexDirection="column"
-          minH={0}
         >
-          {modalContent.content}
-        </ModalBody>
+          <ModalHeader
+            textAlign="center"
+            fontSize="2xl"
+            fontWeight="bold"
+            color="primary"
+            pb={2}
+            flexShrink={0}
+          >
+            {modalContent.title}
+          </ModalHeader>
+          {/* Only show close button on first step to prevent accidental modal closure */}
+          {currentView === "tokenSelection" && (
+            <ModalCloseButton
+              color="red"
+              _hover={{ color: "background", bg: "primary" }}
+              borderRadius="full"
+            />
+          )}
 
-        <ModalFooter
-          flexShrink={0}
-          px={isMobile ? 4 : 6}
-          py={isMobile ? 6 : 6}
-          pb={isMobile ? "calc(1.5rem + env(safe-area-inset-bottom))" : 6}
-          borderTop={isMobile ? "1px solid" : "none"}
-          borderTopColor={isMobile ? "border" : "transparent"}
-          bg={isMobile ? "rgba(0, 0, 0, 0.05)" : "transparent"}
-          backdropFilter={isMobile ? "blur(10px)" : "none"}
-        >
-          {modalContent.footer}
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+          <ModalBody
+            px={isMobile ? 4 : 8}
+            pb={isMobile ? 2 : 8}
+            flex="1"
+            overflowY="auto"
+            display="flex"
+            flexDirection="column"
+            minH={0}
+          >
+            {modalContent.content}
+          </ModalBody>
+
+          <ModalFooter
+            flexShrink={0}
+            px={isMobile ? 4 : 6}
+            py={isMobile ? 6 : 6}
+            pb={isMobile ? "calc(1.5rem + env(safe-area-inset-bottom))" : 6}
+            borderTop={isMobile ? "1px solid" : "none"}
+            borderTopColor={isMobile ? "border" : "transparent"}
+            bg={isMobile ? "rgba(0, 0, 0, 0.05)" : "transparent"}
+            backdropFilter={isMobile ? "blur(10px)" : "none"}
+          >
+            {modalContent.footer}
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Announcement Preview Modal */}
+      {showAnnouncementPreview && announcementPreviewData && (
+        <AnnouncementPreview
+          isOpen={showAnnouncementPreview}
+          onClose={handleAnnouncementCancel}
+          onConfirm={handleAnnouncementApprove}
+          onCancel={handleAnnouncementCancel}
+          announcementContent={announcementPreviewData.content}
+          imageUrl={announcementPreviewData.networkImage}
+          token={selectedToken}
+          recipients={airdropUsers}
+          totalAmount={parseFloat(totalAmount)}
+          creator={{
+            hiveUsername: user,
+            ethereumAddress,
+          }}
+          isAnonymous={isAnonymous}
+        />
+      )}
+    </>
   );
 }
 
