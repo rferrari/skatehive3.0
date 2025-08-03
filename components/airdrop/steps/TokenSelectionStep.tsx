@@ -18,9 +18,11 @@ import {
   Button,
   Image,
   Center,
+  Flex,
 } from "@chakra-ui/react";
 import { tokenDictionary } from "@/lib/utils/tokenDictionary";
 import useIsMobile from "@/hooks/useIsMobile";
+import { useUserBalances } from "@/hooks/useUserBalances";
 
 interface TokenSelectionStepProps {
   selectedToken: string;
@@ -48,6 +50,14 @@ export function TokenSelectionStep({
 }: TokenSelectionStepProps) {
   const isMobile = useIsMobile();
   const selectedTokenInfo = tokenDictionary[selectedToken];
+  const { getTokenBalance } = useUserBalances();
+
+  // Get balance for selected token
+  const tokenBalance = selectedToken ? getTokenBalance(selectedToken) : null;
+  
+  // Check if amount exceeds balance
+  const exceedsBalance = tokenBalance && 
+    parseFloat(totalAmount) > parseFloat(tokenBalance.balance);
 
   return (
     <>
@@ -98,14 +108,78 @@ export function TokenSelectionStep({
               </Badge>
             )}
           </VStack>
+
+          {/* Token Balance Display */}
+          {selectedToken && tokenBalance && (
+            <Box
+              mt={3}
+              p={3}
+              bg="cardBg"
+              borderRadius="md"
+              border="1px solid"
+              borderColor="border"
+            >
+              <Flex justify="space-between" align="center">
+                <Text fontSize="sm" color="textSecondary">
+                  Available Balance:
+                </Text>
+                <VStack spacing={1} align="end">
+                  <Text fontSize="sm" fontWeight="semibold" color="text">
+                    {parseFloat(tokenBalance.balance).toLocaleString()} {selectedToken}
+                  </Text>
+                  {tokenBalance.usdValue && (
+                    <Text fontSize="xs" color="textSecondary">
+                      ≈ ${tokenBalance.usdValue.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })} USD
+                    </Text>
+                  )}
+                </VStack>
+              </Flex>
+            </Box>
+          )}
+
+          {/* No Balance Warning */}
+          {selectedToken && !tokenBalance && (isHiveConnected || isEthereumConnected) && (
+            <Box
+              mt={3}
+              p={3}
+              bg="orange.50"
+              _dark={{ bg: "orange.900", borderColor: "orange.700" }}
+              borderRadius="md"
+              border="1px solid"
+              borderColor="orange.200"
+            >
+              <HStack spacing={2}>
+                <Text fontSize="12px">⚠️</Text>
+                <Text fontSize="sm" color="orange.600" _dark={{ color: "orange.200" }}>
+                  No {selectedToken} balance found in connected wallets
+                </Text>
+              </HStack>
+            </Box>
+          )}
         </Box>
 
         {/* Amount Selection */}
         <Box>
-          <Text fontSize="lg" fontWeight="bold" mb={4} color="primary">
-            Total Amount
-          </Text>
-          <FormControl isInvalid={parseFloat(totalAmount) <= 0}>
+          <HStack justify="space-between" align="center" mb={4}>
+            <Text fontSize="lg" fontWeight="bold" color="primary">
+              Total Amount
+            </Text>
+            {/* Use Max Button */}
+            {tokenBalance && parseFloat(tokenBalance.balance) > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                colorScheme="blue"
+                onClick={() => onConfigChange({ totalAmount: parseFloat(tokenBalance.balance).toFixed(2) })}
+              >
+                Use Max ({parseFloat(tokenBalance.balance).toFixed(2)})
+              </Button>
+            )}
+          </HStack>
+          <FormControl isInvalid={parseFloat(totalAmount) <= 0 || !!exceedsBalance}>
             <FormLabel color="text">
               Total {selectedToken} to distribute
             </FormLabel>
@@ -127,7 +201,14 @@ export function TokenSelectionStep({
                 <NumberDecrementStepper />
               </NumberInputStepper>
             </NumberInput>
-            <FormErrorMessage>Amount must be greater than 0</FormErrorMessage>
+            <FormErrorMessage>
+              {parseFloat(totalAmount) <= 0 
+                ? "Amount must be greater than 0"
+                : exceedsBalance 
+                ? `Amount exceeds your balance of ${parseFloat(tokenBalance?.balance || "0").toFixed(2)} ${selectedToken}`
+                : ""
+              }
+            </FormErrorMessage>
           </FormControl>
         </Box>
 

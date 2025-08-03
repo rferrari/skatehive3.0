@@ -29,6 +29,7 @@ import {
 import { captureAirdropNetworkScreenshot } from "@/lib/utils/screenshotCapture";
 import { SkaterData, SortOption } from "@/types/airdrop";
 import { useAioha } from "@aioha/react-ui";
+import { PortfolioProvider } from "@/contexts/PortfolioContext";
 import {
   TokenSelectionStep,
   ConfigurationStep,
@@ -412,16 +413,22 @@ export function AirdropModal({
         return {
           title,
           content: (
-            <TokenSelectionStep
-              selectedToken={selectedToken}
-              totalAmount={totalAmount}
-              tokenOptions={tokenOptions}
-              isHiveConnected={isHiveConnected}
-              isEthereumConnected={isEthereumConnected}
-              onConfigChange={handleConfigChange}
-              onNext={() => goToStep(2, "configuration")}
-              onCancel={handleClose}
-            />
+            <PortfolioProvider
+              address={ethereumAddress}
+              farcasterAddress={undefined}
+              farcasterVerifiedAddresses={undefined}
+            >
+              <TokenSelectionStep
+                selectedToken={selectedToken}
+                totalAmount={totalAmount}
+                tokenOptions={tokenOptions}
+                isHiveConnected={isHiveConnected}
+                isEthereumConnected={isEthereumConnected}
+                onConfigChange={handleConfigChange}
+                onNext={() => goToStep(2, "configuration")}
+                onCancel={handleClose}
+              />
+            </PortfolioProvider>
           ),
           footer: (
             <HStack spacing={3} width="100%">
