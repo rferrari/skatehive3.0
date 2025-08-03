@@ -50,56 +50,32 @@ export function generateAnnouncementContent(params: AirdropAnnouncementParams, i
     recipients,
     totalAmount,
     customMessage,
-    isWeighted,
-    includeSkateHive,
     creator,
     isAnonymous
   } = params;
 
-  const amountPerUser = totalAmount / recipients.length;
-  const distributionType = isWeighted ? 'weighted' : 'equal';
-  const includeSkateHiveText = includeSkateHive ? ' (including @skatehive)' : '';
-  
-  let content = `🛹 **${token} Airdrop Complete!** 🎯
-
-`;
-
-  // Add creator attribution (unless anonymous)
+  // Determine user display
+  let userDisplay = 'anonymous user';
   if (!isAnonymous && creator) {
     if (creator.hiveUsername) {
-      content += `🎁 **Airdrop by:** @${creator.hiveUsername}
-
-`;
+      userDisplay = `@${creator.hiveUsername}`;
     } else if (creator.ethereumAddress) {
-      content += `🎁 **Airdrop by:** ${creator.ethereumAddress.slice(0, 6)}...${creator.ethereumAddress.slice(-4)}
-
-`;
+      userDisplay = `${creator.ethereumAddress.slice(0, 6)}...${creator.ethereumAddress.slice(-4)}`;
     }
   }
 
+  // Compose the main message
+  let content = `${userDisplay} just made an airdrop of ${totalAmount} ${token} tokens.  \n\n`;
+
   // Add custom message if provided
   if (customMessage && customMessage.trim()) {
-    content += `${customMessage}
-
-`;
+    content += `${customMessage}\n\n`;
   }
 
-  content += `📊 **${recipients.length} recipients**${includeSkateHiveText} • ${totalAmount.toFixed(3)} ${token} total
-💰 ~${amountPerUser.toFixed(3)} ${token} per user (${distributionType})
+  // Add congrats with tagged users (up to 10)
+  content += `Congrats: ${generateRecipientMentions(recipients, 10)}\n\n`;
 
-`;
-
-  // Add network visualization if screenshot provided
-  if (imageUrl) {
-    content += `![Airdrop Network Visualization](${imageUrl})
-
-`;
-  }
-
-  // Add recipient mentions (fewer for snap format)
-  content += `Recipients: ${generateRecipientMentions(recipients, 10)}
-
-Thanks for being part of SkateHive! 🙏`;
+  content += `Thanks for being part of skatehive cult`;
 
   return content;
 }

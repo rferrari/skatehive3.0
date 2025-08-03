@@ -94,7 +94,6 @@ interface PreviewStepProps {
   totalAmount: string;
   sortOption: SortOption;
   airdropUsers: any[];
-  isHiveToken: boolean;
   onBack: () => void;
   onNext: () => void;
   isCapturingScreenshot?: boolean;

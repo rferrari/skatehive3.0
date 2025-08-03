@@ -37,7 +37,6 @@ import {
 } from "./steps";
 import { StepHeader } from "./steps/StepHeader";
 
-
 type ModalView =
   | "tokenSelection"
   | "configuration"
@@ -80,8 +79,6 @@ export function AirdropModal({
   const [isEstimating, setIsEstimating] = useState(false);
   const [networkScreenshot, setNetworkScreenshot] = useState<string>("");
   const [isCapturingScreenshot, setIsCapturingScreenshot] = useState(false);
-
-
 
   // Mobile detection
   const isMobile = useIsMobile();
@@ -196,7 +193,6 @@ export function AirdropModal({
         setCostEstimate({ ...estimate, network: "base" });
       }
     } catch (error) {
-
     } finally {
       setIsEstimating(false);
     }
@@ -283,20 +279,16 @@ export function AirdropModal({
           });
         }
       } catch (error) {
-
         updateStatus({
           state: "completed",
           message: "⚠️ Announcement snap posting failed",
         });
       }
     } catch (error) {
-
     } finally {
       setIsExecuting(false);
     }
   };
-
-
 
   const handleApproveToken = async () => {
     if (!validation.isValid || isApproving) return;
@@ -307,7 +299,6 @@ export function AirdropModal({
     try {
       await erc20Service.approveToken(selectedToken, totalAmount, updateStatus);
     } catch (error) {
-
     } finally {
       setIsApproving(false);
     }
@@ -694,8 +685,6 @@ export function AirdropModal({
           </ModalFooter>
         </ModalContent>
       </Modal>
-
-
     </>
   );
 }
