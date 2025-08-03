@@ -159,7 +159,7 @@ export function AuctionBid({
         setIsLoading(false);
       }
     },
-    [tokenId, writeBid, onBid, minimumBidIncrement, setValue, reservePrice]
+    [tokenId, writeBid, onBid, minimumBidIncrement, setValue, reservePrice, switchChain, toast]
   );
 
   const handleSettle = useCallback(async () => {

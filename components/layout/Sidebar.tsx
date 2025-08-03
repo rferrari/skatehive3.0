@@ -77,14 +77,12 @@ export default function Sidebar() {
     href,
     icon,
     children,
-    onClick,
   }: {
     href: string;
     icon: any;
     children: React.ReactNode;
-    onClick?: () => void;
   }) => (
-    <Link href={href} onClick={onClick} passHref style={{ textDecoration: 'none', color: 'inherit' }}>
+    <Link href={href} passHref style={{ textDecoration: 'none', color: 'inherit' }}>
       <Box
         display="flex"
         alignItems="center"
@@ -177,9 +175,6 @@ export default function Sidebar() {
             <NavItem
               href="/"
               icon={FiHome}
-              onClick={() =>
-                pathname === "/" ? window.location.reload() : undefined
-              }
             >
               Home
             </NavItem>
