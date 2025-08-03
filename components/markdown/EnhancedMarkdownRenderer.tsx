@@ -38,6 +38,9 @@ function renderContentWithVideos(
 
   return parts
     .map((part, idx) => {
+      // Guard against undefined parts
+      if (!part) return null;
+
       // Handle video placeholders
       const videoMatch = part.match(
         /^\[\[(VIDEO|ODYSEE|YOUTUBE|VIMEO):([^\]]+)\]\]$/
@@ -100,17 +103,11 @@ function cleanMarkdownPart(part: string): string {
       ""
     )
     .replace(/^https?:\/\/(?:www\.)?(?:vimeo\.com\/).*$/gm, "")
-    .replace(/^https?:\/\/(?:www\.)?zora\.co\/coin\/.*$/gm, "") // Remove Zora coin URLs
-    .replace(/^ODYSEE\s*$/gm, "")
-    .replace(/^VIDEO\s*$/gm, "")
-    .replace(/^YOUTUBE\s*$/gm, "")
-    .replace(/^VIMEO\s*$/gm, "")
-    .replace(/^INSTAGRAM\s*$/gm, "")
-    .replace(/^ZORACOIN\s*$/gm, "") // Remove ZORACOIN text
-    .replace(/^[a-zA-Z0-9_-]{11}$/gm, "") // YouTube video IDs (11 characters)
-    .replace(/^[0-9]{8,}$/gm, "") // Vimeo video IDs (8+ digits)
-    .replace(/^(Qm[1-9A-HJ-NP-Za-km-z]{44,})$/gm, "")
-    .replace(/^(bafy[0-9a-z]{50,})$/gm, "")
+    .replace(/^https?:\/\/(?:www\.)?zora\.co\/coin\/.*$/gm, "")
+    .replace(/^(ODYSEE|VIDEO|YOUTUBE|VIMEO|INSTAGRAM|ZORACOIN)\s*$/gm, "")
+    .replace(/^[a-zA-Z0-9_-]{11}$/gm, "") // YouTube video IDs
+    .replace(/^[0-9]{8,}$/gm, "") // Vimeo video IDs
+    .replace(/^(Qm[1-9A-HJ-NP-Za-km-z]{44,}|bafy[0-9a-z]{50,})$/gm, "") // IPFS CIDs
     .replace(/^0x[a-fA-F0-9]{40}$/gm, "") // Ethereum addresses
     .replace(/^\?referrer=0x[a-fA-F0-9]{40}$/gm, ""); // Referrer parameters
 }

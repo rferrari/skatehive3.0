@@ -69,7 +69,7 @@ export function generateAnnouncementContent(params: AirdropAnnouncementParams, i
 
   // Add custom message if provided
   if (customMessage && customMessage.trim()) {
-    content += `${customMessage}\n\n`;
+    content += `${creator?.hiveUsername} says: \n >${customMessage}\n\n`;
   }
 
   // Add congrats with tagged users (up to 10)

@@ -412,12 +412,24 @@ const ShareMenuButtons = ({ comment }: ShareMenuButtonsProps) => {
       >
         <FaLink style={{ marginRight: "8px" }} />
         Copy Link
+      </MenuItem>{" "}
+      <MenuItem
+        onClick={() =>
+          window.open(
+            `https://peakd.com/@${comment.author}/${comment.permlink}`,
+            "_blank"
+          )
+        }
+        bg={"background"}
+        color={"primary"}
+      >
+        <FaLink style={{ marginRight: "8px" }} />
+        Open in Peakd
       </MenuItem>
       <MenuItem onClick={handleDownvote} bg={"background"} color={"red"}>
         <FaThumbsDown style={{ marginRight: "8px" }} />
         Downvote Post
       </MenuItem>
-
       {/* Coin Creation Modal */}
       <CoinCreationModal
         isOpen={isCoinModalOpen}

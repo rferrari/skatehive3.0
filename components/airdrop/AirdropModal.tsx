@@ -65,8 +65,23 @@ export function AirdropModal({
   // Airdrop configuration
   const [sortOption, setSortOption] = useState<SortOption>(initialSortOption);
   const [limit, setLimit] = useState(10);
-  const [selectedToken, setSelectedToken] = useState("HIGHER");
-  const [totalAmount, setTotalAmount] = useState("1000");
+  // Set default token and amount based on wallet connection
+  const isMobile = useIsMobile();
+  // Wallet connections
+  const { user, aioha } = useAioha();
+  const { address: ethereumAddress, isConnected: isEthereumConnected } =
+    useAccount();
+  const isHiveConnected = !!user;
+
+  // Determine default token and amount
+  let defaultToken = "HIGHER";
+  let defaultAmount = "1000";
+  if (isHiveConnected && !isEthereumConnected) {
+    defaultToken = "HIVE";
+    defaultAmount = "10";
+  }
+  const [selectedToken, setSelectedToken] = useState(defaultToken);
+  const [totalAmount, setTotalAmount] = useState(defaultAmount);
   const [customMessage, setCustomMessage] = useState("");
   const [includeSkateHive, setIncludeSkateHive] = useState(false);
   const [isWeightedAirdrop, setIsWeightedAirdrop] = useState(false);
@@ -79,17 +94,6 @@ export function AirdropModal({
   const [isEstimating, setIsEstimating] = useState(false);
   const [networkScreenshot, setNetworkScreenshot] = useState<string>("");
   const [isCapturingScreenshot, setIsCapturingScreenshot] = useState(false);
-
-  // Mobile detection
-  const isMobile = useIsMobile();
-
-  // Wallet connections
-  const { user, aioha } = useAioha();
-  const { address: ethereumAddress, isConnected: isEthereumConnected } =
-    useAccount();
-
-  // Check wallet connections for smart token filtering
-  const isHiveConnected = !!user;
 
   // Hooks
   const { airdropUsers, userCount, validation } = useAirdropManager({
@@ -497,7 +501,6 @@ export function AirdropModal({
                 totalAmount={totalAmount}
                 sortOption={sortOption}
                 airdropUsers={airdropUsers}
-                isHiveToken={isHiveToken}
                 onBack={() => goToStep(2, "configuration")}
                 onNext={handlePreviewToConfirmation}
                 isCapturingScreenshot={isCapturingScreenshot}
@@ -625,15 +628,16 @@ export function AirdropModal({
         onClose={handleClose}
         size={isMobile ? "full" : "xl"}
         scrollBehavior={isMobile ? "outside" : "inside"}
+        motionPreset="slideInBottom"
       >
-        <ModalOverlay bg="blackAlpha.600" backdropFilter="blur(10px)" />
+        <ModalOverlay bg="blackAlpha.600" />
         <ModalContent
           bg="background"
           color="text"
           borderRadius={isMobile ? "0" : "20px"}
           border="1px solid"
           borderColor="border"
-          shadow="2xl"
+          shadow="lg"
           mx={isMobile ? 0 : 4}
           maxH={isMobile ? "95vh" : "90vh"}
           h={isMobile ? "95vh" : "auto"}
@@ -678,8 +682,7 @@ export function AirdropModal({
             pb={isMobile ? "calc(1.5rem + env(safe-area-inset-bottom))" : 6}
             borderTop={isMobile ? "1px solid" : "none"}
             borderTopColor={isMobile ? "border" : "transparent"}
-            bg={isMobile ? "rgba(0, 0, 0, 0.05)" : "transparent"}
-            backdropFilter={isMobile ? "blur(10px)" : "none"}
+            bg={isMobile ? "rgba(0, 0, 0, 0.02)" : "transparent"}
           >
             {modalContent.footer}
           </ModalFooter>

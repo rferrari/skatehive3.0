@@ -10,18 +10,26 @@ interface HiveMarkdownProps {
 
 // Mention component for inline rendering
 const Mention: React.FC<{ username: string }> = ({ username }) => (
-  <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+  <span
+    style={{
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 3,
+      verticalAlign: "middle",
+    }}
+  >
     <Image
-      src={`https://images.hive.blog/u/${username}/avatar/small`}
+      src={`https://images.ecency.com/webp/u/${username}/avatar/small`}
       alt={`@${username}`}
       style={{
-        width: 25,
-        height: 25,
+        width: 18,
+        height: 18,
         borderRadius: "50%",
         objectFit: "cover",
         verticalAlign: "middle",
         display: "inline-block",
-        marginRight: 4,
+        flexShrink: 0,
+        marginTop: -1, // Slight upward adjustment to align with text
       }}
       loading="lazy"
     />
@@ -30,9 +38,12 @@ const Mention: React.FC<{ username: string }> = ({ username }) => (
       style={{
         textDecoration: "underline",
         color: "#3182ce",
+        verticalAlign: "middle",
+        lineHeight: "1",
+        fontSize: "inherit",
       }}
     >
-      @{username}
+      {username}
     </a>
   </span>
 );
