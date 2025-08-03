@@ -127,25 +127,25 @@
 
 @keyframes arrow-bg-fade {
   0% {
-    background-color: rgba(128, 128, 128, 0.3);
+    background-color: var(--chakra-colors-secondary);
   }
   50% {
     background-color: transparent;
   }
   100% {
-    background-color: rgba(128, 128, 128, 0.3);
+    background-color: var(--chakra-colors-secondary);
   }
 }
 
 @keyframes arrow-bg-fade-hover {
   0% {
-    background-color: rgba(128, 128, 128, 0.3);
+    background-color: var(--chakra-colors-secondary);
   }
   50% {
     background-color: transparent;
   }
   100% {
-    background-color: rgba(128, 128, 128, 0.3);
+    background-color: var(--chakra-colors-secondary);
   }
 }
 

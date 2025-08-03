@@ -132,8 +132,20 @@ const UpvoteButton = ({
         );
 
         if (vote.success) {
+          // On Hive, voting again overwrites the previous vote, so we always set voted to true
           setVoted(true);
-          setActiveVotes([...activeVotes, { voter: user }]);
+          
+          // Update active votes - replace or add the user's vote
+          const existingVoteIndex = activeVotes.findIndex(vote => vote.voter === user);
+          if (existingVoteIndex >= 0) {
+            // Update existing vote
+            const updatedVotes = [...activeVotes];
+            updatedVotes[existingVoteIndex] = { voter: user, weight: votePercentage * 100 };
+            setActiveVotes(updatedVotes);
+          } else {
+            // Add new vote
+            setActiveVotes([...activeVotes, { voter: user, weight: votePercentage * 100 }]);
+          }
 
           // Estimate the value and call onVoteSuccess if provided
           if (estimateVoteValue && onVoteSuccess && !isHivePowerLoading) {
@@ -192,7 +204,7 @@ const UpvoteButton = ({
     return (
       <HStack>
         <Tooltip
-          label={voted ? "already upvoted" : "upvote"}
+          label={voted ? "already voted" : "upvote"}
           hasArrow
           openDelay={1000}
         >
@@ -205,26 +217,20 @@ const UpvoteButton = ({
             onClick={handleHeartClick}
             p={1}
             borderRadius="full"
-            bg={!voted ? "muted" : undefined}
-            border={!voted ? "1px solid" : voted ? "1px solid" : undefined}
-            borderColor={!voted ? "primary" : voted ? "muted" : undefined}
-            _hover={!voted ? { bg: "muted" } : undefined}
+            bg={voted ? "muted" : !voted ? "muted" : undefined}
+            border="1px solid"
+            borderColor="primary"
+            _hover={{ bg: "muted" }}
             transition="background 0.2s, border-radius 0.2s"
             className={`upvote-container ${className} ${
               !voted ? "arrow-bg-fade" : ""
-            } ${voted ? "upvoted-container" : ""}`}
+            }`}
           >
             <LuArrowUpRight
               size={24}
-              color={
-                voted
-                  ? "var(--chakra-colors-muted)"
-                  : "var(--chakra-colors-primary)"
-              }
+              color={voted ? "var(--chakra-colors-success)" : "var(--chakra-colors-primary)"}
               style={{ opacity: 1 }}
-              className={`${!voted ? "arrow-pulse-hover" : ""} ${
-                voted ? "upvoted-icon" : ""
-              }`}
+              className={!voted ? "arrow-pulse-hover" : ""}
             />
           </Box>
         </Tooltip>
@@ -237,7 +243,7 @@ const UpvoteButton = ({
     return (
       <HStack>
         <Tooltip
-          label={voted ? "already upvoted" : "upvote"}
+          label={voted ? "already voted" : "upvote"}
           hasArrow
           openDelay={1000}
         >
@@ -250,26 +256,20 @@ const UpvoteButton = ({
             onClick={handleHeartClick}
             p={1}
             borderRadius="full"
-            bg={!voted ? "muted" : undefined}
-            border={!voted ? "1px solid" : voted ? "1px solid" : undefined}
-            borderColor={!voted ? "primary" : voted ? "muted" : undefined}
-            _hover={!voted ? { bg: "muted" } : undefined}
+            bg={voted ? "muted" : !voted ? "muted" : undefined}
+            border="1px solid"
+            borderColor="primary"
+            _hover={{ bg: "muted" }}
             transition="background 0.2s, border-radius 0.2s"
             className={`upvote-container ${className} ${
               !voted ? "arrow-bg-fade" : ""
-            } ${voted ? "upvoted-container" : ""}`}
+            }`}
           >
             <LuArrowUpRight
               size={24}
-              color={
-                voted
-                  ? "var(--chakra-colors-muted)"
-                  : "var(--chakra-colors-primary)"
-              }
+              color={voted ? "var(--chakra-colors-success)" : "var(--chakra-colors-primary)"}
               style={{ opacity: 1 }}
-              className={`${!voted ? "arrow-pulse-hover" : ""} ${
-                voted ? "upvoted-icon" : ""
-              }`}
+              className={!voted ? "arrow-pulse-hover" : ""}
             />
           </Box>
         </Tooltip>
@@ -300,7 +300,7 @@ const UpvoteButton = ({
       return (
         <HStack>
           <Tooltip
-            label={voted ? "already upvoted" : "upvote"}
+            label={voted ? "already voted" : "upvote"}
             hasArrow
             openDelay={1000}
           >
@@ -313,26 +313,20 @@ const UpvoteButton = ({
               onClick={handleHeartClick}
               p={1}
               borderRadius="full"
-              bg={!voted ? "muted" : undefined}
-              border={!voted ? "1px solid" : voted ? "1px solid" : undefined}
-              borderColor={!voted ? "primary" : voted ? "muted" : undefined}
-              _hover={!voted ? { bg: "muted" } : undefined}
+              bg={voted ? "muted" : !voted ? "muted" : undefined}
+              border="1px solid"
+              borderColor="primary"
+              _hover={{ bg: "muted" }}
               transition="background 0.2s, border-radius 0.2s"
               className={`upvote-container ${className} ${
                 !voted ? "arrow-bg-fade" : ""
-              } ${voted ? "upvoted-container" : ""}`}
+              }`}
             >
               <LuArrowUpRight
                 size={24}
-                color={
-                  voted
-                    ? "var(--chakra-colors-muted)"
-                    : "var(--chakra-colors-primary)"
-                }
+                color={voted ? "var(--chakra-colors-success)" : "var(--chakra-colors-primary)"}
                 style={{ opacity: 1 }}
-                className={`${!voted ? "arrow-pulse-hover" : ""} ${
-                  voted ? "upvoted-icon" : ""
-                }`}
+                className={!voted ? "arrow-pulse-hover" : ""}
               />
             </Box>
           </Tooltip>
@@ -424,7 +418,7 @@ const UpvoteButton = ({
     return (
       <HStack>
         <Tooltip
-          label={voted ? "already upvoted" : "upvote"}
+          label={voted ? "already voted" : "upvote"}
           hasArrow
           openDelay={1000}
         >
@@ -437,26 +431,20 @@ const UpvoteButton = ({
             onClick={handleHeartClick}
             p={1}
             borderRadius="full"
-            bg={!voted ? "muted" : undefined}
-            border={!voted ? "1px solid" : voted ? "1px solid" : undefined}
-            borderColor={!voted ? "primary" : voted ? "muted" : undefined}
-            _hover={!voted ? { bg: "muted" } : undefined}
+            bg={voted ? "muted" : !voted ? "muted" : undefined}
+            border="1px solid"
+            borderColor="primary"
+            _hover={{ bg: "muted" }}
             transition="background 0.2s, border-radius 0.2s"
             className={`upvote-container ${className} ${
               !voted ? "arrow-bg-fade" : ""
-            } ${voted ? "upvoted-container" : ""}`}
+            }`}
           >
             <LuArrowUpRight
               size={24}
-              color={
-                voted
-                  ? "var(--chakra-colors-muted)"
-                  : "var(--chakra-colors-primary)"
-              }
+              color={voted ? "var(--chakra-colors-success)" : "var(--chakra-colors-primary)"}
               style={{ opacity: 1 }}
-              className={`${!voted ? "arrow-pulse-hover" : ""} ${
-                voted ? "upvoted-icon" : ""
-              }`}
+              className={!voted ? "arrow-pulse-hover" : ""}
             />
           </Box>
         </Tooltip>

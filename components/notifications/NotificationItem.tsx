@@ -12,16 +12,16 @@ import {
   Flex,
 } from "@chakra-ui/react";
 import { Discussion, Notifications } from "@hiveio/dhive";
-import { FaHeart, FaRegHeart } from "react-icons/fa";
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
   getPost,
   checkFollow,
   changeFollow,
-  vote,
 } from "../../lib/hive/client-functions";
+import { fetchComments } from "../../lib/hive/fetchComments";
 import SnapComposer from "../homepage/SnapComposer";
 import HiveMarkdown from "../shared/HiveMarkdown";
+import UpvoteButton from "../shared/UpvoteButton";
 
 interface NotificationItemProps {
   notification: Notifications;
@@ -40,7 +40,9 @@ export default function NotificationItem({
   const [postContent, setPostContent] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [hasVoted, setHasVoted] = useState<boolean>(false);
-  const [isVoting, setIsVoting] = useState<boolean>(false);
+  const [showSlider, setShowSlider] = useState<boolean>(false);
+  const [replies, setReplies] = useState<Discussion[]>([]);
+  const [repliesLoading, setRepliesLoading] = useState<boolean>(false);
   const formattedDate = new Date(notification.date + "Z").toLocaleString(
     "en-US",
     {
@@ -73,6 +75,7 @@ export default function NotificationItem({
 
   // Add helper to fetch comment content
   const fetchCommentContent = useCallback(async () => {
+    console.log('fetchCommentContent called for:', postAuthor, postId);
     const checkIfUserVoted = (post: Discussion | null) => {
       if (!post || !post.active_votes || !currentUser) return false;
       return post.active_votes.some((vote) => vote.voter === currentUser);
@@ -87,6 +90,7 @@ export default function NotificationItem({
         post = await getPost(postAuthor, postId);
         postCache.current[replyKey] = post;
       }
+      console.log('Setting reply:', post);
       setReply(post);
 
       // Check if user has voted on this post
@@ -184,6 +188,7 @@ export default function NotificationItem({
     if (!displayCommentPrompt) {
       setDisplayCommentPrompt(true);
       fetchCommentContent();
+      fetchExistingReplies(); // Fetch existing replies when opening
       window.dispatchEvent(
         new CustomEvent("activeComposerChange", { detail: notification.url })
       );
@@ -255,33 +260,27 @@ export default function NotificationItem({
     setIsFollowingBack(true);
   }
 
-  // Handle upvote function
-  const handleUpvote = async () => {
-    if (!reply || !currentUser || isVoting) return;
+  // Handle new replies
+  function handleNewReply(newComment: Partial<Discussion>) {
+    const newReply = newComment as Discussion;
+    setReplies(prev => [...prev, newReply]);
+  }
 
+  // Fetch existing replies when reply button is clicked
+  async function fetchExistingReplies() {
+    if (!reply) return;
+    
+    setRepliesLoading(true);
     try {
-      setIsVoting(true);
-
-      const voteResult = await vote({
-        username: currentUser,
-        author: reply.author,
-        permlink: reply.permlink,
-        weight: hasVoted ? 0 : 10000, // Toggle between vote and unvote
-      });
-
-      if (voteResult && voteResult.success) {
-        setHasVoted(!hasVoted);
-
-        // Refresh the post to get updated vote data
-        const updatedPost = await getPost(reply.author, reply.permlink);
-        setReply(updatedPost);
-      }
+      const existingReplies = await fetchComments(reply.author, reply.permlink, false);
+      setReplies(existingReplies);
     } catch (error) {
-      console.error("Voting error:", error);
+      console.error('Error fetching replies:', error);
+      setReplies([]);
     } finally {
-      setIsVoting(false);
+      setRepliesLoading(false);
     }
-  };
+  }
 
   // Replace hardcoded gradient and box-shadow with theme variables
   const notificationPulseGradient =
@@ -456,7 +455,7 @@ export default function NotificationItem({
                     replied to your
                   </Text>
                   <Link
-                    href={`/${notification.url}`}
+                    href={`/${parentPost ? `@${parentPost.author}/${parentPost.permlink}` : notification.url}`}
                     color={isNew ? "accent" : "primary"}
                     fontWeight="bold"
                     _hover={{ textDecoration: "underline" }}
@@ -537,7 +536,7 @@ export default function NotificationItem({
                   </Text>
                   {parentPost?.title && (
                     <Link
-                      href={`/${notification.url}`}
+                      href={`/${parentPost ? `@${parentPost.author}/${parentPost.permlink}` : notification.url}`}
                       color={isNew ? "accent" : "primary"}
                       fontWeight="bold"
                       _hover={{ textDecoration: "underline" }}
@@ -580,7 +579,7 @@ export default function NotificationItem({
                     replied to your
                   </Text>
                   <Link
-                    href={`/${notification.url}`}
+                    href={`/${parentPost ? `@${parentPost.author}/${parentPost.permlink}` : notification.url}`}
                     color={isNew ? "accent" : "primary"}
                     fontWeight="bold"
                     _hover={{ textDecoration: "underline" }}
@@ -655,42 +654,221 @@ export default function NotificationItem({
                 </VStack>
               </>
             )}
-          {/* Indent Reply and heart to align with main text, not all the way right */}
+          {/* Indent Reply and upvote to align with main text, not all the way right */}
           {(notification.type === "reply" ||
             notification.type === "reply_comment") && (
-            <Flex mt={2} alignItems="center" w="100%" ml={{ base: 2, md: 8 }}>
-              <Text
-                onClick={handleReplyClick}
-                fontSize={{ base: "xs", md: "sm" }}
-                cursor="pointer"
-                mr={2}
-              >
-                Reply
-              </Text>
-              <IconButton
-                aria-label={hasVoted ? "Unlike" : "Like"}
-                icon={hasVoted ? <FaHeart /> : <FaRegHeart />}
-                variant="ghost"
-                size={{ base: "xs", md: "sm" }}
-                isRound
-                alignSelf="center"
-                color={hasVoted ? "accent" : "muted"}
-                onClick={handleUpvote}
-                isLoading={isVoting}
-              />
-            </Flex>
+            <Box mt={2} w="100%" ml={{ base: 2, md: 8 }}>
+              <Flex alignItems="center" mb={2}>
+                <Text
+                  onClick={handleReplyClick}
+                  fontSize={{ base: "xs", md: "sm" }}
+                  cursor="pointer"
+                  mr={2}
+                >
+                  Reply
+                </Text>
+                {reply ? (
+                  <Box w="50%">
+                    <UpvoteButton
+                      discussion={reply}
+                      voted={hasVoted}
+                      setVoted={(newVotedState) => {
+                        console.log('UpvoteButton setVoted called with:', newVotedState);
+                        setHasVoted(newVotedState);
+                      }}
+                      activeVotes={reply.active_votes || []}
+                      setActiveVotes={(votes) => {
+                        console.log('UpvoteButton setActiveVotes called with:', votes);
+                        if (reply) {
+                          setReply({ ...reply, active_votes: votes });
+                        }
+                      }}
+                      showSlider={showSlider}
+                      setShowSlider={setShowSlider}
+                      variant="withSlider"
+                      size="sm"
+                    />
+                  </Box>
+                ) : (
+                  <Text fontSize="xs" color="muted">Loading...</Text>
+                )}
+              </Flex>
+            </Box>
           )}
         </Box>
         {/* No thumbnail for reply notifications */}
       </HStack>
       {displayCommentPrompt && (
-        <SnapComposer
-          pa={postAuthor}
-          pp={postId}
-          onNewComment={() => {}}
-          onClose={() => null}
-        />
+        <Box mt={2}>
+          {/* Show replies first */}
+          {repliesLoading ? (
+            <Box p={2} textAlign="center" mb={2}>
+              <Text fontSize="xs" color="muted">Loading replies...</Text>
+            </Box>
+          ) : replies.length > 0 ? (
+            <VStack spacing={2} align="stretch" mb={2}>
+              {replies.map((reply: Discussion) => (
+                <ReplyItem
+                  key={reply.permlink}
+                  reply={reply}
+                  currentUser={currentUser}
+                />
+              ))}
+            </VStack>
+          ) : null}
+          {/* Composer below replies */}
+          <SnapComposer
+            pa={postAuthor}
+            pp={postId}
+            onNewComment={handleNewReply}
+            onClose={() => setDisplayCommentPrompt(false)}
+          />
+        </Box>
       )}
     </div>
+  );
+}
+
+// ReplyItem component for nested replies
+interface ReplyItemProps {
+  reply: Discussion;
+  currentUser: string;
+}
+
+function ReplyItem({ reply, currentUser }: ReplyItemProps) {
+  const [showReplies, setShowReplies] = useState<boolean>(false);
+  const [nestedReplies, setNestedReplies] = useState<Discussion[]>([]);
+  const [nestedRepliesLoading, setNestedRepliesLoading] = useState<boolean>(false);
+  const [hasVoted, setHasVoted] = useState<boolean>(false);
+  const [showSlider, setShowSlider] = useState<boolean>(false);
+
+  // Check if user has voted on this reply
+  useEffect(() => {
+    if (reply.active_votes && currentUser) {
+      const userVoted = reply.active_votes.some((vote) => vote.voter === currentUser);
+      setHasVoted(userVoted);
+    }
+  }, [reply.active_votes, currentUser]);
+
+
+
+  // Handle new nested replies
+  function handleNewNestedReply(newComment: Partial<Discussion>) {
+    const newReply = newComment as Discussion;
+    setNestedReplies(prev => [...prev, newReply]);
+  }
+
+  // Fetch existing nested replies
+  async function fetchNestedReplies() {
+    setNestedRepliesLoading(true);
+    try {
+      const existingReplies = await fetchComments(reply.author, reply.permlink, false);
+      setNestedReplies(existingReplies);
+    } catch (error) {
+      console.error('Error fetching nested replies:', error);
+      setNestedReplies([]);
+    } finally {
+      setNestedRepliesLoading(false);
+    }
+  }
+
+  // Handle reply button click
+  function handleReplyClick() {
+    if (!showReplies) {
+      setShowReplies(true);
+      fetchNestedReplies();
+    } else {
+      setShowReplies(false);
+    }
+  }
+
+  return (
+    <Box
+      p={2}
+      borderRadius="md"
+      bg="muted"
+      borderLeft="2px solid"
+      borderColor="border"
+      ml={4}
+    >
+      {/* Reply content */}
+      <HStack mb={1} spacing={2}>
+        <Avatar
+          size="xs"
+          name={reply.author}
+          src={`https://images.hive.blog/u/${reply.author}/avatar/sm`}
+        />
+        <Text fontSize="xs" fontWeight="bold" color="primary">
+          {reply.author}
+        </Text>
+        <Text fontSize="xs" color="muted">
+          {reply.created === "just now" ? "just now" : new Date(reply.created + "Z").toLocaleString()}
+        </Text>
+      </HStack>
+      <Box ml={6} mb={2}>
+        <HiveMarkdown markdown={reply.body} />
+      </Box>
+
+      {/* Reply actions */}
+      <Box ml={6}>
+        <Flex alignItems="center" w="100%">
+          <Text
+            onClick={handleReplyClick}
+            fontSize="xs"
+            cursor="pointer"
+            mr={2}
+            color="primary"
+            _hover={{ textDecoration: "underline" }}
+          >
+            Reply
+          </Text>
+          <Box w="50%">
+            <UpvoteButton
+              discussion={reply}
+              voted={hasVoted}
+              setVoted={setHasVoted}
+              activeVotes={reply.active_votes || []}
+              setActiveVotes={(votes) => {
+                // Update the reply's active votes
+                Object.assign(reply, { active_votes: votes });
+              }}
+              showSlider={showSlider}
+              setShowSlider={setShowSlider}
+              variant="withSlider"
+              size="sm"
+            />
+          </Box>
+        </Flex>
+      </Box>
+
+      {/* Nested replies */}
+      {showReplies && (
+        <Box mt={2} ml={4}>
+          {nestedRepliesLoading ? (
+            <Box p={2} textAlign="center">
+              <Text fontSize="xs" color="muted">Loading replies...</Text>
+            </Box>
+          ) : nestedReplies.length > 0 ? (
+            <VStack spacing={2} align="stretch" mb={2}>
+              {nestedReplies.map((nestedReply: Discussion) => (
+                <ReplyItem
+                  key={nestedReply.permlink}
+                  reply={nestedReply}
+                  currentUser={currentUser}
+                />
+              ))}
+            </VStack>
+          ) : null}
+          
+          {/* Nested composer */}
+          <SnapComposer
+            pa={reply.author}
+            pp={reply.permlink}
+            onNewComment={handleNewNestedReply}
+            onClose={() => setShowReplies(false)}
+          />
+        </Box>
+      )}
+    </Box>
   );
 }
