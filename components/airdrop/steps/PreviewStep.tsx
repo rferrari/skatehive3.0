@@ -42,6 +42,7 @@ import { useAccount } from "wagmi";
 import { Avatar, Name } from "@coinbase/onchainkit/identity";
 import { memo } from "react";
 import { tokenDictionary } from "@/lib/utils/tokenDictionary";
+import { getAvatarErrorHandler } from "@/hooks/useHiveAvatar";
 
 // Custom centered node component for perfect edge anchoring
 const CenteredNode = memo(({ data }: any) => {
@@ -139,7 +140,7 @@ export function PreviewStep({
       data: {
         label: user ? (
           <Image
-            src={`https://images.hive.blog/u/${user}/avatar`}
+            {...getAvatarErrorHandler(user, '')}
             alt={user}
             w="60px"
             h="60px"
@@ -218,7 +219,7 @@ export function PreviewStep({
                   position="relative"
                 >
                   <Image
-                    src={`https://images.hive.blog/u/${user.hive_author}/avatar/small`}
+                    {...getAvatarErrorHandler(user.hive_author, 'small')}
                     alt={user.hive_author}
                     w="100%"
                     h="100%"
@@ -366,7 +367,7 @@ export function PreviewStep({
                       <Td>
                         <HStack>
                           <Image
-                            src={`https://images.hive.blog/u/${user.hive_author}/avatar/small`}
+                            {...getAvatarErrorHandler(user.hive_author, 'small')}
                             alt={user.hive_author}
                             borderRadius="full"
                             boxSize="24px"
@@ -414,7 +415,7 @@ export function PreviewStep({
                       #{index + 1}
                     </Badge>
                     <Image
-                      src={`https://images.hive.blog/u/${user.hive_author}/avatar/small`}
+                      {...getAvatarErrorHandler(user.hive_author, 'small')}
                       alt={user.hive_author}
                       borderRadius="full"
                       boxSize="32px"

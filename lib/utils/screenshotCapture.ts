@@ -89,13 +89,44 @@ export async function captureElementScreenshot(
       // Minimal delay for stabilization
       await new Promise(resolve => setTimeout(resolve, delay));
       
-      // Ensure all images are loaded with CORS
+      // Ensure all images are loaded with CORS and wait for problematic images
       const images = element.querySelectorAll('img');
+      const imagePromises: Promise<void>[] = [];
+      
       images.forEach((img) => {
         if (!img.crossOrigin) {
           img.crossOrigin = 'anonymous';
         }
+        
+        // Wait for each image to load or fail
+        const imagePromise = new Promise<void>((resolve) => {
+          if (img.complete) {
+            resolve();
+          } else {
+            const handleLoad = () => {
+              img.removeEventListener('load', handleLoad);
+              img.removeEventListener('error', handleError);
+              resolve();
+            };
+            const handleError = () => {
+              img.removeEventListener('load', handleLoad);
+              img.removeEventListener('error', handleError);
+              console.warn('Image failed to load for screenshot:', img.src);
+              resolve(); // Continue even if image fails
+            };
+            img.addEventListener('load', handleLoad);
+            img.addEventListener('error', handleError);
+          }
+        });
+        
+        imagePromises.push(imagePromise);
       });
+
+      // Wait for all images to load or fail, but don't wait too long
+      await Promise.race([
+        Promise.all(imagePromises),
+        new Promise(resolve => setTimeout(resolve, 3000)) // 3 second timeout
+      ]);
 
       // Get element's actual dimensions
       const rect = element.getBoundingClientRect();

@@ -308,7 +308,7 @@ export default function SearchOverlay({
         bg="background"
         borderRadius="lg"
         border="1px solid"
-        borderColor="primary"
+        borderColor="secondary"
         maxW="500px"
         maxH="70vh"
         w="90vw"
@@ -338,7 +338,7 @@ export default function SearchOverlay({
                     width: "4px",
                   },
                   "&::-webkit-scrollbar-thumb": {
-                    bg: "primary",
+                    bg: "secondary",
                     borderRadius: "2px",
                   },
                 }}
