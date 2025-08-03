@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { getProfile } from "@/lib/hive/client-functions";
+import { getProfile, getAccountWithPower } from "@/lib/hive/client-functions";
 import { ProfileData } from "../components/profile/ProfilePage";
 import { VideoPart } from "@/types/VideoPart";
 import { migrateLegacyMetadata } from "@/lib/utils/metadataMigration";
@@ -23,6 +23,8 @@ export default function useProfileData(username: string, hiveAccount: HiveAccoun
         ethereum_address: "",
         video_parts: [],
         vote_weight: 51, // Default vote weight
+        vp_percent: "0%",
+        rc_percent: "0%",
     });
 
     const updateProfileData = useCallback((newData: Partial<ProfileData>) => {
@@ -33,6 +35,9 @@ export default function useProfileData(username: string, hiveAccount: HiveAccoun
         const fetchProfileInfo = async () => {
             try {
                 const profileInfo = await getProfile(username);
+                const powerInfo = await getAccountWithPower(username);
+                console.log('Profile API response:', profileInfo); // Debug log
+                console.log('Power API response:', powerInfo); // Debug log
                 let profileImage = "";
                 let coverImage = "";
                 let website = "";
@@ -77,6 +82,14 @@ export default function useProfileData(username: string, hiveAccount: HiveAccoun
                     ethereum_address: ethereum_address,
                     video_parts: video_parts,
                     vote_weight: vote_weight,
+                    vp_percent: powerInfo?.data?.vp_percent || "0%",
+                    rc_percent: powerInfo?.data?.rc_percent || "0%",
+                });
+                
+                // Debug log for power percentages
+                console.log('Power percentages:', {
+                    vp: powerInfo?.data?.vp_percent,
+                    rc: powerInfo?.data?.rc_percent
                 });
             } catch (err) {
                 console.error("Failed to fetch profile info", err);

@@ -469,6 +469,36 @@ export async function getProfile(username: string) {
   return profile
 }
 
+export async function getAccountWithPower(username: string) {
+  try {
+    // Get account data with power information
+    const accountData = await HiveClient.database.call('get_accounts', [[username]]);
+    if (accountData && accountData[0]) {
+      const account = accountData[0];
+      
+      // Calculate voting power percentage
+      const votingPower = account.voting_power || 0;
+      const vpPercent = Math.round((votingPower / 10000) * 100);
+      
+      // For resource credits, we'll need to calculate based on current usage
+      // This is a simplified calculation
+      const rcPercent = 100; // We'll need to implement proper RC calculation
+      
+      return {
+        success: true,
+        data: {
+          vp_percent: `${vpPercent}%`,
+          rc_percent: `${rcPercent}%`
+        }
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error('Error fetching account with power:', error);
+    return null;
+  }
+}
+
 export async function getCommunityInfo(username: string) {
   const profile = await HiveClient.call('bridge', 'get_community', { name: username });
   return profile

@@ -13,6 +13,7 @@ import {
 } from "@chakra-ui/react";
 import { FaGlobe, FaEdit } from "react-icons/fa";
 import FollowButton from "./FollowButton";
+import PowerBars from "./PowerBars";
 import { ProfileData } from "./ProfilePage";
 
 interface ProfileHeaderProps {
@@ -55,10 +56,11 @@ export default function ProfileHeader({
                 m={0}
                 mt={{ base: "-32px", md: 0 }}
             >
-                {/* Avatar */}
-                <Box
-                  position="relative"
-                  display="inline-block"
+                {/* Avatar and Power Bars */}
+                <Flex
+                  direction={{ base: "column", md: "row" }}
+                  align={{ base: "center", md: "flex-start" }}
+                  gap={{ base: 2, md: 4 }}
                   flexShrink={0}
                   flexBasis={{ base: 'auto', md: '25%' }}
                   maxW={{ base: 'none', md: '25%' }}
@@ -69,10 +71,18 @@ export default function ProfileHeader({
                       name={username}
                       borderRadius="md"
                       boxSize="100px"
-                      mr={{ base: 0, md: 4 }}
                       mb={{ base: 2, md: 0 }}
                   />
-                </Box>
+                  {/* Power Bars */}
+                  {profileData.vp_percent && profileData.rc_percent && (
+                    <PowerBars
+                      vpPercent={profileData.vp_percent}
+                      rcPercent={profileData.rc_percent}
+                      height={100}
+                      width={25}
+                    />
+                  )}
+                </Flex>
                 {/* Profile Info (right-aligned on desktop, constrained width) */}
                 <Flex
                   direction="column"

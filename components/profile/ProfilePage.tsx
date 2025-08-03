@@ -47,6 +47,8 @@ export interface ProfileData {
   ethereum_address?: string;
   video_parts?: VideoPart[];
   vote_weight?: number;
+  vp_percent?: string;
+  rc_percent?: string;
 }
 
 export default function ProfilePage({ username }: ProfilePageProps) {
@@ -169,14 +171,16 @@ export default function ProfilePage({ username }: ProfilePageProps) {
               />
             )}
 
-            {/* Edit Profile Modal */}
-            <EditProfile
-              isOpen={isEditModalOpen}
-              onClose={handleEditModalClose}
-              profileData={profileData}
-              onProfileUpdate={updateProfileData}
-              username={username}
-            />
+            {/* Edit Profile Modal - Only render when modal is open */}
+            {isEditModalOpen && (
+              <EditProfile
+                isOpen={isEditModalOpen}
+                onClose={handleEditModalClose}
+                profileData={profileData}
+                onProfileUpdate={updateProfileData}
+                username={username}
+              />
+            )}
           </Box>
         </Container>
       </Center>

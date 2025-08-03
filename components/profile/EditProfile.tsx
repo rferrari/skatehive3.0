@@ -43,6 +43,7 @@ interface EditProfileProps {
 const EditProfile: React.FC<EditProfileProps> = React.memo(
   (props: EditProfileProps) => {
     const { isOpen, onClose, profileData, onProfileUpdate, username } = props;
+    
     const [formData, setFormData] = useState({
       name: "",
       about: "",
@@ -55,14 +56,35 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
     const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const { address, isConnected } = useAccount();
-    const { connect, connectors, isPending } = useConnect();
-    const { disconnect } = useDisconnect();
+    const [isEditingEthAddress, setIsEditingEthAddress] = useState(false);
+    const [showMergeModal, setShowMergeModal] = useState(false);
+    
+    // Safely use Wagmi hooks with error handling
+    let address: string | undefined;
+    let isConnected = false;
+    let connect: any;
+    let connectors: any;
+    let isPending = false;
+    let disconnect: any;
+    
+    try {
+      const account = useAccount();
+      const connectHook = useConnect();
+      const disconnectHook = useDisconnect();
+      
+      address = account.address;
+      isConnected = account.isConnected;
+      connect = connectHook.connect;
+      connectors = connectHook.connectors;
+      isPending = connectHook.isPending;
+      disconnect = disconnectHook.disconnect;
+    } catch (error) {
+      console.warn("Wagmi hooks not available:", error);
+    }
+    
     const { user } = useAioha();
     const { isAuthenticated: isFarcasterConnected, profile: farcasterProfile } =
       useFarcasterSession();
-    const [isEditingEthAddress, setIsEditingEthAddress] = useState(false);
-    const [showMergeModal, setShowMergeModal] = useState(false);
     const toast = useToast();
 
     const countryOptions = useMemo(() => countryList().getData(), []);
@@ -406,7 +428,7 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
               {/* Custom wallet connection instead of ConnectButton */}
               {!isConnected ? (
                 <VStack spacing={2} align="stretch">
-                  {connectors.map((connector) => (
+                  {connectors?.map((connector: { id: string; name: string }) => (
                     <Button
                       key={connector.id}
                       onClick={() => connect({ connector })}
