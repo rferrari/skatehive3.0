@@ -84,7 +84,7 @@ export default function Sidebar() {
     children: React.ReactNode;
     onClick?: () => void;
   }) => (
-    <Link href={href} onClick={onClick} passHref>
+    <Link href={href} onClick={onClick} passHref style={{ textDecoration: 'none', color: 'inherit' }}>
       <Box
         display="flex"
         alignItems="center"
@@ -100,9 +100,37 @@ export default function Sidebar() {
         textDecoration="none"
         color="inherit"
         _hover={{
+          textDecoration: "none",
           "& > div": {
             bg: primaryBg,
             color: hoverTextColor,
+          }
+        }}
+        _focus={{
+          textDecoration: "none",
+          outline: "none"
+        }}
+        _active={{
+          textDecoration: "none"
+        }}
+        _visited={{
+          textDecoration: "none",
+          color: "inherit"
+        }}
+        sx={{
+          "&:hover": {
+            textDecoration: "none !important",
+          },
+          "&:focus": {
+            textDecoration: "none !important",
+            outline: "none !important",
+          },
+          "&:active": {
+            textDecoration: "none !important",
+          },
+          "&:visited": {
+            textDecoration: "none !important",
+            color: "inherit !important",
           }
         }}
       >
