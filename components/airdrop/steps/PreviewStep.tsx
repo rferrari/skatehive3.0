@@ -17,6 +17,7 @@ import {
   ButtonGroup,
   IconButton,
   Tooltip,
+  AspectRatio,
 } from "@chakra-ui/react";
 import { ViewIcon, ViewOffIcon } from "@chakra-ui/icons";
 import { useState, useMemo, useCallback, useEffect } from "react";
@@ -531,75 +532,75 @@ export function PreviewStep({
               </Box>
             )}
 
-            <Box
-              h="500px"
-              w="100%"
-              border="1px solid"
-              borderColor="border"
-              borderRadius="md"
-              overflow="hidden"
-              bg="transparent"
-              position="relative"
-              id="airdrop-network-visualization"
-              className="airdrop-react-flow-container"
-            >
+            <AspectRatio ratio={3 / 2} w="100%">
               <Box
-                position="absolute"
-                inset={0}
-                zIndex={0}
-                pointerEvents="none"
-                bgImage="url('/ogimage.png')"
-                bgSize="cover"
-                bgPosition="center"
-                opacity={0.15}
-              />
-              <ReactFlow
-                nodes={nodes}
-                edges={edges}
-                nodeTypes={nodeTypes}
-                edgeTypes={edgeTypes}
-                onNodesChange={onNodesChange}
-                onEdgesChange={onEdgesChange}
-                connectionLineType={ConnectionLineType.Straight}
-                fitView
-                fitViewOptions={{
-                  padding: 0.2,
-                  includeHiddenNodes: true,
-                  minZoom: 0.5,
-                  maxZoom: 1.5,
-                }}
-                defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-                attributionPosition="bottom-left"
-                nodesDraggable={false}
-                nodesConnectable={false}
-                elementsSelectable={false}
-                zoomOnDoubleClick={false}
-                panOnDrag={true}
-                zoomOnPinch={true}
-                zoomOnScroll={true}
-                preventScrolling={false}
-                minZoom={0.3}
-                maxZoom={2}
-                style={{
-                  background: "transparent",
-                  position: "relative",
-                  zIndex: 1,
-                }}
+                border="1px solid"
+                borderColor="border"
+                borderRadius="md"
+                overflow="hidden"
+                bg="transparent"
+                position="relative"
+                id="airdrop-network-visualization"
+                className="airdrop-react-flow-container"
               >
-                <Background
-                  color="rgba(235, 35, 208, 1)"
-                  gap={100}
-                  size={0.5}
+                <Box
+                  position="absolute"
+                  inset={0}
+                  zIndex={0}
+                  pointerEvents="none"
+                  bgImage="url('/ogimage.png')"
+                  bgSize="cover"
+                  bgPosition="center"
+                  opacity={0.15}
                 />
+                <ReactFlow
+                  nodes={nodes}
+                  edges={edges}
+                  nodeTypes={nodeTypes}
+                  edgeTypes={edgeTypes}
+                  onNodesChange={onNodesChange}
+                  onEdgesChange={onEdgesChange}
+                  connectionLineType={ConnectionLineType.Straight}
+                  fitView
+                  fitViewOptions={{
+                    padding: 0.2,
+                    includeHiddenNodes: true,
+                    minZoom: 0.5,
+                    maxZoom: 1.5,
+                  }}
+                  defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+                  attributionPosition="bottom-left"
+                  nodesDraggable={false}
+                  nodesConnectable={false}
+                  elementsSelectable={false}
+                  zoomOnDoubleClick={false}
+                  panOnDrag={true}
+                  zoomOnPinch={true}
+                  zoomOnScroll={true}
+                  preventScrolling={false}
+                  minZoom={0.3}
+                  maxZoom={2}
+                  style={{
+                    background: "transparent",
+                    position: "relative",
+                    zIndex: 1,
+                  }}
+                >
+                  <Background
+                    color="rgba(235, 35, 208, 1)"
+                    gap={100}
+                    size={0.5}
+                  />
 
-                <Controls
-                  position="top-right"
-                  showInteractive={false}
-                  showZoom={true}
-                  showFitView={true}
-                />
-              </ReactFlow>
-            </Box>
+                  <Controls
+                    position="top-right"
+                    showInteractive={false}
+                    showZoom={true}
+                    showFitView={true}
+                  />
+                </ReactFlow>
+              </Box>
+            </AspectRatio>
           </VStack>
         )}
 

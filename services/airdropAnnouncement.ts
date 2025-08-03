@@ -75,7 +75,7 @@ export function generateAnnouncementContent(params: AirdropAnnouncementParams, i
 
   // Add custom message if provided
   if (customMessage && customMessage.trim()) {
-    content += `${creator?.hiveUsername} says: \n > ${customMessage}\n\n`;
+    content += `says: \n > ${customMessage}\n\n`;
   }
 
   // Add sponsored skaters with tagged users (up to 10)
