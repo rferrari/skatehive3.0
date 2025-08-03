@@ -36,7 +36,7 @@ import {
   ConfirmationStep,
 } from "./steps";
 import { StepHeader } from "./steps/StepHeader";
-import { AnnouncementPreview } from "./AnnouncementPreview";
+
 
 type ModalView =
   | "tokenSelection"
@@ -80,10 +80,8 @@ export function AirdropModal({
   const [isEstimating, setIsEstimating] = useState(false);
   const [networkScreenshot, setNetworkScreenshot] = useState<string>("");
   const [isCapturingScreenshot, setIsCapturingScreenshot] = useState(false);
-  const [previewStepVisited, setPreviewStepVisited] = useState(false);
-  const [showAnnouncementPreview, setShowAnnouncementPreview] = useState(false);
-  const [announcementPreviewData, setAnnouncementPreviewData] =
-    useState<any>(null);
+
+
 
   // Mobile detection
   const isMobile = useIsMobile();
@@ -198,7 +196,7 @@ export function AirdropModal({
         setCostEstimate({ ...estimate, network: "base" });
       }
     } catch (error) {
-      console.error("Cost estimation failed:", error);
+
     } finally {
       setIsEstimating(false);
     }
@@ -237,15 +235,8 @@ export function AirdropModal({
         );
       }
 
-      // After successful airdrop, prepare announcement preview
-      updateStatus({
-        state: "completed",
-        message: "✍️ Preparing announcement preview...",
-      });
-
-      // Show announcement preview instead of posting directly
+      // After successful airdrop, post the announcement directly
       try {
-        // Generate the announcement content for preview
         const announcementContent = generateAnnouncementContent(
           {
             token: selectedToken,
@@ -264,96 +255,48 @@ export function AirdropModal({
           networkScreenshot
         );
 
-        // Set up preview data
-        setAnnouncementPreviewData({
-          content: announcementContent,
-          networkImage: networkScreenshot,
-          airdropData: {
-            selectedToken,
-            recipients: airdropUsers,
-            amounts: airdropUsers.map(
-              (user) => parseFloat(totalAmount) / airdropUsers.length
-            ),
-            totalAmount: parseFloat(totalAmount),
-            distributionMethod: isWeightedAirdrop ? "weighted" : "equal",
+        const announcementResult = await createAirdropAnnouncement({
+          token: selectedToken,
+          recipients: airdropUsers,
+          totalAmount: parseFloat(totalAmount),
+          sortOption,
+          customMessage,
+          screenshotDataUrl: networkScreenshot,
+          isWeighted: isWeightedAirdrop,
+          includeSkateHive,
+          creator: {
+            hiveUsername: user,
+            ethereumAddress,
           },
-          creatorName: user,
           isAnonymous,
         });
 
-        // Show the preview modal
-        setShowAnnouncementPreview(true);
+        if (announcementResult.success && announcementResult.postUrl) {
+          updateStatus({
+            state: "completed",
+            message: `✅ Announcement snap posted successfully! ${announcementResult.postUrl}`,
+          });
+        } else {
+          updateStatus({
+            state: "completed",
+            message: `⚠️ Announcement snap failed: ${announcementResult.error}`,
+          });
+        }
+      } catch (error) {
 
         updateStatus({
           state: "completed",
-          message:
-            "🎉 Airdrop completed! Review your announcement before posting.",
-        });
-      } catch (previewError) {
-        console.warn("Announcement preview preparation failed:", previewError);
-        updateStatus({
-          state: "completed",
-          message:
-            "Airdrop completed successfully! (Announcement preview failed)",
+          message: "⚠️ Announcement snap posting failed",
         });
       }
     } catch (error) {
-      console.error("Airdrop execution failed:", error);
+
     } finally {
       setIsExecuting(false);
     }
   };
 
-  const handleAnnouncementApprove = async () => {
-    if (!announcementPreviewData) return;
 
-    setShowAnnouncementPreview(false);
-
-    try {
-      const announcementResult = await createAirdropAnnouncement({
-        token: selectedToken,
-        recipients: airdropUsers,
-        totalAmount: parseFloat(totalAmount),
-        sortOption,
-        customMessage,
-        screenshotDataUrl: announcementPreviewData.networkImage,
-        isWeighted: isWeightedAirdrop,
-        includeSkateHive,
-        creator: {
-          hiveUsername: user,
-          ethereumAddress,
-        },
-        isAnonymous,
-      });
-
-      if (announcementResult.success && announcementResult.postUrl) {
-        updateStatus({
-          state: "completed",
-          message: `✅ Announcement snap posted successfully! ${announcementResult.postUrl}`,
-        });
-      } else {
-        updateStatus({
-          state: "completed",
-          message: `⚠️ Announcement snap failed: ${announcementResult.error}`,
-        });
-      }
-    } catch (error) {
-      console.error("Announcement posting failed:", error);
-      updateStatus({
-        state: "completed",
-        message: "⚠️ Announcement snap posting failed",
-      });
-    }
-  };
-
-  const handleAnnouncementCancel = () => {
-    setShowAnnouncementPreview(false);
-    setAnnouncementPreviewData(null);
-    updateStatus({
-      state: "completed",
-      message: "✅ Airdrop completed! Announcement cancelled.",
-    });
-  };
 
   const handleApproveToken = async () => {
     if (!validation.isValid || isApproving) return;
@@ -364,7 +307,7 @@ export function AirdropModal({
     try {
       await erc20Service.approveToken(selectedToken, totalAmount, updateStatus);
     } catch (error) {
-      console.error("Token approval failed:", error);
+
     } finally {
       setIsApproving(false);
     }
@@ -752,25 +695,7 @@ export function AirdropModal({
         </ModalContent>
       </Modal>
 
-      {/* Announcement Preview Modal */}
-      {showAnnouncementPreview && announcementPreviewData && (
-        <AnnouncementPreview
-          isOpen={showAnnouncementPreview}
-          onClose={handleAnnouncementCancel}
-          onConfirm={handleAnnouncementApprove}
-          onCancel={handleAnnouncementCancel}
-          announcementContent={announcementPreviewData.content}
-          imageUrl={announcementPreviewData.networkImage}
-          token={selectedToken}
-          recipients={airdropUsers}
-          totalAmount={parseFloat(totalAmount)}
-          creator={{
-            hiveUsername: user,
-            ethereumAddress,
-          }}
-          isAnonymous={isAnonymous}
-        />
-      )}
+
     </>
   );
 }
