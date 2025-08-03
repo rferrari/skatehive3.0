@@ -237,7 +237,7 @@ export function PreviewStep({
                     borderRadius="md"
                     whiteSpace="nowrap"
                   >
-                    @{user.hive_author}
+                    {user.hive_author}
                   </Text>
                 )}
               </VStack>
