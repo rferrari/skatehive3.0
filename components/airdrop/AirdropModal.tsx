@@ -705,7 +705,7 @@ export function AirdropModal({
         <ModalContent
           bg="background"
           color="text"
-          borderRadius={isMobile ? "0" : "20px"}
+          borderRadius={isMobile ? "0" : "10px"}
           border="1px solid"
           borderColor="border"
           shadow="lg"

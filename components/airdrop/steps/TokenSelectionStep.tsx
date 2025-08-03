@@ -54,10 +54,10 @@ export function TokenSelectionStep({
 
   // Get balance for selected token
   const tokenBalance = selectedToken ? getTokenBalance(selectedToken) : null;
-  
+
   // Check if amount exceeds balance
-  const exceedsBalance = tokenBalance && 
-    parseFloat(totalAmount) > parseFloat(tokenBalance.balance);
+  const exceedsBalance =
+    tokenBalance && parseFloat(totalAmount) > parseFloat(tokenBalance.balance);
 
   return (
     <>
@@ -77,9 +77,6 @@ export function TokenSelectionStep({
 
         {/* Token Selection */}
         <Box>
-          <Text fontSize="lg" fontWeight="bold" mb={4} color="primary">
-            Choose Token
-          </Text>
           <FormControl>
             <FormLabel color="text">Available Tokens</FormLabel>
             <Select
@@ -125,14 +122,17 @@ export function TokenSelectionStep({
                 </Text>
                 <VStack spacing={1} align="end">
                   <Text fontSize="sm" fontWeight="semibold" color="text">
-                    {parseFloat(tokenBalance.balance).toLocaleString()} {selectedToken}
+                    {parseFloat(tokenBalance.balance).toLocaleString()}{" "}
+                    {selectedToken}
                   </Text>
                   {tokenBalance.usdValue && (
                     <Text fontSize="xs" color="textSecondary">
-                      ≈ ${tokenBalance.usdValue.toLocaleString(undefined, {
+                      ≈ $
+                      {tokenBalance.usdValue.toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
-                      })} USD
+                      })}{" "}
+                      USD
                     </Text>
                   )}
                 </VStack>
@@ -141,45 +141,54 @@ export function TokenSelectionStep({
           )}
 
           {/* No Balance Warning */}
-          {selectedToken && !tokenBalance && (isHiveConnected || isEthereumConnected) && (
-            <Box
-              mt={3}
-              p={3}
-              bg="orange.50"
-              _dark={{ bg: "orange.900", borderColor: "orange.700" }}
-              borderRadius="md"
-              border="1px solid"
-              borderColor="orange.200"
-            >
-              <HStack spacing={2}>
-                <Text fontSize="12px">⚠️</Text>
-                <Text fontSize="sm" color="orange.600" _dark={{ color: "orange.200" }}>
-                  No {selectedToken} balance found in connected wallets
-                </Text>
-              </HStack>
-            </Box>
-          )}
+          {selectedToken &&
+            !tokenBalance &&
+            (isHiveConnected || isEthereumConnected) && (
+              <Box
+                mt={3}
+                p={3}
+                bg="orange.50"
+                _dark={{ bg: "orange.900", borderColor: "orange.700" }}
+                borderRadius="md"
+                border="1px solid"
+                borderColor="orange.200"
+              >
+                <HStack spacing={2}>
+                  <Text fontSize="12px">⚠️</Text>
+                  <Text
+                    fontSize="sm"
+                    color="orange.600"
+                    _dark={{ color: "orange.200" }}
+                  >
+                    No {selectedToken} balance found in connected wallets
+                  </Text>
+                </HStack>
+              </Box>
+            )}
         </Box>
 
         {/* Amount Selection */}
         <Box>
           <HStack justify="space-between" align="center" mb={4}>
-            <Text fontSize="lg" fontWeight="bold" color="primary">
-              Total Amount
-            </Text>
             {/* Use Max Button */}
             {tokenBalance && parseFloat(tokenBalance.balance) > 0 && (
               <Button
                 size="sm"
                 variant="outline"
                 colorScheme="blue"
-                onClick={() => onConfigChange({ totalAmount: parseFloat(tokenBalance.balance).toFixed(2) })}
+                onClick={() =>
+                  onConfigChange({
+                    totalAmount: parseFloat(tokenBalance.balance).toFixed(2),
+                  })
+                }
               >
                 Use Max ({parseFloat(tokenBalance.balance).toFixed(2)})
               </Button>
             )}
           </HStack>
-          <FormControl isInvalid={parseFloat(totalAmount) <= 0 || !!exceedsBalance}>
+          <FormControl
+            isInvalid={parseFloat(totalAmount) <= 0 || !!exceedsBalance}
+          >
             <FormLabel color="text">
               Total {selectedToken} to distribute
             </FormLabel>
@@ -202,12 +211,13 @@ export function TokenSelectionStep({
               </NumberInputStepper>
             </NumberInput>
             <FormErrorMessage>
-              {parseFloat(totalAmount) <= 0 
+              {parseFloat(totalAmount) <= 0
                 ? "Amount must be greater than 0"
-                : exceedsBalance 
-                ? `Amount exceeds your balance of ${parseFloat(tokenBalance?.balance || "0").toFixed(2)} ${selectedToken}`
-                : ""
-              }
+                : exceedsBalance
+                ? `Amount exceeds your balance of ${parseFloat(
+                    tokenBalance?.balance || "0"
+                  ).toFixed(2)} ${selectedToken}`
+                : ""}
             </FormErrorMessage>
           </FormControl>
         </Box>

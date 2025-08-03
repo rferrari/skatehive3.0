@@ -140,7 +140,7 @@ export function PreviewStep({
       data: {
         label: user ? (
           <Image
-            {...getAvatarErrorHandler(user, '')}
+            {...getAvatarErrorHandler(user, "")}
             alt={user}
             w="60px"
             h="60px"
@@ -219,7 +219,7 @@ export function PreviewStep({
                   position="relative"
                 >
                   <Image
-                    {...getAvatarErrorHandler(user.hive_author, 'small')}
+                    {...getAvatarErrorHandler(user.hive_author, "small")}
                     alt={user.hive_author}
                     w="100%"
                     h="100%"
@@ -367,7 +367,10 @@ export function PreviewStep({
                       <Td>
                         <HStack>
                           <Image
-                            {...getAvatarErrorHandler(user.hive_author, 'small')}
+                            {...getAvatarErrorHandler(
+                              user.hive_author,
+                              "small"
+                            )}
                             alt={user.hive_author}
                             borderRadius="full"
                             boxSize="24px"
@@ -415,7 +418,7 @@ export function PreviewStep({
                       #{index + 1}
                     </Badge>
                     <Image
-                      {...getAvatarErrorHandler(user.hive_author, 'small')}
+                      {...getAvatarErrorHandler(user.hive_author, "small")}
                       alt={user.hive_author}
                       borderRadius="full"
                       boxSize="32px"
