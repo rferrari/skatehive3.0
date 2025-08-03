@@ -96,7 +96,8 @@ export default function Sidebar() {
         cursor="pointer"
         role="group"
         width="100%"
-        ml={4}
+       
+        pl={4}
         textDecoration="none"
         color="inherit"
         _hover={{
@@ -137,9 +138,9 @@ export default function Sidebar() {
         <Box
           display="flex"
           alignItems="center"
-          px={1}
-          py={0.5}
-          borderRadius="md"
+          px={0.25}
+          py={0}
+          my={0.25}
         >
           <Icon as={icon} boxSize={4} mr={2} />
           {children}
