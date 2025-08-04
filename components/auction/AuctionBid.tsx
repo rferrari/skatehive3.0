@@ -6,7 +6,7 @@ import {
 } from "@/hooks/wagmiGenerated";
 import { useCallback, useState } from "react";
 import { parseEther, formatEther } from "viem";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useAccount, useSwitchChain, useChainId } from "wagmi";
 import { waitForTransactionReceipt } from "wagmi/actions";
 import { useForm } from "react-hook-form";
 import { getConfig } from "@/lib/utils/wagmi";
@@ -74,9 +74,28 @@ export function AuctionBid({
   const [txHash, setTxHash] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const account = useAccount();
+  const chainId = useChainId();
   const [hasShownToast, setHasShownToast] = useState(false);
   const toast = require("@chakra-ui/react").useToast();
-  const { switchChain } = useSwitchChain()
+  const { switchChain } = useSwitchChain();
+
+  const isOnBaseNetwork = chainId === base.id;
+
+  const handleSwitchToBase = useCallback(async () => {
+    if (!switchChain) return;
+
+    try {
+      await switchChain({ chainId: base.id });
+    } catch (error: any) {
+      toast({
+        title: "Network Switch Failed",
+        description: error.message || "Failed to switch to Base network",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  }, [switchChain, toast]);
 
   // Calculate minimum bid: currentBid + (currentBid * increment%)
   const minBidValue = calculateMinBid(
@@ -105,7 +124,7 @@ export function AuctionBid({
       setTxHash(null);
 
       try {
-        switchChain({chainId: base.id})
+        switchChain({ chainId: base.id });
 
         const txHash = await writeBid({
           address: DAO_ADDRESSES.auction,
@@ -159,7 +178,16 @@ export function AuctionBid({
         setIsLoading(false);
       }
     },
-    [tokenId, writeBid, onBid, minimumBidIncrement, setValue, reservePrice, switchChain, toast]
+    [
+      tokenId,
+      writeBid,
+      onBid,
+      minimumBidIncrement,
+      setValue,
+      reservePrice,
+      switchChain,
+      toast,
+    ]
   );
 
   const handleSettle = useCallback(async () => {
@@ -208,11 +236,7 @@ export function AuctionBid({
       {/* Success Transaction Hash Toast handled in logic above */}
 
       {isAuctionRunning ? (
-        <Box 
-          as="form" 
-          onSubmit={handleSubmit(onSubmitBid)} 
-          w="full"
-        >
+        <Box as="form" onSubmit={handleSubmit(onSubmitBid)} w="full">
           <VStack
             spacing={4}
             align={alignContent === "right" ? "end" : "stretch"}
@@ -229,30 +253,28 @@ export function AuctionBid({
               </FormLabel>
               <Input
                 {...register("bidAmount", {
-                  required: "Bid amount required",
+                  required: "Bid amount is required",
                   validate: (value) => {
-                    const numValue = Number(value);
-                    if (isNaN(numValue)) return "Invalid number";
-                    if (numValue <= 0) return "Bid must be greater than 0";
-
-                    const minBidEth = parseFloat(formatEther(minBidValue));
-                    if (numValue < minBidEth) {
-                      return `Minimum bid: ${formatEther(minBidValue)} ETH`;
-                    }
-                    return true;
+                    const result = validateBid(
+                      value,
+                      winningBid,
+                      BigInt(reservePrice),
+                      minimumBidIncrement
+                    );
+                    return result.isValid || result.error || "Invalid bid";
                   },
                 })}
-                type="number"
-                step="0.000001"
-                min="0.000001"
-                placeholder="Enter bid amount"
-                bg="muted"
+                placeholder={`Minimum: ${formatEther(minBidValue)} ETH`}
+                bg="background"
+                border="1px solid"
                 borderColor="border"
                 color="text"
                 size="lg"
                 _hover={{ borderColor: "primary" }}
                 _focus={{ borderColor: "primary", boxShadow: "outline" }}
-                isDisabled={!account.isConnected || isLoading}
+                isDisabled={
+                  !account.isConnected || isLoading || !isOnBaseNetwork
+                }
                 textAlign={alignContent === "right" ? "right" : "left"}
               />
               <FormErrorMessage color="error" fontSize="xs">
@@ -269,17 +291,21 @@ export function AuctionBid({
             </FormControl>
 
             <Button
-              type="submit"
+              type={isOnBaseNetwork ? "submit" : "button"}
+              onClick={isOnBaseNetwork ? undefined : handleSwitchToBase}
               variant="solid"
               size="lg"
               width="full"
-              bg="primary"
+              bg={isOnBaseNetwork ? "primary" : "orange.500"}
               color="background"
-              _hover={{ bg: "accent", color: "background" }}
+              _hover={{
+                bg: isOnBaseNetwork ? "accent" : "orange.600",
+                color: "background",
+              }}
               _disabled={{ bg: "muted", color: "text", cursor: "not-allowed" }}
               isDisabled={!account.isConnected || isLoading}
               isLoading={isLoading}
-              loadingText="Placing Bid..."
+              loadingText={isOnBaseNetwork ? "Placing Bid..." : "Switching..."}
               h="48px"
               onMouseEnter={() => {
                 onBidButtonHover?.(true);
@@ -290,7 +316,13 @@ export function AuctionBid({
                 onBidSectionHover?.(false);
               }}
             >
-              {isLoading ? "Placing Bid..." : "Place Bid"}
+              {isLoading
+                ? isOnBaseNetwork
+                  ? "Placing Bid..."
+                  : "Switching..."
+                : isOnBaseNetwork
+                ? "Place Bid"
+                : "Switch to Base"}
             </Button>
           </VStack>
         </Box>
@@ -299,20 +331,33 @@ export function AuctionBid({
           {isLatestAuction && (
             <VStack spacing={4} align="stretch">
               <Button
-                onClick={handleSettle}
+                onClick={isOnBaseNetwork ? handleSettle : handleSwitchToBase}
                 variant="solid"
                 size="lg"
                 width="full"
-                bg="success"
+                bg={isOnBaseNetwork ? "success" : "orange.500"}
                 color="background"
-                _hover={{ bg: "primary", color: "background" }}
-                _disabled={{ bg: "muted", color: "text", cursor: "not-allowed" }}
+                _hover={{
+                  bg: isOnBaseNetwork ? "primary" : "orange.600",
+                  color: "background",
+                }}
+                _disabled={{
+                  bg: "muted",
+                  color: "text",
+                  cursor: "not-allowed",
+                }}
                 isDisabled={!account.isConnected || isLoading}
                 isLoading={isLoading}
-                loadingText="Settling..."
+                loadingText={isOnBaseNetwork ? "Settling..." : "Switching..."}
                 h="48px"
               >
-                {isLoading ? "Settling..." : "Start Next Auction"}
+                {isLoading
+                  ? isOnBaseNetwork
+                    ? "Settling..."
+                    : "Switching..."
+                  : isOnBaseNetwork
+                  ? "Start Next Auction"
+                  : "Switch to Base"}
               </Button>
             </VStack>
           )}
@@ -344,7 +389,12 @@ export function AuctionBid({
         }}
       >
         <VStack spacing={0} align="stretch" style={{ margin: 0, gap: 0 }}>
-          <Text fontSize="sm" fontWeight="bold" color="primary" textAlign="center">
+          <Text
+            fontSize="sm"
+            fontWeight="bold"
+            color="primary"
+            textAlign="center"
+          >
             Bid History
           </Text>
           {bids.length === 0 ? (
@@ -369,7 +419,7 @@ export function AuctionBid({
                 return amountB > amountA ? 1 : amountB < amountA ? -1 : 0;
               })
               .map((bid, index) => (
-                                                 <HStack
+                <HStack
                   key={index}
                   justify="space-between"
                   w="full"
@@ -381,7 +431,11 @@ export function AuctionBid({
                 >
                   <HStack spacing={1} style={{ marginTop: 0 }}>
                     <Avatar address={bid.bidder as `0x${string}`} />
-                    <Name address={bid.bidder as `0x${string}`} className="font-bold text-sm text" style={{ padding: 0, margin: 0 }} />
+                    <Name
+                      address={bid.bidder as `0x${string}`}
+                      className="font-bold text-sm text"
+                      style={{ padding: 0, margin: 0 }}
+                    />
                   </HStack>
                   <Text fontSize="sm" fontWeight="medium" color="text">
                     {formatEther(BigInt(bid.amount))} ETH
