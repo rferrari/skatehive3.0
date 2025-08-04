@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { createCoin, DeployCurrency, createMetadataBuilder, createZoraUploaderForCreator, setApiKey } from '@zoralabs/coins-sdk';
-import { useAccount, useWalletClient, usePublicClient } from 'wagmi';
+import { useAccount, useWalletClient, usePublicClient, useSwitchChain, useChainId } from 'wagmi';
 import { Address } from 'viem';
 import { useToast } from '@chakra-ui/react';
 import { SKATEHIVE_PLATFORM_REFERRER } from '@/components/shared/search/constants';
@@ -8,6 +8,7 @@ import { useAioha } from "@aioha/react-ui";
 import { KeyTypes } from "@aioha/aioha";
 import { Operation } from "@hiveio/dhive";
 import { updatePostWithCoinInfo } from "@/lib/hive/server-actions";
+import { base } from 'wagmi/chains';
 
 // Utility function to generate thumbnail from video file
 const generateVideoThumbnail = async (videoFile: File): Promise<File> => {
@@ -80,6 +81,8 @@ export function useCoinCreation() {
   const { address } = useAccount();
   const { data: walletClient } = useWalletClient();
   const publicClient = usePublicClient();
+  const { switchChain } = useSwitchChain();
+  const chainId = useChainId();
   const { aioha, user } = useAioha();
   const toast = useToast();
 
@@ -98,6 +101,17 @@ export function useCoinCreation() {
 
     setIsCreating(true);
     try {
+      // Ensure we're on Base network
+      if (chainId !== base.id) {
+        try {
+          console.log('Switching to Base network for coin creation...');
+          await switchChain({ chainId: base.id });
+          console.log('Successfully switched to Base network');
+        } catch (switchError: any) {
+          throw new Error(`Failed to switch to Base network. Please switch manually. Error: ${switchError.message}`);
+        }
+      }
+
       // Create metadata using Zora's metadata builder
       const metadataBuilder = createMetadataBuilder()
         .withName(coinData.name)

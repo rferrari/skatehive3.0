@@ -1,11 +1,13 @@
 "use client";
 
+import "@rainbow-me/rainbowkit/styles.css";
 import { CSSReset } from "@chakra-ui/react";
 import { Aioha } from "@aioha/aioha";
 import { AiohaProvider } from "@aioha/react-ui";
 import { ThemeProvider } from "./themeProvider";
 import { OnchainKitProvider } from "@coinbase/onchainkit";
-import { WagmiProvider, http, createConfig } from "wagmi";
+import { getDefaultConfig, RainbowKitProvider } from "@rainbow-me/rainbowkit";
+import { WagmiProvider, http } from "wagmi";
 import { base, mainnet } from "wagmi/chains";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { UserProvider } from "@/contexts/UserContext";
@@ -28,12 +30,17 @@ if (typeof window !== "undefined") {
 
 const queryClient = new QueryClient();
 
-export const wagmiConfig = createConfig({
+export const wagmiConfig = getDefaultConfig({
+  appName: process.env.NEXT_PUBLIC_COMMUNITY_NAME || "skatehive",
+  projectId:
+    process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ||
+    "6465a9e6cbe7a3cb53461864e01d3e8d",
   chains: [base, mainnet],
   transports: {
     [base.id]: http(),
     [mainnet.id]: http(),
   },
+  ssr: true, // Enable server-side rendering for Next.js
 });
 
 const farcasterAuthConfig = {
@@ -50,20 +57,22 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <ThemeProvider>
         <QueryClientProvider client={queryClient}>
           <WagmiProvider config={wagmiConfig}>
-            <OnchainKitProvider
-              chain={base}
-              apiKey={process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY}
-              projectId={process.env.NEXT_PUBLIC_CDP_PROJECT_ID}
-            >
-              <AuthKitProvider config={farcasterAuthConfig}>
-                <AiohaProvider aioha={aioha}>
-                  <VoteWeightProvider>
-                    <CSSReset />
-                    {children}
-                  </VoteWeightProvider>
-                </AiohaProvider>
-              </AuthKitProvider>
-            </OnchainKitProvider>
+            <RainbowKitProvider coolMode initialChain={base}>
+              <OnchainKitProvider
+                chain={base}
+                apiKey={process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY}
+                projectId={process.env.NEXT_PUBLIC_CDP_PROJECT_ID}
+              >
+                <AuthKitProvider config={farcasterAuthConfig}>
+                  <AiohaProvider aioha={aioha}>
+                    <VoteWeightProvider>
+                      <CSSReset />
+                      {children}
+                    </VoteWeightProvider>
+                  </AiohaProvider>
+                </AuthKitProvider>
+              </OnchainKitProvider>
+            </RainbowKitProvider>
           </WagmiProvider>
         </QueryClientProvider>
       </ThemeProvider>
