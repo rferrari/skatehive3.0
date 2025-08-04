@@ -59,28 +59,18 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
     const [isEditingEthAddress, setIsEditingEthAddress] = useState(false);
     const [showMergeModal, setShowMergeModal] = useState(false);
     
-    // Safely use Wagmi hooks with error handling
-    let address: string | undefined;
-    let isConnected = false;
-    let connect: any;
-    let connectors: any;
-    let isPending = false;
-    let disconnect: any;
+    // Always call hooks at the top level
+    const account = useAccount();
+    const connectHook = useConnect();
+    const disconnectHook = useDisconnect();
     
-    try {
-      const account = useAccount();
-      const connectHook = useConnect();
-      const disconnectHook = useDisconnect();
-      
-      address = account.address;
-      isConnected = account.isConnected;
-      connect = connectHook.connect;
-      connectors = connectHook.connectors;
-      isPending = connectHook.isPending;
-      disconnect = disconnectHook.disconnect;
-    } catch (error) {
-      console.warn("Wagmi hooks not available:", error);
-    }
+    // Safely extract values with fallbacks
+    const address = account?.address;
+    const isConnected = account?.isConnected || false;
+    const connect = connectHook?.connect;
+    const connectors = connectHook?.connectors || [];
+    const isPending = connectHook?.isPending || false;
+    const disconnect = disconnectHook?.disconnect;
     
     const { user } = useAioha();
     const { isAuthenticated: isFarcasterConnected, profile: farcasterProfile } =
@@ -428,10 +418,10 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
               {/* Custom wallet connection instead of ConnectButton */}
               {!isConnected ? (
                 <VStack spacing={2} align="stretch">
-                  {connectors?.map((connector: { id: string; name: string }) => (
+                  {connectors?.map((connector) => (
                     <Button
                       key={connector.id}
-                      onClick={() => connect({ connector })}
+                      onClick={() => connect && connect({ connector })}
                       isLoading={isPending}
                       loadingText="Connecting..."
                       size="sm"
@@ -459,7 +449,7 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => disconnect()}
+                      onClick={() => disconnect && disconnect()}
                     >
                       Disconnect
                     </Button>
