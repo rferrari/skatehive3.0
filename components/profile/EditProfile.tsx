@@ -22,7 +22,8 @@ import {
 } from "@chakra-ui/react";
 import countryList from "react-select-country-list";
 import { ProfileData } from "./ProfilePage";
-import { useAccount, useConnect, useDisconnect } from "wagmi";
+import { useAccount } from "wagmi";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useAioha } from "@aioha/react-ui";
 import { useFarcasterSession } from "@/hooks/useFarcasterSession";
 import { KeychainSDK, KeychainKeyTypes, Broadcast } from "keychain-sdk";
@@ -61,16 +62,10 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
     
     // Always call hooks at the top level
     const account = useAccount();
-    const connectHook = useConnect();
-    const disconnectHook = useDisconnect();
     
     // Safely extract values with fallbacks
     const address = account?.address;
     const isConnected = account?.isConnected || false;
-    const connect = connectHook?.connect;
-    const connectors = connectHook?.connectors || [];
-    const isPending = connectHook?.isPending || false;
-    const disconnect = disconnectHook?.disconnect;
     
     const { user } = useAioha();
     const { isAuthenticated: isFarcasterConnected, profile: farcasterProfile } =
@@ -415,45 +410,30 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
                   : "Connect your Ethereum wallet to link it with your Hive profile"}
               </Text>
 
-              {/* Custom wallet connection instead of ConnectButton */}
-              {!isConnected ? (
-                <VStack spacing={2} align="stretch">
-                  {connectors?.map((connector) => (
-                    <Button
-                      key={connector.id}
-                      onClick={() => connect && connect({ connector })}
-                      isLoading={isPending}
-                      loadingText="Connecting..."
-                      size="sm"
-                      colorScheme="blue"
-                      variant="outline"
-                    >
-                      Connect {connector.name}
-                    </Button>
-                  ))}
-                </VStack>
-              ) : (
+              {/* Use RainbowKit ConnectButton */}
+              <Box>
+                <ConnectButton 
+                  showBalance={false}
+                  chainStatus="none"
+                  accountStatus={{
+                    smallScreen: "avatar",
+                    largeScreen: "full"
+                  }}
+                />
+              </Box>
+
+              {isConnected && address && (
                 <VStack spacing={2} align="stretch">
                   <Text fontSize="sm" fontWeight="medium" color="green.500">
                     ✓ Connected: {address?.slice(0, 6)}...{address?.slice(-4)}
                   </Text>
-                  <Flex gap={2}>
-                    <Button
-                      size="sm"
-                      colorScheme="green"
-                      onClick={handleConnectEthWallet}
-                      flex={1}
-                    >
-                      {hasEthAddress ? "Update Address" : "Link Address"}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => disconnect && disconnect()}
-                    >
-                      Disconnect
-                    </Button>
-                  </Flex>
+                  <Button
+                    size="sm"
+                    colorScheme="green"
+                    onClick={handleConnectEthWallet}
+                  >
+                    {hasEthAddress ? "Update Address" : "Link Address"}
+                  </Button>
                 </VStack>
               )}
 
@@ -512,10 +492,6 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
       isEditingEthAddress,
       isConnected,
       address,
-      connectors,
-      isPending,
-      connect,
-      disconnect,
       handleConnectEthWallet,
       handleEditEthAddress,
       handleCancelEthEdit,

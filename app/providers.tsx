@@ -62,7 +62,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
               coolMode
               initialChain={base}
               theme={dynamicRainbowTheme}
-              modalSize="compact"
             >
               <OnchainKitProvider
                 chain={base}
