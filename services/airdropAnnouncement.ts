@@ -1,9 +1,16 @@
 import { createSnapAsSkatedev } from '@/lib/hive/server-actions';
 import { uploadToHiveImagesWithRetry } from '@/lib/utils/imageUpload';
 
+export interface AirdropRecipient {
+  hive_author: string;
+  eth_address?: string;
+  points?: number;
+  amount?: string;
+}
+
 export interface AirdropAnnouncementParams {
   token: string;
-  recipients: any[];
+  recipients: AirdropRecipient[];
   totalAmount: number;
   sortOption: string;
   customMessage?: string;
@@ -27,7 +34,7 @@ export interface AnnouncementResult {
 /**
  * Generate recipient mentions for the post content
  */
-function generateRecipientMentions(recipients: any[], maxMentions: number = 20): string {
+function generateRecipientMentions(recipients: AirdropRecipient[], maxMentions: number = 20): string {
   const mentions = recipients
     .slice(0, maxMentions)
     .map(user => `@${user.hive_author}`)
@@ -75,7 +82,7 @@ export function generateAnnouncementContent(params: AirdropAnnouncementParams, i
 
   // Add custom message if provided
   if (customMessage && customMessage.trim()) {
-    content += `says: \n > ${customMessage}\n\n`;
+    content += `Message: \n > ${customMessage}\n\n`;
   }
 
   // Add sponsored skaters with tagged users (up to 10)
