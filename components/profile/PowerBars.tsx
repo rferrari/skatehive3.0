@@ -13,7 +13,7 @@ export default function PowerBars({
   vpPercent, 
   rcPercent, 
   height = 100, 
-  width = 10 
+  width = 6 
 }: PowerBarsProps) {
   // Parse percentage strings to numbers
   const parsePercentage = (percentStr: string): number => {
@@ -25,85 +25,69 @@ export default function PowerBars({
   const vpValue = parsePercentage(vpPercent);
   const rcValue = parsePercentage(rcPercent);
 
-  // Calculate fill heights
-  const vpFillHeight = (vpValue / 100) * height;
-  const rcFillHeight = (rcValue / 100) * height;
+  // Calculate fill widths (rotated 90 degrees)
+  const vpFillWidth = (vpValue / 100) * height;
+  const rcFillWidth = (rcValue / 100) * height;
 
   return (
-    <Flex direction="column" align="center" gap={2}>
+    <Flex direction="column" align="center" gap={3} minW="fit-content" maxW="fit-content">
       {/* Bars Container */}
-      <Flex gap={3} align="flex-end">
+      <Flex direction="column" gap={3} align="center" minW="fit-content" maxW="fit-content">
         {/* Voting Power Bar */}
         <Tooltip label={`Voting Power: ${vpPercent}`} placement="top">
-          <Box position="relative" cursor="pointer">
-            <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+          <Box position="relative" cursor="pointer" minW={`${height}px`} maxW={`${height}px`} w={`${height}px`}>
+            <svg width={height} height={width} viewBox={`0 0 ${height} ${width}`}>
               {/* Background track */}
               <rect
                 x="0"
                 y="0"
-                width={width}
-                height={height}
+                width={height}
+                height={width}
                 rx="4"
-                fill="var(--chakra-colors-muted)"
+                fill="var(--chakra-colors-error)"
                 opacity="0.3"
               />
               {/* Fill */}
               <rect
                 x="0"
-                y={height - vpFillHeight}
-                width={width}
-                height={vpFillHeight}
+                y="0"
+                width={vpFillWidth}
+                height={width}
                 rx="4"
                 fill="var(--chakra-colors-primary)"
                 opacity="0.8"
               />
             </svg>
-            <Text
-              fontSize="xs"
-              color="text"
-              textAlign="center"
-              mt={1}
-              fontWeight="medium"
-            >
-              VP
-            </Text>
+
           </Box>
         </Tooltip>
 
         {/* Resource Credits Bar */}
         <Tooltip label={`Resource Credits: ${rcPercent}`} placement="top">
-          <Box position="relative" cursor="pointer">
-            <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+          <Box position="relative" cursor="pointer" minW={`${height}px`} maxW={`${height}px`} w={`${height}px`}>
+            <svg width={height} height={width} viewBox={`0 0 ${height} ${width}`}>
               {/* Background track */}
               <rect
                 x="0"
                 y="0"
-                width={width}
-                height={height}
+                width={height}
+                height={width}
                 rx="4"
-                fill="var(--chakra-colors-muted)"
+                fill="var(--chakra-colors-error)"
                 opacity="0.3"
               />
               {/* Fill */}
               <rect
                 x="0"
-                y={height - rcFillHeight}
-                width={width}
-                height={rcFillHeight}
+                y="0"
+                width={rcFillWidth}
+                height={width}
                 rx="4"
                 fill="var(--chakra-colors-accent)"
                 opacity="0.8"
               />
             </svg>
-            <Text
-              fontSize="xs"
-              color="text"
-              textAlign="center"
-              mt={1}
-              fontWeight="medium"
-            >
-              RC
-            </Text>
+
           </Box>
         </Tooltip>
       </Flex>

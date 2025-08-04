@@ -57,15 +57,7 @@ export default function ProfileHeader({
                 mt={{ base: "-32px", md: 0 }}
             >
                 {/* Avatar and Power Bars */}
-                <Flex
-                  direction={{ base: "column", md: "row" }}
-                  align={{ base: "center", md: "flex-start" }}
-                  gap={{ base: 2, md: 4 }}
-                  flexShrink={0}
-                  flexBasis={{ base: 'auto', md: '25%' }}
-                  maxW={{ base: 'none', md: '25%' }}
-                  w={{ base: 'auto', md: '25%' }}
-                >
+                <Box position="relative" flexShrink={0}>
                   <Avatar
                       src={profileData.profileImage}
                       name={username}
@@ -73,16 +65,24 @@ export default function ProfileHeader({
                       boxSize="100px"
                       mb={{ base: 2, md: 0 }}
                   />
-                  {/* Power Bars */}
+                  
+                  {/* Power Bars - Positioned at bottom right of Avatar */}
                   {profileData.vp_percent && profileData.rc_percent && (
-                    <PowerBars
-                      vpPercent={profileData.vp_percent}
-                      rcPercent={profileData.rc_percent}
-                      height={100}
-                      width={25}
-                    />
+                    <Box
+                      position="absolute"
+                      bottom="10px"
+                      right="-110px"
+                      zIndex={1}
+                    >
+                      <PowerBars
+                        vpPercent={profileData.vp_percent}
+                        rcPercent={profileData.rc_percent}
+                        height={100}
+                        width={10}
+                      />
+                    </Box>
                   )}
-                </Flex>
+                </Box>
                 {/* Profile Info (right-aligned on desktop, constrained width) */}
                 <Flex
                   direction="column"
