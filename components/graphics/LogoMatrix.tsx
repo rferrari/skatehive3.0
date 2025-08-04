@@ -4,7 +4,7 @@ import "../../lib/utils/fonts.css";
 
 // Define character sets for each font
 const matrixCharacters1 = "ABCDHIJKLMSTUVWXZ124567890"; // Logoskate1 (original, minus Logoskate2 chars)
-const matrixCharacters2 = "EFGNOPQRYacfgkmopqrtwxz";   // Logoskate2 (user-specified)
+const matrixCharacters2 = "EFGNOPQRYacfgkmopqrtwxz"; // Logoskate2 (user-specified)
 
 const randomSentences = [
   "skate or dont",
@@ -41,11 +41,13 @@ function generateColumnArray(lines = 50) {
   for (let i = 0; i < lines; i++) {
     // 70% chance Logoskate1, 30% Logoskate2
     if (Math.random() < 0.3) {
-      const char = matrixCharacters2[Math.floor(Math.random() * matrixCharacters2.length)];
-      column.push({ char, font: 'Logoskate2' });
+      const char =
+        matrixCharacters2[Math.floor(Math.random() * matrixCharacters2.length)];
+      column.push({ char, font: "Logoskate2" });
     } else {
-      const char = matrixCharacters1[Math.floor(Math.random() * matrixCharacters1.length)];
-      column.push({ char, font: 'Logoskate' });
+      const char =
+        matrixCharacters1[Math.floor(Math.random() * matrixCharacters1.length)];
+      column.push({ char, font: "Logoskate" });
     }
   }
   return column;
@@ -53,13 +55,15 @@ function generateColumnArray(lines = 50) {
 
 // New: type for column
 interface MatrixColumn {
-  text: { char: string, font: string }[];
+  text: { char: string; font: string }[];
   duration: number;
   delay: number;
 }
 
 const LogoMatrix = () => {
-  const [randomSentence, setRandomSentence] = useState(randomSentences[0]);
+  const [randomSentence, setRandomSentence] = useState(
+    () => randomSentences[Math.floor(Math.random() * randomSentences.length)]
+  );
   const [columns, setColumns] = useState<MatrixColumn[]>([]);
   const [primary] = useToken("colors", ["primary"]);
   const [messageVisible, setMessageVisible] = useState(true);
@@ -69,7 +73,7 @@ const LogoMatrix = () => {
     const newColumns = Array.from({ length: 20 }, () => ({
       text: generateColumnArray(50),
       duration: 10 + Math.random() * 10, // 10-20s
-      delay: -Math.random() * 2,      // -0 to -2s
+      delay: -Math.random() * 2, // -0 to -2s
     }));
     setColumns(newColumns);
   }, []);
@@ -79,10 +83,13 @@ const LogoMatrix = () => {
     const switchMessage = setInterval(() => {
       setMessageVisible(false);
       setTimeout(() => {
-        setRandomSentence(prev => {
+        setRandomSentence((prev) => {
           let next;
           do {
-            next = randomSentences[Math.floor(Math.random() * randomSentences.length)];
+            next =
+              randomSentences[
+                Math.floor(Math.random() * randomSentences.length)
+              ];
           } while (next === prev && randomSentences.length > 1);
           return next;
         });
@@ -120,7 +127,12 @@ const LogoMatrix = () => {
             }}
           >
             {col.text.map((item, idx) => (
-              <span key={idx} style={{ fontFamily: `'${item.font}', monospace` }}>{item.char + '\n'}</span>
+              <span
+                key={idx}
+                style={{ fontFamily: `'${item.font}', monospace` }}
+              >
+                {item.char + "\n"}
+              </span>
             ))}
           </Box>
         ))}
@@ -146,38 +158,39 @@ const LogoMatrix = () => {
             background: `linear-gradient(to right, ${primary}, #fff)`,
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
-            animation: "ghost-glitch 1.5s infinite, ghost-flicker 1.1s infinite, ghost-stretch 2.5s infinite",
+            animation:
+              "ghost-glitch 1.5s infinite, ghost-flicker 1.1s infinite, ghost-stretch 2.5s infinite",
             clipPath: "inset(2px 0)",
             opacity: 0.2,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             zIndex: 1,
-            transformOrigin: "center center"
+            transformOrigin: "center center",
           }}
         >
           {randomSentence}
         </Text>
         <style jsx global>{`
           @font-face {
-            font-family: 'Logoskate';
-            src: url('/fonts/Logoskate.ttf') format('truetype');
+            font-family: "Logoskate";
+            src: url("/fonts/Logoskate.ttf") format("truetype");
             font-weight: normal;
             font-style: normal;
             font-display: swap;
           }
           @font-face {
-            font-family: 'Logoskate2';
-            src: url('/fonts/Logoskate2.ttf') format('truetype');
+            font-family: "Logoskate2";
+            src: url("/fonts/Logoskate2.ttf") format("truetype");
             font-weight: normal;
             font-style: normal;
             font-display: swap;
           }
           @font-face {
-            font-family: 'Joystix';
-            src: url('/fonts/joystix.woff2') format('woff2'),
-                 url('/fonts/joystix.woff') format('woff'),
-                 url('/fonts/joystix.otf') format('opentype');
+            font-family: "Joystix";
+            src: url("/fonts/joystix.woff2") format("woff2"),
+              url("/fonts/joystix.woff") format("woff"),
+              url("/fonts/joystix.otf") format("opentype");
             font-weight: normal;
             font-style: normal;
             font-display: swap;
@@ -191,10 +204,12 @@ const LogoMatrix = () => {
             }
           }
           @keyframes ghost-glitch {
-            0%, 100% {
+            0%,
+            100% {
               transform: translate(-50%, -50%) skew(0deg);
             }
-            10%, 90% {
+            10%,
+            90% {
               transform: translate(-50%, -50%) skew(0deg);
             }
             15% {
@@ -220,23 +235,52 @@ const LogoMatrix = () => {
             }
           }
           @keyframes ghost-flicker {
-            0% { opacity: 0.2; }
-            7% { opacity: 0; }
-            13% { opacity: 0.3; }
-            19% { opacity: 0.1; }
-            27% { opacity: 0.4; }
-            33% { opacity: 0; }
-            41% { opacity: 0.2; }
-            52% { opacity: 0.05; }
-            60% { opacity: 0.3; }
-            68% { opacity: 0; }
-            75% { opacity: 0.25; }
-            82% { opacity: 0.1; }
-            90% { opacity: 0.3; }
-            100% { opacity: 0.2; }
+            0% {
+              opacity: 0.2;
+            }
+            7% {
+              opacity: 0;
+            }
+            13% {
+              opacity: 0.3;
+            }
+            19% {
+              opacity: 0.1;
+            }
+            27% {
+              opacity: 0.4;
+            }
+            33% {
+              opacity: 0;
+            }
+            41% {
+              opacity: 0.2;
+            }
+            52% {
+              opacity: 0.05;
+            }
+            60% {
+              opacity: 0.3;
+            }
+            68% {
+              opacity: 0;
+            }
+            75% {
+              opacity: 0.25;
+            }
+            82% {
+              opacity: 0.1;
+            }
+            90% {
+              opacity: 0.3;
+            }
+            100% {
+              opacity: 0.2;
+            }
           }
           @keyframes ghost-stretch {
-            0%, 100% {
+            0%,
+            100% {
               transform: translate(-50%, -50%) scaleY(1);
             }
             25% {
@@ -264,4 +308,4 @@ const LogoMatrix = () => {
   );
 };
 
-export default LogoMatrix; 
+export default LogoMatrix;
