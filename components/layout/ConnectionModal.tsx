@@ -17,10 +17,12 @@ import {
   Flex,
   Tooltip,
   Image,
+  Box,
 } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
 import { useAioha } from "@aioha/react-ui";
-import { useAccount, useConnect, useDisconnect } from "wagmi";
+import { useAccount } from "wagmi";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useFarcasterSession } from "@/hooks/useFarcasterSession";
 import { useFarcasterMiniapp } from "@/hooks/useFarcasterMiniapp";
 import { useSignIn } from "@farcaster/auth-kit";
@@ -96,8 +98,6 @@ export default function ConnectionModal({
   const toast = useToast();
   // Get connection states
   const { isConnected: isEthereumConnected } = useAccount();
-  const { connect, connectors } = useConnect();
-  const { disconnect } = useDisconnect();
   const {
     isAuthenticated: isFarcasterConnected,
     profile: farcasterProfile,
@@ -148,31 +148,6 @@ export default function ConnectionModal({
       status: "success",
       title: "Logged out from Hive",
       description: "You have been disconnected from Hive",
-    });
-  };
-
-  const handleEthereumConnect = async () => {
-    try {
-      const connector = connectors[0];
-      if (connector) {
-        connect({ connector });
-        onClose();
-      }
-    } catch (error) {
-      toast({
-        status: "error",
-        title: "Connection failed",
-        description: "Failed to connect to Ethereum wallet",
-      });
-    }
-  };
-
-  const handleEthereumDisconnect = () => {
-    disconnect();
-    toast({
-      status: "success",
-      title: "Disconnected from Ethereum",
-      description: "Your Ethereum wallet has been disconnected",
     });
   };
 
@@ -342,26 +317,95 @@ export default function ConnectionModal({
                 </HStack>
 
                 {connection.connected ? (
-                  <Button
-                    size="sm"
-                    colorScheme="red"
-                    variant="outline"
-                    onClick={() => {
-                      switch (connection.name) {
-                        case "Hive":
-                          handleHiveLogout();
-                          break;
-                        case "Ethereum":
-                          handleEthereumDisconnect();
-                          break;
-                        case "Farcaster":
-                          handleFarcasterDisconnect();
-                          break;
-                      }
-                    }}
-                  >
-                    Disconnect
-                  </Button>
+                  connection.name === "Ethereum" ? (
+                    <Box>
+                      <ConnectButton.Custom>
+                        {({
+                          account,
+                          chain,
+                          openAccountModal,
+                          openChainModal,
+                          openConnectModal,
+                          authenticationStatus,
+                          mounted,
+                        }) => {
+                          const ready =
+                            mounted && authenticationStatus !== "loading";
+                          const connected =
+                            ready &&
+                            account &&
+                            chain &&
+                            (!authenticationStatus ||
+                              authenticationStatus === "authenticated");
+
+                          return (
+                            <Button
+                              size="sm"
+                              colorScheme="red"
+                              variant="outline"
+                              onClick={openAccountModal}
+                            >
+                              Manage
+                            </Button>
+                          );
+                        }}
+                      </ConnectButton.Custom>
+                    </Box>
+                  ) : (
+                    <Button
+                      size="sm"
+                      colorScheme="red"
+                      variant="outline"
+                      onClick={() => {
+                        switch (connection.name) {
+                          case "Hive":
+                            handleHiveLogout();
+                            break;
+                          case "Farcaster":
+                            handleFarcasterDisconnect();
+                            break;
+                        }
+                      }}
+                    >
+                      Disconnect
+                    </Button>
+                  )
+                ) : connection.name === "Ethereum" ? (
+                  <Box>
+                    <ConnectButton.Custom>
+                      {({
+                        account,
+                        chain,
+                        openAccountModal,
+                        openChainModal,
+                        openConnectModal,
+                        authenticationStatus,
+                        mounted,
+                      }) => {
+                        const ready =
+                          mounted && authenticationStatus !== "loading";
+                        const connected =
+                          ready &&
+                          account &&
+                          chain &&
+                          (!authenticationStatus ||
+                            authenticationStatus === "authenticated");
+
+                        return (
+                          <Button
+                            size="sm"
+                            colorScheme="blue"
+                            onClick={() => {
+                              openConnectModal();
+                              onClose(); // Close the modal after opening RainbowKit modal
+                            }}
+                          >
+                            Connect
+                          </Button>
+                        );
+                      }}
+                    </ConnectButton.Custom>
+                  </Box>
                 ) : (
                   <Button
                     size="sm"
@@ -370,9 +414,6 @@ export default function ConnectionModal({
                       switch (connection.name) {
                         case "Hive":
                           onHiveLogin();
-                          break;
-                        case "Ethereum":
-                          handleEthereumConnect();
                           break;
                         case "Farcaster":
                           onFarcasterConnect();

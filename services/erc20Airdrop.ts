@@ -5,7 +5,8 @@ import {
   writeContract,
   waitForTransactionReceipt,
   getBalance,
-  readContract
+  readContract,
+  switchChain
 } from '@wagmi/core';
 import { parseUnits, parseEther, erc20Abi, Address } from 'viem';
 import { base } from 'wagmi/chains';
@@ -26,7 +27,11 @@ export class ERC20AirdropService {
   private async validateNetwork(): Promise<void> {
     const chainId = getChainId(wagmiConfig);
     if (chainId !== base.id) {
-      throw new Error(`Please switch to Base network. Current chain: ${chainId}`);
+      try {
+        await switchChain(wagmiConfig, { chainId: base.id });
+      } catch (error) {
+        throw new Error(`Please switch to Base network. Current chain: ${chainId}. Switch failed: ${error}`);
+      }
     }
   }
 

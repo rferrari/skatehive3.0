@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { tradeCoin, TradeParameters, createTradeCall, getOnchainCoinDetails } from '@zoralabs/coins-sdk';
-import { useAccount, useWalletClient, usePublicClient, useBalance, useChainId } from 'wagmi';
+import { useAccount, useWalletClient, usePublicClient, useBalance, useChainId, useSwitchChain } from 'wagmi';
 import { Address, formatEther, formatUnits } from 'viem';
 import { useToast } from '@chakra-ui/react';
 import { base } from 'wagmi/chains';
@@ -28,6 +28,7 @@ export function useZoraTrade() {
   const { data: walletClient } = useWalletClient({ chainId: base.id });
   const publicClient = usePublicClient({ chainId: base.id });
   const chainId = useChainId();
+  const { switchChain } = useSwitchChain();
   const toast = useToast();
 
   // Get ETH balance
@@ -181,15 +182,21 @@ export function useZoraTrade() {
 
     // Verify we're on Base chain
     if (chainId !== base.id) {
-      const error = new Error(`Wrong chain: expected Base (${base.id}), got ${chainId}`);
-      console.error('Chain mismatch in executeTrade:', error.message);
-      toast({
-        title: 'Wrong Network',
-        description: `Please switch to Base network. Currently on chain ${chainId}`,
-        status: 'error',
-        duration: 5000,
-      });
-      throw error;
+      try {
+        console.log('Switching to Base network...');
+        await switchChain({ chainId: base.id });
+        console.log('Successfully switched to Base network');
+      } catch (switchError: any) {
+        const error = new Error(`Failed to switch to Base network. Please switch manually. Error: ${switchError.message}`);
+        console.error('Chain switch failed in executeTrade:', error.message);
+        toast({
+          title: 'Network Switch Failed',
+          description: `Please switch to Base network manually. Error: ${switchError.message}`,
+          status: 'error',
+          duration: 5000,
+        });
+        throw error;
+      }
     }
 
     console.log('Executing trade on Base chain:', {

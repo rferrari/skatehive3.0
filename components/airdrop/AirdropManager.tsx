@@ -28,7 +28,7 @@ import {
   Spacer,
 } from "@chakra-ui/react";
 import { ChevronDownIcon, ChevronUpIcon } from "@chakra-ui/icons";
-import { useAccount } from "wagmi";
+import { useAccount, useChainId, useSwitchChain } from "wagmi";
 import { useAioha } from "@aioha/react-ui";
 import { KeychainSDK, KeychainKeyTypes } from "keychain-sdk";
 import { Operation } from "@hiveio/dhive";
@@ -38,6 +38,7 @@ import { useAirdropManager } from "@/hooks/useAirdropManager";
 import { useTransactionStatus } from "@/hooks/useTransactionStatus";
 import { ERC20AirdropService } from "@/services/erc20Airdrop";
 import TransactionStatusDisplay from "./TransactionStatusDisplay";
+import { base } from "wagmi/chains";
 
 interface AirdropManagerProps {
   leaderboardData: SkaterData[];
@@ -66,8 +67,28 @@ const AirdropManager: React.FC<AirdropManagerProps> = ({ leaderboardData }) => {
 
   const { status, updateStatus, resetStatus } = useTransactionStatus();
   const { address, isConnected } = useAccount();
+  const chainId = useChainId();
+  const { switchChain } = useSwitchChain();
   const { user } = useAioha();
   const toast = useToast();
+
+  const isOnBaseNetwork = chainId === base.id;
+
+  const handleSwitchToBase = async () => {
+    if (!switchChain) return;
+
+    try {
+      await switchChain({ chainId: base.id });
+    } catch (error: any) {
+      toast({
+        title: "Network Switch Failed",
+        description: error.message || "Failed to switch to Base network",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
 
   // Create ERC20 service instance
   const erc20Service = new ERC20AirdropService();
@@ -78,6 +99,7 @@ const AirdropManager: React.FC<AirdropManagerProps> = ({ leaderboardData }) => {
 
   const isHiveToken = selectedToken === "HIVE" || selectedToken === "HBD";
   const isHighValueAirdrop = parseFloat(amount) > 1;
+  const needsNetworkSwitch = !isHiveToken && !isOnBaseNetwork;
 
   // Aioha-based Hive airdrop execution
   const executeHiveAirdropWithAioha = async () => {
@@ -586,10 +608,10 @@ const AirdropManager: React.FC<AirdropManagerProps> = ({ leaderboardData }) => {
 
       {/* Execute Button */}
       <Button
-        colorScheme="green"
+        colorScheme={needsNetworkSwitch ? "orange" : "green"}
         size="lg"
         w="full"
-        onClick={handleExecuteAirdrop}
+        onClick={needsNetworkSwitch ? handleSwitchToBase : handleExecuteAirdrop}
         disabled={
           !amount ||
           userCount.limited === 0 ||
@@ -606,13 +628,15 @@ const AirdropManager: React.FC<AirdropManagerProps> = ({ leaderboardData }) => {
           status.state !== "completed" &&
           status.state !== "failed"
         }
-        loadingText="Processing Airdrop..."
-        bg="primary"
+        loadingText={
+          needsNetworkSwitch ? "Switching..." : "Processing Airdrop..."
+        }
+        bg={needsNetworkSwitch ? "orange.500" : "primary"}
         color="background"
-        _hover={{ bg: "accent" }}
+        _hover={{ bg: needsNetworkSwitch ? "orange.600" : "accent" }}
         _disabled={{ opacity: 0.6, cursor: "not-allowed" }}
       >
-        Execute Airdrop 🚀
+        {needsNetworkSwitch ? "Switch to Base Network" : "Execute Airdrop 🚀"}
       </Button>
 
       {/* Transaction Status */}

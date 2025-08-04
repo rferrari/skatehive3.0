@@ -1,0 +1,58 @@
+import { Theme } from '@rainbow-me/rainbowkit';
+
+// Create a dynamic RainbowKit theme that uses CSS variables to match all themes
+export const dynamicRainbowTheme: Theme = {
+  blurs: {
+    modalOverlay: 'blur(4px)',
+  },
+  colors: {
+    accentColor: 'var(--chakra-colors-primary)',
+    accentColorForeground: 'var(--chakra-colors-background)',
+    actionButtonBorder: 'var(--chakra-colors-border)',
+    actionButtonBorderMobile: 'var(--chakra-colors-border)',
+    actionButtonSecondaryBackground: 'var(--chakra-colors-muted)',
+    closeButton: 'var(--chakra-colors-text)',
+    closeButtonBackground: 'var(--chakra-colors-muted)',
+    connectButtonBackground: 'var(--chakra-colors-background)',
+    connectButtonBackgroundError: 'var(--chakra-colors-error)',
+    connectButtonInnerBackground: 'var(--chakra-colors-muted)',
+    connectButtonText: 'var(--chakra-colors-text)',
+    connectButtonTextError: 'var(--chakra-colors-error)',
+    connectionIndicator: 'var(--chakra-colors-success)',
+    downloadBottomCardBackground: 'var(--chakra-colors-background)',
+    downloadTopCardBackground: 'var(--chakra-colors-muted)',
+    error: 'var(--chakra-colors-error)',
+    generalBorder: 'var(--chakra-colors-border)',
+    generalBorderDim: 'var(--chakra-colors-border)',
+    menuItemBackground: 'var(--chakra-colors-muted)',
+    modalBackdrop: 'rgba(0, 0, 0, 0.8)',
+    modalBackground: 'var(--chakra-colors-background)',
+    modalBorder: 'var(--chakra-colors-border)',
+    modalText: 'var(--chakra-colors-text)',
+    modalTextDim: 'var(--chakra-colors-accent)',
+    modalTextSecondary: 'var(--chakra-colors-text)',
+    profileAction: 'var(--chakra-colors-muted)',
+    profileActionHover: 'var(--chakra-colors-primary)',
+    profileForeground: 'var(--chakra-colors-background)',
+    selectedOptionBorder: 'var(--chakra-colors-primary)',
+    standby: 'var(--chakra-colors-warning)',
+  },
+  fonts: {
+    body: 'var(--chakra-fonts-mono)',
+  },
+  radii: {
+    actionButton: '8px',
+    connectButton: '8px',
+    menuButton: '8px',
+    modal: '12px',
+    modalMobile: '12px',
+  },
+  shadows: {
+    connectButton: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+    dialog: '0 10px 25px rgba(0, 0, 0, 0.3)',
+    profileDetailsAction: '0 2px 4px rgba(0, 0, 0, 0.1)',
+    selectedOption: '0 0 0 2px var(--chakra-colors-primary)',
+    selectedWallet: '0 0 0 2px var(--chakra-colors-primary)',
+    walletLogo: '0 2px 8px rgba(0, 0, 0, 0.1)',
+  },
+};

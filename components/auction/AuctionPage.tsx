@@ -8,7 +8,8 @@ import { DAO_ADDRESSES } from "@/lib/utils/constants";
 import { formatEther } from "viem";
 import { useMemo, useState } from "react";
 import Countdown from "react-countdown";
-import { useAccount, useDisconnect } from "wagmi";
+import { useAccount } from "wagmi";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 import ConnectModal from "@/components/wallet/ConnectModal";
 import { useRouter } from "next/navigation";
 import {
@@ -41,7 +42,6 @@ import {
 } from "@chakra-ui/icons";
 import MatrixOverlay from "@/components/graphics/MatrixOverlay";
 import { Name, Avatar, Identity } from "@coinbase/onchainkit/identity";
-import ConnectButton from "@/components/wallet/ConnectButton";
 
 const formatBidAmount = (amount: bigint) => {
   return Number(formatEther(amount)).toLocaleString(undefined, {
@@ -108,7 +108,6 @@ export default function AuctionPage({
 
   const [isBidsModalOpen, setIsBidsModalOpen] = useState(false);
   const { isConnected, address } = useAccount();
-  const { disconnect } = useDisconnect();
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
   const [isHoveringBid, setIsHoveringBid] = useState(false);
 
@@ -276,38 +275,81 @@ export default function AuctionPage({
                   transition="all 0.3s ease"
                   w="100%"
                 >
-                  {!isConnected ? (
-                    <Center>
-                      <ConnectButton />
-                    </Center>
-                  ) : (
-                    <>
-                      <Box w="full">
-                        <Identity address={address as `0x${string}`}>
-                          <Avatar />
-                          <Name className="font-bold text-base ml-1" />
-                        </Identity>
-                      </Box>
-                      <Button
-                        w="full"
-                        mt={2}
-                        px={2}
-                        py={1}
-                        fontSize="md"
-                        fontWeight="bold"
-                        textTransform="uppercase"
-                        color="primary"
-                        bg="muted"
-                        border="2px solid"
-                        borderColor="primary"
-                        borderRadius="lg"
-                        _hover={{ bg: "primary", color: "background" }}
-                        onClick={() => disconnect()}
-                      >
-                        Disconnect
-                      </Button>
-                    </>
-                  )}
+                  <ConnectButton.Custom>
+                    {({
+                      account,
+                      chain,
+                      openAccountModal,
+                      openChainModal,
+                      openConnectModal,
+                      authenticationStatus,
+                      mounted,
+                    }) => {
+                      const ready =
+                        mounted && authenticationStatus !== "loading";
+                      const connected =
+                        ready &&
+                        account &&
+                        chain &&
+                        (!authenticationStatus ||
+                          authenticationStatus === "authenticated");
+
+                      if (!connected) {
+                        return (
+                          <Center>
+                            <Button
+                              onClick={openConnectModal}
+                              size="lg"
+                              px={8}
+                              py={3}
+                              fontSize="lg"
+                              fontWeight="bold"
+                              textTransform="uppercase"
+                              color="background"
+                              bg="primary"
+                              border="2px solid"
+                              borderColor="primary"
+                              borderRadius="lg"
+                              _hover={{ bg: "transparent", color: "primary" }}
+                            >
+                              Connect Wallet
+                            </Button>
+                          </Center>
+                        );
+                      }
+
+                      return (
+                        <>
+                          <Box w="full">
+                            <Identity
+                              address={account.address as `0x${string}`}
+                            >
+                              <Avatar />
+                              <Name className="font-bold text-base ml-1" />
+                            </Identity>
+                          </Box>
+                          <Button
+                            w="full"
+                            mt={2}
+                            px={2}
+                            py={1}
+                            fontSize="md"
+                            fontWeight="bold"
+                            textTransform="uppercase"
+                            color="primary"
+                            bg="muted"
+                            border="2px solid"
+                            borderColor="primary"
+                            borderRadius="lg"
+                            _hover={{ bg: "primary", color: "background" }}
+                            onClick={openAccountModal}
+                          >
+                            Manage Account
+                          </Button>
+                        </>
+                      );
+                    }}
+                  </ConnectButton.Custom>
                 </Box>
                 <Box
                   p={{ base: 6, lg: 6 }}
@@ -382,10 +424,7 @@ export default function AuctionPage({
                     </VStack>
 
                     {/* Bidding Interface */}
-                    <Box
-                      w="full"
-                      alignSelf="center"
-                    >
+                    <Box w="full" alignSelf="center">
                       <AuctionBid
                         tokenId={activeAuction.token.tokenId}
                         winningBid={
