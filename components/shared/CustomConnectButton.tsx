@@ -176,7 +176,7 @@ export function CustomConnectButton({
                             address={account.address as `0x${string}`}
                             chain={base}
                             className="text-sm font-medium truncate"
-                            style={{ color: 'var(--chakra-colors-primary)' }}
+                            style={{ color: "var(--chakra-colors-primary)" }}
                           />
                         </Box>
 

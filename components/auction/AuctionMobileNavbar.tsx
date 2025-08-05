@@ -24,7 +24,7 @@ export default function AuctionMobileNavbar() {
   if (!isMobile) return null;
 
   const handleGoBack = () => {
-    router.push('/');
+    router.push("/");
   };
 
   return (
@@ -50,10 +50,10 @@ export default function AuctionMobileNavbar() {
             size="md"
             _hover={{
               bg: "rgba(124, 255, 0, 0.1)",
-              transform: "scale(1.05)"
+              transform: "scale(1.05)",
             }}
             _active={{
-              transform: "scale(0.95)"
+              transform: "scale(0.95)",
             }}
             transition="all 0.2s ease"
           />

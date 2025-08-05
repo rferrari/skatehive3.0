@@ -214,7 +214,7 @@ export function AuctionBid({
   }, [writeSettle, onSettle]);
 
   return (
-    <VStack spacing={4} align="stretch" w="full">
+    <VStack spacing={2} align="stretch" w="full">
       {/* Error Alert */}
       {errorMessage && (
         <Alert
@@ -249,7 +249,7 @@ export function AuctionBid({
                 mb={2}
                 textAlign={alignContent === "right" ? "right" : "left"}
               >
-                Your Bid (ETH)
+                Your Bid (Ξ)
               </FormLabel>
               <Input
                 {...register("bidAmount", {
@@ -264,7 +264,7 @@ export function AuctionBid({
                     return result.isValid || result.error || "Invalid bid";
                   },
                 })}
-                placeholder={`Minimum: ${formatEther(minBidValue)} ETH`}
+                placeholder={`Minimum: ${formatEther(minBidValue)} Ξ`}
                 bg="background"
                 border="1px solid"
                 borderColor="border"
@@ -286,7 +286,7 @@ export function AuctionBid({
                 mt={1}
                 textAlign={alignContent === "right" ? "right" : "left"}
               >
-                Minimum bid: {formatEther(minBidValue)} ETH
+                Minimum bid: {formatEther(minBidValue)} Ξ
               </Text>
             </FormControl>
 
@@ -329,7 +329,7 @@ export function AuctionBid({
       ) : (
         <>
           {isLatestAuction && (
-            <VStack spacing={4} align="stretch">
+            <VStack spacing={2} align="stretch">
               <Button
                 onClick={isOnBaseNetwork ? handleSettle : handleSwitchToBase}
                 variant="solid"
@@ -366,49 +366,52 @@ export function AuctionBid({
 
       {/* Bid History */}
       <Box
-        w="full"
-        bg="muted"
-        borderRadius="md"
-        p={3}
-        maxH="200px"
+        w="100%"
+        bg="background"
+        border="1px solid"
+        borderColor="border"
         overflowY="auto"
-        position="relative"
-        zIndex={1}
         sx={{
-          "&::-webkit-scrollbar": { width: "6px" },
+          "&::-webkit-scrollbar": { width: "4px" },
           "&::-webkit-scrollbar-track": { background: "transparent" },
           "&::-webkit-scrollbar-thumb": {
-            background: "var(--chakra-colors-border)",
-            borderRadius: "3px",
-          },
-          "&::-webkit-scrollbar-thumb:hover": {
             background: "var(--chakra-colors-primary)",
+            borderRadius: "2px",
           },
           scrollbarWidth: "thin",
-          scrollbarColor: "var(--chakra-colors-border) transparent",
+          scrollbarColor: "var(--chakra-colors-primary) transparent",
         }}
       >
-        <VStack spacing={0} align="stretch" style={{ margin: 0, gap: 0 }}>
-          <Text
-            fontSize="sm"
-            fontWeight="bold"
-            color="primary"
-            textAlign="center"
+        <VStack spacing={0} align="stretch">
+          <HStack
+            justify="center"
+            spacing={2}
+            py={2}
+            px={3}
+            borderBottom="1px solid"
+            borderColor="border"
           >
-            Bid History
-          </Text>
+            <Text
+              fontSize="xs"
+              color="primary"
+              fontWeight="bold"
+              textTransform="uppercase"
+              letterSpacing="wide"
+            >
+              • BID HISTORY •
+            </Text>
+          </HStack>
+
           {bids.length === 0 ? (
             <Box
-              flex={1}
               display="flex"
               alignItems="center"
               justifyContent="center"
-              bg="muted"
-              borderRadius="md"
-              minH="100px"
+              minH="80px"
+              py={4}
             >
-              <Text fontSize="sm" color="primary" textAlign="center">
-                No bid history yet
+              <Text fontSize="sm" color="text" opacity={0.5}>
+                No bids yet
               </Text>
             </Box>
           ) : (
@@ -419,28 +422,49 @@ export function AuctionBid({
                 return amountB > amountA ? 1 : amountB < amountA ? -1 : 0;
               })
               .map((bid, index) => (
-                <HStack
+                <Box
                   key={index}
-                  justify="space-between"
-                  w="full"
-                  py={2}
-                  px={3}
                   bg="muted"
+                  px={3}
+                  py={2}
+                  mx={2}
+                  mb={1}
                   borderRadius="md"
-                  style={{ margin: 0, gap: 0 }}
+                  transition="all 0.2s ease"
+                  _hover={{
+                    bg: "background",
+                    transform: "translateY(-1px)",
+                  }}
                 >
-                  <HStack spacing={1} style={{ marginTop: 0 }}>
-                    <Avatar address={bid.bidder as `0x${string}`} />
-                    <Name
-                      address={bid.bidder as `0x${string}`}
-                      className="font-bold text-sm text"
-                      style={{ padding: 0, margin: 0 }}
-                    />
+                  <HStack justify="space-between" w="full">
+                    <HStack spacing={2}>
+                      <Avatar
+                        address={bid.bidder as `0x${string}`}
+                        className="w-6 h-6 rounded-full"
+                      />
+                      <VStack spacing={0} align="start">
+                        <Name
+                          address={bid.bidder as `0x${string}`}
+                          className="font-medium text-sm"
+                          style={{ color: "var(--chakra-colors-primary)" }}
+                        />
+                        <Text fontSize="xs" color="text" opacity={0.6}>
+                          #{index + 1}
+                        </Text>
+                      </VStack>
+                    </HStack>
+                    <VStack spacing={0} align="end">
+                      <Text fontSize="sm" fontWeight="bold" color="text">
+                        {formatEther(BigInt(bid.amount))} Ξ
+                      </Text>
+                      {index === 0 && (
+                        <Text fontSize="xs" color="primary" fontWeight="medium">
+                          Highest
+                        </Text>
+                      )}
+                    </VStack>
                   </HStack>
-                  <Text fontSize="sm" fontWeight="medium" color="text">
-                    {formatEther(BigInt(bid.amount))} ETH
-                  </Text>
-                </HStack>
+                </Box>
               ))
           )}
         </VStack>

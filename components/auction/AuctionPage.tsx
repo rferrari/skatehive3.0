@@ -25,7 +25,6 @@ import {
   Badge,
   Flex,
   useBreakpointValue,
-  Button,
   Image,
   Spinner,
   List,
@@ -33,12 +32,7 @@ import {
   ListIcon,
   Center,
 } from "@chakra-ui/react";
-import {
-  ArrowBackIcon,
-  ArrowForwardIcon,
-  CheckCircleIcon,
-  InfoIcon,
-} from "@chakra-ui/icons";
+import { CheckCircleIcon, InfoIcon } from "@chakra-ui/icons";
 import MatrixOverlay from "@/components/graphics/MatrixOverlay";
 import { Name, Avatar, Identity } from "@coinbase/onchainkit/identity";
 
@@ -255,22 +249,35 @@ export default function AuctionPage({
             {/* Main Auction Layout */}
             <Box maxW="4xl" mx="auto" w="full" mb={16} mt={6}>
               <Grid
-                templateColumns={{ base: "1fr", lg: "0.25fr 0.75fr" }}
+                templateColumns={{ base: "1fr", lg: "1fr 1fr" }}
                 gap={{ base: 6, md: 6 }}
                 w="full"
-                alignItems="center"
+                alignItems="stretch"
               >
                 {/* Auction Details */}
-                <GridItem order={{ base: 2, lg: 2 }} ml={{ base: 0, lg: 4 }}>
+                <GridItem
+                  order={{ base: 2, lg: 2 }}
+                  ml={{ base: 0, lg: 4 }}
+                  display="flex"
+                  flexDirection="column"
+                >
                   <Box
-                    p={{ base: 6, lg: 6 }}
+                    p={{ base: 0, lg: 0 }}
                     position="relative"
                     overflow="hidden"
                     border={"1px solid"}
                     borderColor="border"
+                    flex="1"
+                    display="flex"
+                    flexDirection="column"
                   >
                     {isHoveringBid && <MatrixOverlay />}
-                    <VStack spacing={6} align="center">
+                    <VStack
+                      spacing={6}
+                      align="center"
+                      flex="1"
+                      justify="space-between"
+                    >
                       {/* Time Remaining */}
                       <VStack spacing={2} position="relative" zIndex={1}>
                         <Text fontSize="sm" color="primary" fontWeight="medium">
@@ -335,7 +342,12 @@ export default function AuctionPage({
                       </VStack>
 
                       {/* Bidding Interface */}
-                      <Box w="full" alignSelf="center">
+                      <Box
+                        w="full"
+                        display="flex"
+                        flexDirection="column"
+                        justifyContent="center"
+                      >
                         <AuctionBid
                           tokenId={activeAuction.token.tokenId}
                           winningBid={
@@ -392,12 +404,19 @@ export default function AuctionPage({
                             bg="background"
                             color="primary"
                             p={3}
-                            borderRadius="md"
+                            borderRadius="none"
                             boxShadow="lg"
                             border="2px dashed"
                             borderColor="primary"
                             zIndex={2}
                             minW={{ base: "180px", md: "220px" }}
+                            opacity={0}
+                            _hover={{
+                              opacity: 1,
+                              transition: "opacity 0.2s ease",
+                              transform:
+                                "translate(-50%, -50%) rotate(30deg) scale(1.05)",
+                            }}
                           >
                             <VStack spacing={2} align="stretch" w="full">
                               <Text
@@ -408,7 +427,7 @@ export default function AuctionPage({
                                 letterSpacing="wide"
                                 textTransform="uppercase"
                               >
-                                Latest Champ
+                                Proud Winner
                               </Text>
                               <Center>
                                 <HStack color={"primary"} spacing={2}>
@@ -428,7 +447,7 @@ export default function AuctionPage({
                                 textAlign="center"
                                 w="full"
                               >
-                                {auctionData.bidAmount} ETH
+                                {auctionData.bidAmount} Ξ
                               </Text>
                             </VStack>
                           </Box>
@@ -550,7 +569,7 @@ export default function AuctionPage({
                         {formatBidAmount(
                           BigInt(activeAuction.dao.auctionConfig.reservePrice)
                         )}{" "}
-                        ETH
+                        Ξ
                       </Badge>
                     </Flex>
                   </VStack>
