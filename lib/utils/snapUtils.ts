@@ -59,6 +59,10 @@ export const extractLastUrl = (content: string): string | null => {
       || url.includes('ibb.co')
       // skip imgurl urls
       || url.includes('imgurl')
+      // skit media.tenor
+      || url.includes('media.tenor.com')
+      // skip https://html5-game-skatehive.vercel.app/QFShive/index.html
+      || url.includes('html5-game-skatehive.vercel.app/QFShive/index.html')
     ) {
       continue;
     }
