@@ -613,7 +613,7 @@ export default function FooterNavButtons() {
 
     setIsHolding(false);
     setIsDragging(false);
-  }, [touchTimer, position.x]);
+  }, [touchTimer, position.x, isDragging]);
 
   // Connection modal handlers
   const handleHiveLogin = () => {
