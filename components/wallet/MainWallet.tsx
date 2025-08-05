@@ -26,7 +26,6 @@ import { convertVestToHive } from "@/lib/hive/client-functions";
 import { extractNumber } from "@/lib/utils/extractNumber";
 import WalletModal from "@/components/wallet/WalletModal";
 import SendTokenModal from "@/components/wallet/SendTokenModal";
-import ConnectModal from "../wallet/ConnectModal";
 import { Asset } from "@hiveio/dhive";
 import HivePowerSection from "./HivePowerSection";
 import HiveSection from "./HiveSection";
@@ -646,10 +645,6 @@ export default function MainWallet({ username }: MainWalletProps) {
                 isPriceLoading={isPriceLoading}
                 onConnectEthereum={openConnectModal}
                 onConnectHive={handleConnectHive}
-              />
-              <ConnectModal
-                isOpen={isConnectModalOpen}
-                onClose={closeConnectModal}
               />
               <SwapSection
                 hivePrice={hivePrice}
