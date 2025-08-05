@@ -296,40 +296,46 @@ export default function MainWallet({ username }: MainWalletProps) {
   }, [user, hivePrice, hbdPrice, hiveBalances, hivePower]);
 
   // Mobile action handlers
-  const handleMobileSend = useCallback((token: TokenDetail | HiveToken) => {
-    console.log("Send token:", token);
-    if ('network' in token && token.network === 'hive') {
-      // This is a Hive token, open WalletModal
-      const hiveToken = token as HiveToken;
-      setModalContent({
-        title: `Send ${hiveToken.symbol}`,
-        description: `Transfer your ${hiveToken.name} to another account`,
-        showMemoField: true,
-        showUsernameField: true
-      });
-      onOpen();
-    } else {
-      // This is an Ethereum token, open SendTokenModal
-      const ethToken = token as TokenDetail;
-      setSelectedToken(ethToken);
-      openSendTokenModal();
-    }
-  }, [onOpen, openSendTokenModal]);
+  const handleMobileSend = useCallback(
+    (token: TokenDetail | HiveToken) => {
+      console.log("Send token:", token);
+      if ("network" in token && token.network === "hive") {
+        // This is a Hive token, open WalletModal
+        const hiveToken = token as HiveToken;
+        setModalContent({
+          title: `Send ${hiveToken.symbol}`,
+          description: `Transfer your ${hiveToken.name} to another account`,
+          showMemoField: true,
+          showUsernameField: true,
+        });
+        onOpen();
+      } else {
+        // This is an Ethereum token, open SendTokenModal
+        const ethToken = token as TokenDetail;
+        setSelectedToken(ethToken);
+        openSendTokenModal();
+      }
+    },
+    [onOpen, openSendTokenModal]
+  );
 
   const handleMobileSwap = useCallback((token: TokenDetail | HiveToken) => {
     console.log("Swap token:", token);
     // TODO: Open swap interface with selected token
   }, []);
 
-  const handleMobileHiveSend = useCallback((hiveToken: HiveToken) => {
-    setModalContent({
-      title: `Send ${hiveToken.symbol}`,
-      description: `Transfer your ${hiveToken.name} to another account`,
-      showMemoField: true,
-      showUsernameField: true
-    });
-    onOpen();
-  }, [onOpen]);
+  const handleMobileHiveSend = useCallback(
+    (hiveToken: HiveToken) => {
+      setModalContent({
+        title: `Send ${hiveToken.symbol}`,
+        description: `Transfer your ${hiveToken.name} to another account`,
+        showMemoField: true,
+        showUsernameField: true,
+      });
+      onOpen();
+    },
+    [onOpen]
+  );
 
   const handleMobileHiveSwap = useCallback((hiveToken: HiveToken) => {
     console.log("Swap Hive token:", hiveToken);
