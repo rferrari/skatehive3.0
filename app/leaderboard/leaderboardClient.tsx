@@ -28,26 +28,31 @@ import AirdropModal from "@/components/airdrop/AirdropModal";
 import React from "react";
 import useIsMobile from "@/hooks/useIsMobile";
 import { Name } from "@coinbase/onchainkit/identity";
-interface SkaterData {
-  id: number;
-  hive_author: string;
-  hive_balance: number;
-  hp_balance: number;
-  hbd_balance: number;
-  hbd_savings_balance: number;
-  has_voted_in_witness: boolean;
-  eth_address: string;
-  gnars_balance: number;
-  gnars_votes: number;
-  skatehive_nft_balance: number;
-  max_voting_power_usd: number;
-  last_updated: string;
-  last_post: string;
-  post_count: number;
-  points: number;
-  giveth_donations_usd: number;
-  giveth_donations_amount: number;
-}
+import { SkaterData } from "./page";
+
+// interface SkaterData {
+//   id: number;
+//   hive_author: string;
+//   hive_balance: number;
+//   hp_balance: number;
+//   hbd_balance: number;
+//   hbd_savings_balance: number;
+//   has_voted_in_witness: boolean;
+//   eth_address: string;
+//   gnars_balance: number;
+//   gnars_votes: number;
+//   skatehive_nft_balance: number;
+//   max_voting_power_usd: number;
+//   last_updated: string;
+//   last_post: string;
+//   post_count: number;
+//   posts_score: number;
+//   snaps_count: number;
+//   delegated_curator: number;
+//   points: number;
+//   giveth_donations_usd: number;
+//   giveth_donations_amount: number;
+// }
 
 interface Props {
   skatersData: SkaterData[];
@@ -147,7 +152,7 @@ export default function LeaderboardClient({ skatersData }: Props) {
                 {!isMobile &&
                   skater.eth_address &&
                   skater.eth_address !==
-                    "0x0000000000000000000000000000000000000000" && (
+                  "0x0000000000000000000000000000000000000000" && (
                     <EthAddress address={skater.eth_address} />
                   )}
                 {!isMobile && (
@@ -213,7 +218,10 @@ export default function LeaderboardClient({ skatersData }: Props) {
             (a.hp_balance + a.max_voting_power_usd)
           );
         case "posts":
-          return b.post_count - a.post_count;
+          if (a.posts_score === 0 && b.posts_score === 0) {
+            return b.points - a.points; // fallback to points
+          }
+          return b.posts_score - a.posts_score;
         case "nfts":
           return b.skatehive_nft_balance - a.skatehive_nft_balance;
         case "gnars":
