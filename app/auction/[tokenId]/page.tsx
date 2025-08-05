@@ -1,7 +1,11 @@
 import { Metadata } from "next";
 import { fetchAuctionByTokenId } from "@/services/auction";
-import { formatEther } from "viem";
-import { AuctionPageClient } from "@/components/auction";
+import { AuctionPage } from "@/components/auction";
+import {
+  generateAuctionMetadata,
+  formatBidAmount,
+  DEFAULT_AUCTION_METADATA,
+} from "@/lib/utils/metadata";
 
 interface PageProps {
   params: Promise<{
@@ -16,92 +20,49 @@ export async function generateMetadata({
   try {
     const { tokenId: tokenIdParam } = await params;
     const tokenId = Number(tokenIdParam);
-    const auction = await fetchAuctionByTokenId(tokenId);
 
-    if (!auction) {
+    // Validate tokenId
+    if (isNaN(tokenId) || tokenId <= 0) {
       return {
-        title: `Auction #${tokenId} - Not Found`,
-        description: `Auction for token #${tokenId} was not found on SkateHive.`,
+        title: `Invalid Token ID - SkateHive`,
+        description: `The token ID "${tokenIdParam}" is not valid.`,
       };
     }
 
-    const tokenName = auction.token.name;
-    const tokenImage = auction.token.image;
+    const auction = await fetchAuctionByTokenId(tokenId);
+
+    if (!auction) {
+      // Check if this might be a missing admin/referral auction
+      const isMultipleOf10 = tokenId % 10 === 0;
+
+      return {
+        title: `Auction #${tokenId} - ${
+          isMultipleOf10 ? "Admin/Referral Auction" : "Not Found"
+        }`,
+        description: isMultipleOf10
+          ? `Auction #${tokenId} appears to be an admin/referral auction that exists on-chain but is not indexed in our subgraph. These auctions are automatically won by the protocol.`
+          : `Auction for token #${tokenId} was not found. This auction may not exist, may be from a different DAO, or may have indexing issues.`,
+      };
+    }
+
+    const { name: tokenName, image: tokenImage } = auction.token;
     const currentBid = auction.highestBid
-      ? Number(formatEther(BigInt(auction.highestBid.amount))).toLocaleString(
-          undefined,
-          {
-            maximumFractionDigits: 5,
-          }
-        )
+      ? formatBidAmount(BigInt(auction.highestBid.amount))
       : "0";
 
     const endTime = new Date(parseInt(auction.endTime) * 1000);
     const isActive = endTime.getTime() > Date.now();
-    const status = isActive ? "Active" : "Ended";
 
-    const title = `${tokenName} - SkateHive Auction`;
-    const description = `${status} auction for ${tokenName}. ${
-      isActive
-        ? `Current bid: ${currentBid} ETH`
-        : `Final bid: ${currentBid} ETH`
-    }. View this unique skateboarding art NFT on SkateHive.`;
-
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://skatehive.app";
-    const auctionUrl = `${baseUrl}/auction/${tokenId}`;
-
-    return {
-      title,
-      description,
-      openGraph: {
-        title,
-        description,
-        images: [
-          {
-            url: tokenImage,
-            width: 600,
-            height: 600,
-            alt: tokenName,
-          },
-        ],
-        type: "website",
-        siteName: "SkateHive",
-      },
-      twitter: {
-        card: "summary_large_image",
-        title,
-        description,
-        images: [tokenImage],
-      },
-      other: {
-        "fc:frame": JSON.stringify({
-          version: "next",
-          imageUrl: tokenImage,
-          button: {
-            title: isActive ? "Place Bid" : "View Auction",
-            action: {
-              type: "launch_frame",
-              name: "Skatehive",
-              url: auctionUrl,
-            },
-          },
-          postUrl: auctionUrl,
-        }),
-        "fc:frame:image": tokenImage,
-        "fc:frame:post_url": auctionUrl,
-      },
-    };
+    return generateAuctionMetadata({
+      tokenName,
+      tokenImage,
+      currentBid: `${currentBid} ETH`,
+      isActive,
+      tokenId,
+    });
   } catch (error) {
-    console.error(
-      "Error generating metadata for token:",
-      (await params).tokenId,
-      error
-    );
-    return {
-      title: `Auction #${(await params).tokenId} - SkateHive`,
-      description:
-        "View this unique skateboarding art NFT auction on SkateHive.",
-    };
+    console.error("Error generating metadata for auction:", error);
+    return DEFAULT_AUCTION_METADATA;
   }
 }
 
@@ -119,5 +80,5 @@ export default async function AuctionTokenPage({ params }: PageProps) {
     );
   }
 
-  return <AuctionPageClient tokenId={tokenIdNumber} showNavigation={true} />;
+  return <AuctionPage tokenId={tokenIdNumber} showNavigation={true} />;
 }

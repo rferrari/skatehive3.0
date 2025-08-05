@@ -1,32 +1,27 @@
 import { Metadata } from "next";
 import { fetchAuction } from "@/services/auction";
 import { DAO_ADDRESSES } from "@/lib/utils/constants";
-import { formatEther } from "viem";
-import { AuctionPageClient } from "@/components/auction";
+import { AuctionPage } from "@/components/auction";
+import {
+  formatBidAmount,
+  NO_AUCTION_METADATA,
+  DEFAULT_AUCTION_METADATA,
+} from "@/lib/utils/metadata";
 
 // Generate metadata for the main auction page
 export async function generateMetadata(): Promise<Metadata> {
   try {
     // Fetch the latest auction for metadata
     const auctions = await fetchAuction(DAO_ADDRESSES.token);
-    const latestAuction = auctions[0];
+    const latestAuction = auctions?.[0];
 
     if (!latestAuction) {
-      return {
-        title: "SkateHive Auction - No Active Auction",
-        description: "No active auction available at SkateHive",
-      };
+      return NO_AUCTION_METADATA;
     }
 
-    const tokenId = latestAuction.token.tokenId;
-    const tokenName = latestAuction.token.name;
-    const tokenImage = latestAuction.token.image;
+    const { name: tokenName, image: tokenImage } = latestAuction.token;
     const currentBid = latestAuction.highestBid
-      ? Number(
-          formatEther(BigInt(latestAuction.highestBid.amount))
-        ).toLocaleString(undefined, {
-          maximumFractionDigits: 5,
-        })
+      ? formatBidAmount(BigInt(latestAuction.highestBid.amount))
       : "0";
 
     const endTime = new Date(parseInt(latestAuction.endTime) * 1000);
@@ -85,14 +80,10 @@ export async function generateMetadata(): Promise<Metadata> {
     };
   } catch (error) {
     console.error("Error generating metadata:", error);
-    return {
-      title: "SkateHive Auction",
-      description:
-        "Participate in SkateHive auctions to acquire unique skateboarding art and voting rights.",
-    };
+    return DEFAULT_AUCTION_METADATA;
   }
 }
 
 export default function MainAuctionPage() {
-  return <AuctionPageClient showNavigation={true} />;
+  return <AuctionPage showNavigation={true} />;
 }

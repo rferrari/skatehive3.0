@@ -2,6 +2,7 @@
 
 import { AuctionBid, BidsModal } from "@/components/auction";
 import { AuctionHeader } from "@/components/auction/AuctionHeader";
+import { AdminAuctionPage } from "@/components/auction/AdminAuctionPage";
 import { fetchAuctionByTokenId, fetchAuction } from "@/services/auction";
 import { useQuery } from "@tanstack/react-query";
 import { DAO_ADDRESSES } from "@/lib/utils/constants";
@@ -31,8 +32,6 @@ import {
   ListItem,
   ListIcon,
   Center,
-  IconButton,
-  Tooltip,
 } from "@chakra-ui/react";
 import {
   ArrowBackIcon,
@@ -90,16 +89,12 @@ export default function AuctionPage({
   } = useQuery({
     queryKey: tokenId ? ["auction", tokenId] : ["auction", "latest"],
     queryFn: async () => {
-      console.log("🔍 Fetching auction data:", { tokenId });
-
       if (tokenId !== undefined) {
         const result = await fetchAuctionByTokenId(tokenId);
-        console.log("📦 fetchAuctionByTokenId result:", { tokenId, result });
         return result;
       } else {
         // Fetch latest auction for main page
         const auctions = await fetchAuction(DAO_ADDRESSES.token);
-        console.log("📦 fetchAuction result:", { auctions });
         return auctions[0] || null;
       }
     },
@@ -182,6 +177,20 @@ export default function AuctionPage({
   }
 
   if (!activeAuction || !auctionData) {
+    const isMultipleOf10 = tokenId ? tokenId % 10 === 0 : false;
+
+    // Show special admin auction page for multiples of 10
+    if (tokenId && isMultipleOf10) {
+      return (
+        <AdminAuctionPage
+          tokenId={tokenId}
+          showNavigation={showNavigation}
+          onPrev={handlePrev}
+          onNext={handleNext}
+        />
+      );
+    }
+
     return (
       <Box bg="background" minH="100vh" py={{ base: 4, md: 8 }}>
         <Container maxW="7xl" px={{ base: 4, md: 6 }}>
@@ -500,12 +509,12 @@ export default function AuctionPage({
                               Latest Champ
                             </Text>
                             <Center>
-                              <HStack>
+                              <HStack color={"primary"} spacing={2}>
                                 <Avatar
                                   address={activeAuction.highestBid.bidder}
                                 />
                                 <Name
-                                  className="text-lg font-bold"
+                                  className="text-lg font-bold text-white"
                                   address={activeAuction.highestBid.bidder}
                                 />
                               </HStack>
