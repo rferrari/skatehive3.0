@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import LeaderboardClient from "./leaderboardClient";
 
-interface SkaterData {
+export interface SkaterData {
   id: number;
   hive_author: string;
   hive_balance: number;
