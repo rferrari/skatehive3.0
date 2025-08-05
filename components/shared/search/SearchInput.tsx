@@ -29,7 +29,7 @@ export default function SearchInput({
   };
 
   return (
-    <Box borderBottom="1px solid" borderColor="secondary">
+    <Box borderBottom="1px solid" borderColor="accent">
       <InputGroup size="lg">
         <InputLeftElement
           pointerEvents="none"
@@ -39,7 +39,7 @@ export default function SearchInput({
           alignItems="center"
           justifyContent="center"
         >
-          <Icon as={FaSearch} color="secondary" boxSize="16px" />
+          <Icon as={FaSearch} color="accent" boxSize="16px" />
         </InputLeftElement>
         <Input
           ref={inputRef}
@@ -54,7 +54,7 @@ export default function SearchInput({
           pl="52px"
           height="56px"
           color="primary"
-          _placeholder={{ color: "secondary", opacity: 0.7 }}
+          _placeholder={{ color: "accent", opacity: 0.7 }}
           _focus={{ outline: "none" }}
         />
       </InputGroup>

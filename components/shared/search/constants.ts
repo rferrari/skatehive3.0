@@ -14,6 +14,7 @@ import {
   FaGavel,
   FaUser,
   FaGift,
+  FaGamepad,
 } from "react-icons/fa";
 import { PageResult } from "./types";
 
@@ -44,6 +45,12 @@ export const STATIC_PAGES: PageResult[] = [
     path: "/wallet",
     description: "Manage your crypto wallet and tokens",
     icon: FaWallet,
+  },
+  {
+    title: "Skatehive Game",
+    path: "/game",
+    description: "Play skateboarding games and challenges",
+    icon: FaGamepad,
   },
   {
     title: "Bounties",
@@ -119,7 +126,7 @@ export const COMMAND_PAGES: PageResult[] = [
 
 export const getPopularPages = () => {
   const popularStaticPages = STATIC_PAGES.filter((page) =>
-    ["Home", "Blog", "Bounties", "Leaderboard", "Create Post"].includes(
+    ["Home", "Blog", "Skatehive Game", "Bounties", "Leaderboard", "Create Post"].includes(
       page.title
     )
   );
