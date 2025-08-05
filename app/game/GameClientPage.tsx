@@ -1,21 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  Box,
-  VStack,
-  Heading,
-  Text,
-  Button,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  Kbd,
-  Icon,
-  HStack,
-  useColorModeValue,
-} from "@chakra-ui/react";
-import { MdFullscreen, MdClose } from "react-icons/md";
 
 export default function GameClientPage() {
   const [isModalFullscreen, setIsModalFullscreen] = useState(false);
@@ -24,185 +9,122 @@ export default function GameClientPage() {
     setIsModalFullscreen(!isModalFullscreen);
   };
 
-  const bgColor = useColorModeValue("gray.900", "gray.900");
-  const textColor = useColorModeValue("white", "white");
-
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
       // F key for fullscreen toggle
       if (event.key === "f" || event.key === "F") {
         event.preventDefault();
-        event.stopPropagation();
         toggleModalFullscreen();
       }
       // Escape key to exit fullscreen
       if (event.key === "Escape" && isModalFullscreen) {
         event.preventDefault();
-        event.stopPropagation();
         setIsModalFullscreen(false);
       }
     };
 
-    // Add listeners to both document and window to catch events even from iframe
-    document.addEventListener("keydown", handleKeyPress, true);
-    window.addEventListener("keydown", handleKeyPress, true);
-
-    // Also add a message listener for iframe communication
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data === "toggleFullscreen") {
-        toggleModalFullscreen();
-      }
-    };
-    window.addEventListener("message", handleMessage);
+    document.addEventListener("keydown", handleKeyPress);
 
     return () => {
-      document.removeEventListener("keydown", handleKeyPress, true);
-      window.removeEventListener("keydown", handleKeyPress, true);
-      window.removeEventListener("message", handleMessage);
+      document.removeEventListener("keydown", handleKeyPress);
     };
   }, [isModalFullscreen]);
 
   return (
     <>
-      <Box minH="100vh" bg={bgColor} display="flex" flexDirection="column">
-        <Box flex={1} p={4}>
-          <Box maxW="7xl" mx="auto">
-            <Heading
-              as="h1"
-              size="xl"
-              color={textColor}
-              mb={6}
-              textAlign="center"
-            >
+      <div className="min-h-screen bg-gray-900 flex flex-col">
+        <div className="flex-1 p-4">
+          <div className="max-w-7xl mx-auto">
+            <h1 className="text-3xl font-bold text-white mb-6 text-center">
               Quest for Skateboard
-            </Heading>
+            </h1>
 
-            <Box
-              bg="black"
-              borderRadius="lg"
-              overflow="hidden"
-              shadow="2xl"
-              position="relative"
-            >
-              {/* Fullscreen Button - Chakra UI */}
-              <Button
-                position="absolute"
-                top={2}
-                right={2}
-                zIndex={9999}
-                colorScheme="yellow"
-                variant="solid"
-                size="lg"
+            <div className="bg-black rounded-lg overflow-hidden shadow-2xl relative">
+              {/* Fullscreen Button - Bright and Always Visible */}
+              <button
                 onClick={toggleModalFullscreen}
-                leftIcon={<Icon as={MdFullscreen} boxSize={6} />}
-                animation="pulse 2s infinite"
-                border="4px solid"
-                borderColor="yellow.300"
-                shadow="2xl"
-                fontWeight="bold"
-                fontSize="lg"
-                px={6}
-                py={3}
-                borderRadius="xl"
-                _hover={{
-                  bg: "yellow.400",
-                  transform: "scale(1.05)",
-                }}
-                title="Click for Fullscreen!"
+                className="absolute top-4 right-4 z-[100] bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition-all duration-200 shadow-xl font-medium text-sm border-2 border-blue-400"
+                title="Enter Fullscreen (F key)"
               >
-                FULLSCREEN
-              </Button>
+                <div className="flex items-center gap-2">
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
+                    />
+                  </svg>
+                  <span>Fullscreen</span>
+                </div>
+              </button>
 
-              <Box
-                as="iframe"
+              <iframe
                 src="https://html5-game-skatehive.vercel.app/QFShive/index.html"
-                w="full"
-                h="800px"
-                border="none"
+                className="w-full h-[800px] border-0"
                 title="SkateHive Game"
                 allow="fullscreen; autoplay; encrypted-media"
                 sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation"
               />
-            </Box>
+            </div>
 
-            <VStack mt={4} spacing={2}>
-              <Text color="gray.400" fontSize="sm" textAlign="center">
-                Use arrow keys or WASD to control your skater.
-              </Text>
-              <HStack spacing={2} align="center">
-                <Text color="yellow.400" fontWeight="bold" fontSize="sm">
-                  Click the yellow
-                </Text>
-                <Button size="xs" colorScheme="yellow" variant="solid">
-                  FULLSCREEN
-                </Button>
-                <Text color="yellow.400" fontWeight="bold" fontSize="sm">
-                  button above for the best experience!
-                </Text>
-              </HStack>
-            </VStack>
-          </Box>
-        </Box>
-      </Box>
+            <div className="mt-4 text-center">
+              <p className="text-gray-400 text-sm">
+                Use arrow keys or WASD to control your skater. Press{" "}
+                <kbd className="bg-gray-700 px-2 py-1 rounded text-xs text-white">
+                  F
+                </kbd>{" "}
+                for fullscreen. Have fun!
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      {/* Modal Fullscreen - Chakra UI Modal */}
-      <Modal
-        isOpen={isModalFullscreen}
-        onClose={() => setIsModalFullscreen(false)}
-        size="full"
-        motionPreset="slideInBottom"
-        closeOnOverlayClick={false}
-        closeOnEsc={true}
-      >
-        <ModalOverlay bg="black" />
-        <ModalContent
-          bg="background"
-          m={0}
-          borderRadius={0}
-          maxW="100vw"
-          maxH="100vh"
-          overflow="hidden"
+      {/* Modal Fullscreen */}
+      {isModalFullscreen && (
+        <div
+          className="fixed inset-0 bg-black z-[9999] flex flex-col"
+          onClick={(e) => e.stopPropagation()}
         >
-          {/* Close Button - Chakra UI */}
-          <Button
-            position="fixed"
-            top={4}
-            left={4}
-            zIndex={10000}
-            colorScheme="red"
-            variant="solid"
-            leftIcon={<Icon as={MdClose} boxSize={5} />}
+          {/* Close Button */}
+          <button
             onClick={() => setIsModalFullscreen(false)}
-            shadow="xl"
-            fontWeight="bold"
-            fontSize="sm"
-            border="2px solid"
-            borderColor="red.400"
-            _hover={{
-              bg: "red.500",
-              transform: "scale(1.05)",
-            }}
+            className="absolute top-4 right-4 z-[10000] bg-red-600 hover:bg-red-500 text-white p-3 rounded-lg transition-all duration-200 shadow-xl"
             title="Exit Fullscreen (ESC)"
           >
-            CLOSE
-          </Button>
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
 
           {/* Fullscreen Game */}
-          <Box
-            as="iframe"
-            src="https://html5-game-skatehive.vercel.app/QFShive/index.html"
-            position="absolute"
-            top={0}
-            left={0}
-            w="100%"
-            h="100%"
-            border="none"
-            title="SkateHive Game - Fullscreen"
-            allow="fullscreen; autoplay; encrypted-media"
-            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation"
-          />
-        </ModalContent>
-      </Modal>
+          <div className="flex-1 w-full h-full">
+            <iframe
+              src="https://html5-game-skatehive.vercel.app/QFShive/index.html"
+              className="w-full h-full border-0"
+              title="SkateHive Game - Fullscreen"
+              allow="fullscreen; autoplay; encrypted-media"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation"
+            />
+          </div>
+        </div>
+      )}
     </>
   );
 }
