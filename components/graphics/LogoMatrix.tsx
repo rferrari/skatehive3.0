@@ -7,7 +7,6 @@ const matrixCharacters1 = "ABCDHIJKLMSTUVWXZ124567890"; // Logoskate1 (original,
 const matrixCharacters2 = "EFGNOPQRYacfgkmopqrtwxz"; // Logoskate2 (user-specified)
 
 const randomSentences = [
-  "skate or dont",
   "F-u-c-k instagram",
   "Praise skatevideosite",
   "Loading Stokenomics...",
@@ -33,6 +32,8 @@ const randomSentences = [
   "Drop hills not bombs!",
   "Praise skatevideosite",
   "Ready to grind on chain?",
+  "Press Ctrl + K for quick menu",
+  "Skateboard is a HiveMind",
 ];
 
 // Generate a column as an array of { char, font }
