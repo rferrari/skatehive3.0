@@ -17,6 +17,9 @@ interface SkaterData {
   last_updated: string;
   last_post: string;
   post_count: number;
+  posts_score: number;
+  snaps_count: number;
+  delegated_curator: number;
   points: number;
   giveth_donations_usd: number;
   giveth_donations_amount: number;
