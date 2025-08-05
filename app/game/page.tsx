@@ -16,7 +16,7 @@ export default function GamePage() {
 
           <div className="bg-black rounded-lg overflow-hidden shadow-2xl">
             <iframe
-              src="https://html5-game-skatehive-qw4abt5eo-webgnars-projects.vercel.app/QFShive/index.html"
+              src="https://html5-game-skatehive.vercel.app/QFShive/index.html"
               className="w-full h-[800px] border-0"
               title="SkateHive Game"
               allow="fullscreen; autoplay; encrypted-media"
