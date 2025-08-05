@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import {
   Button,
   Box,
@@ -155,8 +155,8 @@ export default function AuthButton() {
   const [isFarcasterAuthInProgress, setIsFarcasterAuthInProgress] =
     useState(false);
 
-  // Connection status data with priority (Hive > Ethereum > Farcaster)
-  const connections: ConnectionStatus[] = [
+  // Connection status data with priority (Hive > Ethereum > Farcaster) - Memoized to prevent recreation
+  const connections: ConnectionStatus[] = useMemo(() => [
     {
       name: "Hive",
       connected: !!user,
@@ -178,47 +178,53 @@ export default function AuthButton() {
       color: "purple",
       priority: 3,
     },
-  ];
+  ], [user, isEthereumConnected, isFarcasterConnected]);
+
+  // Memoize metadata parsing to avoid JSON.parse on every render
+  const parsedMetadata = useMemo(() => {
+    if (!hiveAccount?.json_metadata) return null;
+    try {
+      const raw = JSON.parse(hiveAccount.json_metadata);
+      return migrateLegacyMetadata(raw);
+    } catch (err) {
+      return null;
+    }
+  }, [hiveAccount?.json_metadata]);
 
   useEffect(() => {
-    if (!user || !hiveAccount) {
+    if (!user || !hiveAccount || !parsedMetadata) {
       prevEthRef.current = isEthereumConnected;
       prevFcRef.current = isFarcasterConnected;
       return;
     }
 
-    try {
-      const raw = hiveAccount.json_metadata
-        ? JSON.parse(hiveAccount.json_metadata)
-        : {};
-      const parsed = migrateLegacyMetadata(raw);
-      const hasWallet = !!parsed.extensions?.wallets?.primary_wallet;
-      const hasFarcaster = !!parsed.extensions?.farcaster?.username;
+    const hasWallet = !!parsedMetadata.extensions?.wallets?.primary_wallet;
+    const hasFarcaster = !!parsedMetadata.extensions?.farcaster?.username;
 
-      if (isEthereumConnected && !prevEthRef.current && !hasWallet) {
-        setMergeType("ethereum");
-        setShowMergeModal(true);
-      }
+    if (isEthereumConnected && !prevEthRef.current && !hasWallet) {
+      setMergeType("ethereum");
+      setShowMergeModal(true);
+    }
 
-      if (isFarcasterConnected && !prevFcRef.current && !hasFarcaster) {
-        setMergeType("farcaster");
-        setShowMergeModal(true);
-      }
-    } catch (err) {
-      // ignore parse errors
+    if (isFarcasterConnected && !prevFcRef.current && !hasFarcaster) {
+      setMergeType("farcaster");
+      setShowMergeModal(true);
     }
 
     prevEthRef.current = isEthereumConnected;
     prevFcRef.current = isFarcasterConnected;
-  }, [isEthereumConnected, isFarcasterConnected, hiveAccount, user]);
+  }, [isEthereumConnected, isFarcasterConnected, parsedMetadata, user, hiveAccount]);
 
-  // Get primary connection (highest priority connected)
-  const primaryConnection = connections
-    .filter((conn) => conn.connected)
-    .sort((a, b) => a.priority - b.priority)[0];
+  // Get primary connection (highest priority connected) - Memoized
+  const primaryConnection = useMemo(() => 
+    connections
+      .filter((conn) => conn.connected)
+      .sort((a, b) => a.priority - b.priority)[0],
+    [connections]
+  );
 
-  // Get user display info for primary connection
-  const getPrimaryUserInfo = () => {
+  // Get user display info for primary connection - Memoized
+  const primaryUserInfo = useMemo(() => {
     if (!primaryConnection) return null;
 
     switch (primaryConnection.name) {
@@ -253,16 +259,16 @@ export default function AuthButton() {
         break;
     }
     return null;
-  };
+  }, [primaryConnection, user, ethereumAddress, farcasterProfile]);
 
-  // Connection handlers
-  const handleHiveLogin = async () => {
+  // Connection handlers - Memoized with useCallback
+  const handleHiveLogin = useCallback(async () => {
     setIsConnectionModalOpen(false);
     await aioha.logout();
     setModalDisplayed(true);
-  };
+  }, [aioha]);
 
-  const handleFarcasterConnect = () => {
+  const handleFarcasterConnect = useCallback(() => {
     if (isFarcasterAuthInProgress || isFarcasterConnected) {
       return;
     }
@@ -272,19 +278,27 @@ export default function AuthButton() {
     if (hiddenButton) {
       hiddenButton.click();
     }
-  };
+  }, [isFarcasterAuthInProgress, isFarcasterConnected]);
+
+  // Memoize modal close handler
+  const handleCloseConnectionModal = useCallback(() => {
+    setIsConnectionModalOpen(false);
+  }, []);
+
+  // Memoize button click handler
+  const handleOpenConnectionModal = useCallback(() => {
+    setIsConnectionModalOpen(true);
+  }, []);
 
   if (!isClientMounted) {
     return null;
   }
 
-  const primaryUserInfo = getPrimaryUserInfo();
-
   return (
     <>
       {/* Main Login/Profile Button */}
       <Button
-        onClick={() => setIsConnectionModalOpen(true)}
+        onClick={handleOpenConnectionModal}
         color="text"
         bg="background"
         border="1px solid"
@@ -362,7 +376,7 @@ export default function AuthButton() {
       {/* Connection Modal */}
       <ConnectionModal
         isOpen={isConnectionModalOpen}
-        onClose={() => setIsConnectionModalOpen(false)}
+        onClose={handleCloseConnectionModal}
         onHiveLogin={handleHiveLogin}
         onFarcasterConnect={handleFarcasterConnect}
         isFarcasterAuthInProgress={isFarcasterAuthInProgress}

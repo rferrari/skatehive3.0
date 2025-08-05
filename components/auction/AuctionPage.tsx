@@ -10,8 +10,6 @@ import { DAO_ADDRESSES } from "@/lib/utils/constants";
 import { formatEther } from "viem";
 import { useMemo, useState } from "react";
 import Countdown from "react-countdown";
-import { useAccount } from "wagmi";
-import ConnectModal from "@/components/wallet/ConnectModal";
 import { useRouter } from "next/navigation";
 import {
   Box,
@@ -96,8 +94,6 @@ export default function AuctionPage({
   });
 
   const [isBidsModalOpen, setIsBidsModalOpen] = useState(false);
-  const { isConnected, address } = useAccount();
-  const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
   const [isHoveringBid, setIsHoveringBid] = useState(false);
 
   // Navigation logic
@@ -631,12 +627,6 @@ export default function AuctionPage({
             tokenId={activeAuction.token.tokenId.toString()}
           />
         )}
-
-        {/* Connect Modal */}
-        <ConnectModal
-          isOpen={isConnectModalOpen}
-          onClose={() => setIsConnectModalOpen(false)}
-        />
       </Box>
     </>
   );
