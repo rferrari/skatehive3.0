@@ -29,7 +29,6 @@ import NoResults from "./search/NoResults";
 
 // Import types and constants
 import {
-  SkaterData,
   PageResult as PageResultType,
   SearchOverlayProps,
 } from "./search/types";
@@ -38,6 +37,7 @@ import {
   COMMAND_PAGES,
   getPopularPages,
 } from "./search/constants";
+import { SkaterData } from "@/types/leaderboard";
 
 export default function SearchOverlay({
   isOpen,

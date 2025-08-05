@@ -32,13 +32,14 @@ import { useAccount, useChainId, useSwitchChain } from "wagmi";
 import { useAioha } from "@aioha/react-ui";
 import { KeychainSDK, KeychainKeyTypes } from "keychain-sdk";
 import { Operation } from "@hiveio/dhive";
-import { SkaterData, SortOption } from "@/types/airdrop";
+import { SortOption } from "@/types/airdrop";
 import { tokenDictionary } from "@/lib/utils/tokenDictionary";
 import { useAirdropManager } from "@/hooks/useAirdropManager";
 import { useTransactionStatus } from "@/hooks/useTransactionStatus";
 import { ERC20AirdropService } from "@/services/erc20Airdrop";
 import TransactionStatusDisplay from "./TransactionStatusDisplay";
 import { base } from "wagmi/chains";
+import { SkaterData } from "@/types/leaderboard";
 
 interface AirdropManagerProps {
   leaderboardData: SkaterData[];

@@ -2,8 +2,7 @@
 
 import React from "react";
 import { Box, HStack, VStack, Text, Avatar, Icon } from "@chakra-ui/react";
-
-import { SkaterData } from "./types";
+import { SkaterData } from "@/types/leaderboard";
 
 interface SkaterResultProps {
   skater: SkaterData;
