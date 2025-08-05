@@ -22,7 +22,13 @@ import {
   HStack,
   Textarea,
 } from "@chakra-ui/react";
-import React, { useState, useRef, useMemo, useCallback, useEffect } from "react";
+import React, {
+  useState,
+  useRef,
+  useMemo,
+  useCallback,
+  useEffect,
+} from "react";
 import { Discussion } from "@hiveio/dhive";
 import { FaHeart, FaRegHeart, FaShareSquare, FaEdit } from "react-icons/fa";
 import { getPostDate } from "@/lib/utils/GetPostDate";
@@ -624,30 +630,32 @@ export default function PostDetails({
       <Box
         mt={4}
         ref={markdownRef}
-        maxHeight="1000px"
-        overflowY="auto"
+        maxHeight={{ base: "none", md: "1000px" }}
+        overflowY={{ base: "visible", md: "auto" }}
         css={{
-          "&::-webkit-scrollbar": {
-            width: "8px",
+          "@media (min-width: 768px)": {
+            "&::-webkit-scrollbar": {
+              width: "8px",
+            },
+            "&::-webkit-scrollbar-track": {
+              background: "var(--chakra-colors-muted)",
+              borderRadius: "2px",
+            },
+            "&::-webkit-scrollbar-thumb": {
+              background: "var(--chakra-colors-primary)",
+              borderRadius: "2px",
+              border: "1px solid var(--chakra-colors-background)",
+              cursor: "grab",
+            },
+            "&::-webkit-scrollbar-thumb:hover": {
+              background: "var(--chakra-colors-accent)",
+              cursor: "grabbing",
+            },
+            // Firefox scrollbar
+            scrollbarWidth: "thin",
+            scrollbarColor:
+              "var(--chakra-colors-primary) var(--chakra-colors-muted)",
           },
-          "&::-webkit-scrollbar-track": {
-            background: "var(--chakra-colors-muted)",
-            borderRadius: "2px",
-          },
-          "&::-webkit-scrollbar-thumb": {
-            background: "var(--chakra-colors-primary)",
-            borderRadius: "2px",
-            border: "1px solid var(--chakra-colors-background)",
-            cursor: "grab",
-          },
-          "&::-webkit-scrollbar-thumb:hover": {
-            background: "var(--chakra-colors-accent)",
-            cursor: "grabbing",
-          },
-          // Firefox scrollbar
-          scrollbarWidth: "thin",
-          scrollbarColor:
-            "var(--chakra-colors-primary) var(--chakra-colors-muted)",
         }}
       >
         {isEditing ? (
