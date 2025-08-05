@@ -8,9 +8,11 @@ interface lastContainerInfo {
 }
 
 export const useSnaps = () => {
+  // Data source priority: 1 = API first, 2 = Hive blockchain first
+  const DATA_SOURCE_PRIORITY = 1;
+  
   const lastContainerRef = useRef<lastContainerInfo | null>(null); // Use useRef for last container
   const fetchedPermlinksRef = useRef<Set<string>>(new Set()); // Track fetched permlinks
-
   const [currentPage, setCurrentPage] = useState(1);
   const [comments, setComments] = useState<Discussion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -170,17 +172,31 @@ export const useSnaps = () => {
       try {
         let newSnaps: Discussion[] = [];
 
-        // Try Hive blockchain method first
-        try {
-          newSnaps = await getMoreSnaps();
-        } catch (hiveError) {
-          console.warn('Hive blockchain fetch failed, falling back to API:', hiveError);
-          // Fallback to API if Hive method fails
+        if (DATA_SOURCE_PRIORITY === 1) {
+          // API first, blockchain fallback
           try {
             newSnaps = await fetchFromNewApi();
           } catch (apiError) {
-            console.error('Both Hive and API fetch methods failed:', apiError);
-            return;
+            console.warn('API fetch failed, falling back to Hive blockchain:', apiError);
+            try {
+              newSnaps = await getMoreSnaps();
+            } catch (hiveError) {
+              console.error('Both API and Hive blockchain fetch methods failed:', hiveError);
+              return;
+            }
+          }
+        } else {
+          // Blockchain first, API fallback
+          try {
+            newSnaps = await getMoreSnaps();
+          } catch (hiveError) {
+            console.warn('Hive blockchain fetch failed, falling back to API:', hiveError);
+            try {
+              newSnaps = await fetchFromNewApi();
+            } catch (apiError) {
+              console.error('Both Hive blockchain and API fetch methods failed:', apiError);
+              return;
+            }
           }
         }
 
