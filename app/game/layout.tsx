@@ -1,5 +1,4 @@
 import { Metadata } from "next";
-import GameClientPage from "./GameClientPage";
 
 export const metadata: Metadata = {
   title: "Quest for Skateboard - SkateHive Game",
@@ -56,6 +55,10 @@ export const metadata: Metadata = {
   themeColor: "#1f2937", // Matches the gray-900 background
 };
 
-export default function GamePage() {
-  return <GameClientPage />;
+export default function GameLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return children;
 }
