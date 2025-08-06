@@ -91,29 +91,29 @@ export const useSnaps = () => {
   // Convert API item to Discussion format
   function convertApiItemToDiscussion(apiData: any): Discussion {
     return {
-      body: apiData.body,
-      author: apiData.author,
-      permlink: apiData.permlink,
-      parent_author: apiData.parent_author,
-      parent_permlink: apiData.parent_permlink,
-      created: apiData.created,
-      cashout_time: apiData.cashout_time,
-      last_payout: apiData.last_payout,
-      category: apiData.category,
-      pending_payout_value: apiData.pending_payout_value,
-      author_rewards: apiData.author_rewards,
-      total_payout_value: apiData.total_payout_value,
-      curator_payout_value: apiData.curator_payout_value,
-      beneficiaries: apiData.beneficiaries,
-      max_accepted_payout: apiData.max_accepted_payout,
-      percent_hbd: apiData.percent_hbd,
-      allow_votes: apiData.allow_votes,
-      allow_curation_rewards: apiData.allow_curation_rewards,
-      net_rshares: apiData.net_rshares,
-      total_vote_weight: apiData.total_vote_weight,
+      body: apiData.body || '',
+      author: apiData.author || '',
+      permlink: apiData.permlink || '',
+      parent_author: apiData.parent_author || '',
+      parent_permlink: apiData.parent_permlink || '',
+      created: apiData.created || '',
+      cashout_time: apiData.cashout_time || '',
+      last_payout: apiData.last_payout || '',
+      category: apiData.category || '',
+      pending_payout_value: apiData.pending_payout_value || '',
+      author_rewards: apiData.author_rewards || '',
+      total_payout_value: apiData.total_payout_value || '',
+      curator_payout_value: apiData.curator_payout_value || '',
+      beneficiaries: apiData.beneficiaries || [],
+      max_accepted_payout: apiData.max_accepted_payout || '',
+      percent_hbd: apiData.percent_hbd || 0,
+      allow_votes: apiData.allow_votes || true,
+      allow_curation_rewards: apiData.allow_curation_rewards || true,
+      net_rshares: apiData.net_rshares || '',
+      total_vote_weight: apiData.total_vote_weight || 0,
       title: '',
       abs_rshares: '',
-      children: apiData.children.length,
+      children: apiData.children?.length || 0,
       reblogged_by: [],
       replies: [],
       vote_rshares: '',
@@ -149,8 +149,8 @@ export const useSnaps = () => {
   async function fetchFromNewApi(): Promise<Discussion[]> {
     const tag = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || '';
     const limit = 10;
-    const apiUrl = `https://api.skatehive.app/api/v1/feed?limit=${limit}&page=${currentPage}`;
-    // const apiUrl = `http://localhost:3001/api/v1/feed?limit=${limit}&page=${currentPage}`;
+    const apiUrl = `https://api.skatehive.app/api/v2/feed?limit=${limit}&page=${currentPage}`;
+    // const apiUrl = `http://localhost:3001/api/v2/feed?limit=${limit}&page=${currentPage}`;
 
     const response = await fetch(apiUrl);
     if (!response.ok) {
