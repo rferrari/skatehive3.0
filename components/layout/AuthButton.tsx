@@ -24,9 +24,8 @@ import ConnectionModal from "./ConnectionModal";
 import useHiveAccount from "@/hooks/useHiveAccount";
 import { migrateLegacyMetadata } from "@/lib/utils/metadataMigration";
 import MergeAccountModal, { MergeType } from "../profile/MergeAccountModal";
-import { KeychainSDK, KeychainKeyTypes } from "keychain-sdk";
-import { Operation } from "@hiveio/dhive";
-import fetchAccount from "@/lib/hive/fetchAccount";
+import { mergeAccounts, generateMergePreview } from "@/lib/services/mergeAccounts";
+import { ProfileDiff } from "@/lib/utils/profileDiff";
 
 interface ConnectionStatus {
   name: string;
@@ -57,6 +56,9 @@ export default function AuthButton() {
   const { hiveAccount } = useHiveAccount(user || "");
   const [showMergeModal, setShowMergeModal] = useState(false);
   const [mergeType, setMergeType] = useState<MergeType>("ethereum");
+  const [profileDiff, setProfileDiff] = useState<ProfileDiff | undefined>();
+  const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
+  const [isMerging, setIsMerging] = useState(false);
   const prevEthRef = useRef(isEthereumConnected);
   const prevFcRef = useRef(isFarcasterConnected);
 
@@ -66,71 +68,26 @@ export default function AuthButton() {
       return;
     }
 
+    setIsMerging(true);
     try {
-      const { jsonMetadata: currentMetadata, postingMetadata } =
-        await fetchAccount(user);
-
-      const migrated = migrateLegacyMetadata(currentMetadata);
-      migrated.extensions = migrated.extensions || {};
+      const options: any = {
+        username: user,
+      };
 
       if (isEthereumConnected && ethereumAddress) {
-        migrated.extensions.wallets = migrated.extensions.wallets || {};
-        migrated.extensions.wallets.primary_wallet = ethereumAddress;
+        options.ethereumAddress = ethereumAddress;
       }
 
       if (isFarcasterConnected && farcasterProfile) {
-        migrated.extensions.farcaster = migrated.extensions.farcaster || {};
-        migrated.extensions.farcaster.username = farcasterProfile.username;
-        migrated.extensions.farcaster.fid = farcasterProfile.fid;
-        if (farcasterProfile.pfpUrl) {
-          migrated.extensions.farcaster.pfp_url = farcasterProfile.pfpUrl;
-          postingMetadata.profile = postingMetadata.profile || {};
-          postingMetadata.profile.profile_image = farcasterProfile.pfpUrl;
-        }
-        if (farcasterProfile.bio) {
-          migrated.extensions.farcaster.bio = farcasterProfile.bio;
-          postingMetadata.profile = postingMetadata.profile || {};
-          postingMetadata.profile.about = farcasterProfile.bio;
-        }
-
-        migrated.extensions.wallets = migrated.extensions.wallets || {};
-        if (farcasterProfile.custody) {
-          migrated.extensions.wallets.custody_address =
-            farcasterProfile.custody;
-        }
-        if (
-          Array.isArray(farcasterProfile.verifications) &&
-          farcasterProfile.verifications.length > 0
-        ) {
-          migrated.extensions.wallets.farcaster_verified_wallets =
-            farcasterProfile.verifications;
-        }
+        options.farcasterProfile = {
+          fid: farcasterProfile.fid,
+          username: farcasterProfile.username,
+          custody: farcasterProfile.custody,
+          verifications: farcasterProfile.verifications,
+        };
       }
 
-      const operation: Operation = [
-        "account_update2",
-        {
-          account: user,
-          json_metadata: JSON.stringify(migrated),
-          posting_json_metadata: JSON.stringify(postingMetadata),
-          extensions: [],
-        },
-      ];
-
-      const keychain = new KeychainSDK(window);
-      const formParams = {
-        data: {
-          username: user,
-          operations: [operation],
-          method: KeychainKeyTypes.active,
-        },
-      };
-
-      const result = await keychain.broadcast(formParams.data as any);
-
-      if (!result) {
-        throw new Error("Merge failed");
-      }
+      const result = await mergeAccounts(options);
 
       toast({
         title: "Profile Updated",
@@ -146,7 +103,46 @@ export default function AuthButton() {
         duration: 3000,
       });
     } finally {
+      setIsMerging(false);
       setShowMergeModal(false);
+      setProfileDiff(undefined);
+    }
+  };
+
+  const generatePreview = async () => {
+    if (!user) return;
+
+    setIsGeneratingPreview(true);
+    try {
+      const options: any = {
+        username: user,
+      };
+
+      if (isEthereumConnected && ethereumAddress) {
+        options.ethereumAddress = ethereumAddress;
+      }
+
+      if (isFarcasterConnected && farcasterProfile) {
+        options.farcasterProfile = {
+          fid: farcasterProfile.fid,
+          username: farcasterProfile.username,
+          custody: farcasterProfile.custody,
+          verifications: farcasterProfile.verifications,
+        };
+      }
+
+      const diff = await generateMergePreview(options);
+      setProfileDiff(diff);
+    } catch (err: any) {
+      console.error("Failed to generate merge preview", err);
+      toast({
+        title: "Preview Failed",
+        description: err?.message || "Unable to generate preview",
+        status: "error",
+        duration: 3000,
+      });
+    } finally {
+      setIsGeneratingPreview(false);
     }
   };
 
@@ -204,11 +200,13 @@ export default function AuthButton() {
     if (isEthereumConnected && !prevEthRef.current && !hasWallet) {
       setMergeType("ethereum");
       setShowMergeModal(true);
+      generatePreview();
     }
 
     if (isFarcasterConnected && !prevFcRef.current && !hasFarcaster) {
       setMergeType("farcaster");
       setShowMergeModal(true);
+      generatePreview();
     }
 
     prevEthRef.current = isEthereumConnected;
@@ -436,9 +434,14 @@ export default function AuthButton() {
       </Box>
       <MergeAccountModal
         isOpen={showMergeModal}
-        onClose={() => setShowMergeModal(false)}
+        onClose={() => {
+          setShowMergeModal(false);
+          setProfileDiff(undefined);
+        }}
         onMerge={handleMergeAccounts}
         mergeType={mergeType}
+        profileDiff={profileDiff}
+        isLoading={isGeneratingPreview || isMerging}
       />
     </>
   );

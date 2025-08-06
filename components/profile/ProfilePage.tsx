@@ -84,6 +84,8 @@ export interface ProfileData {
   vote_weight?: number;
   vp_percent?: string;
   rc_percent?: string;
+  zineCover?: string;
+  svs_profile?: string;
 }
 
 const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
