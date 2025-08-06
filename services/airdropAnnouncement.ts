@@ -102,7 +102,7 @@ function getSortOptionLabel(sortOption: string): string {
     hp_balance: 'Hive Power',
     hive_balance: 'Hive Balance',
     hbd_savings_balance: 'HBD Savings',
-    post_count: 'Post Count',
+    posts_score: 'Posts Score',
     has_voted_in_witness: 'Witness Voters',
     gnars_balance: 'Gnars Balance',
     skatehive_nft_balance: 'SkateHive NFTs',

@@ -117,7 +117,7 @@ export function ConfigurationStep({
                 <option value="hp_balance">Hive Power</option>
                 <option value="hive_balance">Hive Balance</option>
                 <option value="hbd_savings_balance">HBD Savings</option>
-                <option value="post_count">Post Count</option>
+                <option value="posts_score">Posts Score</option>
                 <option value="has_voted_in_witness">Witness Voters</option>
                 <option value="gnars_balance">Gnars Balance</option>
                 <option value="skatehive_nft_balance">SkateHive NFTs</option>
@@ -187,8 +187,8 @@ export function ConfigurationStep({
                   ? "Hive Balance"
                   : sortOption === "hbd_savings_balance"
                   ? "HBD Savings"
-                  : sortOption === "post_count"
-                  ? "post count"
+                  : sortOption === "posts_score"
+                  ? "posts_score"
                   : sortOption === "gnars_balance"
                   ? "Gnars balance"
                   : sortOption === "skatehive_nft_balance"
