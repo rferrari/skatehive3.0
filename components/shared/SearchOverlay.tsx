@@ -29,7 +29,6 @@ import NoResults from "./search/NoResults";
 
 // Import types and constants
 import {
-  SkaterData,
   PageResult as PageResultType,
   SearchOverlayProps,
 } from "./search/types";
@@ -38,6 +37,7 @@ import {
   COMMAND_PAGES,
   getPopularPages,
 } from "./search/constants";
+import { SkaterData } from "@/types/leaderboard";
 
 export default function SearchOverlay({
   isOpen,
@@ -308,7 +308,7 @@ export default function SearchOverlay({
         bg="background"
         borderRadius="lg"
         border="1px solid"
-        borderColor="secondary"
+        borderColor="accent"
         maxW="500px"
         maxH="70vh"
         w="90vw"
@@ -338,7 +338,7 @@ export default function SearchOverlay({
                     width: "4px",
                   },
                   "&::-webkit-scrollbar-thumb": {
-                    bg: "secondary",
+                    bg: "muted",
                     borderRadius: "2px",
                   },
                 }}

@@ -27,7 +27,7 @@ import {
   generateAnnouncementContent,
 } from "../../services/airdropAnnouncement";
 import { captureAirdropNetworkScreenshot } from "@/lib/utils/screenshotCapture";
-import { SkaterData, SortOption } from "@/types/airdrop";
+import { SortOption } from "@/types/airdrop";
 import { useAioha } from "@aioha/react-ui";
 import { PortfolioProvider } from "@/contexts/PortfolioContext";
 import {
@@ -38,6 +38,7 @@ import {
   ConfirmationStep,
 } from "./steps";
 import { StepHeader } from "./steps/StepHeader";
+import { SkaterData } from "@/types/leaderboard";
 
 type ModalView =
   | "tokenSelection"

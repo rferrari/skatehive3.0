@@ -25,6 +25,8 @@ export default function useProfileData(username: string, hiveAccount: HiveAccoun
         vote_weight: 51, // Default vote weight
         vp_percent: "0%",
         rc_percent: "0%",
+        zineCover: "",
+        svs_profile: "",
     });
 
     const updateProfileData = useCallback((newData: Partial<ProfileData>) => {
@@ -42,6 +44,8 @@ export default function useProfileData(username: string, hiveAccount: HiveAccoun
                 let ethereum_address = "";
                 let video_parts: VideoPart[] = [];
                 let vote_weight = 51;
+                let zineCover = "";
+                let svs_profile = "";
 
                 if (hiveAccount?.posting_json_metadata) {
                     try {
@@ -63,6 +67,8 @@ export default function useProfileData(username: string, hiveAccount: HiveAccoun
                         video_parts = parsedMetadata.extensions?.video_parts || [];
                         const defaultWeight = parsedMetadata.extensions?.settings?.voteSettings?.default_voting_weight;
                         vote_weight = typeof defaultWeight === 'number' ? Math.round(defaultWeight / 100) : 51;
+                        zineCover = parsedMetadata.extensions?.settings?.appSettings?.zineCover || "";
+                        svs_profile = parsedMetadata.extensions?.settings?.appSettings?.svs_profile || "";
                     } catch (err) {
                         console.error("Failed to parse json_metadata", err);
                     }
@@ -82,6 +88,8 @@ export default function useProfileData(username: string, hiveAccount: HiveAccoun
                     vote_weight: vote_weight,
                     vp_percent: powerInfo?.data?.vp_percent || "0%",
                     rc_percent: powerInfo?.data?.rc_percent || "0%",
+                    zineCover: zineCover,
+                    svs_profile: svs_profile,
                 });
                 
 

@@ -100,6 +100,7 @@ export default function TopBar({
           py={2}
           borderRadius="md"
           boxShadow="0 2px 8px var(--chakra-colors-primary-alpha)"
+          display={{ base: "none", md: "flex" }}
           _hover={{
             borderColor: "primary",
             bg: "primary",

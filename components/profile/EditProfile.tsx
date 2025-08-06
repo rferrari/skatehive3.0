@@ -31,6 +31,8 @@ import { Operation } from "@hiveio/dhive";
 import { migrateLegacyMetadata } from "@/lib/utils/metadataMigration";
 import MergeAccountModal from "./MergeAccountModal";
 import fetchAccount from "@/lib/hive/fetchAccount";
+import { mergeAccounts, generateMergePreview } from "@/lib/services/mergeAccounts";
+import { ProfileDiff } from "@/lib/utils/profileDiff";
 
 import { uploadToIpfs } from "@/lib/markdown/composeUtils";
 interface EditProfileProps {
@@ -52,6 +54,8 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
       website: "",
       profileImage: "",
       coverImage: "",
+      zineCover: "",
+      svs_profile: "",
     });
     const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
     const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
@@ -59,6 +63,9 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
     const [error, setError] = useState<string | null>(null);
     const [isEditingEthAddress, setIsEditingEthAddress] = useState(false);
     const [showMergeModal, setShowMergeModal] = useState(false);
+    const [profileDiff, setProfileDiff] = useState<ProfileDiff | undefined>();
+    const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
+    const [isMerging, setIsMerging] = useState(false);
     
     // Always call hooks at the top level
     const account = useAccount();
@@ -84,6 +91,8 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
           website: profileData.website || "",
           profileImage: profileData.profileImage || "",
           coverImage: profileData.coverImage || "",
+          zineCover: profileData.zineCover || "",
+          svs_profile: profileData.svs_profile || "",
         });
         setProfileImageFile(null);
         setCoverImageFile(null);
@@ -93,9 +102,53 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
 
     useEffect(() => {
       if (isOpen && (isConnected || isFarcasterConnected)) {
-        setShowMergeModal(true);
+        // Check if user already has an Ethereum wallet in their metadata
+        const hasExistingEthWallet = profileData.ethereum_address && profileData.ethereum_address.trim() !== "";
+        
+        // Only show merge modal if user doesn't already have an Ethereum wallet
+        if (!hasExistingEthWallet) {
+          setShowMergeModal(true);
+          generatePreview();
+        }
       }
-    }, [isOpen, isConnected, isFarcasterConnected]);
+    }, [isOpen, isConnected, isFarcasterConnected, profileData.ethereum_address]);
+
+    const generatePreview = async () => {
+      if (!user || user !== username) return;
+
+      setIsGeneratingPreview(true);
+      try {
+        const options: any = {
+          username: username,
+        };
+
+        if (isConnected && address) {
+          options.ethereumAddress = address;
+        }
+
+        if (isFarcasterConnected && farcasterProfile) {
+          options.farcasterProfile = {
+            fid: farcasterProfile.fid,
+            username: farcasterProfile.username,
+            custody: farcasterProfile.custody,
+            verifications: farcasterProfile.verifications,
+          };
+        }
+
+        const diff = await generateMergePreview(options);
+        setProfileDiff(diff);
+      } catch (err: any) {
+        console.error("Failed to generate merge preview", err);
+        toast({
+          title: "Preview Failed",
+          description: err?.message || "Unable to generate preview",
+          status: "error",
+          duration: 3000,
+        });
+      } finally {
+        setIsGeneratingPreview(false);
+      }
+    };
 
     // Memoized form field handlers
     const handleFormChange = useCallback(
@@ -179,73 +232,31 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
         return;
       }
 
+      setIsMerging(true);
       try {
-        const { jsonMetadata: currentMetadata, postingMetadata } =
-          await fetchAccount(username);
+        const options: any = {
+          username: username,
+        };
 
-        const migrated = migrateLegacyMetadata(currentMetadata);
-        migrated.extensions = migrated.extensions || {};
-        migrated.extensions.wallets = migrated.extensions.wallets || {};
         if (isConnected && address) {
-          migrated.extensions.wallets.primary_wallet = address;
+          options.ethereumAddress = address;
         }
 
         if (isFarcasterConnected && farcasterProfile) {
-          migrated.extensions.farcaster = migrated.extensions.farcaster || {};
-          migrated.extensions.farcaster.username = farcasterProfile.username;
-          migrated.extensions.farcaster.fid = farcasterProfile.fid;
-          if (farcasterProfile.pfpUrl) {
-            migrated.extensions.farcaster.pfp_url = farcasterProfile.pfpUrl;
-            postingMetadata.profile = postingMetadata.profile || {};
-            postingMetadata.profile.profile_image = farcasterProfile.pfpUrl;
-          }
-          if (farcasterProfile.bio) {
-            migrated.extensions.farcaster.bio = farcasterProfile.bio;
-            postingMetadata.profile = postingMetadata.profile || {};
-            postingMetadata.profile.about = farcasterProfile.bio;
-          }
-          if (farcasterProfile.custody) {
-            migrated.extensions.wallets.custody_address = farcasterProfile.custody;
-          }
-          if (
-            Array.isArray(farcasterProfile.verifications) &&
-            farcasterProfile.verifications.length > 0
-          ) {
-            migrated.extensions.wallets.farcaster_verified_wallets =
-              farcasterProfile.verifications;
-          }
+          options.farcasterProfile = {
+            fid: farcasterProfile.fid,
+            username: farcasterProfile.username,
+            custody: farcasterProfile.custody,
+            verifications: farcasterProfile.verifications,
+          };
         }
 
-        const operation: Operation = [
-          "account_update2",
-          {
-            account: username,
-            json_metadata: JSON.stringify(migrated),
-            posting_json_metadata: JSON.stringify(postingMetadata),
-            extensions: [],
-          },
-        ];
-
-        const keychain = new KeychainSDK(window);
-        const formParams = {
-          data: {
-            username: username,
-            operations: [operation],
-            method: KeychainKeyTypes.active,
-          },
-        };
-
-        const result = await keychain.broadcast(formParams.data as any);
-
-        if (!result) {
-          throw new Error("Merge failed");
-        }
+        const result = await mergeAccounts(options);
 
         const updatedData: Partial<ProfileData> = {};
         if (address) updatedData.ethereum_address = address;
-        if (farcasterProfile?.pfpUrl) updatedData.profileImage = farcasterProfile.pfpUrl;
-        if (farcasterProfile?.bio) updatedData.about = farcasterProfile.bio;
         onProfileUpdate(updatedData);
+        
         toast({
           title: "Wallet Linked",
           status: "success",
@@ -260,7 +271,9 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
           duration: 3000,
         });
       } finally {
+        setIsMerging(false);
         setShowMergeModal(false);
+        setProfileDiff(undefined);
       }
     }, [
       address,
@@ -325,6 +338,10 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
         migrated.extensions.wallets = migrated.extensions.wallets || {};
         migrated.extensions.wallets.primary_wallet = profileData.ethereum_address || "";
         migrated.extensions.video_parts = profileData.video_parts || [];
+        migrated.extensions.settings = migrated.extensions.settings || {};
+        migrated.extensions.settings.appSettings = migrated.extensions.settings.appSettings || {};
+        migrated.extensions.settings.appSettings.zineCover = formData.zineCover || "";
+        migrated.extensions.settings.appSettings.svs_profile = formData.svs_profile || "";
 
         const extMetadata = migrated;
 
@@ -682,6 +699,24 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
                   onChange={handleFormChange("about")}
                 />
               </FormControl>
+
+              <FormControl>
+                <FormLabel>Zine Cover URL (optional)</FormLabel>
+                <Input
+                  value={formData.zineCover}
+                  onChange={handleFormChange("zineCover")}
+                  placeholder="Enter URL for your zine cover image"
+                />
+              </FormControl>
+
+              <FormControl>
+                <FormLabel>SVS Profile (optional)</FormLabel>
+                <Input
+                  value={formData.svs_profile}
+                  onChange={handleFormChange("svs_profile")}
+                  placeholder="Enter your SVS profile information"
+                />
+              </FormControl>
             </VStack>
           </ModalBody>
           <ModalFooter>
@@ -704,8 +739,13 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
       </Modal>
       <MergeAccountModal
         isOpen={showMergeModal}
-        onClose={() => setShowMergeModal(false)}
+        onClose={() => {
+          setShowMergeModal(false);
+          setProfileDiff(undefined);
+        }}
         onMerge={handleMergeAccounts}
+        profileDiff={profileDiff}
+        isLoading={isGeneratingPreview || isMerging}
       />
       </>
     );

@@ -2,15 +2,14 @@
 
 import { AuctionBid, BidsModal } from "@/components/auction";
 import { AuctionHeader } from "@/components/auction/AuctionHeader";
+import { AdminAuctionPage } from "@/components/auction/AdminAuctionPage";
+import AuctionMobileNavbar from "@/components/auction/AuctionMobileNavbar";
 import { fetchAuctionByTokenId, fetchAuction } from "@/services/auction";
 import { useQuery } from "@tanstack/react-query";
 import { DAO_ADDRESSES } from "@/lib/utils/constants";
 import { formatEther } from "viem";
 import { useMemo, useState } from "react";
 import Countdown from "react-countdown";
-import { useAccount } from "wagmi";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
-import ConnectModal from "@/components/wallet/ConnectModal";
 import { useRouter } from "next/navigation";
 import {
   Box,
@@ -24,22 +23,14 @@ import {
   Badge,
   Flex,
   useBreakpointValue,
-  Button,
   Image,
   Spinner,
   List,
   ListItem,
   ListIcon,
   Center,
-  IconButton,
-  Tooltip,
 } from "@chakra-ui/react";
-import {
-  ArrowBackIcon,
-  ArrowForwardIcon,
-  CheckCircleIcon,
-  InfoIcon,
-} from "@chakra-ui/icons";
+import { CheckCircleIcon, InfoIcon } from "@chakra-ui/icons";
 import MatrixOverlay from "@/components/graphics/MatrixOverlay";
 import { Name, Avatar, Identity } from "@coinbase/onchainkit/identity";
 
@@ -90,16 +81,12 @@ export default function AuctionPage({
   } = useQuery({
     queryKey: tokenId ? ["auction", tokenId] : ["auction", "latest"],
     queryFn: async () => {
-      console.log("🔍 Fetching auction data:", { tokenId });
-
       if (tokenId !== undefined) {
         const result = await fetchAuctionByTokenId(tokenId);
-        console.log("📦 fetchAuctionByTokenId result:", { tokenId, result });
         return result;
       } else {
         // Fetch latest auction for main page
         const auctions = await fetchAuction(DAO_ADDRESSES.token);
-        console.log("📦 fetchAuction result:", { auctions });
         return auctions[0] || null;
       }
     },
@@ -107,8 +94,6 @@ export default function AuctionPage({
   });
 
   const [isBidsModalOpen, setIsBidsModalOpen] = useState(false);
-  const { isConnected, address } = useAccount();
-  const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
   const [isHoveringBid, setIsHoveringBid] = useState(false);
 
   // Navigation logic
@@ -182,6 +167,20 @@ export default function AuctionPage({
   }
 
   if (!activeAuction || !auctionData) {
+    const isMultipleOf10 = tokenId ? tokenId % 10 === 0 : false;
+
+    // Show special admin auction page for multiples of 10
+    if (tokenId && isMultipleOf10) {
+      return (
+        <AdminAuctionPage
+          tokenId={tokenId}
+          showNavigation={showNavigation}
+          onPrev={handlePrev}
+          onNext={handleNext}
+        />
+      );
+    }
+
     return (
       <Box bg="background" minH="100vh" py={{ base: 4, md: 8 }}>
         <Container maxW="7xl" px={{ base: 4, md: 6 }}>
@@ -205,508 +204,430 @@ export default function AuctionPage({
   }
 
   return (
-    <Box bg="background" minH="100vh" py={{ base: 4, md: 8 }}>
-      <Container maxW="7xl" px={{ base: 4, md: 6 }}>
-        <VStack spacing={{ base: 2, md: 3 }}>
-          {/* Header Section */}
-          <VStack
-            spacing={{ base: 3, md: 4 }}
-            textAlign="center"
-            maxW="4xl"
-            mx="auto"
-          >
-            <Heading
-              size={{ base: "3xl", md: "4xl" }}
-              color="primary"
-              fontFamily="heading"
-              textTransform="uppercase"
-              letterSpacing="wide"
-              lineHeight="tight"
-              style={{
-                fontFamily: "Dash",
-              }}
-            >
-              Skatehive Auction
-            </Heading>
-            <Text
-              fontSize={{ base: "md", md: "lg" }}
-              color="text"
-              maxW="2xl"
-              lineHeight="tall"
-              px={{ base: 2, md: 0 }}
-            >
-              Participate in an auction to acquire Skatehive Art and Votes
-            </Text>
-          </VStack>
+    <>
+      {/* Mobile Navbar */}
+      <AuctionMobileNavbar />
 
-          {/* Auction Header - Name, Date, Navigation */}
-          <Box maxW="4xl" mx="auto" w="full">
-            <AuctionHeader
-              tokenName={activeAuction.token.name}
-              tokenId={activeAuction.token.tokenId.toString()}
-              startTime={activeAuction.startTime}
-              showNavigation={showNavigation}
-              currentTokenId={currentTokenId}
-              isLatestAuction={isLatestAuction ?? false}
-              onPrev={handlePrev}
-              onNext={handleNext}
-            />
-          </Box>
+      <Box bg="background" minH="100vh" py={{ base: 4, md: 8 }}>
+        <Container maxW="7xl" px={{ base: 4, md: 6 }}>
+          <VStack spacing={{ base: 2, md: 3 }}>
+            {/* Header Section */}
+            <Box textAlign="center" maxW="4xl" mx="auto">
+              <Heading
+                size={{ base: "3xl", md: "4xl" }}
+                color="primary"
+                fontFamily="heading"
+                textTransform="uppercase"
+                letterSpacing="wide"
+                lineHeight="tight"
+                style={{
+                  fontFamily: "Dash",
+                }}
+              >
+                Skatehive Auction
+              </Heading>
+            </Box>
 
-          {/* Main Auction Layout */}
-          <Box maxW="4xl" mx="auto" w="full" mb={16} mt={6}>
-            <Grid
-              templateColumns={{ base: "1fr", lg: "0.25fr 0.75fr" }}
-              gap={{ base: 6, md: 6 }}
-              w="full"
-              alignItems="center"
-            >
-              {/* Auction Details */}
-              <GridItem order={{ base: 2, lg: 2 }} ml={{ base: 0, lg: 4 }}>
-                {/* Wallet Connection */}
-                <Box
+            {/* Auction Header - Name, Date, Navigation */}
+            <Box maxW="4xl" mx="auto" w="full">
+              <AuctionHeader
+                tokenName={activeAuction.token.name}
+                tokenId={activeAuction.token.tokenId.toString()}
+                startTime={activeAuction.startTime}
+                showNavigation={showNavigation}
+                currentTokenId={currentTokenId}
+                isLatestAuction={isLatestAuction ?? false}
+                onPrev={handlePrev}
+                onNext={handleNext}
+              />
+            </Box>
+
+            {/* Main Auction Layout */}
+            <Box maxW="4xl" mx="auto" w="full" mb={16} mt={6}>
+              <Grid
+                templateColumns={{ base: "1fr", lg: "1fr 1fr" }}
+                gap={{ base: 6, md: 6 }}
+                w="full"
+                alignItems="stretch"
+              >
+                {/* Auction Details */}
+                <GridItem
+                  order={{ base: 2, lg: 2 }}
+                  ml={{ base: 0, lg: 4 }}
                   display="flex"
                   flexDirection="column"
-                  alignItems="stretch"
-                  justifyContent="center"
-                  borderRadius="xl"
-                  p={2}
-                  minH="60px"
-                  transition="all 0.3s ease"
-                  w="100%"
                 >
-                  <ConnectButton.Custom>
-                    {({
-                      account,
-                      chain,
-                      openAccountModal,
-                      openChainModal,
-                      openConnectModal,
-                      authenticationStatus,
-                      mounted,
-                    }) => {
-                      const ready =
-                        mounted && authenticationStatus !== "loading";
-                      const connected =
-                        ready &&
-                        account &&
-                        chain &&
-                        (!authenticationStatus ||
-                          authenticationStatus === "authenticated");
-
-                      if (!connected) {
-                        return (
-                          <Center>
-                            <Button
-                              onClick={openConnectModal}
-                              size="lg"
-                              px={8}
-                              py={3}
-                              fontSize="lg"
-                              fontWeight="bold"
-                              textTransform="uppercase"
-                              color="background"
-                              bg="primary"
-                              border="2px solid"
-                              borderColor="primary"
-                              borderRadius="lg"
-                              _hover={{ bg: "transparent", color: "primary" }}
-                            >
-                              Connect Wallet
-                            </Button>
-                          </Center>
-                        );
-                      }
-
-                      return (
-                        <>
-                          <Box w="full">
-                            <Identity
-                              address={account.address as `0x${string}`}
-                            >
-                              <Avatar />
-                              <Name className="font-bold text-base ml-1" />
-                            </Identity>
-                          </Box>
-                          <Button
-                            w="full"
-                            mt={2}
-                            px={2}
-                            py={1}
-                            fontSize="md"
-                            fontWeight="bold"
-                            textTransform="uppercase"
-                            color="primary"
-                            bg="muted"
-                            border="2px solid"
-                            borderColor="primary"
-                            borderRadius="lg"
-                            _hover={{ bg: "primary", color: "background" }}
-                            onClick={openAccountModal}
-                          >
-                            Manage Account
-                          </Button>
-                        </>
-                      );
-                    }}
-                  </ConnectButton.Custom>
-                </Box>
-                <Box
-                  p={{ base: 6, lg: 6 }}
-                  position="relative"
-                  overflow="hidden"
-                  border={"1px solid"}
-                  borderColor="border"
-                >
-                  {isHoveringBid && <MatrixOverlay />}
-                  <VStack spacing={6} align="center">
-                    {/* Time Remaining */}
-                    <VStack spacing={2} position="relative" zIndex={1}>
-                      <Text fontSize="sm" color="primary" fontWeight="medium">
-                        Auction ends in
-                      </Text>
-                      {auctionData.isRunning ? (
-                        <Countdown
-                          date={auctionData.endTime}
-                          renderer={({
-                            days,
-                            hours,
-                            minutes,
-                            seconds,
-                            completed,
-                          }) => {
-                            if (completed) {
-                              return (
-                                <Text
-                                  fontSize="3xl"
-                                  fontWeight="bold"
-                                  color="error"
-                                  fontFamily="mono"
-                                >
-                                  ENDED
-                                </Text>
-                              );
-                            }
-                            return (
-                              <HStack spacing={2} align="center">
-                                <Image
-                                  src="/images/clock.gif"
-                                  alt="clock"
-                                  boxSize="32px"
-                                  objectFit="contain"
-                                />
-                                <Text
-                                  fontSize="4xl"
-                                  fontWeight="bold"
-                                  color="primary"
-                                  fontFamily="mono"
-                                >
-                                  {days > 0 && `${days}d `}
-                                  {String(hours).padStart(2, "0")}h{" "}
-                                  {String(minutes).padStart(2, "0")}m{" "}
-                                  {String(seconds).padStart(2, "0")}s
-                                </Text>
-                              </HStack>
-                            );
-                          }}
-                          onComplete={() => refetch()}
-                        />
-                      ) : (
-                        <Text
-                          fontSize="3xl"
-                          fontWeight="bold"
-                          color="error"
-                          fontFamily="mono"
-                        >
-                          ENDED
+                  <Box
+                    p={{ base: 0, lg: 0 }}
+                    position="relative"
+                    overflow="hidden"
+                    border={"1px solid"}
+                    borderColor="border"
+                    flex="1"
+                    display="flex"
+                    flexDirection="column"
+                  >
+                    {isHoveringBid && <MatrixOverlay />}
+                    <VStack
+                      spacing={6}
+                      align="center"
+                      flex="1"
+                      justify="space-between"
+                    >
+                      {/* Time Remaining */}
+                      <VStack spacing={2} position="relative" zIndex={1}>
+                        <Text fontSize="sm" color="primary" fontWeight="medium">
+                          Auction ends in
                         </Text>
-                      )}
-                    </VStack>
+                        {auctionData.isRunning ? (
+                          <Countdown
+                            date={auctionData.endTime}
+                            renderer={({
+                              days,
+                              hours,
+                              minutes,
+                              seconds,
+                              completed,
+                            }) => {
+                              if (completed) {
+                                return (
+                                  <Text
+                                    fontSize="3xl"
+                                    fontWeight="bold"
+                                    color="error"
+                                    fontFamily="mono"
+                                  >
+                                    ENDED
+                                  </Text>
+                                );
+                              }
+                              return (
+                                <HStack spacing={2} align="center">
+                                  <Image
+                                    src="/images/clock.gif"
+                                    alt="clock"
+                                    boxSize="32px"
+                                    objectFit="contain"
+                                  />
+                                  <Text
+                                    fontSize="4xl"
+                                    fontWeight="bold"
+                                    color="primary"
+                                    fontFamily="mono"
+                                  >
+                                    {days > 0 && `${days}d `}
+                                    {String(hours).padStart(2, "0")}h{" "}
+                                    {String(minutes).padStart(2, "0")}m{" "}
+                                    {String(seconds).padStart(2, "0")}s
+                                  </Text>
+                                </HStack>
+                              );
+                            }}
+                            onComplete={() => refetch()}
+                          />
+                        ) : (
+                          <Text
+                            fontSize="3xl"
+                            fontWeight="bold"
+                            color="error"
+                            fontFamily="mono"
+                          >
+                            ENDED
+                          </Text>
+                        )}
+                      </VStack>
 
-                    {/* Bidding Interface */}
-                    <Box w="full" alignSelf="center">
-                      <AuctionBid
-                        tokenId={activeAuction.token.tokenId}
-                        winningBid={
-                          activeAuction.highestBid?.amount
-                            ? BigInt(activeAuction.highestBid.amount)
-                            : 0n
-                        }
-                        isAuctionRunning={auctionData.isRunning}
-                        reservePrice={
-                          activeAuction.dao.auctionConfig.reservePrice
-                        }
-                        minimumBidIncrement={
-                          activeAuction.dao.auctionConfig.minimumBidIncrement
-                        }
-                        onBid={refetch}
-                        onSettle={refetch}
-                        alignContent="left"
-                        bids={activeAuction.bids || []}
-                        onBidSectionHover={setIsHoveringBid}
-                        isLatestAuction={isLatestAuction ?? false}
-                      />
-                    </Box>
+                      {/* Bidding Interface */}
+                      <Box
+                        w="full"
+                        display="flex"
+                        flexDirection="column"
+                        justifyContent="center"
+                      >
+                        <AuctionBid
+                          tokenId={activeAuction.token.tokenId}
+                          winningBid={
+                            activeAuction.highestBid?.amount
+                              ? BigInt(activeAuction.highestBid.amount)
+                              : 0n
+                          }
+                          isAuctionRunning={auctionData.isRunning}
+                          reservePrice={
+                            activeAuction.dao.auctionConfig.reservePrice
+                          }
+                          minimumBidIncrement={
+                            activeAuction.dao.auctionConfig.minimumBidIncrement
+                          }
+                          onBid={refetch}
+                          onSettle={refetch}
+                          alignContent="left"
+                          bids={activeAuction.bids || []}
+                          onBidSectionHover={setIsHoveringBid}
+                          isLatestAuction={isLatestAuction ?? false}
+                        />
+                      </Box>
+                    </VStack>
+                  </Box>
+                </GridItem>
+
+                {/* Large NFT Image */}
+                <GridItem order={{ base: 1, lg: 1 }}>
+                  <Box position="relative" h="full">
+                    <VStack spacing={0}>
+                      {/* NFT Image */}
+                      <Box
+                        position="relative"
+                        w={{ base: "full", md: "400px", lg: "600px" }}
+                        h={{ base: "auto", md: "400px", lg: "600px" }}
+                        mx="auto"
+                      >
+                        <Image
+                          src={activeAuction.token.image}
+                          alt={activeAuction.token.name}
+                          w={{ base: "full", md: "400px", lg: "600px" }}
+                          h={{ base: "auto", md: "400px", lg: "600px" }}
+                          aspectRatio="1"
+                          objectFit="cover"
+                          fallbackSrc="/images/placeholder.png"
+                        />
+                        {/* Stamped Latest Champ Box - Centered and Rotated */}
+                        {!auctionData.isRunning && activeAuction.highestBid && (
+                          <Box
+                            position="absolute"
+                            top="50%"
+                            left="50%"
+                            transform="translate(-50%, -50%) rotate(30deg)"
+                            bg="background"
+                            color="primary"
+                            p={3}
+                            borderRadius="none"
+                            boxShadow="lg"
+                            border="2px dashed"
+                            borderColor="primary"
+                            zIndex={2}
+                            minW={{ base: "180px", md: "220px" }}
+                            opacity={0}
+                            _hover={{
+                              opacity: 1,
+                              transition: "opacity 0.2s ease",
+                              transform:
+                                "translate(-50%, -50%) rotate(30deg) scale(1.05)",
+                            }}
+                          >
+                            <VStack spacing={2} align="stretch" w="full">
+                              <Text
+                                fontSize="sm"
+                                fontWeight="bold"
+                                color="primary"
+                                textAlign="center"
+                                letterSpacing="wide"
+                                textTransform="uppercase"
+                              >
+                                Proud Winner
+                              </Text>
+                              <Center>
+                                <HStack color={"primary"} spacing={2}>
+                                  <Avatar
+                                    address={activeAuction.highestBid.bidder}
+                                  />
+                                  <Name
+                                    className="text-lg font-bold text-white"
+                                    address={activeAuction.highestBid.bidder}
+                                  />
+                                </HStack>
+                              </Center>
+                              <Text
+                                fontSize="lg"
+                                fontWeight="bold"
+                                color="success"
+                                textAlign="center"
+                                w="full"
+                              >
+                                {auctionData.bidAmount} Ξ
+                              </Text>
+                            </VStack>
+                          </Box>
+                        )}
+                      </Box>
+
+                      {/* NFT Image Only - Title, Date, and Navigation moved to AuctionHeader */}
+                      <Box />
+                    </VStack>
+                  </Box>
+                </GridItem>
+              </Grid>
+            </Box>
+
+            {/* Widgets Row - 3 Columns */}
+            <Grid
+              templateColumns={{ base: "1fr", md: "repeat(3, 1fr)" }}
+              gap={{ base: 4, md: 6 }}
+              w="full"
+              maxW="6xl"
+              mx="auto"
+            >
+              {/* How it works */}
+              <GridItem>
+                <Box
+                  bg="muted"
+                  borderRadius="xl"
+                  border="1px solid"
+                  borderColor="border"
+                  p={6}
+                  shadow="sm"
+                  h="full"
+                >
+                  <Heading size="md" color="text" mb={4} fontSize="lg">
+                    How it works
+                  </Heading>
+                  <List spacing={3}>
+                    <ListItem display="flex" alignItems="start">
+                      <ListIcon as={CheckCircleIcon} color="primary" mt={1} />
+                      <Text fontSize="sm" color="text">
+                        Connect your wallet to participate in the auction
+                      </Text>
+                    </ListItem>
+                    <ListItem display="flex" alignItems="start">
+                      <ListIcon as={CheckCircleIcon} color="primary" mt={1} />
+                      <Text fontSize="sm" color="text">
+                        Place a bid higher than the current highest bid
+                      </Text>
+                    </ListItem>
+                    <ListItem display="flex" alignItems="start">
+                      <ListIcon as={CheckCircleIcon} color="primary" mt={1} />
+                      <Text fontSize="sm" color="text">
+                        If you&apos;re the highest bidder when the auction ends,
+                        you win!
+                      </Text>
+                    </ListItem>
+                    <ListItem display="flex" alignItems="start">
+                      <ListIcon as={CheckCircleIcon} color="primary" mt={1} />
+                      <Text fontSize="sm" color="text">
+                        Settle the auction to claim your NFT and start the next
+                        one
+                      </Text>
+                    </ListItem>
+                  </List>
+                </Box>
+              </GridItem>
+
+              {/* Auction Rules */}
+              <GridItem>
+                <Box
+                  bg="muted"
+                  borderRadius="xl"
+                  border="1px solid"
+                  borderColor="border"
+                  p={6}
+                  shadow="sm"
+                  h="full"
+                >
+                  <Heading size="md" color="text" mb={4} fontSize="lg">
+                    Auction Rules
+                  </Heading>
+                  <VStack spacing={3}>
+                    <Flex justify="space-between" w="full" align="center">
+                      <Text fontSize="sm" color="text">
+                        Auction Duration:
+                      </Text>
+                      <Badge
+                        bg="success"
+                        color="background"
+                        variant="solid"
+                        fontSize="xs"
+                      >
+                        24 hours
+                      </Badge>
+                    </Flex>
+                    <Flex justify="space-between" w="full" align="center">
+                      <Text fontSize="sm" color="text">
+                        Minimum Increment:
+                      </Text>
+                      <Badge
+                        bg="success"
+                        color="background"
+                        variant="solid"
+                        fontSize="xs"
+                      >
+                        2%
+                      </Badge>
+                    </Flex>
+                    <Flex justify="space-between" w="full" align="center">
+                      <Text fontSize="sm" color="text">
+                        Reserve Price:
+                      </Text>
+                      <Badge
+                        bg="success"
+                        color="background"
+                        variant="solid"
+                        fontSize="xs"
+                      >
+                        {formatBidAmount(
+                          BigInt(activeAuction.dao.auctionConfig.reservePrice)
+                        )}{" "}
+                        Ξ
+                      </Badge>
+                    </Flex>
                   </VStack>
                 </Box>
               </GridItem>
 
-              {/* Large NFT Image */}
-              <GridItem order={{ base: 1, lg: 1 }}>
-                <Box position="relative" h="full">
-                  <VStack spacing={0}>
-                    {/* NFT Image */}
-                    <Box
-                      position="relative"
-                      w={{ base: "full", md: "400px", lg: "600px" }}
-                      h={{ base: "auto", md: "400px", lg: "600px" }}
-                      mx="auto"
-                    >
-                      <Image
-                        src={activeAuction.token.image}
-                        alt={activeAuction.token.name}
-                        w={{ base: "full", md: "400px", lg: "600px" }}
-                        h={{ base: "auto", md: "400px", lg: "600px" }}
-                        aspectRatio="1"
-                        objectFit="cover"
-                        fallbackSrc="/images/placeholder.png"
-                      />
-                      {/* Stamped Latest Champ Box - Centered and Rotated */}
-                      {!auctionData.isRunning && activeAuction.highestBid && (
-                        <Box
-                          position="absolute"
-                          top="50%"
-                          left="50%"
-                          transform="translate(-50%, -50%) rotate(30deg)"
-                          bg="background"
-                          color="primary"
-                          p={3}
-                          borderRadius="md"
-                          boxShadow="lg"
-                          border="2px dashed"
-                          borderColor="primary"
-                          zIndex={2}
-                          minW={{ base: "180px", md: "220px" }}
-                        >
-                          <VStack spacing={2} align="stretch" w="full">
-                            <Text
-                              fontSize="sm"
-                              fontWeight="bold"
-                              color="primary"
-                              textAlign="center"
-                              letterSpacing="wide"
-                              textTransform="uppercase"
-                            >
-                              Latest Champ
-                            </Text>
-                            <Center>
-                              <HStack>
-                                <Avatar
-                                  address={activeAuction.highestBid.bidder}
-                                />
-                                <Name
-                                  className="text-lg font-bold"
-                                  address={activeAuction.highestBid.bidder}
-                                />
-                              </HStack>
-                            </Center>
-                            <Text
-                              fontSize="lg"
-                              fontWeight="bold"
-                              color="success"
-                              textAlign="center"
-                              w="full"
-                            >
-                              {auctionData.bidAmount} ETH
-                            </Text>
-                          </VStack>
-                        </Box>
-                      )}
-                    </Box>
-
-                    {/* NFT Image Only - Title, Date, and Navigation moved to AuctionHeader */}
-                    <Box />
-                  </VStack>
+              {/* Pro Tips */}
+              <GridItem>
+                <Box
+                  bg="muted"
+                  borderRadius="xl"
+                  border="1px solid"
+                  borderColor="primary"
+                  p={6}
+                  shadow="sm"
+                  h="full"
+                >
+                  <HStack spacing={2} mb={3}>
+                    <InfoIcon color="primary" />
+                    <Heading size="md" color="primary" fontSize="lg">
+                      Pro Tips
+                    </Heading>
+                  </HStack>
+                  <List spacing={2}>
+                    <ListItem>
+                      <Text fontSize="sm" color="text">
+                        • Bids in the last 10 minutes extend the auction
+                      </Text>
+                    </ListItem>
+                    <ListItem>
+                      <Text fontSize="sm" color="text">
+                        • Higher gas fees = faster transaction confirmation
+                      </Text>
+                    </ListItem>
+                    <ListItem>
+                      <Text fontSize="sm" color="text">
+                        • Check the transaction on Basescan for updates
+                      </Text>
+                    </ListItem>
+                    <ListItem>
+                      <Text fontSize="sm" color="text">
+                        • Join our Discord for auction notifications
+                      </Text>
+                    </ListItem>
+                  </List>
                 </Box>
               </GridItem>
             </Grid>
-          </Box>
+          </VStack>
+        </Container>
 
-          {/* Widgets Row - 3 Columns */}
-          <Grid
-            templateColumns={{ base: "1fr", md: "repeat(3, 1fr)" }}
-            gap={{ base: 4, md: 6 }}
-            w="full"
-            maxW="6xl"
-            mx="auto"
-          >
-            {/* How it works */}
-            <GridItem>
-              <Box
-                bg="muted"
-                borderRadius="xl"
-                border="1px solid"
-                borderColor="border"
-                p={6}
-                shadow="sm"
-                h="full"
-              >
-                <Heading size="md" color="text" mb={4} fontSize="lg">
-                  How it works
-                </Heading>
-                <List spacing={3}>
-                  <ListItem display="flex" alignItems="start">
-                    <ListIcon as={CheckCircleIcon} color="primary" mt={1} />
-                    <Text fontSize="sm" color="text">
-                      Connect your wallet to participate in the auction
-                    </Text>
-                  </ListItem>
-                  <ListItem display="flex" alignItems="start">
-                    <ListIcon as={CheckCircleIcon} color="primary" mt={1} />
-                    <Text fontSize="sm" color="text">
-                      Place a bid higher than the current highest bid
-                    </Text>
-                  </ListItem>
-                  <ListItem display="flex" alignItems="start">
-                    <ListIcon as={CheckCircleIcon} color="primary" mt={1} />
-                    <Text fontSize="sm" color="text">
-                      If you&apos;re the highest bidder when the auction ends,
-                      you win!
-                    </Text>
-                  </ListItem>
-                  <ListItem display="flex" alignItems="start">
-                    <ListIcon as={CheckCircleIcon} color="primary" mt={1} />
-                    <Text fontSize="sm" color="text">
-                      Settle the auction to claim your NFT and start the next
-                      one
-                    </Text>
-                  </ListItem>
-                </List>
-              </Box>
-            </GridItem>
-
-            {/* Auction Rules */}
-            <GridItem>
-              <Box
-                bg="muted"
-                borderRadius="xl"
-                border="1px solid"
-                borderColor="border"
-                p={6}
-                shadow="sm"
-                h="full"
-              >
-                <Heading size="md" color="text" mb={4} fontSize="lg">
-                  Auction Rules
-                </Heading>
-                <VStack spacing={3}>
-                  <Flex justify="space-between" w="full" align="center">
-                    <Text fontSize="sm" color="text">
-                      Auction Duration:
-                    </Text>
-                    <Badge
-                      bg="success"
-                      color="background"
-                      variant="solid"
-                      fontSize="xs"
-                    >
-                      24 hours
-                    </Badge>
-                  </Flex>
-                  <Flex justify="space-between" w="full" align="center">
-                    <Text fontSize="sm" color="text">
-                      Minimum Increment:
-                    </Text>
-                    <Badge
-                      bg="success"
-                      color="background"
-                      variant="solid"
-                      fontSize="xs"
-                    >
-                      2%
-                    </Badge>
-                  </Flex>
-                  <Flex justify="space-between" w="full" align="center">
-                    <Text fontSize="sm" color="text">
-                      Reserve Price:
-                    </Text>
-                    <Badge
-                      bg="success"
-                      color="background"
-                      variant="solid"
-                      fontSize="xs"
-                    >
-                      {formatBidAmount(
-                        BigInt(activeAuction.dao.auctionConfig.reservePrice)
-                      )}{" "}
-                      ETH
-                    </Badge>
-                  </Flex>
-                </VStack>
-              </Box>
-            </GridItem>
-
-            {/* Pro Tips */}
-            <GridItem>
-              <Box
-                bg="muted"
-                borderRadius="xl"
-                border="1px solid"
-                borderColor="primary"
-                p={6}
-                shadow="sm"
-                h="full"
-              >
-                <HStack spacing={2} mb={3}>
-                  <InfoIcon color="primary" />
-                  <Heading size="md" color="primary" fontSize="lg">
-                    Pro Tips
-                  </Heading>
-                </HStack>
-                <List spacing={2}>
-                  <ListItem>
-                    <Text fontSize="sm" color="text">
-                      • Bids in the last 10 minutes extend the auction
-                    </Text>
-                  </ListItem>
-                  <ListItem>
-                    <Text fontSize="sm" color="text">
-                      • Higher gas fees = faster transaction confirmation
-                    </Text>
-                  </ListItem>
-                  <ListItem>
-                    <Text fontSize="sm" color="text">
-                      • Check the transaction on Basescan for updates
-                    </Text>
-                  </ListItem>
-                  <ListItem>
-                    <Text fontSize="sm" color="text">
-                      • Join our Discord for auction notifications
-                    </Text>
-                  </ListItem>
-                </List>
-              </Box>
-            </GridItem>
-          </Grid>
-        </VStack>
-      </Container>
-
-      {/* Bids Modal */}
-      {activeAuction && activeAuction.bids && (
-        <BidsModal
-          isOpen={isBidsModalOpen}
-          onClose={() => setIsBidsModalOpen(false)}
-          bids={activeAuction.bids}
-          tokenName={activeAuction.token.name}
-          tokenId={activeAuction.token.tokenId.toString()}
-        />
-      )}
-
-      {/* Connect Modal */}
-      <ConnectModal
-        isOpen={isConnectModalOpen}
-        onClose={() => setIsConnectModalOpen(false)}
-      />
-    </Box>
+        {/* Bids Modal */}
+        {activeAuction && activeAuction.bids && (
+          <BidsModal
+            isOpen={isBidsModalOpen}
+            onClose={() => setIsBidsModalOpen(false)}
+            bids={activeAuction.bids}
+            tokenName={activeAuction.token.name}
+            tokenId={activeAuction.token.tokenId.toString()}
+          />
+        )}
+      </Box>
+    </>
   );
 }

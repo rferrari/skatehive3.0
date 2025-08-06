@@ -34,7 +34,7 @@ export default function PageResult({
         <Box
           p={2}
           borderRadius="md"
-          bg={highlightedIndex === index ? "primary" : "secondary"}
+          bg={highlightedIndex === index ? "primary" : "accent"}
           color={highlightedIndex === index ? "muted" : "background"}
         >
           <Icon as={page.icon} boxSize={4} />

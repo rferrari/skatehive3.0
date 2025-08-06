@@ -1,9 +1,10 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 export default function useViewMode() {
     const router = useRouter();
+    const isInitialMount = useRef(true);
 
     // Get the initial view mode from the URL
     const getInitialViewMode = () => {
@@ -26,23 +27,34 @@ export default function useViewMode() {
         }
     }, []);
 
-    // When viewMode changes, update the URL
+    // When viewMode changes, update the URL (but not on initial mount)
     useEffect(() => {
+        if (isInitialMount.current) {
+            isInitialMount.current = false;
+            return;
+        }
+
         if (typeof window !== 'undefined') {
             const params = new URLSearchParams(window.location.search);
             params.set('view', viewMode);
-            router.replace(`?${params.toString()}`);
+            const newUrl = `${window.location.pathname}?${params.toString()}`;
+            
+            // Use pushState instead of router to avoid page reloads
+            window.history.pushState({}, '', newUrl);
         }
-    }, [viewMode, router]);
+    }, [viewMode]);
 
     const closeMagazine = useCallback(() => {
         if (typeof window !== 'undefined') {
             const params = new URLSearchParams(window.location.search);
             params.set('view', 'grid');
-            router.replace(`?${params.toString()}`);
+            const newUrl = `${window.location.pathname}?${params.toString()}`;
+            
+            // Use pushState instead of router to avoid page reloads
+            window.history.pushState({}, '', newUrl);
         }
         setViewMode('grid');
-    }, [router]);
+    }, []);
 
     return {
         viewMode,

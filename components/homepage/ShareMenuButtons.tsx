@@ -423,7 +423,13 @@ const ShareMenuButtons = ({ comment }: ShareMenuButtonsProps) => {
         bg={"background"}
         color={"primary"}
       >
-        <FaLink style={{ marginRight: "8px" }} />
+        <Image
+          src="/logos/peakd.png"
+          alt="Peakd Logo"
+          boxSize="16px"
+          mr={2}
+          display="inline-block"
+        />
         Open in Peakd
       </MenuItem>
       <MenuItem onClick={handleDownvote} bg={"background"} color={"red"}>

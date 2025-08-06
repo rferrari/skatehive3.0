@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { memo } from "react";
 import { Box, Image } from "@chakra-ui/react";
 
 interface ProfileCoverImageProps {
@@ -7,7 +7,7 @@ interface ProfileCoverImageProps {
   username: string;
 }
 
-export default function ProfileCoverImage({
+const ProfileCoverImage = memo(function ProfileCoverImage({
   coverImage,
   username,
 }: ProfileCoverImageProps) {
@@ -33,4 +33,6 @@ export default function ProfileCoverImage({
       />
     </Box>
   );
-}
+});
+
+export default ProfileCoverImage;

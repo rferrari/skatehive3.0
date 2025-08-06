@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     
     // Fetch more data to ensure we get skatespot posts
     const fetchLimit = Math.max(parseInt(limit) * 10, 100); // Fetch 10x more to find skatespots
-    const apiUrl = `https://api.skatehive.app/api/v1/feed?limit=${fetchLimit}&page=${page}`;
+    const apiUrl = `https://api.skatehive.app/api/v2/feed?limit=${fetchLimit}&page=${page}`;
     
     const response = await fetch(apiUrl, {
       method: 'GET',

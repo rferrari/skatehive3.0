@@ -6,14 +6,8 @@ export async function fetchAuctionByTokenId(tokenId: number): Promise<Auction | 
     // Import DAO_ADDRESSES to filter by the correct DAO
     const { DAO_ADDRESSES } = await import('@/lib/utils/constants');
     
-    console.log("🔍 fetchAuctionByTokenId:", { 
-      tokenId, 
-      daoToken: DAO_ADDRESSES.token,
-      daoTokenLower: DAO_ADDRESSES.token.toLowerCase()
-    });
-    
-    // Filter by both DAO and tokenId
-    const { data } = (await noCacheApolloClient.query({
+    // First try: Filter by both DAO and tokenId (try both string and number formats)
+    let queryResult = await noCacheApolloClient.query({
       query: GET_DATA,
       variables: {
         where: { 
@@ -24,15 +18,58 @@ export async function fetchAuctionByTokenId(tokenId: number): Promise<Auction | 
         orderDirection: "desc",
         first: 1,
       },
+    });
+
+    let data = queryResult.data as any;
+    
+    // If not found with string, try with number
+    if (!data.auctions?.[0]) {
+      queryResult = await noCacheApolloClient.query({
+        query: GET_DATA,
+        variables: {
+          where: { 
+            dao: DAO_ADDRESSES.token.toLowerCase(),
+            token_: { tokenId: tokenId }
+          },
+          orderBy: "endTime",
+          orderDirection: "desc",
+          first: 1,
+        },
+      });
+      
+      data = queryResult.data as any;
+    }
+    
+    // If found, return it
+    if (data.auctions?.[0]) {
+      return data.auctions[0];
+    }
+    
+    // Third try: Get a larger set of auctions and search locally
+    const { data: broadData } = (await noCacheApolloClient.query({
+      query: GET_DATA,
+      variables: {
+        where: { 
+          dao: DAO_ADDRESSES.token.toLowerCase()
+        },
+        orderBy: "endTime",
+        orderDirection: "desc",
+        first: 200,
+      },
     })) as GraphResponse;
     
-    console.log("📦 GraphQL response:", { 
-      tokenId, 
-      auctionsFound: data.auctions?.length || 0,
-      firstAuction: data.auctions?.[0] || null 
+    // Look for the auction by tokenId in the broader results
+    const foundAuction = broadData.auctions?.find(auction => {
+      const auctionTokenId = Number(auction.token.tokenId);
+      return auctionTokenId === tokenId;
     });
     
-    return data.auctions?.[0] || null;
+    if (foundAuction) {
+      return foundAuction;
+    }
+    
+    // Return null if not found after all attempts
+    return null;
   } catch (error) {
     console.error("Error in fetchAuctionByTokenId:", error);
     throw new Error("Error fetching auction by tokenId");
@@ -52,7 +89,7 @@ export async function fetchAuction(tokenAddress: string): Promise<Auction[]> {
         where,
         orderBy: 'endTime',
         orderDirection: 'desc',
-        first: 1,
+        first: 300,
       },
     })) as GraphResponse;
 

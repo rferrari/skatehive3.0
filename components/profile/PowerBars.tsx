@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { memo } from "react";
 import { Box, Text, Flex, Tooltip } from "@chakra-ui/react";
 
 interface PowerBarsProps {
@@ -9,7 +9,7 @@ interface PowerBarsProps {
   width?: number;
 }
 
-export default function PowerBars({ 
+const PowerBars = memo(function PowerBars({ 
   vpPercent, 
   rcPercent, 
   height = 100, 
@@ -93,4 +93,6 @@ export default function PowerBars({
       </Flex>
     </Flex>
   );
-} 
+});
+
+export default PowerBars;

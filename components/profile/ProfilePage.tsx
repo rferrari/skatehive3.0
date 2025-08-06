@@ -1,13 +1,6 @@
 "use client";
-import React, { useState, useMemo } from "react";
-import {
-  Box,
-  Alert,
-  AlertIcon,
-  Flex,
-  Container,
-  Center,
-} from "@chakra-ui/react";
+import React, { useState, useMemo, useCallback, memo } from "react";
+import { Box, Alert, AlertIcon, Container, Center } from "@chakra-ui/react";
 import useHiveAccount from "@/hooks/useHiveAccount";
 import LoadingComponent from "../homepage/loadingComponent";
 import PostInfiniteScroll from "../blog/PostInfiniteScroll";
@@ -19,7 +12,6 @@ import VideoPartsView from "./VideoPartsView";
 // Import modular components
 import ProfileCoverImage from "./ProfileCoverImage";
 import ProfileHeader from "./ProfileHeader";
-import ProfileActions from "./ProfileActions";
 import ViewModeSelector from "./ViewModeSelector";
 import MagazineModal from "./MagazineModal";
 import SnapsGrid from "./SnapsGrid";
@@ -30,6 +22,49 @@ import useFollowStatus from "@/hooks/useFollowStatus";
 import useProfilePosts from "@/hooks/useProfilePosts";
 import useViewMode from "@/hooks/useViewMode";
 import useIsMobile from "@/hooks/useIsMobile";
+
+// Memoized SnapsGrid to prevent unnecessary re-renders
+const MemoizedSnapsGrid = memo(function MemoizedSnapsGrid({
+  username,
+}: {
+  username: string;
+}) {
+  return <SnapsGrid username={username} />;
+});
+
+// Optimized content views component to reduce re-renders
+const ContentViews = memo(function ContentViews({
+  viewMode,
+  postProps,
+  videoPartsProps,
+  username,
+}: {
+  viewMode: string;
+  postProps: {
+    allPosts: any[];
+    fetchPosts: () => Promise<void>;
+    viewMode: "grid" | "list";
+    context: "profile";
+    hideAuthorInfo: boolean;
+  };
+  videoPartsProps: {
+    profileData: ProfileData;
+    username: string;
+    onProfileUpdate: (data: Partial<ProfileData>) => void;
+  };
+  username: string;
+}) {
+  switch (viewMode) {
+    case "videoparts":
+      return <VideoPartsView {...videoPartsProps} />;
+    case "snaps":
+      return <MemoizedSnapsGrid username={username} />;
+    case "magazine":
+      return null; // Magazine is handled separately
+    default:
+      return <PostInfiniteScroll {...postProps} />;
+  }
+});
 
 interface ProfilePageProps {
   username: string;
@@ -49,16 +84,22 @@ export interface ProfileData {
   vote_weight?: number;
   vp_percent?: string;
   rc_percent?: string;
+  zineCover?: string;
+  svs_profile?: string;
 }
 
-export default function ProfilePage({ username }: ProfilePageProps) {
+const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
   const { hiveAccount, isLoading, error } = useHiveAccount(username);
   const { user } = useAioha();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Custom hooks
-  const { profileData, updateProfileData } = useProfileData(username, hiveAccount);
-  const { isFollowing, isFollowLoading, updateFollowing, updateLoading } = useFollowStatus(user, username);
+  const { profileData, updateProfileData } = useProfileData(
+    username,
+    hiveAccount
+  );
+  const { isFollowing, isFollowLoading, updateFollowing, updateLoading } =
+    useFollowStatus(user, username);
   const { posts, fetchPosts } = useProfilePosts(username);
   const { viewMode, handleViewModeChange, closeMagazine } = useViewMode();
   const isMobile = useIsMobile();
@@ -66,9 +107,50 @@ export default function ProfilePage({ username }: ProfilePageProps) {
   // Memoize derived values
   const isOwner = useMemo(() => user === username, [user, username]);
 
-  // Modal handlers
-  const handleEditModalOpen = () => setIsEditModalOpen(true);
-  const handleEditModalClose = () => setIsEditModalOpen(false);
+  // Modal handlers - Stable references to prevent re-renders
+  const handleEditModalOpen = useCallback(() => setIsEditModalOpen(true), []);
+  const handleEditModalClose = useCallback(() => setIsEditModalOpen(false), []);
+
+  // Memoize view mode change handler to prevent unnecessary re-renders
+  const memoizedViewModeChange = useCallback(
+    (mode: "grid" | "list" | "magazine" | "videoparts" | "snaps") => {
+      handleViewModeChange(mode);
+    },
+    [handleViewModeChange]
+  );
+
+  // Memoize follow-related props to prevent ProfileHeader re-renders
+  const followProps = useMemo(
+    () => ({
+      isFollowing,
+      isFollowLoading,
+      onFollowingChange: updateFollowing,
+      onLoadingChange: updateLoading,
+    }),
+    [isFollowing, isFollowLoading, updateFollowing, updateLoading]
+  );
+
+  // Memoize post-related props
+  const postProps = useMemo(
+    () => ({
+      allPosts: posts,
+      fetchPosts,
+      viewMode: viewMode as "grid" | "list",
+      context: "profile" as const,
+      hideAuthorInfo: true,
+    }),
+    [posts, fetchPosts, viewMode]
+  );
+
+  // Memoize video parts props
+  const videoPartsProps = useMemo(
+    () => ({
+      profileData,
+      username,
+      onProfileUpdate: updateProfileData,
+    }),
+    [profileData, username, updateProfileData]
+  );
 
   if (isLoading || !hiveAccount) {
     return (
@@ -101,12 +183,14 @@ export default function ProfilePage({ username }: ProfilePageProps) {
 
   return (
     <>
-      {/* Magazine Modal */}
-      <MagazineModal
-        isOpen={viewMode === 'magazine'}
-        onClose={closeMagazine}
-        username={username}
-      />
+      {/* Magazine Modal - Only render when needed */}
+      {viewMode === "magazine" && (
+        <MagazineModal
+          isOpen={true}
+          onClose={closeMagazine}
+          username={username}
+        />
+      )}
       <Center>
         <Container maxW="container.md" p={0} m={0}>
           {/* Main Profile Content */}
@@ -124,8 +208,11 @@ export default function ProfilePage({ username }: ProfilePageProps) {
               scrollbarWidth: "none",
             }}
           >
-            {/* Cover Image */}
-            <ProfileCoverImage coverImage={profileData.coverImage} username={username} />
+            {/* Cover Image - Now enabled for mobile too */}
+            <ProfileCoverImage
+              coverImage={profileData.coverImage}
+              username={username}
+            />
 
             {/* Profile Header */}
             <ProfileHeader
@@ -133,57 +220,40 @@ export default function ProfilePage({ username }: ProfilePageProps) {
               username={username}
               isOwner={isOwner}
               user={user}
-              isFollowing={isFollowing}
-              isFollowLoading={isFollowLoading}
-              onFollowingChange={updateFollowing}
-              onLoadingChange={updateLoading}
+              {...followProps}
               onEditModalOpen={handleEditModalOpen}
             />
 
-            {/* Mobile-only Logout and Settings Buttons for Profile Owner */}
-            <ProfileActions isOwner={isOwner} isMobile={isMobile} />
-
             {/* View Mode Selector */}
-            <Flex justify="center" align="center" direction="column">
-              <ViewModeSelector
-                viewMode={viewMode}
-                onViewModeChange={handleViewModeChange}
-                isMobile={isMobile}
-              />
-            </Flex>
+            <ViewModeSelector
+              viewMode={viewMode}
+              onViewModeChange={memoizedViewModeChange}
+              isMobile={isMobile}
+            />
 
-            {/* Content Views */}
-            {viewMode !== "magazine" && viewMode !== "videoparts" && viewMode !== "snaps" && (
-              <PostInfiniteScroll
-                allPosts={posts}
-                fetchPosts={fetchPosts}
-                viewMode={viewMode as "grid" | "list"}
-                context="profile"
-                hideAuthorInfo={true}
-              />
-            )}
-            {viewMode === "videoparts" && (
-              <VideoPartsView profileData={profileData} username={username} onProfileUpdate={updateProfileData} />
-            )}
-            {viewMode === "snaps" && (
-              <SnapsGrid
-                username={username}
-              />
-            )}
-
-            {/* Edit Profile Modal - Only render when modal is open */}
-            {isEditModalOpen && (
-              <EditProfile
-                isOpen={isEditModalOpen}
-                onClose={handleEditModalClose}
-                profileData={profileData}
-                onProfileUpdate={updateProfileData}
-                username={username}
-              />
-            )}
+            {/* Content Views - Optimized conditional rendering */}
+            <ContentViews
+              viewMode={viewMode}
+              postProps={postProps}
+              videoPartsProps={videoPartsProps}
+              username={username}
+            />
           </Box>
         </Container>
       </Center>
+
+      {/* Edit Profile Modal - Only render when modal is open */}
+      {isEditModalOpen && (
+        <EditProfile
+          isOpen={isEditModalOpen}
+          onClose={handleEditModalClose}
+          profileData={profileData}
+          onProfileUpdate={updateProfileData}
+          username={username}
+        />
+      )}
     </>
   );
-}
+});
+
+export default ProfilePage;

@@ -1,7 +1,8 @@
 import { useMemo, useCallback } from 'react';
-import { SkaterData, SortOption, AirdropUser, AirdropSummary, AirdropConfig } from '@/types/airdrop';
+import { SortOption, AirdropUser, AirdropSummary, AirdropConfig } from '@/types/airdrop';
 import { tokenDictionary } from '@/lib/utils/tokenDictionary';
 import { SKATEHIVE_HOT_ADDRESS } from '@/lib/utils/constants';
+import { SkaterData } from '@/types/leaderboard';
 
 interface AirdropManagerProps {
   leaderboardData: SkaterData[];
@@ -80,7 +81,7 @@ export const useAirdropManager = ({ leaderboardData, config }: AirdropManagerPro
       const tokenInfo = tokenDictionary[selectedToken];
       const isERC20 = tokenInfo?.network !== 'hive';
       
-      const skateHiveEntry = {
+      const skateHiveEntry: SkaterData = {
         id: -1,
         hive_author: 'skatehive',
         eth_address: SKATEHIVE_HOT_ADDRESS,
@@ -97,6 +98,9 @@ export const useAirdropManager = ({ leaderboardData, config }: AirdropManagerPro
         last_updated: new Date().toISOString(),
         last_post: '',
         post_count: 0,
+        posts_score: 0,
+        snaps_count: 0, 
+        delegated_curator: 0,
         giveth_donations_usd: 0,
         giveth_donations_amount: 0,
       };

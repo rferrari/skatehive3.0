@@ -60,8 +60,8 @@ const AirdropFilterModal: React.FC<AirdropFilterModalProps> = ({
       description: "Users with most HBD in savings",
     },
     {
-      value: "post_count",
-      label: "Post Count",
+      value: "posts_score",
+      label: "Posts Score",
       description: "Most active content creators",
     },
     {

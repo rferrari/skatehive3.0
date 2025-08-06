@@ -24,11 +24,11 @@ export function migrateLegacyMetadata(data: any): SkatehiveJsonMetadata {
 
   const ext: any = metadata.extensions;
 
-  // Wallet migrations
+  // Wallet migrations - keep eth_address in same location for legacy compatibility
   if (ext.eth_address) {
     ext.wallets = ext.wallets || {};
     ext.wallets.primary_wallet = ext.eth_address;
-    delete ext.eth_address;
+    // Keep the original eth_address for legacy compatibility
   }
   if (ext.btc_address) {
     ext.wallets = ext.wallets || {};
@@ -77,8 +77,6 @@ export function migrateLegacyMetadata(data: any): SkatehiveJsonMetadata {
   // Ensure substructures exist
   ext.wallets = ext.wallets || {};
   ext.wallets.additional = ext.wallets.additional || [];
-  ext.wallets.farcaster_verified_wallets =
-    ext.wallets.farcaster_verified_wallets || [];
 
   ext.settings = ext.settings || {};
   ext.settings.voteSettings = ext.settings.voteSettings || {

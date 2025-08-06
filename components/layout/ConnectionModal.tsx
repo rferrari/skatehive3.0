@@ -194,8 +194,8 @@ export default function ConnectionModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} isCentered>
-      <ModalOverlay bg="blackAlpha.700" backdropFilter="blur(8px)" />{" "}
+    <Modal isOpen={isOpen} onClose={onClose} isCentered motionPreset="none">
+      <ModalOverlay bg="blackAlpha.700" backdropFilter="blur(6px)" />{" "}
       <ModalContent bg={"background"}>
         <ModalHeader>
           {primaryConnection ? "Manage Connections" : "Connect to SkateHive"}

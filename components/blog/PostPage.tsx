@@ -108,7 +108,7 @@ export default function PostPage({ author, permlink }: PostPageProps) {
           <PostDetails post={post} onOpenConversation={onOpen} />
         </Box>
         <Box
-          width={{ base: "100%", md: "300px" }}
+          width={{ base: "100%", md: "35%" }}
           h={{ base: "auto", md: "100vh" }}
           overflowY="auto"
           sx={{ "&::-webkit-scrollbar": { display: "none" } }}
