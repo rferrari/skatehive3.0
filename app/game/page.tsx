@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     siteName: "SkateHive",
     images: [
       {
-        url: "/game-preview.jpg", // You can add an actual game screenshot here
+        url: "/images/qfs-ogimage.png", // You can add an actual game screenshot here
         width: 1200,
         height: 630,
         alt: "Quest for Skateboard Game Preview",
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     title: "Quest for Skateboard - SkateHive Game",
     description:
       "Experience the ultimate skateboarding adventure! Control your skater and perform epic tricks.",
-    images: ["/game-preview.jpg"], // Same image as OpenGraph
+    images: ["/images/qfs-ogimage.png"], // Same image as OpenGraph
   },
   robots: {
     index: true,
