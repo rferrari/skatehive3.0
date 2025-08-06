@@ -52,8 +52,12 @@ export const metadata: Metadata = {
       follow: true,
     },
   },
-  viewport: "width=device-width, initial-scale=1",
-  themeColor: "#1f2937", // Matches the gray-900 background
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#1f2937",
 };
 
 export default function GamePage() {
