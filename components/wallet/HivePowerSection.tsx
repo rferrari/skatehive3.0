@@ -6,7 +6,7 @@ import {
   Tooltip,
   IconButton,
 } from "@chakra-ui/react";
-import { FaArrowDown, FaQuestionCircle } from "react-icons/fa";
+import { FaArrowDown, FaArrowUp, FaQuestionCircle } from "react-icons/fa";
 import { useState, useCallback, useMemo, memo } from "react";
 import useIsMobile from "@/hooks/useIsMobile";
 
@@ -42,6 +42,10 @@ const HivePowerSection = memo(function HivePowerSection({
       "Power Down",
       "Create a Hive Power unstake request. The request is fulfilled once a week over the next 13 weeks."
     );
+  }, [onModalOpen]);
+
+  const handlePowerUpClick = useCallback(() => {
+    onModalOpen("Power Up", "Power Up your HIVE to HP");
   }, [onModalOpen]);
 
   return (
@@ -93,6 +97,16 @@ const HivePowerSection = memo(function HivePowerSection({
               variant="outline"
               onClick={handlePowerDown}
             />
+            <Tooltip label="Power Up" hasArrow>
+              <IconButton
+                aria-label="Power Up"
+                icon={<FaArrowUp />}
+                size="sm"
+                colorScheme="blue"
+                variant="outline"
+                onClick={handlePowerUpClick}
+              />
+            </Tooltip>
           </Tooltip>
           <Box textAlign="right">
             <Text fontSize="2xl" fontWeight="bold" color="primary">
