@@ -15,6 +15,7 @@ import {
   FaArrowDown,
   FaArrowUp,
   FaQuestionCircle,
+  FaPiggyBank,
 } from "react-icons/fa";
 import { useState, useCallback, useMemo, memo } from "react";
 import { CustomHiveIcon } from "./CustomHiveIcon";
@@ -176,7 +177,7 @@ const HBDSection = memo(function HBDSection({
               <Tooltip label="Convert to Savings" hasArrow>
                 <IconButton
                   aria-label="Convert to Savings"
-                  icon={<FaArrowDown />}
+                  icon={<FaPiggyBank />}
                   size="sm"
                   colorScheme="green"
                   variant="outline"
