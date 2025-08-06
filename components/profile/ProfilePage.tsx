@@ -23,6 +23,49 @@ import useProfilePosts from "@/hooks/useProfilePosts";
 import useViewMode from "@/hooks/useViewMode";
 import useIsMobile from "@/hooks/useIsMobile";
 
+// Memoized SnapsGrid to prevent unnecessary re-renders
+const MemoizedSnapsGrid = memo(function MemoizedSnapsGrid({
+  username,
+}: {
+  username: string;
+}) {
+  return <SnapsGrid username={username} />;
+});
+
+// Optimized content views component to reduce re-renders
+const ContentViews = memo(function ContentViews({
+  viewMode,
+  postProps,
+  videoPartsProps,
+  username,
+}: {
+  viewMode: string;
+  postProps: {
+    allPosts: any[];
+    fetchPosts: () => Promise<void>;
+    viewMode: "grid" | "list";
+    context: "profile";
+    hideAuthorInfo: boolean;
+  };
+  videoPartsProps: {
+    profileData: ProfileData;
+    username: string;
+    onProfileUpdate: (data: Partial<ProfileData>) => void;
+  };
+  username: string;
+}) {
+  switch (viewMode) {
+    case "videoparts":
+      return <VideoPartsView {...videoPartsProps} />;
+    case "snaps":
+      return <MemoizedSnapsGrid username={username} />;
+    case "magazine":
+      return null; // Magazine is handled separately
+    default:
+      return <PostInfiniteScroll {...postProps} />;
+  }
+});
+
 interface ProfilePageProps {
   username: string;
 }
@@ -62,9 +105,50 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
   // Memoize derived values
   const isOwner = useMemo(() => user === username, [user, username]);
 
-  // Modal handlers
+  // Modal handlers - Stable references to prevent re-renders
   const handleEditModalOpen = useCallback(() => setIsEditModalOpen(true), []);
   const handleEditModalClose = useCallback(() => setIsEditModalOpen(false), []);
+
+  // Memoize view mode change handler to prevent unnecessary re-renders
+  const memoizedViewModeChange = useCallback(
+    (mode: "grid" | "list" | "magazine" | "videoparts" | "snaps") => {
+      handleViewModeChange(mode);
+    },
+    [handleViewModeChange]
+  );
+
+  // Memoize follow-related props to prevent ProfileHeader re-renders
+  const followProps = useMemo(
+    () => ({
+      isFollowing,
+      isFollowLoading,
+      onFollowingChange: updateFollowing,
+      onLoadingChange: updateLoading,
+    }),
+    [isFollowing, isFollowLoading, updateFollowing, updateLoading]
+  );
+
+  // Memoize post-related props
+  const postProps = useMemo(
+    () => ({
+      allPosts: posts,
+      fetchPosts,
+      viewMode: viewMode as "grid" | "list",
+      context: "profile" as const,
+      hideAuthorInfo: true,
+    }),
+    [posts, fetchPosts, viewMode]
+  );
+
+  // Memoize video parts props
+  const videoPartsProps = useMemo(
+    () => ({
+      profileData,
+      username,
+      onProfileUpdate: updateProfileData,
+    }),
+    [profileData, username, updateProfileData]
+  );
 
   if (isLoading || !hiveAccount) {
     return (
@@ -97,12 +181,14 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
 
   return (
     <>
-      {/* Magazine Modal */}
-      <MagazineModal
-        isOpen={viewMode === "magazine"}
-        onClose={closeMagazine}
-        username={username}
-      />
+      {/* Magazine Modal - Only render when needed */}
+      {viewMode === "magazine" && (
+        <MagazineModal
+          isOpen={true}
+          onClose={closeMagazine}
+          username={username}
+        />
+      )}
       <Center>
         <Container maxW="container.md" p={0} m={0}>
           {/* Main Profile Content */}
@@ -132,54 +218,38 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
               username={username}
               isOwner={isOwner}
               user={user}
-              isFollowing={isFollowing}
-              isFollowLoading={isFollowLoading}
-              onFollowingChange={updateFollowing}
-              onLoadingChange={updateLoading}
+              {...followProps}
               onEditModalOpen={handleEditModalOpen}
             />
 
             {/* View Mode Selector */}
             <ViewModeSelector
               viewMode={viewMode}
-              onViewModeChange={handleViewModeChange}
+              onViewModeChange={memoizedViewModeChange}
               isMobile={isMobile}
             />
 
-            {/* Content Views */}
-            {viewMode !== "magazine" &&
-              viewMode !== "videoparts" &&
-              viewMode !== "snaps" && (
-                <PostInfiniteScroll
-                  allPosts={posts}
-                  fetchPosts={fetchPosts}
-                  viewMode={viewMode as "grid" | "list"}
-                  context="profile"
-                  hideAuthorInfo={true}
-                />
-              )}
-            {viewMode === "videoparts" && (
-              <VideoPartsView
-                profileData={profileData}
-                username={username}
-                onProfileUpdate={updateProfileData}
-              />
-            )}
-            {viewMode === "snaps" && <SnapsGrid username={username} />}
-
-            {/* Edit Profile Modal - Only render when modal is open */}
-            {isEditModalOpen && (
-              <EditProfile
-                isOpen={isEditModalOpen}
-                onClose={handleEditModalClose}
-                profileData={profileData}
-                onProfileUpdate={updateProfileData}
-                username={username}
-              />
-            )}
+            {/* Content Views - Optimized conditional rendering */}
+            <ContentViews
+              viewMode={viewMode}
+              postProps={postProps}
+              videoPartsProps={videoPartsProps}
+              username={username}
+            />
           </Box>
         </Container>
       </Center>
+
+      {/* Edit Profile Modal - Only render when modal is open */}
+      {isEditModalOpen && (
+        <EditProfile
+          isOpen={isEditModalOpen}
+          onClose={handleEditModalClose}
+          profileData={profileData}
+          onProfileUpdate={updateProfileData}
+          username={username}
+        />
+      )}
     </>
   );
 });

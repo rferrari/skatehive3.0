@@ -45,6 +45,7 @@ function useInView(options: IntersectionOptions = {}) {
 type RendererProps = {
   src?: string;
   loop?: boolean;
+  skipThumbnailLoad?: boolean; // New prop to skip thumbnail loading
   [key: string]: any;
 };
 
@@ -263,7 +264,11 @@ const BASE_SLIDER_STYLE = {
   cursor: "pointer",
 };
 
-const VideoRenderer = ({ src, ...props }: RendererProps) => {
+const VideoRenderer = ({
+  src,
+  skipThumbnailLoad = false,
+  ...props
+}: RendererProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isHorizontal, setIsHorizontal] = useState(false);
@@ -281,8 +286,11 @@ const VideoRenderer = ({ src, ...props }: RendererProps) => {
   // Use Intersection Observer to detect visibility
   const { ref: setVideoRef, isInView } = useInView({ threshold: 0.5 });
 
-  // Extract IPFS hash from video src and fetch thumbnail
+  // Extract IPFS hash from video src and fetch thumbnail - only if not skipped
   useEffect(() => {
+    // Skip thumbnail loading if explicitly disabled (e.g., for modal video playback)
+    if (skipThumbnailLoad) return;
+
     const loadThumbnail = async () => {
       if (src) {
         try {
@@ -300,7 +308,7 @@ const VideoRenderer = ({ src, ...props }: RendererProps) => {
     };
 
     loadThumbnail();
-  }, [src]);
+  }, [src, skipThumbnailLoad]);
 
   const handleLoadedData = useCallback(() => {
     setIsVideoLoaded(true);
