@@ -19,7 +19,6 @@ import VideoPartsView from "./VideoPartsView";
 // Import modular components
 import ProfileCoverImage from "./ProfileCoverImage";
 import ProfileHeader from "./ProfileHeader";
-import ProfileActions from "./ProfileActions";
 import ViewModeSelector from "./ViewModeSelector";
 import MagazineModal from "./MagazineModal";
 import SnapsGrid from "./SnapsGrid";
@@ -57,8 +56,12 @@ export default function ProfilePage({ username }: ProfilePageProps) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Custom hooks
-  const { profileData, updateProfileData } = useProfileData(username, hiveAccount);
-  const { isFollowing, isFollowLoading, updateFollowing, updateLoading } = useFollowStatus(user, username);
+  const { profileData, updateProfileData } = useProfileData(
+    username,
+    hiveAccount
+  );
+  const { isFollowing, isFollowLoading, updateFollowing, updateLoading } =
+    useFollowStatus(user, username);
   const { posts, fetchPosts } = useProfilePosts(username);
   const { viewMode, handleViewModeChange, closeMagazine } = useViewMode();
   const isMobile = useIsMobile();
@@ -103,7 +106,7 @@ export default function ProfilePage({ username }: ProfilePageProps) {
     <>
       {/* Magazine Modal */}
       <MagazineModal
-        isOpen={viewMode === 'magazine'}
+        isOpen={viewMode === "magazine"}
         onClose={closeMagazine}
         username={username}
       />
@@ -124,8 +127,11 @@ export default function ProfilePage({ username }: ProfilePageProps) {
               scrollbarWidth: "none",
             }}
           >
-            {/* Cover Image */}
-            <ProfileCoverImage coverImage={profileData.coverImage} username={username} />
+            {/* Cover Image - Now enabled for mobile too */}
+            <ProfileCoverImage
+              coverImage={profileData.coverImage}
+              username={username}
+            />
 
             {/* Profile Header */}
             <ProfileHeader
@@ -140,9 +146,6 @@ export default function ProfilePage({ username }: ProfilePageProps) {
               onEditModalOpen={handleEditModalOpen}
             />
 
-            {/* Mobile-only Logout and Settings Buttons for Profile Owner */}
-            <ProfileActions isOwner={isOwner} isMobile={isMobile} />
-
             {/* View Mode Selector */}
             <Flex justify="center" align="center" direction="column">
               <ViewModeSelector
@@ -153,23 +156,25 @@ export default function ProfilePage({ username }: ProfilePageProps) {
             </Flex>
 
             {/* Content Views */}
-            {viewMode !== "magazine" && viewMode !== "videoparts" && viewMode !== "snaps" && (
-              <PostInfiniteScroll
-                allPosts={posts}
-                fetchPosts={fetchPosts}
-                viewMode={viewMode as "grid" | "list"}
-                context="profile"
-                hideAuthorInfo={true}
-              />
-            )}
+            {viewMode !== "magazine" &&
+              viewMode !== "videoparts" &&
+              viewMode !== "snaps" && (
+                <PostInfiniteScroll
+                  allPosts={posts}
+                  fetchPosts={fetchPosts}
+                  viewMode={viewMode as "grid" | "list"}
+                  context="profile"
+                  hideAuthorInfo={true}
+                />
+              )}
             {viewMode === "videoparts" && (
-              <VideoPartsView profileData={profileData} username={username} onProfileUpdate={updateProfileData} />
-            )}
-            {viewMode === "snaps" && (
-              <SnapsGrid
+              <VideoPartsView
+                profileData={profileData}
                 username={username}
+                onProfileUpdate={updateProfileData}
               />
             )}
+            {viewMode === "snaps" && <SnapsGrid username={username} />}
 
             {/* Edit Profile Modal - Only render when modal is open */}
             {isEditModalOpen && (
