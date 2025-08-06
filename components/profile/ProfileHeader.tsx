@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { memo } from "react";
 import {
   Box,
   Heading,
@@ -29,7 +29,7 @@ interface ProfileHeaderProps {
   onEditModalOpen: () => void;
 }
 
-export default function ProfileHeader({
+const ProfileHeader = memo(function ProfileHeader({
   profileData,
   username,
   isOwner,
@@ -225,4 +225,6 @@ export default function ProfileHeader({
       </Box>
     </Box>
   );
-}
+});
+
+export default ProfileHeader;

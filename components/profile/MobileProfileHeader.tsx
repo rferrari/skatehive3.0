@@ -1,24 +1,21 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, memo } from "react";
 import {
   Box,
-  Heading,
   Text,
   Flex,
   Avatar,
   IconButton,
   Link,
-  HStack,
   Button,
   VStack,
   Badge,
 } from "@chakra-ui/react";
-import { FaGlobe, FaEdit, FaSignOutAlt, FaCog } from "react-icons/fa";
-import FollowButton from "./FollowButton";
+import { FaSignOutAlt, FaCog } from "react-icons/fa";
 import { ProfileData } from "./ProfilePage";
 import { useRouter } from "next/navigation";
 import { useAioha } from "@aioha/react-ui";
-import { checkFollow } from "@/lib/hive/client-functions";
+import { checkFollow, changeFollow } from "@/lib/hive/client-functions";
 
 interface MobileProfileHeaderProps {
   profileData: ProfileData;
@@ -32,7 +29,7 @@ interface MobileProfileHeaderProps {
   onEditModalOpen: () => void;
 }
 
-export default function MobileProfileHeader({
+const MobileProfileHeader = memo(function MobileProfileHeader({
   profileData,
   username,
   isOwner,
@@ -49,19 +46,64 @@ export default function MobileProfileHeader({
 
   // Check if the viewed user follows the current user back
   useEffect(() => {
+    if (!user || !username || user === username) return;
+
     const checkMutualFollow = async () => {
-      if (user && username && user !== username) {
-        try {
-          const doesFollow = await checkFollow(username, user);
-          setFollowsBack(doesFollow);
-        } catch (error) {
-          console.error("Error checking mutual follow:", error);
-        }
+      try {
+        const doesFollow = await checkFollow(username, user);
+        setFollowsBack(doesFollow);
+      } catch (error) {
+        console.error("Error checking mutual follow:", error);
+        setFollowsBack(false);
       }
     };
 
     checkMutualFollow();
   }, [user, username]);
+
+  // Memoized follow handler
+  const handleFollowToggle = useCallback(async () => {
+    if (!user || !username || user === username || isFollowLoading) return;
+
+    const prev = isFollowing;
+    const next = !isFollowing;
+
+    // Optimistic update
+    onFollowingChange(next);
+    onLoadingChange(true);
+
+    try {
+      await changeFollow(user, username);
+      // Keep optimistic state
+      onLoadingChange(false);
+    } catch (error) {
+      console.error("Follow action failed:", error);
+      // Revert on error
+      onFollowingChange(prev);
+      onLoadingChange(false);
+    }
+  }, [
+    user,
+    username,
+    isFollowing,
+    isFollowLoading,
+    onFollowingChange,
+    onLoadingChange,
+  ]);
+
+  // Memoized logout handler
+  const handleLogout = useCallback(async () => {
+    try {
+      await aioha.logout();
+    } catch (error) {
+      console.error("Error during logout:", error);
+    }
+  }, [aioha]);
+
+  // Memoized settings navigation
+  const handleSettingsClick = useCallback(() => {
+    router.push("/settings");
+  }, [router]);
 
   return (
     <Box display={{ base: "block", md: "none" }} position="relative" w="100%">
@@ -77,6 +119,7 @@ export default function MobileProfileHeader({
             borderColor="white"
             bg="white"
             shadow="lg"
+            loading="lazy"
           />
 
           {/* Top-right settings (only for owner) */}
@@ -90,7 +133,7 @@ export default function MobileProfileHeader({
               _hover={{ bg: "blackAlpha.800" }}
               size="sm"
               borderRadius="full"
-              onClick={() => router.push("/settings")}
+              onClick={handleSettingsClick}
             />
           )}
         </Flex>
@@ -122,30 +165,7 @@ export default function MobileProfileHeader({
               {/* Follow/Following Button */}
               {!isOwner && user && (
                 <Button
-                  onClick={async () => {
-                    if (!user || !username || user === username) return;
-
-                    const prev = isFollowing;
-                    const next = !isFollowing;
-                    onFollowingChange(next);
-                    onLoadingChange(true);
-
-                    try {
-                      // Import the function locally for this action
-                      const { changeFollow } = await import(
-                        "@/lib/hive/client-functions"
-                      );
-                      await changeFollow(user, username);
-
-                      // Update state immediately for better UX
-                      onFollowingChange(next);
-                      onLoadingChange(false);
-                    } catch (error) {
-                      console.error("Follow action failed:", error);
-                      onFollowingChange(prev);
-                      onLoadingChange(false);
-                    }
-                  }}
+                  onClick={handleFollowToggle}
                   size="xs"
                   variant={isFollowing ? "outline" : "solid"}
                   colorScheme={isFollowing ? "whiteAlpha" : "primary"}
@@ -254,17 +274,13 @@ export default function MobileProfileHeader({
               size="sm"
               variant="solid"
               colorScheme="red"
-              onClick={async () => {
-                try {
-                  await aioha.logout();
-                } catch (error) {
-                  console.error("Error during logout:", error);
-                }
-              }}
+              onClick={handleLogout}
             />
           </Flex>
         )}
       </Box>
     </Box>
   );
-}
+});
+
+export default MobileProfileHeader;

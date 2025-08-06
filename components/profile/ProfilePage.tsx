@@ -1,13 +1,6 @@
 "use client";
-import React, { useState, useMemo } from "react";
-import {
-  Box,
-  Alert,
-  AlertIcon,
-  Flex,
-  Container,
-  Center,
-} from "@chakra-ui/react";
+import React, { useState, useMemo, useCallback, memo } from "react";
+import { Box, Alert, AlertIcon, Container, Center } from "@chakra-ui/react";
 import useHiveAccount from "@/hooks/useHiveAccount";
 import LoadingComponent from "../homepage/loadingComponent";
 import PostInfiniteScroll from "../blog/PostInfiniteScroll";
@@ -50,7 +43,7 @@ export interface ProfileData {
   rc_percent?: string;
 }
 
-export default function ProfilePage({ username }: ProfilePageProps) {
+const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
   const { hiveAccount, isLoading, error } = useHiveAccount(username);
   const { user } = useAioha();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -70,8 +63,8 @@ export default function ProfilePage({ username }: ProfilePageProps) {
   const isOwner = useMemo(() => user === username, [user, username]);
 
   // Modal handlers
-  const handleEditModalOpen = () => setIsEditModalOpen(true);
-  const handleEditModalClose = () => setIsEditModalOpen(false);
+  const handleEditModalOpen = useCallback(() => setIsEditModalOpen(true), []);
+  const handleEditModalClose = useCallback(() => setIsEditModalOpen(false), []);
 
   if (isLoading || !hiveAccount) {
     return (
@@ -147,13 +140,11 @@ export default function ProfilePage({ username }: ProfilePageProps) {
             />
 
             {/* View Mode Selector */}
-            <Flex justify="center" align="center" direction="column">
-              <ViewModeSelector
-                viewMode={viewMode}
-                onViewModeChange={handleViewModeChange}
-                isMobile={isMobile}
-              />
-            </Flex>
+            <ViewModeSelector
+              viewMode={viewMode}
+              onViewModeChange={handleViewModeChange}
+              isMobile={isMobile}
+            />
 
             {/* Content Views */}
             {viewMode !== "magazine" &&
@@ -191,4 +182,6 @@ export default function ProfilePage({ username }: ProfilePageProps) {
       </Center>
     </>
   );
-}
+});
+
+export default ProfilePage;
