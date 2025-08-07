@@ -3,16 +3,14 @@ import { VideoPart } from './VideoPart';
 export interface SkatehiveExtensions {
   wallets?: {
     primary_wallet?: string;
-    custody_address?: string;
-    farcaster_verified_wallets?: string[];
     additional?: string[];
     btc_address?: string;
   };
   farcaster?: {
     fid?: number;
     username?: string;
-    pfp_url?: string;
-    bio?: string;
+    custody_address?: string;
+    verified_wallets?: string[];
   };
   video_parts?: VideoPart[];
   other?: Record<string, any>;
@@ -21,7 +19,21 @@ export interface SkatehiveExtensions {
       default_voting_weight: number;
       enable_slider: boolean;
     };
-    appSettings?: Record<string, any>;
+    appSettings?: {
+      zineCover?: string;
+      svs_profile?: string;
+      [key: string]: any;
+    };
+  };
+}
+
+export interface LegacyUserExtensions {
+  extensions?: {
+    eth_address?: string;
+    video_parts?: VideoPart[];
+    level?: number;
+    staticXp?: number;
+    cumulativeXp?: number;
   };
 }
 

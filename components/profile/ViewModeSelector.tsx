@@ -1,75 +1,88 @@
 "use client";
-import React from "react";
-import { ButtonGroup, IconButton, Tooltip } from "@chakra-ui/react";
+import React, { memo, useMemo, useCallback } from "react";
+import { Tabs, TabList, Tab, Box } from "@chakra-ui/react";
 import { FaTh, FaBars, FaBookOpen, FaVideo, FaCamera } from "react-icons/fa";
 
 interface ViewModeSelectorProps {
-    viewMode: "grid" | "list" | "magazine" | "videoparts" | "snaps";
-    onViewModeChange: (mode: "grid" | "list" | "magazine" | "videoparts" | "snaps") => void;
-    isMobile: boolean;
+  viewMode: "grid" | "list" | "magazine" | "videoparts" | "snaps";
+  onViewModeChange: (
+    mode: "grid" | "list" | "magazine" | "videoparts" | "snaps"
+  ) => void;
+  isMobile: boolean;
 }
 
-export default function ViewModeSelector({ viewMode, onViewModeChange, isMobile }: ViewModeSelectorProps) {
-    const buttonStyle = {
-        "&:hover": {
-            boxShadow: "4px 4px 6px var(--chakra-colors-primary-alpha)",
-        },
-        "&:active": {
-            transform: "translate(2px, 2px)",
-            boxShadow: "2px 2px 3px var(--chakra-colors-primary-alpha)",
-        },
-    };
+const viewModes = [
+  { key: "snaps", label: "Snaps", icon: FaCamera },
+  { key: "grid", label: "Grid", icon: FaTh },
+  { key: "list", label: "List", icon: FaBars },
+  { key: "magazine", label: "Magazine", icon: FaBookOpen },
+  { key: "videoparts", label: "Videos", icon: FaVideo },
+] as const;
 
-    return (
-        <ButtonGroup isAttached variant="outline" size="sm" my={4} colorScheme="green">
-            <Tooltip label="Snaps View" hasArrow>
-                <IconButton
-                    aria-label="Show Snaps"
-                    icon={<FaCamera />}
-                    onClick={() => onViewModeChange("snaps")}
-                    isActive={viewMode === "snaps"}
-                    sx={buttonStyle}
-                />
-            </Tooltip>
-            <Tooltip label="Grid View" hasArrow>
-                <IconButton
-                    aria-label="Grid view"
-                    icon={<FaTh />}
-                    onClick={() => onViewModeChange("grid")}
-                    isActive={viewMode === "grid"}
-                    sx={buttonStyle}
-                />
-            </Tooltip>
-            <Tooltip label="List View" hasArrow>
-                <IconButton
-                    aria-label="List view"
-                    icon={<FaBars />}
-                    onClick={() => onViewModeChange("list")}
-                    isActive={viewMode === "list"}
-                    sx={buttonStyle}
-                />
-            </Tooltip>
-            {/* Hide Magazine button on mobile */}
-            {!isMobile && (
-                <Tooltip label="Magazine View" hasArrow>
-                    <IconButton
-                        aria-label="Show Magazine"
-                        icon={<FaBookOpen />}
-                        onClick={() => onViewModeChange("magazine")}
-                        isActive={viewMode === "magazine"}
-                        sx={buttonStyle}
-                    />
-                </Tooltip>
-            )}
-            <Tooltip label="Videoparts View" hasArrow>
-                <IconButton
-                    aria-label="Show Videoparts"
-                    icon={<FaVideo />}
-                    onClick={() => onViewModeChange("videoparts")}
-                    isActive={viewMode === "videoparts"}
-                    sx={buttonStyle}
-                />
-            </Tooltip>
-        </ButtonGroup>
-    );
-}
+const ViewModeSelector = memo(function ViewModeSelector({
+  viewMode,
+  onViewModeChange,
+  isMobile,
+}: ViewModeSelectorProps) {
+  // Memoize available modes based on mobile state
+  const availableModes = useMemo(
+    () => (isMobile ? viewModes.filter((mode) => mode.key !== "magazine") : viewModes),
+    [isMobile]
+  );
+
+  // Memoize current tab index
+  const currentTabIndex = useMemo(
+    () => availableModes.findIndex((mode) => mode.key === viewMode),
+    [availableModes, viewMode]
+  );
+
+  const handleTabChange = useCallback((index: number) => {
+    const modes = isMobile ? viewModes.filter((mode) => mode.key !== "magazine") : viewModes;
+    const selectedMode = modes[index];
+    onViewModeChange(selectedMode.key);
+  }, [isMobile, onViewModeChange]);
+
+  return (
+    <Box my={4}>
+      <Tabs
+        index={currentTabIndex}
+        onChange={handleTabChange}
+        variant="enclosed"
+        colorScheme="green"
+        size="sm"
+        isFitted={true}
+      >
+        <TabList>
+          {availableModes.map((mode) => {
+            const IconComponent = mode.icon;
+            return (
+              <Tab
+                key={mode.key}
+                _selected={{
+                  color: "primary",
+                  bg: "muted",
+                  boxShadow: "md",
+                }}
+                _hover={{
+                  bg: "muted.100",
+                  transform: "translateY(-1px)",
+                }}
+                transition="all 0.2s"
+                display="flex"
+                alignItems="center"
+                gap={2}
+                px={isMobile ? 2 : 4}
+                minW={isMobile ? "auto" : "80px"}
+              >
+                <IconComponent size={14} />
+                {mode.label}
+              </Tab>
+            );
+          })}
+        </TabList>
+      </Tabs>
+    </Box>
+  );
+});
+
+export default ViewModeSelector;

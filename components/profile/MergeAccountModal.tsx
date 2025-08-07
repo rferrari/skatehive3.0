@@ -12,9 +12,12 @@ import {
   HStack,
   Icon,
   VStack,
+  Divider,
 } from "@chakra-ui/react";
 import { FaHive, FaEthereum, FaArrowLeft } from "react-icons/fa";
 import { SiFarcaster } from "react-icons/si";
+import ProfileDiffTable from "./ProfileDiffTable";
+import { ProfileDiff } from "@/lib/utils/profileDiff";
 
 export type MergeType = "ethereum" | "farcaster";
 
@@ -23,6 +26,8 @@ interface MergeAccountModalProps {
   onClose: () => void;
   onMerge: () => void;
   mergeType?: MergeType;
+  profileDiff?: ProfileDiff;
+  isLoading?: boolean;
 }
 
 const MergeAccountModal: React.FC<MergeAccountModalProps> = ({
@@ -30,6 +35,8 @@ const MergeAccountModal: React.FC<MergeAccountModalProps> = ({
   onClose,
   onMerge,
   mergeType = "ethereum",
+  profileDiff,
+  isLoading = false,
 }) => {
   const getMergeContent = () => {
     switch (mergeType) {
@@ -69,27 +76,43 @@ const MergeAccountModal: React.FC<MergeAccountModalProps> = ({
   const content = getMergeContent();
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} isCentered>
+    <Modal isOpen={isOpen} onClose={onClose} isCentered size="2xl">
       <ModalOverlay backdropFilter="blur(8px)" />
       <ModalContent
         bg={"background"}
         border={"1px dashed"}
         borderColor="primary"
+        maxH="90vh"
+        overflow="hidden"
       >
         <ModalHeader>{content.title}</ModalHeader>
         <ModalCloseButton />
-        <ModalBody>
-          <VStack spacing={4} align="center">
-            {content.icons}
-            <Text textAlign="center">{content.text}</Text>
+        <ModalBody maxH="75vh" overflowY="auto">
+          <VStack spacing={6} align="stretch">
+            <VStack spacing={4} align="center">
+              {content.icons}
+              <Text textAlign="center">{content.text}</Text>
+            </VStack>
+            
+            {profileDiff && (
+              <>
+                <Divider />
+                <ProfileDiffTable diff={profileDiff} />
+              </>
+            )}
           </VStack>
         </ModalBody>
         <ModalFooter>
-          <Button variant="ghost" mr={3} onClick={onClose}>
+          <Button variant="ghost" mr={3} onClick={onClose} disabled={isLoading}>
             Cancel
           </Button>
-          <Button colorScheme="green" onClick={onMerge}>
-            Merge
+          <Button 
+            colorScheme="green" 
+            onClick={onMerge}
+            isLoading={isLoading}
+            loadingText="Merging..."
+          >
+            {profileDiff?.hasChanges ? 'Apply Changes' : 'Merge'}
           </Button>
         </ModalFooter>
       </ModalContent>

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Discussion } from '@hiveio/dhive';
 import HiveClient from '@/lib/hive/hiveclient';
 import { validateHiveUsernameFormat } from '@/lib/utils/hiveAccountUtils';
@@ -16,12 +16,14 @@ export default function useUserSnaps(username: string) {
     const [isLoading, setIsLoading] = useState(false);
     const [hasMore, setHasMore] = useState(true);
     const fetchedPermlinksRef = useRef<Set<string>>(new Set());
+    const initialLoadDoneRef = useRef<boolean>(false);
 
-    const resetSnaps = () => {
+    const resetSnaps = useCallback(() => {
         setSnaps([]);
         setHasMore(true);
         fetchedPermlinksRef.current.clear();
-    };
+        initialLoadDoneRef.current = false;
+    }, []);
 
     // Filter snaps to only include those with images or videos
     const filterMediaSnaps = (snaps: Discussion[]): Discussion[] => {
@@ -273,7 +275,7 @@ export default function useUserSnaps(username: string) {
         }
     };
 
-    const fetchUserSnaps = async (): Promise<Discussion[]> => {
+    const fetchUserSnaps = useCallback(async (): Promise<Discussion[]> => {
         // Validate username to prevent injection attacks
         if (!username || typeof username !== 'string') {
             console.error('Invalid username: must be a non-empty string');
@@ -324,9 +326,9 @@ export default function useUserSnaps(username: string) {
             setHasMore(false);
             return [];
         }
-    };
+    }, [username]);
 
-    const loadMoreSnaps = async () => {
+    const loadMoreSnaps = useCallback(async () => {
         if (isLoading || !hasMore) return;
 
         setIsLoading(true);
@@ -348,19 +350,20 @@ export default function useUserSnaps(username: string) {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [isLoading, hasMore, fetchUserSnaps]);
 
     // Reset when username changes
     useEffect(() => {
         resetSnaps();
     }, [username]);
 
-    // Load initial snaps
+    // Load initial snaps - only once per username
     useEffect(() => {
-        if (username && snaps.length === 0 && !isLoading) {
+        if (username && !isLoading && !initialLoadDoneRef.current) {
+            initialLoadDoneRef.current = true;
             loadMoreSnaps();
         }
-    }, [username]);
+    }, [username, isLoading, loadMoreSnaps]);
 
     return {
         snaps: snaps.map(snap => ({
