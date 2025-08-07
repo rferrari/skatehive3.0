@@ -20,25 +20,26 @@ import { Asset } from "@aioha/aioha";
 import { useAioha } from "@aioha/react-ui";
 import useHiveAccount from "@/hooks/useHiveAccount";
 
-const mockData = {
-  pixbeePixKey: "816b8bac-bf1f-4689-80c2-c2bc2e2a8d7a",
-  HivePriceBRL: 1.159,
-  BRLPriceHive: 1.132,
-  HivePriceUSD: 0.212,
-  HBDPriceBRL: 5.555,
-  BRLPriceHBD: 5.555,
-  minRefundHive: 5,
-  minRefundHbd: 2,
-  minRefundPix: 10,
-  depositMinLimit: 5,
-  balancePix: 836.86,
-  balanceHbd: 87.025,
-  balanceHive: 0.107,
-  balanceTotal: 1299.52,
-  OurExchangePer: 0.01,
-  OurExchangeFee: 2,
-  OurRefundPer: 0.01,
-};
+// devs in localhost no pixbee acces due CORS
+// const mockData = {
+//   pixbeePixKey: "816b8bac-bf1f-4689-80c2-c2bc2e2a8d7a",
+//   HivePriceBRL: 1.159,
+//   BRLPriceHive: 1.132,
+//   HivePriceUSD: 0.212,
+//   HBDPriceBRL: 5.555,
+//   BRLPriceHBD: 5.555,
+//   minRefundHive: 5,
+//   minRefundHbd: 2,
+//   minRefundPix: 10,
+//   depositMinLimit: 5,
+//   balancePix: 836.86,
+//   balanceHbd: 87.025,
+//   balanceHive: 0.107,
+//   balanceTotal: 1299.52,
+//   OurExchangePer: 0.01,
+//   OurExchangeFee: 2,
+//   OurRefundPer: 0.01,
+// };
 
 
 interface PixDashboardData {
@@ -370,14 +371,16 @@ export default function PIXTabContent() {
           );
 
           if (!res.ok) {
-            console.warn("❌ Server responded with error, using mock data.");
-            json = mockData;
+            console.warn("❌ Server responded with error, use mock data.");
+            // json = mockData;
+            throw new Error("Pixbee offline");
           } else {
             json = await res.json();
           }
         } catch (err) {
-          console.error("❌ Fetch failed, using mock data.", err);
-          json = mockData;
+          console.error("❌ Fetch failed, use mock data.", err);
+          // json = mockData;
+          throw new Error("Pixbee offline");
         }
         // console.log("✅ PIX Data received:", json);
 
