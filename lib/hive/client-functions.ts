@@ -557,4 +557,75 @@ export async function calculateUserVoteValue(user: any) {
   const estimate = rshares / recentClaimsNumeric * rewardBalanceNumeric * hbdMedianPrice;
   return estimate;
 }
+interface TransactionSummary {
+  transactions: Transaction[];
+  totalSentToPixbee: Record<string, number>; // e.g. { HIVE: 0.001, HBD: 1.0 }
+}
+export interface Transaction {
+    from: string;
+    to: string;
+    amount: string;
+    memo?: string;
+    timestamp: string;
+}
+
+
+export async function getTransactionHistory(
+  username: string,
+  searchAccount: string
+): Promise<TransactionSummary> {
+  try {
+    const operationsBitmask: [number, number] = [4, 0];
+    const accountHistory = await HiveClient.database.getAccountHistory(
+      username,
+      -1,
+      1000,
+      operationsBitmask
+    );
+
+    // Filter and map transfer transactions involving the searchAccount
+    const filteredTransactions = accountHistory
+      .filter(([_, operationDetails]) => {
+        const operationType = operationDetails.op[0];
+        const opDetails = operationDetails.op[1];
+        return (
+          operationType === "transfer" &&
+          (opDetails.from === searchAccount || opDetails.to === searchAccount)
+        );
+      })
+      .map(([_, operationDetails]) => {
+        const opDetails = operationDetails.op[1];
+        return {
+          from: opDetails.from,
+          to: opDetails.to,
+          amount: opDetails.amount,
+          memo: opDetails.memo || "",
+          timestamp: operationDetails.timestamp,
+        };
+      });
+
+    // Reverse for most recent first
+    const transactions = filteredTransactions.reverse();
+
+    // Sum total sent FROM username TO pixbee
+    const totalSentToPixbee = transactions.reduce<Record<string, number>>(
+      (acc, tx) => {
+        if (tx.from === username && tx.to.toLowerCase() === "pixbee") {
+          const [amountStr, currency] = tx.amount.split(" ");
+          const amountNum = parseFloat(amountStr);
+          if (!isNaN(amountNum)) {
+            acc[currency] = (acc[currency] || 0) + amountNum;
+          }
+        }
+        return acc;
+      },
+      {}
+    );
+
+    return { transactions, totalSentToPixbee };
+  } catch (error) {
+    console.error("Error fetching transaction history:", error);
+    return { transactions: [], totalSentToPixbee: {} };
+  }
+}
 
