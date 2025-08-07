@@ -66,12 +66,12 @@ export function PortfolioProvider({
 
   const fetchAllPortfolios = useCallback(async () => {
     // Debug logging for portfolio addresses
-    console.log("📊 Portfolio Context Debug:", {
-      ethereumAddress: address,
-      farcasterAddress: farcasterAddress,
-      farcasterVerifiedAddresses: farcasterVerifiedAddresses,
-      bothEmpty: !address && !farcasterAddress,
-    });
+    // console.log("📊 Portfolio Context Debug:", {
+    //   ethereumAddress: address,
+    //   farcasterAddress: farcasterAddress,
+    //   farcasterVerifiedAddresses: farcasterVerifiedAddresses,
+    //   bothEmpty: !address && !farcasterAddress,
+    // });
 
     if (
       !address &&
