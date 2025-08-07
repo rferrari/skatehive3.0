@@ -242,6 +242,21 @@ const HBDSection = memo(function HBDSection({
           </VStack>
         </HStack>
 
+        {/* Available HBD to invest */}
+        <Box p={3} borderRadius="md" bg={theme.colors.muted}>
+          <Text fontSize="sm" color="text" mb={1}>
+            Available HBD to invest:{" "}
+            <Text as="span" fontWeight="bold" color="primary">
+              {hbdBalance} HBD
+            </Text>
+          </Text>
+          <Text fontSize="xs" color="gray.400">
+            Convert your liquid HBD to savings to start earning passive
+            income!
+          </Text>
+        </Box>
+
+
         {/* Investment Actions */}
         <VStack spacing={3} align="stretch">
           <HStack spacing={2}>
@@ -281,19 +296,6 @@ const HBDSection = memo(function HBDSection({
             </Tooltip>
           </HStack>
 
-          {/* Available HBD to invest */}
-          <Box p={3} borderRadius="md" bg={theme.colors.muted}>
-            <Text fontSize="sm" color="text" mb={1}>
-              Available HBD to invest:{" "}
-              <Text as="span" fontWeight="bold" color="primary">
-                {hbdBalance} HBD
-              </Text>
-            </Text>
-            <Text fontSize="xs" color="gray.400">
-              Convert your liquid HBD to savings to start earning passive
-              income!
-            </Text>
-          </Box>
 
           {/* Claimable Interest */}
           {estimatedClaimableInterest > 0 && (
@@ -305,7 +307,7 @@ const HBDSection = memo(function HBDSection({
               >
                 <Box>
                   <Text fontWeight="bold" color="lime">
-                    💎 Claimable Interest
+                    Claimable Interest
                   </Text>
                   {daysUntilClaim === 0 && estimatedClaimableInterest > 0 ? (
                     <Text color="gray.400" fontSize="sm">
@@ -349,7 +351,7 @@ const HBDSection = memo(function HBDSection({
           )}
 
           {/* Investment Info */}
-          <Box p={3} borderRadius="md" bg={theme.colors.muted}>
+          {/* <Box p={3} borderRadius="md" bg={theme.colors.muted}>
             <Text fontSize="sm" fontWeight="bold" mb={1}>
               📈 Investment Details
             </Text>
@@ -366,7 +368,8 @@ const HBDSection = memo(function HBDSection({
             <Text fontSize="xs" color="text">
               • 3-day withdrawal period for security
             </Text>
-          </Box>
+          </Box> */}
+          
         </VStack>
       </Box>
     );
