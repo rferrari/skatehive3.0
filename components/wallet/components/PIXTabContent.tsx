@@ -366,7 +366,7 @@ export default function PIXTabContent() {
 
         try {
           const res = await fetch(
-            process.env.NEXT_PUBLIC_PIXBEE_ENDPOINT + "/skatebank",
+            (process.env.NEXT_PUBLIC_PIXBEE_ENDPOINT || "https://aphid-glowing-fish.ngrok-free.app") + "/skatebank",
             glowinOptions
           );
 
