@@ -38,86 +38,6 @@ export default function BeneficiariesInput({
   const { isOpen, onToggle } = useDisclosure();
   const [errors, setErrors] = useState<string[]>([]);
 
-  const addBeneficiary = useCallback(() => {
-    const newBeneficiary = { account: "", weight: 500, isValidAccount: false };
-    const updatedBeneficiaries = [...beneficiaries, newBeneficiary];
-    console.log("🎯 BeneficiariesInput: Adding new beneficiary", {
-      newBeneficiary,
-      currentCount: beneficiaries.length,
-      newCount: updatedBeneficiaries.length,
-      updatedBeneficiaries,
-    });
-    setBeneficiaries(updatedBeneficiaries);
-  }, [beneficiaries, setBeneficiaries]);
-
-  const removeBeneficiary = useCallback(
-    (index: number) => {
-      const removedBeneficiary = beneficiaries[index];
-      const newBeneficiaries = beneficiaries.filter((_, i) => i !== index);
-      console.log("🗑️ BeneficiariesInput: Removing beneficiary", {
-        index,
-        removedBeneficiary,
-        beforeCount: beneficiaries.length,
-        afterCount: newBeneficiaries.length,
-        newBeneficiaries,
-      });
-      setBeneficiaries(newBeneficiaries);
-      validateBeneficiaries(newBeneficiaries);
-    },
-    [beneficiaries, setBeneficiaries]
-  );
-
-  const updateBeneficiary = useCallback(
-    (
-      index: number,
-      field: keyof Beneficiary,
-      value: string | number | boolean
-    ) => {
-      const oldBeneficiary = beneficiaries[index];
-      const newBeneficiaries = [...beneficiaries];
-
-      if (field === "weight") {
-        // Convert percentage to basis points (1% = 100 basis points)
-        const percentage =
-          typeof value === "string"
-            ? parseFloat(value) || 0
-            : (value as number);
-        const weightInBasisPoints = Math.round(percentage * 100);
-        newBeneficiaries[index][field] = weightInBasisPoints;
-
-        console.log("📊 BeneficiariesInput: Updating beneficiary weight", {
-          index,
-          field,
-          inputValue: value,
-          percentage,
-          weightInBasisPoints,
-          oldValue: oldBeneficiary.weight,
-          newValue: weightInBasisPoints,
-          oldBeneficiary,
-          newBeneficiary: newBeneficiaries[index],
-        });
-      } else if (field === "account") {
-        newBeneficiaries[index][field] = value as string;
-
-        console.log("👤 BeneficiariesInput: Updating beneficiary account", {
-          index,
-          field,
-          inputValue: value,
-          oldValue: oldBeneficiary.account,
-          newValue: value,
-          oldBeneficiary,
-          newBeneficiary: newBeneficiaries[index],
-        });
-      } else if (field === "isValidAccount") {
-        newBeneficiaries[index][field] = value as boolean;
-      }
-
-      setBeneficiaries(newBeneficiaries);
-      validateBeneficiaries(newBeneficiaries);
-    },
-    [beneficiaries, setBeneficiaries]
-  );
-
   const validateBeneficiaries = useCallback(
     (beneficiariesList: Beneficiary[]) => {
       console.log("✅ BeneficiariesInput: Starting validation", {
@@ -189,6 +109,86 @@ export default function BeneficiariesInput({
       setErrors(validationErrors);
     },
     []
+  );
+
+  const addBeneficiary = useCallback(() => {
+    const newBeneficiary = { account: "", weight: 500, isValidAccount: false };
+    const updatedBeneficiaries = [...beneficiaries, newBeneficiary];
+    console.log("🎯 BeneficiariesInput: Adding new beneficiary", {
+      newBeneficiary,
+      currentCount: beneficiaries.length,
+      newCount: updatedBeneficiaries.length,
+      updatedBeneficiaries,
+    });
+    setBeneficiaries(updatedBeneficiaries);
+  }, [beneficiaries, setBeneficiaries]);
+
+  const removeBeneficiary = useCallback(
+    (index: number) => {
+      const removedBeneficiary = beneficiaries[index];
+      const newBeneficiaries = beneficiaries.filter((_, i) => i !== index);
+      console.log("🗑️ BeneficiariesInput: Removing beneficiary", {
+        index,
+        removedBeneficiary,
+        beforeCount: beneficiaries.length,
+        afterCount: newBeneficiaries.length,
+        newBeneficiaries,
+      });
+      setBeneficiaries(newBeneficiaries);
+      validateBeneficiaries(newBeneficiaries);
+    },
+    [beneficiaries, setBeneficiaries, validateBeneficiaries]
+  );
+
+  const updateBeneficiary = useCallback(
+    (
+      index: number,
+      field: keyof Beneficiary,
+      value: string | number | boolean
+    ) => {
+      const oldBeneficiary = beneficiaries[index];
+      const newBeneficiaries = [...beneficiaries];
+
+      if (field === "weight") {
+        // Convert percentage to basis points (1% = 100 basis points)
+        const percentage =
+          typeof value === "string"
+            ? parseFloat(value) || 0
+            : (value as number);
+        const weightInBasisPoints = Math.round(percentage * 100);
+        newBeneficiaries[index][field] = weightInBasisPoints;
+
+        console.log("📊 BeneficiariesInput: Updating beneficiary weight", {
+          index,
+          field,
+          inputValue: value,
+          percentage,
+          weightInBasisPoints,
+          oldValue: oldBeneficiary.weight,
+          newValue: weightInBasisPoints,
+          oldBeneficiary,
+          newBeneficiary: newBeneficiaries[index],
+        });
+      } else if (field === "account") {
+        newBeneficiaries[index][field] = value as string;
+
+        console.log("👤 BeneficiariesInput: Updating beneficiary account", {
+          index,
+          field,
+          inputValue: value,
+          oldValue: oldBeneficiary.account,
+          newValue: value,
+          oldBeneficiary,
+          newBeneficiary: newBeneficiaries[index],
+        });
+      } else if (field === "isValidAccount") {
+        newBeneficiaries[index][field] = value as boolean;
+      }
+
+      setBeneficiaries(newBeneficiaries);
+      validateBeneficiaries(newBeneficiaries);
+    },
+    [beneficiaries, setBeneficiaries, validateBeneficiaries]
   );
 
   const totalPercentage =
@@ -320,9 +320,9 @@ export default function BeneficiariesInput({
               <Alert status="info" size="sm">
                 <AlertIcon />
                 <Text fontSize="xs">
-                  {beneficiaries.length} beneficiar
-                  {beneficiaries.length === 1 ? "y" : "ies"} will receive{" "}
-                  {totalPercentage.toFixed(1)}% of post rewards
+                  {beneficiaries.length}{" "}
+                  {beneficiaries.length === 1 ? "beneficiary" : "beneficiaries"}{" "}
+                  will receive {totalPercentage.toFixed(1)}% of post rewards
                 </Text>
               </Alert>
             )}
