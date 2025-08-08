@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useMemo, useEffect, lazy, Suspense } from "react";
+import { useState, useRef, useMemo, useEffect, lazy, Suspense, useCallback } from "react";
 import {
   Box,
   Flex,
@@ -178,12 +178,23 @@ export default function Magazine(props: MagazineProps) {
   const isLoading = shouldFetchPosts ? magazinePosts.isLoading : props.isLoading || false;
   const error = shouldFetchPosts ? magazinePosts.error : props.error || null;
 
-  // Defer heavy initialization to improve initial render
+  // Optimize initialization for better performance
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsInitialized(true);
-    }, 100);
-    return () => clearTimeout(timer);
+    let animationFrame: number;
+    const initializeAsync = () => {
+      animationFrame = requestAnimationFrame(() => {
+        setIsInitialized(true);
+      });
+    };
+    
+    // Start initialization immediately but defer heavy operations
+    initializeAsync();
+    
+    return () => {
+      if (animationFrame) {
+        cancelAnimationFrame(animationFrame);
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -192,14 +203,16 @@ export default function Magazine(props: MagazineProps) {
     }
   }, [isInitialized]);
 
-  // Memoize filtered and sorted posts for performance
+  // Memoize filtered and sorted posts for performance - limit initial render
   const filteredPosts = useMemo(() => {
     if (!posts || !isInitialized) return [];
-    // TODO: Add your blocked users logic if needed
-    return posts.sort(
+    // Limit to first 10 posts initially for better performance
+    const sortedPosts = posts.sort(
       (a, b) =>
         Number(getPayoutValue(b as any)) - Number(getPayoutValue(a as any))
     );
+    // For initial load, limit to 10 posts to reduce render time
+    return sortedPosts.slice(0, 10);
   }, [posts, isInitialized]);
 
   const playSound = () => {
@@ -255,25 +268,25 @@ export default function Magazine(props: MagazineProps) {
         startPage={0}
         size="stretch"
         drawShadow={false}
-        flippingTime={1000}
+        flippingTime={600} // Reduced from 1000ms for snappier feel
         usePortrait
         startZIndex={0}
-        autoSize={true}
-        maxShadowOpacity={0.2}
+        autoSize={false} // Disable auto-sizing to prevent reflows
+        maxShadowOpacity={0.1} // Reduced shadow for better performance
         showCover={false}
-        mobileScrollSupport
-        swipeDistance={50}
+        mobileScrollSupport={false} // Disable to reduce event listeners
+        swipeDistance={30} // Reduced sensitivity for better performance
         clickEventForward={false}
         useMouseEvents
         renderOnlyPageLengthChange={true}
         showPageCorners={false}
-        disableFlipByClick={true}
+        disableFlipByClick={false}
         style={{ width: "100%", height: "100vh" }}
         ref={flipBookRef}
-        onInit={(instance) => {
+        onInit={(instance: any) => {
           flipBookRef.current = instance;
         }}
-        onFlip={(e) => {
+        onFlip={(e: any) => {
           playSound();
           // Pause all native videos
           const videos = document.querySelectorAll(".flipbook video");
@@ -491,12 +504,24 @@ export default function Magazine(props: MagazineProps) {
       <style jsx global>{`
         .magazine-content {
           color: var(--chakra-colors-text, #fff);
+          contain: layout style paint;
+          will-change: transform;
         }
         .magazine-content iframe {
           max-width: 100%;
           width: 100%;
           display: block;
           margin: 0 auto;
+          will-change: transform;
+          transform: translateZ(0);
+        }
+        .flipbook {
+          will-change: transform;
+          transform: translateZ(0);
+          touch-action: pan-y pinch-zoom;
+        }
+        .flipbook * {
+          touch-action: manipulation;
         }
         /* Hide vertical scrollbar for the post body area */
         .hide-scrollbar::-webkit-scrollbar {

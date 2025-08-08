@@ -65,8 +65,15 @@ const MagazineModal = React.memo(function MagazineModal({
   }, [posts, isLoading, tag, magazineQuery]);
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="full" motionPreset="none">
-      <ModalOverlay />
+    <Modal 
+      isOpen={isOpen} 
+      onClose={onClose} 
+      size="full" 
+      motionPreset="none"
+      trapFocus={false}
+      blockScrollOnMount={false}
+    >
+      <ModalOverlay bg="blackAlpha.800" />
       <ModalContent
         p={0}
         m={0}
@@ -76,6 +83,7 @@ const MagazineModal = React.memo(function MagazineModal({
         overflow="hidden"
         bg="background"
         position="relative"
+        willChange="transform"
       >
         <IconButton
           aria-label="Back"
