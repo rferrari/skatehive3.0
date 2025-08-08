@@ -100,6 +100,7 @@ const LoadingComponent = () => {
         justify="center"
         align="center"
         position="relative"
+        w={"100vw"}
       >
         {columns.map((columnText, i) => {
           const duration = 6 + Math.random() * 6; // 6-12 seconds

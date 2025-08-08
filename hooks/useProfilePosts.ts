@@ -4,6 +4,7 @@ import { findPosts } from "@/lib/hive/client-functions";
 
 export default function useProfilePosts(username: string) {
     const [posts, setPosts] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const isFetching = useRef(false);
     const params = useRef([
         username,
@@ -26,9 +27,10 @@ export default function useProfilePosts(username: string) {
                     12,
                 ];
             }
+            setIsLoading(false);
             isFetching.current = false;
         } catch (err) {
-            console.error("Failed to fetch posts", err);
+            setIsLoading(false);
             isFetching.current = false;
         }
     }, [username]);
@@ -36,9 +38,10 @@ export default function useProfilePosts(username: string) {
     // Reset posts when username changes
     useEffect(() => {
         setPosts([]);
+        setIsLoading(true);
         params.current = [username, "", new Date().toISOString().split(".")[0], 12];
         fetchPosts();
     }, [username, fetchPosts]);
 
-    return { posts, fetchPosts };
+    return { posts, fetchPosts, isLoading };
 }

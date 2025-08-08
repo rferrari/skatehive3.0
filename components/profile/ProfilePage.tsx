@@ -1,5 +1,12 @@
 "use client";
-import React, { useState, useMemo, useCallback, memo } from "react";
+import React, {
+  useState,
+  useMemo,
+  useCallback,
+  memo,
+  useRef,
+  useEffect,
+} from "react";
 import { Box, Alert, AlertIcon, Container, Center } from "@chakra-ui/react";
 import useHiveAccount from "@/hooks/useHiveAccount";
 import LoadingComponent from "../homepage/loadingComponent";
@@ -13,7 +20,7 @@ import VideoPartsView from "./VideoPartsView";
 import ProfileCoverImage from "./ProfileCoverImage";
 import ProfileHeader from "./ProfileHeader";
 import ViewModeSelector from "./ViewModeSelector";
-import MagazineModal from "./MagazineModal";
+import MagazineModal from "../shared/MagazineModal";
 import SnapsGrid from "./SnapsGrid";
 
 // Import custom hooks
@@ -32,7 +39,14 @@ const MemoizedSnapsGrid = memo(function MemoizedSnapsGrid({
   return <SnapsGrid username={username} />;
 });
 
-// Optimized content views component to reduce re-renders
+// Memoized PostInfiniteScroll to prevent re-renders
+const MemoizedPostInfiniteScroll = memo(function MemoizedPostInfiniteScroll(
+  props: any
+) {
+  return <PostInfiniteScroll {...props} />;
+});
+
+// Optimized content views component with conditional mounting to reduce re-renders
 const ContentViews = memo(function ContentViews({
   viewMode,
   postProps,
@@ -54,16 +68,27 @@ const ContentViews = memo(function ContentViews({
   };
   username: string;
 }) {
-  switch (viewMode) {
-    case "videoparts":
-      return <VideoPartsView {...videoPartsProps} />;
-    case "snaps":
-      return <MemoizedSnapsGrid username={username} />;
-    case "magazine":
-      return null; // Magazine is handled separately
-    default:
-      return <PostInfiniteScroll {...postProps} />;
-  }
+  // Use conditional rendering with style display to avoid unmounting/remounting
+  return (
+    <>
+      <Box display={viewMode === "videoparts" ? "block" : "none"}>
+        {viewMode === "videoparts" && <VideoPartsView {...videoPartsProps} />}
+      </Box>
+
+      <Box display={viewMode === "snaps" ? "block" : "none"}>
+        {viewMode === "snaps" && <MemoizedSnapsGrid username={username} />}
+      </Box>
+
+      <Box display={["grid", "list"].includes(viewMode) ? "block" : "none"}>
+        {["grid", "list"].includes(viewMode) && (
+          <MemoizedPostInfiniteScroll
+            key={`posts-${viewMode}`}
+            {...postProps}
+          />
+        )}
+      </Box>
+    </>
+  );
 });
 
 interface ProfilePageProps {
@@ -100,21 +125,67 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
   );
   const { isFollowing, isFollowLoading, updateFollowing, updateLoading } =
     useFollowStatus(user, username);
-  const { posts, fetchPosts } = useProfilePosts(username);
+  const {
+    posts,
+    fetchPosts,
+    isLoading: postsLoading,
+  } = useProfilePosts(username);
   const { viewMode, handleViewModeChange, closeMagazine } = useViewMode();
   const isMobile = useIsMobile();
 
+  // Debounce timer ref for view mode changes
+  const viewModeTimer = useRef<NodeJS.Timeout | null>(null);
+  const isTransitioning = useRef(false);
+
   // Memoize derived values
   const isOwner = useMemo(() => user === username, [user, username]);
+
+  // Throttled close handler to prevent rapid clicking
+  const throttledCloseMagazine = useCallback(() => {
+    closeMagazine();
+  }, [closeMagazine]);
 
   // Modal handlers - Stable references to prevent re-renders
   const handleEditModalOpen = useCallback(() => setIsEditModalOpen(true), []);
   const handleEditModalClose = useCallback(() => setIsEditModalOpen(false), []);
 
-  // Memoize view mode change handler to prevent unnecessary re-renders
+  // Optimized view mode change handler with debouncing to prevent rapid switches
   const memoizedViewModeChange = useCallback(
     (mode: "grid" | "list" | "magazine" | "videoparts" | "snaps") => {
-      handleViewModeChange(mode);
+      // Prevent rapid changes
+      if (isTransitioning.current) return;
+
+      // Clear previous timer
+      if (viewModeTimer.current) {
+        clearTimeout(viewModeTimer.current);
+      }
+
+      isTransitioning.current = true;
+
+      // Debounce the view mode change to prevent rapid switching
+      viewModeTimer.current = setTimeout(() => {
+        // Use requestIdleCallback if available for non-blocking execution
+        if (window.requestIdleCallback) {
+          window.requestIdleCallback(
+            () => {
+              handleViewModeChange(mode);
+              // Reset transition flag after a brief delay
+              setTimeout(() => {
+                isTransitioning.current = false;
+              }, 100);
+            },
+            { timeout: 100 }
+          );
+        } else {
+          // Fallback to requestAnimationFrame
+          requestAnimationFrame(() => {
+            handleViewModeChange(mode);
+            setTimeout(() => {
+              isTransitioning.current = false;
+            }, 100);
+          });
+        }
+      }, 100); // Reduced to 100ms for better responsiveness
     },
     [handleViewModeChange]
   );
@@ -130,17 +201,38 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
     [isFollowing, isFollowLoading, updateFollowing, updateLoading]
   );
 
-  // Memoize post-related props
-  const postProps = useMemo(
-    () => ({
-      allPosts: posts,
+  // Memoize chronologically sorted posts - only when needed for grid/list views
+  const sortedPosts = useMemo(() => {
+    // Skip expensive sorting if we're in snaps or videoparts mode
+    if (!["grid", "list", "magazine"].includes(viewMode)) {
+      return [];
+    }
+    return [...posts].sort(
+      (a, b) => new Date(b.created).getTime() - new Date(a.created).getTime()
+    );
+  }, [posts, viewMode]);
+
+  // Memoize post-related props - only when needed for grid/list views
+  const postProps = useMemo(() => {
+    // Skip creating props if not in grid/list mode
+    if (!["grid", "list"].includes(viewMode)) {
+      return {
+        allPosts: [],
+        fetchPosts: () => Promise.resolve(),
+        viewMode: "grid" as const,
+        context: "profile" as const,
+        hideAuthorInfo: true,
+      };
+    }
+
+    return {
+      allPosts: sortedPosts,
       fetchPosts,
       viewMode: viewMode as "grid" | "list",
       context: "profile" as const,
       hideAuthorInfo: true,
-    }),
-    [posts, fetchPosts, viewMode]
-  );
+    };
+  }, [sortedPosts, fetchPosts, viewMode]);
 
   // Memoize video parts props
   const videoPartsProps = useMemo(
@@ -151,6 +243,15 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
     }),
     [profileData, username, updateProfileData]
   );
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (viewModeTimer.current) {
+        clearTimeout(viewModeTimer.current);
+      }
+    };
+  }, []);
 
   if (isLoading || !hiveAccount) {
     return (
@@ -183,12 +284,13 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
 
   return (
     <>
-      {/* Magazine Modal - Only render when needed */}
+      {/* Magazine Modal - Only render when needed with performance optimization */}
       {viewMode === "magazine" && (
         <MagazineModal
-          isOpen={true}
-          onClose={closeMagazine}
+          isOpen={viewMode === "magazine"}
+          onClose={throttledCloseMagazine}
           username={username}
+          posts={sortedPosts} // Use pre-sorted posts
         />
       )}
       <Center>

@@ -1,5 +1,13 @@
 "use client";
-import { useState, useRef, useMemo, useEffect } from "react";
+import {
+  useState,
+  useRef,
+  useMemo,
+  useEffect,
+  lazy,
+  Suspense,
+  useCallback,
+} from "react";
 import {
   Box,
   Flex,
@@ -13,7 +21,7 @@ import {
 import HTMLFlipBook from "react-pageflip";
 import { Discussion } from "@hiveio/dhive";
 import { getPayoutValue, findPosts } from "@/lib/hive/client-functions";
-import HiveMarkdown from "@/components/shared/HiveMarkdown";
+const HiveMarkdown = lazy(() => import("@/components/shared/HiveMarkdown"));
 import LoadingComponent from "../homepage/loadingComponent";
 import MatrixOverlay from "@/components/graphics/MatrixOverlay";
 import { useTheme } from "@/app/themeProvider";
@@ -29,6 +37,12 @@ function useMagazinePosts(
   const tagString = JSON.stringify(tag);
 
   useEffect(() => {
+    // Don't fetch if tag is empty or query is not provided
+    if (!query || !tag || tag.length === 0) {
+      setIsLoading(false);
+      return;
+    }
+
     let isMounted = true;
     setIsLoading(true);
     setError(null);
@@ -155,34 +169,63 @@ export default function Magazine(props: MagazineProps) {
   const { theme } = useTheme();
   const flipBookRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // If tag and query are provided, use the hook to fetch posts
-  const magazinePosts = useMagazinePosts(props.query!, props.tag!);
+  // Only use the hook to fetch posts if tag and query are provided
+  const shouldFetchPosts = !!(props.tag && props.query);
+  const magazinePosts = useMagazinePosts(
+    props.query || "created",
+    props.tag || []
+  );
+
   const posts = useMemo(() => {
-    return props.tag && props.query ? magazinePosts.posts : props.posts || [];
-  }, [magazinePosts.posts, props.posts, props.tag, props.query]);
-  const isLoading =
-    props.tag && props.query
-      ? magazinePosts.isLoading
-      : props.isLoading || false;
-  const error =
-    props.tag && props.query ? magazinePosts.error : props.error || null;
+    const finalPosts = shouldFetchPosts
+      ? magazinePosts.posts
+      : props.posts || [];
+    return finalPosts;
+  }, [magazinePosts.posts, props.posts, shouldFetchPosts]);
 
+  const isLoading = shouldFetchPosts
+    ? magazinePosts.isLoading
+    : props.isLoading || false;
+  const error = shouldFetchPosts ? magazinePosts.error : props.error || null;
+
+  // Optimize initialization for better performance
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = 0.2; // Set to 20% volume
-    }
+    let animationFrame: number;
+    const initializeAsync = () => {
+      animationFrame = requestAnimationFrame(() => {
+        setIsInitialized(true);
+      });
+    };
+
+    // Start initialization immediately but defer heavy operations
+    initializeAsync();
+
+    return () => {
+      if (animationFrame) {
+        cancelAnimationFrame(animationFrame);
+      }
+    };
   }, []);
 
-  // Memoize filtered and sorted posts for performance
+  useEffect(() => {
+    if (audioRef.current && isInitialized) {
+      audioRef.current.volume = 0.2; // Set to 20% volume
+    }
+  }, [isInitialized]);
+
+  // Memoize filtered and sorted posts for performance - limit initial render
   const filteredPosts = useMemo(() => {
-    if (!posts) return [];
-    // TODO: Add your blocked users logic if needed
-    return posts.sort(
+    if (!posts || !isInitialized) return [];
+    // Limit to first 10 posts initially for better performance
+    const sortedPosts = posts.sort(
       (a, b) =>
         Number(getPayoutValue(b as any)) - Number(getPayoutValue(a as any))
     );
-  }, [posts]);
+    // For initial load, limit to 10 posts to reduce render time
+    return sortedPosts.slice(0, 10);
+  }, [posts, isInitialized]);
 
   const playSound = () => {
     if (audioRef.current) {
@@ -191,7 +234,7 @@ export default function Magazine(props: MagazineProps) {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || !isInitialized) {
     return <LoadingComponent />;
   }
 
@@ -237,25 +280,25 @@ export default function Magazine(props: MagazineProps) {
         startPage={0}
         size="stretch"
         drawShadow={false}
-        flippingTime={1000}
+        flippingTime={600} // Reduced from 1000ms for snappier feel
         usePortrait
         startZIndex={0}
-        autoSize={true}
-        maxShadowOpacity={0.2}
+        autoSize={false} // Disable auto-sizing to prevent reflows
+        maxShadowOpacity={0.1} // Reduced shadow for better performance
         showCover={false}
-        mobileScrollSupport
-        swipeDistance={50}
+        mobileScrollSupport={false} // Disable to reduce event listeners
+        swipeDistance={30} // Reduced sensitivity for better performance
         clickEventForward={false}
         useMouseEvents
         renderOnlyPageLengthChange={true}
         showPageCorners={false}
-        disableFlipByClick={true}
+        disableFlipByClick={false}
         style={{ width: "100%", height: "100vh" }}
         ref={flipBookRef}
-        onInit={(instance) => {
+        onInit={(instance: any) => {
           flipBookRef.current = instance;
         }}
-        onFlip={(e) => {
+        onFlip={(e: any) => {
           playSound();
           // Pause all native videos
           const videos = document.querySelectorAll(".flipbook video");
@@ -448,7 +491,31 @@ export default function Magazine(props: MagazineProps) {
                 width="100%"
                 className="hide-scrollbar"
               >
-                <HiveMarkdown markdown={post.body} />
+                {!isInitialized ? (
+                  <Box
+                    display="flex"
+                    justifyContent="center"
+                    alignItems="center"
+                    height="100%"
+                  >
+                    <LoadingComponent />
+                  </Box>
+                ) : (
+                  <Suspense
+                    fallback={
+                      <Box
+                        display="flex"
+                        justifyContent="center"
+                        alignItems="center"
+                        height="100%"
+                      >
+                        <LoadingComponent />
+                      </Box>
+                    }
+                  >
+                    <HiveMarkdown markdown={post.body} />
+                  </Suspense>
+                )}
               </Box>
             </Box>
           );
@@ -461,12 +528,24 @@ export default function Magazine(props: MagazineProps) {
       <style jsx global>{`
         .magazine-content {
           color: var(--chakra-colors-text, #fff);
+          contain: layout style paint;
+          will-change: transform;
         }
         .magazine-content iframe {
           max-width: 100%;
           width: 100%;
           display: block;
           margin: 0 auto;
+          will-change: transform;
+          transform: translateZ(0);
+        }
+        .flipbook {
+          will-change: transform;
+          transform: translateZ(0);
+          touch-action: pan-y pinch-zoom;
+        }
+        .flipbook * {
+          touch-action: manipulation;
         }
         /* Hide vertical scrollbar for the post body area */
         .hide-scrollbar::-webkit-scrollbar {

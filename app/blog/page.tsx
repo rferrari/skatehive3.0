@@ -8,7 +8,7 @@ import PostInfiniteScroll from "@/components/blog/PostInfiniteScroll";
 import { useSearchParams, useRouter } from "next/navigation";
 import JoinSkatehiveBanner from "@/components/blog/JoinSkatehiveBanner";
 import PostGrid from "@/components/blog/PostGrid";
-import MagazineModal from "@/components/blog/MagazineModal";
+import MagazineModal from "@/components/shared/MagazineModal";
 
 function BlogContent() {
   const searchParams = useSearchParams();
@@ -114,7 +114,7 @@ function BlogContent() {
         ];
       }
     } catch (error) {
-      console.log(error);
+      // Error handled silently for production
     } finally {
       isFetching.current = false;
     }
@@ -154,17 +154,14 @@ function BlogContent() {
   // Modal logic for magazine view
   const isMagazineOpen = viewMode === "magazine";
   const closeMagazine = () => {
-    // Remove view=magazine from the query string, revert to grid
-    const params = new URLSearchParams(window.location.search);
-    params.set("view", "grid");
-    router.replace(`/blog?${params.toString()}`);
+    // Simple state change - just close the magazine
     setViewMode("grid");
   };
   // Magazine props (same as /magazine/page.tsx)
   const communityTag =
     process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || "hive-173115";
   const magazineTag = [{ tag: communityTag, limit: 30 }];
-  const magazineQuery = "created";
+  const magazineQuery = "trending"; // Use trending for blog magazine view
 
   return (
     <>
