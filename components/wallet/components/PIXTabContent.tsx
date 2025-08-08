@@ -42,7 +42,7 @@ import useHiveAccount from "@/hooks/useHiveAccount";
 // };
 
 
-interface PixDashboardData {
+export interface PixDashboardData {
   pixbeePixKey: string;
   HivePriceBRL: number;
   BRLPriceHive: number;
@@ -71,7 +71,15 @@ const glowinOptions = {
 };
 
 // 🐝 PIX Form Component
-function PIXForm() {
+type PIXFormProps = {
+  pixDashboardData: PixDashboardData | null;
+};
+
+function PIXForm({ pixDashboardData }: PIXFormProps) {
+  if (!pixDashboardData) {
+    return <div>Loading dashboard data...</div>;
+  }
+
   const { user, aioha } = useAioha();
   const { hiveAccount, isLoading, error } = useHiveAccount(user || "");
   const [currency, setCurrency] = useState("HIVE");
@@ -102,7 +110,7 @@ function PIXForm() {
     if (lowerMemo.includes("inválida") || lowerMemo.includes("nao") || lowerMemo.includes("não")) {
       return {
         isValid: false,
-        translatedNote: "❌ Invalid PIX key or not available.",
+        translatedNote: "❌ Invalid PIX key or PIX amount not available.",
       };
     }
 
@@ -206,9 +214,9 @@ function PIXForm() {
   return (
     <VStack spacing={3} align="stretch">
       <Box fontSize="xs" color="gray.400">
-        Your HBD Balance: {userAvailableHbd.toFixed(3)} HBD
+        Your HBD Balance: {userAvailableHbd.toFixed(3)} HBD<br />
+        Minimal Deposit: R$ {pixDashboardData.depositMinLimit}
       </Box>
-
 
       <Select
         value={currency}
@@ -265,28 +273,52 @@ function PIXForm() {
       </Button>
 
       {previewData && (
-        <Box mt={3} p={3} border="1px solid" borderColor="muted" borderRadius="md">
-          <Text fontSize="sm"><strong>Preview:</strong></Text>
-          <Text fontSize="sm">💸 <strong>{previewData.resAmount}</strong></Text>
-          <Text fontSize="sm">📝 <strong>{previewData.resMemo}</strong></Text>
+        <Box
+          mt={3}
+          p={3}
+          border="1px solid"
+          borderColor="muted"
+          borderRadius="md"
+          backgroundImage="url('/images/brl.webp')"
+          backgroundSize="cover"
+          backgroundPosition="left"
+          backgroundRepeat="no-repeat"
+          position="relative"
+          minHeight="250px"
+          _before={{
+            content: '""',
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.8)", // Semi-transparent black overlay (adjust opacity as needed)
+            zIndex: 1,
+          }}
+        >
+          <Box position="relative" zIndex={2}> {/* Ensure content is above the overlay */}
+            <Text fontSize="md"><strong>Preview:</strong></Text><br />
+            <Text fontSize="sm">💸 <strong>{previewData.resAmount}</strong></Text>
+            <Text fontSize="sm">📝 <strong>{previewData.resMemo}</strong></Text>
 
-          {!previewData.isValid && (
-            <Text fontSize="sm" color="red.400" mt={2}>
-              {previewData.translatedNote}
-            </Text>
-          )}
+            {!previewData.isValid && (
+              <Text fontSize="sm" color="red.400" mt={2}>
+                {previewData.translatedNote}
+              </Text>
+            )}
 
-          <Button
-            mt={2}
-            size="sm"
-            colorScheme="blue"
-            onClick={handleSend}
-            fontFamily="Joystix"
-            fontWeight="bold"
-            isDisabled={!previewData.isValid}
-          >
-            💸 Sign & Send
-          </Button>
+            <Button
+              mt={2}
+              size="sm"
+              colorScheme="blue"
+              onClick={handleSend}
+              fontFamily="Joystix"
+              fontWeight="bold"
+              isDisabled={!previewData.isValid}
+            >
+              💸 Sign & Send
+            </Button>
+          </Box>
         </Box>
       )}
     </VStack>
@@ -310,7 +342,7 @@ function BalanceBarGraph({ data }: { data: PixDashboardData }) {
   return (
     <Box>
       <Text fontWeight="bold" mb={1}>
-        💰 Pixbee Balance (BRL {total.toFixed(2)})
+        💰 Skatebank Balance (BRL {total.toFixed(2)})
       </Text>
       <HStack
         h="24px"
@@ -354,7 +386,7 @@ function BalanceBarGraph({ data }: { data: PixDashboardData }) {
 
 // 🧠 Main Component
 export default function PIXTabContent() {
-  const [dashboardData, setDashboardData] = useState<PixDashboardData | null>(null);
+  const [pixDashboardData, setDashboardData] = useState<PixDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const toast = useToast();
 
@@ -411,26 +443,12 @@ export default function PIXTabContent() {
     <VStack spacing={4} align="stretch">
       {loading ? (
         <Center><Spinner /></Center>
-      ) : dashboardData ? (
+      ) : pixDashboardData ? (
         <>
-          <Box
-            p={4}
-            bg="background"
-            borderRadius="lg"
-            border="1px solid"
-            borderColor="muted"
-          >
-            <BalanceBarGraph data={dashboardData} />
-
-            {/* PIX Summary */}
-            <Heading size="sm" mb={3} mt={5} color="primary">
-              <Text fontWeight="bold">Mininal Deposit: R$ {dashboardData.depositMinLimit}</Text>
-            </Heading>
-          </Box>
+          <BalanceBarGraph data={pixDashboardData} />
 
           {/* PIX Form */}
           <Box
-            mt={4}
             p={4}
             bg="background"
             borderRadius="lg"
@@ -440,7 +458,7 @@ export default function PIXTabContent() {
             <Heading size="sm" mb={4} color="primary" fontFamily="Joystix">
               💸 Send PIX Transfer
             </Heading>
-            <PIXForm />
+            <PIXForm pixDashboardData={pixDashboardData} />
           </Box>
         </>
       ) : (
@@ -448,7 +466,7 @@ export default function PIXTabContent() {
       )}
 
       <Box>
-        <PIXTransactionHistory searchAccount={"pixbee"} />
+        <PIXTransactionHistory searchAccount={"pixbee"} pixDashboardData={pixDashboardData} />
       </Box>
 
     </VStack>

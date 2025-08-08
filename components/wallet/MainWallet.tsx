@@ -447,7 +447,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                       fontSize={{ base: "sm", md: "md" }}
                       flex={1}
                     >
-                      🐝 PIX
+                      💸 PIX
                     </Tab>
                   )}
                 </TabList>
@@ -642,11 +642,11 @@ export default function MainWallet({ username }: MainWalletProps) {
                             color="primary"
                             fontFamily="Joystix"
                           >
-                            🐝 Pixbee
+                            💸 Pix
                           </Heading>
-                          <Text fontSize="sm" color="text" mb={4}>
-                            Use Pixbee service to Buy and sell HBD instantly using PIX (Brazilian Real).
-                            Fast, secure, and convenient for Brazilian users!
+                          <Text fontSize="sm" color="text" mb={1}>
+                            Fast, secure, and convenient way to send HBD via PIX!
+                            Use Skatebank service powered by Pixbee to Buy and sell HBD instantly using PIX (Brazilian Real currency).                            
                           </Text>
                         </Box>
 

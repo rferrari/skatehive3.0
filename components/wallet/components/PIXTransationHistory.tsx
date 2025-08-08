@@ -4,13 +4,14 @@ import { useAioha } from "@aioha/react-ui";
 import { Tooltip, useToast } from "@chakra-ui/react";
 import { useEffect, useCallback, useState } from "react";
 import { Box, Spinner, Table, Tbody, Td, Text, Th, Thead, Tr } from "@chakra-ui/react";
+import { PixDashboardData } from "./PIXTabContent";
 
 const MAX_MEMO_LENGTH = 25;
 const CALENDAR_EMOJI = "📅";
 const ENDECRYPTED_EMOJI = "🔒";
 const DECRYPTED_EMOJI = "" //"🗝️";
 
-const PIXTransactionHistory = ({ searchAccount }: { searchAccount: string }) => {
+const PIXTransactionHistory = ({ searchAccount, pixDashboardData }: { searchAccount: string, pixDashboardData: PixDashboardData | null }) => {
   const { user, aioha } = useAioha();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [totalSentToPixbee, setTotalSentToPixbee] = useState<Record<string, number>>({});
@@ -71,22 +72,72 @@ const PIXTransactionHistory = ({ searchAccount }: { searchAccount: string }) => 
     fetchTransactions();
   }, [user, searchAccount]);
 
+  const replacePixbee = (str: string) =>
+    str?.toLowerCase() === "pixbee" ? "skatebank" : str;
+
   return (
     <Box p={1}>
       {loading ? (
         <Spinner />
       ) : transactions.length > 0 ? (
         <>
-          <Box mb={2}>
-            <Text fontSize="sm" fontWeight="bold">
-              Total You Sent to pixbee:{" "}
-              {Object.entries(totalSentToPixbee).map(([currency, amount]) => (
-                <span key={currency}>
-                  {amount.toFixed(3)} {currency}{" "}
-                </span>
-              ))}
+          <Box mb={4} maxWidth="500px">
+            <Text fontSize="lg" fontWeight="bold" mb={2} textAlign="center">
+              Your Withdraw History
             </Text>
+
+            <Table size="sm" variant="simple" w="100%">
+              <Thead>
+                <Tr>
+                  <Th textAlign="center">Currency</Th>
+                  <Th isNumeric>Total Sent</Th>
+                  <Th isNumeric>Now Worth (BRL)</Th>
+                </Tr>
+              </Thead>
+              <Tbody>
+                {Object.entries(totalSentToPixbee).map(([currency, amount]) => {
+                  let priceBRL = 0;
+                  if (currency === "HBD" && typeof pixDashboardData?.HBDPriceBRL === "number") {
+                    priceBRL = pixDashboardData.HBDPriceBRL;
+                  }
+                  if (currency === "HIVE" && typeof pixDashboardData?.HivePriceBRL === "number") {
+                    priceBRL = pixDashboardData.HivePriceBRL;
+                  }
+                  return (
+                    <Tr key={currency}>
+                      <Td textAlign="center">{currency}</Td>
+                      <Td isNumeric>{amount.toFixed(3)}</Td>
+                      <Td isNumeric>
+                        {priceBRL ? `R$ ${(amount * priceBRL).toFixed(2)}` : "-"}
+                      </Td>
+                    </Tr>
+                  );
+                })}
+                <Tr fontWeight="bold">
+                  <Td textAlign="center">TOTAL</Td>
+                  <Td isNumeric>
+
+                  </Td>
+                  <Td isNumeric>
+                    R${" "}
+                    {Object.entries(totalSentToPixbee)
+                      .reduce((sum, [currency, amount]) => {
+                        let priceBRL = 0;
+                        if (currency === "HBD" && typeof pixDashboardData?.HBDPriceBRL === "number") {
+                          priceBRL = pixDashboardData.HBDPriceBRL;
+                        }
+                        if (currency === "HIVE" && typeof pixDashboardData?.HivePriceBRL === "number") {
+                          priceBRL = pixDashboardData.HivePriceBRL;
+                        }
+                        return sum + amount * priceBRL;
+                      }, 0)
+                      .toFixed(2)}
+                  </Td>
+                </Tr>
+              </Tbody>
+            </Table>
           </Box>
+
 
           <Box overflowX="auto" color="white" width="100%" maxWidth="1200px" mx="auto">
             <Table size="sm">
@@ -120,10 +171,10 @@ const PIXTransactionHistory = ({ searchAccount }: { searchAccount: string }) => 
                   return (
                     <Tr key={idx}>
                       <Td fontSize="xs" px={2}>
-                        {transaction.from}
+                        {replacePixbee(transaction.from)}
                       </Td>
                       <Td fontSize="xs" px={2}>
-                        {transaction.to}
+                        {replacePixbee(transaction.to)}
                       </Td>
                       <Td fontSize="xs" px={2} textAlign="right">
                         {transaction.amount}
