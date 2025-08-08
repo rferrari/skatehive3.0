@@ -6,14 +6,12 @@ import {
   Heading,
   Input,
   Select,
-  // SimpleGrid,
   Spinner,
   Text,
   useToast,
   VStack,
   HStack,
   Tooltip,
-  FormLabel,
   OrderedList,
   ListItem,
 } from "@chakra-ui/react";
@@ -21,28 +19,6 @@ import PIXTransactionHistory from "./PIXTransationHistory";
 import { Asset } from "@aioha/aioha";
 import { useAioha } from "@aioha/react-ui";
 import useHiveAccount from "@/hooks/useHiveAccount";
-
-// devs in localhost no pixbee acces due CORS
-// const mockData = {
-//   pixbeePixKey: "816b8bac-bf1f-4689-80c2-c2bc2e2a8d7a",
-//   HivePriceBRL: 1.159,
-//   BRLPriceHive: 1.132,
-//   HivePriceUSD: 0.212,
-//   HBDPriceBRL: 5.555,
-//   BRLPriceHBD: 5.555,
-//   minRefundHive: 5,
-//   minRefundHbd: 2,
-//   minRefundPix: 10,
-//   depositMinLimit: 5,
-//   balancePix: 836.86,
-//   balanceHbd: 87.025,
-//   balanceHive: 0.107,
-//   balanceTotal: 1299.52,
-//   OurExchangePer: 0.01,
-//   OurExchangeFee: 2,
-//   OurRefundPer: 0.01,
-// };
-
 
 export interface PixDashboardData {
   pixbeePixKey: string;
@@ -78,13 +54,10 @@ type PIXFormProps = {
 };
 
 function PIXForm({ pixDashboardData }: PIXFormProps) {
-  if (!pixDashboardData) {
-    return <div>Loading dashboard data...</div>;
-  }
-
+  // Move all hooks to the top level
   const { user, aioha } = useAioha();
   const { hiveAccount, isLoading, error } = useHiveAccount(user || "");
-  const [currency, setCurrency] = useState("HIVE");
+  const [currency, setCurrency] = useState("HBD");
   const [amount, setAmount] = useState("");
   const [pixKey, setPixKey] = useState("");
   const [previewData, setPreviewData] = useState<{
@@ -96,15 +69,22 @@ function PIXForm({ pixDashboardData }: PIXFormProps) {
   const [loading, setLoading] = useState(false);
   const toast = useToast();
 
+  // Declare userAvailableHbd before useEffect
   const userAvailableHbd = hiveAccount?.hbd_balance
     ? Number(String(hiveAccount.hbd_balance).split(" ")[0])
     : 0;
 
+  // Use userAvailableHbd in useEffect
   useEffect(() => {
     if (userAvailableHbd > 0) {
       setAmount(String(userAvailableHbd.toFixed(3)));
     }
   }, [userAvailableHbd]);
+
+  // Early return after hooks
+  if (!pixDashboardData) {
+    return <Text color="red.400">Loading dashboard data...</Text>;
+  }
 
   const checkMemoValidity = (memo: string): { isValid: boolean; translatedNote?: string } => {
     const lowerMemo = memo.toLowerCase();
@@ -232,7 +212,6 @@ function PIXForm({ pixDashboardData }: PIXFormProps) {
       </Select>
 
       <HStack>
-
         <Input
           placeholder="Amount"
           type="number"
@@ -294,14 +273,21 @@ function PIXForm({ pixDashboardData }: PIXFormProps) {
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.8)", // Semi-transparent black overlay (adjust opacity as needed)
+            backgroundColor: "rgba(0, 0, 0, 0.8)",
             zIndex: 1,
           }}
         >
-          <Box position="relative" zIndex={2}> {/* Ensure content is above the overlay */}
-            <Text fontSize="md"><strong>Preview:</strong></Text><br />
-            <Text fontSize="sm">💸 <strong>{previewData.resAmount}</strong></Text>
-            <Text fontSize="sm">📝 <strong>{previewData.resMemo}</strong></Text>
+          <Box position="relative" zIndex={2}>
+            <Text fontSize="md">
+              <strong>Preview:</strong>
+            </Text>
+            <br />
+            <Text fontSize="sm">
+              💸 <strong>{previewData.resAmount}</strong>
+            </Text>
+            <Text fontSize="sm">
+              📝 <strong>{previewData.resMemo}</strong>
+            </Text>
 
             {!previewData.isValid && (
               <Text fontSize="sm" color="red.400" mt={2}>
@@ -326,8 +312,6 @@ function PIXForm({ pixDashboardData }: PIXFormProps) {
     </VStack>
   );
 }
-
-
 
 // 📊 Balance Bar Graph
 function BalanceBarGraph({ data }: { data: PixDashboardData }) {
@@ -366,7 +350,6 @@ function BalanceBarGraph({ data }: { data: PixDashboardData }) {
         </Tooltip>
       </HStack>
 
-      {/* Updated Legend */}
       <HStack spacing={4} mt={2} fontSize="xs" color="text">
         <HStack>
           <Box w={3} h={3} bg="blue.400" borderRadius="sm" />
@@ -385,7 +368,6 @@ function BalanceBarGraph({ data }: { data: PixDashboardData }) {
   );
 }
 
-
 // 🧠 Main Component
 export default function PIXTabContent() {
   const [pixDashboardData, setDashboardData] = useState<PixDashboardData | null>(null);
@@ -395,28 +377,16 @@ export default function PIXTabContent() {
   useEffect(() => {
     async function fetchData() {
       try {
-        // console.log("📡 Fetching PIX dashboard data...");
-        let json;
+        const res = await fetch(
+          (process.env.NEXT_PUBLIC_PIXBEE_ENDPOINT || "https://aphid-glowing-fish.ngrok-free.app") + "/skatebank",
+          glowinOptions
+        );
 
-        try {
-          const res = await fetch(
-            (process.env.NEXT_PUBLIC_PIXBEE_ENDPOINT || "https://aphid-glowing-fish.ngrok-free.app") + "/skatebank",
-            glowinOptions
-          );
-
-          if (!res.ok) {
-            console.warn("❌ Server responded with error, use mock data.");
-            // json = mockData;
-            throw new Error("Pixbee offline");
-          } else {
-            json = await res.json();
-          }
-        } catch (err) {
-          console.error("❌ Fetch failed, use mock data.", err);
-          // json = mockData;
+        if (!res.ok) {
           throw new Error("Pixbee offline");
         }
-        // console.log("✅ PIX Data received:", json);
+
+        const json = await res.json();
 
         // Convert to numbers if some are strings
         const parsedData = {
@@ -431,20 +401,22 @@ export default function PIXTabContent() {
 
         setDashboardData(parsedData);
       } catch (error) {
-        console.error("❌ Failed to load PIX data", error);
-        toast({ title: "Failed to load PIX data", status: "error" });
+        console.error("Failed to load PIX data", error);
+        toast({ title: "Failed to load PIX data", status: "error", duration: 3000 });
       } finally {
         setLoading(false);
       }
     }
 
     fetchData();
-  }, []);
+  }, [toast]);
 
   return (
     <VStack spacing={4} align="stretch">
       {loading ? (
-        <Center><Spinner /></Center>
+        <Center>
+          <Spinner />
+        </Center>
       ) : pixDashboardData ? (
         <>
           <BalanceBarGraph data={pixDashboardData} />
@@ -493,28 +465,46 @@ export default function PIXTabContent() {
 
           {/* Transaction History */}
           <Box>
+            <Heading size="sm" mb={4} color="primary" fontFamily="Joystix">
+              📜 Your Withdraw History
+            </Heading>
             <PIXTransactionHistory searchAccount={"pixbee"} pixDashboardData={pixDashboardData} />
           </Box>
 
           {/* FAQ */}
           <Box>
-            <Heading>O que eu faço caso minha transferencia não funcione?</Heading>
-            <Text mt={2}>
-              Calma, ele vai chegar ou vamos te reembolsar. 
-              Nosso time sempre recebe notificoes das transacoes em caso de falha. 
-              Caso queira, abra um ticket de suporte em nosso <a href="https://discord.gg/eAQfS97wHK">canal do Discord</a>.<br />
+            <Heading size="sm" mb={4} color="primary" fontFamily="Joystix">
+              ❓ FAQ
+            </Heading>
+            <Text mt={2} color="text">
+              <strong>O que eu faço caso minha transferencia não funcione?</strong>
+              <br />
+              Calma, ele vai chegar ou vamos te reembolsar.
+              <br />
+              Nosso time sempre recebe notificoes das transacoes em caso de falha.
+              <br />
+              Caso queira, abra um ticket de suporte em nosso{" "}
+              <a href="https://discord.gg/eAQfS97wHK">canal do Discord</a>.
+              <br />
             </Text>
           </Box>
 
           <Box>
-            <Heading>What should I do if my transfer doesn’t work?</Heading>
-            <Text mt={2}>
-              Stay calm, it will arrive or we will refund you. 
-              Our team always receives notifications of transactions in case of failure. 
-              If you wish, open a support ticket on our <a href="https://discord.gg/eAQfS97wHK">Discord channel</a>.<br />
+            <Heading size="sm" mb={4} color="primary" fontFamily="Joystix">
+              ❓ FAQ
+            </Heading>
+            <Text mt={2} color="text">
+              <strong>What should I do if my transfer doesn’t work?</strong>
+              <br />
+              Stay calm, it will arrive or we will refund you.
+              <br />
+              Our team always receives notifications of transactions in case of failure.
+              <br />
+              If you wish, open a support ticket on our{" "}
+              <a href="https://discord.gg/eAQfS97wHK">Discord channel</a>.
+              <br />
             </Text>
           </Box>
-
         </>
       ) : (
         <Text color="red.400">Pixbee is offline now. Try later</Text>
