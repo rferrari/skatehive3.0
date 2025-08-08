@@ -32,6 +32,7 @@ import {
 export default function GameClientPage() {
   const [isModalFullscreen, setIsModalFullscreen] = useState(false);
   const [gameKey, setGameKey] = useState(0);
+  const [gameScale, setGameScale] = useState(0.7); // Start at 70% size
 
   const toggleModalFullscreen = () => {
     setIsModalFullscreen(!isModalFullscreen);
@@ -39,6 +40,14 @@ export default function GameClientPage() {
 
   const refreshGame = () => {
     setGameKey((prev) => prev + 1);
+  };
+
+  const increaseSize = () => {
+    setGameScale((prev) => Math.min(prev + 0.1, 1.0)); // Max 100%
+  };
+
+  const decreaseSize = () => {
+    setGameScale((prev) => Math.max(prev - 0.1, 0.4)); // Min 40%
   };
 
   const bgColor = useColorModeValue("gray.900", "gray.900");
@@ -149,16 +158,27 @@ export default function GameClientPage() {
             >
               {!isModalFullscreen && (
                 <Box
-                  key={gameKey}
-                  as="iframe"
-                  src="https://html5-game-skatehive.vercel.app/QFShive/index.html"
                   w="100%"
                   h="100%"
-                  border="none"
-                  title="SkateHive Game"
-                  allow="fullscreen; autoplay; encrypted-media"
-                  sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation"
-                />
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  overflow="hidden"
+                >
+                  <Box
+                    key={gameKey}
+                    as="iframe"
+                    src="https://html5-game-skatehive.vercel.app/QFShive/index.html"
+                    w="1280px"
+                    h="720px"
+                    border="none"
+                    title="SkateHive Game"
+                    allow="fullscreen; autoplay; encrypted-media"
+                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation"
+                    transform={`scale(${gameScale})`}
+                    transformOrigin="center"
+                  />
+                </Box>
               )}
               {isModalFullscreen && (
                 <Box
@@ -270,6 +290,32 @@ export default function GameClientPage() {
                     boxShadow="0 4px 8px rgba(0,0,0,0.3)"
                   >
                     REFRESH
+                  </Button>
+                  <Button
+                    colorScheme="gray"
+                    size="lg"
+                    onClick={decreaseSize}
+                    bg={mutedSecondary}
+                    color="white"
+                    _hover={{ bg: mutedHighlight }}
+                    fontWeight="bold"
+                    border={`2px solid ${mutedPrimary}`}
+                    boxShadow="0 4px 8px rgba(0,0,0,0.3)"
+                  >
+                    -
+                  </Button>
+                  <Button
+                    colorScheme="gray"
+                    size="lg"
+                    onClick={increaseSize}
+                    bg={mutedSecondary}
+                    color="white"
+                    _hover={{ bg: mutedHighlight }}
+                    fontWeight="bold"
+                    border={`2px solid ${mutedPrimary}`}
+                    boxShadow="0 4px 8px rgba(0,0,0,0.3)"
+                  >
+                    +
                   </Button>
                 </HStack>
               </VStack>
