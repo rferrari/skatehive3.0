@@ -83,7 +83,7 @@ const PIXTransactionHistory = ({ searchAccount, pixDashboardData }: { searchAcco
         <>
           <Box mb={4} maxWidth="500px">
             <Text fontSize="lg" fontWeight="bold" mb={2} textAlign="center">
-              Your Withdraw History
+              📜 Your Withdraw History
             </Text>
 
             <Table size="sm" variant="simple" w="100%">

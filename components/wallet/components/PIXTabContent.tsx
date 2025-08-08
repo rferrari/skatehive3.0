@@ -14,6 +14,8 @@ import {
   HStack,
   Tooltip,
   FormLabel,
+  OrderedList,
+  ListItem,
 } from "@chakra-ui/react";
 import PIXTransactionHistory from "./PIXTransationHistory";
 import { Asset } from "@aioha/aioha";
@@ -215,7 +217,7 @@ function PIXForm({ pixDashboardData }: PIXFormProps) {
     <VStack spacing={3} align="stretch">
       <Box fontSize="xs" color="gray.400">
         Your HBD Balance: {userAvailableHbd.toFixed(3)} HBD<br />
-        Minimal Deposit: R$ {pixDashboardData.depositMinLimit}
+        Minimal Deposit: {pixDashboardData.depositMinLimit} PIX
       </Box>
 
       <Select
@@ -330,7 +332,7 @@ function PIXForm({ pixDashboardData }: PIXFormProps) {
 // 📊 Balance Bar Graph
 function BalanceBarGraph({ data }: { data: PixDashboardData }) {
   const hiveBRL = data.balanceHive * data.HivePriceBRL;
-  const hbdBRL = data.balanceHbd * data.HBDPriceBRL;
+  const hbdBRL = data.balanceHbd * ((data.HBDPriceBRL + data.BRLPriceHBD) / 2);
   const pixBRL = data.balancePix;
 
   const total = hiveBRL + hbdBRL + pixBRL;
@@ -368,15 +370,15 @@ function BalanceBarGraph({ data }: { data: PixDashboardData }) {
       <HStack spacing={4} mt={2} fontSize="xs" color="text">
         <HStack>
           <Box w={3} h={3} bg="blue.400" borderRadius="sm" />
-          <Text>PIX: R$ {pixBRL.toFixed(2)}</Text>
+          <Text>{pixBRL.toFixed(2)} PIX</Text>
         </HStack>
         <HStack>
           <Box w={3} h={3} bg="green.400" borderRadius="sm" />
-          <Text>HBD: R$ {hbdBRL.toFixed(2)}</Text>
+          <Text>{data.balanceHbd.toFixed(3)} HBD</Text>
         </HStack>
         <HStack>
           <Box w={3} h={3} bg="red.400" borderRadius="sm" />
-          <Text>HIVE: R$ {hiveBRL.toFixed(2)}</Text>
+          <Text>{data.balanceHive.toFixed(3)} HIVE</Text>
         </HStack>
       </HStack>
     </Box>
@@ -447,7 +449,7 @@ export default function PIXTabContent() {
         <>
           <BalanceBarGraph data={pixDashboardData} />
 
-          {/* PIX Form */}
+          {/* HBD to PIX Form */}
           <Box
             p={4}
             bg="background"
@@ -456,19 +458,67 @@ export default function PIXTabContent() {
             borderColor="muted"
           >
             <Heading size="sm" mb={4} color="primary" fontFamily="Joystix">
-              💸 Send PIX Transfer
+              💸 HBD to PIX Transfer
             </Heading>
             <PIXForm pixDashboardData={pixDashboardData} />
           </Box>
+
+          {/* PIX to HBD Transfer Guide */}
+          <Box
+            p={4}
+            bg="background"
+            borderRadius="lg"
+            border="1px solid"
+            borderColor="muted"
+          >
+            <Heading size="sm" mb={4} color="primary" fontFamily="Joystix">
+              💸 PIX to HBD Transfer
+            </Heading>
+            <OrderedList pl={4} color="text">
+              <ListItem mb={1}>
+                Send a PIX transfer to this PIX Key:<br />
+                <strong>{pixDashboardData.pixbeePixKey}</strong>
+              </ListItem>
+              <ListItem mb={1}>
+                In the PIX MESSAGE, specify the HIVE account to be credited to. Example: skatehive
+              </ListItem>
+              {/* <ListItem mb={1}>
+                If you want to buy Hive, add " hive" after your username In the PIX MESSAGE. Example: skatedev hive
+              </ListItem> */}
+              <ListItem mb={1}>
+                Send the PIX transfer and wait for the HBD to be received.
+              </ListItem>
+            </OrderedList>
+          </Box>
+
+          {/* Transaction History */}
+          <Box>
+            <PIXTransactionHistory searchAccount={"pixbee"} pixDashboardData={pixDashboardData} />
+          </Box>
+
+          {/* FAQ */}
+          <Box>
+            <Heading>O que eu faço caso minha transferencia não funcione?</Heading>
+            <Text mt={2}>
+              Calma, ele vai chegar ou vamos te reembolsar. 
+              Nosso time sempre recebe notificoes das transacoes em caso de falha. 
+              Caso queira, abra um ticket de suporte em nosso <a href="https://discord.gg/eAQfS97wHK">canal do Discord</a>.<br />
+            </Text>
+          </Box>
+
+          <Box>
+            <Heading>What should I do if my transfer doesn’t work?</Heading>
+            <Text mt={2}>
+              Stay calm, it will arrive or we will refund you. 
+              Our team always receives notifications of transactions in case of failure. 
+              If you wish, open a support ticket on our <a href="https://discord.gg/eAQfS97wHK">Discord channel</a>.<br />
+            </Text>
+          </Box>
+
         </>
       ) : (
         <Text color="red.400">Pixbee is offline now. Try later</Text>
       )}
-
-      <Box>
-        <PIXTransactionHistory searchAccount={"pixbee"} pixDashboardData={pixDashboardData} />
-      </Box>
-
     </VStack>
   );
 }
