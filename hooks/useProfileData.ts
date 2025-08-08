@@ -38,6 +38,7 @@ export default function useProfileData(username: string, hiveAccount: HiveAccoun
             try {
                 const profileInfo = await getProfile(username);
                 const powerInfo = await getAccountWithPower(username);
+
                 let profileImage = "";
                 let coverImage = "";
                 let website = "";
@@ -92,7 +93,6 @@ export default function useProfileData(username: string, hiveAccount: HiveAccoun
                     svs_profile: svs_profile,
                 });
                 
-
             } catch (err) {
                 console.error("Failed to fetch profile info", err);
             }
