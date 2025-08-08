@@ -45,29 +45,17 @@ export default function EmbeddedMap() {
   // Debug: Track newSpot changes (client-side only)
   useEffect(() => {
     if (typeof window !== "undefined") {
-      console.log("EmbeddedMap: newSpot changed", {
-        newSpot: newSpot
-          ? { author: newSpot.author, permlink: newSpot.permlink }
-          : null,
-      });
     }
   }, [newSpot]);
 
   // Handler to accept Partial<Discussion> and cast to Discussion
   const handleNewSpot = (newComment: Partial<Discussion>) => {
     if (typeof window !== "undefined") {
-      console.log("EmbeddedMap: handleNewSpot called", {
-        newComment: {
-          author: newComment.author,
-          permlink: newComment.permlink,
-        },
-      });
     }
     setNewSpot(newComment as Discussion); // Optimistic update, safe for UI
     // Clear the newSpot after 5 seconds to prevent conflicts
     setTimeout(() => {
       if (typeof window !== "undefined") {
-        console.log("EmbeddedMap: Clearing newSpot");
       }
       setNewSpot(null);
     }, 5000);

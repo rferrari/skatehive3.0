@@ -70,14 +70,11 @@ const BountyRewarder: React.FC<BountyRewarderProps> = ({
     setRewardSuccess(false);
     
     try {
-      // Step 1: Send tip to each winner sequentially
-      console.log("Starting tip transfers...");
       setCurrentStep("Sending rewards...");
       
       for (let i = 0; i < selectedWinners.length; i++) {
         const winner = selectedWinners[i];
         try {
-          console.log(`Sending tip to ${winner}... (${i + 1}/${selectedWinners.length})`);
           setCurrentStep(`Sending reward to @${winner}... (${i + 1}/${selectedWinners.length})`);
           
           const transferResult = await transferWithKeychain(
@@ -87,7 +84,6 @@ const BountyRewarder: React.FC<BountyRewarderProps> = ({
             `Congrats @${winner}! You won ${rewardPerWinner} ${rewardInfo.currency} in the bounty: ${challengeName}`,
             rewardInfo.currency
           );
-          console.log(`Transfer to ${winner} successful:`, transferResult);
         } catch (err) {
           console.error(`Transfer error for ${winner}:`, err);
           setRewardError(`Failed to send reward to @${winner}. Please try again.`);
@@ -96,9 +92,6 @@ const BountyRewarder: React.FC<BountyRewarderProps> = ({
           return; // Exit early if any transfer fails
         }
       }
-      
-      // Step 2: Only if ALL transfers were successful, proceed with posting the comment
-      console.log("All transfers successful, proceeding with comment...");
       setCurrentStep("Announcing Winners... Confirm the keychain transaction to make a post in this bounty tagging the winners");
       
       const winnersList = selectedWinners.map((w) => `@${w}`).join(", ");
@@ -132,8 +125,6 @@ const BountyRewarder: React.FC<BountyRewarderProps> = ({
         comment_options: "",
       };
       
-      console.log("Prepared minimal comment postObj:", postObj);
-      
       // Validate all fields are present and not undefined
       for (const [key, value] of Object.entries(postObj)) {
         if (value === undefined || value === null || value === "undefined") {
@@ -146,7 +137,6 @@ const BountyRewarder: React.FC<BountyRewarderProps> = ({
       try {
         const keychain = new KeychainSDK(window);
         const commentResult = await keychain.post(postObj);
-        console.log("Keychain result:", commentResult);
         if (!commentResult || commentResult.success === false) {
           throw new Error("Failed to post bounty winner comment.");
         }

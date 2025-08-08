@@ -140,8 +140,6 @@ export function useFarcasterNotifications({
                 lastSyncTime: new Date(),
                 error: undefined
             }));
-
-            console.log(`Processed ${newNotifications.length} notifications for Farcaster`, result);
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Failed to process notifications';
             setStatus(prev => ({

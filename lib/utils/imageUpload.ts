@@ -109,12 +109,8 @@ export async function uploadToHiveImagesWithRetry(
       }
     }
   }
-  
-  // If Hive Images failed, try IPFS as fallback
-  console.log('Hive Images upload failed, trying IPFS fallback...');
   try {
     const result = await uploadToIPFSFallback(imageDataUrl, filename);
-    console.log('✅ Successfully uploaded to IPFS as fallback');
     return result;
   } catch (ipfsError) {
     console.error('Both Hive Images and IPFS uploads failed');

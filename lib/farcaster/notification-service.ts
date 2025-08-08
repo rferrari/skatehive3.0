@@ -24,7 +24,6 @@ class FarcasterNotificationService {
                 : await tokenStore.getActiveTokens();
 
             if (userTokens.length === 0) {
-                console.log('No Farcaster users found for notification');
                 return { success: true, results: [] };
             }
 
@@ -267,7 +266,6 @@ class FarcasterNotificationService {
             const userToken = allTokens.find((token: FarcasterUserToken) => token.token === invalidToken);
             if (userToken) {
                 await tokenStore.removeToken(userToken.fid);
-                console.log(`Removed invalid token for FID ${userToken.fid}`);
             }
         }
     }

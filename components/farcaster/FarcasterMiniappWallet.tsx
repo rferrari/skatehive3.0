@@ -39,10 +39,6 @@ export default function FarcasterMiniappWallet({
             setHasWalletSupport(true);
             const address = await getWalletAddress();
             setWalletAddress(address);
-            console.log("🛹 Wallet check result:", {
-              address,
-              hasSupport: true,
-            });
           } else {
             setHasWalletSupport(false);
             console.warn(

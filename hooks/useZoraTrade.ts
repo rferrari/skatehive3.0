@@ -183,9 +183,7 @@ export function useZoraTrade() {
     // Verify we're on Base chain
     if (chainId !== base.id) {
       try {
-        console.log('Switching to Base network...');
         await switchChain({ chainId: base.id });
-        console.log('Successfully switched to Base network');
       } catch (switchError: any) {
         const error = new Error(`Failed to switch to Base network. Please switch manually. Error: ${switchError.message}`);
         console.error('Chain switch failed in executeTrade:', error.message);
@@ -198,13 +196,6 @@ export function useZoraTrade() {
         throw error;
       }
     }
-
-    console.log('Executing trade on Base chain:', {
-      chainId,
-      walletClient: walletClient ? 'connected' : 'disconnected',
-      publicClient: publicClient ? 'connected' : 'disconnected',
-      config
-    });
 
     setIsTrading(true);
     setTradeResult(null);

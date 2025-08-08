@@ -22,8 +22,6 @@ export default function useFollowStatus(user: string | null, username: string) {
                     if (isMounted) {
                         // Distinguish different error types
                         if (error.name === 'AbortError') {
-                            // Request was cancelled, don't update state
-                            console.log('Follow status check was cancelled');
                         } else if (error.response?.status === 404) {
                             // User not found
                             console.warn('User not found:', username);

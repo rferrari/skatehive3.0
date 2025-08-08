@@ -35,11 +35,6 @@ export const useFarcasterMiniapp = () => {
             // Check if wallet methods are available
             if (sdk.wallet && typeof sdk.wallet.getEthereumProvider === 'function') {
               const ethProvider = await sdk.wallet.getEthereumProvider();
-              console.log('🔗 Wallet provider initialized:', {
-                provider: ethProvider,
-                hasRequest: ethProvider && typeof ethProvider.request === 'function',
-                providerType: typeof ethProvider
-              });
               setWalletProvider(ethProvider);
             } else {
               console.warn('⚠️ SDK wallet methods not available');
@@ -148,14 +143,12 @@ export const useFarcasterMiniapp = () => {
     }
 
     try {
-      console.log('🔍 Checking wallet accounts...', { walletProvider, hasRequest: typeof walletProvider.request === 'function' });
       
       if (typeof walletProvider.request !== 'function') {
         throw new Error('Wallet provider does not have request method');
       }
       
       const accounts = await walletProvider.request({ method: 'eth_accounts' });
-      console.log('📋 Wallet accounts:', accounts);
       return accounts && accounts.length > 0 ? accounts[0] : null;
     } catch (error) {
       console.error('❌ Failed to get wallet address:', error);
@@ -169,14 +162,12 @@ export const useFarcasterMiniapp = () => {
     }
 
     try {
-      console.log('🔌 Connecting wallet...', { walletProvider, hasRequest: typeof walletProvider.request === 'function' });
       
       if (typeof walletProvider.request !== 'function') {
         throw new Error('Wallet provider does not have request method');
       }
       
       const accounts = await walletProvider.request({ method: 'eth_requestAccounts' });
-      console.log('✅ Wallet connected:', accounts);
       return accounts && accounts.length > 0 ? accounts[0] : null;
     } catch (error) {
       console.error('❌ Failed to connect wallet:', error);

@@ -108,26 +108,15 @@ export default function CoinCreatorComposer({
   const generateVideoThumbnail = async (file: File): Promise<File | null> => {
     try {
       setIsGeneratingThumbnail(true);
-      console.log(
-        "Starting thumbnail generation for:",
-        file.name,
-        file.type,
-        file.size
-      );
 
       // Initialize FFmpeg with proper error handling
       if (!ffmpegRef.current) {
-        console.log("Initializing new FFmpeg instance...");
         ffmpegRef.current = new FFmpeg();
 
         // Set up logging for FFmpeg
         ffmpegRef.current.on("log", ({ message }) => {
-          console.log("FFmpeg log:", message);
         });
-
-        console.log("Loading FFmpeg core...");
         await ffmpegRef.current.load();
-        console.log("FFmpeg loaded successfully");
       }
 
       const ffmpeg = ffmpegRef.current;
@@ -141,24 +130,14 @@ export default function CoinCreatorComposer({
       // Generate unique file names to avoid conflicts
       const inputFileName = `input_${Date.now()}.mp4`;
       const outputFileName = `thumbnail_${Date.now()}.jpg`;
-
-      console.log("Converting file to FFmpeg format...");
       const fileData = await fetchFile(file);
-      console.log("File data converted, size:", fileData.length);
-
-      console.log("Writing video file to FFmpeg virtual FS:", inputFileName);
       await ffmpeg.writeFile(inputFileName, fileData);
-
-      console.log("Verifying file was written...");
       // Verify the file exists in FFmpeg's FS
       const files = await ffmpeg.listDir("/");
-      console.log("Files in FFmpeg FS:", files);
 
       if (!files.some((f) => f.name === inputFileName)) {
         throw new Error(`Input file ${inputFileName} not found in FFmpeg FS`);
       }
-
-      console.log("Executing FFmpeg command to generate thumbnail...");
       // Generate thumbnail with more conservative settings
       await ffmpeg.exec([
         "-i",
@@ -176,21 +155,14 @@ export default function CoinCreatorComposer({
         "-y", // Overwrite output file
         outputFileName,
       ]);
-
-      console.log("Verifying thumbnail was generated...");
       const outputFiles = await ffmpeg.listDir("/");
-      console.log("Files after generation:", outputFiles);
 
       if (!outputFiles.some((f) => f.name === outputFileName)) {
         throw new Error(
           `Thumbnail file ${outputFileName} not found after generation`
         );
       }
-
-      console.log("Reading generated thumbnail data...");
       const thumbnailData = await ffmpeg.readFile(outputFileName);
-      console.log("Thumbnail data type:", typeof thumbnailData);
-      console.log("Thumbnail data size:", thumbnailData.length);
 
       if (!thumbnailData || thumbnailData.length === 0) {
         throw new Error("Generated thumbnail data is empty");
@@ -198,25 +170,16 @@ export default function CoinCreatorComposer({
 
       // Create blob from the data
       const thumbnailBlob = new Blob([thumbnailData], { type: "image/jpeg" });
-      console.log("Created thumbnail blob:", thumbnailBlob.size, "bytes");
 
       // Create a File object from the blob
       const thumbnailFile = new File([thumbnailBlob], "video-thumbnail.jpg", {
         type: "image/jpeg",
       });
 
-      console.log("Thumbnail file created successfully:", {
-        name: thumbnailFile.name,
-        size: thumbnailFile.size,
-        type: thumbnailFile.type,
-      });
-
       // Clean up FFmpeg files
       try {
-        console.log("Cleaning up temporary files...");
         await ffmpeg.deleteFile(inputFileName);
         await ffmpeg.deleteFile(outputFileName);
-        console.log("Temporary files cleaned up successfully");
       } catch (cleanupError) {
         console.warn("Failed to clean up thumbnail files:", cleanupError);
         // Don't throw here as the main operation succeeded
@@ -241,14 +204,12 @@ export default function CoinCreatorComposer({
       if (ffmpegRef.current?.loaded) {
         try {
           const files = await ffmpegRef.current.listDir("/");
-          console.log("Files in FFmpeg FS during error cleanup:", files);
           for (const fileInfo of files) {
             if (
               fileInfo.name.includes("input_") ||
               fileInfo.name.includes("thumbnail_")
             ) {
               await ffmpegRef.current.deleteFile(fileInfo.name);
-              console.log("Cleaned up file:", fileInfo.name);
             }
           }
         } catch (cleanupError) {
@@ -287,11 +248,6 @@ export default function CoinCreatorComposer({
     const thumbnail = await generateVideoThumbnail(file);
     if (thumbnail) {
       setVideoThumbnail(thumbnail);
-      console.log("Generated video thumbnail for Zora SDK:", {
-        originalVideoSize: file.size,
-        thumbnailSize: thumbnail.size,
-        thumbnailType: thumbnail.type,
-      });
     } else {
       console.warn(
         "Failed to generate video thumbnail - coin will be created without image"

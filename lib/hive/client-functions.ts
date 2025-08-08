@@ -32,7 +32,6 @@ export async function commentWithKeychain(formParamsAsObject: any): Promise<Hive
   const keychain = new KeychainSDK(window);
   const post = await keychain.post(formParamsAsObject.data as Post);
   if (post) {
-    console.log('post', post);
     return {
       success: true,
       publicKey: String(post.publicKey)
@@ -65,7 +64,6 @@ export async function loginWithKeychain(username: string) {
         formParamsAsObject.data as Login);
     return ({ login });
   } catch (error) {
-    console.log({ error });
   }
 }
 
@@ -93,7 +91,6 @@ export async function transferWithKeychain(username: string, destination: string
     const transfer = await keychain
       .transfer(
         formParamsAsObject.data as Transfer);
-    console.log({ transfer });
     
     // Check if the transfer was successful
     if (!transfer || !transfer.success) {
@@ -102,7 +99,6 @@ export async function transferWithKeychain(username: string, destination: string
     
     return transfer;
   } catch (error) {
-    console.log({ error });
     throw error; // Re-throw the error so the caller can handle it
   }
 }
@@ -156,7 +152,6 @@ export async function updateProfile(
     };
 
     const broadcast = await keychain.broadcast(broadcastData);
-    console.log('Broadcast success:', broadcast);
   } catch (error) {
     console.error('Profile update failed:', error);
     throw error;
@@ -196,8 +191,6 @@ export async function communitySubscribeKeyChain(username: string) {
   };
   try {
     const custom = await keychain.custom(formParamsAsObject.data as unknown as Custom);
-    //const broadcast = await keychain.broadcast(formParamsAsObject.data as unknown as Broadcast);
-    console.log('Broadcast success:', custom);
   } catch (error) {
     console.error('Profile update failed:', error);
   }
@@ -215,7 +208,6 @@ export async function checkFollow(follower: string, following: string): Promise<
       return false
     }
   } catch (error) {
-    console.log(error)
     return false
   }
 }
@@ -250,8 +242,6 @@ export async function changeFollow(follower: string, following: string) {
   };
   try {
     const custom = await keychain.custom(formParamsAsObject.data as unknown as Custom);
-    //const broadcast = await keychain.broadcast(formParamsAsObject.data as unknown as Broadcast);
-    console.log('Broadcast success:', custom);
   } catch (error) {
     console.error('Profile update failed:', error);
   }
@@ -414,7 +404,6 @@ export async function findLastNotificationsReset(username: string, start = -1, l
     return findLastNotificationsReset(username, start - 1000, loopCount + 1);
 
   } catch (error) {
-    console.log(error);
     return '1970-01-01T00:00:00Z';
   }
 }
@@ -424,7 +413,6 @@ export async function fetchNewNotifications(username: string) {
     const notifications: Notifications[] = await HiveClient.call('bridge', 'account_notifications', { account: username, limit: 100 });
     return notifications;
   } catch (error) {
-    console.log('Error:', error);
     return [];
   }
 }
@@ -451,7 +439,6 @@ export async function getLastReadNotificationDate(username: string): Promise<str
 
     return '1970-01-01T00:00:00Z';
   } catch (error) {
-    console.log(error);
     return '1970-01-01T00:00:00Z';
   }
 }

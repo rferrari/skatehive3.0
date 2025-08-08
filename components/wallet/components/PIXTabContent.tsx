@@ -76,9 +76,6 @@ type PIXFormProps = {
 };
 
 function PIXForm({ pixDashboardData }: PIXFormProps) {
-  if (!pixDashboardData) {
-    return <div>Loading dashboard data...</div>;
-  }
 
   const { user, aioha } = useAioha();
   const { hiveAccount, isLoading, error } = useHiveAccount(user || "");
@@ -104,6 +101,9 @@ function PIXForm({ pixDashboardData }: PIXFormProps) {
     }
   }, [userAvailableHbd]);
 
+  if (!pixDashboardData) {
+    return <div>Loading dashboard data...</div>;
+  }
   const checkMemoValidity = (memo: string): { isValid: boolean; translatedNote?: string } => {
     const lowerMemo = memo.toLowerCase();
 
@@ -393,7 +393,6 @@ export default function PIXTabContent() {
   useEffect(() => {
     async function fetchData() {
       try {
-        // console.log("📡 Fetching PIX dashboard data...");
         let json;
 
         try {
@@ -414,7 +413,6 @@ export default function PIXTabContent() {
           // json = mockData;
           throw new Error("Pixbee offline");
         }
-        // console.log("✅ PIX Data received:", json);
 
         // Convert to numbers if some are strings
         const parsedData = {

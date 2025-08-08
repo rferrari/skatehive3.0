@@ -51,7 +51,6 @@ export class HiveProfileService {
                     currentProfile = JSON.parse(account.posting_json_metadata);
                 }
             } catch (error) {
-                console.log('No existing profile metadata or invalid JSON');
             }
 
             // Ensure extensions object exists

@@ -21,7 +21,6 @@ class FarcasterTokenStore {
             updatedAt: new Date(),
         };
         this.tokens.set(fid, userToken);
-        console.log(`Added/Updated Farcaster token for FID ${fid}, username: ${username}`);
     }
 
     // Remove a user's token
@@ -33,12 +32,10 @@ class FarcasterTokenStore {
                 const { Pool } = await import('pg');
                 const pool = new Pool({ connectionString: process.env.STORAGE_POSTGRES_URL || process.env.POSTGRES_URL });
                 const res = await pool.query('DELETE FROM farcaster_tokens WHERE fid = $1', [fid]);
-                console.log(`Removed Farcaster token for FID ${fid} from database. Rows affected:`, res.rowCount);
             } catch (err) {
                 console.error(`Failed to remove Farcaster token for FID ${fid} from database:`, err);
             }
         })();
-        console.log(`Removed Farcaster token for FID ${fid} (memory + DB)`);
     }
 
     // Disable notifications for a user
@@ -48,7 +45,6 @@ class FarcasterTokenStore {
             userToken.isActive = false;
             userToken.updatedAt = new Date();
             this.tokens.set(fid, userToken);
-            console.log(`Disabled notifications for FID ${fid}`);
         }
     }
 
@@ -61,7 +57,6 @@ class FarcasterTokenStore {
             userToken.notificationUrl = notificationUrl;
             userToken.updatedAt = new Date();
             this.tokens.set(fid, userToken);
-            console.log(`Enabled notifications for FID ${fid}`);
         }
     }
 
@@ -263,8 +258,6 @@ export async function verifyFarcasterSignature(signature: FarcasterSignature): P
             console.error('Public key does not match FID');
             return false;
         }
-
-        console.log(`Successfully verified signature for FID ${header.fid}`);
         return true;
 
     } catch (error) {
@@ -276,7 +269,6 @@ export async function verifyFarcasterSignature(signature: FarcasterSignature): P
 // Process webhook events from Farcaster
 export async function processFarcasterWebhook(signedPayload: FarcasterSignature): Promise<boolean> {
     try {
-        console.log('[Webhook] Processing Farcaster webhook payload:', JSON.stringify(signedPayload));
         const isValidSignature = await verifyFarcasterSignature(signedPayload);
         if (!isValidSignature) {
             console.error('[Webhook] Invalid Farcaster signature');
@@ -292,13 +284,10 @@ export async function processFarcasterWebhook(signedPayload: FarcasterSignature)
             return false;
         }
 
-        console.log(`[Webhook] Event: ${payload.event}, FID: ${fid}, Header:`, header, 'Payload:', payload);
-
         switch (payload.event) {
             case 'miniapp_added': {
                 if (payload.notificationDetails) {
                     const username = header.username || `user_${fid}`;
-                    console.log(`[Webhook] Adding token for FID ${fid}, username: ${username}`);
                     farcasterTokenStore.addToken(
                         fid,
                         username,
@@ -312,14 +301,12 @@ export async function processFarcasterWebhook(signedPayload: FarcasterSignature)
                 break;
             }
             case 'miniapp_removed': {
-                console.log(`[Webhook] Removing token for FID ${fid}`);
                 farcasterTokenStore.removeToken(fid);
                 // Delete preferences for this FID
                 const { SkateHiveFarcasterService } = await import('./skatehive-integration');
                 break;
             }
             case 'notifications_enabled':
-                console.log(`[Webhook] Enabling notifications for FID ${fid}`);
                 farcasterTokenStore.enableNotifications(
                     fid,
                     payload.notificationDetails.token,
@@ -327,15 +314,12 @@ export async function processFarcasterWebhook(signedPayload: FarcasterSignature)
                 );
                 break;
             case 'notifications_disabled':
-                console.log(`[Webhook] Disabling notifications for FID ${fid}`);
                 farcasterTokenStore.disableNotifications(fid);
                 break;
             default:
                 console.warn('[Webhook] Unknown Farcaster webhook event:', payload);
                 return false;
         }
-
-        console.log('[Webhook] Successfully processed event:', payload.event);
         return true;
     } catch (error) {
         console.error('[Webhook] Failed to process Farcaster webhook:', error);
@@ -356,7 +340,6 @@ export function linkHiveToFarcaster(fid: string, hiveUsername: string): boolean 
             userToken.notificationUrl,
             hiveUsername
         );
-        console.log(`Linked Hive user ${hiveUsername} to Farcaster FID ${fid}`);
         return true;
     }
     return false;

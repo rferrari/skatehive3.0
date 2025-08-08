@@ -141,10 +141,6 @@ export default function FarcasterUniversalWallet({
           <Box p={4} bg="background" textAlign="center">
             <SignInButton
               onSuccess={({ fid, username }) => {
-                console.log("🎉 Farcaster Sign In Success:", {
-                  fid,
-                  username,
-                });
                 toast({
                   status: "success",
                   title: "Connected to Farcaster!",

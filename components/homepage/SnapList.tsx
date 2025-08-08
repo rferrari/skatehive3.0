@@ -126,9 +126,6 @@ export default function SnapList({
       // Filter out posts with 2 or more downvotes (community disapproval)
       const shouldShow = downvoteCount < 2;
       if (!shouldShow) {
-        console.log(
-          `❌ FILTERING OUT post by ${discussion.author} due to ${downvoteCount} downvotes`
-        );
       }
       return shouldShow;
     })
