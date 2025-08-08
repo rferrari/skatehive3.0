@@ -38,20 +38,12 @@ export default function SpotList({
   // Debug: Track displayedSpots changes (client-side only)
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      console.log('SpotList: displayedSpots changed', { 
-        count: displayedSpots.length,
-        spots: displayedSpots.map(s => ({ author: s.author, permlink: s.permlink }))
-      });
     }
   }, [displayedSpots]);
 
   // Update displayed spots when spots or newSpot changes
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      console.log('SpotList: spots or newSpot changed', { 
-        spotsCount: spots.length, 
-        newSpot: newSpot ? { author: newSpot.author, permlink: newSpot.permlink } : null 
-      });
     }
     
     let baseSpots = [...spots];
@@ -61,7 +53,6 @@ export default function SpotList({
       if (!exists) {
         baseSpots = [newSpot, ...baseSpots];
         if (typeof window !== 'undefined') {
-          console.log('SpotList: Added new spot to baseSpots');
         }
       }
     }
@@ -72,7 +63,6 @@ export default function SpotList({
       return dateB.getTime() - dateA.getTime();
     });
     if (typeof window !== 'undefined') {
-      console.log('SpotList: Setting displayedSpots', { count: baseSpots.length });
     }
     setDisplayedSpots(baseSpots);
     
@@ -84,34 +74,20 @@ export default function SpotList({
 
   const handleLoadMore = useCallback(() => {
     if (typeof window !== 'undefined') {
-      console.log('SpotList: handleLoadMore called', { 
-        hasOnLoadMore: !!onLoadMore, 
-        hasMore, 
-        isLoading,
-        visibleCount,
-        displayedSpotsLength: displayedSpots.length
-      });
     }
     
     if (onLoadMore && hasMore && !isLoading) {
       // If we have a loadMore function, use it to fetch more data
       if (typeof window !== 'undefined') {
-        console.log('SpotList: Calling onLoadMore to fetch more data');
       }
       onLoadMore();
     } else if (!onLoadMore) {
       // Fallback to just showing more items from current data
       if (typeof window !== 'undefined') {
-        console.log('SpotList: Using fallback - increasing visibleCount');
       }
       setVisibleCount((prev) => prev + 10);
     } else {
       if (typeof window !== 'undefined') {
-        console.log('SpotList: handleLoadMore conditions not met', {
-          hasOnLoadMore: !!onLoadMore,
-          hasMore,
-          isLoading
-        });
       }
     }
   }, [onLoadMore, hasMore, isLoading, visibleCount, displayedSpots.length]);

@@ -104,9 +104,7 @@ export function useCoinCreation() {
       // Ensure we're on Base network
       if (chainId !== base.id) {
         try {
-          console.log('Switching to Base network for coin creation...');
           await switchChain({ chainId: base.id });
-          console.log('Successfully switched to Base network');
         } catch (switchError: any) {
           throw new Error(`Failed to switch to Base network. Please switch manually. Error: ${switchError.message}`);
         }

@@ -73,13 +73,6 @@ export default function FooterNavButtons() {
   const { signIn, signOut, connect, reconnect, isSuccess, isError } = useSignIn(
     {
       onSuccess: ({ fid, username, bio, displayName, pfpUrl }) => {
-        console.log("[FarcasterConnect] Auth success callback triggered", {
-          fid,
-          username,
-        });
-        console.log(
-          "[FarcasterConnect] Success callback - clearing state and preventing modal reopening"
-        );
 
         // Clear safety timeout and auth progress state first
         clearAuthTimeout();
@@ -87,16 +80,12 @@ export default function FooterNavButtons() {
 
         // Reset Auth Kit state immediately to prevent modal reopening
         setTimeout(() => {
-          console.log(
-            "[FarcasterConnect] Resetting Auth Kit state after success"
-          );
           signOut();
         }, 100);
 
         // Close modal and show success toast
         safeCloseConnectionModal();
         setTimeout(() => {
-          console.log("[FarcasterConnect] Showing success toast");
           toast({
             title: "Farcaster Connected",
             description: `Successfully connected as @${username}`,
@@ -119,13 +108,6 @@ export default function FooterNavButtons() {
         });
       },
       onStatusResponse: (res) => {
-        console.log("[FarcasterConnect] Status update:", res);
-
-        // Log the full response to understand the structure
-        console.log(
-          "[FarcasterConnect] Full status response:",
-          JSON.stringify(res, null, 2)
-        );
       },
     }
   );
@@ -155,9 +137,6 @@ export default function FooterNavButtons() {
 
     // Set a safety timeout for abandoned auth attempts
     authTimeoutRef.current = setTimeout(() => {
-      console.log(
-        "[FarcasterConnect] Safety timeout triggered - user likely abandoned auth"
-      );
       setIsFarcasterAuthInProgress(false);
       // Optional: Show a gentle message that auth was cancelled
       toast({
@@ -191,17 +170,8 @@ export default function FooterNavButtons() {
   // Safe modal close handler to prevent conflicts
   const safeCloseConnectionModal = useCallback(() => {
     if (isModalTransitioning) {
-      console.log(
-        "[FarcasterConnect] Modal close ignored - already transitioning"
-      );
       return; // Prevent multiple close calls
     }
-
-    console.log("[FarcasterConnect] safeCloseConnectionModal called", {
-      isSuccess,
-      actualFarcasterConnection,
-      isFarcasterAuthInProgress,
-    });
 
     setIsModalTransitioning(true);
     setIsConnectionModalOpen(false);
@@ -211,9 +181,6 @@ export default function FooterNavButtons() {
     // Only reset Auth Kit state if user manually closes modal while connected
     // Don't interfere with success callback flow
     if (isSuccess && actualFarcasterConnection && !isFarcasterAuthInProgress) {
-      console.log(
-        "[FarcasterConnect] Manual modal close - resetting Auth Kit state"
-      );
       signOut();
     }
 
@@ -252,9 +219,6 @@ export default function FooterNavButtons() {
       (isSuccess || isError) &&
       !isFarcasterAuthInProgress // Only reset if not currently authenticating
     ) {
-      console.log(
-        "[FarcasterConnect] Modal opened with existing connection, resetting Auth Kit state"
-      );
       // Reset the Auth Kit state to prevent automatic modal reopening
       if (isSuccess) {
         setTimeout(() => {
@@ -289,9 +253,6 @@ export default function FooterNavButtons() {
           );
 
           if (!authKitModalExists && isFarcasterAuthInProgress) {
-            console.log(
-              "[FarcasterConnect] Auth Kit modal not found but auth in progress - assuming user closed modal"
-            );
             clearAuthTimeout();
             setIsFarcasterAuthInProgress(false);
           }
@@ -311,9 +272,6 @@ export default function FooterNavButtons() {
                 '[class*="fc-authkit-signin-modal"], [data-testid*="farcaster"], .farcaster-auth-modal'
               );
               if (!authKitModalExists) {
-                console.log(
-                  "[FarcasterConnect] Escape key pressed and modal closed - cancelling auth"
-                );
                 clearAuthTimeout();
                 setIsFarcasterAuthInProgress(false);
               }
@@ -329,11 +287,6 @@ export default function FooterNavButtons() {
           document.removeEventListener("keydown", handleEscapeKey);
         };
       } else {
-        // Mobile-specific handling: Auth Kit redirects to external apps
-        // Don't check for modal existence, just rely on callbacks and safety timeout
-        console.log(
-          "[FarcasterConnect] Mobile auth flow - no modal detection, relying on callbacks and safety timeout"
-        );
       }
 
       // Focus/visibility detection works for both desktop and mobile
@@ -354,9 +307,6 @@ export default function FooterNavButtons() {
                 '[class*="fc-authkit-signin-modal"], [data-testid*="farcaster"], .farcaster-auth-modal'
               );
               if (!authKitModalExists && isFarcasterAuthInProgress) {
-                console.log(
-                  "[FarcasterConnect] Focus returned but no modal found - user likely closed modal"
-                );
                 clearAuthTimeout();
                 setIsFarcasterAuthInProgress(false);
               }
@@ -627,21 +577,8 @@ export default function FooterNavButtons() {
   const handleFarcasterConnect = async () => {
     // Prevent rapid clicks during auth process
     if (isFarcasterAuthInProgress || isModalTransitioning) {
-      console.log(
-        "[FarcasterConnect] Auth already in progress or modal transitioning, ignoring click"
-      );
       return;
     }
-
-    console.log("[FarcasterConnect] Starting connection process...", {
-      isInMiniapp,
-      miniappUser,
-      isFarcasterConnected,
-      farcasterProfile,
-      actualFarcasterConnection,
-      isMobile,
-      userAgent: typeof window !== "undefined" ? navigator.userAgent : "SSR",
-    });
 
     setIsFarcasterAuthInProgress(true);
     setAuthTimeoutSafety(); // Start safety timeout
@@ -689,23 +626,11 @@ export default function FooterNavButtons() {
         return;
       }
 
-      // Scenario 3: Regular web auth (Desktop & Mobile browsers)
-      console.log("[FarcasterConnect] Calling signIn()...");
-      console.log("[FarcasterConnect] Context:", {
-        isMobile,
-        isInMiniapp,
-        platform: isMobile ? "mobile-browser" : "desktop-browser",
-      });
-
       // The signIn() function opens the Farcaster Auth Kit modal
       // On desktop: Shows QR code modal
       // On mobile: Shows deep link options and redirects
       // Success/error handling is done via the onSuccess/onError callbacks above
       signIn();
-
-      console.log(
-        "[FarcasterConnect] signIn() called - Auth Kit modal should be open"
-      );
     } catch (error) {
       console.error("Farcaster auth error:", error);
       clearAuthTimeout(); // Clear safety timeout on error

@@ -194,9 +194,7 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
         const ffmpeg = ffmpegRef.current;
         setStatus("Converting to GIF...");
         await ffmpeg.writeFile(videoFile.name, await fetchFile(videoFile));
-        const vfCommand = `fps=${fps},scale=320:-1:flags=lanczos`;
-        
-        console.log("FFmpeg command:", vfCommand); // Debug log
+        const vfCommand = `fps=${fps},scale=320:-1:flags=lanczos`; // Debug log
         
         await ffmpeg.exec([
           "-ss", startTime.toString(),

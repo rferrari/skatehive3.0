@@ -152,20 +152,6 @@ export async function GET(request: NextRequest) {
     const endIndex = startIndex + limitNum;
     const paginatedSpots = transformedSpots.slice(startIndex, endIndex);
     
-    // Debug pagination info
-    if (typeof process !== 'undefined' && process.env.NODE_ENV === 'development') {
-      console.log('API Pagination:', {
-        totalSpots,
-        limitNum,
-        pageNum,
-        totalPages,
-        startIndex,
-        endIndex,
-        paginatedSpotsLength: paginatedSpots.length,
-        hasNextPage: pageNum < totalPages
-      });
-    }
-    
     return NextResponse.json({
       success: true,
       data: paginatedSpots,

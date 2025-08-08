@@ -94,8 +94,6 @@ export async function createPostAsSkatedev({
     const privateKey = PrivateKey.fromString(postingKey);
     await HiveClient.broadcast.sendOperations([operation], privateKey);
 
-    console.log(`✅ Posted to Hive as ${author}/${permlink} for Ethereum user ${ethereumAddress}`);
-
     return {
       success: true,
       author,
@@ -198,8 +196,6 @@ export async function createSnapAsSkatedev({
     const privateKey = PrivateKey.fromString(postingKey);
     await HiveClient.broadcast.sendOperations([operation], privateKey);
 
-    console.log(`✅ Posted snap to Hive as ${author}/${permlink} for Ethereum user ${ethereumAddress}`);
-
     return {
       success: true,
       author,
@@ -287,8 +283,6 @@ export async function updatePostWithCoinInfo({
     // Broadcast the operation
     const privateKey = PrivateKey.fromString(postingKey);
     await HiveClient.broadcast.sendOperations([operation], privateKey);
-
-    console.log(`✅ Updated post ${author}/${permlink} with coin info ${coinAddress}`);
 
     return { success: true };
 

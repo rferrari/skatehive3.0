@@ -114,12 +114,6 @@ export default function BeneficiariesInput({
   const addBeneficiary = useCallback(() => {
     const newBeneficiary = { account: "", weight: 500, isValidAccount: false };
     const updatedBeneficiaries = [...beneficiaries, newBeneficiary];
-    console.log("🎯 BeneficiariesInput: Adding new beneficiary", {
-      newBeneficiary,
-      currentCount: beneficiaries.length,
-      newCount: updatedBeneficiaries.length,
-      updatedBeneficiaries,
-    });
     setBeneficiaries(updatedBeneficiaries);
   }, [beneficiaries, setBeneficiaries]);
 
@@ -127,13 +121,6 @@ export default function BeneficiariesInput({
     (index: number) => {
       const removedBeneficiary = beneficiaries[index];
       const newBeneficiaries = beneficiaries.filter((_, i) => i !== index);
-      console.log("🗑️ BeneficiariesInput: Removing beneficiary", {
-        index,
-        removedBeneficiary,
-        beforeCount: beneficiaries.length,
-        afterCount: newBeneficiaries.length,
-        newBeneficiaries,
-      });
       setBeneficiaries(newBeneficiaries);
       validateBeneficiaries(newBeneficiaries);
     },
@@ -157,30 +144,8 @@ export default function BeneficiariesInput({
             : (value as number);
         const weightInBasisPoints = Math.round(percentage * 100);
         newBeneficiaries[index][field] = weightInBasisPoints;
-
-        console.log("📊 BeneficiariesInput: Updating beneficiary weight", {
-          index,
-          field,
-          inputValue: value,
-          percentage,
-          weightInBasisPoints,
-          oldValue: oldBeneficiary.weight,
-          newValue: weightInBasisPoints,
-          oldBeneficiary,
-          newBeneficiary: newBeneficiaries[index],
-        });
       } else if (field === "account") {
         newBeneficiaries[index][field] = value as string;
-
-        console.log("👤 BeneficiariesInput: Updating beneficiary account", {
-          index,
-          field,
-          inputValue: value,
-          oldValue: oldBeneficiary.account,
-          newValue: value,
-          oldBeneficiary,
-          newBeneficiary: newBeneficiaries[index],
-        });
       } else if (field === "isValidAccount") {
         newBeneficiaries[index][field] = value as boolean;
       }
@@ -196,14 +161,6 @@ export default function BeneficiariesInput({
 
   // Add effect to log beneficiaries changes
   React.useEffect(() => {
-    console.log("🔄 BeneficiariesInput: Beneficiaries state changed", {
-      beneficiaries,
-      count: beneficiaries.length,
-      totalWeight: beneficiaries.reduce((sum, b) => sum + b.weight, 0),
-      totalPercentage,
-      isOpen,
-      errors: errors.length,
-    });
   }, [beneficiaries, totalPercentage, isOpen, errors.length]);
 
   return (

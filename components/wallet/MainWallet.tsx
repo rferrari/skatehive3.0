@@ -299,7 +299,6 @@ export default function MainWallet({ username }: MainWalletProps) {
   // Mobile action handlers
   const handleMobileSend = useCallback(
     (token: TokenDetail | HiveToken) => {
-      console.log("Send token:", token);
       if ("network" in token && token.network === "hive") {
         // This is a Hive token, open WalletModal
         const hiveToken = token as HiveToken;
@@ -321,7 +320,6 @@ export default function MainWallet({ username }: MainWalletProps) {
   );
 
   const handleMobileSwap = useCallback((token: TokenDetail | HiveToken) => {
-    console.log("Swap token:", token);
     // TODO: Open swap interface with selected token
   }, []);
 
@@ -339,7 +337,6 @@ export default function MainWallet({ username }: MainWalletProps) {
   );
 
   const handleMobileHiveSwap = useCallback((hiveToken: HiveToken) => {
-    console.log("Swap Hive token:", hiveToken);
     // TODO: Open Hive swap interface with selected token
   }, []);
 

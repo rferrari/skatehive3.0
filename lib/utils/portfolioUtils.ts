@@ -296,13 +296,11 @@ export async function fetchTokenData(
 
   // Check if globally rate limited
   if (globalRateLimited && Date.now() < globalRateLimitExpiry) {
-    console.log(`🚫 Globally rate limited, skipping ${cacheKey}`);
     return null;
   }
 
   // Check if token is blacklisted due to repeated failures
   if (isTokenBlacklisted(cacheKey)) {
-    console.log(`🚫 Token blacklisted due to repeated failures: ${cacheKey}`);
     return null;
   }
 
@@ -323,7 +321,6 @@ export async function fetchTokenData(
 
   // Wait if too many concurrent requests
   if (activeRequests >= MAX_CONCURRENT_REQUESTS) {
-    console.log(`⏳ Too many concurrent requests, skipping ${cacheKey}`);
     return null;
   }
 
@@ -351,7 +348,6 @@ export async function fetchTokenData(
 
       if (!response.ok) {
         if (response.status === 429) {
-          console.log(`⏰ Rate limited for ${cacheKey}`);
           // Set global rate limit for longer duration
           globalRateLimited = true;
           globalRateLimitExpiry = Date.now() + 15 * 60 * 1000; // 15 minutes instead of 5
@@ -361,7 +357,6 @@ export async function fetchTokenData(
           cacheExpiry.set(cacheKey, Date.now() + FAILURE_CACHE_DURATION);
           return null;
         } else if (response.status === 404) {
-          console.log(`ℹ️ Token not found on GeckoTerminal: ${cacheKey}`);
           // Cache 404s for longer to avoid retrying
           tokenDataCache.set(cacheKey, null);
           cacheExpiry.set(cacheKey, Date.now() + CACHE_DURATION);
@@ -462,7 +457,6 @@ export const filterTokensByBalance = (
 
   // Don't try to fetch if globally rate limited - this prevents the infinite loop
   if (globalRateLimited && Date.now() < globalRateLimitExpiry) {
-    console.log(`🚫 Globally rate limited, skipping all fetches until ${new Date(globalRateLimitExpiry).toLocaleTimeString()}`);
     return filteredTokens;
   }
 
@@ -485,26 +479,22 @@ export const filterTokensByBalance = (
 
   // Only fetch if we're not rate limited and there are tokens to fetch
   if (tokensNeedingFetch.length > 0) {
-    console.log(`🔍 Fetching data for ${tokensNeedingFetch.length} token (limited batch)`);
 
     // Only fetch one at a time with longer delays
     tokensNeedingFetch.forEach((token, index) => {
       setTimeout(() => {
         // Double-check rate limit before making the request
         if (globalRateLimited && Date.now() < globalRateLimitExpiry) {
-          console.log(`🚫 Rate limit check: skipping ${token.token.symbol}`);
           return;
         }
 
         fetchTokenData(token.token.address, null, token.network)
           .then(result => {
             if (result) {
-              console.log(`✅ Successfully fetched data for ${token.token.symbol}`);
               notifyLogoUpdates();
             }
           })
           .catch(error => {
-            console.log(`⚠️ Could not fetch data for ${token.token.symbol}: ${error.message}`);
           });
       }, index * 3000); // Increase delay to 3 seconds between requests
     });
@@ -549,7 +539,6 @@ export const preloadTokenLogos = async (tokens: TokenDetail[]): Promise<void> =>
         notifyLogoUpdates();
       }
     } catch (error) {
-      console.log(`Failed to preload ${tokenDetail.token.symbol}:`, error);
     }
   }
 };
@@ -611,7 +600,6 @@ export const getTokenLogoSync = (
 };
 
 export const forceRefreshTokenData = async (tokens: TokenDetail[]): Promise<void> => {
-  console.log('🔄 Force refreshing token data...');
 
   tokenDataCache.clear();
   cacheExpiry.clear();
@@ -625,7 +613,6 @@ export const forceRefreshTokenData = async (tokens: TokenDetail[]): Promise<void
 
     const result = await fetchTokenData(tokenDetail.token.address, null, tokenDetail.network);
     if (result) {
-      console.log(`✅ Refreshed data for ${tokenDetail.token.symbol}`);
     }
     return result;
   });
@@ -633,5 +620,4 @@ export const forceRefreshTokenData = async (tokens: TokenDetail[]): Promise<void
   await Promise.allSettled(promises);
 
   notifyLogoUpdates();
-  console.log('🔄 Force refresh completed');
 };

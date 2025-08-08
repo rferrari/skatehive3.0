@@ -42,7 +42,6 @@ export default function useHiveAccount(username: string) {
         if (username) {
             handleGetHiveAccount()
         } else {
-            console.log("🔄 useHiveAccount: No username provided, skipping fetch");
         }
     }, [username]);
     return { hiveAccount, isLoading, error }

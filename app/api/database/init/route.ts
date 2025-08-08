@@ -25,7 +25,6 @@ export async function POST() {
         // Execute each statement
         for (const statement of statements) {
             try {
-                console.log('Executing SQL:', statement.substring(0, 100) + '...');
                 await sql.query(statement);
                 results.push({ statement: statement.substring(0, 50) + '...', success: true });
             } catch (error) {

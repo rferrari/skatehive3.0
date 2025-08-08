@@ -214,7 +214,6 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         setStatus("");
         setCompressionProgress(0);
         setUploadProgress(0);
-        console.log("No file selected.");
         if (onUploadFinish) onUploadFinish();
         return;
       }
@@ -245,7 +244,6 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
             const duration = await getVideoDuration(file);
             if (duration > 60) { // Skip compression for videos over 1 minute
               shouldSkipCompression = true;
-              console.log("Video is over 1 minute, skipping compression to prevent crashes.");
             }
           } catch (error) {
             console.warn("Could not determine video duration, proceeding with compression:", error);
@@ -257,11 +255,8 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         setUploadProgress(0);
 
         if (shouldSkipCompression) {
-          console.log("Skipping compression, converting to MP4 format for browser compatibility.");
         } else if (shouldResize) {
-          console.log("File is larger than 12MB, compressing with resize.");
         } else {
-          console.log("File is smaller than 12MB, converting to MP4 without resize.");
         }
 
         // Generate thumbnail first
@@ -271,8 +266,6 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         if (shouldSkipCompression) {
           // Convert to MP4 format without compression for browser compatibility
           const mp4Blob = await convertToMp4(file);
-          console.log(`Original file size: ${file.size} bytes`);
-          console.log(`Converted MP4 size: ${mp4Blob.size} bytes`);
           
           processedFile = new File([mp4Blob], "converted.mp4", {
             type: "video/mp4",
@@ -280,8 +273,6 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         } else {
           // Compress the video
           const compressedBlob = await compressVideo(file, shouldResize);
-          console.log(`Original file size: ${file.size} bytes`);
-          console.log(`Compressed video size: ${compressedBlob.size} bytes`);
 
           if (compressedBlob.size === 0) {
             setStatus("Error: Compression resulted in an empty file.");

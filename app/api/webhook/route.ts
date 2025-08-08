@@ -65,14 +65,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Detailed logging for debugging webhook delivery
-    console.log('[FARCASTER WEBHOOK] Received event:', {
-      event: decodedPayload.event,
-      payload: decodedPayload,
-      headers,
-      raw: body
-    });
-
     // Handle different webhook events
     switch (decodedPayload.event) {
       case 'frame_added':
@@ -85,20 +77,17 @@ export async function POST(request: NextRequest) {
           const headerJson = JSON.parse(Buffer.from(body.header, 'base64').toString('utf8'));
           fid = headerJson.fid || null;
           username = headerJson.username || null;
-          console.log('[FARCASTER WEBHOOK] Decoded header:', { fid, username, headerJson });
         } catch (err) {
           console.warn('[FARCASTER WEBHOOK] Failed to decode header for FID/username:', err, { rawHeader: body.header });
         }
         let dbSuccess = false;
         let dbError = null;
-        console.log('[FARCASTER WEBHOOK] Notification details:', notificationDetails);
         if (notificationDetails && notificationDetails.token && notificationDetails.url) {
           try {
             const { getTokenStore } = await import('@/lib/farcaster/token-store-factory');
             const tokenStore = getTokenStore();
             // Deduplicate: check if token already exists for this FID
             const existingToken = tokenStore.getTokenByFid ? await tokenStore.getTokenByFid(fid || '') : null;
-            console.log('[FARCASTER WEBHOOK] Existing token for FID:', { fid, existingToken });
             if (!existingToken || existingToken.token !== notificationDetails.token) {
               await tokenStore.addToken(
                 fid || '',
@@ -106,7 +95,6 @@ export async function POST(request: NextRequest) {
                 notificationDetails.token,
                 notificationDetails.url
               );
-              console.log('[FARCASTER WEBHOOK] Added/Updated token for FID:', { fid, username, token: notificationDetails.token, url: notificationDetails.url });
               // Explicitly enable notifications (set is_active = TRUE)
               if (tokenStore.enableNotifications) {
                 await tokenStore.enableNotifications(
@@ -114,7 +102,6 @@ export async function POST(request: NextRequest) {
                   notificationDetails.token,
                   notificationDetails.url
                 );
-                console.log('[FARCASTER WEBHOOK] Notifications enabled for FID:', fid);
               }
               // Create default user preferences with FID and Farcaster username only
               const fidStr = typeof fid === 'string' ? fid.trim() : String(fid);
@@ -127,16 +114,13 @@ export async function POST(request: NextRequest) {
                     // If username is missing in preferences but present in header, update it
                     if (!existingPrefs.farcasterUsername && username) {
                       await SkateHiveFarcasterService.updateFarcasterUsername(fidStr, username);
-                      console.log('[FARCASTER WEBHOOK] Linked previous preferences for FID:', fidStr, 'with username:', username);
                     } else {
-                      console.log('[FARCASTER WEBHOOK] Found previous preferences for FID:', fidStr, 'No update needed.');
                     }
                   } else {
                     if (!username) {
                       console.warn('[FARCASTER WEBHOOK] Creating preferences with missing username for FID:', { fid });
                     }
                     await SkateHiveFarcasterService.createDefaultPreferences(fidStr, username ?? '');
-                    console.log('[FARCASTER WEBHOOK] Created default user preferences for FID:', fidStr);
                   }
                 } catch (err) {
                   console.warn('[FARCASTER WEBHOOK] Failed to create or link user preferences:', err);
@@ -145,7 +129,6 @@ export async function POST(request: NextRequest) {
                 console.warn('[FARCASTER WEBHOOK] Skipped creating default preferences due to missing fid:', { fid });
               }
               dbSuccess = true;
-              console.log('[FARCASTER WEBHOOK] Stored token and enabled notifications for user:', { fid, username, notificationDetails });
             } else {
               // Ensure notifications are enabled for existing token
               if (tokenStore.enableNotifications) {
@@ -154,10 +137,8 @@ export async function POST(request: NextRequest) {
                   notificationDetails.token,
                   notificationDetails.url
                 );
-                console.log('[FARCASTER WEBHOOK] Notifications enabled for existing token FID:', fid);
               }
               dbSuccess = true;
-              console.log('[FARCASTER WEBHOOK] Token already exists for FID, notifications enabled:', fid);
             }
           } catch (err) {
             dbError = err instanceof Error ? err.message : String(err);
@@ -202,14 +183,12 @@ export async function POST(request: NextRequest) {
             const { getTokenStore } = await import('@/lib/farcaster/token-store-factory');
             const tokenStore = getTokenStore();
             await tokenStore.removeToken(fid);
-            console.log('[FARCASTER WEBHOOK] Removed token for FID:', fid);
           } catch (err) {
             console.error('[FARCASTER WEBHOOK] Error removing token for FID:', fid, err);
           }
         } else {
           console.warn('[FARCASTER WEBHOOK] No FID found for frame_removed event:', decodedPayload);
         }
-        console.log('[FARCASTER WEBHOOK] User removed Mini App (preferences retained):', decodedPayload);
         break;
       }
       case 'notifications_disabled': {
@@ -225,13 +204,10 @@ export async function POST(request: NextRequest) {
           const { getTokenStore } = await import('@/lib/farcaster/token-store-factory');
           const tokenStore = getTokenStore();
           await tokenStore.disableNotifications(fid);
-          console.log('[FARCASTER WEBHOOK] Disabled notifications for FID:', fid);
         }
-        console.log('[FARCASTER WEBHOOK] Notifications disabled:', decodedPayload);
         break;
       }
       default:
-        console.log('[FARCASTER WEBHOOK] Unknown event:', decodedPayload.event, decodedPayload);
     }
 
     // Always return 200 OK to acknowledge receipt

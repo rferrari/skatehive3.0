@@ -29,7 +29,6 @@ export const useSkatespots = () => {
     
     // Don't refetch if we already have data for this page (but allow refresh)
     if (page === 1 && !append && spots.length > 0 && isInitializedRef.current && !error) {
-      console.log('Skipping fetch - already have data for page 1');
       return;
     }
     
@@ -62,7 +61,6 @@ export const useSkatespots = () => {
         setSpots(prev => {
           const updated = [...prev, ...newSpots];
           if (typeof window !== 'undefined') {
-            console.log('Appending spots:', { prevCount: prev.length, newCount: newSpots.length, totalCount: updated.length });
           }
           return updated;
         });
@@ -73,12 +71,6 @@ export const useSkatespots = () => {
       }
       
       if (typeof window !== 'undefined') {
-        console.log('useSkatespots: Setting pagination', {
-          hasNextPage: result.pagination.hasNextPage,
-          currentPage: result.pagination.currentPage,
-          total: result.pagination.total,
-          totalPages: result.pagination.totalPages
-        });
       }
       setHasMore(result.pagination.hasNextPage);
       setCurrentPage(result.pagination.currentPage);
@@ -99,7 +91,6 @@ export const useSkatespots = () => {
   // Debug: Track spots changes (client-side only)
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      console.log('Spots state changed:', { count: spots.length, spots: spots.map(s => ({ author: s.author, permlink: s.permlink })) });
     }
   }, [spots]);
 

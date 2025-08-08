@@ -188,7 +188,6 @@ export async function generateMetadata({
 
     const postUrl = `${DOMAIN_URL}/post/${cleanedAuthor}/${permlink}`;
 
-    // console.log("Generated metadata:", {
     //   title,
     //   description,
     //   bannerImage,

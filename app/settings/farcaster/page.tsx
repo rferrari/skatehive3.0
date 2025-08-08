@@ -65,10 +65,6 @@ export default function FarcasterAdminPage() {
 
   // Admin-only functions
   const handleSendCustomNotification = async () => {
-    console.log(
-      "🔥 [UI] handleSendCustomNotification called with:",
-      customNotification
-    );
     setSaving(true);
     setEventLogs((logs) => [
       ...logs,
@@ -76,7 +72,6 @@ export default function FarcasterAdminPage() {
     ]);
 
     try {
-      console.log("🚀 [UI] Sending custom notification via notify endpoint...");
       const response = await fetch("/api/farcaster/notify", {
         method: "POST",
         headers: {

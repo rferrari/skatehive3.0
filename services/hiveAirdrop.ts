@@ -13,14 +13,6 @@ export async function executeHiveAirdrop({
   aiohaInstance,
 }: HiveAirdropParams): Promise<void> {
   try {
-    console.log("Starting executeHiveAirdrop with params:", {
-      token,
-      recipients: recipients.length,
-      totalAmount,
-      user,
-      aiohaUser,
-      hasAiohaInstance: !!aiohaInstance,
-    });
 
     // Extract username from user object or use directly
     const username = typeof user === 'string' ? user : user;
@@ -47,8 +39,6 @@ export async function executeHiveAirdrop({
         memo: customMessage || `SkateHive Community Airdrop - ${token} 🛹`,
       },
     ]) as Operation[];
-
-    console.log("Created operations:", operations);
 
     updateStatus({ 
       state: 'transfer-pending', 
@@ -80,13 +70,6 @@ const executeAiohaTransfer = async (
   updateStatus: (status: any) => void
 ) => {
   try {
-    // Debug information
-    console.log('Aioha Debug Info:', {
-      aiohaUserExists: !!aiohaUser,
-      aiohaUserName: aiohaUser,
-      instanceExists: !!aiohaInstance,
-      instanceHasSignAndBroadcast: !!(aiohaInstance && typeof aiohaInstance.signAndBroadcastTx === 'function')
-    });
     
     // Try to determine which broadcaster to use
     let broadcaster;
@@ -99,8 +82,6 @@ const executeAiohaTransfer = async (
     } else {
       throw new Error('No valid Aioha instance found. Please ensure your Hive wallet is properly connected.');
     }
-    
-    console.log('Using broadcaster:', broadcasterType);
     
     updateStatus({
       state: 'transfer-pending',
