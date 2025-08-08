@@ -15,7 +15,7 @@ import {
   OrderedList,
   ListItem,
 } from "@chakra-ui/react";
-import PIXTransactionHistory from "./PIXTransationHistory";
+import PIXTransactionHistory from "./PIXTransactionHistory";
 import { Asset } from "@aioha/aioha";
 import { useAioha } from "@aioha/react-ui";
 import useHiveAccount from "@/hooks/useHiveAccount";
