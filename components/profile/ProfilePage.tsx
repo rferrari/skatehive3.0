@@ -13,7 +13,7 @@ import VideoPartsView from "./VideoPartsView";
 import ProfileCoverImage from "./ProfileCoverImage";
 import ProfileHeader from "./ProfileHeader";
 import ViewModeSelector from "./ViewModeSelector";
-import MagazineModal from "./MagazineModal";
+import MagazineModal from "../shared/MagazineModal";
 import SnapsGrid from "./SnapsGrid";
 
 // Import custom hooks
@@ -100,7 +100,7 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
   );
   const { isFollowing, isFollowLoading, updateFollowing, updateLoading } =
     useFollowStatus(user, username);
-  const { posts, fetchPosts } = useProfilePosts(username);
+  const { posts, fetchPosts, isLoading: postsLoading } = useProfilePosts(username);
   const { viewMode, handleViewModeChange, closeMagazine } = useViewMode();
   const isMobile = useIsMobile();
 
@@ -130,16 +130,21 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
     [isFollowing, isFollowLoading, updateFollowing, updateLoading]
   );
 
+  // Memoize chronologically sorted posts
+  const sortedPosts = useMemo(() => {
+    return [...posts].sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime());
+  }, [posts]);
+
   // Memoize post-related props
   const postProps = useMemo(
     () => ({
-      allPosts: posts,
+      allPosts: sortedPosts,
       fetchPosts,
       viewMode: viewMode as "grid" | "list",
       context: "profile" as const,
       hideAuthorInfo: true,
     }),
-    [posts, fetchPosts, viewMode]
+    [sortedPosts, fetchPosts, viewMode]
   );
 
   // Memoize video parts props
@@ -183,12 +188,13 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
 
   return (
     <>
-      {/* Magazine Modal - Only render when needed */}
+            {/* Magazine Modal - Only render when needed */}
       {viewMode === "magazine" && (
         <MagazineModal
-          isOpen={true}
+          isOpen={viewMode === "magazine"}
           onClose={closeMagazine}
           username={username}
+          posts={posts}
         />
       )}
       <Center>

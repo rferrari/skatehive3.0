@@ -38,8 +38,7 @@ export default function useProfileData(username: string, hiveAccount: HiveAccoun
             try {
                 const profileInfo = await getProfile(username);
                 const powerInfo = await getAccountWithPower(username);
-                console.log('Profile API response:', profileInfo); // Debug log
-                console.log('Power API response:', powerInfo); // Debug log
+
                 let profileImage = "";
                 let coverImage = "";
                 let website = "";
@@ -94,11 +93,6 @@ export default function useProfileData(username: string, hiveAccount: HiveAccoun
                     svs_profile: svs_profile,
                 });
                 
-                // Debug log for power percentages
-                console.log('Power percentages:', {
-                    vp: powerInfo?.data?.vp_percent,
-                    rc: powerInfo?.data?.rc_percent
-                });
             } catch (err) {
                 console.error("Failed to fetch profile info", err);
             }

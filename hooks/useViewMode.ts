@@ -39,21 +39,20 @@ export default function useViewMode() {
             params.set('view', viewMode);
             const newUrl = `${window.location.pathname}?${params.toString()}`;
             
-            // Use pushState instead of router to avoid page reloads
-            window.history.pushState({}, '', newUrl);
+            // Use replaceState for magazine mode to avoid back button issues
+            // Use pushState for other modes to maintain browsable history
+            if (viewMode === 'magazine') {
+                window.history.replaceState({}, '', newUrl);
+            } else {
+                window.history.replaceState({}, '', newUrl);
+            }
         }
     }, [viewMode]);
 
     const closeMagazine = useCallback(() => {
-        if (typeof window !== 'undefined') {
-            const params = new URLSearchParams(window.location.search);
-            params.set('view', 'grid');
-            const newUrl = `${window.location.pathname}?${params.toString()}`;
-            
-            // Use pushState instead of router to avoid page reloads
-            window.history.pushState({}, '', newUrl);
-        }
-        setViewMode('grid');
+        // Set view mode to default (snaps for profile pages)
+        // The useEffect above will handle URL updates
+        setViewMode('snaps');
     }, []);
 
     return {

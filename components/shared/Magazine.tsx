@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useMemo, useEffect } from "react";
+import { useState, useRef, useMemo, useEffect, lazy, Suspense } from "react";
 import {
   Box,
   Flex,
@@ -13,7 +13,7 @@ import {
 import HTMLFlipBook from "react-pageflip";
 import { Discussion } from "@hiveio/dhive";
 import { getPayoutValue, findPosts } from "@/lib/hive/client-functions";
-import HiveMarkdown from "@/components/shared/HiveMarkdown";
+const HiveMarkdown = lazy(() => import("@/components/shared/HiveMarkdown"));
 import LoadingComponent from "../homepage/loadingComponent";
 import MatrixOverlay from "@/components/graphics/MatrixOverlay";
 import { useTheme } from "@/app/themeProvider";
@@ -29,6 +29,12 @@ function useMagazinePosts(
   const tagString = JSON.stringify(tag);
 
   useEffect(() => {
+    // Don't fetch if tag is empty or query is not provided
+    if (!query || !tag || tag.length === 0) {
+      setIsLoading(false);
+      return;
+    }
+    
     let isMounted = true;
     setIsLoading(true);
     setError(null);
@@ -155,34 +161,46 @@ export default function Magazine(props: MagazineProps) {
   const { theme } = useTheme();
   const flipBookRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // If tag and query are provided, use the hook to fetch posts
-  const magazinePosts = useMagazinePosts(props.query!, props.tag!);
+  // Only use the hook to fetch posts if tag and query are provided
+  const shouldFetchPosts = !!(props.tag && props.query);
+  const magazinePosts = useMagazinePosts(
+    props.query || "created", 
+    props.tag || []
+  );
+  
   const posts = useMemo(() => {
-    return props.tag && props.query ? magazinePosts.posts : props.posts || [];
-  }, [magazinePosts.posts, props.posts, props.tag, props.query]);
-  const isLoading =
-    props.tag && props.query
-      ? magazinePosts.isLoading
-      : props.isLoading || false;
-  const error =
-    props.tag && props.query ? magazinePosts.error : props.error || null;
+    const finalPosts = shouldFetchPosts ? magazinePosts.posts : props.posts || [];
+    return finalPosts;
+  }, [magazinePosts.posts, props.posts, shouldFetchPosts]);
+  
+  const isLoading = shouldFetchPosts ? magazinePosts.isLoading : props.isLoading || false;
+  const error = shouldFetchPosts ? magazinePosts.error : props.error || null;
+
+  // Defer heavy initialization to improve initial render
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsInitialized(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
-    if (audioRef.current) {
+    if (audioRef.current && isInitialized) {
       audioRef.current.volume = 0.2; // Set to 20% volume
     }
-  }, []);
+  }, [isInitialized]);
 
   // Memoize filtered and sorted posts for performance
   const filteredPosts = useMemo(() => {
-    if (!posts) return [];
+    if (!posts || !isInitialized) return [];
     // TODO: Add your blocked users logic if needed
     return posts.sort(
       (a, b) =>
         Number(getPayoutValue(b as any)) - Number(getPayoutValue(a as any))
     );
-  }, [posts]);
+  }, [posts, isInitialized]);
 
   const playSound = () => {
     if (audioRef.current) {
@@ -191,7 +209,7 @@ export default function Magazine(props: MagazineProps) {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || !isInitialized) {
     return <LoadingComponent />;
   }
 
@@ -448,7 +466,19 @@ export default function Magazine(props: MagazineProps) {
                 width="100%"
                 className="hide-scrollbar"
               >
-                <HiveMarkdown markdown={post.body} />
+                {!isInitialized ? (
+                  <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+                    <LoadingComponent />
+                  </Box>
+                ) : (
+                  <Suspense fallback={
+                    <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+                      <LoadingComponent />
+                    </Box>
+                  }>
+                    <HiveMarkdown markdown={post.body} />
+                  </Suspense>
+                )}
               </Box>
             </Box>
           );

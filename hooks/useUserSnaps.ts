@@ -292,32 +292,32 @@ export default function useUserSnaps(username: string) {
         try {
             let userSnaps: Discussion[] = [];
 
-            // Try Hive blockchain method first
+            // Try API method first
+            try {
+            userSnaps = await fetchUserSnapsFromAPI(username);
+
+            // If API returns no results, try Hive blockchain as fallback
+            if (userSnaps.length === 0) {
+                console.log('No snaps found from API, trying Hive blockchain fallback');
+                try {
+                userSnaps = await fetchUserSnapsFromHive(username);
+                console.log('Successfully fetched user snaps from Hive blockchain fallback');
+                } catch (hiveError) {
+                console.warn('Hive blockchain fallback also failed:', hiveError);
+                // Still return empty array from API rather than failing completely
+                }
+            }
+            } catch (apiError) {
+            console.warn('API fetch failed for user snaps, falling back to Hive blockchain:', apiError);
+            // Fallback to Hive blockchain if API method fails
             try {
                 userSnaps = await fetchUserSnapsFromHive(username);
-
-                // If Hive returns no results, try API as fallback
-                if (userSnaps.length === 0) {
-                    console.log('No snaps found on Hive blockchain, trying API fallback');
-                    try {
-                        userSnaps = await fetchUserSnapsFromAPI(username);
-                        console.log('Successfully fetched user snaps from API fallback');
-                    } catch (apiError) {
-                        console.warn('API fallback also failed:', apiError);
-                        // Still return empty array from Hive rather than failing completely
-                    }
-                }
+                console.log('Successfully fetched user snaps from Hive blockchain fallback');
             } catch (hiveError) {
-                console.warn('Hive blockchain fetch failed for user snaps, falling back to API:', hiveError);
-                // Fallback to API if Hive method fails
-                try {
-                    userSnaps = await fetchUserSnapsFromAPI(username);
-                    console.log('Successfully fetched user snaps from API fallback');
-                } catch (apiError) {
-                    console.error('Both Hive and API fetch methods failed for user snaps:', apiError);
-                    setHasMore(false);
-                    return [];
-                }
+                console.error('Both API and Hive blockchain fetch methods failed for user snaps:', hiveError);
+                setHasMore(false);
+                return [];
+            }
             }
 
             return userSnaps;
