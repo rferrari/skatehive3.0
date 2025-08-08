@@ -1,5 +1,5 @@
 import { Box, Text, HStack, Tooltip, Icon, IconButton } from "@chakra-ui/react";
-import { FaPaperPlane, FaArrowUp, FaQuestionCircle } from "react-icons/fa";
+import { FaPaperPlane, FaQuestionCircle } from "react-icons/fa";
 import { useState, useCallback, useMemo, memo } from "react";
 import { CustomHiveIcon } from "./CustomHiveIcon";
 import { useTheme } from "@/app/themeProvider";
@@ -38,10 +38,6 @@ const HiveSection = memo(function HiveSection({
 
   const handleSendClick = useCallback(() => {
     onModalOpen("Send HIVE", "Send Hive to another account", true, true);
-  }, [onModalOpen]);
-
-  const handlePowerUpClick = useCallback(() => {
-    onModalOpen("Power Up", "Power Up your HIVE to HP");
   }, [onModalOpen]);
 
   return (
@@ -87,16 +83,6 @@ const HiveSection = memo(function HiveSection({
                 colorScheme="blue"
                 variant="outline"
                 onClick={handleSendClick}
-              />
-            </Tooltip>
-            <Tooltip label="Power Up" hasArrow>
-              <IconButton
-                aria-label="Power Up"
-                icon={<FaArrowUp />}
-                size="sm"
-                colorScheme="blue"
-                variant="outline"
-                onClick={handlePowerUpClick}
               />
             </Tooltip>
           </HStack>

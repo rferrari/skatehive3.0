@@ -5,8 +5,9 @@ import {
   HStack,
   Tooltip,
   IconButton,
+  VStack,
 } from "@chakra-ui/react";
-import { FaArrowDown, FaQuestionCircle } from "react-icons/fa";
+import { FaArrowDown, FaArrowUp, FaQuestionCircle } from "react-icons/fa";
 import { useState, useCallback, useMemo, memo } from "react";
 import useIsMobile from "@/hooks/useIsMobile";
 
@@ -44,6 +45,10 @@ const HivePowerSection = memo(function HivePowerSection({
     );
   }, [onModalOpen]);
 
+  const handlePowerUpClick = useCallback(() => {
+    onModalOpen("Power Up", "Power Up your HIVE to HP");
+  }, [onModalOpen]);
+
   return (
     <Box
       p={4}
@@ -66,14 +71,14 @@ const HivePowerSection = memo(function HivePowerSection({
               <Text fontSize="lg" fontWeight="bold" color="primary">
                 HIVE POWER
               </Text>
-              <IconButton
+              {/* <IconButton
                 aria-label="Info about Hive Power"
                 icon={<FaQuestionCircle />}
                 size="xs"
                 variant="ghost"
                 color="gray.400"
                 onClick={handleInfoToggle}
-              />
+              /> */}
             </HStack>
             {/* {!isMobile && (
               <Text fontSize="sm" color="gray.400">
@@ -84,16 +89,6 @@ const HivePowerSection = memo(function HivePowerSection({
         </HStack>
 
         <HStack spacing={3} align="center">
-          <Tooltip label="Power Down" hasArrow>
-            <IconButton
-              aria-label="Power Down"
-              icon={<FaArrowDown />}
-              size="sm"
-              colorScheme="blue"
-              variant="outline"
-              onClick={handlePowerDown}
-            />
-          </Tooltip>
           <Box textAlign="right">
             <Text fontSize="2xl" fontWeight="bold" color="primary">
               {hivePower !== undefined ? hivePower : "Loading..."}
@@ -105,16 +100,83 @@ const HivePowerSection = memo(function HivePowerSection({
             )}
           </Box>
         </HStack>
+
+
       </HStack>
 
-      {showInfo && (
-        <Box mt={3} p={3} bg="muted" borderRadius="md">
-          <Text color="gray.400" fontSize="sm">
-            Staked Hive is the power you have to vote on posts. Earns you 3%
-            interest. Actively voting on posts can earn up to 10% APR.
-          </Text>
-        </Box>
-      )}
+      {/* {showInfo && ( */}
+      <Box mt={3} p={3} bg="muted" borderRadius="md">
+        <Text color="gray.400" fontSize="sm">
+          • More Hive Power you can create more posts and comment more
+          • Increate the value of your vote on posts and comments.
+          • Earns you 3% interest.
+          • Actively voting on posts can earn up to 10% APR.
+        </Text>
+      </Box>
+      {/* )} */}
+
+      {/* Investment Actions */}
+      <VStack spacing={3} align="stretch">
+        <HStack spacing={2}>
+          <Tooltip label="Power UP" hasArrow>
+            <Box
+              as="button"
+              px={4}
+              py={2}
+              fontSize="sm"
+              bg="primary"
+              color="background"
+              borderRadius="md"
+              fontWeight="bold"
+              _hover={{ bg: "accent" }}
+              onClick={handlePowerUpClick}
+              flex={1}
+            >
+              💰 Power UP
+            </Box>
+          </Tooltip>
+          <Tooltip label="Power Down" hasArrow>
+            <Box
+              as="button"
+              px={4}
+              py={2}
+              fontSize="sm"
+              bg="muted"
+              color="text"
+              borderRadius="md"
+              fontWeight="bold"
+              _hover={{ bg: "accent", color: "background" }}
+              onClick={handlePowerDown}
+              flex={1}
+            >
+              📤 Power Down
+            </Box>
+          </Tooltip>
+        </HStack>
+      </VStack>
+      
+      {/* 
+      <Tooltip label="Power Down" hasArrow>
+        <IconButton
+          aria-label="Power Down"
+          icon={<FaArrowDown />}
+          size="sm"
+          colorScheme="blue"
+          variant="outline"
+          onClick={handlePowerDown}
+        />
+        <Tooltip label="Power Up" hasArrow>
+          <IconButton
+            aria-label="Power Up"
+            icon={<FaArrowUp />}
+            size="sm"
+            colorScheme="blue"
+            variant="outline"
+            onClick={handlePowerUpClick}
+          />
+        </Tooltip>
+      </Tooltip> */}
+
     </Box>
   );
 });

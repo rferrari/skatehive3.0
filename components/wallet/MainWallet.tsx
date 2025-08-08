@@ -29,6 +29,7 @@ import SendTokenModal from "@/components/wallet/SendTokenModal";
 import { Asset } from "@hiveio/dhive";
 import HivePowerSection from "./HivePowerSection";
 import HiveSection from "./HiveSection";
+import SkateBankSection from "./SkateBankSection";
 import HBDSection from "./HBDSection";
 import MarketPrices from "./MarketPrices";
 import SwapSection from "./SwapSection";
@@ -40,6 +41,7 @@ import { FarcasterEnhancedUserData } from "@/types/farcaster";
 import TotalPortfolioValue from "./components/TotalPortfolioValue";
 import MobileActionButtons from "./components/MobileActionButtons";
 import { TokenDetail } from "@/types/portfolio";
+import PIXTabContent from "./components/PIXTabContent";
 
 interface HiveToken {
   symbol: string;
@@ -366,8 +368,8 @@ export default function MainWallet({ username }: MainWalletProps) {
             : isFarcasterConnected &&
               farcasterProfile &&
               "custody" in farcasterProfile
-            ? farcasterProfile?.custody
-            : undefined
+              ? farcasterProfile?.custody
+              : undefined
         }
         farcasterVerifiedAddresses={
           // Use enhanced data if available and valid, otherwise fallback to profile verifications
@@ -376,8 +378,8 @@ export default function MainWallet({ username }: MainWalletProps) {
             : isFarcasterConnected &&
               farcasterProfile &&
               "verifications" in farcasterProfile
-            ? farcasterProfile?.verifications
-            : undefined
+              ? farcasterProfile?.verifications
+              : undefined
         }
       >
         <Box
@@ -422,6 +424,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                   >
                     💰 Wallet
                   </Tab>
+
                   {/* Only show SkateBank tab if user is connected to Hive */}
                   {user && (
                     <Tab
@@ -432,6 +435,19 @@ export default function MainWallet({ username }: MainWalletProps) {
                       flex={1}
                     >
                       🏦 SkateBank
+                    </Tab>
+                  )}
+
+                  {/* Only show SkateBank tab if user is connected to Hive */}
+                  {user && (
+                    <Tab
+                      _selected={{ bg: "primary", color: "background" }}
+                      _hover={{ bg: "primary", opacity: 0.8 }}
+                      fontWeight="bold"
+                      fontSize={{ base: "sm", md: "md" }}
+                      flex={1}
+                    >
+                      💸 PIX
                     </Tab>
                   )}
                 </TabList>
@@ -465,14 +481,10 @@ export default function MainWallet({ username }: MainWalletProps) {
                         totalHiveAssetsValue={totalHiveAssetsValue}
                       />
                     </Box>
+
                     {/* Hive Sections - Show if user is connected to Hive */}
                     {user ? (
                       <>
-                        <HivePowerSection
-                          hivePower={hivePower}
-                          hivePrice={hivePrice}
-                          onModalOpen={handleModalOpen}
-                        />
                         <HiveSection
                           balance={hiveBalances.balance}
                           hivePrice={hivePrice}
@@ -524,45 +536,45 @@ export default function MainWallet({ username }: MainWalletProps) {
                           </Heading>
                           <Text fontSize="sm" color="text" mb={4}>
                             Grow your tokens with SkateHive&apos;s investment
-                            options. Earn passive income and build your
+                            options and Earn passive income and build your
                             skateboarding empire!
                           </Text>
-                        </Box>
 
-                        {/* HBD Savings Investment */}
-                        <Box
-                          p={4}
-                          bg="background"
-                          borderRadius="lg"
-                          border="1px solid"
-                          borderColor="muted"
-                        >
-                          <Heading size="sm" mb={2} color="primary">
-                            🏛️ Dollar Savings (15% APR)
-                          </Heading>
-                          <Text fontSize="sm" color="text" mb={3}>
-                            Earn guaranteed 15% annual interest on your Dollar
-                            Savings. Perfect for long-term hodlers!
-                          </Text>
-                          <HBDSection
-                            hbdBalance={hiveBalances.hbdBalance}
-                            hbdSavingsBalance={hiveBalances.hbdSavingsBalance}
-                            hbdPrice={hbdPrice}
-                            estimatedClaimableInterest={
-                              hbdInterestData.estimatedClaimableInterest
-                            }
-                            daysUntilClaim={hbdInterestData.daysUntilClaim}
-                            lastInterestPayment={
-                              hbdInterestData.lastInterestPayment
-                            }
-                            onModalOpen={handleModalOpen}
-                            onClaimInterest={handleClaimHbdInterest}
-                            isBankView={true}
-                          />
-                        </Box>
+                          <Box mb={5}>
+                            <HivePowerSection
+                              hivePower={hivePower}
+                              hivePrice={hivePrice}
+                              onModalOpen={handleModalOpen}
+                            />
+                          </Box>
 
-                        {/* PIX Integration Section */}
-                        <Box
+
+                          {/* SkateBank Investment */}
+                          <Box
+                            p={4}
+                            bg="background"
+                            borderRadius="lg"
+                            border="1px solid"
+                            borderColor="muted"
+                          >
+                            <SkateBankSection
+                              hbdBalance={hiveBalances.hbdBalance}
+                              hbdSavingsBalance={hiveBalances.hbdSavingsBalance}
+                              hbdPrice={hbdPrice}
+                              estimatedClaimableInterest={
+                                hbdInterestData.estimatedClaimableInterest
+                              }
+                              daysUntilClaim={hbdInterestData.daysUntilClaim}
+                              lastInterestPayment={
+                                hbdInterestData.lastInterestPayment
+                              }
+                              onModalOpen={handleModalOpen}
+                              onClaimInterest={handleClaimHbdInterest}
+                            />
+                          </Box>
+
+                          {/* PIX Integration Section */}
+                          {/* <Box
                           p={4}
                           bg="background"
                           borderRadius="lg"
@@ -611,8 +623,35 @@ export default function MainWallet({ username }: MainWalletProps) {
                             }}
                           >
                             🇧🇷 Buy and Sell HBD with PIX
-                          </Box>
+                          </Box> 
+                        */}
                         </Box>
+
+                      </VStack>
+                    </TabPanel>
+                  )}
+
+                  {/* PIX Tab - Pixbee - Only show if connected to Hive */}
+                  {user && (
+                    <TabPanel p={0}>
+                      <VStack spacing={4} align="stretch">
+                        <Box>
+                          <Heading
+                            size="md"
+                            mb={3}
+                            color="primary"
+                            fontFamily="Joystix"
+                          >
+                            💸 Pix
+                          </Heading>
+                          <Text fontSize="sm" color="text" mb={1}>
+                            Fast, secure, and convenient way to send HBD via PIX!
+                            Use Skatebank service powered by Pixbee to Buy and sell HBD instantly using PIX (Brazilian Real currency).                            
+                          </Text>
+                        </Box>
+
+                        <PIXTabContent />
+
                       </VStack>
                     </TabPanel>
                   )}

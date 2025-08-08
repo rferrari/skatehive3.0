@@ -249,7 +249,7 @@ export function WalletDistributionChart({
           textAlign="center"
           pointerEvents="none"
         >
-          <Text fontSize="xs" color={theme.colors.muted} mb={1}>
+          <Text fontSize="xs" color={theme.colors.primary} mb={1}>
             Total Value
           </Text>
           <Text fontSize="lg" fontWeight="bold" color={theme.colors.primary}>

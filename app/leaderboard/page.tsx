@@ -77,6 +77,7 @@ async function processLeaderboardData(
     podiumImageUrl,
   };
 }
+
 export async function generateMetadata(): Promise<Metadata> {
   const { top3, top3Names, podiumImageUrl } = await processLeaderboardData(300); // 5 minutes cache for metadata
 
