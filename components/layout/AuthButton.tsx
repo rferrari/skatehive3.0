@@ -406,10 +406,6 @@ export default function AuthButton() {
       >
         <SignInButton
           onSuccess={({ fid, username }) => {
-            console.log("🎉 Farcaster Sign In Success:", {
-              fid,
-              username,
-            });
             setIsFarcasterAuthInProgress(false);
             setIsConnectionModalOpen(false);
             toast({

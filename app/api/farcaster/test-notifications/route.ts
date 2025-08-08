@@ -7,12 +7,9 @@ import { AutomatedNotificationService } from '@/lib/farcaster/automated-notifica
  */
 export async function POST(req: NextRequest) {
     try {
-        console.log('[test-notifications] Starting manual test of automated notification service');
 
         // Process all unread notifications
         const results = await AutomatedNotificationService.processUnreadNotifications();
-
-        console.log('[test-notifications] Test completed:', results);
 
         return NextResponse.json({
             success: true,

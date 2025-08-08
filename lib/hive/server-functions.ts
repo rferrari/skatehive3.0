@@ -101,7 +101,6 @@ export async function createAccount(username: string, password: string) {
     // Broadcast the operation using HiveClient
     try {
         if (process.env.ACCOUNT_KEY) await HiveClient.broadcast.sendOperations([op], PrivateKey.from(process.env.ACCOUNT_KEY));
-        console.log('Account created successfully');
     } catch (error) {
         console.error('Error creating account:', error);
     }

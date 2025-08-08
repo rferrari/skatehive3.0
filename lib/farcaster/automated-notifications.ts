@@ -58,40 +58,30 @@ export class AutomatedNotificationService {
             processedNotifications: [] as any[]
         };
 
-        console.log(`[AutomatedNotificationService] 🚀 Starting automated notification processing`);
-        console.log(`[AutomatedNotificationService] 📊 Cache stats: ${enrichmentCache.size} cached entries`);
-
         // Run cleanup once per day (check if we should clean up)
         const shouldCleanup = Math.random() < 0.1; // 10% chance per run
         if (shouldCleanup) {
-            console.log(`[AutomatedNotificationService] 🧹 Running periodic cleanup...`);
             try {
                 const cleanupResults = await this.cleanupNotificationLogs();
-                console.log(`[AutomatedNotificationService] 🧹 Cleanup completed:`, cleanupResults);
             } catch (error) {
                 console.error(`[AutomatedNotificationService] ❌ Cleanup failed:`, error);
             }
         }
 
         try {
-            console.log(`[AutomatedNotificationService] Starting automated notification processing at ${new Date().toISOString()}`);
 
             // Get all users with active Farcaster tokens
             const activeUsers = await this.getActiveUsers();
-            console.log(`[AutomatedNotificationService] Found ${activeUsers.length} active users with Farcaster tokens`);
 
             for (const user of activeUsers) {
                 try {
-                    console.log(`[AutomatedNotificationService] Processing notifications for ${user.hiveUsername || user.fid}`);
 
                     const sentCount = await this.processUserUnreadNotifications(user);
 
                     if (sentCount > 0) {
                         results.processedUsers++;
                         results.totalNotificationsSent += sentCount;
-                        console.log(`[AutomatedNotificationService] ✅ Sent ${sentCount} notifications to ${user.hiveUsername || user.fid}`);
                     } else {
-                        console.log(`[AutomatedNotificationService] No new notifications for ${user.hiveUsername || user.fid}`);
                     }
                 } catch (userError) {
                     const errorMsg = `Failed to process notifications for ${user.hiveUsername || user.fid}: ${userError instanceof Error ? userError.message : 'Unknown error'}`;
@@ -99,8 +89,6 @@ export class AutomatedNotificationService {
                     results.errors.push(errorMsg);
                 }
             }
-
-            console.log(`[AutomatedNotificationService] Completed processing. Processed ${results.processedUsers} users, sent ${results.totalNotificationsSent} notifications total`);
 
         } catch (error) {
             const errorMsg = `Failed to process automated notifications: ${error instanceof Error ? error.message : 'Unknown error'}`;
@@ -134,8 +122,6 @@ export class AutomatedNotificationService {
                 ORDER BY t.created_at ASC
             `;
 
-            console.log(`[AutomatedNotificationService] Found ${result.rows.length} active users with linked Hive accounts`);
-
             return result.rows.map(row => ({
                 hiveUsername: row.hive_username,
                 fid: row.fid,
@@ -159,19 +145,16 @@ export class AutomatedNotificationService {
         const { hiveUsername, fid, maxNotificationsPerBatch } = user;
 
         if (!hiveUsername) {
-            console.log(`[AutomatedNotificationService] Skipping user with FID ${fid} - no Hive username`);
             return 0;
         }
 
         try {
-            console.log(`[processUserUnreadNotifications] Processing notifications for ${hiveUsername} (linked at: ${user.linkedAt.toISOString()})`);
 
             // Get user's Farcaster preferences
             const userPreferences = await SkateHiveFarcasterService.getPreferencesByFid(fid) ||
                 await SkateHiveFarcasterService.getUserPreferences(hiveUsername);
 
             if (!userPreferences) {
-                console.log(`[processUserUnreadNotifications] No Farcaster preferences found for ${hiveUsername}, creating defaults...`);
 
                 // Try to create default preferences
                 try {
@@ -183,7 +166,6 @@ export class AutomatedNotificationService {
                         SET hive_username = ${hiveUsername}
                         WHERE fid = ${fid}
                     `;
-                    console.log(`[processUserUnreadNotifications] Created default preferences for ${hiveUsername}`);
                 } catch (createError) {
                     console.error(`[processUserUnreadNotifications] Failed to create preferences for ${hiveUsername}:`, createError);
                     return 0;
@@ -194,14 +176,11 @@ export class AutomatedNotificationService {
             const allNotifications = await serverHiveClient.fetchNotifications(hiveUsername, 100);
 
             if (!allNotifications || allNotifications.length === 0) {
-                console.log(`[processUserUnreadNotifications] No notifications found for ${hiveUsername}`);
                 return 0;
             }
 
             // Filter to get only unread notifications (those not in our sent log AND after user linked account)
             const unreadNotifications = await this.getUnreadNotifications(hiveUsername, allNotifications, user.linkedAt);
-
-            console.log(`[processUserUnreadNotifications] Found ${unreadNotifications.length} unread notifications for ${hiveUsername}`);
 
             if (unreadNotifications.length === 0) {
                 return 0;
@@ -217,12 +196,8 @@ export class AutomatedNotificationService {
             // Take only up to maxNotificationsPerBatch notifications
             const notificationsToSend = sortedNotifications.slice(0, maxNotificationsPerBatch);
 
-            console.log(`[processUserUnreadNotifications] Will send ${notificationsToSend.length} notifications (max batch: ${maxNotificationsPerBatch})`);
-
             // Convert to Farcaster format
             const farcasterNotifications = await this.convertToFarcasterNotifications(notificationsToSend);
-
-            console.log(`[processUserUnreadNotifications] Converted ${farcasterNotifications.length} notifications to Farcaster format`);
 
             if (farcasterNotifications.length === 0) {
                 return 0;
@@ -233,8 +208,6 @@ export class AutomatedNotificationService {
 
             for (let i = 0; i < farcasterNotifications.length; i++) {
                 const notification = farcasterNotifications[i];
-
-                console.log(`[processUserUnreadNotifications] Sending notification ${i + 1}/${farcasterNotifications.length} to ${hiveUsername}: ${notification.title}`);
 
                 try {
                     const result = await farcasterNotificationService.sendNotification(notification, [hiveUsername]);
@@ -247,7 +220,6 @@ export class AutomatedNotificationService {
                     });
 
                     if (hasSuccessfulSends) {
-                        console.log(`[processUserUnreadNotifications] ✅ Successfully sent notification ${i + 1} to ${hiveUsername}`);
                         sentCount++;
 
                         // Log the sent notification to prevent duplicates (only log successful sends)
@@ -258,7 +230,6 @@ export class AutomatedNotificationService {
                             await new Promise(resolve => setTimeout(resolve, 500));
                         }
                     } else {
-                        console.log(`[processUserUnreadNotifications] ❌ Failed to send notification ${i + 1} to ${hiveUsername}:`, result);
 
                         // Log failed notification attempt
                         await this.logFailedNotification(hiveUsername, fid, notificationsToSend[i], 'Send failed');
@@ -270,8 +241,6 @@ export class AutomatedNotificationService {
                     await this.logFailedNotification(hiveUsername, fid, notificationsToSend[i], error instanceof Error ? error.message : 'Unknown error');
                 }
             }
-
-            console.log(`[processUserUnreadNotifications] Successfully sent ${sentCount}/${farcasterNotifications.length} notifications to ${hiveUsername}`);
             return sentCount;
 
         } catch (error) {
@@ -286,7 +255,6 @@ export class AutomatedNotificationService {
      */
     private static async getUnreadNotifications(hiveUsername: string, allNotifications: any[], linkedAt: Date): Promise<any[]> {
         try {
-            console.log(`[getUnreadNotifications] Filtering notifications for ${hiveUsername}, linked at: ${linkedAt.toISOString()}`);
 
             // First, filter out notifications that occurred before the user linked their account
             const notificationsAfterLinking = allNotifications.filter(notification => {
@@ -294,13 +262,10 @@ export class AutomatedNotificationService {
                 const isAfterLinking = notificationTimestamp >= linkedAt;
 
                 if (!isAfterLinking) {
-                    console.log(`[getUnreadNotifications] Skipping historical notification from ${notificationTimestamp.toISOString()} (before linking at ${linkedAt.toISOString()})`);
                 }
 
                 return isAfterLinking;
             });
-
-            console.log(`[getUnreadNotifications] Filtered ${allNotifications.length} total notifications down to ${notificationsAfterLinking.length} after account linking date`);
 
             // Get all notifications we've already processed for this user (successful OR failed)
             // Use existing columns to create unique identifiers
@@ -333,8 +298,6 @@ export class AutomatedNotificationService {
                 }
             }
 
-            console.log(`[getUnreadNotifications] Found ${processedNotificationSignatures.size} previously processed notifications, ${unreadNotifications.length} unread for ${hiveUsername}`);
-
             return unreadNotifications;
         } catch (error) {
             console.error(`[getUnreadNotifications] Error getting unread notifications for ${hiveUsername}:`, error);
@@ -343,7 +306,6 @@ export class AutomatedNotificationService {
                 const notificationTimestamp = new Date(notification.date || notification.timestamp || 0);
                 return notificationTimestamp >= linkedAt;
             });
-            console.log(`[getUnreadNotifications] Treating ${notificationsAfterLinking.length} notifications after linking as unread due to error`);
             return notificationsAfterLinking;
         }
     }
@@ -357,7 +319,6 @@ export class AutomatedNotificationService {
             const farcasterNotification = await this.convertHiveToFarcasterNotification(notification);
 
             if (!farcasterNotification) {
-                console.log(`[logSentNotification] Could not convert notification for logging`);
                 return;
             }
 
@@ -385,8 +346,6 @@ export class AutomatedNotificationService {
                     null
                 )
             `;
-
-            console.log(`[logSentNotification] ✅ Logged notification for ${hiveUsername}: ${farcasterNotification.title}`);
         } catch (error) {
             console.error(`[logSentNotification] Error logging notification for ${hiveUsername}:`, error);
         }
@@ -401,7 +360,6 @@ export class AutomatedNotificationService {
             const farcasterNotification = await this.convertHiveToFarcasterNotification(notification);
 
             if (!farcasterNotification) {
-                console.log(`[logFailedNotification] Could not convert notification for logging`);
                 return;
             }
 
@@ -431,8 +389,6 @@ export class AutomatedNotificationService {
                     null
                 )
             `;
-
-            console.log(`[logFailedNotification] 📝 Logged failed notification for ${hiveUsername}: ${farcasterNotification.title} - ${errorMessage}`);
         } catch (error) {
             console.error(`[logFailedNotification] Error logging failed notification for ${hiveUsername}:`, error);
         }
@@ -476,7 +432,6 @@ export class AutomatedNotificationService {
      * Only enriches notifications that are about to be sent to reduce API calls
      */
     private static async convertToFarcasterNotifications(notifications: any[]): Promise<HiveToFarcasterNotification[]> {
-        console.log(`[convertToFarcasterNotifications] Converting ${notifications.length} notifications`);
 
         // Clean up old cache entries before processing
         this.cleanupEnrichmentCache();
@@ -493,8 +448,6 @@ export class AutomatedNotificationService {
                 console.error('[convertToFarcasterNotifications] Error converting notification:', error);
             }
         }
-
-        console.log(`[convertToFarcasterNotifications] Successfully converted ${farcasterNotifications.length}/${notifications.length} notifications`);
         return farcasterNotifications;
     }
 
@@ -504,12 +457,6 @@ export class AutomatedNotificationService {
     private static async convertHiveToFarcasterNotification(notification: Notifications): Promise<HiveToFarcasterNotification | null> {
         try {
             const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://skatehive.app';
-
-            console.log('[convertHiveToFarcasterNotification] Converting notification:', {
-                type: notification.type,
-                url: notification.url,
-                baseUrl
-            });
 
             // Extract notification details
             let title = '';
@@ -599,7 +546,6 @@ export class AutomatedNotificationService {
                     break;
 
                 default:
-                    console.log(`[convertHiveToFarcasterNotification] Unsupported notification type: ${notification.type}`);
                     return null;
             }
 
@@ -609,7 +555,6 @@ export class AutomatedNotificationService {
             // Validate URL
             try {
                 new URL(sourceUrl);
-                console.log(`[convertHiveToFarcasterNotification] ✅ Generated valid URL: ${sourceUrl}`);
             } catch (urlError) {
                 console.error(`[convertHiveToFarcasterNotification] ❌ Invalid URL generated: ${sourceUrl}`, urlError);
                 return null;
@@ -649,24 +594,20 @@ export class AutomatedNotificationService {
         // Check cache first
         const cached = enrichmentCache.get(cacheKey);
         if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
-            console.log(`[enrichNotificationContent] Using cached content for ${cacheKey}`);
             return cached.content;
         }
 
         // Validate that we have meaningful author and permlink
         if (!author || !permlink || author.length < 3 || permlink.length < 3) {
-            console.log(`[enrichNotificationContent] Skipping enrichment for invalid author/permlink: ${author}/${permlink}`);
             return null;
         }
 
         try {
-            console.log(`[enrichNotificationContent] Fetching content for ${author}/${permlink} (${notificationType})`);
 
             // Fetch the actual post/comment content from Hive blockchain
             const content = await serverHiveClient.fetchContent(author, permlink);
 
             if (!content || !content.body) {
-                console.log(`[enrichNotificationContent] No content found for ${author}/${permlink}`);
                 // Cache the null result to avoid repeated failures
                 enrichmentCache.set(cacheKey, { content: null, timestamp: Date.now() });
                 return null;
@@ -678,7 +619,6 @@ export class AutomatedNotificationService {
 
             // Skip enrichment if content is too short or empty
             if (!cleanText || cleanText.trim().length < 10) {
-                console.log(`[enrichNotificationContent] Content too short for ${author}/${permlink}, skipping enrichment`);
                 enrichmentCache.set(cacheKey, { content: null, timestamp: Date.now() });
                 return null;
             }
@@ -711,8 +651,6 @@ export class AutomatedNotificationService {
                     enrichmentCache.set(cacheKey, { content: null, timestamp: Date.now() });
                     return null;
             }
-
-            console.log(`[enrichNotificationContent] ✅ Enriched content: ${enrichedBody}`);
 
             // Cache the successful result
             enrichmentCache.set(cacheKey, { content: enrichedBody, timestamp: Date.now() });
@@ -752,8 +690,6 @@ export class AutomatedNotificationService {
         try {
             const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://skatehive.app';
             const postUrl = `${baseUrl}/post/${author}/${permlink}`;
-
-            console.log(`[enrichWithOpenGraph] Fetching OpenGraph for: ${postUrl}`);
 
             const response = await fetch(postUrl, {
                 headers: {
@@ -865,12 +801,9 @@ export class AutomatedNotificationService {
                 enrichmentCache.delete(entries[i][0]);
                 cleanedCount++;
             }
-
-            console.log(`[cleanupEnrichmentCache] Removed ${entriesToRemove} entries due to size limit`);
         }
 
         if (cleanedCount > 0) {
-            console.log(`[cleanupEnrichmentCache] Cleaned up ${cleanedCount} cache entries, ${enrichmentCache.size} remaining`);
         }
     }
 
@@ -895,8 +828,6 @@ export class AutomatedNotificationService {
                 throw new Error('Database URL not configured');
             }
 
-            console.log('[cleanupNotificationLogs] Starting database cleanup...');
-
             // Clean up old notification logs but preserve recent ones for deduplication
             // Only delete logs older than 30 days to maintain deduplication integrity
             // Recent logs (last 30 days) are kept to prevent duplicate notifications
@@ -906,8 +837,7 @@ export class AutomatedNotificationService {
                     WHERE sent_at < NOW() - INTERVAL '30 days'
                 `;
                 results.deduplicationLogsDeleted = cleanupResult.rowCount || 0;
-                results.analyticsLogsDeleted = results.deduplicationLogsDeleted; // Same table
-                console.log(`[cleanupNotificationLogs] Deleted ${results.deduplicationLogsDeleted} notification logs older than 30 days (preserved recent logs for deduplication)`);
+                results.analyticsLogsDeleted = results.deduplicationLogsDeleted;
             } catch (error) {
                 const errorMsg = `Failed to clean notification logs: ${error instanceof Error ? error.message : 'Unknown error'}`;
                 console.error(`[cleanupNotificationLogs] ${errorMsg}`);
@@ -917,18 +847,14 @@ export class AutomatedNotificationService {
             // Vacuum tables if we deleted a significant number of rows
             if (results.deduplicationLogsDeleted > 1000 || results.analyticsLogsDeleted > 1000) {
                 try {
-                    console.log('[cleanupNotificationLogs] Running VACUUM ANALYZE...');
                     await sql`VACUUM ANALYZE farcaster_notification_log`;
                     await sql`VACUUM ANALYZE farcaster_notification_logs`;
-                    console.log('[cleanupNotificationLogs] VACUUM completed');
                 } catch (error) {
                     const errorMsg = `Failed to vacuum tables: ${error instanceof Error ? error.message : 'Unknown error'}`;
                     console.error(`[cleanupNotificationLogs] ${errorMsg}`);
                     results.errors.push(errorMsg);
                 }
             }
-
-            console.log('[cleanupNotificationLogs] Database cleanup completed');
 
         } catch (error) {
             const errorMsg = `Failed to cleanup notification logs: ${error instanceof Error ? error.message : 'Unknown error'}`;

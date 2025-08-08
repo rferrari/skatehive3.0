@@ -13,7 +13,6 @@ export async function POST(request: NextRequest) {
         const { action } = body;
 
         if (action === 'cleanup') {
-            console.log('[Cleanup API] Starting manual database cleanup...');
             const results = await AutomatedNotificationService.cleanupNotificationLogs();
 
             return NextResponse.json({
@@ -23,7 +22,6 @@ export async function POST(request: NextRequest) {
                 message: `Cleanup completed. Deleted ${results.deduplicationLogsDeleted} deduplication logs and ${results.analyticsLogsDeleted} analytics logs`
             });
         } else if (action === 'stats') {
-            console.log('[Cleanup API] Getting database statistics...');
             const stats = await AutomatedNotificationService.getDatabaseStats();
 
             return NextResponse.json({

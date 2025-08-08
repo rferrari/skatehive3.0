@@ -164,12 +164,6 @@ export default function ZoraTradingModal({
   // Debug logging
   React.useEffect(() => {
     if (isConnected) {
-      console.log("Chain info:", { 
-        currentChainId: chainId, 
-        baseChainId: base.id, 
-        isWrongChain,
-        chainName: chainId === 1 ? "Ethereum Mainnet" : chainId === 8453 ? "Base" : `Chain ${chainId}`
-      });
     }
   }, [chainId, isConnected, isWrongChain]);
 
@@ -341,7 +335,6 @@ export default function ZoraTradingModal({
 
   const handleSwitchToBase = async () => {
     try {
-      console.log("Attempting to switch to Base network...", { currentChain: chainId, targetChain: base.id });
       
       // Show loading state
       toast({
@@ -363,7 +356,6 @@ export default function ZoraTradingModal({
       }
       
       if (chainId === base.id) {
-        console.log("Chain switch successful, now on Base");
         toast({
           title: "Switched to Base",
           description: "You're now connected to Base network",
@@ -471,15 +463,6 @@ export default function ZoraTradingModal({
     }
 
     try {
-      // Final chain verification with detailed logging
-      console.log("Pre-trade chain verification:", {
-        currentChainId: chainId,
-        expectedChainId: base.id,
-        isOnBase: chainId === base.id,
-        fromCurrency: fromCurrency.symbol,
-        toCurrency: toCurrency.symbol,
-        amount
-      });
 
       // Last-second chain check
       if (chainId !== base.id) {
@@ -501,20 +484,6 @@ export default function ZoraTradingModal({
         fromCurrency.type === "eth"
           ? parseEther(amount)
           : parseUnits(amount, fromBalance?.decimals || fromCurrency.decimals);
-
-      console.log("Executing trade with:", {
-        fromToken: {
-          type: fromCurrency.type,
-          address: fromCurrency.address,
-          amount: amountIn.toString(),
-        },
-        toToken: {
-          type: toCurrency.type,
-          address: toCurrency.address,
-        },
-        slippage,
-        chainId
-      });
 
       await executeTrade({
         fromToken: {

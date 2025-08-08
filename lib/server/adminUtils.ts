@@ -26,7 +26,6 @@ export const logSecurityAttempt = (
     };
 
     if (success) {
-        console.log('✅ [ADMIN] Authorized operation:', logData);
     } else {
         console.warn('🚫 [SECURITY] Unauthorized admin attempt:', logData);
     }

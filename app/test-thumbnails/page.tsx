@@ -14,7 +14,6 @@ export default function VideoThumbnailTest() {
     const handleTest = () => {
         if (testVideoUrl) {
             setShowVideo(true);
-            console.log('🧪 Testing video URL:', testVideoUrl);
         }
     };
 

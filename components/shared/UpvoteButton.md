@@ -98,7 +98,6 @@ const SnapComponent = ({ discussion }) => {
   const [activeVotes, setActiveVotes] = useState(discussion.active_votes || []);
 
   const handleVoteSuccess = (estimatedValue) => {
-    console.log('Vote successful!', estimatedValue);
   };
 
   return (

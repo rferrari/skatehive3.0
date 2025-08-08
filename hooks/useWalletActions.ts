@@ -134,7 +134,6 @@ export function useWalletActions() {
         operations: [op],
         method: KeychainKeyTypes.active,
       });
-      console.log("Claim HBD interest response:", response);
     } catch (error) {
       console.error("Error claiming HBD interest:", error);
     }

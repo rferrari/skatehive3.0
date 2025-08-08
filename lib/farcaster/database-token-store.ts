@@ -50,7 +50,6 @@ export class DatabaseTokenStore {
           is_active = TRUE,
           updated_at = NOW()
       `;
-            console.log(`Added/Updated Farcaster token for FID ${fid}, username: ${username}`);
         } catch (error) {
             console.error('Failed to add token to database:', error);
             throw error;
@@ -61,7 +60,6 @@ export class DatabaseTokenStore {
     async removeToken(fid: string): Promise<void> {
         try {
             await sql`DELETE FROM farcaster_tokens WHERE fid = ${fid}`;
-            console.log(`Removed Farcaster token for FID ${fid}`);
         } catch (error) {
             console.error('Failed to remove token from database:', error);
             throw error;
@@ -76,7 +74,6 @@ export class DatabaseTokenStore {
         SET is_active = FALSE, updated_at = NOW() 
         WHERE fid = ${fid}
       `;
-            console.log(`Disabled notifications for FID ${fid}`);
         } catch (error) {
             console.error('Failed to disable notifications:', error);
             throw error;
@@ -91,7 +88,6 @@ export class DatabaseTokenStore {
         SET is_active = TRUE, token = ${token}, notification_url = ${notificationUrl}, updated_at = NOW()
         WHERE fid = ${fid}
       `;
-            console.log(`Enabled notifications for FID ${fid}`);
         } catch (error) {
             console.error('Failed to enable notifications:', error);
             throw error;
@@ -297,8 +293,6 @@ export class DatabaseTokenStore {
             await sql`CREATE INDEX IF NOT EXISTS idx_notification_logs_hive_username ON farcaster_notification_logs(hive_username)`;
             await sql`CREATE INDEX IF NOT EXISTS idx_notification_logs_type ON farcaster_notification_logs(notification_type)`;
             await sql`CREATE INDEX IF NOT EXISTS idx_notification_logs_sent_at ON farcaster_notification_logs(sent_at)`;
-
-            console.log('Enhanced SkateHive Farcaster database tables initialized successfully');
         } catch (error) {
             console.error('Failed to initialize database:', error);
             throw error;
@@ -309,10 +303,8 @@ export class DatabaseTokenStore {
 // Create instance based on environment
 export const createTokenStore = () => {
     if (process.env.POSTGRES_URL || process.env.VERCEL_ENV === 'production') {
-        console.log('Using database token store');
         return new DatabaseTokenStore();
     } else {
-        console.log('Using in-memory token store for development');
         // Return the existing in-memory store for development
         const { farcasterTokenStore } = require('./token-store');
         return farcasterTokenStore;

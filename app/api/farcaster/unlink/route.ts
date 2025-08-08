@@ -41,8 +41,6 @@ export async function POST(request: NextRequest) {
         // Update Hive profile if requested and posting key is provided
         if (updateHiveProfile && postingKey) {
             try {
-                // Remove farcaster username from Hive profile
-                console.log('[UNLINK] Would update Hive profile to remove Farcaster username');
                 // Note: Profile update functionality would need to be implemented
             } catch (err) {
                 console.warn('[UNLINK] Failed to update Hive profile:', err);

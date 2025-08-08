@@ -117,7 +117,6 @@ const ReceiveModal: React.FC<ReceiveModalProps> = ({ isOpen, onClose }) => {
           text: `Here's my ${type} address: ${addr}`,
         });
       } catch (error) {
-        console.log("Share canceled");
       }
     } else {
       // Fallback to clipboard

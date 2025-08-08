@@ -52,14 +52,6 @@ export default function Composer() {
 
   // Debug log compose form state
   React.useEffect(() => {
-    console.log("📄 Composer: State changed", {
-      beneficiaries,
-      beneficiariesCount: beneficiaries.length,
-      title: title.length,
-      markdown: markdown.length,
-      hashtags: hashtags.length,
-      isSubmitting
-    });
   }, [beneficiaries, title, markdown, hashtags, isSubmitting]);
 
   // Refs
@@ -247,11 +239,6 @@ export default function Composer() {
       <BeneficiariesInput
         beneficiaries={beneficiaries}
         setBeneficiaries={(newBeneficiaries) => {
-          console.log("📄 Composer: setBeneficiaries called", {
-            from: beneficiaries,
-            to: newBeneficiaries,
-            change: newBeneficiaries.length - beneficiaries.length
-          });
           setBeneficiaries(newBeneficiaries);
         }}
         isSubmitting={isSubmitting}

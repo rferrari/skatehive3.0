@@ -54,7 +54,6 @@ export function useFarcasterSession() {
         if (!hasPersistedSession) {
           setHasPersistedSession(true);
         }
-        console.log('[FarcasterSession] Saved session:', session);
       }
     }
   }, [isAuthenticated, profile?.fid, profile?.username, hasPersistedSession]);
@@ -64,18 +63,15 @@ export function useFarcasterSession() {
     const restoreSession = () => {
       try {
         const savedSession = localStorage.getItem(SESSION_KEY);
-        // console.log('[FarcasterSession] Restoring session, found:', !!savedSession);
         if (savedSession) {
           const session: FarcasterSession = JSON.parse(savedSession);
           const isExpired = Date.now() - session.timestamp > SESSION_EXPIRY;
           
           if (isExpired) {
-            // console.log('[FarcasterSession] Session expired, removing');
             localStorage.removeItem(SESSION_KEY);
             setHasPersistedSession(false);
             setSessionData(null);
           } else {
-            // console.log('[FarcasterSession] Session restored:', session.username);
             setHasPersistedSession(true);
             setSessionData(session);
           }
@@ -98,8 +94,6 @@ export function useFarcasterSession() {
 
   // Clear session on sign out
   const clearSession = useCallback(() => {
-    // console.log('[FarcasterSession] Clearing session explicitly');
-    // console.log('[FarcasterSession] Before clear - hasPersistedSession:', hasPersistedSession);
     
     // Clear localStorage
     localStorage.removeItem(SESSION_KEY);
@@ -109,7 +103,6 @@ export function useFarcasterSession() {
       // Check for any keys that might be related to Farcaster Auth Kit
       Object.keys(localStorage).forEach(key => {
         if (key.includes('farcaster') || key.includes('authkit') || key.includes('fc_')) {
-          // console.log('[FarcasterSession] Removing potential auth key:', key);
           localStorage.removeItem(key);
         }
       });
@@ -120,8 +113,6 @@ export function useFarcasterSession() {
     // Update state
     setHasPersistedSession(false);
     setSessionData(null);
-    
-    console.log('[FarcasterSession] After clear - session removed');
   }, [hasPersistedSession]);
 
   // Get persisted session data

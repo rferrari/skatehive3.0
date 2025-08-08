@@ -20,7 +20,6 @@ export async function getLastReadNotificationDateServer(username: string): Promi
         }
         return '1970-01-01T00:00:00Z';
     } catch (error) {
-        console.log(error);
         return '1970-01-01T00:00:00Z';
     }
 }
@@ -30,7 +29,6 @@ export async function fetchNewNotificationsServer(username: string) {
         const notifications: Notifications[] = await HiveClient.call('bridge', 'account_notifications', { account: username, limit: 100 });
         return notifications;
     } catch (error) {
-        console.log('Error:', error);
         return [];
     }
 }

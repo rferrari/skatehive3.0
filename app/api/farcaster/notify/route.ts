@@ -30,17 +30,6 @@ export async function POST(request: NextRequest) {
             logSecurityAttempt(adminUsername, `${type} notification (admin operation)`, request, true);
         }
 
-        // Log all notification requests (for monitoring)
-        console.log('🔔 [Notify API] Received notification request:', {
-            type,
-            isAdminOperation,
-            adminUsername: isAdminOperation ? adminUsername : 'n/a',
-            title,
-            body: messageBody,
-            broadcast,
-            targetUsers: targetUsers?.length || 0
-        });
-
         // Create notification object
         const notification: HiveToFarcasterNotification = {
             type,
@@ -58,7 +47,6 @@ export async function POST(request: NextRequest) {
         let finalTargetUsers = targetUsers;
 
         if (broadcast) {
-            console.log('📢 [Notify API] Broadcasting to all users...');
             // Send to all users by not specifying targetUsers
             finalTargetUsers = undefined;
         } else if (!targetUsers && hiveUsername) {
@@ -66,18 +54,11 @@ export async function POST(request: NextRequest) {
             finalTargetUsers = [hiveUsername];
         }
 
-        console.log('🎯 [Notify API] Sending notification to:', finalTargetUsers ? `${finalTargetUsers.length} specific users` : 'all users');
-
         // Send notification
         const result = await farcasterNotificationService.sendNotification(
             notification,
             finalTargetUsers
         );
-
-        console.log('✅ [Notify API] Notification sent:', {
-            success: result.success,
-            resultCount: result.results?.length || 0
-        });
 
         return NextResponse.json({
             success: result.success,

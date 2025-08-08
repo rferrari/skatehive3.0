@@ -75,7 +75,6 @@ export default function NotificationItem({
 
   // Add helper to fetch comment content
   const fetchCommentContent = useCallback(async () => {
-    console.log('fetchCommentContent called for:', postAuthor, postId);
     const checkIfUserVoted = (post: Discussion | null) => {
       if (!post || !post.active_votes || !currentUser) return false;
       return post.active_votes.some((vote) => vote.voter === currentUser);
@@ -90,7 +89,6 @@ export default function NotificationItem({
         post = await getPost(postAuthor, postId);
         postCache.current[replyKey] = post;
       }
-      console.log('Setting reply:', post);
       setReply(post);
 
       // Check if user has voted on this post
@@ -673,12 +671,10 @@ export default function NotificationItem({
                       discussion={reply}
                       voted={hasVoted}
                       setVoted={(newVotedState) => {
-                        console.log('UpvoteButton setVoted called with:', newVotedState);
                         setHasVoted(newVotedState);
                       }}
                       activeVotes={reply.active_votes || []}
                       setActiveVotes={(votes) => {
-                        console.log('UpvoteButton setActiveVotes called with:', votes);
                         if (reply) {
                           setReply({ ...reply, active_votes: votes });
                         }

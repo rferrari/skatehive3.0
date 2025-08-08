@@ -613,16 +613,13 @@ case 'NEW_TYPE':
 // 1. All notifications showing 1970 timestamps (CRITICAL BUG - FIXED)
 // Problem: Hive API returns 'date' field, not 'timestamp'
 // Check: notification.date || notification.timestamp || 0
-console.log('Notification timestamp:', notification.date);
 // Fixed in: automated-notifications.ts (July 2025)
 
 // 2. Memory cache growing too large
-console.log(`Cache size: ${enrichmentCache.size} entries`);
 // Solution: Check cleanupEnrichmentCache() execution
 
 // 3. Database logs accumulating
 // Check cleanup execution in logs
-console.log('[AutomatedNotificationService] 🧹 Running periodic cleanup...');
 
 // 4. API rate limiting from Hive
 // Check selective enrichment percentages
@@ -682,14 +679,12 @@ curl -X POST "/api/farcaster/cleanup" \
 ```typescript
 // Clear enrichment cache
 enrichmentCache.clear();
-console.log('Emergency cache clear executed');
 ```
 
 #### **Processing Failures**
 ```typescript
 // Check user count and notification volume
 const activeUsers = await this.getActiveUsers();
-console.log(`Processing ${activeUsers.length} active users`);
 ```
 
 ---

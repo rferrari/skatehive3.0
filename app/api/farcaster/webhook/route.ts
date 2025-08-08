@@ -5,7 +5,6 @@ import { FarcasterSignature } from '@/types/farcaster';
 export async function POST(request: NextRequest) {
     try {
         const signature: FarcasterSignature = await request.json();
-        console.log('[Webhook] Received Farcaster signature:', JSON.stringify(signature));
 
         // Validate the signature format
         if (!signature.header || !signature.payload || !signature.signature) {
@@ -18,7 +17,6 @@ export async function POST(request: NextRequest) {
 
         // Process the webhook
         const success = await processFarcasterWebhook(signature);
-        console.log('[Webhook] processFarcasterWebhook result:', success);
 
         if (success) {
             return NextResponse.json({ success: true });

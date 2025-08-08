@@ -160,22 +160,16 @@ export default function ConnectionModal({
           "You're connected via Farcaster miniapp. Close the app to disconnect.",
       });
     } else {
-      console.log("[FarcasterDisconnect] Starting disconnect process...");
 
       // Step 1: Clear the custom session first
       clearSession();
-      console.log("[FarcasterDisconnect] Custom session cleared");
 
       // Step 2: Sign out from Auth Kit
       signOut();
-      console.log("[FarcasterDisconnect] Auth Kit signOut called");
 
       // Step 3: Force a small delay and try to clear again to ensure it sticks
       setTimeout(() => {
         clearSession();
-        console.log(
-          "[FarcasterDisconnect] Second clearSession call for safety"
-        );
       }, 200);
 
       toast({
