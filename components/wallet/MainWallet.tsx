@@ -29,6 +29,7 @@ import SendTokenModal from "@/components/wallet/SendTokenModal";
 import { Asset } from "@hiveio/dhive";
 import HivePowerSection from "./HivePowerSection";
 import HiveSection from "./HiveSection";
+import SkateBankSection from "./SkateBankSection";
 import HBDSection from "./HBDSection";
 import MarketPrices from "./MarketPrices";
 import SwapSection from "./SwapSection";
@@ -548,7 +549,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                           </Box>
 
 
-                          {/* HBD Savings Investment */}
+                          {/* SkateBank Investment */}
                           <Box
                             p={4}
                             bg="background"
@@ -556,16 +557,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                             border="1px solid"
                             borderColor="muted"
                           >
-                            <Heading size="sm" mb={2} color="primary">
-                              🏛️ Dollar Savings (15% APR)
-                            </Heading>
-                            <Text fontSize="sm" color="text" mb={3}>
-                              • Earn guaranteed 15% annual interest on your Dollar Savings.
-                              • Claim Monthly interest
-                              • 3-day withdrawal period for security
-                            </Text>
-
-                            <HBDSection
+                            <SkateBankSection
                               hbdBalance={hiveBalances.hbdBalance}
                               hbdSavingsBalance={hiveBalances.hbdSavingsBalance}
                               hbdPrice={hbdPrice}
@@ -578,7 +570,6 @@ export default function MainWallet({ username }: MainWalletProps) {
                               }
                               onModalOpen={handleModalOpen}
                               onClaimInterest={handleClaimHbdInterest}
-                              isBankView={true}
                             />
                           </Box>
 
