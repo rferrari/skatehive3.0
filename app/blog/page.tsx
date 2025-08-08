@@ -114,7 +114,7 @@ function BlogContent() {
         ];
       }
     } catch (error) {
-      console.log(error);
+      // Error handled silently for production
     } finally {
       isFetching.current = false;
     }

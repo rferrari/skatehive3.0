@@ -100,7 +100,7 @@ export default function SnapsGrid({ username }: SnapsGridProps) {
 
       if (videoUrls.length > 0) {
         preloadThumbnails(videoUrls).catch((error) => {
-          console.warn("Failed to preload some thumbnails:", error);
+          // Preload errors handled silently for production
         });
       }
     }

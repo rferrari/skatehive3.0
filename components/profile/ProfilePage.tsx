@@ -1,5 +1,12 @@
 "use client";
-import React, { useState, useMemo, useCallback, memo, useRef, useEffect } from "react";
+import React, {
+  useState,
+  useMemo,
+  useCallback,
+  memo,
+  useRef,
+  useEffect,
+} from "react";
 import { Box, Alert, AlertIcon, Container, Center } from "@chakra-ui/react";
 import useHiveAccount from "@/hooks/useHiveAccount";
 import LoadingComponent from "../homepage/loadingComponent";
@@ -33,7 +40,9 @@ const MemoizedSnapsGrid = memo(function MemoizedSnapsGrid({
 });
 
 // Memoized PostInfiniteScroll to prevent re-renders
-const MemoizedPostInfiniteScroll = memo(function MemoizedPostInfiniteScroll(props: any) {
+const MemoizedPostInfiniteScroll = memo(function MemoizedPostInfiniteScroll(
+  props: any
+) {
   return <PostInfiniteScroll {...props} />;
 });
 
@@ -65,16 +74,16 @@ const ContentViews = memo(function ContentViews({
       <Box display={viewMode === "videoparts" ? "block" : "none"}>
         {viewMode === "videoparts" && <VideoPartsView {...videoPartsProps} />}
       </Box>
-      
+
       <Box display={viewMode === "snaps" ? "block" : "none"}>
         {viewMode === "snaps" && <MemoizedSnapsGrid username={username} />}
       </Box>
-      
+
       <Box display={["grid", "list"].includes(viewMode) ? "block" : "none"}>
         {["grid", "list"].includes(viewMode) && (
-          <MemoizedPostInfiniteScroll 
-            key={`posts-${viewMode}`} 
-            {...postProps} 
+          <MemoizedPostInfiniteScroll
+            key={`posts-${viewMode}`}
+            {...postProps}
           />
         )}
       </Box>
@@ -116,10 +125,14 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
   );
   const { isFollowing, isFollowLoading, updateFollowing, updateLoading } =
     useFollowStatus(user, username);
-  const { posts, fetchPosts, isLoading: postsLoading } = useProfilePosts(username);
+  const {
+    posts,
+    fetchPosts,
+    isLoading: postsLoading,
+  } = useProfilePosts(username);
   const { viewMode, handleViewModeChange, closeMagazine } = useViewMode();
   const isMobile = useIsMobile();
-  
+
   // Debounce timer ref for view mode changes
   const viewModeTimer = useRef<NodeJS.Timeout | null>(null);
   const isTransitioning = useRef(false);
@@ -141,25 +154,28 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
     (mode: "grid" | "list" | "magazine" | "videoparts" | "snaps") => {
       // Prevent rapid changes
       if (isTransitioning.current) return;
-      
+
       // Clear previous timer
       if (viewModeTimer.current) {
         clearTimeout(viewModeTimer.current);
       }
-      
+
       isTransitioning.current = true;
-      
+
       // Debounce the view mode change to prevent rapid switching
       viewModeTimer.current = setTimeout(() => {
         // Use requestIdleCallback if available for non-blocking execution
         if (window.requestIdleCallback) {
-          window.requestIdleCallback(() => {
-            handleViewModeChange(mode);
-            // Reset transition flag after a brief delay
-            setTimeout(() => {
-              isTransitioning.current = false;
-            }, 100);
-          }, { timeout: 100 });
+          window.requestIdleCallback(
+            () => {
+              handleViewModeChange(mode);
+              // Reset transition flag after a brief delay
+              setTimeout(() => {
+                isTransitioning.current = false;
+              }, 100);
+            },
+            { timeout: 100 }
+          );
         } else {
           // Fallback to requestAnimationFrame
           requestAnimationFrame(() => {
@@ -191,7 +207,9 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
     if (!["grid", "list", "magazine"].includes(viewMode)) {
       return [];
     }
-    return [...posts].sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime());
+    return [...posts].sort(
+      (a, b) => new Date(b.created).getTime() - new Date(a.created).getTime()
+    );
   }, [posts, viewMode]);
 
   // Memoize post-related props - only when needed for grid/list views
@@ -206,7 +224,7 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
         hideAuthorInfo: true,
       };
     }
-    
+
     return {
       allPosts: sortedPosts,
       fetchPosts,

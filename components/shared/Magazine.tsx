@@ -1,5 +1,13 @@
 "use client";
-import { useState, useRef, useMemo, useEffect, lazy, Suspense, useCallback } from "react";
+import {
+  useState,
+  useRef,
+  useMemo,
+  useEffect,
+  lazy,
+  Suspense,
+  useCallback,
+} from "react";
 import {
   Box,
   Flex,
@@ -34,7 +42,7 @@ function useMagazinePosts(
       setIsLoading(false);
       return;
     }
-    
+
     let isMounted = true;
     setIsLoading(true);
     setError(null);
@@ -166,16 +174,20 @@ export default function Magazine(props: MagazineProps) {
   // Only use the hook to fetch posts if tag and query are provided
   const shouldFetchPosts = !!(props.tag && props.query);
   const magazinePosts = useMagazinePosts(
-    props.query || "created", 
+    props.query || "created",
     props.tag || []
   );
-  
+
   const posts = useMemo(() => {
-    const finalPosts = shouldFetchPosts ? magazinePosts.posts : props.posts || [];
+    const finalPosts = shouldFetchPosts
+      ? magazinePosts.posts
+      : props.posts || [];
     return finalPosts;
   }, [magazinePosts.posts, props.posts, shouldFetchPosts]);
-  
-  const isLoading = shouldFetchPosts ? magazinePosts.isLoading : props.isLoading || false;
+
+  const isLoading = shouldFetchPosts
+    ? magazinePosts.isLoading
+    : props.isLoading || false;
   const error = shouldFetchPosts ? magazinePosts.error : props.error || null;
 
   // Optimize initialization for better performance
@@ -186,10 +198,10 @@ export default function Magazine(props: MagazineProps) {
         setIsInitialized(true);
       });
     };
-    
+
     // Start initialization immediately but defer heavy operations
     initializeAsync();
-    
+
     return () => {
       if (animationFrame) {
         cancelAnimationFrame(animationFrame);
@@ -480,15 +492,27 @@ export default function Magazine(props: MagazineProps) {
                 className="hide-scrollbar"
               >
                 {!isInitialized ? (
-                  <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+                  <Box
+                    display="flex"
+                    justifyContent="center"
+                    alignItems="center"
+                    height="100%"
+                  >
                     <LoadingComponent />
                   </Box>
                 ) : (
-                  <Suspense fallback={
-                    <Box display="flex" justifyContent="center" alignItems="center" height="100%">
-                      <LoadingComponent />
-                    </Box>
-                  }>
+                  <Suspense
+                    fallback={
+                      <Box
+                        display="flex"
+                        justifyContent="center"
+                        alignItems="center"
+                        height="100%"
+                      >
+                        <LoadingComponent />
+                      </Box>
+                    }
+                  >
                     <HiveMarkdown markdown={post.body} />
                   </Suspense>
                 )}

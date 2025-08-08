@@ -4,11 +4,9 @@ import { Discussion } from '@hiveio/dhive';
 import HiveClient from '@/lib/hive/hiveclient';
 import { validateHiveUsernameFormat } from '@/lib/utils/hiveAccountUtils';
 
-// Debug utility that only logs in development mode
+// Debug utility - disabled for production
 const debug = (...args: any[]) => {
-    if (process.env.NODE_ENV === 'development') {
-        console.log(...args);
-    }
+    // Disabled for production
 };
 
 export default function useUserSnaps(username: string) {
@@ -52,7 +50,6 @@ export default function useUserSnaps(username: string) {
 
                 return result;
             } catch (error) {
-                console.error('Error parsing snap for media:', error);
                 return false;
             }
         });
@@ -92,7 +89,6 @@ export default function useUserSnaps(username: string) {
                 hasMedia: uniqueImages.length > 0 || uniqueVideos.length > 0
             };
         } catch (error) {
-            console.error('Error extracting media from snap:', error);
             return { images: [], videos: [], hasMedia: false };
         }
     };
@@ -144,7 +140,6 @@ export default function useUserSnaps(username: string) {
 
             return mediaSnaps;
         } catch (error) {
-            console.error('Error fetching user snaps from Hive blockchain:', error);
             throw error;
         }
     };
@@ -180,7 +175,6 @@ export default function useUserSnaps(username: string) {
         } else if (data.result && Array.isArray(data.result)) {
             userSnaps = data.result;
         } else {
-            console.error('Unexpected API response structure:', data);
             return [];
         }
 
@@ -278,14 +272,12 @@ export default function useUserSnaps(username: string) {
     const fetchUserSnaps = useCallback(async (): Promise<Discussion[]> => {
         // Validate username to prevent injection attacks
         if (!username || typeof username !== 'string') {
-            console.error('Invalid username: must be a non-empty string');
             return [];
         }
 
         // Validate username format using centralized validation
         const validation = validateHiveUsernameFormat(username);
         if (!validation.isValid) {
-            console.error('Invalid username format:', validation.error, username);
             return [];
         }
 
@@ -298,23 +290,17 @@ export default function useUserSnaps(username: string) {
 
             // If API returns no results, try Hive blockchain as fallback
             if (userSnaps.length === 0) {
-                console.log('No snaps found from API, trying Hive blockchain fallback');
                 try {
                 userSnaps = await fetchUserSnapsFromHive(username);
-                console.log('Successfully fetched user snaps from Hive blockchain fallback');
                 } catch (hiveError) {
-                console.warn('Hive blockchain fallback also failed:', hiveError);
                 // Still return empty array from API rather than failing completely
                 }
             }
             } catch (apiError) {
-            console.warn('API fetch failed for user snaps, falling back to Hive blockchain:', apiError);
             // Fallback to Hive blockchain if API method fails
             try {
                 userSnaps = await fetchUserSnapsFromHive(username);
-                console.log('Successfully fetched user snaps from Hive blockchain fallback');
             } catch (hiveError) {
-                console.error('Both API and Hive blockchain fetch methods failed for user snaps:', hiveError);
                 setHasMore(false);
                 return [];
             }
@@ -322,7 +308,6 @@ export default function useUserSnaps(username: string) {
 
             return userSnaps;
         } catch (error) {
-            console.error('Error fetching user snaps:', error);
             setHasMore(false);
             return [];
         }
@@ -345,7 +330,6 @@ export default function useUserSnaps(username: string) {
                 });
             }
         } catch (error) {
-            console.error('Error loading user snaps:', error);
             setHasMore(false);
         } finally {
             setIsLoading(false);

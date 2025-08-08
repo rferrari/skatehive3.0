@@ -40,8 +40,6 @@ const MagazineModal = React.memo(function MagazineModal({
   magazineTag,
   magazineQuery = "created",
 }: MagazineModalProps) {
-  if (!isOpen) return null; // Don't render anything when closed
-
   // Memoize the tag calculation to prevent unnecessary re-renders
   const tag = useMemo(() => {
     return username ? [{ tag: username, limit: 30 }] : magazineTag || [];
@@ -64,11 +62,13 @@ const MagazineModal = React.memo(function MagazineModal({
     };
   }, [posts, isLoading, tag, magazineQuery]);
 
+  if (!isOpen) return null; // Don't render anything when closed
+
   return (
-    <Modal 
-      isOpen={isOpen} 
-      onClose={onClose} 
-      size="full" 
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      size="full"
       motionPreset="none"
       trapFocus={false}
       blockScrollOnMount={false}

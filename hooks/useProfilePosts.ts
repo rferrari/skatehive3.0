@@ -30,7 +30,6 @@ export default function useProfilePosts(username: string) {
             setIsLoading(false);
             isFetching.current = false;
         } catch (err) {
-            console.error("Failed to fetch posts", err);
             setIsLoading(false);
             isFetching.current = false;
         }

@@ -56,7 +56,7 @@ export const NotificationProvider = ({
       setNotifications(notifs);
       setLastReadDate(lastRead);
     } catch (error) {
-      console.error("Error refreshing notifications:", error);
+      // Error handled silently for production
     } finally {
       setIsLoading(false);
     }
@@ -96,7 +96,6 @@ export const NotificationProvider = ({
       // If no timezone info, assume it's UTC (common for blockchain timestamps)
       return new Date(dateString + "Z");
     } catch (error) {
-      console.warn("Failed to parse notification date:", dateString, error);
       return new Date(0); // Return epoch as fallback
     }
   }, []);
