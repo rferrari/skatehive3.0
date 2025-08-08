@@ -444,7 +444,7 @@ export default function PIXTabContent() {
           </Box>
         </>
       ) : (
-        <Text color="red.400">No dashboard data available</Text>
+        <Text color="red.400">Pixbee is offline now. Try later</Text>
       )}
 
       <Box>
