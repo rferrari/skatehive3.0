@@ -106,7 +106,7 @@ export default function GameClientPage() {
       document.body.style.overflow = "auto";
       document.removeEventListener("keydown", handleKeyPress);
     };
-  }, [isModalFullscreen]);
+  }, [isModalFullscreen, toggleModalFullscreen]);
 
   return (
     <>
