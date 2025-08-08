@@ -444,7 +444,7 @@ export default function PIXTabContent() {
             borderColor="muted"
           >
             <Heading size="sm" mb={4} color="primary" fontFamily="Joystix">
-              💸 PIX to HBD Transfer
+              💲 PIX to HBD Transfer
             </Heading>
             <OrderedList pl={4} color="text">
               <ListItem mb={1}>
@@ -465,9 +465,6 @@ export default function PIXTabContent() {
 
           {/* Transaction History */}
           <Box>
-            <Heading size="sm" mb={4} color="primary" fontFamily="Joystix">
-              📜 Your Withdraw History
-            </Heading>
             <PIXTransactionHistory searchAccount={"pixbee"} pixDashboardData={pixDashboardData} />
           </Box>
 
