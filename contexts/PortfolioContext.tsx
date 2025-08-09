@@ -7,7 +7,6 @@ import React, {
   ReactNode,
   useCallback,
   useMemo,
-  useRef,
 } from "react";
 import { PortfolioData } from "../types/portfolio";
 
@@ -45,44 +44,19 @@ export function PortfolioProvider({
     useState<Record<string, PortfolioData>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [lastFetchTime, setLastFetchTime] = useState<number>(0);
-  const abortControllerRef = useRef<AbortController | null>(null);
-
-  // Cache to prevent duplicate API calls
-  const portfolioCache = useRef<Map<string, { data: PortfolioData | null; timestamp: number }>>(new Map());
-  const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes cache
 
   const fetchPortfolio = useCallback(
-    async (walletAddress: string, signal?: AbortSignal): Promise<PortfolioData | null> => {
-      // Check cache first
-      const cached = portfolioCache.current.get(walletAddress);
-      const now = Date.now();
-      if (cached && (now - cached.timestamp) < CACHE_DURATION) {
-        return cached.data;
-      }
-
+    async (walletAddress: string): Promise<PortfolioData | null> => {
       try {
-        const response = await fetch(`/api/portfolio/${walletAddress}`, { signal });
-        if (!response.ok) {
-          let errorMessage = "Failed to fetch portfolio";
-          try {
-            const errorData = await response.json();
-            errorMessage = errorData?.message || errorMessage;
-          } catch {
-            // Non-JSON error response, keep default message
-          }
-          throw new Error(errorMessage);
-        }
+        const response = await fetch(`/api/portfolio/${walletAddress}`);
         const data = await response.json();
-        
-        // Cache the result
-        portfolioCache.current.set(walletAddress, { data, timestamp: now });
+
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to fetch portfolio");
+        }
+
         return data;
       } catch (err) {
-        if (err instanceof Error && err.name === 'AbortError') {
-          // Don't log abort errors
-          return null;
-        }
         console.error(`Error fetching portfolio for ${walletAddress}:`, err);
         return null;
       }
@@ -90,12 +64,8 @@ export function PortfolioProvider({
     []
   );
 
-  const fetchAllPortfolios = useCallback(async (forceRefresh = false) => {
-    // Prevent duplicate fetches and add debouncing
-    const now = Date.now();
-    if (!forceRefresh && (now - lastFetchTime) < 1000) {
-      return; // Debounce: prevent calls within 1 second
-    }
+  const fetchAllPortfolios = useCallback(async () => {
+    // Production: Debug logging removed
 
     if (
       !address &&
@@ -108,23 +78,8 @@ export function PortfolioProvider({
       return;
     }
 
-    // Cancel previous request
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-
-    // Create new abort controller
-    const abortController = new AbortController();
-    abortControllerRef.current = abortController;
-
     setIsLoading(true);
     setError(null);
-    setLastFetchTime(now);
-
-    // Clear cache if force refresh
-    if (forceRefresh) {
-      portfolioCache.current.clear();
-    }
 
     try {
       // Filter out Solana addresses (they don't start with 0x) and deduplicate
@@ -138,15 +93,10 @@ export function PortfolioProvider({
 
       const [ethPortfolio, fcPortfolio, ...verifiedPortfolios] =
         await Promise.all([
-          address ? fetchPortfolio(address, abortController.signal) : null,
-          farcasterAddress ? fetchPortfolio(farcasterAddress, abortController.signal) : null,
-          ...ethVerifiedAddresses.map((addr) => fetchPortfolio(addr, abortController.signal)),
+          address ? fetchPortfolio(address) : null,
+          farcasterAddress ? fetchPortfolio(farcasterAddress) : null,
+          ...ethVerifiedAddresses.map((addr) => fetchPortfolio(addr)),
         ]);
-
-      // Check if request was aborted
-      if (abortController.signal.aborted) {
-        return;
-      }
 
       setPortfolio(ethPortfolio);
       setFarcasterPortfolio(fcPortfolio);
@@ -161,19 +111,11 @@ export function PortfolioProvider({
       });
       setFarcasterVerifiedPortfolios(verifiedPortfoliosRecord);
     } catch (err) {
-      if (err instanceof Error && err.name === 'AbortError') {
-        // Don't set error for aborted requests
-        return;
-      }
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setIsLoading(false);
-      // Clear the abort controller reference
-      if (abortControllerRef.current === abortController) {
-        abortControllerRef.current = null;
-      }
     }
-  }, [address, farcasterAddress, farcasterVerifiedAddresses, fetchPortfolio, lastFetchTime]);
+  }, [address, farcasterAddress, farcasterVerifiedAddresses, fetchPortfolio]);
 
   // Aggregate portfolios
   const aggregatedPortfolio = useMemo((): PortfolioData | null => {
@@ -267,13 +209,6 @@ export function PortfolioProvider({
 
   useEffect(() => {
     fetchAllPortfolios();
-
-    // Cleanup function to abort pending requests
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-    };
   }, [fetchAllPortfolios]);
 
   // Memoize the context value to prevent unnecessary re-renders
@@ -285,7 +220,7 @@ export function PortfolioProvider({
       aggregatedPortfolio,
       isLoading,
       error,
-      refetch: () => fetchAllPortfolios(true), // Force refresh when called manually
+      refetch: fetchAllPortfolios,
     }),
     [
       portfolio,

@@ -9,7 +9,7 @@ interface lastContainerInfo {
 
 export const useSnaps = () => {
   // Data source priority: 1 = API first, 2 = Hive blockchain first
-  const DATA_SOURCE_PRIORITY = 1;
+  const DATA_SOURCE_PRIORITY = 2;
   
   const lastContainerRef = useRef<lastContainerInfo | null>(null); // Use useRef for last container
   const fetchedPermlinksRef = useRef<Set<string>>(new Set()); // Track fetched permlinks

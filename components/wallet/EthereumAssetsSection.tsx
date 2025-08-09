@@ -110,11 +110,9 @@ export default function EthereumAssetsSection() {
         unsubscribe();
       };
     }
-  }, [aggregatedPortfolio?.tokens?.length]); // Only depend on length to prevent excessive re-runs
+  }, [aggregatedPortfolio?.tokens]);
 
   const handleForceRefresh = useCallback(async () => {
-    if (isRefreshing) return; // Prevent multiple simultaneous refreshes
-    
     setIsRefreshing(true);
     try {
       if (aggregatedPortfolio?.tokens) {
@@ -122,14 +120,14 @@ export default function EthereumAssetsSection() {
         // Clear the portfolio hash to allow fresh preloading
         sessionStorage.removeItem("lastPortfolioHash");
       }
-      // Refetch portfolio data from API with force refresh
+      // Refetch portfolio data from API
       refetch();
     } catch (error) {
       console.error("Failed to refresh token data:", error);
     } finally {
       setIsRefreshing(false);
     }
-  }, [aggregatedPortfolio?.tokens, refetch, isRefreshing]);
+  }, [aggregatedPortfolio?.tokens, refetch]);
 
   const handleSendToken = useCallback(
     (tokenDetail: TokenDetail, logoUrl?: string) => {
@@ -179,10 +177,10 @@ export default function EthereumAssetsSection() {
     address,
     isFarcasterConnected,
     farcasterProfile?.custody,
-    portfolio?.totalNetWorth, // Only check net worth to prevent constant re-renders
-    farcasterPortfolio?.totalNetWorth,
-    Object.keys(farcasterVerifiedPortfolios).length, // Only check length
-    aggregatedPortfolio?.totalNetWorth,
+    portfolio,
+    farcasterPortfolio,
+    farcasterVerifiedPortfolios,
+    aggregatedPortfolio,
   ]);
 
   return (

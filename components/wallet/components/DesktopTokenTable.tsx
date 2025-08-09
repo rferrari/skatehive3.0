@@ -18,7 +18,7 @@ import {
   MenuItem,
   Box,
 } from "@chakra-ui/react";
-import { Fragment, memo } from "react";
+import { Fragment } from "react";
 import { FaChevronDown, FaChevronUp, FaPaperPlane } from "react-icons/fa";
 import {
   ConsolidatedToken,
@@ -39,7 +39,7 @@ interface DesktopTokenTableProps {
   onSendToken: (token: TokenDetail, logoUrl?: string) => void;
 }
 
-export default memo(function DesktopTokenTable({
+export default function DesktopTokenTable({
   consolidatedTokens,
   expandedTokens,
   onToggleExpansion,
@@ -258,4 +258,4 @@ export default memo(function DesktopTokenTable({
       </Table>
     </TableContainer>
   );
-});
+}
