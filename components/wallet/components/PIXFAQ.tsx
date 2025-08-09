@@ -52,13 +52,11 @@ const PIXFAQ = () => {
       <Heading size="sm" mb={4} color="primary" fontFamily="Joystix">
         {content[language].title}
       </Heading>
-      <Text mt={2} color="text">
-        <strong>{content[language].question}</strong>
-        <br />
-        {content[language].answer.map((line, index) => (
-          <Box key={index} dangerouslySetInnerHTML={{ __html: line }} />
-        ))}
-      </Text>
+      <strong>{content[language].question}</strong>
+      <br />
+      {content[language].answer.map((line, index) => (
+        <Box key={index} dangerouslySetInnerHTML={{ __html: line }} />
+      ))}
     </Box>
   );
 };
