@@ -455,6 +455,21 @@ export default function PIXTabContent() {
         </Center>
       ) : pixDashboardData ? (
         <>
+          <Box>
+            <Heading
+              size="md"
+              mb={3}
+              color="primary"
+              fontFamily="Joystix"
+            >
+              💸 Pix
+            </Heading>
+            <Text fontSize="sm" color="text" mb={1}>
+              Fast, secure, and convenient way to send HBD via PIX!
+              Use Skatebank service powered by Pixbee to Buy and sell HBD instantly using PIX.
+            </Text>
+          </Box>
+          
           <BalanceBarGraph data={pixDashboardData} />
 
           {/* HBD to PIX Form */}
