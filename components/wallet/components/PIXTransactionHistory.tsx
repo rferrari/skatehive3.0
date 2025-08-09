@@ -135,18 +135,6 @@ const PIXTransactionHistory = ({ searchAccount, pixDashboardData }: { searchAcco
                 <Tr fontWeight="bold">
                   <Td textAlign="center">TOTAL</Td>
                   <Td isNumeric>
-                    {/* {Object.entries(totalSentToPixbee)
-                      .reduce((sum, [currency, amount]) => {
-                        let priceBRL = 0;
-                        if (currency === "HBD" && typeof pixDashboardData?.HBDPriceBRL === "number") {
-                          priceBRL = pixDashboardData.HBDPriceBRL;
-                        }
-                        if (currency === "HIVE" && typeof pixDashboardData?.HivePriceBRL === "number") {
-                          priceBRL = pixDashboardData.HivePriceBRL;
-                        }
-                        return sum + amount;
-                      }, 0)
-                      .toFixed(3)} */}
                   </Td>
                   <Td isNumeric>
                     R${" "}
@@ -164,18 +152,6 @@ const PIXTransactionHistory = ({ searchAccount, pixDashboardData }: { searchAcco
                       .toFixed(2)}
                   </Td>
                   <Td isNumeric>
-                    {/* {Object.entries(totalReceived)
-                      .reduce((sum, [currency, amount]) => {
-                        let priceBRL = 0;
-                        if (currency === "HBD" && typeof pixDashboardData?.HBDPriceBRL === "number") {
-                          priceBRL = pixDashboardData.HBDPriceBRL;
-                        }
-                        if (currency === "HIVE" && typeof pixDashboardData?.HivePriceBRL === "number") {
-                          priceBRL = pixDashboardData.HivePriceBRL;
-                        }
-                        return sum + amount;
-                      }, 0)
-                      .toFixed(3)} */}
                   </Td>
                   <Td isNumeric>
                     R${" "}
