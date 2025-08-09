@@ -9,7 +9,7 @@ interface lastContainerInfo {
 
 export const useSnaps = () => {
   // Data source priority: 1 = API first, 2 = Hive blockchain first
-  const DATA_SOURCE_PRIORITY = 1;
+  const DATA_SOURCE_PRIORITY = 2;
   
   const lastContainerRef = useRef<lastContainerInfo | null>(null); // Use useRef for last container
   const fetchedPermlinksRef = useRef<Set<string>>(new Set()); // Track fetched permlinks
@@ -172,20 +172,7 @@ export const useSnaps = () => {
       try {
         let newSnaps: Discussion[] = [];
 
-        if (DATA_SOURCE_PRIORITY === 1) {
-          // API first, blockchain fallback
-          try {
-            newSnaps = await fetchFromNewApi();
-          } catch (apiError) {
-            console.warn('API fetch failed, falling back to Hive blockchain:', apiError);
-            try {
-              newSnaps = await getMoreSnaps();
-            } catch (hiveError) {
-              console.error('Both API and Hive blockchain fetch methods failed:', hiveError);
-              return;
-            }
-          }
-        } else {
+        if (DATA_SOURCE_PRIORITY === 2) {
           // Blockchain first, API fallback
           try {
             newSnaps = await getMoreSnaps();
@@ -195,6 +182,19 @@ export const useSnaps = () => {
               newSnaps = await fetchFromNewApi();
             } catch (apiError) {
               console.error('Both Hive blockchain and API fetch methods failed:', apiError);
+              return;
+            }
+          }
+        } else {
+          // API first, blockchain fallback
+          try {
+            newSnaps = await fetchFromNewApi();
+          } catch (apiError) {
+            console.warn('API fetch failed, falling back to Hive blockchain:', apiError);
+            try {
+              newSnaps = await getMoreSnaps();
+            } catch (hiveError) {
+              console.error('Both API and Hive blockchain fetch methods failed:', hiveError);
               return;
             }
           }

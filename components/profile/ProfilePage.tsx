@@ -11,7 +11,6 @@ import { Box, Alert, AlertIcon, Container, Center } from "@chakra-ui/react";
 import useHiveAccount from "@/hooks/useHiveAccount";
 import LoadingComponent from "../homepage/loadingComponent";
 import PostInfiniteScroll from "../blog/PostInfiniteScroll";
-import type { ComponentProps } from "react";
 import { useAioha } from "@aioha/react-ui";
 import EditProfile from "./EditProfile";
 import { VideoPart } from "@/types/VideoPart";
@@ -42,7 +41,7 @@ const MemoizedSnapsGrid = memo(function MemoizedSnapsGrid({
 
 // Memoized PostInfiniteScroll to prevent re-renders
 const MemoizedPostInfiniteScroll = memo(function MemoizedPostInfiniteScroll(
-  props: ComponentProps<typeof PostInfiniteScroll>
+  props: any
 ) {
   return <PostInfiniteScroll {...props} />;
 });
@@ -134,8 +133,8 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
   const { viewMode, handleViewModeChange, closeMagazine } = useViewMode();
   const isMobile = useIsMobile();
 
-  // Debounce timer ref for view mode changes (DOM-safe typing)
-  const viewModeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Debounce timer ref for view mode changes
+  const viewModeTimer = useRef<NodeJS.Timeout | null>(null);
   const isTransitioning = useRef(false);
 
   // Memoize derived values
@@ -158,7 +157,7 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
 
       // Clear previous timer
       if (viewModeTimer.current) {
-        window.clearTimeout(viewModeTimer.current);
+        clearTimeout(viewModeTimer.current);
       }
 
       isTransitioning.current = true;
@@ -166,8 +165,8 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
       // Debounce the view mode change to prevent rapid switching
       viewModeTimer.current = setTimeout(() => {
         // Use requestIdleCallback if available for non-blocking execution
-        if ((window as any).requestIdleCallback) {
-          (window as any).requestIdleCallback(
+        if (window.requestIdleCallback) {
+          window.requestIdleCallback(
             () => {
               handleViewModeChange(mode);
               // Reset transition flag after a brief delay
@@ -249,7 +248,7 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
   useEffect(() => {
     return () => {
       if (viewModeTimer.current) {
-        window.clearTimeout(viewModeTimer.current);
+        clearTimeout(viewModeTimer.current);
       }
     };
   }, []);
