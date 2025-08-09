@@ -165,8 +165,8 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
       // Debounce the view mode change to prevent rapid switching
       viewModeTimer.current = setTimeout(() => {
         // Use requestIdleCallback if available for non-blocking execution
-        if (window.requestIdleCallback) {
-          window.requestIdleCallback(
+        if ((window as any).requestIdleCallback) {
+          (window as any).requestIdleCallback(
             () => {
               handleViewModeChange(mode);
               // Reset transition flag after a brief delay
