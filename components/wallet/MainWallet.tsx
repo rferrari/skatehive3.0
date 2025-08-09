@@ -42,6 +42,8 @@ import TotalPortfolioValue from "./components/TotalPortfolioValue";
 import MobileActionButtons from "./components/MobileActionButtons";
 import { TokenDetail } from "@/types/portfolio";
 import PIXTabContent from "./components/PIXTabContent";
+import { formatValue } from "@/lib/utils/portfolioUtils";
+import HiveTransactionHistory from "./components/HiveTransactionHistory";
 
 interface HiveToken {
   symbol: string;
@@ -487,9 +489,10 @@ export default function MainWallet({ username }: MainWalletProps) {
                           hivePrice={hivePrice}
                           onModalOpen={handleModalOpen}
                         />
+
                         <HBDSection
                           hbdBalance={hiveBalances.hbdBalance}
-                          hbdSavingsBalance="0.000" // Only show liquid HBD in wallet tab
+                          hbdSavingsBalance="0.000"
                           hbdPrice={hbdPrice}
                           estimatedClaimableInterest={0}
                           daysUntilClaim={0}
@@ -500,8 +503,33 @@ export default function MainWallet({ username }: MainWalletProps) {
                           onClaimInterest={handleClaimHbdInterest}
                           isWalletView={true}
                         />
+
+                        <Box
+                          p={4}
+                          mt={2}
+                          mb={2}
+                          bg="transparent"
+                          borderRadius="md"
+                          border="1px solid"
+                          borderColor="gray.200"
+                        >
+                          <Text color="primary" mb={4}>
+                            Estimated Account Value <strong>{formatValue(totalHiveAssetsValue)}</strong><br />
+                            <small>USD value of all Hive tokens and Ivenstments in your wallet.</small>
+                          </Text>
+
+                          {hiveAccount?.savings_withdraw_requests &&
+                            hiveAccount.savings_withdraw_requests > 0 && (
+                              <Text color="orange.400" fontSize="sm" mt={1}>
+                                🚨 You have {hiveAccount.savings_withdraw_requests} savings withdrawal
+                                {hiveAccount.savings_withdraw_requests > 1 ? "s" : ""} in progress.
+                              </Text>
+                            )}
+                        </Box>
+
                       </>
                     ) : (
+
                       /* Show Connect Hive Section if not connected */
                       <MobileActionButtons
                         onSend={handleMobileSend}
@@ -510,12 +538,22 @@ export default function MainWallet({ username }: MainWalletProps) {
                         onHiveSwap={handleMobileHiveSwap}
                       />
                     )}
+
                     {/* Ethereum Assets Section - Show if connected to Ethereum OR have Farcaster data */}
                     {isMounted && (isConnected || isFarcasterConnected) && (
                       <EthereumAssetsSection />
                     )}
+
                     {/* NFT Section - Show if connected to Ethereum */}
                     {isMounted && isConnected && <NFTSection />}
+
+                    {/* Hive Sections - Show if user is connected to Hive */}
+                    {/* Transaction History */}
+                    {user && (
+                      <HiveTransactionHistory searchAccount={user} />
+                    )}
+
+
                   </TabPanel>
 
                   {/* SkateBank Tab - Investment Options - Only show if connected to Hive */}
@@ -545,7 +583,6 @@ export default function MainWallet({ username }: MainWalletProps) {
                             />
                           </Box>
 
-
                           {/* SkateBank Investment */}
                           <Box
                             p={4}
@@ -565,63 +602,12 @@ export default function MainWallet({ username }: MainWalletProps) {
                               lastInterestPayment={
                                 hbdInterestData.lastInterestPayment
                               }
+                              savings_withdraw_requests={(hiveAccount?.savings_withdraw_requests || 0)}
                               onModalOpen={handleModalOpen}
                               onClaimInterest={handleClaimHbdInterest}
                             />
                           </Box>
 
-                          {/* PIX Integration Section */}
-                          {/* <Box
-                          p={4}
-                          bg="background"
-                          borderRadius="lg"
-                          border="1px solid"
-                          borderColor="muted"
-                        >
-                          <Heading
-                            size="sm"
-                            mb={2}
-                            color="primary"
-                            display="flex"
-                            alignItems="center"
-                            gap={2}
-                          >
-                            🇧🇷 PIX Integration
-                          </Heading>
-                          <Text fontSize="sm" color="text" mb={3}>
-                            Buy and sell HBD instantly using PIX (Brazilian
-                            Real). Fast, secure, and convenient for Brazilian
-                            users!
-                          </Text>
-                          <Box
-                            as="button"
-                            onClick={() =>
-                              window.open(
-                                "https://pixbee-hive.vercel.app/",
-                                "_blank"
-                              )
-                            }
-                            w="100%"
-                            p={3}
-                            bg="primary"
-                            color="background"
-                            borderRadius="md"
-                            border="none"
-                            cursor="pointer"
-                            fontWeight="bold"
-                            fontSize="sm"
-                            transition="all 0.2s"
-                            _hover={{
-                              opacity: 0.8,
-                              transform: "translateY(-1px)",
-                            }}
-                            _active={{
-                              transform: "translateY(0px)",
-                            }}
-                          >
-                            🇧🇷 Buy and Sell HBD with PIX
-                          </Box> 
-                        */}
                         </Box>
 
                       </VStack>
@@ -632,23 +618,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                   {user && (
                     <TabPanel p={0}>
                       <VStack spacing={4} align="stretch">
-                        <Box>
-                          <Heading
-                            size="md"
-                            mb={3}
-                            color="primary"
-                            fontFamily="Joystix"
-                          >
-                            💸 Pix
-                          </Heading>
-                          <Text fontSize="sm" color="text" mb={1}>
-                            Fast, secure, and convenient way to send HBD via PIX!
-                            Use Skatebank service powered by Pixbee to Buy and sell HBD instantly using PIX.
-                          </Text>
-                        </Box>
-
                         <PIXTabContent />
-
                       </VStack>
                     </TabPanel>
                   )}
