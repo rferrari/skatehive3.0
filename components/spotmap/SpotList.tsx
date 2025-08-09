@@ -31,7 +31,6 @@ export default function SpotList({
   onLoadMore 
 }: SpotListProps) {
   const [displayedSpots, setDisplayedSpots] = useState<Discussion[]>([]);
-  const [visibleCount, setVisibleCount] = useState(10);
   const [conversation, setConversation] = useState<Discussion | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -65,32 +64,25 @@ export default function SpotList({
     if (typeof window !== 'undefined') {
     }
     setDisplayedSpots(baseSpots);
-    
-    // Reset visibleCount when spots change (new data loaded)
-    if (spots.length > 0) {
-      setVisibleCount(10);
-    }
   }, [spots, newSpot]);
 
   const handleLoadMore = useCallback(() => {
     if (typeof window !== 'undefined') {
+      console.log(`handleLoadMore called: hasMore=${hasMore}, onLoadMore=${!!onLoadMore}, isLoading=${isLoading}`);
     }
     
     if (onLoadMore && hasMore && !isLoading) {
-      // If we have a loadMore function, use it to fetch more data
+      // If we have a loadMore function and there's more data to fetch, use it
       if (typeof window !== 'undefined') {
+        console.log('Calling onLoadMore to fetch more data from API');
       }
       onLoadMore();
-    } else if (!onLoadMore) {
-      // Fallback to just showing more items from current data
-      if (typeof window !== 'undefined') {
-      }
-      setVisibleCount((prev) => prev + 10);
     } else {
       if (typeof window !== 'undefined') {
+        console.log('Cannot load more: conditions not met');
       }
     }
-  }, [onLoadMore, hasMore, isLoading, visibleCount, displayedSpots.length]);
+  }, [onLoadMore, hasMore, isLoading]);
 
   // Infinite scroll functionality
   useEffect(() => {
@@ -148,7 +140,7 @@ export default function SpotList({
     <>
       <Box my={8}>
         <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
-          {displayedSpots.slice(0, visibleCount).map((spot) => (
+          {displayedSpots.map((spot) => (
             <Snap
               key={spot.permlink}
               discussion={spot}
@@ -166,15 +158,15 @@ export default function SpotList({
           </Box>
         )}
         
-        {/* Show manual load more button as fallback */}
-        {(hasMore || visibleCount < displayedSpots.length) && !isLoading && (
+        {/* Show Load More button only when there's more data to fetch */}
+        {hasMore && onLoadMore && !isLoading && (
           <Box display="flex" justifyContent="center" py={4}>
             <Button
               onClick={handleLoadMore}
               colorScheme="primary"
               variant="outline"
             >
-              {hasMore ? "Load More Spots" : "Show More"}
+              Load More Spots
             </Button>
           </Box>
         )}
