@@ -114,7 +114,15 @@ function BlogContent() {
         ];
       }
     } catch (error) {
-      // Error handled silently for production
+        // error is silently swallowed
+        if (process.env.NODE_ENV === "development") {
+          console.error("Blog page error:", error);
+        } else {
+          // Replace with your monitoring service call
+          if (typeof window !== "undefined" && (window as any).monitoringService) {
+            (window as any).monitoringService.captureException(error);
+          }
+        }
     } finally {
       isFetching.current = false;
     }
