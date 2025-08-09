@@ -185,7 +185,7 @@ export const useSnaps = () => {
               return;
             }
           }
-        } else {
+        } else if (DATA_SOURCE_PRIORITY === 2) {
           // Blockchain first, API fallback
           try {
             newSnaps = await getMoreSnaps();
