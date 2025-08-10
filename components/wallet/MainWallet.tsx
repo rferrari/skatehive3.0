@@ -514,7 +514,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                           borderColor="gray.200"
                         >
                           <Text color="primary" mb={4}>
-                            Estimated Account Value <strong>{formatValue(totalHiveAssetsValue)}</strong><br />
+                            Estimated Hive Account Value: <strong>{formatValue(totalHiveAssetsValue)}</strong><br />
                             <small>USD value of all Hive tokens and Ivenstments in your wallet.</small>
                           </Text>
 
@@ -527,6 +527,8 @@ export default function MainWallet({ username }: MainWalletProps) {
                             )}
                         </Box>
 
+                        {/* Transaction History  - Show if user is connected to Hive */}
+                        <HiveTransactionHistory searchAccount={user} />
                       </>
                     ) : (
 
@@ -547,11 +549,6 @@ export default function MainWallet({ username }: MainWalletProps) {
                     {/* NFT Section - Show if connected to Ethereum */}
                     {isMounted && isConnected && <NFTSection />}
 
-                    {/* Hive Sections - Show if user is connected to Hive */}
-                    {/* Transaction History */}
-                    {user && (
-                      <HiveTransactionHistory searchAccount={user} />
-                    )}
 
 
                   </TabPanel>
