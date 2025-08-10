@@ -656,7 +656,23 @@ const ZoraCoinPageClient = React.memo(
                       See on Zora
                     </Button>
                   </HStack>
-                  <Box maxW="100%" overflow="hidden">
+                  <Box 
+                    maxW="100%" 
+                    overflow="hidden"
+                    wordBreak="break-all"
+                    overflowWrap="break-word"
+                    sx={{
+                      "& *": {
+                        wordBreak: "break-all",
+                        overflowWrap: "break-word",
+                        maxWidth: "100%"
+                      },
+                      "& a": {
+                        wordBreak: "break-all",
+                        overflowWrap: "break-word"
+                      }
+                    }}
+                  >
                     <EnhancedMarkdownRenderer
                       content={coinData.description || `${coinData.name} creator coin`}
                       className="text-sm text-gray-400"
