@@ -656,8 +656,8 @@ const ZoraCoinPageClient = React.memo(
                       See on Zora
                     </Button>
                   </HStack>
-                  <Box 
-                    maxW="100%" 
+                  <Box
+                    maxW="100%"
                     overflow="hidden"
                     wordBreak="break-all"
                     overflowWrap="break-word"
@@ -665,16 +665,18 @@ const ZoraCoinPageClient = React.memo(
                       "& *": {
                         wordBreak: "break-all",
                         overflowWrap: "break-word",
-                        maxWidth: "100%"
+                        maxWidth: "100%",
                       },
                       "& a": {
                         wordBreak: "break-all",
-                        overflowWrap: "break-word"
-                      }
+                        overflowWrap: "break-word",
+                      },
                     }}
                   >
                     <EnhancedMarkdownRenderer
-                      content={coinData.description || `${coinData.name} creator coin`}
+                      content={
+                        coinData.description || `${coinData.name} creator coin`
+                      }
                       className="text-sm text-gray-400"
                     />
                   </Box>
@@ -795,9 +797,9 @@ const ZoraCoinPageClient = React.memo(
                       _placeholder={{ color: "gray.500" }}
                     />
                     <VStack spacing={3} mt={3}>
-                      <HStack 
-                        spacing={{ base: 1, md: 2 }} 
-                        flexWrap="wrap" 
+                      <HStack
+                        spacing={{ base: 1, md: 2 }}
+                        flexWrap="wrap"
                         justify="center"
                         w="100%"
                       >
