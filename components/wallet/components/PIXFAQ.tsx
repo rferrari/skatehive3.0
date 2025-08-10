@@ -1,4 +1,4 @@
-import { Box, Heading, Text } from '@chakra-ui/react';
+import { Box, Heading, Text, Link } from '@chakra-ui/react';
 
 interface PIXFAQProps {
   language: 'en' | 'pt';
@@ -12,7 +12,13 @@ const PIXFAQ = ({ language }: PIXFAQProps) => {
       answer: [
         'Stay calm, it will arrive or we will refund you.',
         'Our team always receives notifications of transactions in case of failure.',
-        'If you wish, open a support ticket on our <a href="https://discord.gg/eAQfS97wHK">Discord channel</a>.',
+        {
+          text: 'If you wish, open a support ticket on our ',
+          link: {
+            href: 'https://discord.gg/eAQfS97wHK',
+            text: 'Discord channel',
+          },
+        },
       ],
     },
     pt: {
@@ -21,7 +27,13 @@ const PIXFAQ = ({ language }: PIXFAQProps) => {
       answer: [
         'Calma, ele vai chegar ou vamos te reembolsar.',
         'Nosso time sempre recebe notificações das transações em caso de falha.',
-        'Caso queira, abra um ticket de suporte em nosso <a href="https://discord.gg/eAQfS97wHK">Discord</a>.',
+        {
+          text: 'Caso queira, abra um ticket de suporte em nosso ',
+          link: {
+            href: 'https://discord.gg/eAQfS97wHK',
+            text: 'Discord',
+          },
+        },
       ],
     },
   };
@@ -38,10 +50,20 @@ const PIXFAQ = ({ language }: PIXFAQProps) => {
       <Heading size="sm" mb={4} color="primary" fontFamily="Joystix">
         {content[language].title}
       </Heading>
-      <strong>{content[language].question}</strong>
-      <br />
-      {content[language].answer.map((line, index) => (
-        <Box key={index} dangerouslySetInnerHTML={{ __html: line }} />
+      <Text as="strong">{content[language].question}</Text>
+      {content[language].answer.map((item, index) => (
+        <Text key={index} mb={2}>
+          {typeof item === 'string' ? (
+            item
+          ) : (
+            <>
+              {item.text}
+              <Link href={item.link.href} isExternal color="blue.500">
+                {item.link.text}
+              </Link>
+            </>
+          )}
+        </Text>
       ))}
     </Box>
   );

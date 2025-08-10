@@ -1,4 +1,4 @@
-import { Box, Heading, OrderedList, ListItem } from '@chakra-ui/react';
+import { Box, Heading, OrderedList, ListItem, Text } from '@chakra-ui/react';
 import { PixDashboardData } from './PIXTabContent';
 
 interface PixTransferGuideProps {
@@ -11,20 +11,34 @@ const PixTransferGuide = ({ pixDashboardData, language }: PixTransferGuideProps)
     en: {
       title: '💲 PIX to HBD',
       steps: [
-        `Send a PIX transfer to this Key: <strong>${pixDashboardData.pixbeePixKey}</strong>`,
+        {
+          text: 'Send a PIX transfer to this Key: ',
+          strong: pixDashboardData.pixbeePixKey,
+        },
         'In the PIX MESSAGE, specify the HIVE account to be credited with HBD. Example: "skater"',
         'To buy HIVE, specify hive after your account. Example: "skater420 hive"',
-        'Check <i>Skatebank Balance</i> above. If greater than our balance, your PIX will be refunded.',
+        {
+          text: 'Check ',
+          italic: 'Skatebank Balance',
+          textAfter: ' above. If greater than our balance, your PIX will be refunded.',
+        },
         'Send the PIX transfer and wait for the transfer.',
       ],
     },
     pt: {
       title: '💲 PIX para HBD',
       steps: [
-        `Envie uma transferência para esta Chave PIX: <strong>${pixDashboardData.pixbeePixKey}</strong>`,
+        {
+          text: 'Envie uma transferência para esta Chave PIX: ',
+          strong: pixDashboardData.pixbeePixKey,
+        },
         'Na MENSAGEM PIX, especifique a conta HIVE a ser creditada com HBD. Exemplo: "skater"',
         'Se quiser comprar HIVE, especifique hive após sua conta. Exemplo: "skater420 hive"',
-        'Verifique o <i>Saldo Skatebank</i> acima. Se for superior ao saldo, seu PIX será reembolsado.',
+        {
+          text: 'Verifique o ',
+          italic: 'Saldo Skatebank',
+          textAfter: ' acima. Se for superior ao saldo, seu PIX será reembolsado.',
+        },
         'Envie a transferência PIX e aguarde a transferência.',
       ],
     },
@@ -44,7 +58,18 @@ const PixTransferGuide = ({ pixDashboardData, language }: PixTransferGuideProps)
       </Heading>
       <OrderedList pl={4} color="text">
         {content[language].steps.map((step, index) => (
-          <ListItem key={index} mb={1} dangerouslySetInnerHTML={{ __html: step }} />
+          <ListItem key={index} mb={1}>
+            {typeof step === 'string' ? (
+              <Text>{step}</Text>
+            ) : (
+              <Text>
+                {step.text}
+                {step.strong && <Text as="strong">{step.strong}</Text>}
+                {step.italic && <Text as="i">{step.italic}</Text>}
+                {step.textAfter && step.textAfter}
+              </Text>
+            )}
+          </ListItem>
         ))}
       </OrderedList>
     </Box>
