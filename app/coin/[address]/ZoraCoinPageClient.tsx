@@ -38,6 +38,7 @@ import {
 import { ChevronDownIcon } from "@chakra-ui/icons";
 import { useZoraTrade, TradeConfig } from "@/hooks/useZoraTrade";
 import { getIpfsGatewayUrls } from "@/lib/utils/ipfsMetadata";
+import { EnhancedMarkdownRenderer } from "@/components/markdown/EnhancedMarkdownRenderer";
 
 // Component that tries multiple IPFS gateways for reliable media loading
 const MediaRenderer = React.memo(
@@ -179,17 +180,15 @@ const MediaRenderer = React.memo(
             playsInline
             w="100%"
             h="100%"
-            objectFit="cover"
+            objectFit={{ base: "contain", lg: "cover" }}
             borderRadius="lg"
             onError={handleVideoError}
             onLoadedData={handleVideoLoad}
             onCanPlay={handleVideoLoad}
             onLoadStart={() => {
-              console.log("🎬 Video loading started...");
               setIsLoading(true);
             }}
             onLoadedMetadata={() => {
-              console.log("🎬 Video metadata loaded");
               setIsLoading(false);
             }}
             style={{
@@ -224,12 +223,11 @@ const MediaRenderer = React.memo(
             alt={altText}
             w="100%"
             h="100%"
-            objectFit="cover"
+            objectFit={{ base: "contain", lg: "cover" }}
             borderRadius="lg"
             onError={handleImageError}
             onLoad={handleImageLoad}
             onLoadStart={() => {
-              console.log("🖼️ Image loading started...");
               setIsLoading(true);
             }}
             style={{
@@ -315,7 +313,7 @@ const ZoraCoinPageClient = React.memo(
       ethBalance,
     } = useZoraTrade();
 
-    // Get quote when amount changes
+    // Get quote when amount changes (optimized to prevent unnecessary requests)
     useEffect(() => {
       const getQuote = async () => {
         if (!tradeAmount || !coinData?.address || !isConnected) {
@@ -395,7 +393,6 @@ const ZoraCoinPageClient = React.memo(
 
           setQuoteResult(quote);
         } catch (error) {
-          console.error("Quote failed:", error);
           setQuoteResult(null);
           setFormattedQuoteOutput("0");
         } finally {
@@ -403,15 +400,20 @@ const ZoraCoinPageClient = React.memo(
         }
       };
 
-      const timeoutId = setTimeout(getQuote, 500); // Debounce
-      return () => clearTimeout(timeoutId);
+      // Only get quote if we have a valid amount
+      if (tradeAmount && parseFloat(tradeAmount) > 0) {
+        const timeoutId = setTimeout(getQuote, 800); // Increased debounce
+        return () => clearTimeout(timeoutId);
+      } else {
+        // Clear quote immediately if no valid amount
+        setQuoteResult(null);
+        setFormattedQuoteOutput("0");
+      }
     }, [
       tradeAmount,
       isBuying,
       coinData?.address,
-      isConnected,
-      getTradeQuote,
-      userBalance,
+      userBalance?.decimals, // Only depend on decimals, not the entire userBalance object
     ]);
 
     // Trade function that executes directly
@@ -476,10 +478,13 @@ const ZoraCoinPageClient = React.memo(
       }
     };
 
-    // Fetch user's coin balance when connected
+    // Fetch user's coin balance when connected (optimized)
     useEffect(() => {
       const fetchUserBalance = async () => {
-        if (!isConnected || !coinData?.address) return;
+        if (!isConnected || !coinData?.address) {
+          setUserBalance(null);
+          return;
+        }
 
         try {
           const balance = await getFormattedBalance(
@@ -489,11 +494,12 @@ const ZoraCoinPageClient = React.memo(
           setUserBalance(balance);
         } catch (err) {
           // Balance fetching failed silently
+          setUserBalance(null);
         }
       };
 
       fetchUserBalance();
-    }, [isConnected, coinData?.address, getFormattedBalance]);
+    }, [isConnected, coinData?.address]); // Removed getFormattedBalance from dependencies
 
     // Format large numbers
     const formatNumber = (value: string | number | undefined): string => {
@@ -551,16 +557,37 @@ const ZoraCoinPageClient = React.memo(
 
     return (
       <Box minH="100vh" bg="background" color="white">
-        <Grid templateColumns={{ base: "1fr", lg: "1fr 400px" }} h="100vh">
+        <Grid
+          templateColumns={{
+            base: "1fr",
+            lg: "1fr 400px",
+          }}
+          templateRows={{
+            base: "auto 1fr",
+            lg: "100vh",
+          }}
+          h={{ base: "auto", lg: "100vh" }}
+        >
           {/* Left Side - Media Content */}
           <GridItem
             bg="background"
             display="flex"
             alignItems="center"
             justifyContent="center"
-            p={4}
+            p={{ base: 1, md: 4 }}
+            order={{ base: 1, lg: 0 }}
+            minH={{ base: "60vh", lg: "100vh" }}
           >
-            <Box maxW="800px" maxH="600px" w="100%" h="100%">
+            <Box
+              maxW={{ base: "100%", lg: "800px" }}
+              maxH={{ base: "60vh", lg: "600px" }}
+              w="100%"
+              h={{ base: "auto", lg: "100%" }}
+              aspectRatio={{ base: "auto", lg: "unset" }}
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+            >
               <MediaRenderer
                 videoUrl={coinData.videoUrl}
                 imageUrl={coinData.image}
@@ -573,26 +600,40 @@ const ZoraCoinPageClient = React.memo(
           {/* Right Side - Trading Interface */}
           <GridItem
             bg="background"
-            borderLeft="1px solid"
+            borderLeft={{ base: "none", lg: "1px solid" }}
+            borderTop={{ base: "1px solid", lg: "none" }}
             borderColor="gray.700"
+            order={{ base: 2, lg: 1 }}
+            maxH={{ base: "none", lg: "100vh" }}
+            overflowY={{ base: "visible", lg: "auto" }}
           >
-            <VStack h="100%" spacing={0}>
+            <VStack h={{ base: "auto", lg: "100%" }} spacing={0}>
               {/* Header */}
               <Box
                 w="100%"
-                p={6}
+                p={{ base: 4, md: 6 }}
                 borderBottom="1px solid"
                 borderColor="gray.700"
               >
                 <VStack align="start" spacing={3}>
-                  <HStack justify="space-between" w="100%">
-                    <HStack>
+                  <HStack
+                    justify="space-between"
+                    w="100%"
+                    flexWrap={{ base: "wrap", md: "nowrap" }}
+                  >
+                    <HStack
+                      minW={{ base: "100%", sm: "auto" }}
+                      mb={{ base: 2, sm: 0 }}
+                    >
                       <Avatar
-                        size="sm"
+                        size={{ base: "md", md: "sm" }}
                         name={coinData.name || coinData.symbol}
                       />
                       <VStack align="start" spacing={1}>
-                        <Heading size="md" fontWeight="bold">
+                        <Heading
+                          size={{ base: "sm", md: "md" }}
+                          fontWeight="bold"
+                        >
                           {coinData.name || "Unknown Coin"}
                         </Heading>
                         <Text fontSize="xs" color="gray.400">
@@ -601,10 +642,12 @@ const ZoraCoinPageClient = React.memo(
                       </VStack>
                     </HStack>
                     <Button
-                      size="sm"
+                      size={{ base: "xs", md: "sm" }}
                       variant="outline"
                       colorScheme="blue"
                       fontSize="xs"
+                      w={{ base: "100%", sm: "auto" }}
+                      mt={{ base: 2, sm: 0 }}
                       as="a"
                       href={`https://zora.co/coin/base:${coinData.address}`}
                       target="_blank"
@@ -613,7 +656,7 @@ const ZoraCoinPageClient = React.memo(
                       See on Zora
                     </Button>
                   </HStack>
-                  <Text fontSize="sm" color="gray.400" noOfLines={2}>
+                  <Text fontSize="sm" color="gray.400" noOfLines={{ base: 3, md: 2 }}>
                     {coinData.description || `${coinData.name} creator coin`}
                   </Text>
                 </VStack>
@@ -622,13 +665,16 @@ const ZoraCoinPageClient = React.memo(
               {/* Stats */}
               <Box
                 w="100%"
-                p={4}
+                p={{ base: 3, md: 4 }}
                 borderBottom="1px solid"
                 borderColor="gray.700"
               >
                 <Grid
-                  templateColumns="repeat(3, 1fr)"
-                  gap={2}
+                  templateColumns={{
+                    base: "repeat(2, 1fr)",
+                    sm: "repeat(3, 1fr)",
+                  }}
+                  gap={{ base: 3, md: 2 }}
                   textAlign="center"
                 >
                   <Box>
@@ -647,7 +693,7 @@ const ZoraCoinPageClient = React.memo(
                       {formatCurrency(coinData.marketCap)}
                     </Text>
                   </Box>
-                  <Box>
+                  <Box gridColumn={{ base: "span 2", sm: "span 1" }}>
                     <Text fontSize="xs" color="gray.400" mb={1}>
                       Creator Earnings
                     </Text>
@@ -659,8 +705,8 @@ const ZoraCoinPageClient = React.memo(
               </Box>
 
               {/* Trading Section */}
-              <Box w="100%" p={6} flex="1">
-                <VStack spacing={4} align="stretch">
+              <Box w="100%" p={{ base: 3, md: 6 }} flex="1">
+                <VStack spacing={{ base: 3, md: 4 }} align="stretch">
                   {/* Buy/Sell Toggle */}
                   <HStack spacing={0}>
                     <Button
@@ -670,6 +716,8 @@ const ZoraCoinPageClient = React.memo(
                       borderRadius="lg"
                       flex="1"
                       fontWeight="bold"
+                      h={{ base: "48px", md: "40px" }}
+                      fontSize={{ base: "md", md: "sm" }}
                       onClick={() => setIsBuying(true)}
                       _hover={{ bg: isBuying ? "green.400" : "gray.700" }}
                     >
@@ -682,6 +730,8 @@ const ZoraCoinPageClient = React.memo(
                       borderRadius="lg"
                       flex="1"
                       fontWeight="bold"
+                      h={{ base: "48px", md: "40px" }}
+                      fontSize={{ base: "md", md: "sm" }}
                       onClick={() => setIsBuying(false)}
                       _hover={{ bg: !isBuying ? "red.400" : "gray.700" }}
                     >
@@ -690,11 +740,16 @@ const ZoraCoinPageClient = React.memo(
                   </HStack>
 
                   {/* Balance */}
-                  <HStack justify="space-between">
-                    <Text fontSize="sm" color="gray.400">
+                  <HStack justify="space-between" flexWrap="wrap">
+                    <Text fontSize={{ base: "sm", md: "sm" }} color="gray.400">
                       Balance
                     </Text>
-                    <Text fontSize="sm" color="gray.400">
+                    <Text
+                      fontSize={{ base: "sm", md: "sm" }}
+                      color="gray.400"
+                      textAlign="right"
+                      wordBreak="break-all"
+                    >
                       {isBuying
                         ? ethBalance?.formatted
                           ? `${parseFloat(ethBalance.formatted).toFixed(6)} ETH`
@@ -714,148 +769,180 @@ const ZoraCoinPageClient = React.memo(
                       bg="gray.800"
                       border="none"
                       color="white"
-                      fontSize="lg"
-                      h="50px"
+                      fontSize={{ base: "lg", md: "lg" }}
+                      h={{ base: "56px", md: "50px" }}
                       value={tradeAmount}
                       onChange={(e) => setTradeAmount(e.target.value)}
                       _placeholder={{ color: "gray.500" }}
                     />
-                    <HStack mt={2} spacing={2}>
-                      {isBuying ? (
-                        // Buy mode - show ETH amounts
-                        <>
-                          <Button
-                            size="xs"
-                            variant="outline"
-                            colorScheme="gray"
-                            onClick={() => setTradeAmount("0.001")}
-                          >
-                            0.001 ETH
-                          </Button>
-                          <Button
-                            size="xs"
-                            variant="outline"
-                            colorScheme="gray"
-                            onClick={() => setTradeAmount("0.01")}
-                          >
-                            0.01 ETH
-                          </Button>
-                          <Button
-                            size="xs"
-                            variant="outline"
-                            colorScheme="gray"
-                            onClick={() => setTradeAmount("0.1")}
-                          >
-                            0.1 ETH
-                          </Button>
-                          <Button
-                            size="xs"
-                            variant="outline"
-                            colorScheme="gray"
-                            onClick={() =>
-                              setTradeAmount(ethBalance?.formatted || "0")
-                            }
-                          >
-                            Max
-                          </Button>
-                        </>
-                      ) : (
-                        // Sell mode - show percentages of token balance
-                        <>
-                          <Button
-                            size="xs"
-                            variant="outline"
-                            colorScheme="red"
-                            onClick={() => {
-                              if (userBalance?.raw) {
-                                const amount25 =
-                                  (userBalance.raw * BigInt(25)) / BigInt(100);
-                                setTradeAmount(
-                                  formatUnits(amount25, userBalance.decimals)
-                                );
+                    <VStack spacing={3} mt={3}>
+                      <HStack 
+                        spacing={{ base: 1, md: 2 }} 
+                        flexWrap="wrap" 
+                        justify="center"
+                        w="100%"
+                      >
+                        {isBuying ? (
+                          // Buy mode - show ETH amounts
+                          <>
+                            <Button
+                              size={{ base: "sm", md: "xs" }}
+                              variant="outline"
+                              colorScheme="gray"
+                              onClick={() => setTradeAmount("0.001")}
+                              minW={{ base: "70px", md: "auto" }}
+                              fontSize={{ base: "xs", md: "xs" }}
+                            >
+                              0.001 ETH
+                            </Button>
+                            <Button
+                              size={{ base: "sm", md: "xs" }}
+                              variant="outline"
+                              colorScheme="gray"
+                              onClick={() => setTradeAmount("0.01")}
+                              minW={{ base: "70px", md: "auto" }}
+                              fontSize={{ base: "xs", md: "xs" }}
+                            >
+                              0.01 ETH
+                            </Button>
+                            <Button
+                              size={{ base: "sm", md: "xs" }}
+                              variant="outline"
+                              colorScheme="gray"
+                              onClick={() => setTradeAmount("0.1")}
+                              minW={{ base: "70px", md: "auto" }}
+                              fontSize={{ base: "xs", md: "xs" }}
+                            >
+                              0.1 ETH
+                            </Button>
+                            <Button
+                              size={{ base: "sm", md: "xs" }}
+                              variant="outline"
+                              colorScheme="gray"
+                              onClick={() =>
+                                setTradeAmount(ethBalance?.formatted || "0")
                               }
-                            }}
-                            isDisabled={
-                              !userBalance?.raw || userBalance.raw === BigInt(0)
-                            }
-                          >
-                            25%
-                          </Button>
-                          <Button
-                            size="xs"
-                            variant="outline"
-                            colorScheme="red"
-                            onClick={() => {
-                              if (userBalance?.raw) {
-                                const amount50 =
-                                  (userBalance.raw * BigInt(50)) / BigInt(100);
-                                setTradeAmount(
-                                  formatUnits(amount50, userBalance.decimals)
-                                );
+                              minW={{ base: "50px", md: "auto" }}
+                              fontSize={{ base: "xs", md: "xs" }}
+                            >
+                              Max
+                            </Button>
+                          </>
+                        ) : (
+                          // Sell mode - show percentages of token balance
+                          <>
+                            <Button
+                              size={{ base: "sm", md: "xs" }}
+                              variant="outline"
+                              colorScheme="red"
+                              minW={{ base: "50px", md: "auto" }}
+                              fontSize={{ base: "xs", md: "xs" }}
+                              onClick={() => {
+                                if (userBalance?.raw) {
+                                  const amount25 =
+                                    (userBalance.raw * BigInt(25)) /
+                                    BigInt(100);
+                                  setTradeAmount(
+                                    formatUnits(amount25, userBalance.decimals)
+                                  );
+                                }
+                              }}
+                              isDisabled={
+                                !userBalance?.raw ||
+                                userBalance.raw === BigInt(0)
                               }
-                            }}
-                            isDisabled={
-                              !userBalance?.raw || userBalance.raw === BigInt(0)
-                            }
-                          >
-                            50%
-                          </Button>
-                          <Button
-                            size="xs"
-                            variant="outline"
-                            colorScheme="red"
-                            onClick={() => {
-                              if (userBalance?.raw) {
-                                const amount75 =
-                                  (userBalance.raw * BigInt(75)) / BigInt(100);
-                                setTradeAmount(
-                                  formatUnits(amount75, userBalance.decimals)
-                                );
+                            >
+                              25%
+                            </Button>
+                            <Button
+                              size={{ base: "sm", md: "xs" }}
+                              variant="outline"
+                              colorScheme="red"
+                              minW={{ base: "50px", md: "auto" }}
+                              fontSize={{ base: "xs", md: "xs" }}
+                              onClick={() => {
+                                if (userBalance?.raw) {
+                                  const amount50 =
+                                    (userBalance.raw * BigInt(50)) /
+                                    BigInt(100);
+                                  setTradeAmount(
+                                    formatUnits(amount50, userBalance.decimals)
+                                  );
+                                }
+                              }}
+                              isDisabled={
+                                !userBalance?.raw ||
+                                userBalance.raw === BigInt(0)
                               }
-                            }}
-                            isDisabled={
-                              !userBalance?.raw || userBalance.raw === BigInt(0)
-                            }
-                          >
-                            75%
-                          </Button>
-                          <Button
-                            size="xs"
-                            variant="outline"
-                            colorScheme="red"
-                            onClick={() => {
-                              if (userBalance?.raw) {
-                                setTradeAmount(
-                                  formatUnits(
-                                    userBalance.raw,
-                                    userBalance.decimals
-                                  )
-                                );
+                            >
+                              50%
+                            </Button>
+                            <Button
+                              size={{ base: "sm", md: "xs" }}
+                              variant="outline"
+                              colorScheme="red"
+                              minW={{ base: "50px", md: "auto" }}
+                              fontSize={{ base: "xs", md: "xs" }}
+                              onClick={() => {
+                                if (userBalance?.raw) {
+                                  const amount75 =
+                                    (userBalance.raw * BigInt(75)) /
+                                    BigInt(100);
+                                  setTradeAmount(
+                                    formatUnits(amount75, userBalance.decimals)
+                                  );
+                                }
+                              }}
+                              isDisabled={
+                                !userBalance?.raw ||
+                                userBalance.raw === BigInt(0)
                               }
-                            }}
-                            isDisabled={
-                              !userBalance?.raw || userBalance.raw === BigInt(0)
-                            }
-                          >
-                            100%
-                          </Button>
-                        </>
-                      )}
-                    </HStack>
+                            >
+                              75%
+                            </Button>
+                            <Button
+                              size={{ base: "sm", md: "xs" }}
+                              variant="outline"
+                              colorScheme="red"
+                              minW={{ base: "50px", md: "auto" }}
+                              fontSize={{ base: "xs", md: "xs" }}
+                              onClick={() => {
+                                if (userBalance?.raw) {
+                                  setTradeAmount(
+                                    formatUnits(
+                                      userBalance.raw,
+                                      userBalance.decimals
+                                    )
+                                  );
+                                }
+                              }}
+                              isDisabled={
+                                !userBalance?.raw ||
+                                userBalance.raw === BigInt(0)
+                              }
+                            >
+                              100%
+                            </Button>
+                          </>
+                        )}
+                      </HStack>
+                    </VStack>
                   </Box>
 
                   {/* Currency Selector */}
-                  <HStack>
+                  <HStack justify="space-between" w="100%">
                     <Box
                       bg="gray.800"
                       borderRadius="lg"
-                      p={3}
+                      p={{ base: 2, md: 3 }}
                       display="flex"
                       alignItems="center"
                       cursor="pointer"
+                      flex="1"
+                      maxW="120px"
                     >
                       <Avatar size="xs" name="ETH" mr={2} />
-                      <Text fontSize="sm" mr={2}>
+                      <Text fontSize={{ base: "sm", md: "sm" }} mr={2}>
                         ETH
                       </Text>
                       <ChevronDownIcon />
@@ -869,6 +956,8 @@ const ZoraCoinPageClient = React.memo(
                       bg="gray.800"
                       border="none"
                       color="white"
+                      h={{ base: "48px", md: "40px" }}
+                      fontSize={{ base: "sm", md: "sm" }}
                       value={tradeComment}
                       onChange={(e) => setTradeComment(e.target.value)}
                       _placeholder={{ color: "gray.500" }}
@@ -927,10 +1016,11 @@ const ZoraCoinPageClient = React.memo(
                   <Button
                     bg={isBuying ? "green.500" : "red.500"}
                     color="black"
-                    size="lg"
+                    size={{ base: "lg", md: "lg" }}
                     fontWeight="bold"
                     borderRadius="lg"
-                    h="50px"
+                    h={{ base: "56px", md: "50px" }}
+                    fontSize={{ base: "lg", md: "md" }}
                     onClick={handleTrade}
                     isLoading={isTrading}
                     loadingText={isBuying ? "Buying..." : "Selling..."}
@@ -943,11 +1033,23 @@ const ZoraCoinPageClient = React.memo(
               </Box>
 
               {/* Tabs Section */}
-              <Box w="100%" borderTop="1px solid" borderColor="gray.700">
-                <Tabs variant="enclosed" colorScheme="gray">
+              <Box
+                w="100%"
+                borderTop="1px solid"
+                borderColor="gray.700"
+                flex={{ base: "none", lg: "1" }}
+                maxH={{ base: "400px", lg: "none" }}
+                overflowY={{ base: "auto", lg: "visible" }}
+              >
+                <Tabs
+                  variant="enclosed"
+                  colorScheme="gray"
+                  size={{ base: "md", lg: "sm" }}
+                >
                   <TabList bg="transparent" borderBottom="none">
                     <Tab
                       color="gray.400"
+                      fontSize={{ base: "sm", lg: "xs" }}
                       _selected={{ color: "white", borderColor: "gray.600" }}
                     >
                       Comments
@@ -962,6 +1064,7 @@ const ZoraCoinPageClient = React.memo(
                     </Tab>
                     <Tab
                       color="gray.400"
+                      fontSize={{ base: "sm", lg: "xs" }}
                       _selected={{ color: "white", borderColor: "gray.600" }}
                     >
                       Holders
@@ -976,6 +1079,7 @@ const ZoraCoinPageClient = React.memo(
                     </Tab>
                     <Tab
                       color="gray.400"
+                      fontSize={{ base: "sm", lg: "xs" }}
                       _selected={{ color: "white", borderColor: "gray.600" }}
                     >
                       Details
@@ -983,7 +1087,7 @@ const ZoraCoinPageClient = React.memo(
                   </TabList>
 
                   <TabPanels>
-                    <TabPanel p={4}>
+                    <TabPanel p={{ base: 3, md: 4 }}>
                       <VStack spacing={3} align="stretch">
                         <Box>
                           <Input
@@ -991,7 +1095,8 @@ const ZoraCoinPageClient = React.memo(
                             bg="gray.800"
                             border="none"
                             color="white"
-                            size="sm"
+                            size={{ base: "md", lg: "sm" }}
+                            h={{ base: "44px", lg: "36px" }}
                             _placeholder={{ color: "gray.500" }}
                           />
                           <Text fontSize="xs" color="gray.500" mt={1}>
@@ -1024,39 +1129,78 @@ const ZoraCoinPageClient = React.memo(
                       </VStack>
                     </TabPanel>
 
-                    <TabPanel p={4}>
+                    <TabPanel p={{ base: 3, md: 4 }}>
                       <VStack spacing={3} align="stretch">
                         {/* Holders List */}
-                        <HStack justify="space-between">
-                          <HStack>
-                            <Text fontSize="lg">1</Text>
-                            <Avatar size="sm" name="Market" />
-                            <Text fontSize="sm">Market</Text>
+                        <HStack
+                          justify="space-between"
+                          flexWrap={{ base: "wrap", md: "nowrap" }}
+                        >
+                          <HStack minW={{ base: "60%", md: "auto" }}>
+                            <Text fontSize={{ base: "md", md: "lg" }}>1</Text>
+                            <Avatar
+                              size={{ base: "sm", md: "sm" }}
+                              name="Market"
+                            />
+                            <Text fontSize={{ base: "sm", md: "sm" }}>
+                              Market
+                            </Text>
                           </HStack>
-                          <Badge colorScheme="blue">98.864%</Badge>
+                          <Badge
+                            colorScheme="blue"
+                            fontSize={{ base: "xs", md: "sm" }}
+                          >
+                            98.864%
+                          </Badge>
                         </HStack>
 
-                        <HStack justify="space-between">
-                          <HStack>
-                            <Text fontSize="lg">2</Text>
-                            <Avatar size="sm" name="skatehacker" />
-                            <Text fontSize="sm">skatehacker (creator)</Text>
+                        <HStack
+                          justify="space-between"
+                          flexWrap={{ base: "wrap", md: "nowrap" }}
+                        >
+                          <HStack minW={{ base: "60%", md: "auto" }}>
+                            <Text fontSize={{ base: "md", md: "lg" }}>2</Text>
+                            <Avatar
+                              size={{ base: "sm", md: "sm" }}
+                              name="skatehacker"
+                            />
+                            <Text fontSize={{ base: "sm", md: "sm" }}>
+                              skatehacker (creator)
+                            </Text>
                           </HStack>
-                          <Badge colorScheme="blue">1%</Badge>
+                          <Badge
+                            colorScheme="blue"
+                            fontSize={{ base: "xs", md: "sm" }}
+                          >
+                            1%
+                          </Badge>
                         </HStack>
 
-                        <HStack justify="space-between">
-                          <HStack>
-                            <Text fontSize="lg">3</Text>
-                            <Avatar size="sm" name="r4to" />
-                            <Text fontSize="sm">r4to ⚡</Text>
+                        <HStack
+                          justify="space-between"
+                          flexWrap={{ base: "wrap", md: "nowrap" }}
+                        >
+                          <HStack minW={{ base: "60%", md: "auto" }}>
+                            <Text fontSize={{ base: "md", md: "lg" }}>3</Text>
+                            <Avatar
+                              size={{ base: "sm", md: "sm" }}
+                              name="r4to"
+                            />
+                            <Text fontSize={{ base: "sm", md: "sm" }}>
+                              r4to ⚡
+                            </Text>
                           </HStack>
-                          <Badge colorScheme="blue">0.136%</Badge>
+                          <Badge
+                            colorScheme="blue"
+                            fontSize={{ base: "xs", md: "sm" }}
+                          >
+                            0.136%
+                          </Badge>
                         </HStack>
                       </VStack>
                     </TabPanel>
 
-                    <TabPanel p={4}>
+                    <TabPanel p={{ base: 3, md: 4 }}>
                       <VStack align="start" spacing={3}>
                         <Box>
                           <Text fontSize="sm" color="gray.400" mb={1}>

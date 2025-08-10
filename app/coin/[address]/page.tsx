@@ -15,7 +15,7 @@ interface PageProps {
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
-  const { address } = params;
+  const { address } = await params;
 
   // Validate Ethereum address format
   if (!isAddress(address)) {
@@ -138,7 +138,7 @@ export async function generateMetadata({
 
 // Server component that validates and passes data to client
 export default async function CoinPage({ params }: PageProps) {
-  const { address } = params;
+  const { address } = await params;
 
   // Validate Ethereum address format
   if (!isAddress(address)) {
