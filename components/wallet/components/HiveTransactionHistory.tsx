@@ -179,16 +179,16 @@ const HiveTransactionHistory = ({ searchAccount }: { searchAccount: string }) =>
 
                                             return (
                                                 <Tr key={idx}>
-                                                    <Td fontSize="xs" px={2}>
+                                                    <Td fontSize="xs" px={2} color="primary">
                                                         {replacePixbee(transaction.from)}
                                                     </Td>
-                                                    <Td fontSize="xs" px={2}>
+                                                    <Td fontSize="xs" px={2} color="primary">
                                                         {replacePixbee(transaction.to)}
                                                     </Td>
-                                                    <Td fontSize="xs" px={2} textAlign="right">
+                                                    <Td fontSize="xs" px={2} textAlign="right" color="primary">
                                                         {transaction.amount}
                                                     </Td>
-                                                    <Td fontSize="xs" px={2}>
+                                                    <Td fontSize="xs" px={2} color="primary">
                                                         <Tooltip label={displayMemo} hasArrow placement="top">
                                                             <Box
                                                                 cursor={isEncrypted ? "pointer" : "default"}
@@ -202,7 +202,7 @@ const HiveTransactionHistory = ({ searchAccount }: { searchAccount: string }) =>
                                                             </Box>
                                                         </Tooltip>
                                                     </Td>
-                                                    <Td fontSize="xs" px={2} textAlign="center">
+                                                    <Td fontSize="xs" px={2} textAlign="center" color="primary">
                                                         <Tooltip label={new Date(transaction.timestamp).toLocaleString()} hasArrow>
                                                             {CALENDAR_EMOJI}
                                                         </Tooltip>
