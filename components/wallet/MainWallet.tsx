@@ -656,6 +656,7 @@ export default function MainWallet({ username }: MainWalletProps) {
               />
             </VStack>
           </Grid>
+
           {modalContent && (
             <WalletModal
               isOpen={isOpen}
@@ -664,6 +665,7 @@ export default function MainWallet({ username }: MainWalletProps) {
               description={modalContent.description}
               showMemoField={modalContent.showMemoField}
               showUsernameField={modalContent.showUsernameField}
+              hiveAccount={hiveAccount || undefined}
               onConfirm={onConfirm}
             />
           )}
