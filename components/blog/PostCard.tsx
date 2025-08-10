@@ -17,7 +17,9 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Discussion } from "@hiveio/dhive";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination } from "swiper/modules";
-import "swiper/swiper-bundle.css";
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
 import { getPostDate } from "@/lib/utils/GetPostDate";
 import { useAioha } from "@aioha/react-ui";
 import { useRouter } from "next/navigation";
@@ -28,8 +30,20 @@ import {
   extractImageUrls,
 } from "@/lib/utils/extractImageUrls"; // Import YouTube extraction function
 import useHivePower from "@/hooks/useHivePower";
+import { parseJsonMetadata } from "@/lib/hive/metadata-utils";
 import MatrixOverlay from "@/components/graphics/MatrixOverlay";
 import { UpvoteButton } from "@/components/shared";
+
+interface PostJsonMetadata {
+  app?: string;
+  format?: string;
+  description?: string;
+  tags?: string[];
+  users?: string[];
+  links?: string[];
+  image?: string | string[];
+  [key: string]: any;
+}
 
 interface PostCardProps {
   post: Discussion;
@@ -46,13 +60,10 @@ export default function PostCard({
   const postDate = getPostDate(created);
 
   // Use useMemo to parse JSON only when json_metadata changes
-  const metadata = useMemo(() => {
-    try {
-      return JSON.parse(json_metadata);
-    } catch (e) {
-      console.error("Error parsing JSON metadata", e);
-      return {};
-    }
+  const metadata = useMemo((): PostJsonMetadata => {
+    const parsed = parseJsonMetadata(json_metadata);
+    // Ensure we always return a valid object, even if parseJsonMetadata fails
+    return (parsed && typeof parsed === 'object') ? parsed : {};
   }, [json_metadata]);
 
   const [imageUrls, setImageUrls] = useState<string[]>([]);

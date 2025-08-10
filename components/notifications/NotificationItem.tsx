@@ -18,6 +18,7 @@ import {
   checkFollow,
   changeFollow,
 } from "../../lib/hive/client-functions";
+import { parseJsonMetadata } from "@/lib/hive/metadata-utils";
 import { fetchComments } from "../../lib/hive/fetchComments";
 import SnapComposer from "../homepage/SnapComposer";
 import HiveMarkdown from "../shared/HiveMarkdown";
@@ -124,7 +125,7 @@ export default function NotificationItem({
           try {
             const post_metadata =
               parentPostData && parentPostData.json_metadata
-                ? JSON.parse(parentPostData.json_metadata)
+                ? parseJsonMetadata(parentPostData.json_metadata)
                 : {};
             if (
               post_metadata &&
@@ -151,7 +152,7 @@ export default function NotificationItem({
           // Get metadata from the post itself
           try {
             const post_metadata = post.json_metadata
-              ? JSON.parse(post.json_metadata)
+              ? parseJsonMetadata(post.json_metadata)
               : {};
             if (
               post_metadata &&
@@ -261,19 +262,23 @@ export default function NotificationItem({
   // Handle new replies
   function handleNewReply(newComment: Partial<Discussion>) {
     const newReply = newComment as Discussion;
-    setReplies(prev => [...prev, newReply]);
+    setReplies((prev) => [...prev, newReply]);
   }
 
   // Fetch existing replies when reply button is clicked
   async function fetchExistingReplies() {
     if (!reply) return;
-    
+
     setRepliesLoading(true);
     try {
-      const existingReplies = await fetchComments(reply.author, reply.permlink, false);
+      const existingReplies = await fetchComments(
+        reply.author,
+        reply.permlink,
+        false
+      );
       setReplies(existingReplies);
     } catch (error) {
-      console.error('Error fetching replies:', error);
+      console.error("Error fetching replies:", error);
       setReplies([]);
     } finally {
       setRepliesLoading(false);
@@ -453,7 +458,11 @@ export default function NotificationItem({
                     replied to your
                   </Text>
                   <Link
-                    href={`/${parentPost ? `@${parentPost.author}/${parentPost.permlink}` : notification.url}`}
+                    href={`/${
+                      parentPost
+                        ? `@${parentPost.author}/${parentPost.permlink}`
+                        : notification.url
+                    }`}
                     color={isNew ? "accent" : "primary"}
                     fontWeight="bold"
                     _hover={{ textDecoration: "underline" }}
@@ -534,7 +543,11 @@ export default function NotificationItem({
                   </Text>
                   {parentPost?.title && (
                     <Link
-                      href={`/${parentPost ? `@${parentPost.author}/${parentPost.permlink}` : notification.url}`}
+                      href={`/${
+                        parentPost
+                          ? `@${parentPost.author}/${parentPost.permlink}`
+                          : notification.url
+                      }`}
                       color={isNew ? "accent" : "primary"}
                       fontWeight="bold"
                       _hover={{ textDecoration: "underline" }}
@@ -577,7 +590,11 @@ export default function NotificationItem({
                     replied to your
                   </Text>
                   <Link
-                    href={`/${parentPost ? `@${parentPost.author}/${parentPost.permlink}` : notification.url}`}
+                    href={`/${
+                      parentPost
+                        ? `@${parentPost.author}/${parentPost.permlink}`
+                        : notification.url
+                    }`}
                     color={isNew ? "accent" : "primary"}
                     fontWeight="bold"
                     _hover={{ textDecoration: "underline" }}
@@ -686,7 +703,9 @@ export default function NotificationItem({
                     />
                   </Box>
                 ) : (
-                  <Text fontSize="xs" color="muted">Loading...</Text>
+                  <Text fontSize="xs" color="muted">
+                    Loading...
+                  </Text>
                 )}
               </Flex>
             </Box>
@@ -699,13 +718,15 @@ export default function NotificationItem({
           {/* Show replies first */}
           {repliesLoading ? (
             <Box p={2} textAlign="center" mb={2}>
-              <Text fontSize="xs" color="muted">Loading replies...</Text>
+              <Text fontSize="xs" color="muted">
+                Loading replies...
+              </Text>
             </Box>
           ) : replies.length > 0 ? (
             <VStack spacing={2} align="stretch" mb={2}>
               {replies.map((reply: Discussion) => (
                 <ReplyItem
-                  key={reply.permlink}
+                  key={`${reply.author}/${reply.permlink}`}
                   reply={reply}
                   currentUser={currentUser}
                 />
@@ -734,34 +755,39 @@ interface ReplyItemProps {
 function ReplyItem({ reply, currentUser }: ReplyItemProps) {
   const [showReplies, setShowReplies] = useState<boolean>(false);
   const [nestedReplies, setNestedReplies] = useState<Discussion[]>([]);
-  const [nestedRepliesLoading, setNestedRepliesLoading] = useState<boolean>(false);
+  const [nestedRepliesLoading, setNestedRepliesLoading] =
+    useState<boolean>(false);
   const [hasVoted, setHasVoted] = useState<boolean>(false);
   const [showSlider, setShowSlider] = useState<boolean>(false);
 
   // Check if user has voted on this reply
   useEffect(() => {
     if (reply.active_votes && currentUser) {
-      const userVoted = reply.active_votes.some((vote) => vote.voter === currentUser);
+      const userVoted = reply.active_votes.some(
+        (vote) => vote.voter === currentUser
+      );
       setHasVoted(userVoted);
     }
   }, [reply.active_votes, currentUser]);
 
-
-
   // Handle new nested replies
   function handleNewNestedReply(newComment: Partial<Discussion>) {
     const newReply = newComment as Discussion;
-    setNestedReplies(prev => [...prev, newReply]);
+    setNestedReplies((prev) => [...prev, newReply]);
   }
 
   // Fetch existing nested replies
   async function fetchNestedReplies() {
     setNestedRepliesLoading(true);
     try {
-      const existingReplies = await fetchComments(reply.author, reply.permlink, false);
+      const existingReplies = await fetchComments(
+        reply.author,
+        reply.permlink,
+        false
+      );
       setNestedReplies(existingReplies);
     } catch (error) {
-      console.error('Error fetching nested replies:', error);
+      console.error("Error fetching nested replies:", error);
       setNestedReplies([]);
     } finally {
       setNestedRepliesLoading(false);
@@ -798,7 +824,9 @@ function ReplyItem({ reply, currentUser }: ReplyItemProps) {
           {reply.author}
         </Text>
         <Text fontSize="xs" color="muted">
-          {reply.created === "just now" ? "just now" : new Date(reply.created + "Z").toLocaleString()}
+          {reply.created === "just now"
+            ? "just now"
+            : new Date(reply.created + "Z").toLocaleString()}
         </Text>
       </HStack>
       <Box ml={6} mb={2}>
@@ -842,20 +870,22 @@ function ReplyItem({ reply, currentUser }: ReplyItemProps) {
         <Box mt={2} ml={4}>
           {nestedRepliesLoading ? (
             <Box p={2} textAlign="center">
-              <Text fontSize="xs" color="muted">Loading replies...</Text>
+              <Text fontSize="xs" color="muted">
+                Loading replies...
+              </Text>
             </Box>
           ) : nestedReplies.length > 0 ? (
             <VStack spacing={2} align="stretch" mb={2}>
               {nestedReplies.map((nestedReply: Discussion) => (
                 <ReplyItem
-                  key={nestedReply.permlink}
+                  key={`${nestedReply.author}/${nestedReply.permlink}`}
                   reply={nestedReply}
                   currentUser={currentUser}
                 />
               ))}
             </VStack>
           ) : null}
-          
+
           {/* Nested composer */}
           <SnapComposer
             pa={reply.author}

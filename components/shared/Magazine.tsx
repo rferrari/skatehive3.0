@@ -21,10 +21,16 @@ import {
 import HTMLFlipBook from "react-pageflip";
 import { Discussion } from "@hiveio/dhive";
 import { getPayoutValue, findPosts } from "@/lib/hive/client-functions";
-const HiveMarkdown = lazy(() => import("@/components/shared/HiveMarkdown"));
+const EnhancedMarkdownRenderer = lazy(() =>
+  import("@/components/markdown/EnhancedMarkdownRenderer").then((module) => ({
+    default: module.EnhancedMarkdownRenderer,
+  }))
+);
 import LoadingComponent from "../homepage/loadingComponent";
 import MatrixOverlay from "@/components/graphics/MatrixOverlay";
 import { useTheme } from "@/app/themeProvider";
+import SkateErrorBoundary from "./SkateErrorBoundary";
+import ContentErrorWatcher from "./ContentErrorWatcher";
 
 function useMagazinePosts(
   query: string,
@@ -150,21 +156,6 @@ export interface MagazineProps {
   query?: string;
 }
 
-// Add a function to ensure all YouTube iframes have enablejsapi=1 in their src
-function addEnableJsApiToYouTubeIframes(html: string) {
-  return html.replace(
-    /<iframe([^>]+src="https:\/\/www\.youtube\.com\/embed\/[^\"]+)([^>]*)>/g,
-    (match, beforeSrc, afterSrc) => {
-      if (beforeSrc.includes("enablejsapi=1")) return match;
-      if (beforeSrc.includes("?")) {
-        return `<iframe${beforeSrc}&enablejsapi=1${afterSrc}>`;
-      } else {
-        return `<iframe${beforeSrc}?enablejsapi=1${afterSrc}>`;
-      }
-    }
-  );
-}
-
 export default function Magazine(props: MagazineProps) {
   const { theme } = useTheme();
   const flipBookRef = useRef<any>(null);
@@ -255,317 +246,323 @@ export default function Magazine(props: MagazineProps) {
   }
 
   return (
-    <VStack
-      {...backgroundGradient}
-      width="100%"
-      height="100%"
-      alignItems="flex-start"
-      justifyContent="flex-start"
-      spacing={0}
-      sx={{
-        "&::-webkit-scrollbar": { display: "none" },
-        scrollbarWidth: "none",
-        overflowY: "hidden",
-      }}
-    >
-      <audio ref={audioRef} src="/pageflip.mp3" preload="auto" />
-      <HTMLFlipBook
-        className="flipbook hide-scrollbar"
-        width={1000}
-        height={1300}
-        minWidth={0}
-        maxWidth={10000}
-        minHeight={0}
-        maxHeight={10000}
-        startPage={0}
-        size="stretch"
-        drawShadow={false}
-        flippingTime={600} // Reduced from 1000ms for snappier feel
-        usePortrait
-        startZIndex={0}
-        autoSize={false} // Disable auto-sizing to prevent reflows
-        maxShadowOpacity={0.1} // Reduced shadow for better performance
-        showCover={false}
-        mobileScrollSupport={false} // Disable to reduce event listeners
-        swipeDistance={30} // Reduced sensitivity for better performance
-        clickEventForward={false}
-        useMouseEvents
-        renderOnlyPageLengthChange={true}
-        showPageCorners={false}
-        disableFlipByClick={false}
-        style={{ width: "100%", height: "100vh" }}
-        ref={flipBookRef}
-        onInit={(instance: any) => {
-          flipBookRef.current = instance;
+    <ContentErrorWatcher>
+      <VStack
+        {...backgroundGradient}
+        width="100%"
+        height="100%"
+        alignItems="flex-start"
+        justifyContent="flex-start"
+        spacing={0}
+        sx={{
+          "&::-webkit-scrollbar": { display: "none" },
+          scrollbarWidth: "none",
+          overflowY: "hidden",
         }}
-        onFlip={(e: any) => {
-          playSound();
-          // Pause all native videos
-          const videos = document.querySelectorAll(".flipbook video");
-          videos.forEach((video) => {
-            const vid = video as HTMLVideoElement;
-            if (!vid.paused) {
-              vid.pause();
-            }
-          });
-          // Pause all iframe videos
-          const iframes = document.querySelectorAll(".flipbook iframe");
-          iframes.forEach((iframe) => {
-            const ifr = iframe as HTMLIFrameElement;
-            if (ifr.src.includes("youtube.com/embed")) {
-              ifr.contentWindow?.postMessage(
-                JSON.stringify({
-                  event: "command",
-                  func: "pauseVideo",
-                  args: [],
-                }),
-                "*"
-              );
-            } else if (
-              ifr.src.includes("skatehype.com/ifplay.php") ||
-              ifr.src.includes("3speak.tv")
-            ) {
-              const oldSrc = ifr.src;
-              ifr.src = "";
-              setTimeout(() => {
-                ifr.src = oldSrc;
-              }, 100);
-            }
-          });
-        }}
-        onUpdate={() => {}}
       >
-        <Box
-          sx={coverStyles(theme)}
-          width="100%"
-          height="100%"
-          position="relative"
-          overflow="hidden"
+        <audio ref={audioRef} src="/pageflip.mp3" preload="auto" />
+        <HTMLFlipBook
+          className="flipbook hide-scrollbar"
+          width={1000}
+          height={1300}
+          minWidth={0}
+          maxWidth={10000}
+          minHeight={0}
+          maxHeight={10000}
+          startPage={0}
+          size="stretch"
+          drawShadow={false}
+          flippingTime={600} // Reduced from 1000ms for snappier feel
+          usePortrait
+          startZIndex={0}
+          autoSize={false} // Disable auto-sizing to prevent reflows
+          maxShadowOpacity={0.1} // Reduced shadow for better performance
+          showCover={false}
+          mobileScrollSupport={false} // Disable to reduce event listeners
+          swipeDistance={30} // Reduced sensitivity for better performance
+          clickEventForward={false}
+          useMouseEvents
+          renderOnlyPageLengthChange={true}
+          showPageCorners={false}
+          disableFlipByClick={false}
+          style={{ width: "100%", height: "100vh" }}
+          ref={flipBookRef}
+          onInit={(instance: any) => {
+            flipBookRef.current = instance;
+          }}
+          onFlip={(e: any) => {
+            playSound();
+            // Pause all native videos
+            const videos = document.querySelectorAll(".flipbook video");
+            videos.forEach((video) => {
+              const vid = video as HTMLVideoElement;
+              if (!vid.paused) {
+                vid.pause();
+              }
+            });
+            // Pause all iframe videos
+            const iframes = document.querySelectorAll(".flipbook iframe");
+            iframes.forEach((iframe) => {
+              const ifr = iframe as HTMLIFrameElement;
+              if (ifr.src.includes("youtube.com/embed")) {
+                ifr.contentWindow?.postMessage(
+                  JSON.stringify({
+                    event: "command",
+                    func: "pauseVideo",
+                    args: [],
+                  }),
+                  "*"
+                );
+              } else if (
+                ifr.src.includes("skatehype.com/ifplay.php") ||
+                ifr.src.includes("3speak.tv")
+              ) {
+                const oldSrc = ifr.src;
+                ifr.src = "";
+                setTimeout(() => {
+                  ifr.src = oldSrc;
+                }, 100);
+              }
+            });
+          }}
+          onUpdate={() => {}}
         >
-          {/* Matrix effect as background */}
           <Box
-            position="absolute"
-            top={0}
-            left={0}
-            width="100%"
-            height="100%"
-            zIndex={0}
-            pointerEvents="none"
-          >
-            <MatrixOverlay coverMode />
-          </Box>
-          <Flex
-            direction="column"
-            alignItems="center"
-            justifyContent="center"
+            sx={coverStyles(theme)}
             width="100%"
             height="100%"
             position="relative"
-            zIndex={1}
+            overflow="hidden"
           >
-            {/* Text content above image, overlapping bottom of image */}
-            <Box zIndex={2} position="relative" mb={-16} textAlign="center">
-              <Heading
-                size="2xl"
-                fontWeight="extrabold"
-                letterSpacing="tight"
-                mb={2}
-                style={{
-                  fontFamily: `'Joystix', 'VT323', 'Fira Mono', 'monospace'`,
-                  textShadow:
-                    "0 4px 32px #000, 0 8px 48px #000, 0 0 8px #000, 0 0 2px #000",
-                  color: theme.colors.primary,
-                }}
-              >
-                SkateHive Magazine
-              </Heading>
-              <Text
-                fontSize="xl"
-                color={theme.colors.primary}
-                mb={4}
-                style={{
-                  fontFamily: `'Joystix', 'VT323', 'Fira Mono', 'monospace'`,
-                  textShadow:
-                    "0 4px 32px #000, 0 8px 48px #000, 0 0 8px #000, 0 0 2px #000",
-                }}
-              >
-                The Community Skateboarding Zine
-              </Text>
-            </Box>
-            {/* Cover image */}
-            <Image
-              src="/images/covers/nogenta_cover.png"
-              alt="SkateHive Cover"
-              maxHeight="500px"
-              maxWidth="100%"
-              width="auto"
-              loading="lazy"
-              borderRadius="lg"
-              boxShadow="xl"
-              zIndex={1}
-            />
-          </Flex>
-        </Box>
-        {filteredPosts.map((post: Discussion, index) => {
-          const isLeftPage = index % 2 === 0;
-          const pageBorderRadius = isLeftPage ? "16px 0 0 0px" : "0 16px 0px 0";
-          return (
+            {/* Matrix effect as background */}
             <Box
-              key={`${post.id}-${index}`}
-              sx={{ ...pageStyles(theme), borderRadius: pageBorderRadius }}
-              position="relative"
+              position="absolute"
+              top={0}
+              left={0}
               width="100%"
               height="100%"
-              overflow="hidden"
-              display="flex"
-              flexDirection="column"
+              zIndex={0}
+              pointerEvents="none"
             >
-              <Flex align="center" mb={2} gap={2}>
-                <Image
-                  src={`https://images.hive.blog/u/${post.author}/avatar/small`}
-                  alt={post.author}
-                  boxSize="32px"
-                  borderRadius="full"
-                  mr={2}
-                />
+              <MatrixOverlay coverMode />
+            </Box>
+            <Flex
+              direction="column"
+              alignItems="center"
+              justifyContent="center"
+              width="100%"
+              height="100%"
+              position="relative"
+              zIndex={1}
+            >
+              {/* Text content above image, overlapping bottom of image */}
+              <Box zIndex={2} position="relative" mb={-16} textAlign="center">
+                <Heading
+                  size="2xl"
+                  fontWeight="extrabold"
+                  letterSpacing="tight"
+                  mb={2}
+                  style={{
+                    fontFamily: `'Joystix', 'VT323', 'Fira Mono', 'monospace'`,
+                    textShadow:
+                      "0 4px 32px #000, 0 8px 48px #000, 0 0 8px #000, 0 0 2px #000",
+                    color: theme.colors.primary,
+                  }}
+                >
+                  SkateHive Magazine
+                </Heading>
                 <Text
-                  fontSize="sm"
+                  fontSize="xl"
+                  color={theme.colors.primary}
+                  mb={4}
+                  style={{
+                    fontFamily: `'Joystix', 'VT323', 'Fira Mono', 'monospace'`,
+                    textShadow:
+                      "0 4px 32px #000, 0 8px 48px #000, 0 0 8px #000, 0 0 2px #000",
+                  }}
+                >
+                  The Community Skateboarding Zine
+                </Text>
+              </Box>
+              {/* Cover image */}
+              <Image
+                src="/images/covers/nogenta_cover.png"
+                alt="SkateHive Cover"
+                maxHeight="500px"
+                maxWidth="100%"
+                width="auto"
+                loading="lazy"
+                borderRadius="lg"
+                boxShadow="xl"
+                zIndex={1}
+              />
+            </Flex>
+          </Box>
+          {filteredPosts.map((post: Discussion, index) => {
+            const isLeftPage = index % 2 === 0;
+            const pageBorderRadius = isLeftPage
+              ? "16px 0 0 0px"
+              : "0 16px 0px 0";
+            return (
+              <Box
+                key={`${post.id}-${index}`}
+                sx={{ ...pageStyles(theme), borderRadius: pageBorderRadius }}
+                position="relative"
+                width="100%"
+                height="100%"
+                overflow="hidden"
+                display="flex"
+                flexDirection="column"
+              >
+                <Flex align="center" mb={2} gap={2}>
+                  <Image
+                    src={`https://images.hive.blog/u/${post.author}/avatar/small`}
+                    alt={post.author}
+                    boxSize="32px"
+                    borderRadius="full"
+                    mr={2}
+                  />
+                  <Text
+                    fontSize="sm"
+                    color={theme.colors.primary}
+                    style={{
+                      fontFamily: `'Joystix', 'VT323', 'Fira Mono', 'monospace'`,
+                      letterSpacing: "0.5px",
+                    }}
+                    fontWeight="bold"
+                  >
+                    @{post.author}
+                  </Text>
+                  <Text
+                    fontSize="xs"
+                    color={theme.colors.accent}
+                    style={{
+                      fontFamily: `'Joystix', 'VT323', 'Fira Mono', 'monospace'`,
+                      letterSpacing: "0.5px",
+                    }}
+                    ml={2}
+                  >
+                    {new Date(post.created).toLocaleDateString()}
+                  </Text>
+                  <Badge
+                    variant={"solid"}
+                    bg={theme.colors.primary}
+                    color={theme.colors.background}
+                    h={"24px"}
+                    minW={"48px"}
+                    px={2}
+                    borderRadius={8}
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                    fontWeight="bold"
+                    style={{
+                      fontFamily: `'Joystix', 'VT323', 'Fira Mono', 'monospace'`,
+                      letterSpacing: "0.5px",
+                    }}
+                    ml={2}
+                  >
+                    ${Number(getPayoutValue(post as any)).toFixed(2)}
+                  </Badge>
+                </Flex>
+                <Heading
+                  fontSize="lg"
                   color={theme.colors.primary}
                   style={{
                     fontFamily: `'Joystix', 'VT323', 'Fira Mono', 'monospace'`,
                     letterSpacing: "0.5px",
                   }}
-                  fontWeight="bold"
+                  mb={2}
                 >
-                  @{post.author}
-                </Text>
-                <Text
-                  fontSize="xs"
-                  color={theme.colors.accent}
-                  style={{
-                    fontFamily: `'Joystix', 'VT323', 'Fira Mono', 'monospace'`,
-                    letterSpacing: "0.5px",
-                  }}
-                  ml={2}
+                  {post.title}
+                </Heading>
+                <Divider mt={2} mb={2} />
+                <Box
+                  flex="1 1 0%"
+                  minHeight={0}
+                  overflowY="auto"
+                  overflowX="hidden"
+                  width="100%"
+                  className="hide-scrollbar"
                 >
-                  {new Date(post.created).toLocaleDateString()}
-                </Text>
-                <Badge
-                  variant={"solid"}
-                  bg={theme.colors.primary}
-                  color={theme.colors.background}
-                  h={"24px"}
-                  minW={"48px"}
-                  px={2}
-                  borderRadius={8}
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                  fontWeight="bold"
-                  style={{
-                    fontFamily: `'Joystix', 'VT323', 'Fira Mono', 'monospace'`,
-                    letterSpacing: "0.5px",
-                  }}
-                  ml={2}
-                >
-                  ${Number(getPayoutValue(post as any)).toFixed(2)}
-                </Badge>
-              </Flex>
-              <Heading
-                fontSize="lg"
-                color={theme.colors.primary}
-                style={{
-                  fontFamily: `'Joystix', 'VT323', 'Fira Mono', 'monospace'`,
-                  letterSpacing: "0.5px",
-                }}
-                mb={2}
-              >
-                {post.title}
-              </Heading>
-              <Divider mt={2} mb={2} />
-              <Box
-                flex="1 1 0%"
-                minHeight={0}
-                overflowY="auto"
-                overflowX="hidden"
-                width="100%"
-                className="hide-scrollbar"
-              >
-                {!isInitialized ? (
-                  <Box
-                    display="flex"
-                    justifyContent="center"
-                    alignItems="center"
-                    height="100%"
-                  >
-                    <LoadingComponent />
-                  </Box>
-                ) : (
-                  <Suspense
-                    fallback={
-                      <Box
-                        display="flex"
-                        justifyContent="center"
-                        alignItems="center"
-                        height="100%"
-                      >
-                        <LoadingComponent />
-                      </Box>
-                    }
-                  >
-                    <HiveMarkdown markdown={post.body} />
-                  </Suspense>
-                )}
+                  {!isInitialized ? (
+                    <Box
+                      display="flex"
+                      justifyContent="center"
+                      alignItems="center"
+                      height="100%"
+                    >
+                      <LoadingComponent />
+                    </Box>
+                  ) : (
+                    <Suspense
+                      fallback={
+                        <Box
+                          display="flex"
+                          justifyContent="center"
+                          alignItems="center"
+                          height="100%"
+                        >
+                          <LoadingComponent />
+                        </Box>
+                      }
+                    >
+                      <SkateErrorBoundary>
+                        <EnhancedMarkdownRenderer content={post.body} />
+                      </SkateErrorBoundary>
+                    </Suspense>
+                  )}
+                </Box>
               </Box>
-            </Box>
-          );
-        })}
-        <Box sx={backCoverStyles(theme)}>
-          <Heading color={theme.colors.primary}>Back Cover</Heading>
-          <Text color={theme.colors.text}>Last Page</Text>
-        </Box>
-      </HTMLFlipBook>
-      <style jsx global>{`
-        .magazine-content {
-          color: var(--chakra-colors-text, #fff);
-          contain: layout style paint;
-          will-change: transform;
-        }
-        .magazine-content iframe {
-          max-width: 100%;
-          width: 100%;
-          display: block;
-          margin: 0 auto;
-          will-change: transform;
-          transform: translateZ(0);
-        }
-        .flipbook {
-          will-change: transform;
-          transform: translateZ(0);
-          touch-action: pan-y pinch-zoom;
-        }
-        .flipbook * {
-          touch-action: manipulation;
-        }
-        /* Hide vertical scrollbar for the post body area */
-        .hide-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        .hide-scrollbar {
-          -ms-overflow-style: none; /* IE and Edge */
-          scrollbar-width: none; /* Firefox */
-        }
-        /* Aggressively hide all scrollbars within the flipbook and its children */
-        .flipbook,
-        .flipbook * {
-          scrollbar-width: none !important; /* Firefox */
-          -ms-overflow-style: none !important; /* IE and Edge */
-        }
-        .flipbook::-webkit-scrollbar,
-        .flipbook *::-webkit-scrollbar {
-          display: none !important; /* Chrome, Safari */
-        }
-      `}</style>
-    </VStack>
+            );
+          })}
+          <Box sx={backCoverStyles(theme)}>
+            <Heading color={theme.colors.primary}>Back Cover</Heading>
+            <Text color={theme.colors.text}>Last Page</Text>
+          </Box>
+        </HTMLFlipBook>
+        <style jsx global>{`
+          .magazine-content {
+            color: var(--chakra-colors-text, #fff);
+            contain: layout style paint;
+            will-change: transform;
+          }
+          .magazine-content iframe {
+            max-width: 100%;
+            width: 100%;
+            display: block;
+            margin: 0 auto;
+            will-change: transform;
+            transform: translateZ(0);
+          }
+          .flipbook {
+            will-change: transform;
+            transform: translateZ(0);
+            touch-action: pan-y pinch-zoom;
+          }
+          .flipbook * {
+            touch-action: manipulation;
+          }
+          /* Hide vertical scrollbar for the post body area */
+          .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+          }
+          .hide-scrollbar {
+            -ms-overflow-style: none; /* IE and Edge */
+            scrollbar-width: none; /* Firefox */
+          }
+          /* Aggressively hide all scrollbars within the flipbook and its children */
+          .flipbook,
+          .flipbook * {
+            scrollbar-width: none !important; /* Firefox */
+            -ms-overflow-style: none !important; /* IE and Edge */
+          }
+          .flipbook::-webkit-scrollbar,
+          .flipbook *::-webkit-scrollbar {
+            display: none !important; /* Chrome, Safari */
+          }
+        `}</style>
+      </VStack>
+    </ContentErrorWatcher>
   );
 }

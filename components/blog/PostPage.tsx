@@ -12,6 +12,7 @@ import PostDetails from "@/components/blog/PostDetails";
 import { useComments } from "@/hooks/useComments";
 import InitFrameSDK from "@/hooks/init-frame-sdk";
 import BountyDetail from "@/components/bounties/BountyDetail";
+import ContentErrorWatcher from "@/components/shared/ContentErrorWatcher";
 
 interface PostPageProps {
   author: string;
@@ -86,65 +87,71 @@ export default function PostPage({ author, permlink }: PostPageProps) {
 
   // Detect if this is a bounty post
   if (isBounty) {
-    return <BountyDetail post={post} />;
+    return (
+      <ContentErrorWatcher>
+        <BountyDetail post={post} />
+      </ContentErrorWatcher>
+    );
   }
 
   return (
-    <Box bg="background" color="text" minH="100vh">
-      <Flex
-        direction={{ base: "column", md: "row" }}
-        h={{ base: "auto", md: "100vh" }}
-        gap={4}
-      >
-        <Box
-          flex={1}
+    <ContentErrorWatcher>
+      <Box bg="background" color="text" minH="100vh">
+        <Flex
+          direction={{ base: "column", md: "row" }}
           h={{ base: "auto", md: "100vh" }}
-          overflowY="auto"
-          sx={{
-            "&::-webkit-scrollbar": { display: "none" },
-            scrollbarWidth: "none",
-          }}
+          gap={4}
         >
-          <PostDetails post={post} onOpenConversation={onOpen} />
-        </Box>
-        <Box
-          width={{ base: "100%", md: "35%" }}
-          h={{ base: "auto", md: "100vh" }}
-          overflowY="auto"
-          sx={{ "&::-webkit-scrollbar": { display: "none" } }}
-        >
-          {!conversation ? (
-            <>
-              <SnapList
-                author={author}
-                permlink={permlink}
+          <Box
+            flex={1}
+            h={{ base: "auto", md: "100vh" }}
+            overflowY="auto"
+            sx={{
+              "&::-webkit-scrollbar": { display: "none" },
+              scrollbarWidth: "none",
+            }}
+          >
+            <PostDetails post={post} onOpenConversation={onOpen} />
+          </Box>
+          <Box
+            width={{ base: "100%", md: "35%" }}
+            h={{ base: "auto", md: "100vh" }}
+            overflowY="auto"
+            sx={{ "&::-webkit-scrollbar": { display: "none" } }}
+          >
+            {!conversation ? (
+              <>
+                <SnapList
+                  author={author}
+                  permlink={permlink}
+                  setConversation={setConversation}
+                  onOpen={onOpen}
+                  setReply={setReply}
+                  newComment={newComment}
+                  setNewComment={setNewComment}
+                  post={true}
+                  data={commentsData}
+                />
+              </>
+            ) : (
+              <Conversation
+                discussion={conversation}
                 setConversation={setConversation}
                 onOpen={onOpen}
                 setReply={setReply}
-                newComment={newComment}
-                setNewComment={setNewComment}
-                post={true}
-                data={commentsData}
               />
-            </>
-          ) : (
-            <Conversation
-              discussion={conversation}
-              setConversation={setConversation}
-              onOpen={onOpen}
-              setReply={setReply}
-            />
-          )}
-        </Box>
-      </Flex>
-      {isOpen && (
-        <SnapReplyModal
-          isOpen={isOpen}
-          onClose={onClose}
-          discussion={reply}
-          onNewReply={handleNewComment}
-        />
-      )}
-    </Box>
+            )}
+          </Box>
+        </Flex>
+        {isOpen && (
+          <SnapReplyModal
+            isOpen={isOpen}
+            onClose={onClose}
+            discussion={reply}
+            onNewReply={handleNewComment}
+          />
+        )}
+      </Box>
+    </ContentErrorWatcher>
   );
 }

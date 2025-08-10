@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Discussion } from "@hiveio/dhive";
 import { findPosts } from "@/lib/hive/client-functions";
 import PostInfiniteScroll from "@/components/blog/PostInfiniteScroll";
+import { CommunityTotalPayout } from "../shared";
 
 export default function RightSideBar() {
   const [query, setQuery] = useState("created");
@@ -89,6 +90,7 @@ export default function RightSideBar() {
         scrollbarWidth: "none",
       }}
     >
+      <CommunityTotalPayout />
       <PostInfiniteScroll
         allPosts={allPosts}
         fetchPosts={fetchPosts}

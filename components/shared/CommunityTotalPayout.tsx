@@ -1,9 +1,18 @@
 "use client";
 const SKATEHIVE_TAG =
   process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || "hive-173115";
-import { Box, Flex, Image, Text, VStack, useTheme } from "@chakra-ui/react";
+import {
+  Box,
+  Center,
+  Flex,
+  Image,
+  Text,
+  VStack,
+  useTheme,
+  useDisclosure,
+} from "@chakra-ui/react";
 import { useEffect, useMemo, useState } from "react";
-import dayjs from "dayjs";
+import SkateHiveMagazineModal from "./SkateHiveMagazineModal";
 
 function CommunityTotalPayout() {
   const [totalHBDPayout, setTotalHBDPayout] = useState<number>(0);
@@ -11,21 +20,18 @@ function CommunityTotalPayout() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isHovered, setIsHovered] = useState(false);
-  const [createdDate, setCreatedDate] = useState<string | null>(null);
+
+  // Modal state
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   const theme = useTheme();
-  const borderColor = theme.colors.border || "#1E90FF";
   const accentColor = theme.colors.accent || "#B0C4DE";
-  const successColor = theme.colors.success || "#38A169";
   const textColor = theme.colors.text || "#1E90FF";
   const borderRadius = theme.radii.lg || "16px";
   const bodyFont = theme.fonts.body;
-  const headingFont = theme.fonts.heading;
   const fontWeightBold = theme.fontWeights.bold || 700;
-  const fontWeightNormal = theme.fontWeights.normal || 400;
   const fontSizeSm = theme.fontSizes.sm || "14px";
   const fontSizeXl = theme.fontSizes.xl || "20px";
-  const fontSizePayoutLarge = "64px";
   const fontSizeBelow = theme.fontSizes["md"] || "16px";
 
   const formattedNumber = useMemo(
@@ -51,9 +57,6 @@ function CommunityTotalPayout() {
           data[SKATEHIVE_TAG]?.total_payouts_hbd?.replace("$", "") || "90000"
         );
         setTotalHBDPayout(payout);
-        if (data[SKATEHIVE_TAG]?.created) {
-          setCreatedDate(data[SKATEHIVE_TAG].created);
-        }
       } catch (error: any) {
         console.error("Error fetching data: ", error);
         setError(error.message);
@@ -92,34 +95,15 @@ function CommunityTotalPayout() {
   return (
     <center>
       <Box
-        margin="0px"
-        padding="4px"
-        width={"100%"}
-        maxW="md"
-        mx="auto"
-        borderRadius={borderRadius}
-        color={accentColor}
         position="relative"
         overflow="hidden"
         zIndex={0}
         mb={4}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        cursor={"pointer"}
+        onClick={onOpen}
       >
-        {/* Griptape background to match join page style */}
-        <Box
-          position="absolute"
-          top={0}
-          left={0}
-          width="100%"
-          height="100%"
-          backgroundImage="url('/images/griptape.jpg')"
-          backgroundSize="cover"
-          backgroundPosition="center"
-          opacity={0.3}
-          zIndex={0}
-          pointerEvents="none"
-        />
         {isHovered && (
           <Box
             position="absolute"
@@ -169,41 +153,34 @@ function CommunityTotalPayout() {
             fontFamily={bodyFont}
           >
             <Text
-              color={successColor}
-              fontSize={fontSizePayoutLarge}
+              color={"primary"}
+              fontSize={"24px"}
               fontWeight={fontWeightBold}
-              textShadow={"1px 1px 15px " + borderColor}
               gap={1}
               display={"flex"}
               zIndex={2}
-              fontFamily={headingFont}
+              style={{
+                fontFamily: `'Joystix', 'VT323', 'Fira Mono', 'monospace'`,
+              }}
             >
               ${displayedNumber} USD
             </Text>
-            <Flex direction="row" align="center" gap={2} zIndex={2}>
+            <Center>
               <Text
                 color={accentColor}
                 fontSize={fontSizeBelow}
                 fontWeight={fontWeightBold}
-                textShadow={"1px 1px 15px " + borderColor}
                 fontFamily={bodyFont}
               >
-                Paid to Skaters
+                Magazine Total Payout
               </Text>
-              {createdDate && (
-                <Text
-                  color={accentColor}
-                  fontSize={fontSizeBelow}
-                  fontWeight={fontWeightNormal}
-                  fontFamily={bodyFont}
-                >
-                  since {dayjs(createdDate).format("MMM D, YYYY")}
-                </Text>
-              )}
-            </Flex>
+            </Center>
           </Flex>
         )}
       </Box>
+
+      {/* SkateHive Magazine Modal */}
+      <SkateHiveMagazineModal isOpen={isOpen} onClose={onClose} />
     </center>
   );
 }
