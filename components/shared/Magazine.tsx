@@ -21,10 +21,12 @@ import {
 import HTMLFlipBook from "react-pageflip";
 import { Discussion } from "@hiveio/dhive";
 import { getPayoutValue, findPosts } from "@/lib/hive/client-functions";
-const HiveMarkdown = lazy(() => import("@/components/shared/HiveMarkdown"));
+const EnhancedMarkdownRenderer = lazy(() => import("@/components/markdown/EnhancedMarkdownRenderer").then(module => ({ default: module.EnhancedMarkdownRenderer })));
 import LoadingComponent from "../homepage/loadingComponent";
 import MatrixOverlay from "@/components/graphics/MatrixOverlay";
 import { useTheme } from "@/app/themeProvider";
+import SkateErrorBoundary from "./SkateErrorBoundary";
+import ContentErrorWatcher from "./ContentErrorWatcher";
 
 function useMagazinePosts(
   query: string,
@@ -150,21 +152,6 @@ export interface MagazineProps {
   query?: string;
 }
 
-// Add a function to ensure all YouTube iframes have enablejsapi=1 in their src
-function addEnableJsApiToYouTubeIframes(html: string) {
-  return html.replace(
-    /<iframe([^>]+src="https:\/\/www\.youtube\.com\/embed\/[^\"]+)([^>]*)>/g,
-    (match, beforeSrc, afterSrc) => {
-      if (beforeSrc.includes("enablejsapi=1")) return match;
-      if (beforeSrc.includes("?")) {
-        return `<iframe${beforeSrc}&enablejsapi=1${afterSrc}>`;
-      } else {
-        return `<iframe${beforeSrc}?enablejsapi=1${afterSrc}>`;
-      }
-    }
-  );
-}
-
 export default function Magazine(props: MagazineProps) {
   const { theme } = useTheme();
   const flipBookRef = useRef<any>(null);
@@ -255,19 +242,20 @@ export default function Magazine(props: MagazineProps) {
   }
 
   return (
-    <VStack
-      {...backgroundGradient}
-      width="100%"
-      height="100%"
-      alignItems="flex-start"
-      justifyContent="flex-start"
-      spacing={0}
-      sx={{
-        "&::-webkit-scrollbar": { display: "none" },
-        scrollbarWidth: "none",
-        overflowY: "hidden",
-      }}
-    >
+    <ContentErrorWatcher>
+      <VStack
+        {...backgroundGradient}
+        width="100%"
+        height="100%"
+        alignItems="flex-start"
+        justifyContent="flex-start"
+        spacing={0}
+        sx={{
+          "&::-webkit-scrollbar": { display: "none" },
+          scrollbarWidth: "none",
+          overflowY: "hidden",
+        }}
+      >
       <audio ref={audioRef} src="/pageflip.mp3" preload="auto" />
       <HTMLFlipBook
         className="flipbook hide-scrollbar"
@@ -513,7 +501,9 @@ export default function Magazine(props: MagazineProps) {
                       </Box>
                     }
                   >
-                    <HiveMarkdown markdown={post.body} />
+                    <SkateErrorBoundary>
+                      <EnhancedMarkdownRenderer content={post.body} />
+                    </SkateErrorBoundary>
                   </Suspense>
                 )}
               </Box>
@@ -567,5 +557,6 @@ export default function Magazine(props: MagazineProps) {
         }
       `}</style>
     </VStack>
+    </ContentErrorWatcher>
   );
 }

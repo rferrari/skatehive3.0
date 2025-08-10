@@ -12,6 +12,7 @@ import PostDetails from "@/components/blog/PostDetails";
 import { useComments } from "@/hooks/useComments";
 import InitFrameSDK from "@/hooks/init-frame-sdk";
 import BountyDetail from "@/components/bounties/BountyDetail";
+import ContentErrorWatcher from "@/components/shared/ContentErrorWatcher";
 
 interface PostPageProps {
   author: string;
@@ -86,11 +87,16 @@ export default function PostPage({ author, permlink }: PostPageProps) {
 
   // Detect if this is a bounty post
   if (isBounty) {
-    return <BountyDetail post={post} />;
+    return (
+      <ContentErrorWatcher>
+        <BountyDetail post={post} />
+      </ContentErrorWatcher>
+    );
   }
 
   return (
-    <Box bg="background" color="text" minH="100vh">
+    <ContentErrorWatcher>
+      <Box bg="background" color="text" minH="100vh">
       <Flex
         direction={{ base: "column", md: "row" }}
         h={{ base: "auto", md: "100vh" }}
@@ -146,5 +152,6 @@ export default function PostPage({ author, permlink }: PostPageProps) {
         />
       )}
     </Box>
+    </ContentErrorWatcher>
   );
 }

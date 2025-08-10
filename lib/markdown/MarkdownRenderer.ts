@@ -1,8 +1,87 @@
 import { DefaultRenderer } from "@hiveio/content-renderer";
+import DOMPurify from "dompurify";
 
 // Create a cache for processed markdown
 const markdownCache = new Map<string, string>();
 const processedContentCache = new Map<string, string>();
+
+// Simple function to get DOMPurify instance, only sanitize on client side
+function getSanitizedHTML(html: string): string {
+    // Only sanitize in browser environment
+    if (typeof window === 'undefined') {
+        // Server-side: skip sanitization, it will be sanitized on client
+        return html;
+    }
+    
+    // Client-side: use DOMPurify
+    const purify = DOMPurify;
+    
+    // Define the hook function to validate iframe sources
+    const iframeHook = function (node: Node, data: any) {
+        // Allow iframes from trusted video platforms
+        if (data && data.tagName === 'iframe' && node instanceof HTMLElement) {
+            const src = node.getAttribute('src');
+            if (src) {
+                // Define trusted domains with more specific patterns
+                const trustedPatterns = [
+                    /^https:\/\/(www\.)?youtube\.com\/embed\/[a-zA-Z0-9_-]{11}(\?.*)?$/,
+                    /^https:\/\/youtu\.be\/[a-zA-Z0-9_-]{11}(\?.*)?$/,
+                    /^https:\/\/player\.vimeo\.com\/video\/[0-9]+(\?.*)?$/,
+                    /^https:\/\/3speak\.tv\/embed\?v=.+$/,
+                    /^https:\/\/odysee\.com\/.+$/,
+                    /^https:\/\/ipfs\.skatehive\.app\/ipfs\/.+$/,
+                    /^https:\/\/gateway\.pinata\.cloud\/ipfs\/.+$/
+                ];
+                
+                const isAllowed = trustedPatterns.some(pattern => pattern.test(src));
+                
+                if (!isAllowed && node.parentNode) {
+                    console.warn(`Blocked untrusted iframe src: ${src}`);
+                    node.parentNode.removeChild(node);
+                }
+            }
+        }
+    };
+    
+    // Add hook before sanitization
+    purify.addHook('beforeSanitizeElements', iframeHook);
+    
+    // Configure DOMPurify to allow SkateHive specific features
+    const clean = purify.sanitize(html, {
+        ALLOWED_TAGS: [
+            'div', 'span', 'p', 'br', 'strong', 'em', 'u', 'strike', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+            'blockquote', 'ul', 'ol', 'li', 'a', 'img', 'video', 'source', 'iframe', 'mention', 'code', 'pre',
+            'table', 'thead', 'tbody', 'tr', 'th', 'td', 'hr', 'sup', 'sub', 'small', 'mark', 'del', 'ins'
+        ],
+        ALLOWED_ATTR: [
+            'href', 'src', 'alt', 'title', 'width', 'height', 'style', 'class', 'id', 'data-username', 
+            'data-ipfs-hash', 'controls', 'preload', 'autoplay', 'playsinline', 'webkit-playsinline', 
+            'muted', 'poster', 'type', 'frameborder', 'allow', 'allowfullscreen', 'loading', 'target',
+            'rel'
+        ],
+        // More permissive URI regex that allows our trusted video platforms
+        ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+        ADD_TAGS: ['mention'],
+        ADD_ATTR: ['data-username', 'data-ipfs-hash', 'webkit-playsinline', 'playsinline'],
+        FORBID_TAGS: ['script', 'object', 'embed', 'applet', 'base', 'link'],
+        FORBID_ATTR: ['onclick', 'onload', 'onerror', 'onmouseover', 'onfocus', 'onblur', 'onsubmit', 'onreset', 'onselect', 'onchange'],
+        WHOLE_DOCUMENT: false,
+        RETURN_DOM: false,
+        RETURN_DOM_FRAGMENT: false,
+        RETURN_TRUSTED_TYPE: false,
+        ALLOW_UNKNOWN_PROTOCOLS: false,
+        CUSTOM_ELEMENT_HANDLING: {
+            tagNameCheck: /^mention$/,
+            attributeNameCheck: /^data-username$/,
+            allowCustomizedBuiltInElements: false,
+        }
+    });
+    
+    // Remove the hook after sanitization to prevent memory leaks
+    purify.removeHook('beforeSanitizeElements');
+    
+    return clean;
+}
 
 export function processMediaContent(content: string): string {
     // Check cache first
@@ -93,34 +172,61 @@ export default function markdownRenderer(markdown: string): string {
         return markdownCache.get(markdown)!;
     }
     
-    // Process media content before rendering markdown
-    const processedMarkdown = processMediaContent(markdown);
-    const renderer = new DefaultRenderer({
-        baseUrl: "https://hive.blog/",
-        breaks: true,
-        skipSanitization: true,
-        allowInsecureScriptTags: true,
-        addNofollowToLinks: true,
-        doNotShowImages: false,
-        assetsWidth: 540,
-        assetsHeight: 380,
-        imageProxyFn: (url: string) => url,
-        usertagUrlFn: (account: string) => "/" + "@" + account,
-        hashtagUrlFn: (hashtag: string) => "/trending/" + hashtag,
-        isLinkSafeFn: () => true,
-        addExternalCssClassToMatchingLinksFn: () => true,
-        ipfsPrefix: "https://ipfs.skatehive.app",
-    });
-    const html = renderer.render(processedMarkdown);
-    // Replace user mention links with <mention> tags
-    const mentionLinkRegex = /<a [^>]*href="\/@([a-z0-9\-.]+)"[^>]*>@([a-z0-9\-.]+)<\/a>/gi;
-    const htmlWithMentions = html.replace(mentionLinkRegex, (_match: string, username: string) => {
-        return `<mention data-username="${username}">@${username}</mention>`;
-    });
-    
-    // Cache the result
-    markdownCache.set(markdown, htmlWithMentions);
-    return htmlWithMentions;
+    try {
+        // Process media content before rendering markdown
+        const processedMarkdown = processMediaContent(markdown);
+        const renderer = new DefaultRenderer({
+            baseUrl: "https://hive.blog/",
+            breaks: true,
+            skipSanitization: false,
+            allowInsecureScriptTags: false,
+            addNofollowToLinks: true,
+            doNotShowImages: false,
+            assetsWidth: 540,
+            assetsHeight: 380,
+            imageProxyFn: (url: string) => url,
+            usertagUrlFn: (account: string) => "/" + "@" + account,
+            hashtagUrlFn: (hashtag: string) => "/trending/" + hashtag,
+            isLinkSafeFn: () => true,
+            addExternalCssClassToMatchingLinksFn: () => true,
+            ipfsPrefix: "https://ipfs.skatehive.app",
+        });
+        const html = renderer.render(processedMarkdown);
+        
+        // Sanitize the HTML (only on client side)
+        const clean = getSanitizedHTML(html);
+        
+        // Replace user mention links with <mention> tags
+        const mentionLinkRegex = /<a [^>]*href="\/@([a-z0-9\-.]+)"[^>]*>@([a-z0-9\-.]+)<\/a>/gi;
+        const htmlWithMentions = clean.replace(mentionLinkRegex, (_match: string, username: string) => {
+            return `<mention data-username="${username}">@${username}</mention>`;
+        });
+        
+        // Cache the result
+        markdownCache.set(markdown, htmlWithMentions);
+        return htmlWithMentions;
+    } catch (error) {
+        console.warn('Content renderer error handled by SkateHive:', error);
+        
+        // Return a safe fallback message
+        const errorMessage = `
+            <div style="
+                padding: 1rem; 
+                border: 2px solid #f56565; 
+                border-radius: 8px; 
+                background: #feb2b2; 
+                color: #742a2a; 
+                text-align: center;
+                font-family: 'Joystix', 'VT323', 'Fira Mono', monospace;
+            ">
+                🛹 Content filtered for safety - SkateHive devs were gnarlier! 🛹
+            </div>
+        `;
+        
+        // Cache the error result to avoid repeated processing
+        markdownCache.set(markdown, errorMessage);
+        return errorMessage;
+    }
 }
 
 function isLikelyVideoID(url: string): boolean {

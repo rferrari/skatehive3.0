@@ -1,6 +1,7 @@
 import React from "react";
 import markdownRenderer from "@/lib/markdown/MarkdownRenderer";
 import { Image } from "@chakra-ui/react";
+import SkateErrorBoundary from "./SkateErrorBoundary";
 
 interface HiveMarkdownProps {
   markdown: string;
@@ -53,6 +54,7 @@ const HiveMarkdown: React.FC<HiveMarkdownProps> = ({
   className = "markdown-body",
   style,
 }) => {
+  // Get sanitized HTML from the updated markdownRenderer
   let rawHtml = markdownRenderer(markdown);
 
   // Replace <mention data-username="username">@username</mention> with <Mention />
@@ -105,24 +107,28 @@ const HiveMarkdown: React.FC<HiveMarkdownProps> = ({
   // If there are mentions, process them, else just dangerouslySetInnerHTML
   if (rawHtml.includes("<mention")) {
     return (
-      <div className={className} style={style}>
-        {processMentions(rawHtml).map((part, i) =>
-          typeof part === "string" ? (
-            <span key={i} dangerouslySetInnerHTML={{ __html: part }} />
-          ) : (
-            part
-          )
-        )}
-      </div>
+      <SkateErrorBoundary>
+        <div className={className} style={style}>
+          {processMentions(rawHtml).map((part, i) =>
+            typeof part === "string" ? (
+              <span key={i} dangerouslySetInnerHTML={{ __html: part }} />
+            ) : (
+              part
+            )
+          )}
+        </div>
+      </SkateErrorBoundary>
     );
   }
 
   return (
-    <div
-      className={className}
-      style={style}
-      dangerouslySetInnerHTML={{ __html: rawHtml }}
-    />
+    <SkateErrorBoundary>
+      <div
+        className={className}
+        style={style}
+        dangerouslySetInnerHTML={{ __html: rawHtml }}
+      />
+    </SkateErrorBoundary>
   );
 };
 
