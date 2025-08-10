@@ -2,6 +2,37 @@ import { useAioha } from "@aioha/react-ui";
 import { KeyTypes } from "@aioha/aioha";
 import { KeychainSDK, KeychainKeyTypes } from "keychain-sdk";
 import { Operation } from "@hiveio/dhive";
+import { getProfile } from "@/lib/hive/client-functions";
+
+interface HiveRPCError extends Error {
+  name: "RPCError";
+  jse_info?: unknown;
+}
+
+function isHiveRPCError(err: unknown): err is HiveRPCError {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    "name" in err &&
+    (err as any).name === "RPCError"
+  );
+}
+
+function extractHiveRPCMessage(err: unknown): string {
+  if (isHiveRPCError(err)) {
+    if (err.jse_info && typeof err.jse_info === "object") {
+      const chars = Object.values(err.jse_info)
+        .filter((v): v is string => typeof v === "string")
+        .join("");
+      if (chars) return chars;
+    }
+    return err.message || "Unknown RPC error";
+  }
+  if (err instanceof Error) {
+    return err.message;
+  }
+  return "Unknown error";
+}
 
 export function useWalletActions() {
   const { user, aioha } = useAioha();
@@ -13,20 +44,34 @@ export function useWalletActions() {
     memo?: string,
     actionType?: string
   ) => {
+    let result: any;
     if (!actionType) return;
+
+    // check if hive account exist
+    if (username) {
+      try {
+        const transferTo = await getProfile(username);
+      } catch (err: unknown) {
+        return {
+          error: extractHiveRPCMessage(err),
+          errorCode: 4001,
+          success: false
+        };
+      }
+    }
 
     switch (actionType) {
       case "Send HIVE":
         if (username) {
-          await aioha.transfer(username, amount, 'HIVE', memo);
+          result = await aioha.transfer(username, amount, 'HIVE', memo);
         }
         break;
       case "Power Up":
-        await aioha.stakeHive(amount);
+        result = await aioha.stakeHive(amount);
         break;
       case "Convert HIVE":
         const nai = direction === "HIVE_TO_HBD" ? "@@000000013" : "@@000000014";
-        await aioha.signAndBroadcastTx(
+        result = await aioha.signAndBroadcastTx(
           [
             [
               "convert",
@@ -45,7 +90,7 @@ export function useWalletActions() {
         );
         break;
       case "HIVE Savings":
-        await aioha.signAndBroadcastTx(
+        result = await aioha.signAndBroadcastTx(
           [
             [
               "transfer_to_savings",
@@ -61,7 +106,7 @@ export function useWalletActions() {
         );
         break;
       case "Power Down":
-        await aioha.unstakeHive(amount);
+        result = await aioha.unstakeHive(amount);
         break;
       case "Delegate":
         if (username) {
@@ -70,11 +115,11 @@ export function useWalletActions() {
         break;
       case "Send HBD":
         if (username) {
-          await aioha.transfer(username, amount, 'HBD', memo);
+          result = await aioha.transfer(username, amount, 'HBD', memo);
         }
         break;
       case "HBD Savings":
-        await aioha.signAndBroadcastTx(
+        result = await aioha.signAndBroadcastTx(
           [
             [
               "transfer_to_savings",
@@ -92,7 +137,7 @@ export function useWalletActions() {
       case "Withdraw HBD Savings":
       case "Withdraw HIVE Savings":
         const currency = actionType.includes("HBD") ? "HBD" : "HIVE";
-        await aioha.signAndBroadcastTx(
+        result = await aioha.signAndBroadcastTx(
           [
             [
               "transfer_from_savings",
@@ -109,6 +154,8 @@ export function useWalletActions() {
         );
         break;
     }
+
+    return result;
   };
 
   const handleClaimHbdInterest = async () => {
