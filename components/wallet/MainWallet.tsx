@@ -44,6 +44,7 @@ import { TokenDetail } from "@/types/portfolio";
 import PIXTabContent from "./components/PIXTabContent";
 import { formatValue } from "@/lib/utils/portfolioUtils";
 import HiveTransactionHistory from "./components/HiveTransactionHistory";
+import ClaimRewards from "./components/ClaimRewards";
 
 interface HiveToken {
   symbol: string;
@@ -527,6 +528,14 @@ export default function MainWallet({ username }: MainWalletProps) {
                             )}
                         </Box>
 
+                        
+                          <ClaimRewards
+                            reward_hbd_balance={hiveAccount?.reward_hbd_balance}
+                            reward_hive_balance={hiveAccount?.reward_hive_balance}
+                            reward_vesting_balance={hiveAccount?.reward_vesting_balance}
+                            reward_vesting_hive={hiveAccount?.reward_vesting_hive}
+                          />
+                        
                         {/* Transaction History  - Show if user is connected to Hive */}
                         <HiveTransactionHistory searchAccount={user} />
                       </>
@@ -548,8 +557,6 @@ export default function MainWallet({ username }: MainWalletProps) {
 
                     {/* NFT Section - Show if connected to Ethereum */}
                     {isMounted && isConnected && <NFTSection />}
-
-
 
                   </TabPanel>
 
