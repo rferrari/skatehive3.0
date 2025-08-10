@@ -86,7 +86,6 @@ export const SkateErrorModal: React.FC<SkateErrorModalProps> = ({
               color={theme.colors.accent}
               animation="spin 3s linear infinite"
             />
-
             <Text
               color={theme.colors.text}
               textAlign="center"
@@ -96,7 +95,6 @@ export const SkateErrorModal: React.FC<SkateErrorModalProps> = ({
             >
               {content.message}
             </Text>
-
             {errorMessage && (
               <Box
                 bg={theme.colors.muted}
@@ -115,6 +113,25 @@ export const SkateErrorModal: React.FC<SkateErrorModalProps> = ({
                 </Text>
               </Box>
             )}
+            <Text
+              fontSize="xs"
+              color={"secondary"}
+              fontFamily="'Fira Mono', monospace"
+              textAlign="center"
+            >
+              Shout out to{" "}
+              <Box
+                as="a"
+                href="/user/louis88"
+                color={"accent"}
+                textDecoration="underline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Louis88
+              </Box>{" "}
+              for testing and reporting this vulnerability!
+            </Text>
           </VStack>
         </ModalBody>
 
