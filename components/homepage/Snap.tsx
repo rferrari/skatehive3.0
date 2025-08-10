@@ -89,7 +89,7 @@ const Snap = ({
 
   // State to track comment count for optimistic updates
   const [commentCount, setCommentCount] = useState(discussion.children ?? 0);
-
+  // console.log("comment icon counter debug:", commentCount, discussion.children);
   const effectiveDepth = discussion.depth || 0;
 
   const { text, media } = useMemo(

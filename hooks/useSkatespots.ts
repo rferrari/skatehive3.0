@@ -22,16 +22,18 @@ export const useSkatespots = () => {
   const [error, setError] = useState<string | null>(null);
   const fetchedPermlinksRef = useRef<Set<string>>(new Set());
   const isInitializedRef = useRef(false);
+  const isLoadingRef = useRef(false); // Use ref to prevent race conditions
 
   const fetchSkatespots = async (page: number = 1, append: boolean = false) => {
-    // Prevent multiple simultaneous requests
-    if (isLoading) return;
+    // Prevent multiple simultaneous requests using ref
+    if (isLoadingRef.current) return;
     
-    // Don't refetch if we already have data for this page (but allow refresh)
+    // Only prevent refetching initial data if we already have data and it's not a refresh
     if (page === 1 && !append && spots.length > 0 && isInitializedRef.current && !error) {
       return;
     }
     
+    isLoadingRef.current = true;
     setIsLoading(true);
     setError(null);
     
@@ -61,6 +63,7 @@ export const useSkatespots = () => {
         setSpots(prev => {
           const updated = [...prev, ...newSpots];
           if (typeof window !== 'undefined') {
+            console.log(`Appending ${newSpots.length} spots. Total spots: ${updated.length}`);
           }
           return updated;
         });
@@ -68,18 +71,25 @@ export const useSkatespots = () => {
         // For initial load, always set spots regardless of duplicates
         setSpots(newSpots);
         isInitializedRef.current = true;
+        if (typeof window !== 'undefined') {
+          console.log(`Initial load: ${newSpots.length} spots`);
+        }
       }
       
-      if (typeof window !== 'undefined') {
-      }
+      // Update pagination state
       setHasMore(result.pagination.hasNextPage);
       setCurrentPage(result.pagination.currentPage);
+      
+      if (typeof window !== 'undefined') {
+        console.log(`Page ${result.pagination.currentPage}/${result.pagination.totalPages}, hasNextPage: ${result.pagination.hasNextPage}`);
+      }
       
     } catch (err) {
       console.error('Error fetching skatespots:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch skatespots');
     } finally {
       setIsLoading(false);
+      isLoadingRef.current = false;
     }
   };
 
@@ -91,13 +101,22 @@ export const useSkatespots = () => {
   // Debug: Track spots changes (client-side only)
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      console.log(`Spots updated: ${spots.length} total spots`);
     }
   }, [spots]);
 
   // Load next page
   const loadNextPage = () => {
-    if (!isLoading && hasMore) {
-      fetchSkatespots(currentPage + 1, true);
+    if (!isLoadingRef.current && hasMore) {
+      const nextPage = currentPage + 1;
+      if (typeof window !== 'undefined') {
+        console.log(`Loading next page: ${nextPage}`);
+      }
+      fetchSkatespots(nextPage, true);
+    } else {
+      if (typeof window !== 'undefined') {
+        console.log(`Cannot load next page: isLoading=${isLoadingRef.current}, hasMore=${hasMore}`);
+      }
     }
   };
 
@@ -106,6 +125,7 @@ export const useSkatespots = () => {
     fetchedPermlinksRef.current.clear();
     setCurrentPage(1);
     setHasMore(true);
+    isInitializedRef.current = false;
     // Don't clear spots immediately - let the new fetch handle it
     fetchSkatespots(1, false);
   };
