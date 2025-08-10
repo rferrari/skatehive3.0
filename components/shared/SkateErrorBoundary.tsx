@@ -1,7 +1,7 @@
-import React from 'react';
-import { Box, Text } from '@chakra-ui/react';
-import { SkateErrorModal, useSkateErrorHandler } from './SkateErrorModal';
-import { useTheme } from '@/app/themeProvider';
+import React from "react";
+import { Box, Text } from "@chakra-ui/react";
+import { SkateErrorModal, useSkateErrorHandler } from "./SkateErrorModal";
+import { useTheme } from "@/app/themeProvider";
 
 interface SkateErrorBoundaryProps {
   children: React.ReactNode;
@@ -42,23 +42,27 @@ export class SkateErrorBoundary extends React.Component<
     });
 
     // Log the error for debugging
-    console.error('SkateErrorBoundary caught an error:', error, errorInfo);
+    console.error("SkateErrorBoundary caught an error:", error, errorInfo);
   }
 
   render() {
     if (this.state.hasError) {
       const { error } = this.state;
-      const isContentRendererError = error?.message?.includes('@hiveio/content-renderer');
-      const isMaliciousContentError = 
-        isContentRendererError && 
-        (error?.message?.includes('Blocked') || 
-         error?.message?.includes('does not appear to be a url'));
+      const isContentRendererError = error?.message?.includes(
+        "@hiveio/content-renderer"
+      );
+      const isMaliciousContentError =
+        isContentRendererError &&
+        (error?.message?.includes("Blocked") ||
+          error?.message?.includes("does not appear to be a url"));
 
       return (
-        <SkateErrorFallback 
+        <SkateErrorFallback
           error={error}
           isMaliciousContent={!!isMaliciousContentError}
-          onRetry={() => this.setState({ hasError: false, error: null, errorInfo: null })}
+          onRetry={() =>
+            this.setState({ hasError: false, error: null, errorInfo: null })
+          }
         />
       );
     }
@@ -79,20 +83,20 @@ const SkateErrorFallback: React.FC<SkateErrorFallbackProps> = ({
   onRetry,
 }) => {
   const { theme } = useTheme();
-  const { 
-    isErrorOpen, 
-    closeError, 
+  const {
+    isErrorOpen,
+    closeError,
     showMaliciousContentError,
     showError,
     errorType,
-    errorMessage 
+    errorMessage,
   } = useSkateErrorHandler();
 
   React.useEffect(() => {
     if (isMaliciousContent) {
       showMaliciousContentError(error?.message);
     } else {
-      showError('general-error', error?.message || 'Unknown error occurred');
+      showError("general-error", error?.message || "Unknown error occurred");
     }
   }, [error, isMaliciousContent, showMaliciousContentError, showError]);
 
@@ -118,7 +122,7 @@ const SkateErrorFallback: React.FC<SkateErrorFallbackProps> = ({
           🛹 Content filtered for safety
         </Text>
       </Box>
-      
+
       <SkateErrorModal
         isOpen={isErrorOpen}
         onClose={handleClose}
@@ -131,12 +135,12 @@ const SkateErrorFallback: React.FC<SkateErrorFallbackProps> = ({
 
 // Hook for wrapping content with error handling
 export const useSkateContentRenderer = () => {
-  const { 
-    isErrorOpen, 
-    closeError, 
+  const {
+    isErrorOpen,
+    closeError,
     showMaliciousContentError,
     errorType,
-    errorMessage 
+    errorMessage,
   } = useSkateErrorHandler();
 
   const renderWithErrorHandling = (content: React.ReactNode, key?: string) => (

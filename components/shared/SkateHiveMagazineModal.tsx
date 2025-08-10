@@ -65,7 +65,7 @@ export default function SkateHiveMagazineModal({
             color={accentColor}
             pb={2}
           >
-            📖 SkateHive Magazine: "Infinity Mag"
+            📖 SkateHive Magazine: &ldquo;Infinity Mag&rdquo;
           </ModalHeader>
           <ModalCloseButton />
 
@@ -77,7 +77,7 @@ export default function SkateHiveMagazineModal({
                 textAlign="center"
                 lineHeight="tall"
               >
-                The Skatehive App is more than just a platform; it's a digital
+                The Skatehive App is more than just a platform; it&apos;s a digital
                 skateboard magazine where skaters contribute to the pages of its
                 Infinity Mag. Each post, trick clip, or story shared becomes
                 part of a living, evolving publication created entirely by
