@@ -155,6 +155,10 @@ export function useZoraTrade() {
   }, [isConnected, ethBalance, getTokenBalance, getTokenDecimals]);
 
   const getTradeQuote = useCallback(async (config: TradeConfig) => {
+    if (!publicClient) {
+      return null;
+    }
+
     try {
       const tradeParameters: TradeParameters = {
         sell: config.fromToken.type === 'eth' 
@@ -173,7 +177,7 @@ export function useZoraTrade() {
     } catch (error) {
       return null;
     }
-  }, [address]);
+  }, [address, publicClient]);
 
   const executeTrade = useCallback(async (config: TradeConfig) => {
     if (!isConnected || !address || !walletClient || !publicClient) {
@@ -185,11 +189,10 @@ export function useZoraTrade() {
       try {
         await switchChain({ chainId: base.id });
       } catch (switchError: any) {
-        const error = new Error(`Failed to switch to Base network. Please switch manually. Error: ${switchError.message}`);
-        console.error('Chain switch failed in executeTrade:', error.message);
+        const error = new Error(`Failed to switch to Base network. Please switch manually.`);
         toast({
           title: 'Network Switch Failed',
-          description: `Please switch to Base network manually. Error: ${switchError.message}`,
+          description: 'Please switch to Base network manually.',
           status: 'error',
           duration: 5000,
         });
@@ -240,8 +243,6 @@ export function useZoraTrade() {
       return receipt;
 
     } catch (error: any) {
-      console.error('Trade execution error:', error);
-      
       // Handle specific error types
       let title = 'Trade failed';
       let description = 'An error occurred during the trade';
