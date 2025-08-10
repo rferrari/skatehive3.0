@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+declare const StWidget: any;
+
 export default function ChatPage() {
   const chatRef = useRef<HTMLDivElement | null>(null);
   const [debug, setDebug] = useState<string[]>([]);
@@ -43,7 +45,6 @@ export default function ChatPage() {
       .then(() => loadScript('https://chat.peakd.com/stwidget.js'))
       .then(() => {
         log('Attempting to create StWidget');
-        const StWidget = (window as any).StWidget;
         if (typeof StWidget === 'function') {
           widget = new StWidget('https://chat.peakd.com/t/hive-173115/0');
           widget.setProperties({
@@ -54,7 +55,7 @@ export default function ChatPage() {
           container.appendChild(element);
           log('Widget appended to container');
         } else {
-          log('StWidget not available on window');
+          log('StWidget constructor missing');
         }
       })
       .catch((e) => {
