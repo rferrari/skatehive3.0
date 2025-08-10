@@ -656,9 +656,12 @@ const ZoraCoinPageClient = React.memo(
                       See on Zora
                     </Button>
                   </HStack>
-                  <Text fontSize="sm" color="gray.400" noOfLines={{ base: 3, md: 2 }}>
-                    {coinData.description || `${coinData.name} creator coin`}
-                  </Text>
+                  <Box maxW="100%" overflow="hidden">
+                    <EnhancedMarkdownRenderer
+                      content={coinData.description || `${coinData.name} creator coin`}
+                      className="text-sm text-gray-400"
+                    />
+                  </Box>
                 </VStack>
               </Box>
 
