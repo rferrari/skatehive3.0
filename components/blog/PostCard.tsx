@@ -34,6 +34,17 @@ import { parseJsonMetadata } from "@/lib/hive/metadata-utils";
 import MatrixOverlay from "@/components/graphics/MatrixOverlay";
 import { UpvoteButton } from "@/components/shared";
 
+interface PostJsonMetadata {
+  app?: string;
+  format?: string;
+  description?: string;
+  tags?: string[];
+  users?: string[];
+  links?: string[];
+  image?: string | string[];
+  [key: string]: any;
+}
+
 interface PostCardProps {
   post: Discussion;
   listView?: boolean;
@@ -49,10 +60,11 @@ export default function PostCard({
   const postDate = getPostDate(created);
 
   // Use useMemo to parse JSON only when json_metadata changes
-  const metadata = useMemo(
-    () => parseJsonMetadata(json_metadata),
-    [json_metadata]
-  );
+  const metadata = useMemo((): PostJsonMetadata => {
+    const parsed = parseJsonMetadata(json_metadata);
+    // Ensure we always return a valid object, even if parseJsonMetadata fails
+    return (parsed && typeof parsed === 'object') ? parsed : {};
+  }, [json_metadata]);
 
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [youtubeLinks, setYoutubeLinks] = useState<LinkWithDomain[]>([]);

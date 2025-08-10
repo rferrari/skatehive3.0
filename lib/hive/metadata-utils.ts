@@ -37,9 +37,16 @@ export function getMetadataValue(metadata: any, key: string, fallback: any = nul
 /**
  * Check if metadata contains images
  */
-export function hasImages(metadata: any): boolean {
+export function hasImages(metadata: unknown): boolean {
   const parsed = parseJsonMetadata(metadata);
-  return !!(parsed.image && (Array.isArray(parsed.image) ? parsed.image.length > 0 : parsed.image));
+  const img = parsed.image;
+  if (typeof img === 'string') {
+    return img.trim().length > 0;
+  }
+  if (Array.isArray(img)) {
+    return img.some((v) => typeof v === 'string' && v.trim().length > 0);
+  }
+  return false;
 }
 
 /**
@@ -47,15 +54,35 @@ export function hasImages(metadata: any): boolean {
  */
 export function getImageUrls(metadata: any): string[] {
   const parsed = parseJsonMetadata(metadata);
-  if (!parsed.image) return [];
+  let allImages: string[] = [];
   
-  if (Array.isArray(parsed.image)) {
-    return parsed.image.filter((img: any) => typeof img === 'string');
+  // Process parsed.image
+  if (parsed.image) {
+    if (Array.isArray(parsed.image)) {
+      allImages = allImages.concat(
+        parsed.image
+          .filter((img: any) => typeof img === 'string')
+          .map((img: string) => img.trim())
+          .filter((img: string) => img.length > 0)
+      );
+    } else if (typeof parsed.image === 'string') {
+      const trimmedImage = parsed.image.trim();
+      if (trimmedImage.length > 0) {
+        allImages.push(trimmedImage);
+      }
+    }
   }
   
-  if (typeof parsed.image === 'string') {
-    return [parsed.image];
+  // Process parsed.images (if present)
+  if (parsed.images && Array.isArray(parsed.images)) {
+    allImages = allImages.concat(
+      parsed.images
+        .filter((img: any) => typeof img === 'string')
+        .map((img: string) => img.trim())
+        .filter((img: string) => img.length > 0)
+    );
   }
   
-  return [];
+  // Remove duplicates and return
+  return Array.from(new Set(allImages));
 }

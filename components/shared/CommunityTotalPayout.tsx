@@ -26,7 +26,6 @@ function CommunityTotalPayout() {
 
   const theme = useTheme();
   const accentColor = theme.colors.accent || "#B0C4DE";
-  const successColor = theme.colors.success || "#38A169";
   const textColor = theme.colors.text || "#1E90FF";
   const borderRadius = theme.radii.lg || "16px";
   const bodyFont = theme.fonts.body;
