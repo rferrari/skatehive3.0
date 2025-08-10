@@ -126,7 +126,7 @@ export async function generateMetadata({
     };
   } catch (error) {
     // Keep minimal error logging for debugging in production
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === "development") {
       console.error("Error generating metadata for coin:", error);
     }
     return {
@@ -184,7 +184,7 @@ export default async function CoinPage({ params }: PageProps) {
       creatorAddress: coin.creatorAddress,
     };
   } catch (err) {
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === "development") {
       console.error("Error fetching coin data:", err);
     }
     error = "Failed to load coin data";

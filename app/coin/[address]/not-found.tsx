@@ -33,8 +33,8 @@ export default function NotFound() {
 
         <VStack spacing={4}>
           <Text color="gray.600">
-            The coin you&apos;re looking for might have been removed or the address
-            might be incorrect.
+            The coin you&apos;re looking for might have been removed or the
+            address might be incorrect.
           </Text>
 
           <Button as={Link} href="/" colorScheme="blue" size="lg">
