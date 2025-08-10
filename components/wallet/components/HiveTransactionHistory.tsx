@@ -125,7 +125,7 @@ const HiveTransactionHistory = ({ searchAccount }: { searchAccount: string }) =>
                                 zIndex={1}
                             >
                                 <Text fontSize="sm" color="primary">
-                                    Your Hive Transaction Activity
+                                    Hive Activity
                                 </Text>
                             </Box>
                             {/* IconButton on the right */}

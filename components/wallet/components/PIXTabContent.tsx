@@ -14,7 +14,9 @@ import {
   Tooltip,
   OrderedList,
   ListItem,
+  IconButton,
 } from "@chakra-ui/react";
+import { FaGlobe } from 'react-icons/fa';
 import PIXTransactionHistory from "./PIXTransactionHistory";
 import { Asset } from "@aioha/aioha";
 import { useAioha } from "@aioha/react-ui";
@@ -42,21 +44,13 @@ export interface PixDashboardData {
   OurRefundPer: number;
 }
 
-const glowinOptions = {
-  method: "GET",
-  headers: {
-    "ngrok-skip-browser-warning": "69420",
-    "Content-Type": "application/json",
-  },
-};
-
 // 🐝 PIX Form Component
 type PIXFormProps = {
   pixDashboardData: PixDashboardData | null;
+  language: 'en' | 'pt';
 };
 
-function PIXForm({ pixDashboardData }: PIXFormProps) {
-  // Move all hooks to the top level
+function PIXForm({ pixDashboardData, language }: PIXFormProps) {
   const { user, aioha } = useAioha();
   const { hiveAccount, isLoading, error } = useHiveAccount(user || "");
   const [currency, setCurrency] = useState("HBD");
@@ -71,7 +65,7 @@ function PIXForm({ pixDashboardData }: PIXFormProps) {
   const [loading, setLoading] = useState(false);
   const toast = useToast();
 
-  // Declare userAvailableHbd before useEffect
+  // Declare userAvailableHive before useEffect
   const userAvailableHive = hiveAccount?.balance
     ? Number(String(hiveAccount.balance).split(" ")[0])
     : 0;
@@ -91,36 +85,99 @@ function PIXForm({ pixDashboardData }: PIXFormProps) {
 
   // Early return after hooks
   if (!pixDashboardData) {
-    return <Text color="red.400">Loading dashboard data...</Text>;
+    return <Text color="red.400">{language === 'en' ? 'Loading dashboard data...' : 'Carregando dados do painel...'}</Text>;
   }
+
+  const content = {
+    en: {
+      title: `💸 ${currency} to PIX`,
+      balanceLabel: currency === "HBD" ? 'Your HBD Balance' : 'Your HIVE Balance',
+      minDeposit: 'Minimal Deposit',
+      amountPlaceholder: 'Amount',
+      maxButton: 'MAX',
+      pixKeyPlaceholder: 'PIX key',
+      previewButton: '👀 Preview',
+      previewTitle: 'Preview:',
+      sendButton: '💸 Sign & Send',
+      invalidAmount: 'Invalid amount',
+      pixKeyRequired: 'PIX key is required',
+      previewFailed: 'Preview failed',
+      transferSuccessful: 'PIX Transfer Successful',
+      sentMessage: `Sent ${amount} ${currency} to pixbee`,
+      transferFailed: 'Transfer Failed',
+      transferError: 'Transfer Error',
+      invalidPixKey: 'Invalid PIX key. ',
+      invalidPixAmount: 'PIX amount not available. ',
+      invalidPixLow: 'Amount is less than the minimum deposit.',
+    },
+    pt: {
+      title: `💸 ${currency} para PIX`,
+      balanceLabel: currency === "HBD" ? 'Seu Saldo HBD' : 'Seu Saldo HIVE',
+      minDeposit: 'Depósito Mínimo',
+      amountPlaceholder: 'Quantidade',
+      maxButton: 'MAX',
+      pixKeyPlaceholder: 'Chave PIX',
+      previewButton: '👀 Revisar',
+      previewTitle: 'Revisar:',
+      sendButton: '💸 Assinar & Enviar',
+      invalidAmount: 'Quantidade inválida',
+      pixKeyRequired: 'Chave PIX é obrigatória',
+      previewFailed: 'Falha na visualização',
+      transferSuccessful: 'Transferência PIX Bem-sucedida',
+      sentMessage: `Enviado ${amount} ${currency} para pixbee`,
+      transferFailed: 'Falha na Transferência',
+      transferError: 'Erro na Transferência',
+      invalidPixKey: '',
+      invalidPixAmount: '',
+      invalidPixLow: '',
+      // minAmount: '⚠️ Valor inferior ao depósito mínimo.',
+    },
+  };
+
+  const langContent = content[language];
 
   const checkMemoValidity = (memo: string): { isValid: boolean; translatedNote?: string } => {
     const lowerMemo = memo.toLowerCase();
+    let isValid: boolean = true;
+    let translatedNote: string = ""
 
-    if (lowerMemo.includes("inválida") || lowerMemo.includes("nao") || lowerMemo.includes("não")) {
-      return {
-        isValid: false,
-        translatedNote: "❌ Invalid PIX key or PIX amount not available.",
-      };
+    // Determine key type by looking for keywords (case insensitive)
+    let keyType = "";
+    if (lowerMemo.includes("evp")) keyType = "EVP";
+    else if (lowerMemo.includes("email")) keyType = "email";
+    else if (lowerMemo.includes("cpf")) keyType = "CPF";
+    else if (lowerMemo.includes("phone")) keyType = "Phone";
+
+    if (lowerMemo.includes("inválida")) {
+      isValid = false;
+      translatedNote = langContent.invalidPixKey;
+    }
+
+    if (lowerMemo.includes("nao")) {
+      isValid = false;
+      translatedNote = translatedNote + langContent.invalidPixAmount;
     }
 
     if (lowerMemo.includes("menor")) {
-      return {
-        isValid: false,
-        translatedNote: "⚠️ Amount is less than the minimum deposit.",
-      };
+      isValid = false;
+      translatedNote = translatedNote + langContent.invalidPixLow;
     }
 
-    return { isValid: true };
+    // If valid and keyType detected, add positive message
+    if (isValid && keyType) {
+      translatedNote = `Valid PIX Key type '${keyType}'. Amount available.`;
+    }
+
+    return { isValid, translatedNote };
   };
 
   const handlePreview = async () => {
     if (!amount || Number(amount) <= 0) {
-      toast({ title: "Invalid amount", status: "error", duration: 3000 });
+      toast({ title: langContent.invalidAmount, status: "error", duration: 3000 });
       return;
     }
     if (!pixKey) {
-      toast({ title: "PIX key is required", status: "error", duration: 3000 });
+      toast({ title: langContent.pixKeyRequired, status: "error", duration: 3000 });
       return;
     }
 
@@ -151,7 +208,7 @@ function PIXForm({ pixDashboardData }: PIXFormProps) {
         translatedNote,
       });
     } catch (error) {
-      toast({ title: "Preview failed", description: String(error), status: "error" });
+      toast({ title: langContent.previewFailed, description: String(error), status: "error" });
       setPreviewData(null);
     } finally {
       setLoading(false);
@@ -165,7 +222,7 @@ function PIXForm({ pixDashboardData }: PIXFormProps) {
       const amountNumber = Number(amount);
       if (isNaN(amountNumber) || amountNumber <= 0) {
         toast({
-          title: "Invalid amount",
+          title: langContent.invalidAmount,
           status: "error",
           duration: 3000,
         });
@@ -178,8 +235,8 @@ function PIXForm({ pixDashboardData }: PIXFormProps) {
 
       if (xferResult?.success) {
         toast({
-          title: "PIX Transfer Successful",
-          description: `Sent ${amount} ${currency} to pixbee`,
+          title: langContent.transferSuccessful,
+          description: langContent.sentMessage,
           status: "success",
           duration: 4000,
         });
@@ -189,7 +246,7 @@ function PIXForm({ pixDashboardData }: PIXFormProps) {
         setPreviewData(null);
       } else {
         toast({
-          title: "Transfer Failed",
+          title: langContent.transferFailed,
           description: xferResult?.message || "Unknown error",
           status: "error",
           duration: 4000,
@@ -198,7 +255,7 @@ function PIXForm({ pixDashboardData }: PIXFormProps) {
     } catch (error) {
       console.error("Transfer error", error);
       toast({
-        title: "Transfer Error",
+        title: langContent.transferError,
         description: String(error),
         status: "error",
         duration: 4000,
@@ -214,21 +271,20 @@ function PIXForm({ pixDashboardData }: PIXFormProps) {
       border="1px solid"
       borderColor="muted"
     >
-
       <VStack spacing={3} align="stretch">
         <Heading size="sm" mb={2} color="primary" fontFamily="Joystix">
-          💸 {currency} to PIX Transfer
+          {langContent.title}
         </Heading>
         <Box fontSize="xs" color="primary">
           {currency === "HBD" ? (
             <>
-              Your HBD Balance: {userAvailableHbd.toFixed(3)} HBD<br />
-              Minimal Deposit: {pixDashboardData.depositMinLimit} PIX
+              {langContent.balanceLabel}: {userAvailableHbd.toFixed(3)} HBD<br />
+              {langContent.minDeposit}: {pixDashboardData.depositMinLimit} PIX
             </>
           ) : (
             <>
-              Your HIVE Balance: {userAvailableHive.toFixed(3)} HIVE<br />
-              Minimal Deposit: {pixDashboardData.depositMinLimit} PIX
+              {langContent.balanceLabel}: {userAvailableHive.toFixed(3)} HIVE<br />
+              {langContent.minDeposit}: {pixDashboardData.depositMinLimit} PIX
             </>
           )}
         </Box>
@@ -247,7 +303,7 @@ function PIXForm({ pixDashboardData }: PIXFormProps) {
 
         <HStack>
           <Input
-            placeholder="Amount"
+            placeholder={langContent.amountPlaceholder}
             type="number"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
@@ -263,12 +319,12 @@ function PIXForm({ pixDashboardData }: PIXFormProps) {
             onClick={() => setAmount(String(currency === "HBD" ? userAvailableHbd : userAvailableHive))}
             isDisabled={currency === "HBD" ? userAvailableHbd === 0 : userAvailableHive === 0}
           >
-            MAX
+            {langContent.maxButton}
           </Button>
         </HStack>
 
         <Input
-          placeholder="PIX key"
+          placeholder={langContent.pixKeyPlaceholder}
           value={pixKey}
           onChange={(e) => setPixKey(e.target.value)}
           size="sm"
@@ -284,7 +340,7 @@ function PIXForm({ pixDashboardData }: PIXFormProps) {
           fontFamily="Joystix"
           fontWeight="bold"
         >
-          👀 Preview
+          {langContent.previewButton}
         </Button>
 
         {previewData && (
@@ -313,19 +369,22 @@ function PIXForm({ pixDashboardData }: PIXFormProps) {
           >
             <Box position="relative" zIndex={2}>
               <Text fontSize="md">
-                <strong>Preview:</strong>
+                <strong>{langContent.previewTitle}</strong>
               </Text>
               <br />
               <Text fontSize="sm">
                 💸 <strong>{previewData.resAmount}</strong>
               </Text>
-              <Text fontSize="sm">
-                📝 <strong>{previewData.resMemo}</strong>
-              </Text>
 
-              {!previewData.isValid && (
-                <Text fontSize="sm" color="red.400" mt={2}>
-                  {previewData.translatedNote}
+              {language == "pt" && (
+                <Text fontSize="sm">
+                  {previewData.isValid ? "📝" : "❌"} <strong>{previewData.resMemo}</strong>
+                </Text>
+              )}
+
+              {language == "en" && (
+                < Text fontSize="sm" >
+                  {previewData.isValid ? "📝" : "❌"} <strong>{previewData.translatedNote}</strong>
                 </Text>
               )}
 
@@ -338,13 +397,14 @@ function PIXForm({ pixDashboardData }: PIXFormProps) {
                 fontWeight="bold"
                 isDisabled={!previewData.isValid}
               >
-                💸 Sign & Send
+                {langContent.sendButton}
               </Button>
             </Box>
           </Box>
-        )}
-      </VStack>
-    </Box>
+        )
+        }
+      </VStack >
+    </Box >
   );
 }
 
@@ -408,7 +468,27 @@ function BalanceBarGraph({ data }: { data: PixDashboardData }) {
 export default function PIXTabContent() {
   const [pixDashboardData, setDashboardData] = useState<PixDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [language, setLanguage] = useState<'en' | 'pt'>('pt');
   const toast = useToast();
+
+  const toggleLanguage = () => {
+    setLanguage(language === 'en' ? 'pt' : 'en');
+  };
+
+  const content = {
+    en: {
+      heading: '💸 Pix',
+      description: 'Fast, secure, and convenient way to send HBD via PIX! Use Skatebank service powered by Pixbee to Buy and Sell instantly using PIX.',
+      offline: 'Skatebank is offline now. Try later',
+    },
+    pt: {
+      heading: '💸 Pix',
+      description: 'Maneira rápida, segura e conveniente de enviar HBD via PIX! Use o serviço Skatebank powered by Pixbee para comprar e vender usando PIX.',
+      offline: 'Skatebank está offline agora. Tente mais tarde',
+    },
+  };
+
+  const langContent = content[language];
 
   useEffect(() => {
     async function fetchData() {
@@ -448,45 +528,65 @@ export default function PIXTabContent() {
   }, [toast]);
 
   return (
-    <VStack spacing={4} align="stretch">
-      {loading ? (
-        <Center>
-          <Spinner />
-        </Center>
-      ) : pixDashboardData ? (
-        <>
-          <Box>
-            <Heading
-              size="md"
-              mb={3}
-              color="primary"
-              fontFamily="Joystix"
-            >
-              💸 Pix
-            </Heading>
-            <Text fontSize="sm" color="text" mb={1}>
-              Fast, secure, and convenient way to send HBD via PIX!
-              Use Skatebank service powered by Pixbee to Buy and sell HBD instantly using PIX.
-            </Text>
-          </Box>
-          
-          <BalanceBarGraph data={pixDashboardData} />
+    <Box position="relative">
+      <VStack spacing={4} align="stretch">
+        {loading ? (
+          <Center>
+            <Spinner />
+          </Center>
+        ) : pixDashboardData ? (
+          <>
+            <Box>
+              <Heading
+                size="md"
+                mb={4}
+                color="primary"
+                fontFamily="Joystix"
+              >
+                {langContent.heading}
+                <IconButton
+                  aria-label="Toggle language"
+                  icon={<FaGlobe />}
+                  size="sm"
+                  position="absolute"
+                  top={0}
+                  right={2}
+                  onClick={toggleLanguage}
+                  color="black"
+                  zIndex={10}
+                />
+              </Heading>
+              <Text fontSize="sm" color="text" mb={1}>
+                {langContent.description}
+              </Text>
+            </Box>
 
-          {/* HBD to PIX Form */}
-          <PIXForm pixDashboardData={pixDashboardData} />
+            <BalanceBarGraph data={pixDashboardData} />
 
-          {/* PIX to HBD Transfer Guide */}
-          <PixTransferGuide pixDashboardData={pixDashboardData} />
+            {/* HBD to PIX Form */}
+            <PIXForm pixDashboardData={pixDashboardData} language={language} />
 
-          {/* Transaction History */}
-          <PIXTransactionHistory searchAccount={"pixbee"} pixDashboardData={pixDashboardData} />
+            {/* PIX to HBD Transfer Guide */}
+            <PixTransferGuide pixDashboardData={pixDashboardData} language={language} />
 
-          {/* PIX FAQ */}
-          <PIXFAQ />
-        </>
-      ) : (
-        <Text color="red.400">Skatebank is offline now. Try later</Text>
-      )}
-    </VStack>
+            {/* Transaction History */}
+            <PIXTransactionHistory searchAccount={"pixbee"} pixDashboardData={pixDashboardData} language={language} />
+
+            {/* PIX FAQ */}
+            <PIXFAQ language={language} />
+          </>
+        ) : (
+          <Text color="red.400">{langContent.offline}</Text>
+        )}
+      </VStack>
+    </Box>
   );
 }
+
+const glowinOptions = {
+  method: "GET",
+  headers: {
+    "ngrok-skip-browser-warning": "69420",
+    "Content-Type": "application/json",
+  },
+};

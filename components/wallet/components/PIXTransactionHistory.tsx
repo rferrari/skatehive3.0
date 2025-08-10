@@ -13,7 +13,7 @@ const CALENDAR_EMOJI = "📅";
 const ENDECRYPTED_EMOJI = "🔒";
 const DECRYPTED_EMOJI = ""; // "🗝️";
 
-const PIXTransactionHistory = ({ searchAccount, pixDashboardData }: { searchAccount: string, pixDashboardData: PixDashboardData | null }) => {
+const PIXTransactionHistory = ({ searchAccount, pixDashboardData, language }: { searchAccount: string, pixDashboardData: PixDashboardData | null, language: 'en' | 'pt' }) => {
   const { user, aioha } = useAioha();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [totalSentToPixbee, setTotalSentToPixbee] = useState<Record<string, number>>({});
@@ -21,6 +21,49 @@ const PIXTransactionHistory = ({ searchAccount, pixDashboardData }: { searchAcco
   const [loading, setLoading] = useState(true);
   const [decryptedMemos, setDecryptedMemos] = useState<Record<number, string>>({});
   const toast = useToast();
+
+  const content = {
+    en: {
+      summaryTitle: '📊 Your PIX Transaction Summary',
+      currency: 'Currency',
+      totalSent: 'Total Sent',
+      nowWorth: 'Now Worth',
+      totalReceived: 'Total Received',
+      total: 'TOTAL',
+      historyTitle: '📜 Your PIX Transaction History',
+      from: 'From',
+      to: 'To',
+      amount: 'Amount',
+      memo: 'Memo',
+      date: 'Date',
+      noTransactions: 'No transactions found.',
+      decryptionFailed: 'Decryption Failed',
+      unableToDecrypt: 'Unable to decrypt this memo.',
+      error: 'Error',
+      decryptionError: 'Something went wrong while decrypting.',
+    },
+    pt: {
+      summaryTitle: '📊 Resumo das Suas Transações PIX',
+      currency: 'Moeda',
+      totalSent: 'Total Enviado',
+      nowWorth: 'Valor Atual',
+      totalReceived: 'Total Recebido',
+      total: 'TOTAL',
+      historyTitle: '📜 Histórico das Suas Transações PIX',
+      from: 'De',
+      to: 'Para',
+      amount: 'Quantia',
+      memo: 'Memo',
+      date: 'Data',
+      noTransactions: 'Nenhuma transação encontrada.',
+      decryptionFailed: 'Falha na Descriptografia',
+      unableToDecrypt: 'Incapaz de descriptografar este memo.',
+      error: 'Erro',
+      decryptionError: 'Algo deu errado durante a descriptografia.',
+    },
+  };
+
+  const langContent = content[language];
 
   const handleDecrypt = useCallback(
     async (idx: number, memo: string) => {
@@ -32,8 +75,8 @@ const PIXTransactionHistory = ({ searchAccount, pixDashboardData }: { searchAcco
           setDecryptedMemos((prev) => ({ ...prev, [idx]: cleaned }));
         } else {
           toast({
-            title: "Decryption Failed",
-            description: "Unable to decrypt this memo.",
+            title: langContent.decryptionFailed,
+            description: langContent.unableToDecrypt,
             status: "error",
             duration: 5000,
             isClosable: true,
@@ -42,15 +85,15 @@ const PIXTransactionHistory = ({ searchAccount, pixDashboardData }: { searchAcco
       } catch (err) {
         console.error(err);
         toast({
-          title: "Error",
-          description: "Something went wrong while decrypting.",
+          title: langContent.error,
+          description: langContent.decryptionError,
           status: "error",
           duration: 5000,
           isClosable: true,
         });
       }
     },
-    [aioha, toast]
+    [aioha, toast, language, langContent]
   );
 
   useEffect(() => {
@@ -96,19 +139,19 @@ const PIXTransactionHistory = ({ searchAccount, pixDashboardData }: { searchAcco
         <Spinner />
       ) : transactions.length > 0 ? (
         <>
-          <Box mb={4} w="100%">
+          <Box mb={8} w="100%">
             <Text fontSize="lg" fontWeight="bold" mb={2} textAlign="center">
-              📊 Your PIX Transaction Summary
+              {langContent.summaryTitle}
             </Text>
 
             <Table size="sm" variant="simple" w="100%">
               <Thead>
                 <Tr>
-                  <Th textAlign="center">Currency</Th>
-                  <Th isNumeric>Total Sent</Th>
-                  <Th isNumeric>Now Worth</Th>
-                  <Th isNumeric>Total Received</Th>
-                  <Th isNumeric>Now Worth</Th>
+                  <Th textAlign="center">{langContent.currency}</Th>
+                  <Th isNumeric>{langContent.totalSent}</Th>
+                  <Th isNumeric>{langContent.nowWorth}</Th>
+                  <Th isNumeric>{langContent.totalReceived}</Th>
+                  <Th isNumeric>{langContent.nowWorth}</Th>
                 </Tr>
               </Thead>
               <Tbody>
@@ -133,7 +176,7 @@ const PIXTransactionHistory = ({ searchAccount, pixDashboardData }: { searchAcco
                   );
                 })}
                 <Tr fontWeight="bold">
-                  <Td textAlign="center">TOTAL</Td>
+                  <Td textAlign="center">{langContent.total}</Td>
                   <Td isNumeric>
                   </Td>
                   <Td isNumeric>
@@ -174,7 +217,7 @@ const PIXTransactionHistory = ({ searchAccount, pixDashboardData }: { searchAcco
           </Box>
 
             <Text fontSize="lg" fontWeight="bold" mb={2} textAlign="center">
-              📜 Your PIX Transaction History
+              {langContent.historyTitle}
             </Text>
 
           <Box overflowX="auto" color="white" width="100%" maxWidth="1200px" mx="auto">
@@ -182,19 +225,19 @@ const PIXTransactionHistory = ({ searchAccount, pixDashboardData }: { searchAcco
               <Thead>
                 <Tr>
                   <Th fontSize="xs" width="20%" textAlign="center">
-                    From
+                    {langContent.from}
                   </Th>
                   <Th fontSize="xs" width="20%" textAlign="center">
-                    To
+                    {langContent.to}
                   </Th>
                   <Th fontSize="xs" width="20%" textAlign="center">
-                    Amount
+                    {langContent.amount}
                   </Th>
                   <Th fontSize="xs" width="37%" textAlign="center">
-                    Memo
+                    {langContent.memo}
                   </Th>
                   <Th fontSize="xs" width="3%" textAlign="center">
-                    Date
+                    {langContent.date}
                   </Th>
                 </Tr>
               </Thead>
@@ -244,7 +287,7 @@ const PIXTransactionHistory = ({ searchAccount, pixDashboardData }: { searchAcco
           </Box>
         </>
       ) : (
-        <Text>No transactions found.</Text>
+        <Text>{langContent.noTransactions}</Text>
       )}
     </Box>
   );

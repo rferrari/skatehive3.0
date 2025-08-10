@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import { Box, Heading, Text, IconButton } from '@chakra-ui/react';
-import { FaGlobe } from 'react-icons/fa';
+import { Box, Heading, Text } from '@chakra-ui/react';
 
-const PIXFAQ = () => {
-  const [language, setLanguage] = useState<'en' | 'pt'>('pt');
+interface PIXFAQProps {
+  language: 'en' | 'pt';
+}
 
+const PIXFAQ = ({ language }: PIXFAQProps) => {
   const content = {
     en: {
       title: '❓ FAQ',
@@ -26,10 +26,6 @@ const PIXFAQ = () => {
     },
   };
 
-  const toggleLanguage = () => {
-    setLanguage(language === 'en' ? 'pt' : 'en');
-  };
-
   return (
     <Box
       p={4}
@@ -39,16 +35,6 @@ const PIXFAQ = () => {
       borderColor="muted"
       position="relative"
     >
-      <IconButton
-        aria-label="Toggle language"
-        icon={<FaGlobe />}
-        size="sm"
-        position="absolute"
-        top={2}
-        right={2}
-        onClick={toggleLanguage}
-        color="black"
-      />
       <Heading size="sm" mb={4} color="primary" fontFamily="Joystix">
         {content[language].title}
       </Heading>
