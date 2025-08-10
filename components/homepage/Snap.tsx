@@ -355,7 +355,7 @@ const Snap = ({
                       const nextDepth = effectiveDepth + 1;
                       return (
                         <Snap
-                          key={reply.permlink}
+                          key={`${reply.author}/${reply.permlink}`}
                           discussion={{ ...reply, depth: nextDepth } as any}
                           onOpen={onOpen}
                           setReply={setReply}

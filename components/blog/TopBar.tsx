@@ -78,7 +78,7 @@ export default function TopBar({
               boxShadow: "0 2px 4px var(--chakra-colors-primary-alpha)",
             }}
           >
-            Create a Post
+            Create a Page
           </Button>
         )}
         <Button

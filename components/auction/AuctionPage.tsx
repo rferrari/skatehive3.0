@@ -32,7 +32,7 @@ import {
 } from "@chakra-ui/react";
 import { CheckCircleIcon, InfoIcon } from "@chakra-ui/icons";
 import MatrixOverlay from "@/components/graphics/MatrixOverlay";
-import { Name, Avatar, Identity } from "@coinbase/onchainkit/identity";
+import { Name, Avatar } from "@coinbase/onchainkit/identity";
 
 const formatBidAmount = (amount: bigint) => {
   return Number(formatEther(amount)).toLocaleString(undefined, {
