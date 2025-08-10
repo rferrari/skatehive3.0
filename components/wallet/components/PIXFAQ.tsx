@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import { Box, Heading, Text, IconButton } from '@chakra-ui/react';
-import { FaGlobe } from 'react-icons/fa';
+import { Box, Heading, Text, Link } from '@chakra-ui/react';
 
-const PIXFAQ = () => {
-  const [language, setLanguage] = useState<'en' | 'pt'>('pt');
+interface PIXFAQProps {
+  language: 'en' | 'pt';
+}
 
+const PIXFAQ = ({ language }: PIXFAQProps) => {
   const content = {
     en: {
       title: '❓ FAQ',
@@ -12,7 +12,13 @@ const PIXFAQ = () => {
       answer: [
         'Stay calm, it will arrive or we will refund you.',
         'Our team always receives notifications of transactions in case of failure.',
-        'If you wish, open a support ticket on our <a href="https://discord.gg/eAQfS97wHK">Discord channel</a>.',
+        {
+          text: 'If you wish, open a support ticket on our ',
+          link: {
+            href: 'https://discord.gg/eAQfS97wHK',
+            text: 'Discord channel',
+          },
+        },
       ],
     },
     pt: {
@@ -21,13 +27,15 @@ const PIXFAQ = () => {
       answer: [
         'Calma, ele vai chegar ou vamos te reembolsar.',
         'Nosso time sempre recebe notificações das transações em caso de falha.',
-        'Caso queira, abra um ticket de suporte em nosso <a href="https://discord.gg/eAQfS97wHK">Discord</a>.',
+        {
+          text: 'Caso queira, abra um ticket de suporte em nosso ',
+          link: {
+            href: 'https://discord.gg/eAQfS97wHK',
+            text: 'Discord',
+          },
+        },
       ],
     },
-  };
-
-  const toggleLanguage = () => {
-    setLanguage(language === 'en' ? 'pt' : 'en');
   };
 
   return (
@@ -39,26 +47,24 @@ const PIXFAQ = () => {
       borderColor="muted"
       position="relative"
     >
-      <IconButton
-        aria-label="Toggle language"
-        icon={<FaGlobe />}
-        size="sm"
-        position="absolute"
-        top={2}
-        right={2}
-        onClick={toggleLanguage}
-        color="black"
-      />
       <Heading size="sm" mb={4} color="primary" fontFamily="Joystix">
         {content[language].title}
       </Heading>
-      <Text mt={2} color="text">
-        <strong>{content[language].question}</strong>
-        <br />
-        {content[language].answer.map((line, index) => (
-          <Box key={index} dangerouslySetInnerHTML={{ __html: line }} />
-        ))}
-      </Text>
+      <Text as="strong">{content[language].question}</Text>
+      {content[language].answer.map((item, index) => (
+        <Text key={index} mb={2}>
+          {typeof item === 'string' ? (
+            item
+          ) : (
+            <>
+              {item.text}
+              <Link href={item.link.href} isExternal color="blue.500">
+                {item.link.text}
+              </Link>
+            </>
+          )}
+        </Text>
+      ))}
     </Box>
   );
 };

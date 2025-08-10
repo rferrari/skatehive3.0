@@ -29,6 +29,7 @@ interface HBDSectionProps {
   estimatedClaimableInterest: number;
   daysUntilClaim: number;
   lastInterestPayment?: string;
+  savings_withdraw_requests?: number;
   onModalOpen: (
     title: string,
     description?: string,
@@ -56,6 +57,7 @@ const SkateBankSection = memo(function HBDSection({
   estimatedClaimableInterest,
   daysUntilClaim,
   lastInterestPayment,
+  savings_withdraw_requests,
   onModalOpen,
   onClaimInterest
 }: HBDSectionProps) {
@@ -173,12 +175,21 @@ const SkateBankSection = memo(function HBDSection({
       {/* Available HBD to invest */}
       <Box p={3} borderRadius="md" bg={theme.colors.muted}>
 
+        {savings_withdraw_requests &&
+          savings_withdraw_requests > 0 && (
+            <Text color="orange.400" fontSize="sm" mt={1} mb={1}>
+              🚨 You have {savings_withdraw_requests} savings withdrawal
+              {savings_withdraw_requests > 1 ? "s" : ""} in progress.
+            </Text>
+          )}
+
         <Text fontSize="sm" color="text" mb={1}>
           Available HBD to invest:{" "}
           <Text as="span" fontWeight="bold" color="primary">
             {hbdBalance} HBD
           </Text>
         </Text>
+
         <Text fontSize="xs" color="gray.400">
           Convert your liquid HBD to savings to start earning passive
           income!

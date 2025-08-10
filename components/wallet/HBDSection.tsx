@@ -129,6 +129,8 @@ const HBDSection = memo(function HBDSection({
     return (
         <Box
             p={4}
+            mt={2}
+            mb={2}
             bg="transparent"
             borderRadius="md"
             border="1px solid"
