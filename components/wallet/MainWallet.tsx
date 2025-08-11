@@ -18,13 +18,14 @@ import {
   Tab,
   TabPanel,
   useColorMode,
+  useToast,
 } from "@chakra-ui/react";
 import { AiohaModal, useAioha } from "@aioha/react-ui";
 import { KeyTypes } from "@aioha/aioha";
 import "@aioha/react-ui/dist/build.css";
 import { convertVestToHive } from "@/lib/hive/client-functions";
 import { extractNumber } from "@/lib/utils/extractNumber";
-import WalletModal from "@/components/wallet/WalletModal";
+import HiveWalletModal from "@/components/wallet/HiveWalletModal";
 import SendTokenModal from "@/components/wallet/SendTokenModal";
 import { Asset } from "@hiveio/dhive";
 import HivePowerSection from "./HivePowerSection";
@@ -45,6 +46,7 @@ import PIXTabContent from "./components/PIXTabContent";
 import { formatValue } from "@/lib/utils/portfolioUtils";
 import HiveTransactionHistory from "./components/HiveTransactionHistory";
 import ClaimRewards from "./components/ClaimRewards";
+import { CopyIcon, ExternalLinkIcon } from "@chakra-ui/icons";
 
 interface HiveToken {
   symbol: string;
@@ -107,6 +109,8 @@ export default function MainWallet({ username }: MainWalletProps) {
   const [hivePrice, setHivePrice] = useState<number | null>(null);
   const [hbdPrice, setHbdPrice] = useState<number | null>(null);
   const [isPriceLoading, setIsPriceLoading] = useState(true);
+  const toast = useToast();
+
 
   // Set mounted state to prevent hydration mismatch
   useEffect(() => {
@@ -186,15 +190,76 @@ export default function MainWallet({ username }: MainWalletProps) {
       memo?: string
     ) => {
       if (modalContent) {
-        await handleConfirm(
+        const result = await handleConfirm(
           amount,
           direction,
           username,
           memo,
           modalContent.title
         );
+
+
+        if (result?.error) {
+          toast({
+            title: "Error",
+            description: result.error,
+            status: "error",
+            duration: 5000,
+            isClosable: true,
+          });
+          return; // stop here, don't close modal
+        }
+
+        if (result?.success && result.result) {
+          const txId = result.result;
+          const hiveUrl = `https://hivehub.dev/tx/${txId}`;
+
+          toast({
+            title: "Success!",
+            description: (
+              <span style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <strong>Tx:</strong> {txId}
+                <CopyIcon
+                  cursor="pointer"
+                  onClick={() => {
+                    navigator.clipboard.writeText(txId);
+                    toast({
+                      title: "Copied!",
+                      description: "TX copied to clipboard",
+                      status: "info",
+                      duration: 2000,
+                      isClosable: true,
+                    });
+                  }}
+                />
+                {/* <ExternalLinkIcon
+                  as="a"
+                  href={hiveUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  ml="2"
+                  cursor="pointer"
+                  onClick={() =>
+                    toast({
+                      title: "Link opened",
+                      description: "Opened transaction in a new tab",
+                      status: "info",
+                      duration: 2000,
+                      isClosable: true,
+                    })
+                  }
+                /> */}
+              </span>
+            ),
+            status: "success",
+            duration: 8000,
+            isClosable: true,
+          });
+
+          onClose(); // Close modal on success
+        }
       }
-      onClose();
+
     },
     [modalContent, handleConfirm, onClose]
   );
@@ -303,7 +368,7 @@ export default function MainWallet({ username }: MainWalletProps) {
   const handleMobileSend = useCallback(
     (token: TokenDetail | HiveToken) => {
       if ("network" in token && token.network === "hive") {
-        // This is a Hive token, open WalletModal
+        // This is a Hive token, open HiveWalletModal
         const hiveToken = token as HiveToken;
         setModalContent({
           title: `Send ${hiveToken.symbol}`,
@@ -528,14 +593,14 @@ export default function MainWallet({ username }: MainWalletProps) {
                             )}
                         </Box>
 
-                        
-                          <ClaimRewards
-                            reward_hbd_balance={hiveAccount?.reward_hbd_balance}
-                            reward_hive_balance={hiveAccount?.reward_hive_balance}
-                            reward_vesting_balance={hiveAccount?.reward_vesting_balance}
-                            reward_vesting_hive={hiveAccount?.reward_vesting_hive}
-                          />
-                        
+
+                        <ClaimRewards
+                          reward_hbd_balance={hiveAccount?.reward_hbd_balance}
+                          reward_hive_balance={hiveAccount?.reward_hive_balance}
+                          reward_vesting_balance={hiveAccount?.reward_vesting_balance}
+                          reward_vesting_hive={hiveAccount?.reward_vesting_hive}
+                        />
+
                         {/* Transaction History  - Show if user is connected to Hive */}
                         <HiveTransactionHistory searchAccount={user} />
                       </>
@@ -665,7 +730,7 @@ export default function MainWallet({ username }: MainWalletProps) {
           </Grid>
 
           {modalContent && (
-            <WalletModal
+            <HiveWalletModal
               isOpen={isOpen}
               onClose={onClose}
               title={modalContent.title}

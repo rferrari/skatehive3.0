@@ -23,7 +23,7 @@ import { ArrowForwardIcon, LockIcon, ViewIcon } from "@chakra-ui/icons";
 import useIsMobile from "@/hooks/useIsMobile";
 import { HiveAccount } from "@/hooks/useHiveAccount";
 
-interface WalletModalProps {
+interface HiveWalletModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
@@ -39,7 +39,7 @@ interface WalletModalProps {
   ) => void; // direction is now before optional params
 }
 
-export default function WalletModal({
+export default function HiveWalletModal({
   isOpen,
   onClose,
   title,
@@ -48,7 +48,7 @@ export default function WalletModal({
   showUsernameField = false,
   hiveAccount,
   onConfirm,
-}: WalletModalProps) {
+}: HiveWalletModalProps) {
   const [amount, setAmount] = useState<string>("");
   const [memo, setMemo] = useState<string>("");
   const [username, setUsername] = useState<string>(""); // State to hold username
@@ -68,7 +68,7 @@ export default function WalletModal({
   };
 
   const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setUsername(e.target.value);
+    setUsername(e.target.value.trim().toLowerCase());
   };
 
   const toggleEncrypt = () => {

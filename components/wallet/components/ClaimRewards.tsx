@@ -123,13 +123,13 @@ export default function ClaimRewards({
           <HStack justifyContent="space-between" alignItems="center">
             <VStack align="start">
               <Text>You have some pending rewards to claim:</Text>
-              {parseFloat(String(pendingRewards.hive)) > 0.5 && (
+              {parseFloat(String(pendingRewards.hive)) > 0 && (
                 <Text>{pendingRewards.hive} HIVE</Text>
               )}
-              {parseFloat(String(pendingRewards.hbd)) > 0.5 && (
+              {parseFloat(String(pendingRewards.hbd)) > 0 && (
                 <Text>{pendingRewards.hbd} HBD</Text>
               )}
-              {parseFloat(String(pendingRewards.vests_hive)) > 0.5 && (
+              {parseFloat(String(pendingRewards.vests_hive)) > 0 && (
                 <Text>{pendingRewards.vests_hive} HP</Text>
               )}
             </VStack>
