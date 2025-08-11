@@ -633,7 +633,7 @@ export default function SnapComposer({
                 flex={buttonSize === "sm" ? "none" : undefined}
                 alignSelf={buttonSize === "sm" ? "flex-start" : undefined}
                 display={buttonSize === "sm" ? "inline-flex" : undefined}
-                maxH={"32px"}
+                maxH={"2rem"}
               >
                 {buttonText}
               </Button>
