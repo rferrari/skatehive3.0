@@ -41,23 +41,41 @@ export default function ChatPage() {
         scripts.push(s);
       });
 
-    loadScript('https://chat.peakd.com/stlib.js')
-      .then(() => loadScript('https://chat.peakd.com/stwidget.js'))
-      .then(() => {
-        log('Attempting to create StWidget');
-        if (typeof StWidget === 'function') {
-          widget = new StWidget('https://chat.peakd.com/t/hive-173115/0');
-          widget.setProperties({
-            allow_resize: true,
-            use_dark_mode: false,
-          });
-          const element = widget.createElement('100%', '600px', false, false);
-          container.appendChild(element);
-          log('Widget appended to container');
-        } else {
-          log('StWidget constructor missing');
+    try {
+      Object.keys(localStorage).forEach((key) => {
+        const value = localStorage.getItem(key);
+        if (value && value.trim().startsWith('#')) {
+          log(`Clearing corrupt localStorage key: ${key}`);
+          localStorage.removeItem(key);
         }
-      })
+      });
+    } catch (e) {
+      log(`localStorage scan failed: ${e}`);
+    }
+
+    const initWidget = () => {
+      log('Attempting to create StWidget');
+      if (typeof StWidget === 'function') {
+        widget = new StWidget('https://chat.peakd.com/t/hive-173115/0');
+        widget.setProperties({
+          allow_resize: true,
+          use_dark_mode: false,
+        });
+        const element = widget.createElement('100%', '600px', false, false);
+        container.appendChild(element);
+        log('Widget appended to container');
+      } else {
+        log('StWidget constructor missing');
+      }
+    };
+
+    (typeof StWidget === 'function'
+      ? Promise.resolve()
+      : loadScript('https://chat.peakd.com/stlib.js').then(() =>
+          loadScript('https://chat.peakd.com/stwidget.js')
+        )
+    )
+      .then(initWidget)
       .catch((e) => {
         log(`Error initializing widget: ${e}`);
       });
