@@ -490,7 +490,7 @@ export default function SnapComposer({
             onKeyDown={handleKeyDown} // Attach the keydown handler
             _focusVisible={{ border: "tb1" }}
           />
-          <HStack justify="space-between" mb={3}>
+          <HStack justify="space-between" mb={1}>
             <HStack>
               {/* Image Upload Button */}
               <Box position="relative">
@@ -622,9 +622,7 @@ export default function SnapComposer({
                 onClick={handleComment}
                 borderRadius={buttonSize === "sm" ? "sm" : "base"}
                 fontWeight="bold"
-                size={buttonSize}
                 px={buttonSize === "sm" ? 1 : 8}
-                py={buttonSize === "sm" ? 0 : 6}
                 mt={2}
                 mb={1}
                 minWidth={buttonSize === "sm" ? undefined : "120px"}
@@ -635,7 +633,7 @@ export default function SnapComposer({
                 flex={buttonSize === "sm" ? "none" : undefined}
                 alignSelf={buttonSize === "sm" ? "flex-start" : undefined}
                 display={buttonSize === "sm" ? "inline-flex" : undefined}
-                height={buttonSize === "sm" ? "auto" : undefined}
+                maxH={"32px"}
               >
                 {buttonText}
               </Button>
