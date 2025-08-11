@@ -61,10 +61,14 @@ export class MarkdownProcessor {
     zoraCoinLinks.forEach(addressWithChain => {
       // Extract just the address part (remove chain prefix if present)
       const address = addressWithChain.includes(':') ? addressWithChain.split(':')[1] : addressWithChain;
-      const originalUrl = `https://zora.co/coin/${addressWithChain}`;
+      
+      // Replace both zora.co and skatehive.app URLs
+      const zoraUrl = `https://zora.co/coin/${addressWithChain}`;
+      const skatehiveUrl = `https://skatehive.app/coin/${addressWithChain}`;
       const placeholder = `[[ZORACOIN:${address}]]`;
       
-      processedContent = processedContent.replace(originalUrl, placeholder);
+      processedContent = processedContent.replace(zoraUrl, placeholder);
+      processedContent = processedContent.replace(skatehiveUrl, placeholder);
     });
     
     return processedContent;

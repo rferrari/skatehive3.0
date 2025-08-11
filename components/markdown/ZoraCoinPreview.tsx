@@ -257,7 +257,7 @@ export default function ZoraCoinPreview({ address }: ZoraCoinPreviewProps) {
         <Center>
           <VStack spacing={2} width="full">
             <Link
-              href={`https://zora.co/coin/base:${address}`}
+              href={`https://skatehive.app/coin/${address}`}
               isExternal
               fontWeight="bold"
               textAlign="center"

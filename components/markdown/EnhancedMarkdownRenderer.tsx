@@ -104,6 +104,7 @@ function cleanMarkdownPart(part: string): string {
     )
     .replace(/^https?:\/\/(?:www\.)?(?:vimeo\.com\/).*$/gm, "")
     .replace(/^https?:\/\/(?:www\.)?zora\.co\/coin\/.*$/gm, "")
+    .replace(/^https?:\/\/(?:www\.)?skatehive\.app\/coin\/.*$/gm, "")
     .replace(/^(ODYSEE|VIDEO|YOUTUBE|VIMEO|INSTAGRAM|ZORACOIN)\s*$/gm, "")
     .replace(/^[a-zA-Z0-9_-]{11}$/gm, "") // YouTube video IDs
     .replace(/^[0-9]{8,}$/gm, "") // Vimeo video IDs
