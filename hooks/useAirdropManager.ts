@@ -19,6 +19,15 @@ export const useAirdropManager = ({ leaderboardData, config }: AirdropManagerPro
     // Step 1: Apply special filters
     if (sortOption === 'has_voted_in_witness') {
       workingData = workingData.filter(user => user.has_voted_in_witness === true);
+    } else if (sortOption === 'missing_witness') {
+      // Sort by post count first, then by witness vote presence
+      // This shows active users who haven't voted for witness
+      workingData.sort((a, b) => {
+        if (a.has_voted_in_witness === b.has_voted_in_witness) {
+          return b.posts_score - a.posts_score; // Same witness status, sort by activity
+        }
+        return a.has_voted_in_witness ? 1 : -1; // Users without witness vote rank higher
+      });
     } else if (sortOption === 'airdrop_the_poor') {
       workingData = workingData.filter(user => {
         const totalHiveValue = (user.hive_balance || 0) + 
@@ -32,7 +41,7 @@ export const useAirdropManager = ({ leaderboardData, config }: AirdropManagerPro
     }
     
     // Step 2: Sort data (except for special filters)
-    if (sortOption !== 'has_voted_in_witness' && sortOption !== 'airdrop_the_poor') {
+    if (sortOption !== 'has_voted_in_witness' && sortOption !== 'missing_witness' && sortOption !== 'airdrop_the_poor') {
       workingData.sort((a, b) => {
         const aVal = (a as any)[sortOption] ?? 0;
         const bVal = (b as any)[sortOption] ?? 0;
