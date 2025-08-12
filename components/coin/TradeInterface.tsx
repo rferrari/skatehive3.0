@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import {
   Box,
   VStack,
@@ -12,8 +12,16 @@ import {
   Spinner,
 } from "@chakra-ui/react";
 import { ChevronDownIcon } from "@chakra-ui/icons";
-import { formatUnits } from "viem";
+import { formatUnits, Address } from "viem";
 import { UserBalance } from "@/types/coin";
+import { CoinSelector } from "./CoinSelector";
+
+export interface SelectedCoin {
+  address?: Address;
+  symbol: string;
+  name: string;
+  image?: string;
+}
 
 interface TradeInterfaceProps {
   isBuying: boolean;
@@ -31,6 +39,7 @@ interface TradeInterfaceProps {
   userBalance: UserBalance | null;
   coinSymbol?: string;
   onTrade: () => void;
+  onSelectedCoinChange?: (coin: SelectedCoin) => void;
 }
 
 export const TradeInterface: React.FC<TradeInterfaceProps> = ({
@@ -49,7 +58,23 @@ export const TradeInterface: React.FC<TradeInterfaceProps> = ({
   userBalance,
   coinSymbol = "COIN",
   onTrade,
+  onSelectedCoinChange,
 }) => {
+  // State for selected coin in the selector
+  const [selectedCoin, setSelectedCoin] = useState<SelectedCoin>({
+    symbol: "ETH",
+    name: "Ethereum",
+  });
+
+  const handleCoinSelect = (coin: SelectedCoin) => {
+    setSelectedCoin(coin);
+    // Reset trade amount when changing coins
+    setTradeAmount("");
+    // Notify parent component of coin change
+    if (onSelectedCoinChange) {
+      onSelectedCoinChange(coin);
+    }
+  };
   return (
     <VStack spacing={{ base: 3, md: 4 }} align="stretch">
       {/* Buy/Sell Toggle */}
@@ -96,9 +121,11 @@ export const TradeInterface: React.FC<TradeInterfaceProps> = ({
           wordBreak="break-all"
         >
           {isBuying
-            ? ethBalance?.formatted
-              ? `${parseFloat(ethBalance.formatted).toFixed(6)} ETH`
-              : "0.000000 ETH"
+            ? selectedCoin.symbol === "ETH"
+              ? ethBalance?.formatted
+                ? `${parseFloat(ethBalance.formatted).toFixed(6)} ETH`
+                : "0.000000 ETH"
+              : "0.000000 " + selectedCoin.symbol // TODO: Get actual balance for selected coin
             : userBalance?.formatted
             ? `${parseFloat(userBalance.formatted).toFixed(6)} ${coinSymbol}`
             : `0.000000 ${coinSymbol}`}
@@ -126,49 +153,96 @@ export const TradeInterface: React.FC<TradeInterfaceProps> = ({
             w="100%"
           >
             {isBuying ? (
-              // Buy mode - show ETH amounts
-              <>
-                <Button
-                  size={{ base: "sm", md: "xs" }}
-                  variant="outline"
-                  colorScheme="gray"
-                  onClick={() => setTradeAmount("0.001")}
-                  minW={{ base: "70px", md: "auto" }}
-                  fontSize={{ base: "xs", md: "xs" }}
-                >
-                  0.001 ETH
-                </Button>
-                <Button
-                  size={{ base: "sm", md: "xs" }}
-                  variant="outline"
-                  colorScheme="gray"
-                  onClick={() => setTradeAmount("0.01")}
-                  minW={{ base: "70px", md: "auto" }}
-                  fontSize={{ base: "xs", md: "xs" }}
-                >
-                  0.01 ETH
-                </Button>
-                <Button
-                  size={{ base: "sm", md: "xs" }}
-                  variant="outline"
-                  colorScheme="gray"
-                  onClick={() => setTradeAmount("0.1")}
-                  minW={{ base: "70px", md: "auto" }}
-                  fontSize={{ base: "xs", md: "xs" }}
-                >
-                  0.1 ETH
-                </Button>
-                <Button
-                  size={{ base: "sm", md: "xs" }}
-                  variant="outline"
-                  colorScheme="gray"
-                  onClick={() => setTradeAmount(ethBalance?.formatted || "0")}
-                  minW={{ base: "50px", md: "auto" }}
-                  fontSize={{ base: "xs", md: "xs" }}
-                >
-                  Max
-                </Button>
-              </>
+              // Buy mode - show amounts for selected currency
+              selectedCoin.symbol === "ETH" ? (
+                // ETH amounts
+                <>
+                  <Button
+                    size={{ base: "sm", md: "xs" }}
+                    variant="outline"
+                    colorScheme="gray"
+                    onClick={() => setTradeAmount("0.001")}
+                    minW={{ base: "70px", md: "auto" }}
+                    fontSize={{ base: "xs", md: "xs" }}
+                  >
+                    0.001 ETH
+                  </Button>
+                  <Button
+                    size={{ base: "sm", md: "xs" }}
+                    variant="outline"
+                    colorScheme="gray"
+                    onClick={() => setTradeAmount("0.01")}
+                    minW={{ base: "70px", md: "auto" }}
+                    fontSize={{ base: "xs", md: "xs" }}
+                  >
+                    0.01 ETH
+                  </Button>
+                  <Button
+                    size={{ base: "sm", md: "xs" }}
+                    variant="outline"
+                    colorScheme="gray"
+                    onClick={() => setTradeAmount("0.1")}
+                    minW={{ base: "70px", md: "auto" }}
+                    fontSize={{ base: "xs", md: "xs" }}
+                  >
+                    0.1 ETH
+                  </Button>
+                  <Button
+                    size={{ base: "sm", md: "xs" }}
+                    variant="outline"
+                    colorScheme="gray"
+                    onClick={() => setTradeAmount(ethBalance?.formatted || "0")}
+                    minW={{ base: "50px", md: "auto" }}
+                    fontSize={{ base: "xs", md: "xs" }}
+                  >
+                    Max
+                  </Button>
+                </>
+              ) : (
+                // Other coin amounts - show percentage buttons for now
+                <>
+                  <Button
+                    size={{ base: "sm", md: "xs" }}
+                    variant="outline"
+                    colorScheme="gray"
+                    onClick={() => setTradeAmount("10")}
+                    minW={{ base: "70px", md: "auto" }}
+                    fontSize={{ base: "xs", md: "xs" }}
+                  >
+                    10 {selectedCoin.symbol}
+                  </Button>
+                  <Button
+                    size={{ base: "sm", md: "xs" }}
+                    variant="outline"
+                    colorScheme="gray"
+                    onClick={() => setTradeAmount("100")}
+                    minW={{ base: "70px", md: "auto" }}
+                    fontSize={{ base: "xs", md: "xs" }}
+                  >
+                    100 {selectedCoin.symbol}
+                  </Button>
+                  <Button
+                    size={{ base: "sm", md: "xs" }}
+                    variant="outline"
+                    colorScheme="gray"
+                    onClick={() => setTradeAmount("1000")}
+                    minW={{ base: "70px", md: "auto" }}
+                    fontSize={{ base: "xs", md: "xs" }}
+                  >
+                    1K {selectedCoin.symbol}
+                  </Button>
+                  <Button
+                    size={{ base: "sm", md: "xs" }}
+                    variant="outline"
+                    colorScheme="gray"
+                    onClick={() => setTradeAmount("0")} // TODO: Set to max balance of selected coin
+                    minW={{ base: "50px", md: "auto" }}
+                    fontSize={{ base: "xs", md: "xs" }}
+                  >
+                    Max
+                  </Button>
+                </>
+              )
             ) : (
               // Sell mode - show percentages of token balance
               <>
@@ -262,22 +336,11 @@ export const TradeInterface: React.FC<TradeInterfaceProps> = ({
 
       {/* Currency Selector */}
       <HStack justify="space-between" w="100%">
-        <Box
-          bg="gray.800"
-          borderRadius="lg"
-          p={{ base: 2, md: 3 }}
-          display="flex"
-          alignItems="center"
-          cursor="pointer"
-          flex="1"
-          maxW="120px"
-        >
-          <Avatar size="xs" name="ETH" mr={2} />
-          <Text fontSize={{ base: "sm", md: "sm" }} mr={2}>
-            ETH
-          </Text>
-          <ChevronDownIcon />
-        </Box>
+        <CoinSelector
+          selectedCoin={selectedCoin}
+          onSelectCoin={handleCoinSelect}
+          isBuying={isBuying}
+        />
       </HStack>
 
       {/* Comment Box */}
@@ -316,7 +379,8 @@ export const TradeInterface: React.FC<TradeInterfaceProps> = ({
                   fontWeight="bold"
                   color={isBuying ? "green.400" : "blue.400"}
                 >
-                  {formattedQuoteOutput} {isBuying ? coinSymbol : "ETH"}
+                  {formattedQuoteOutput}{" "}
+                  {isBuying ? coinSymbol : selectedCoin.symbol}
                 </Text>
               </HStack>
               {quoteResult?.quote?.minimumAmountOut && (
@@ -329,7 +393,7 @@ export const TradeInterface: React.FC<TradeInterfaceProps> = ({
                       BigInt(quoteResult.quote.minimumAmountOut),
                       18
                     )}{" "}
-                    {isBuying ? coinSymbol : "ETH"}
+                    {isBuying ? coinSymbol : selectedCoin.symbol}
                   </Text>
                 </HStack>
               )}

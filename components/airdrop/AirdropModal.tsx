@@ -14,7 +14,7 @@ import {
   Text,
 } from "@chakra-ui/react";
 import { ArrowBackIcon, CheckIcon } from "@chakra-ui/icons";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useAccount } from "wagmi";
 import { tokenDictionary } from "@/lib/utils/tokenDictionary";
 import { useAirdropManager } from "@/hooks/useAirdropManager";
@@ -117,6 +117,23 @@ export function AirdropModal({
   });
 
   const { status, updateStatus, resetStatus } = useTransactionStatus();
+
+  // Auto-close modal when transaction is completed
+  useEffect(() => {
+    if (status.state === "completed") {
+      // Add a small delay to show the completion message before closing
+      const timer = setTimeout(() => {
+        onClose();
+      }, 2000);
+      return () => clearTimeout(timer);
+    } else if (status.state === "failed") {
+      // Close modal on failure with a longer delay so users can read the error
+      const timer = setTimeout(() => {
+        onClose();
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [status.state, onClose]);
 
   // Computed values
   const getAvailableTokens = () => {

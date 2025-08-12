@@ -5,6 +5,7 @@ export type SortOption =
   | "hbd_savings_balance"
   | "posts_score"
   | "has_voted_in_witness"
+  | "missing_witness"
   | "gnars_balance"
   | "skatehive_nft_balance"
   | "gnars_votes"

@@ -18,7 +18,7 @@ import { Address } from "viem";
 import { MediaRenderer } from "@/components/coin/MediaRenderer";
 import { CoinHeader } from "@/components/coin/CoinHeader";
 import { CoinStats } from "@/components/coin/CoinStats";
-import { TradeInterface } from "@/components/coin/TradeInterface";
+import { TradeInterface, SelectedCoin } from "@/components/coin/TradeInterface";
 import { CoinTabs } from "@/components/coin/CoinTabs";
 import { EditMetadataModal } from "@/components/shared/EditMetadataModal";
 import { useCoinTrading } from "@/hooks/useCoinTrading";
@@ -30,6 +30,13 @@ const ZoraCoinPageClient = React.memo<ZoraCoinPageClientProps>(
     const [loading] = useState(!initialCoinData && !initialError);
     const [error] = useState<string | null>(initialError);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+    // State for selected trading coin
+    const [selectedTradingCoin, setSelectedTradingCoin] =
+      useState<SelectedCoin>({
+        symbol: "ETH",
+        name: "Ethereum",
+      });
 
     const { address: connectedAddress } = useAccount();
 
@@ -48,6 +55,12 @@ const ZoraCoinPageClient = React.memo<ZoraCoinPageClientProps>(
       isTrading,
       ethBalance,
     } = useCoinTrading(coinData);
+
+    const handleSelectedCoinChange = (coin: SelectedCoin) => {
+      setSelectedTradingCoin(coin);
+      // TODO: Update trading logic to use the selected coin
+      console.log("Selected coin changed:", coin);
+    };
 
     // Check if connected user is the creator of the coin
     const isCreator = Boolean(
@@ -160,6 +173,7 @@ const ZoraCoinPageClient = React.memo<ZoraCoinPageClientProps>(
                   userBalance={userBalance}
                   coinSymbol={coinData?.symbol}
                   onTrade={handleTrade}
+                  onSelectedCoinChange={handleSelectedCoinChange}
                 />
               </Box>
 

@@ -71,24 +71,27 @@ export function generateAnnouncementContent(params: AirdropAnnouncementParams, i
     }
   }
 
-  // Start with image if available
+  // Start with empty content
   let content = '';
+
+  // 1. Compose the main message
+  content += `${userDisplay} just made an airdrop of ${totalAmount} ${token} tokens.  \n\n`;
+
+  // 2. Add sponsored skaters with tagged users (up to 10)
+  content += `To: ${generateRecipientMentions(recipients, 10)}\n\n`;
+
+  // 3. Add the rendered image of the airdrop
   if (imageUrl) {
     content += `![Airdrop Network Visualization](${imageUrl})\n\n`;
   }
 
-  // Compose the main message
-  content += `${userDisplay} just made an airdrop of ${totalAmount} ${token} tokens.  \n\n`;
-
-  // Add custom message if provided
+  // 4. Add custom message if provided
   if (customMessage && customMessage.trim()) {
-    content += `Message: \n > ${customMessage}\n\n`;
+    content += `> ${customMessage}\n\n`;
   }
 
-  // Add sponsored skaters with tagged users (up to 10)
-  content += `Sponsored Skaters: ${generateRecipientMentions(recipients, 10)}\n\n`;
-
-  content += `Thanks for being part of skatehive cult`;
+  // 5. Add signature
+  content += `Thanks for being part of the skatehive 🛸`;
 
   return content;
 }
@@ -104,6 +107,7 @@ function getSortOptionLabel(sortOption: string): string {
     hbd_savings_balance: 'HBD Savings',
     posts_score: 'Posts Score',
     has_voted_in_witness: 'Witness Voters',
+    missing_witness: 'Missing Witness',
     gnars_balance: 'Gnars Balance',
     skatehive_nft_balance: 'SkateHive NFTs',
     gnars_votes: 'Gnars Votes',

@@ -70,6 +70,11 @@ const AirdropFilterModal: React.FC<AirdropFilterModalProps> = ({
       description: "Governance participants",
     },
     {
+      value: "missing_witness",
+      label: "Missing Witness",
+      description: "Active users who haven't voted for witness",
+    },
+    {
       value: "gnars_balance",
       label: "Gnars NFTs",
       description: "Gnars NFT holders",
