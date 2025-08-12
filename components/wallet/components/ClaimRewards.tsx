@@ -39,16 +39,16 @@ export default function ClaimRewards({
     vests_hive: reward_vesting_hive ? extractNumber(reward_vesting_hive.toString()) : "0.000",
   };
 
-  // Check if there are any claimable rewards > 0.5
+  // Show claim box if rewards > 0.1
   const hasRewards =
-    parseFloat(String(pendingRewards.hive)) > 0.5 ||
-    parseFloat(String(pendingRewards.hbd)) > 0.5 ||
-    parseFloat(String(pendingRewards.vests_hive)) > 0.5;
+    parseFloat(String(pendingRewards.hive)) > 0.1 ||
+    parseFloat(String(pendingRewards.hbd)) > 0.1 ||
+    parseFloat(String(pendingRewards.vests_hive)) > 0.1;
 
   // Reset hasClaimed when rewards change
   useEffect(() => {
     if (hasRewards) {
-      setHasClaimed(false); // Show claim box if rewards > 0.5
+      setHasClaimed(false); 
     }
   }, [pendingRewards.hive, pendingRewards.hbd, pendingRewards.vests_hive]);
 
