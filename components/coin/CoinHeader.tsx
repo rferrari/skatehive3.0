@@ -9,7 +9,11 @@ import {
   Avatar,
   Heading,
   Button,
+  IconButton,
+  Image,
+  Tooltip,
 } from "@chakra-ui/react";
+import { EditIcon } from "@chakra-ui/icons";
 import { EnhancedMarkdownRenderer } from "@/components/markdown/EnhancedMarkdownRenderer";
 import { CoinData } from "@/types/coin";
 
@@ -41,6 +45,12 @@ export const CoinHeader: React.FC<CoinHeaderProps> = ({
             <Avatar
               size={{ base: "md", md: "sm" }}
               name={coinData.name || coinData.symbol}
+              src={
+                coinData.creatorProfile?.avatar?.previewImage?.small ||
+                coinData.image
+              }
+              bg="gray.600"
+              color="white"
             />
             <VStack align="start" spacing={1}>
               <Heading size={{ base: "sm", md: "md" }} fontWeight="bold">
@@ -48,6 +58,9 @@ export const CoinHeader: React.FC<CoinHeaderProps> = ({
               </Heading>
               <Text fontSize="xs" color="gray.400">
                 {coinData.symbol || "COIN"}
+                {coinData.creatorProfile?.handle && (
+                  <> • by @{coinData.creatorProfile.handle}</>
+                )}
               </Text>
             </VStack>
           </HStack>
@@ -57,30 +70,53 @@ export const CoinHeader: React.FC<CoinHeaderProps> = ({
             spacing={2}
             flexWrap="wrap"
           >
-            <Button
-              size={{ base: "xs", md: "sm" }}
-              variant="outline"
-              colorScheme="blue"
-              fontSize="xs"
-              as="a"
-              href={`https://zora.co/coin/base:${coinData.address}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              flex={{ base: "1", sm: "auto" }}
-            >
-              See on Zora
-            </Button>
-            {isCreator && (
-              <Button
-                size={{ base: "xs", md: "sm" }}
+            <Tooltip label="See on Zora" placement="top">
+              <IconButton
+                size={{ base: "sm", md: "sm" }}
                 variant="outline"
-                colorScheme="green"
-                fontSize="xs"
-                onClick={onEditMetadata}
-                flex={{ base: "1", sm: "auto" }}
-              >
-                Edit Metadata
-              </Button>
+                colorScheme="blue"
+                as="a"
+                href={`https://zora.co/coin/base:${coinData.address}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="See on Zora"
+                icon={
+                  <Image
+                    src="/logos/Zorb.png"
+                    alt="Zora"
+                    w="16px"
+                    h="16px"
+                    fallback={
+                      <Box
+                        w="16px"
+                        h="16px"
+                        bg="blue.500"
+                        borderRadius="2px"
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="center"
+                        fontSize="xs"
+                        fontWeight="bold"
+                        color="white"
+                      >
+                        Z
+                      </Box>
+                    }
+                  />
+                }
+              />
+            </Tooltip>
+            {isCreator && (
+              <Tooltip label="Edit Metadata" placement="top">
+                <IconButton
+                  size={{ base: "sm", md: "sm" }}
+                  variant="outline"
+                  colorScheme="green"
+                  onClick={onEditMetadata}
+                  aria-label="Edit Metadata"
+                  icon={<EditIcon />}
+                />
+              </Tooltip>
             )}
           </HStack>
         </HStack>

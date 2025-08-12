@@ -11,6 +11,17 @@ export interface CoinData {
   uniqueHolders?: number;
   createdAt?: string;
   creatorAddress?: string;
+  volume24h?: string;
+  blurDataURL?: string;
+  creatorProfile?: {
+    handle?: string;
+    avatar?: {
+      previewImage?: {
+        small?: string;
+        medium?: string;
+      };
+    };
+  };
 }
 
 export interface UserBalance {

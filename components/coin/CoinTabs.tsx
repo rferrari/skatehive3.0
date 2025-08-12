@@ -54,7 +54,7 @@ export const CoinTabs: React.FC<CoinTabsProps> = ({ coinData }) => {
           >
             Holders
             <Badge ml={2} fontSize="xs" bg="gray.700" color="gray.300">
-              3
+              {coinData.uniqueHolders || 0}
             </Badge>
           </Tab>
           <Tab
@@ -171,7 +171,50 @@ export const CoinTabs: React.FC<CoinTabsProps> = ({ coinData }) => {
                     Creator
                   </Text>
                   <Text fontSize="xs" fontFamily="mono" color="blue.400">
-                    {coinData.creatorAddress}
+                    {coinData.creatorProfile?.handle
+                      ? `@${coinData.creatorProfile.handle}`
+                      : coinData.creatorAddress}
+                  </Text>
+                  {coinData.creatorProfile?.handle && (
+                    <Text
+                      fontSize="xs"
+                      fontFamily="mono"
+                      color="gray.500"
+                      mt={1}
+                    >
+                      {coinData.creatorAddress}
+                    </Text>
+                  )}
+                </Box>
+              )}
+
+              <Box>
+                <Text fontSize="sm" color="gray.400" mb={1}>
+                  Unique Holders
+                </Text>
+                <Text fontSize="sm" fontWeight="bold" color="white">
+                  {coinData.uniqueHolders?.toLocaleString() || "0"}
+                </Text>
+              </Box>
+
+              {coinData.totalSupply && (
+                <Box>
+                  <Text fontSize="sm" color="gray.400" mb={1}>
+                    Total Supply
+                  </Text>
+                  <Text fontSize="sm" fontWeight="bold" color="white">
+                    {Number(coinData.totalSupply).toLocaleString()}
+                  </Text>
+                </Box>
+              )}
+
+              {coinData.createdAt && (
+                <Box>
+                  <Text fontSize="sm" color="gray.400" mb={1}>
+                    Created
+                  </Text>
+                  <Text fontSize="sm" color="white">
+                    {new Date(coinData.createdAt).toLocaleDateString()}
                   </Text>
                 </Box>
               )}

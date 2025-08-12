@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { isAddress } from "viem";
+import { Address, isAddress } from "viem";
 import { getCoin } from "@zoralabs/coins-sdk";
 import { base } from "viem/chains";
 import ZoraCoinPageClient from "./ZoraCoinPageClient";
@@ -151,7 +151,7 @@ export default async function CoinPage({ params }: PageProps) {
   try {
     // Fetch initial coin data on server side
     const response = await getCoin({
-      address: address as `0x${string}`,
+      address: address as Address,
       chain: base.id,
     });
 
@@ -160,7 +160,7 @@ export default async function CoinPage({ params }: PageProps) {
     if (!coin) {
       notFound();
     }
-
+    console.log(coin);
     // Prepare data for client component
     coinData = {
       address,
@@ -182,6 +182,21 @@ export default async function CoinPage({ params }: PageProps) {
       uniqueHolders: coin.uniqueHolders,
       createdAt: coin.createdAt,
       creatorAddress: coin.creatorAddress,
+      volume24h: coin.volume24h,
+      blurDataURL: coin.mediaContent?.previewImage?.small, // Use small image as blur placeholder
+      creatorProfile: coin.creatorProfile
+        ? {
+            handle: coin.creatorProfile.handle,
+            avatar: coin.creatorProfile.avatar
+              ? {
+                  previewImage: {
+                    small: coin.creatorProfile.avatar.previewImage?.small,
+                    medium: coin.creatorProfile.avatar.previewImage?.medium,
+                  },
+                }
+              : undefined,
+          }
+        : undefined,
     };
   } catch (err) {
     if (process.env.NODE_ENV === "development") {

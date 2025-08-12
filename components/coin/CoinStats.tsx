@@ -35,10 +35,10 @@ export const CoinStats: React.FC<CoinStatsProps> = ({ coinData }) => {
         </Box>
         <Box>
           <Text fontSize="xs" color="gray.400" mb={1}>
-            Total Volume
+            24h Volume
           </Text>
           <Text fontSize="xs" fontWeight="bold">
-            {formatCurrency(coinData.marketCap)}
+            {formatCurrency(coinData.volume24h)}
           </Text>
         </Box>
         <Box gridColumn={{ base: "span 2", sm: "span 1" }}>
@@ -46,7 +46,16 @@ export const CoinStats: React.FC<CoinStatsProps> = ({ coinData }) => {
             Creator Earnings
           </Text>
           <Text fontSize="xs" fontWeight="bold">
-            $0.05
+            {(() => {
+              if (!coinData.volume24h) return "$0.00";
+              try {
+                const volumeNum = parseFloat(coinData.volume24h.toString());
+                const earnings = volumeNum * 0.05; // 5% creator fee
+                return formatCurrency(earnings.toString());
+              } catch {
+                return "$0.00";
+              }
+            })()}
           </Text>
         </Box>
       </Grid>

@@ -116,6 +116,7 @@ const ZoraCoinPageClient = React.memo<ZoraCoinPageClientProps>(
                 imageUrl={coinData.image}
                 hasVideo={coinData.hasVideo}
                 altText={coinData.name || "Coin"}
+                blurDataURL={coinData.blurDataURL}
               />
             </Box>
           </GridItem>

@@ -18,13 +18,14 @@ interface MediaRendererProps {
   imageUrl?: string;
   hasVideo?: boolean;
   altText: string;
+  blurDataURL?: string;
 }
 
 /**
  * Component that tries multiple IPFS gateways for reliable media loading
  */
 export const MediaRenderer = React.memo<MediaRendererProps>(
-  ({ videoUrl, imageUrl, hasVideo, altText }) => {
+  ({ videoUrl, imageUrl, hasVideo, altText, blurDataURL }) => {
     const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [videoFailed, setVideoFailed] = useState(false);
@@ -115,10 +116,10 @@ export const MediaRenderer = React.memo<MediaRendererProps>(
       return (
         <Box position="relative" w="100%" h="100%">
           {/* Preview image as loading background */}
-          {isLoading && imageUrl && (
+          {isLoading && (blurDataURL || imageUrl) && (
             <Box position="absolute" w="100%" h="100%" zIndex={1}>
               <Image
-                src={imageUrl}
+                src={blurDataURL || imageUrl}
                 alt={altText}
                 w="100%"
                 h="100%"
