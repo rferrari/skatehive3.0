@@ -39,7 +39,7 @@ export default function ClaimRewards({
     vests_hive: reward_vesting_hive ? extractNumber(reward_vesting_hive.toString()) : "0.000",
   };
 
-  // Show claim box if rewards > 0.1
+  // Show claim box if rewards > 0
   const hasRewards =
     parseFloat(String(pendingRewards.hive)) > 0 ||
     parseFloat(String(pendingRewards.hbd)) > 0 ||
