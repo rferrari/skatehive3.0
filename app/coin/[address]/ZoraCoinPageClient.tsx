@@ -39,6 +39,7 @@ import { ChevronDownIcon } from "@chakra-ui/icons";
 import { useZoraTrade, TradeConfig } from "@/hooks/useZoraTrade";
 import { getIpfsGatewayUrls } from "@/lib/utils/ipfsMetadata";
 import { EnhancedMarkdownRenderer } from "@/components/markdown/EnhancedMarkdownRenderer";
+import { EditMetadataModal } from "@/components/shared/EditMetadataModal";
 
 // Component that tries multiple IPFS gateways for reliable media loading
 const MediaRenderer = React.memo(
@@ -303,7 +304,10 @@ const ZoraCoinPageClient = React.memo(
     const [formattedQuoteOutput, setFormattedQuoteOutput] =
       useState<string>("0");
 
-    const { isConnected } = useAccount();
+    // Edit metadata modal state
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+    const { isConnected, address: connectedAddress } = useAccount();
     const {
       executeTrade,
       getTradeQuote,
@@ -312,6 +316,19 @@ const ZoraCoinPageClient = React.memo(
       isTrading,
       ethBalance,
     } = useZoraTrade();
+    console.log(coinData, "coindata");
+
+    // Check if connected user is the creator of the coin
+    const isCreator =
+      connectedAddress &&
+      coinData?.creatorAddress &&
+      connectedAddress.toLowerCase() === coinData.creatorAddress.toLowerCase();
+
+    console.log("Creator check:", {
+      connectedAddress,
+      creatorAddress: coinData?.creatorAddress,
+      isCreator,
+    });
 
     // Get quote when amount changes (optimized to prevent unnecessary requests)
     useEffect(() => {
@@ -641,20 +658,38 @@ const ZoraCoinPageClient = React.memo(
                         </Text>
                       </VStack>
                     </HStack>
-                    <Button
-                      size={{ base: "xs", md: "sm" }}
-                      variant="outline"
-                      colorScheme="blue"
-                      fontSize="xs"
-                      w={{ base: "100%", sm: "auto" }}
-                      mt={{ base: 2, sm: 0 }}
-                      as="a"
-                      href={`https://zora.co/coin/base:${coinData.address}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <HStack
+                      minW={{ base: "100%", sm: "auto" }}
+                      mb={{ base: 2, sm: 0 }}
+                      spacing={2}
+                      flexWrap="wrap"
                     >
-                      See on Zora
-                    </Button>
+                      <Button
+                        size={{ base: "xs", md: "sm" }}
+                        variant="outline"
+                        colorScheme="blue"
+                        fontSize="xs"
+                        as="a"
+                        href={`https://zora.co/coin/base:${coinData.address}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        flex={{ base: "1", sm: "auto" }}
+                      >
+                        See on Zora
+                      </Button>
+                      {isCreator && (
+                        <Button
+                          size={{ base: "xs", md: "sm" }}
+                          variant="outline"
+                          colorScheme="green"
+                          fontSize="xs"
+                          onClick={() => setIsEditModalOpen(true)}
+                          flex={{ base: "1", sm: "auto" }}
+                        >
+                          Edit Metadata
+                        </Button>
+                      )}
+                    </HStack>
                   </HStack>
                   <Box
                     maxW="100%"
@@ -1267,6 +1302,19 @@ const ZoraCoinPageClient = React.memo(
             </VStack>
           </GridItem>
         </Grid>
+
+        {/* Edit Metadata Modal */}
+        <EditMetadataModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          coinAddress={coinData.address as Address}
+          currentMetadata={{
+            name: coinData.name,
+            description: coinData.description,
+            image: coinData.image,
+            animation_url: coinData.videoUrl,
+          }}
+        />
       </Box>
     );
   }
