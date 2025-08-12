@@ -41,9 +41,9 @@ export default function ClaimRewards({
 
   // Show claim box if rewards > 0.1
   const hasRewards =
-    parseFloat(String(pendingRewards.hive)) > 0.1 ||
-    parseFloat(String(pendingRewards.hbd)) > 0.1 ||
-    parseFloat(String(pendingRewards.vests_hive)) > 0.1;
+    parseFloat(String(pendingRewards.hive)) > 0 ||
+    parseFloat(String(pendingRewards.hbd)) > 0 ||
+    parseFloat(String(pendingRewards.vests_hive)) > 0;
 
   // Reset hasClaimed when rewards change
   useEffect(() => {
