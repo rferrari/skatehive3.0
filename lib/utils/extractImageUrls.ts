@@ -105,14 +105,18 @@ export function extractVideoUrls(markdown: string): string[] {
     return videoUrls;
 }
 
-// Extract Zora coin contract addresses from text
+// Extract Zora coin contract addresses from text (supports both zora.co and skatehive.app)
 export function extractZoraCoinLinks(text: string): string[] {
-    const regex = /https:\/\/zora\.co\/coin\/([a-zA-Z0-9:]+)/g
+    const coinRegex = /https:\/\/(?:www\.)?(?:zora\.co|skatehive\.app)\/coin\/([a-zA-Z0-9:]+)/g
     const addresses: string[] = []
+
     let match
-    while ((match = regex.exec(text)) !== null) {
+
+    // Extract from supported domains in textual order
+    while ((match = coinRegex.exec(text)) !== null) {
         addresses.push(match[1])
     }
+    
     return addresses
 }
 
