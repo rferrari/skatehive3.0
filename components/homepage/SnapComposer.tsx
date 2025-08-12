@@ -13,6 +13,7 @@ import {
 import { useAioha } from "@aioha/react-ui";
 import GiphySelector from "./GiphySelector";
 import VideoUploader, { VideoUploaderRef } from "./VideoUploader";
+import VideoTrimModal from "./VideoTrimModal";
 import { IGif } from "@giphy/js-types";
 import { FaImage } from "react-icons/fa";
 import { MdGif, MdMovieCreation } from "react-icons/md";
@@ -29,6 +30,7 @@ import { ImageCompressorRef } from "@/lib/utils/ImageCompressor";
 import imageCompression from "browser-image-compression";
 import GifModal from "../compose/GifModal";
 import { GIFMakerRef as GIFMakerWithSelectorRef } from "./GIFMakerWithSelector";
+import useHivePower from "@/hooks/useHivePower";
 
 interface SnapComposerProps {
   pa: string;
@@ -63,6 +65,7 @@ export default function SnapComposer({
   >([]);
   const gifWebpInputRef = useRef<HTMLInputElement>(null);
   const imageUploadInputRef = useRef<HTMLInputElement>(null);
+  const videoUploadInputRef = useRef<HTMLInputElement>(null);
 
   // GifModal state and refs
   const [isGifModalOpen, setGifModalOpen] = useState(false);
@@ -86,6 +89,14 @@ export default function SnapComposer({
     null
   );
 
+  // Video trimming modal state
+  const [isTrimModalOpen, setIsTrimModalOpen] = useState(false);
+  const [pendingVideoFile, setPendingVideoFile] = useState<File | null>(null);
+
+  // Get user's Hive Power to determine if they can bypass the 15s limit
+  const { hivePower } = useHivePower(user || "");
+  const canBypassLimit = hivePower !== null && hivePower >= 100;
+
   const handleVideoDurationError = (duration: number) => {
     setVideoDurationError(
       "Error. Short form video only here. Max 60 sec. Use Mag for longer video."
@@ -106,6 +117,66 @@ export default function SnapComposer({
   // Helper functions to manage upload count
   const startUpload = () => setUploadCount((c) => c + 1);
   const finishUpload = () => setUploadCount((c) => Math.max(0, c - 1));
+
+  // Helper function to get video duration
+  const getVideoDuration = (file: File): Promise<number> => {
+    return new Promise((resolve, reject) => {
+      const video = document.createElement("video");
+      video.preload = "metadata";
+      video.onloadedmetadata = () => {
+        resolve(video.duration);
+        URL.revokeObjectURL(video.src);
+      };
+      video.onerror = () => {
+        reject(new Error("Failed to load video"));
+        URL.revokeObjectURL(video.src);
+      };
+      video.src = URL.createObjectURL(file);
+    });
+  };
+
+  // Handle video file selection (with duration check for SnapComposer)
+  const handleVideoFile = async (file: File) => {
+    try {
+      const duration = await getVideoDuration(file);
+
+      // For SnapComposer (homepage), enforce 15s limit unless user has >100 HP
+      if (!canBypassLimit && duration > 15) {
+        setPendingVideoFile(file);
+        setIsTrimModalOpen(true);
+        return;
+      }
+
+      // If user can bypass or video is under 15s, process normally
+      if (videoUploaderRef.current) {
+        startUpload();
+        await videoUploaderRef.current.handleFile(file);
+        finishUpload();
+      }
+    } catch (error) {
+      console.error("Error checking video duration:", error);
+      alert(
+        "Failed to process video file: " +
+          (error instanceof Error ? error.message : String(error))
+      );
+    }
+  };
+
+  // Handle trim modal completion
+  const handleTrimComplete = async (trimmedFile: File) => {
+    if (videoUploaderRef.current) {
+      startUpload();
+      await videoUploaderRef.current.handleFile(trimmedFile);
+      finishUpload();
+    }
+    setPendingVideoFile(null);
+  };
+
+  // Handle trim modal close
+  const handleTrimModalClose = () => {
+    setIsTrimModalOpen(false);
+    setPendingVideoFile(null);
+  };
 
   // Handler for compressed image upload
   const handleCompressedImageUpload = async (
@@ -179,6 +250,16 @@ export default function SnapComposer({
       finishUpload();
       e.target.value = ""; // Reset input
     }
+  };
+
+  // Simple video upload handler for ref-based input
+  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      await handleVideoFile(file);
+    }
+    // Reset input so same file can be selected again
+    e.target.value = "";
   };
 
   // Unified image upload handler
@@ -379,20 +460,12 @@ export default function SnapComposer({
           }
         }
       } else if (file.type.startsWith("video/")) {
-        // For video, use video uploader logic if available
-        if (videoUploaderRef.current && videoUploaderRef.current.handleFile) {
-          setIsLoading(true);
-          try {
-            startUpload();
-            await videoUploaderRef.current.handleFile(file);
-          } catch (error) {
-            console.error("Error uploading video:", error);
-          } finally {
-            setIsLoading(false);
-            finishUpload();
-          }
-        } else {
-          alert("Video upload not supported.");
+        // For video, use our new video handling logic with trimming
+        try {
+          await handleVideoFile(file);
+        } catch (error) {
+          console.error("Error uploading video:", error);
+          alert("Failed to upload video");
         }
       } else {
         alert("Unsupported file type: " + file.type);
@@ -526,6 +599,14 @@ export default function SnapComposer({
                   onChange={handleUnifiedImageUpload}
                   multiple
                 />
+                {/* Hidden Video Upload Input */}
+                <input
+                  type="file"
+                  accept="video/*"
+                  style={{ display: "none" }}
+                  ref={videoUploadInputRef}
+                  onChange={handleVideoUpload}
+                />
               </Box>
               {/* Giphy Button (only in reply modal) */}
               {post && (
@@ -577,7 +658,7 @@ export default function SnapComposer({
                   boxShadow: "0 0 0 2px var(--chakra-colors-primary)",
                 }}
                 _active={{ borderColor: "accent" }}
-                onClick={() => videoUploaderRef.current?.trigger()}
+                onClick={() => videoUploadInputRef.current?.click()}
               >
                 <FaVideo color="var(--chakra-colors-primary)" size={22} />
               </Button>
@@ -652,8 +733,7 @@ export default function SnapComposer({
               username={user || undefined}
               onUploadStart={handleVideoUploadStart}
               onUploadFinish={handleVideoUploadFinish}
-              maxDurationSeconds={60}
-              onDurationError={handleVideoDurationError}
+              // Remove maxDurationSeconds and onDurationError since we handle trimming in modal
             />
           </Box>
           <Wrap spacing={4}>
@@ -826,6 +906,17 @@ export default function SnapComposer({
         setGifSize={setGifSize}
         setIsProcessingGif={setIsProcessingGif}
       />
+
+      {/* Video Trim Modal */}
+      <VideoTrimModal
+        isOpen={isTrimModalOpen}
+        onClose={handleTrimModalClose}
+        videoFile={pendingVideoFile}
+        onTrimComplete={handleTrimComplete}
+        maxDuration={15}
+        canBypass={canBypassLimit}
+      />
+
       {/* Matrix Overlay and login prompt if not logged in */}
       {!user && <></>}
     </Box>
