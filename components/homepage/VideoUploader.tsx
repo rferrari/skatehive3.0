@@ -1,4 +1,30 @@
-import React, { useRef, useImperativeHandle, forwardRef, useState } from "react";
+import React, {
+  useRef,
+  useImperativeHandle,
+  forwardRef,
+  useState,
+} from "react";
+// Capability detection helpers
+function detectFFmpegSupport() {
+  // SharedArrayBuffer detection
+  const hasSharedArrayBuffer =
+    typeof window !== "undefined" && "SharedArrayBuffer" in window;
+  // Basic FFmpeg.wasm detection
+  try {
+    // @ts-ignore
+    if (!hasSharedArrayBuffer) return false;
+    // WebAssembly features
+    if (typeof WebAssembly === "undefined") return false;
+    // iOS Safari detection (very unreliable for FFmpeg.wasm)
+    const ua = navigator.userAgent;
+    if (/iPad|iPhone|iPod/.test(ua) && !("MSStream" in window)) return false;
+    // Android old browsers
+    if (/Android/.test(ua) && !hasSharedArrayBuffer) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile } from "@ffmpeg/util";
 
@@ -19,49 +45,57 @@ export interface VideoUploaderRef {
 }
 
 const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
-  ({ 
-    onUpload, 
-    isProcessing = false, 
-    username, 
-    onUploadStart, 
-    onUploadFinish,
-    skipCompression = false,
-    maxDurationSeconds,
-    onDurationError
-  }, ref) => {
+  (
+    {
+      onUpload,
+      isProcessing = false,
+      username,
+      onUploadStart,
+      onUploadFinish,
+      skipCompression = false,
+      maxDurationSeconds,
+      onDurationError,
+    },
+    ref
+  ) => {
     const inputRef = useRef<HTMLInputElement>(null);
     const ffmpegRef = useRef<any>(null);
     const [status, setStatus] = useState<string>("");
     const [compressionProgress, setCompressionProgress] = useState<number>(0);
     const [uploadProgress, setUploadProgress] = useState<number>(0);
+    const [fallbackMode, setFallbackMode] = useState<boolean>(false);
+    const [retryCount, setRetryCount] = useState<number>(0);
 
     // Replace hardcoded background and color values with theme variables
-    const backgroundMuted = 'var(--chakra-colors-muted, #eee)';
-    const backgroundPrimary = 'var(--chakra-colors-primary, #0070f3)';
-    const backgroundAccent = 'var(--chakra-colors-accent, #00b894)';
+    const backgroundMuted = "var(--chakra-colors-muted, #eee)";
+    const backgroundPrimary = "var(--chakra-colors-primary, #0070f3)";
+    const backgroundAccent = "var(--chakra-colors-accent, #00b894)";
 
     // Function to get video duration using HTML5 video element
     const getVideoDuration = (file: File): Promise<number> => {
       return new Promise((resolve, reject) => {
-        const video = document.createElement('video');
-        video.preload = 'metadata';
-        
+        const video = document.createElement("video");
+        video.preload = "metadata";
+
         video.onloadedmetadata = () => {
           const duration = video.duration;
           URL.revokeObjectURL(video.src); // Clean up object URL
           resolve(duration);
         };
-        
+
         video.onerror = () => {
           URL.revokeObjectURL(video.src); // Clean up object URL
-          reject(new Error('Failed to load video metadata'));
+          reject(new Error("Failed to load video metadata"));
         };
-        
+
         video.src = URL.createObjectURL(file);
       });
     };
 
-    const compressVideo = async (file: File, shouldResize: boolean): Promise<Blob> => {
+    const compressVideo = async (
+      file: File,
+      shouldResize: boolean
+    ): Promise<Blob> => {
       setStatus("Compressing video...");
       setCompressionProgress(0);
       if (!ffmpegRef.current) {
@@ -70,17 +104,29 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
       }
       const ffmpeg = ffmpegRef.current;
       // Set up progress handler
-      ffmpeg.on('progress', ({ progress }: { progress: number }) => {
+      ffmpeg.on("progress", ({ progress }: { progress: number }) => {
         setCompressionProgress(Math.round(progress * 100));
       });
       await ffmpeg.writeFile(file.name, await fetchFile(file));
 
+      // Ultra-fast compression settings optimized for mobile
       const ffmpegArgs = [
-        "-i", file.name,
-        "-c:v", "libx264",
-        "-c:a", "aac",
-        "-crf", "25",
-        "-preset", "veryfast",
+        "-i",
+        file.name,
+        "-c:v",
+        "libx264",
+        "-c:a",
+        "aac",
+        "-crf",
+        "28", // Higher CRF for faster encoding (slightly lower quality but much faster)
+        "-preset",
+        "ultrafast", // Fastest preset available
+        "-tune",
+        "fastdecode", // Optimize for fast decoding
+        "-movflags",
+        "+faststart", // Web optimization for MP4
+        "-threads",
+        "0", // Use all available CPU threads
       ];
 
       if (shouldResize) {
@@ -104,20 +150,27 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         await ffmpegRef.current.load();
       }
       const ffmpeg = ffmpegRef.current;
-      
+
       // Set up progress handler
-      ffmpeg.on('progress', ({ progress }: { progress: number }) => {
+      ffmpeg.on("progress", ({ progress }: { progress: number }) => {
         setCompressionProgress(Math.round(progress * 100));
       });
-      
+
       await ffmpeg.writeFile(file.name, await fetchFile(file));
 
-      // Minimal conversion to MP4 - copy streams without re-encoding
+      // Fast conversion optimized for iPhone .mov files
       const ffmpegArgs = [
-        "-i", file.name,
-        "-c", "copy", // Copy streams without re-encoding (preserves quality)
-        "-f", "mp4",  // Force MP4 format
-        "output.mp4"
+        "-i",
+        file.name,
+        "-c:v",
+        "copy", // Copy video stream without re-encoding when possible
+        "-c:a",
+        "aac", // Re-encode audio to AAC for compatibility (fast)
+        "-movflags",
+        "+faststart", // Web optimization
+        "-f",
+        "mp4", // Force MP4 format
+        "output.mp4",
       ];
 
       await ffmpeg.exec(ffmpegArgs);
@@ -127,62 +180,165 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
       return new Blob([data.buffer], { type: "video/mp4" });
     };
 
-    const generateThumbnail = async (file: File): Promise<string | null> => {
+    // Fast HTML5 Canvas thumbnail generation (prioritized over FFmpeg)
+    const generateThumbnail = async (
+      file: File,
+      fallback: boolean
+    ): Promise<string | null> => {
+      setStatus("Generating thumbnail...");
+      
+      // Always try Canvas method first for speed (especially for long videos)
       try {
-        setStatus("Generating thumbnail...");
-
-        if (!ffmpegRef.current) {
-          ffmpegRef.current = new FFmpeg();
-          await ffmpegRef.current.load();
-        }
-        const ffmpeg = ffmpegRef.current;
-
-        // Write the original file for thumbnail generation
-        await ffmpeg.writeFile("input_thumb.mp4", await fetchFile(file));
-
-        // Generate thumbnail at 2 second mark
-        await ffmpeg.exec([
-          "-i", "input_thumb.mp4",
-          "-ss", "00:00:02",
-          "-frames:v", "1",
-          "-vf", "scale=320:240:force_original_aspect_ratio=decrease,pad=320:240:(ow-iw)/2:(oh-ih)/2",
-          "-f", "webp",
-          "thumbnail.webp"
+        const video = document.createElement("video");
+        video.preload = "metadata";
+        video.muted = true; // Prevent autoplay issues
+        video.crossOrigin = "anonymous";
+        
+        // Create object URL and set up video
+        const videoUrl = URL.createObjectURL(file);
+        video.src = videoUrl;
+        
+        // Wait for video metadata with timeout
+        await Promise.race([
+          new Promise((resolve, reject) => {
+            video.onloadedmetadata = () => resolve(true);
+            video.onerror = () => reject("Video load error");
+          }),
+          new Promise((_, reject) => 
+            setTimeout(() => reject("Video metadata timeout"), 5000)
+          )
         ]);
-
-        const thumbnailData = await ffmpeg.readFile("thumbnail.webp");
-        const thumbnailBlob = new Blob([thumbnailData.buffer], { type: "image/webp" });
-
-        // Upload thumbnail to IPFS first
-        const thumbnailFormData = new FormData();
-        thumbnailFormData.append("file", thumbnailBlob, "thumbnail.webp");
-        if (username) {
-          thumbnailFormData.append("creator", username);
+        
+        // Seek to a good thumbnail position (10% into video, max 5 seconds)
+        const thumbnailTime = Math.min(Math.max(video.duration * 0.1, 1), 5);
+        video.currentTime = thumbnailTime;
+        
+        // Wait for seek to complete with timeout
+        await Promise.race([
+          new Promise((resolve) => {
+            video.onseeked = () => resolve(true);
+            // Fallback if onseeked doesn't fire
+            setTimeout(() => resolve(true), 500);
+          }),
+          new Promise((_, reject) => 
+            setTimeout(() => reject("Video seek timeout"), 3000)
+          )
+        ]);
+        
+        // Create canvas and draw frame
+        const canvas = document.createElement("canvas");
+        canvas.width = 320;
+        canvas.height = 240;
+        const ctx = canvas.getContext("2d");
+        
+        if (!ctx) throw new Error("Canvas context unavailable");
+        
+        // Calculate aspect ratio and draw centered
+        const videoAspect = video.videoWidth / video.videoHeight;
+        const canvasAspect = canvas.width / canvas.height;
+        
+        let drawWidth, drawHeight, drawX, drawY;
+        if (videoAspect > canvasAspect) {
+          drawWidth = canvas.width;
+          drawHeight = canvas.width / videoAspect;
+          drawX = 0;
+          drawY = (canvas.height - drawHeight) / 2;
+        } else {
+          drawWidth = canvas.height * videoAspect;
+          drawHeight = canvas.height;
+          drawX = (canvas.width - drawWidth) / 2;
+          drawY = 0;
         }
-
+        
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(video, drawX, drawY, drawWidth, drawHeight);
+        
+        // Clean up video URL
+        URL.revokeObjectURL(videoUrl);
+        
+        // Convert to blob with quality optimization
+        const blob = await new Promise<Blob>((resolve) => {
+          canvas.toBlob((blob) => {
+            resolve(blob || new Blob());
+          }, "image/webp", 0.8);
+        });
+        
+        if (blob.size === 0) throw new Error("Empty thumbnail blob");
+        
+        // Upload thumbnail
+        const thumbnailFormData = new FormData();
+        thumbnailFormData.append("file", blob, "thumbnail.webp");
+        if (username) thumbnailFormData.append("creator", username);
+        
         const thumbnailResponse = await fetch("/api/pinata", {
           method: "POST",
           body: thumbnailFormData,
         });
-
-        if (!thumbnailResponse.ok) {
-          throw new Error("Failed to upload thumbnail");
-        }
-
+        
+        if (!thumbnailResponse.ok) throw new Error("Failed to upload thumbnail");
+        
         const thumbnailResult = await thumbnailResponse.json();
-        const thumbnailUrl = `https://ipfs.skatehive.app/ipfs/${thumbnailResult.IpfsHash}`;
-
-        // Clean up FFmpeg files
-        try {
-          await ffmpeg.deleteFile("input_thumb.mp4");
-          await ffmpeg.deleteFile("thumbnail.webp");
-        } catch (e) {
-          console.warn("Failed to clean up thumbnail files:", e);
-        }
-
-        return thumbnailUrl;
+        return `https://ipfs.skatehive.app/ipfs/${thumbnailResult.IpfsHash}`;
+        
       } catch (error) {
-        console.error("Thumbnail generation failed:", error);
+        console.error("Fast thumbnail generation failed:", error);
+        
+        // Only try FFmpeg as absolute last resort and only for short videos
+        if (!fallback && file.size < 50 * 1024 * 1024) { // Only for files < 50MB
+          try {
+            setStatus("Generating thumbnail (fallback)...");
+            
+            if (!ffmpegRef.current) {
+              ffmpegRef.current = new FFmpeg();
+              await ffmpegRef.current.load();
+            }
+            const ffmpeg = ffmpegRef.current;
+            
+            await ffmpeg.writeFile("input_thumb.mp4", await fetchFile(file));
+            
+            // Ultra-fast thumbnail generation
+            await ffmpeg.exec([
+              "-i", "input_thumb.mp4",
+              "-ss", "2", // Seek to 2 seconds
+              "-frames:v", "1",
+              "-vf", "scale=320:240:force_original_aspect_ratio=decrease",
+              "-f", "webp",
+              "-preset", "ultrafast", // Fastest possible
+              "thumbnail.webp",
+            ]);
+            
+            const thumbnailData = await ffmpeg.readFile("thumbnail.webp");
+            const thumbnailBlob = new Blob([thumbnailData.buffer], { type: "image/webp" });
+            
+            const thumbnailFormData = new FormData();
+            thumbnailFormData.append("file", thumbnailBlob, "thumbnail.webp");
+            if (username) thumbnailFormData.append("creator", username);
+            
+            const thumbnailResponse = await fetch("/api/pinata", {
+              method: "POST",
+              body: thumbnailFormData,
+            });
+            
+            if (!thumbnailResponse.ok) throw new Error("Failed to upload thumbnail");
+            
+            const thumbnailResult = await thumbnailResponse.json();
+            
+            // Cleanup
+            try {
+              await ffmpeg.deleteFile("input_thumb.mp4");
+              await ffmpeg.deleteFile("thumbnail.webp");
+            } catch {}
+            
+            return `https://ipfs.skatehive.app/ipfs/${thumbnailResult.IpfsHash}`;
+            
+          } catch (ffmpegError) {
+            console.error("FFmpeg thumbnail also failed:", ffmpegError);
+          }
+        }
+        
+        // If all else fails, continue without thumbnail
+        setStatus("Thumbnail generation failed, continuing upload...");
         return null;
       }
     };
@@ -208,106 +364,24 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
       });
     };
 
-    // Extracted video upload logic for direct file handling
-    const processVideoFile = async (file: File) => {
-      if (!file) {
-        setStatus("");
-        setCompressionProgress(0);
-        setUploadProgress(0);
-        if (onUploadFinish) onUploadFinish();
-        return;
-      }
-      if (onUploadStart) onUploadStart();
+    // Fallback direct upload (no processing)
+    const uploadWithoutProcessing = async (
+      file: File,
+      thumbnailUrl: string | null
+    ) => {
+      setStatus("Uploading video (no processing)...");
+      setCompressionProgress(0);
+      setUploadProgress(0);
+      const formData = new FormData();
+      formData.append("file", file);
+      if (username) formData.append("creator", username);
+      if (thumbnailUrl) formData.append("thumbnailUrl", thumbnailUrl);
       try {
-        // Check video duration if maxDurationSeconds is set
-        if (maxDurationSeconds) {
-          setStatus("Checking video duration...");
-          const duration = await getVideoDuration(file);
-          if (duration > maxDurationSeconds) {
-            setStatus(""); // Clear the status message
-            if (onDurationError) onDurationError(duration);
-            onUpload(null);
-            if (onUploadFinish) onUploadFinish();
-            return;
-          }
-        }
-
-        const twelveMB = 12 * 1024 * 1024;
-        const shouldResize = file.size > twelveMB;
-
-        // Determine if we should skip compression
-        let shouldSkipCompression = skipCompression;
-        
-        // If not explicitly skipping, check duration for auto-skip (over 1 minute)
-        if (!shouldSkipCompression && !maxDurationSeconds) {
-          try {
-            const duration = await getVideoDuration(file);
-            if (duration > 60) { // Skip compression for videos over 1 minute
-              shouldSkipCompression = true;
-            }
-          } catch (error) {
-            console.warn("Could not determine video duration, proceeding with compression:", error);
-          }
-        }
-
-        setStatus(shouldSkipCompression ? "Converting to MP4 format..." : "Converting video...");
-        setCompressionProgress(0);
-        setUploadProgress(0);
-
-        if (shouldSkipCompression) {
-        } else if (shouldResize) {
-        } else {
-        }
-
-        // Generate thumbnail first
-        const thumbnailUrl = await generateThumbnail(file);
-
-        let processedFile: File;
-        if (shouldSkipCompression) {
-          // Convert to MP4 format without compression for browser compatibility
-          const mp4Blob = await convertToMp4(file);
-          
-          processedFile = new File([mp4Blob], "converted.mp4", {
-            type: "video/mp4",
-          });
-        } else {
-          // Compress the video
-          const compressedBlob = await compressVideo(file, shouldResize);
-
-          if (compressedBlob.size === 0) {
-            setStatus("Error: Compression resulted in an empty file.");
-            onUpload(null);
-            if (onUploadFinish) onUploadFinish();
-            return;
-          }
-          if (shouldResize && compressedBlob.size > file.size) {
-            setStatus("Error: Compressed file is larger than the original.");
-            onUpload(null);
-            if (onUploadFinish) onUploadFinish();
-            return;
-          }
-
-          processedFile = new File([compressedBlob], "compressed.mp4", {
-            type: "video/mp4",
-          });
-        }
-
-        const formData = new FormData();
-        formData.append("file", processedFile);
-        if (username) {
-          formData.append("creator", username);
-        }
-        if (thumbnailUrl) {
-          formData.append("thumbnailUrl", thumbnailUrl);
-        }
-        setStatus("Uploading video...");
-        setUploadProgress(0);
-        // Upload to Pinata with progress
         const responseText = await uploadWithProgress(formData);
         let result;
         try {
           result = JSON.parse(responseText);
-        } catch (e) {
+        } catch {
           setStatus("Failed to parse upload response.");
           onUpload(null);
           if (onUploadFinish) onUploadFinish();
@@ -325,10 +399,181 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         onUpload(videoUrl);
         if (onUploadFinish) onUploadFinish();
       } catch (error) {
-        setStatus("Error during file upload.");
+        setStatus("Upload failed (network or server error)");
         setCompressionProgress(0);
         setUploadProgress(0);
-        console.error("Error during file upload:", error);
+        console.error("Direct upload failed:", error);
+        onUpload(null);
+        if (onUploadFinish) onUploadFinish();
+      }
+    };
+
+    // Main video upload logic with fallback and retry
+    const processVideoFile = async (
+      file: File,
+      attempt: number = 1,
+      lastError: string = ""
+    ) => {
+      if (!file) {
+        setStatus("");
+        setCompressionProgress(0);
+        setUploadProgress(0);
+        if (onUploadFinish) onUploadFinish();
+        return;
+      }
+      if (onUploadStart) onUploadStart();
+      setRetryCount(attempt - 1);
+      let ffmpegSupported = detectFFmpegSupport();
+      let fallback = fallbackMode || !ffmpegSupported;
+      let errorStep = "";
+      try {
+        // Duration check
+        if (maxDurationSeconds) {
+          setStatus("Checking video duration...");
+          try {
+            const duration = await getVideoDuration(file);
+            if (duration > maxDurationSeconds) {
+              setStatus("");
+              if (onDurationError) onDurationError(duration);
+              onUpload(null);
+              if (onUploadFinish) onUploadFinish();
+              return;
+            }
+          } catch (err) {
+            errorStep = "duration";
+            throw new Error("Failed to check video duration");
+          }
+        }
+
+        // Thumbnail generation
+        let thumbnailUrl: string | null = null;
+        try {
+          thumbnailUrl = await generateThumbnail(file, fallback);
+        } catch (err) {
+          errorStep = "thumbnail";
+          setStatus("Thumbnail generation failed, continuing upload...");
+        }
+
+        // Video processing
+        let processedFile: File = file;
+        if (!fallback && !skipCompression) {
+          try {
+            // Smart detection for iPhone .mov files - use fast conversion instead of compression
+            const isIPhoneMov = file.name.toLowerCase().endsWith('.mov') && file.type === 'video/quicktime';
+            
+            if (isIPhoneMov) {
+              setStatus("Converting iPhone video to MP4...");
+              const mp4Blob = await convertToMp4(file);
+              processedFile = new File([mp4Blob], "converted.mp4", {
+                type: "video/mp4",
+              });
+            } else {
+              setStatus("Compressing video...");
+              const twelveMB = 12 * 1024 * 1024;
+              const shouldResize = file.size > twelveMB;
+              const compressedBlob = await compressVideo(file, shouldResize);
+              if (compressedBlob.size === 0)
+                throw new Error("Compression resulted in empty file");
+              processedFile = new File([compressedBlob], "compressed.mp4", {
+                type: "video/mp4",
+              });
+            }
+          } catch (err) {
+            errorStep = "transcoding";
+            setStatus("Processing failed, retrying with fallback...");
+            fallback = true;
+            setFallbackMode(true);
+            if (attempt < 3) {
+              await processVideoFile(file, attempt + 1, "transcoding");
+              return;
+            } else {
+              setStatus(
+                "Processing failed after retries. Uploading original file."
+              );
+            }
+          }
+        } else if (!fallback && skipCompression) {
+          try {
+            setStatus("Converting to MP4 format...");
+            const mp4Blob = await convertToMp4(file);
+            processedFile = new File([mp4Blob], "converted.mp4", {
+              type: "video/mp4",
+            });
+          } catch (err) {
+            errorStep = "conversion";
+            setStatus("Conversion failed, retrying with fallback...");
+            fallback = true;
+            setFallbackMode(true);
+            if (attempt < 3) {
+              await processVideoFile(file, attempt + 1, "conversion");
+              return;
+            } else {
+              setStatus(
+                "Conversion failed after retries. Uploading original file."
+              );
+            }
+          }
+        }
+
+        // Upload
+        try {
+          setStatus("Uploading video...");
+          setUploadProgress(0);
+          const formData = new FormData();
+          formData.append("file", processedFile);
+          if (username) formData.append("creator", username);
+          if (thumbnailUrl) formData.append("thumbnailUrl", thumbnailUrl);
+          const responseText = await uploadWithProgress(formData);
+          let result;
+          try {
+            result = JSON.parse(responseText);
+          } catch {
+            errorStep = "upload";
+            setStatus("Failed to parse upload response.");
+            onUpload(null);
+            if (onUploadFinish) onUploadFinish();
+            return;
+          }
+          if (!result || !result.IpfsHash) {
+            errorStep = "upload";
+            setStatus("Failed to upload video.");
+            onUpload(null);
+            if (onUploadFinish) onUploadFinish();
+            return;
+          }
+          const videoUrl = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`;
+          setStatus("Upload complete!");
+          setUploadProgress(100);
+          onUpload(videoUrl);
+          if (onUploadFinish) onUploadFinish();
+        } catch (err) {
+          errorStep = "upload";
+          setStatus("Upload failed, retrying...");
+          if (attempt < 3) {
+            await processVideoFile(file, attempt + 1, "upload");
+            return;
+          } else {
+            setStatus("Upload failed after retries.");
+            onUpload(null);
+            if (onUploadFinish) onUploadFinish();
+            return;
+          }
+        }
+      } catch (error) {
+        let failMsg = "";
+        if (errorStep === "duration")
+          failMsg = "Failed to check video duration.";
+        else if (errorStep === "thumbnail")
+          failMsg = "Thumbnail generation failed.";
+        else if (errorStep === "transcoding")
+          failMsg = "Video transcoding failed.";
+        else if (errorStep === "conversion")
+          failMsg = "Video conversion failed.";
+        else if (errorStep === "upload") failMsg = "Video upload failed.";
+        else failMsg = "Unknown error.";
+        setStatus(`Upload failed: ${failMsg}`);
+        setCompressionProgress(0);
+        setUploadProgress(0);
         onUpload(null);
         if (onUploadFinish) onUploadFinish();
       }
@@ -339,6 +584,8 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
     ) => {
       const file = event.target.files?.[0];
       if (file) {
+        setFallbackMode(false);
+        setRetryCount(0);
         await processVideoFile(file);
       } else {
         if (onUploadFinish) onUploadFinish();
@@ -346,6 +593,8 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
     };
 
     const handleFile = async (file: File) => {
+      setFallbackMode(false);
+      setRetryCount(0);
       await processVideoFile(file);
     };
 
@@ -370,22 +619,73 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
           disabled={isProcessing}
         />
         {status && (
-          <div style={{ marginTop: 8, color: status.includes("Error") || status.includes("Failed") ? 'red' : '#333' }}>
+          <div
+            style={{
+              marginTop: 8,
+              color:
+                status.includes("Error") || status.includes("Failed")
+                  ? "red"
+                  : "#333",
+            }}
+          >
             {status}
+            {retryCount > 0 && (
+              <div style={{ fontSize: 12, color: "accent" }}>
+                Retried {retryCount} {retryCount === 1 ? "time" : "times"}
+              </div>
+            )}
+            {fallbackMode && (
+              <div style={{ fontSize: 12, color: "accent" }}>
+                Fallback mode enabled: minimal processing for mobile
+                compatibility
+              </div>
+            )}
           </div>
         )}
         {status === "Compressing video..." && (
           <div style={{ marginTop: 8 }}>
-            <div style={{ height: 8, background: backgroundMuted, borderRadius: 4, overflow: 'hidden', width: 200 }}>
-              <div style={{ width: `${compressionProgress}%`, height: '100%', background: backgroundPrimary, transition: 'width 0.2s' }} />
+            <div
+              style={{
+                height: 8,
+                background: backgroundMuted,
+                borderRadius: 4,
+                overflow: "hidden",
+                width: 200,
+              }}
+            >
+              <div
+                style={{
+                  width: `${compressionProgress}%`,
+                  height: "100%",
+                  background: backgroundPrimary,
+                  transition: "width 0.2s",
+                }}
+              />
             </div>
-            <div style={{ fontSize: 12, marginTop: 2 }}>{compressionProgress}%</div>
+            <div style={{ fontSize: 12, marginTop: 2 }}>
+              {compressionProgress}%
+            </div>
           </div>
         )}
         {status === "Uploading video..." && (
           <div style={{ marginTop: 8 }}>
-            <div style={{ height: 8, background: backgroundMuted, borderRadius: 4, overflow: 'hidden', width: 200 }}>
-              <div style={{ width: `${uploadProgress}%`, height: '100%', background: backgroundAccent, transition: 'width 0.2s' }} />
+            <div
+              style={{
+                height: 8,
+                background: backgroundMuted,
+                borderRadius: 4,
+                overflow: "hidden",
+                width: 200,
+              }}
+            >
+              <div
+                style={{
+                  width: `${uploadProgress}%`,
+                  height: "100%",
+                  background: backgroundAccent,
+                  transition: "width 0.2s",
+                }}
+              />
             </div>
             <div style={{ fontSize: 12, marginTop: 2 }}>{uploadProgress}%</div>
           </div>
