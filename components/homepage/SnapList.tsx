@@ -30,6 +30,7 @@ import { countDownvotes } from "@/lib/utils/postUtils";
 import { useAioha } from "@aioha/react-ui";
 import { useAccount } from "wagmi";
 import SidebarLogo from "../graphics/SidebarLogo";
+import { SkaterData } from "@/types/leaderboard";
 
 interface SnapListProps {
   author: string;
@@ -73,6 +74,26 @@ export default function SnapList({
 
   // Modal state for coin creator
   const { isOpen, onOpen, onClose } = useDisclosure();
+
+  const [errorLeaderboard, setErrorLeaderboard] = useState<string | null>(null);
+  const [leaderboardData, setLeaderboardData] = useState<SkaterData[]>([]);
+
+  const fetchLeaderboardData = async () => {
+    setErrorLeaderboard(null);
+    try {
+      const res = await fetch('https://api.skatehive.app/api/skatehive', {
+        next: { revalidate: 300 },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setLeaderboardData(Array.isArray(data) ? data : []);
+      } else {
+        setErrorLeaderboard(`Failed to fetch leaderboard data: ${res.status}`);
+      }
+    } catch (error) {
+      setErrorLeaderboard('Error fetching leaderboard data');
+    }
+  };
 
   // Modal state for airdrop
   const {
@@ -239,6 +260,7 @@ export default function SnapList({
                           borderColor: "primary.400",
                         }}
                         onClick={() => {
+                          fetchLeaderboardData();
                           onAirdropOpen();
                         }}
                       >
@@ -405,8 +427,9 @@ export default function SnapList({
           <AirdropModal
             isOpen={isAirdropOpen}
             onClose={onAirdropClose}
-            leaderboardData={[]}
-            initialSortOption="points"
+            leaderboardData={leaderboardData}
+            retryFetchLeaderboard={fetchLeaderboardData}
+            errorLeaderboard={errorLeaderboard}
           />
 
           <InfiniteScroll

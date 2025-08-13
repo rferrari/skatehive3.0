@@ -50,7 +50,7 @@ export default function ClaimRewards({
     if (hasRewards) {
       setHasClaimed(false); 
     }
-  }, [pendingRewards.hive, pendingRewards.hbd, pendingRewards.vests_hive]);
+  }, [pendingRewards.hive, pendingRewards.hbd, pendingRewards.vests_hive, hasRewards]);
 
   // Fetch potential rewards from Skatehive API
   useEffect(() => {

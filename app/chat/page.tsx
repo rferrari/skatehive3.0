@@ -127,7 +127,7 @@ export default function ChatPage() {
         }
       }
     };
-  }, []);
+  }, [isLoading]);
 
   // Set mounted ref to false on unmount
   useEffect(() => {

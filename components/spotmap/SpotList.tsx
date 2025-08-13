@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import {
   Box,
-  VStack,
   Text,
   Spinner,
   Button,
@@ -21,38 +20,36 @@ interface SpotListProps {
   isLoading?: boolean;
   hasMore?: boolean;
   onLoadMore?: () => void;
+  error?: string | null;
 }
 
-export default function SpotList({ 
-  newSpot, 
-  spots = [], 
-  isLoading = false, 
-  hasMore = false, 
-  onLoadMore 
+export default function SpotList({
+  newSpot,
+  spots = [],
+  isLoading = false,
+  hasMore = false,
+  onLoadMore,
+  error,
 }: SpotListProps) {
-  const [displayedSpots, setDisplayedSpots] = useState<Discussion[]>([]);
+  const [displayedSpots, setDisplayedSpots] = useState<Discussion[]>(spots);
   const [conversation, setConversation] = useState<Discussion | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Debug: Track displayedSpots changes (client-side only)
+  // Debug: Track props and state changes
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
+      console.log("SpotList props:", { isLoading, spotsLength: spots.length, newSpot, displayedSpotsLength: displayedSpots.length, error });
     }
-  }, [displayedSpots]);
+  }, [isLoading, spots, newSpot, displayedSpots, error]);
 
   // Update displayed spots when spots or newSpot changes
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-    }
-    
     let baseSpots = [...spots];
     if (newSpot) {
       // Prepend new spot if not already in the list
       const exists = baseSpots.some((c) => c.permlink === newSpot.permlink);
       if (!exists) {
         baseSpots = [newSpot, ...baseSpots];
-        if (typeof window !== 'undefined') {
-        }
       }
     }
     // Sort by created date, newest first, handling invalid dates
@@ -61,8 +58,6 @@ export default function SpotList({
       const dateB = b.created === "just now" ? new Date() : new Date(b.created);
       return dateB.getTime() - dateA.getTime();
     });
-    if (typeof window !== 'undefined') {
-    }
     setDisplayedSpots(baseSpots);
   }, [spots, newSpot]);
 
@@ -70,7 +65,7 @@ export default function SpotList({
     if (typeof window !== 'undefined') {
       console.log(`handleLoadMore called: hasMore=${hasMore}, onLoadMore=${!!onLoadMore}, isLoading=${isLoading}`);
     }
-    
+
     if (onLoadMore && hasMore && !isLoading) {
       // If we have a loadMore function and there's more data to fetch, use it
       if (typeof window !== 'undefined') {
@@ -124,11 +119,13 @@ export default function SpotList({
     setConversation(null);
   };
 
-  if (isLoading && displayedSpots.length === 0) {
+  // Initial load: show LoadingComponent
+  if (isLoading && spots.length === 0 && displayedSpots.length === 0) {
     return <LoadingComponent />;
   }
 
-  if (displayedSpots.length === 0) {
+  // No spots available
+  if (!isLoading && spots.length === 0 && !newSpot) {
     return (
       <Box textAlign="center" my={8}>
         <Text>No spots have been submitted yet.</Text>
@@ -136,30 +133,48 @@ export default function SpotList({
     );
   }
 
+  // Error state
+  if (error) {
+    return (
+      <Box textAlign="center" my={8}>
+        <Text color="red.600" fontWeight="bold">
+          Error loading spots:
+        </Text>
+        <Text color="red.500">{error}</Text>
+      </Box>
+    );
+  }
+
   return (
     <>
       <Box my={8}>
-        <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
+        <SimpleGrid
+          columns={{ base: 1, md: 2, lg: 3 }}
+          spacing={6}
+          alignItems="stretch"
+        >
           {displayedSpots.map((spot) => (
-            <Snap
-              key={spot.permlink}
-              discussion={spot}
-              onOpen={() => handleOpenConversation(spot)}
-              setReply={() => {}}
-              setConversation={handleOpenConversation}
-            />
+            <Box key={spot.permlink} height="100%">
+              <Snap
+                key={spot.permlink}
+                discussion={spot}
+                onOpen={() => handleOpenConversation(spot)}
+                setReply={() => {}}
+                setConversation={handleOpenConversation}
+              />
+            </Box>
           ))}
         </SimpleGrid>
-        
-        {/* Show loading spinner when fetching more data */}
+
+        {/* Load more spinner */}
         {isLoading && displayedSpots.length > 0 && (
           <Box display="flex" justifyContent="center" py={4}>
             <Spinner color="primary" />
           </Box>
         )}
-        
-        {/* Show Load More button only when there's more data to fetch */}
-        {hasMore && onLoadMore && !isLoading && (
+
+        {/* Load More button */}
+        {hasMore && onLoadMore && !isLoading && displayedSpots.length > 0 && (
           <Box display="flex" justifyContent="center" py={4}>
             <Button
               onClick={handleLoadMore}
@@ -171,6 +186,7 @@ export default function SpotList({
           </Box>
         )}
       </Box>
+
       <Modal isOpen={isModalOpen} onClose={handleCloseModal} size="2xl">
         <ModalOverlay />
         <ModalContent bg="background" color="text">
@@ -178,12 +194,12 @@ export default function SpotList({
             <Conversation
               discussion={conversation}
               setConversation={() => setIsModalOpen(false)}
-              onOpen={() => {}}
-              setReply={() => {}}
+              onOpen={() => { }}
+              setReply={() => { }}
             />
           )}
         </ModalContent>
       </Modal>
     </>
   );
-} 
+}

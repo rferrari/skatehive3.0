@@ -48,7 +48,7 @@ export default function SpotSnapComposer({
   const [address, setAddress] = useState("");
   const [isDragOver, setIsDragOver] = useState(false);
 
-  const buttonText = "Post Spot";
+  const buttonText = "Add Spot";
 
   const handleCompressedImageUpload = async (
     url: string | null,
@@ -388,24 +388,26 @@ export default function SpotSnapComposer({
               Upload <Box as="span" color="red.500">*</Box>
             </Box>
           </Button>
-          <Button
+        </HStack>
+        <Button
             bg="primary"
             color="background"
             size="lg"
-            flex="1"
+            // flex="1"
             _hover={{ bg: "accent", color: "text" }}
             onClick={handleComment}
             isDisabled={isLoading}
           >
             {isLoading ? <Spinner size="sm" /> : buttonText}
           </Button>
-        </HStack>
+
         <ImageCompressor
           ref={imageCompressorRef}
           onUpload={handleCompressedImageUpload}
           isProcessing={isLoading}
           hideStatus={true}
         />
+
         <Wrap spacing={4}>
           {compressedImages.map((imgObj, index) => (
             <Box key={index} position="relative" mb={4}>

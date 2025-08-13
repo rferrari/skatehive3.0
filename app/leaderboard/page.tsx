@@ -13,7 +13,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://skatehive.app";
 const API_ENDPOINT = "https://api.skatehive.app/api/skatehive";
 
 // Unified data fetching with optimized caching strategy
-async function fetchLeaderboardData(
+export async function fetchLeaderboardData(
   revalidateSeconds: number = 60
 ): Promise<SkaterData[]> {
   try {

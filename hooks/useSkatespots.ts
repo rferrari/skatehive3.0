@@ -38,7 +38,7 @@ export const useSkatespots = () => {
     setError(null);
     
     try {
-      const response = await fetch(`/api/skatespots?page=${page}&limit=10`);
+      const response = await fetch(`/api/skatespots?page=${page}&limit=12`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
