@@ -1,4 +1,5 @@
 "use client";
+
 import { Box, Spinner } from "@chakra-ui/react";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Discussion } from "@hiveio/dhive";
@@ -10,7 +11,7 @@ export default function RightSideBar() {
   const [query, setQuery] = useState("created");
   const [allPosts, setAllPosts] = useState<Discussion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const sidebarRef = useRef<HTMLDivElement>(null); // Reference for the sidebar
+  const sidebarRef = useRef<HTMLDivElement>(null);
   const isFetching = useRef(false);
 
   const tag = process.env.NEXT_PUBLIC_HIVE_SEARCH_TAG;
@@ -25,9 +26,9 @@ export default function RightSideBar() {
   ]);
 
   const fetchPosts = useCallback(async () => {
-    if (isFetching.current) return; // Prevent multiple fetches
+    if (isFetching.current) return;
     isFetching.current = true;
-    setIsLoading(true); // Set loading state
+    setIsLoading(true);
     try {
       const posts = await findPosts(query, params.current);
       setAllPosts((prevPosts) => [...prevPosts, ...posts]);
@@ -43,7 +44,7 @@ export default function RightSideBar() {
       // Error fetching leaderboard data
     } finally {
       isFetching.current = false;
-      setIsLoading(false); // Reset loading state
+      setIsLoading(false);
     }
   }, [query, tag]);
 
@@ -51,7 +52,6 @@ export default function RightSideBar() {
     fetchPosts();
   }, [fetchPosts]);
 
-  // Scroll event handler
   const handleScroll = useCallback(() => {
     const sidebar = sidebarRef.current;
     if (sidebar) {
@@ -74,13 +74,15 @@ export default function RightSideBar() {
   return (
     <Box
       as="aside"
-      w={{ base: "100%", md: "400px" }}
-      h="100vh"
+      w={{ base: "100%", md: "300px", lg: "350px" }} // Match HomePageClient.tsx
+      // maxW={{ md: "30%", lg: "35%" }} // Match HomePageClient.tsx
+      maxH="calc(100vh - 0px)" // Match HomePageClient.tsx
       overflowY="auto"
-      pr={4}
-      pt={2}
-      position={"sticky"}
-      top={0}
+      overflowX="hidden"
+      p={{ md: 2 }} // 8px padding on md and above
+      pt={0} // Remove top padding
+      mt={0} // Remove top margin
+      boxSizing="border-box"
       ref={sidebarRef}
       id="scrollableDiv"
       sx={{
@@ -90,13 +92,22 @@ export default function RightSideBar() {
         scrollbarWidth: "none",
       }}
     >
-      <CommunityTotalPayout />
-      <PostInfiniteScroll
-        allPosts={allPosts}
-        fetchPosts={fetchPosts}
-        viewMode="grid"
-        context="rightsidebar"
-      />
+      <Box w="100%">
+        <CommunityTotalPayout />
+      </Box>
+      <Box w="100%">
+        <PostInfiniteScroll
+          allPosts={allPosts}
+          fetchPosts={fetchPosts}
+          viewMode="grid"
+          context="rightsidebar"
+        />
+      </Box>
+      {isLoading && (
+        <Box display="flex" justifyContent="center" py={4}>
+          <Spinner />
+        </Box>
+      )}
     </Box>
   );
 }
