@@ -29,6 +29,7 @@ import React from "react";
 import useIsMobile from "@/hooks/useIsMobile";
 import { Name } from "@coinbase/onchainkit/identity";
 import { SkaterData } from "@/types/leaderboard";
+import { fetchLeaderboardData } from "./page";
 
 interface Props {
   skatersData: SkaterData[];
@@ -58,6 +59,26 @@ export default function LeaderboardClient({ skatersData }: Props) {
   } = useDisclosure();
   const toast = useToast();
   const isMobile = useIsMobile();
+  
+  const [errorLeaderboard, setErrorLeaderboard] = useState<string | null>(null);
+  const [leaderboardData, setLeaderboardData] = useState<SkaterData[]>([]);
+
+  const fetchLeaderboardData = async () => {
+    setErrorLeaderboard(null);
+    try {
+      const res = await fetch('https://api.skatehive.app/api/skatehive', {
+        next: { revalidate: 300 },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setLeaderboardData(Array.isArray(data) ? data : []);
+      } else {
+        setErrorLeaderboard(`Failed to fetch leaderboard data: ${res.status}`);
+      }
+    } catch (error) {
+      setErrorLeaderboard('Error fetching leaderboard data');
+    }
+  };
 
   // Add debugging for render count
   const renderCount = React.useRef(0);
@@ -579,7 +600,9 @@ export default function LeaderboardClient({ skatersData }: Props) {
       <AirdropModal
         isOpen={isAirdropOpen}
         onClose={onAirdropClose}
-        leaderboardData={skatersData}
+        leaderboardData={skatersData || leaderboardData}
+        retryFetchLeaderboard={fetchLeaderboardData}        
+        errorLeaderboard={errorLeaderboard}
       />
     </VStack>
   );

@@ -11,7 +11,9 @@ import {
   Modal,
   ModalOverlay,
   ModalContent,
+  ModalHeader,
   ModalBody,
+  ModalCloseButton,
   VStack,
   Box,
 } from "@chakra-ui/react";
@@ -150,15 +152,17 @@ export default function SearchOverlay({
         clearTimeout(debounceRef.current);
       }
     };
-  }, [query, fetchSkaters]);
+  }, [query, fetchSkaters, pathname]);
 
-  const filteredSkaters = skaters.filter((skater) =>
-    skater.hive_author.toLowerCase().includes(query.toLowerCase())
-  );
+  const filteredSkaters = useMemo(() => {
+    return skaters.filter((skater) =>
+      skater.hive_author.toLowerCase().includes(query.toLowerCase())
+    );
+  }, [skaters, query]);
 
   // Also search commands when not using "/" prefix
-  const filteredCommands =
-    !query.startsWith("/") && query.trim()
+  const filteredCommands = useMemo(() => {
+    return !query.startsWith("/") && query.trim()
       ? COMMAND_PAGES.filter(
           (page) =>
             page.path !== pathname &&
@@ -166,12 +170,11 @@ export default function SearchOverlay({
               page.description.toLowerCase().includes(query.toLowerCase()))
         )
       : [];
+  }, [query, pathname]);
 
-  const allResults = [
-    ...filteredPages,
-    ...filteredSkaters,
-    ...filteredCommands,
-  ];
+  const allResults = useMemo(() => {
+    return [...filteredPages, ...filteredSkaters, ...filteredCommands];
+  }, [filteredPages, filteredSkaters, filteredCommands]);
 
   const initialSuggestions = useMemo(() => {
     return query ? allResults : [...popularPages, ...topSkaters];
@@ -315,6 +318,14 @@ export default function SearchOverlay({
         m={4}
         position="relative"
       >
+        <ModalHeader p={4} pb={0}>
+          <ModalCloseButton
+            color="red"
+            _hover={{ color: "background", bg: "primary" }}
+            borderRadius="full"
+            isDisabled={isLoading || isLoadingTopSkaters}
+          />
+        </ModalHeader>
         <ModalBody p={0}>
           <VStack spacing={0} align="stretch">
             {/* Search Input */}

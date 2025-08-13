@@ -51,7 +51,8 @@ interface AirdropModalProps {
   isOpen: boolean;
   onClose: () => void;
   leaderboardData: SkaterData[];
-  initialSortOption?: SortOption;
+  errorLeaderboard: string | null;
+  retryFetchLeaderboard: () => void;
 }
 
 const erc20Service = new ERC20AirdropService();
@@ -60,18 +61,17 @@ export function AirdropModal({
   isOpen,
   onClose,
   leaderboardData,
-  initialSortOption = "points",
+  errorLeaderboard,
+  retryFetchLeaderboard,
 }: AirdropModalProps) {
   // Modal view state
   const [currentView, setCurrentView] = useState<ModalView>("tokenSelection");
   const [currentStep, setCurrentStep] = useState(1);
 
   // Airdrop configuration
-  const [sortOption, setSortOption] = useState<SortOption>(initialSortOption);
+  const [sortOption, setSortOption] = useState<SortOption>("points");
   const [limit, setLimit] = useState(10);
-  // Set default token and amount based on wallet connection
   const isMobile = useIsMobile();
-  // Wallet connections
   const { user, aioha } = useAioha();
   const { address: ethereumAddress, isConnected: isEthereumConnected } =
     useAccount();
@@ -121,13 +121,11 @@ export function AirdropModal({
   // Auto-close modal when transaction is completed
   useEffect(() => {
     if (status.state === "completed") {
-      // Add a small delay to show the completion message before closing
       const timer = setTimeout(() => {
         onClose();
       }, 2000);
       return () => clearTimeout(timer);
     } else if (status.state === "failed") {
-      // Close modal on failure with a longer delay so users can read the error
       const timer = setTimeout(() => {
         onClose();
       }, 5000);
@@ -138,23 +136,15 @@ export function AirdropModal({
   // Computed values
   const getAvailableTokens = () => {
     const allTokens = Object.entries(tokenDictionary);
-
-    // If both wallets connected, show all tokens
     if (isHiveConnected && isEthereumConnected) {
       return allTokens;
     }
-
-    // If only Hive connected, show only Hive tokens
     if (isHiveConnected && !isEthereumConnected) {
       return allTokens.filter(([_, info]) => info.network === "hive");
     }
-
-    // If only Ethereum connected, show only Base/Ethereum tokens
     if (!isHiveConnected && isEthereumConnected) {
       return allTokens.filter(([_, info]) => info.network === "base");
     }
-
-    // If no wallets connected, show all tokens (they'll see connection warnings later)
     return allTokens;
   };
 
@@ -181,7 +171,7 @@ export function AirdropModal({
         setSelectedToken(updates.selectedToken);
       if (updates.totalAmount !== undefined)
         setTotalAmount(updates.totalAmount);
-      setCostEstimate(null); // Reset cost estimate when config changes
+      setCostEstimate(null);
     },
     []
   );
@@ -198,9 +188,7 @@ export function AirdropModal({
     setIsEstimating(true);
     try {
       const tokenInfo = tokenDictionary[selectedToken];
-
       if (tokenInfo?.network === "hive") {
-        // For Hive tokens, cost estimation is simpler
         const perUser = parseFloat(totalAmount) / airdropUsers.length;
         setCostEstimate({
           totalAmount: totalAmount,
@@ -210,7 +198,6 @@ export function AirdropModal({
           network: "hive",
         });
       } else {
-        // For ERC-20 tokens, use the service
         const estimate = await erc20Service.estimateAirdropCost(
           selectedToken,
           airdropUsers,
@@ -219,6 +206,7 @@ export function AirdropModal({
         setCostEstimate({ ...estimate, network: "base" });
       }
     } catch (error) {
+      console.error("Error estimating cost:", error);
     } finally {
       setIsEstimating(false);
     }
@@ -232,9 +220,7 @@ export function AirdropModal({
 
     try {
       const tokenInfo = tokenDictionary[selectedToken];
-
       if (tokenInfo?.network === "hive") {
-        // Execute Hive airdrop
         await executeHiveAirdrop({
           token: selectedToken,
           recipients: airdropUsers,
@@ -242,13 +228,12 @@ export function AirdropModal({
           customMessage:
             customMessage ||
             `SkateHive Community Airdrop - ${selectedToken} 🛹`,
-          user: user, // Pass username string directly
+          user: user,
           updateStatus,
-          aiohaUser: user, // Pass the username for broadcasting
-          aiohaInstance: aioha, // Also pass the aioha instance for fallback
+          aiohaUser: user,
+          aiohaInstance: aioha,
         });
       } else {
-        // Execute ERC-20 airdrop
         await erc20Service.executeAirdrop(
           selectedToken,
           airdropUsers,
@@ -257,7 +242,6 @@ export function AirdropModal({
         );
       }
 
-      // After successful airdrop, post the announcement directly
       try {
         const announcementContent = generateAnnouncementContent(
           {
@@ -283,7 +267,7 @@ export function AirdropModal({
           totalAmount: parseFloat(totalAmount),
           sortOption,
           customMessage,
-          screenshotDataUrl: uploadedImageUrl, // Use uploaded image URL instead of raw screenshot
+          screenshotDataUrl: uploadedImageUrl,
           isWeighted: isWeightedAirdrop,
           includeSkateHive,
           creator: {
@@ -311,6 +295,7 @@ export function AirdropModal({
         });
       }
     } catch (error) {
+      console.error("Error executing airdrop:", error);
     } finally {
       setIsExecuting(false);
     }
@@ -325,6 +310,7 @@ export function AirdropModal({
     try {
       await erc20Service.approveToken(selectedToken, totalAmount, updateStatus);
     } catch (error) {
+      console.error("Error approving token:", error);
     } finally {
       setIsApproving(false);
     }
@@ -335,49 +321,39 @@ export function AirdropModal({
     setCurrentStep(step);
     setCurrentView(view);
 
-    // Smart state resets when going back
     if (step < currentStep) {
       if (step === 1) {
-        // Reset everything when going back to token selection
         setNetworkScreenshot("");
         setUploadedImageUrl("");
         setCostEstimate(null);
         resetStatus();
       } else if (step === 2) {
-        // Reset preview-related states when going back to configuration
         setNetworkScreenshot("");
         setUploadedImageUrl("");
         setCostEstimate(null);
       } else if (step === 3) {
-        // Reset announcement and execution states when going back to preview
         setUploadedImageUrl("");
         resetStatus();
       } else if (step === 4) {
-        // Reset execution states when going back to announcement preview
         resetStatus();
       }
     }
   };
 
-  // Handle moving from preview to announcement preview with screenshot capture
   const handlePreviewToAnnouncementPreview = async () => {
-    // Always capture screenshot when moving to announcement preview
     setIsCapturingScreenshot(true);
-
     try {
       const screenshot = await captureAirdropNetworkScreenshot();
       setNetworkScreenshot(screenshot);
       goToStep(4, "announcementPreview");
     } catch (error) {
       console.error("Screenshot capture failed:", error);
-      // Continue to announcement preview even if screenshot fails
       goToStep(4, "announcementPreview");
     } finally {
       setIsCapturingScreenshot(false);
     }
   };
 
-  // Handle moving from announcement preview to confirmation
   const handleAnnouncementPreviewToConfirmation = () => {
     goToStep(5, "confirmation");
   };
@@ -480,26 +456,46 @@ export function AirdropModal({
         return {
           title,
           content: (
-            <ConfigurationStep
-              sortOption={sortOption}
-              limit={limit}
-              selectedToken={selectedToken}
-              totalAmount={totalAmount}
-              customMessage={customMessage}
-              includeSkateHive={includeSkateHive}
-              isWeightedAirdrop={isWeightedAirdrop}
-              isAnonymous={isAnonymous}
-              userCount={userCount}
-              airdropUsers={airdropUsers}
-              onSortOptionChange={setSortOption}
-              onLimitChange={setLimit}
-              onCustomMessageChange={setCustomMessage}
-              onIncludeSkateHiveChange={setIncludeSkateHive}
-              onWeightedAirdropChange={setIsWeightedAirdrop}
-              onAnonymousChange={setIsAnonymous}
-              onBack={() => goToStep(1, "tokenSelection")}
-              onNext={() => goToStep(3, "preview")}
-            />
+            <>
+              {leaderboardData.length === 0 && errorLeaderboard ? (
+                <Box textAlign="center" py={4}>
+                  <Text color="red.500" mb={4}>
+                    {errorLeaderboard}
+                  </Text>
+                  <Button
+                    colorScheme="blue"
+                    onClick={retryFetchLeaderboard}
+                    bg="primary"
+                    color="background"
+                    _hover={{ bg: "primaryDark" }}
+                    size={isMobile ? "sm" : "md"}
+                  >
+                    Retry
+                  </Button>
+                </Box>
+              ) : (
+                <ConfigurationStep
+                  sortOption={sortOption}
+                  limit={limit}
+                  selectedToken={selectedToken}
+                  totalAmount={totalAmount}
+                  customMessage={customMessage}
+                  includeSkateHive={includeSkateHive}
+                  isWeightedAirdrop={isWeightedAirdrop}
+                  isAnonymous={isAnonymous}
+                  userCount={userCount}
+                  airdropUsers={airdropUsers}
+                  onSortOptionChange={setSortOption}
+                  onLimitChange={setLimit}
+                  onCustomMessageChange={setCustomMessage}
+                  onIncludeSkateHiveChange={setIncludeSkateHive}
+                  onWeightedAirdropChange={setIsWeightedAirdrop}
+                  onAnonymousChange={setIsAnonymous}
+                  onBack={() => goToStep(1, "tokenSelection")}
+                  onNext={() => goToStep(3, "preview")}
+                />
+              )}
+            </>
           ),
           footer: (
             <HStack spacing={3} width="100%">
@@ -523,7 +519,7 @@ export function AirdropModal({
                 _hover={{ bg: "primaryDark" }}
                 size={isMobile ? "sm" : "md"}
                 flex="2"
-                disabled={airdropUsers.length === 0}
+                disabled={airdropUsers.length === 0 || (leaderboardData.length === 0 && !!errorLeaderboard)}
               >
                 Next: Preview Recipients
               </Button>
@@ -535,18 +531,16 @@ export function AirdropModal({
         return {
           title,
           content: (
-            <>
-              <PreviewStep
-                selectedToken={selectedToken}
-                totalAmount={totalAmount}
-                sortOption={sortOption}
-                airdropUsers={airdropUsers}
-                onBack={() => goToStep(2, "configuration")}
-                onNext={handlePreviewToAnnouncementPreview}
-                isCapturingScreenshot={isCapturingScreenshot}
-                networkScreenshot={networkScreenshot}
-              />
-            </>
+            <PreviewStep
+              selectedToken={selectedToken}
+              totalAmount={totalAmount}
+              sortOption={sortOption}
+              airdropUsers={airdropUsers}
+              onBack={() => goToStep(2, "configuration")}
+              onNext={handlePreviewToAnnouncementPreview}
+              isCapturingScreenshot={isCapturingScreenshot}
+              networkScreenshot={networkScreenshot}
+            />
           ),
           footer: (
             <HStack spacing={3} width="100%">
@@ -670,7 +664,6 @@ export function AirdropModal({
               >
                 Back
               </Button>
-
               <Button
                 variant="outline"
                 onClick={() => goToStep(1, "tokenSelection")}
@@ -683,7 +676,6 @@ export function AirdropModal({
               >
                 Start Over
               </Button>
-
               <Button
                 colorScheme="green"
                 onClick={handleExecuteAirdrop}
@@ -711,73 +703,67 @@ export function AirdropModal({
   const modalContent = getModalContent();
 
   return (
-    <>
-      <Modal
-        isOpen={isOpen}
-        onClose={handleClose}
-        size={isMobile ? "full" : "xl"}
-        scrollBehavior={isMobile ? "outside" : "inside"}
-        motionPreset="slideInBottom"
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      size={isMobile ? "full" : "xl"}
+      scrollBehavior={isMobile ? "outside" : "inside"}
+      motionPreset="slideInBottom"
+    >
+      <ModalOverlay bg="blackAlpha.600" />
+      <ModalContent
+        bg="background"
+        color="text"
+        borderRadius={isMobile ? "0" : "10px"}
+        border="1px solid"
+        borderColor="border"
+        shadow="lg"
+        mx={isMobile ? 0 : 4}
+        maxH={isMobile ? "95vh" : "90vh"}
+        h={isMobile ? "95vh" : "auto"}
+        display="flex"
+        flexDirection="column"
       >
-        <ModalOverlay bg="blackAlpha.600" />
-        <ModalContent
-          bg="background"
-          color="text"
-          borderRadius={isMobile ? "0" : "10px"}
-          border="1px solid"
-          borderColor="border"
-          shadow="lg"
-          mx={isMobile ? 0 : 4}
-          maxH={isMobile ? "95vh" : "90vh"}
-          h={isMobile ? "95vh" : "auto"}
+        <ModalHeader
+          textAlign="center"
+          fontSize="2xl"
+          fontWeight="bold"
+          color="primary"
+          pb={2}
+          flexShrink={0}
+        >
+          {modalContent.title}
+        </ModalHeader>
+        <ModalCloseButton
+          color="red"
+          _hover={{ color: "background", bg: "primary" }}
+          borderRadius="full"
+          isDisabled={isExecuting || isApproving || isCapturingScreenshot}
+        />
+        <ModalBody
+          px={isMobile ? 4 : 8}
+          pb={isMobile ? 2 : 8}
+          flex="1"
+          overflowY="auto"
           display="flex"
           flexDirection="column"
+          minH={0}
         >
-          <ModalHeader
-            textAlign="center"
-            fontSize="2xl"
-            fontWeight="bold"
-            color="primary"
-            pb={2}
-            flexShrink={0}
-          >
-            {modalContent.title}
-          </ModalHeader>
-          {/* Only show close button on first step to prevent accidental modal closure */}
-          {currentView === "tokenSelection" && (
-            <ModalCloseButton
-              color="red"
-              _hover={{ color: "background", bg: "primary" }}
-              borderRadius="full"
-            />
-          )}
-
-          <ModalBody
-            px={isMobile ? 4 : 8}
-            pb={isMobile ? 2 : 8}
-            flex="1"
-            overflowY="auto"
-            display="flex"
-            flexDirection="column"
-            minH={0}
-          >
-            {modalContent.content}
-          </ModalBody>
-
-          <ModalFooter
-            flexShrink={0}
-            px={isMobile ? 4 : 6}
-            py={isMobile ? 6 : 6}
-            pb={isMobile ? "calc(1.5rem + env(safe-area-inset-bottom))" : 6}
-            borderTop={isMobile ? "1px solid" : "none"}
-            borderTopColor={isMobile ? "border" : "transparent"}
-            bg={isMobile ? "rgba(0, 0, 0, 0.02)" : "transparent"}
-          >
-            {modalContent.footer}
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-    </>
+          {modalContent.content}
+        </ModalBody>
+        <ModalFooter
+          flexShrink={0}
+          px={isMobile ? 4 : 6}
+          py={isMobile ? 6 : 6}
+          pb={isMobile ? "calc(1.5rem + env(safe-area-inset-bottom))" : 6}
+          borderTop={isMobile ? "1px solid" : "none"}
+          borderTopColor={isMobile ? "border" : "transparent"}
+          bg={isMobile ? "rgba(0, 0, 0, 0.02)" : "transparent"}
+        >
+          {modalContent.footer}
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
   );
 }
 
