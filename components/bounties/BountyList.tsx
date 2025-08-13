@@ -99,7 +99,7 @@ export default function BountyList({
         // Use case-insensitive comparison to handle potential case differences
         const isNotAuthor = bounty.author.toLowerCase() !== user.toLowerCase();
         const hasVoted = bounty.active_votes?.some((vote) => vote.voter.toLowerCase() === user.toLowerCase());
-        
+
         return isNotAuthor && hasVoted;
       });
     }
@@ -184,7 +184,7 @@ export default function BountyList({
   };
   const indexToFilter = (idx: number) =>
     ["active", "claimed", "my-claimed", "my-bounties", "all", "completed"][
-      idx
+    idx
     ] as typeof filter;
 
   useEffect(() => {
@@ -262,7 +262,7 @@ export default function BountyList({
             replies.forEach((reply: any) => {
               if (reply.author) usernames.add(reply.author);
             });
-          } catch {}
+          } catch { }
         })
       );
       if (!cancelled) {
@@ -300,380 +300,391 @@ export default function BountyList({
       </Box>
     );
   }
-return (
-  <>
-    {/* Stats Board */}
-    <Box
-      mb={{ base: 2, md: 6 }}
-      p={{ base: 0, md: 0 }}
-      borderRadius={{ base: "none", md: "lg" }}
-      bg="muted"
-      boxShadow={{ base: "none", md: "md" }}
-      maxW="1000px"
-      mx="auto"
-      overflow="hidden"
-    >
-      <Flex
-        direction={{ base: "row", md: "row" }}
-        align="center"
-        justify="center"
-        height={{ base: "40px", md: "80px" }}
+
+  return (
+    <>
+      {/* Stats Board */}
+      <Box
+        mb={{ base: 2, md: 6 }}
+        p={{ base: 0, md: 0 }}
+        borderRadius={{ base: "none", md: "lg" }}
         bg="muted"
-        gap={{ base: 0, md: 0 }}
+        boxShadow={{ base: "none", md: "md" }}
+        maxW="1000px"
+        mx="auto"
+        overflow="hidden"
       >
-        {/* Active Bounties */}
-        <Box
-          flex="1"
-          textAlign="center"
-          py={{ base: 0, md: 3 }}
-          px={{ base: 0, md: 0 }}
+        <Flex
+          direction={{ base: "row", md: "row" }}
+          align="center"
+          justify="center"
+          height={{ base: "40px", md: "80px" }}
+          bg="muted"
+          gap={{ base: 0, md: 0 }}
         >
-          <Text
-            fontWeight="bold"
-            fontSize={{ base: "md", md: "2xl" }}
-            color="primary.400"
-            lineHeight={1}
+          {/* Active Bounties */}
+          <Box
+            flex="1"
+            textAlign="center"
+            py={{ base: 0, md: 3 }}
+            px={{ base: 0, md: 0 }}
           >
-            {activeBounties.length}
-          </Text>
-          <Text
-            fontSize={{ base: "xs", md: "md" }}
-            color="text"
-            lineHeight={1}
+            <Text
+              fontWeight="bold"
+              fontSize={{ base: "md", md: "2xl" }}
+              color="primary.400"
+              lineHeight={1}
+            >
+              {activeBounties.length}
+            </Text>
+            <Text
+              fontSize={{ base: "xs", md: "md" }}
+              color="text"
+              lineHeight={1}
+            >
+              {activeBounties.length === 1 ? "active bounty" : "active bounties"}
+            </Text>
+          </Box>
+          {/* Divider for md+ only */}
+          <Divider
+            orientation="vertical"
+            height="60px"
+            display={{ base: "none", md: "block" }}
+          />
+          {/* Rewards Up for Grabs */}
+          <Box
+            flex="1"
+            textAlign="center"
+            py={{ base: 0, md: 3 }}
+            px={{ base: 0, md: 0 }}
           >
-            {activeBounties.length === 1 ? "active bounty" : "active bounties"}
-          </Text>
-        </Box>
-        {/* Divider for md+ only */}
-        <Divider
-          orientation="vertical"
-          height="60px"
-          display={{ base: "none", md: "block" }}
-        />
-        {/* Rewards Up for Grabs */}
-        <Box
-          flex="1"
-          textAlign="center"
-          py={{ base: 0, md: 3 }}
-          px={{ base: 0, md: 0 }}
-        >
-          <Text
-            fontWeight="bold"
-            fontSize={{ base: "md", md: "2xl" }}
-            color="primary.400"
-            lineHeight={1}
-          >
-            {isPriceLoading || totalActiveRewardsUSD === null
-              ? "Calculating..."
-              : `~$${totalActiveRewardsUSD.toLocaleString(undefined, {
+            <Text
+              fontWeight="bold"
+              fontSize={{ base: "md", md: "2xl" }}
+              color="primary.400"
+              lineHeight={1}
+            >
+              {isPriceLoading || totalActiveRewardsUSD === null
+                ? "Calculating..."
+                : `~$${totalActiveRewardsUSD.toLocaleString(undefined, {
                   maximumFractionDigits: 2,
                 })} USD`}
-          </Text>
-          <Text
-            fontSize={{ base: "xs", md: "md" }}
-            color="text"
-            lineHeight={1}
+            </Text>
+            <Text
+              fontSize={{ base: "xs", md: "md" }}
+              color="text"
+              lineHeight={1}
+            >
+              active rewards
+            </Text>
+          </Box>
+          {/* Divider for md+ only */}
+          <Divider
+            orientation="vertical"
+            height="60px"
+            display={{ base: "none", md: "block" }}
+          />
+          {/* Active Bounty Hunters */}
+          <Box
+            flex="1"
+            textAlign="center"
+            py={{ base: 0, md: 3 }}
+            px={{ base: 0, md: 0 }}
           >
-            active rewards
-          </Text>
-        </Box>
-        {/* Divider for md+ only */}
-        <Divider
-          orientation="vertical"
-          height="60px"
-          display={{ base: "none", md: "block" }}
-        />
-        {/* Active Bounty Hunters */}
-        <Box
+            <Text
+              fontWeight="bold"
+              fontSize={{ base: "md", md: "2xl" }}
+              color="primary.400"
+              lineHeight={1}
+            >
+              {isLoadingGrinders
+                ? "..."
+                : activeBounties.length === 0
+                  ? "0"
+                  : bountyGrinders.length}
+            </Text>
+            <Text
+              fontSize={{ base: "xs", md: "md" }}
+              color="text"
+              lineHeight={1}
+            >
+              {bountyGrinders.length === 1 ? "active hunter" : "active hunters"}
+            </Text>
+          </Box>
+        </Flex>
+      </Box>
+
+      {/* Tabs and Sort */}
+      <Flex
+        align="center"
+        mb={{ base: 0, md: 4 }}
+        gap={{ base: 0, md: 4 }}
+        direction={{ base: "column", md: "row" }}
+        justifyContent={{ base: "center", md: "flex-start" }}
+        alignItems={{ base: "center", md: "stretch" }}
+      >
+        <Tabs
+          variant="soft-rounded"
+          colorScheme="primary"
+          index={filterToIndex(filter)}
+          onChange={(idx) => setFilter(indexToFilter(idx))}
           flex="1"
-          textAlign="center"
-          py={{ base: 0, md: 3 }}
-          px={{ base: 0, md: 0 }}
+          width={{ base: "100%", md: "auto" }}
+          display="flex"
+          justifyContent={{ base: "center", md: "flex-start" }}
         >
-          <Text
+          <TabList
+            sx={{
+              overflowX: { base: "auto", md: "visible" },
+              whiteSpace: { base: "nowrap", md: "normal" },
+              borderBottom: { base: "1px solid", md: "none" },
+              borderColor: { base: "gray.700", md: "none" },
+              boxShadow: { base: "0 2px 4px rgba(0,0,0,0.04)", md: "none" },
+              pb: { base: 2, md: 0 },
+              mb: { base: 0, md: 0 },
+              justifyContent: { base: "center", md: "flex-start" },
+            }}
+          >
+            <Tab
+              borderWidth="2px"
+              borderColor="transparent"
+              minW={0}
+              fontSize={{ base: "lg", md: "sm" }}
+              px={{ base: 1, md: 2 }}
+              py={{ base: 1, md: 1 }}
+              m={{ base: 0, md: 1 }}
+              _selected={{
+                color: "primary",
+                bg: "primary.900",
+                borderColor: "primary",
+                borderWidth: "2px",
+              }}
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+            >
+              <FaBolt style={{ marginRight: 0, marginBottom: 0 }} />
+              <Box display={{ base: "none", md: "inline" }} ml={1}>
+                Active
+              </Box>
+            </Tab>
+            <Tab
+              borderWidth="2px"
+              borderColor="transparent"
+              minW={0}
+              fontSize={{ base: "lg", md: "sm" }}
+              px={{ base: 1, md: 2 }}
+              py={{ base: 1, md: 1 }}
+              m={{ base: 0, md: 1 }}
+              _selected={{
+                color: "primary",
+                bg: "primary.900",
+                borderColor: "primary",
+                borderWidth: "2px",
+              }}
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+            >
+              <FaCheckCircle />
+              <Box display={{ base: "none", md: "inline" }} ml={1}>
+                Claimed
+              </Box>
+            </Tab>
+            <Tab
+              borderWidth="2px"
+              borderColor="transparent"
+              minW={0}
+              fontSize={{ base: "lg", md: "sm" }}
+              px={{ base: 1, md: 2 }}
+              py={{ base: 1, md: 1 }}
+              m={{ base: 0, md: 1 }}
+              _selected={{
+                color: "primary",
+                bg: "primary.900",
+                borderColor: "primary",
+                borderWidth: "2px",
+              }}
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+            >
+              <FaUserCheck />
+              <Box display={{ base: "none", md: "inline" }} ml={1}>
+                My Claimed
+              </Box>
+            </Tab>
+            <Tab
+              borderWidth="2px"
+              borderColor="transparent"
+              minW={0}
+              fontSize={{ base: "lg", md: "sm" }}
+              px={{ base: 1, md: 2 }}
+              py={{ base: 1, md: 1 }}
+              m={{ base: 0, md: 1 }}
+              _selected={{
+                color: "primary",
+                bg: "primary.900",
+                borderColor: "primary",
+                borderWidth: "2px",
+              }}
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+            >
+              <FaUserEdit />
+              <Box display={{ base: "none", md: "inline" }} ml={1}>
+                My Bounties
+              </Box>
+            </Tab>
+            <Tab
+              borderWidth="2px"
+              borderColor="transparent"
+              minW={0}
+              fontSize={{ base: "lg", md: "sm" }}
+              px={{ base: 1, md: 2 }}
+              py={{ base: 1, md: 1 }}
+              m={{ base: 0, md: 1 }}
+              _selected={{
+                color: "primary",
+                bg: "primary.900",
+                borderColor: "primary",
+                borderWidth: "2px",
+              }}
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+            >
+              <FaList />
+              <Box display={{ base: "none", md: "inline" }} ml={1}>
+                All
+              </Box>
+            </Tab>
+            <Tab
+              borderWidth="2px"
+              borderColor="transparent"
+              minW={0}
+              fontSize={{ base: "lg", md: "sm" }}
+              px={{ base: 1, md: 2 }}
+              py={{ base: 1, md: 1 }}
+              m={{ base: 0, md: 1 }}
+              _selected={{
+                color: "primary",
+                bg: "primary.900",
+                borderColor: "primary",
+                borderWidth: "2px",
+              }}
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+            >
+              <FaFlagCheckered />
+              <Box display={{ base: "none", md: "inline" }} ml={1}>
+                Completed
+              </Box>
+            </Tab>
+          </TabList>
+        </Tabs>
+        <Box
+          textAlign="center"
+          width={{ base: "100%", md: "auto" }}
+          mt={{ base: 0, md: 0 }}
+          mb={{ base: 0, md: 0 }}
+          gap={0}
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+        >
+          <Select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as any)}
+            variant="outline"
+            display="inline-block"
+            width={{ base: "90%", md: "180px" }}
+            fontFamily="heading"
             fontWeight="bold"
-            fontSize={{ base: "md", md: "2xl" }}
-            color="primary.400"
-            lineHeight={1}
+            fontSize={{ base: "lg", md: "sm" }}
+            color="primary.900"
+            bg={{ base: "background", md: "muted" }}
+            borderColor={{ base: "primary.400", md: "gray.300" }}
+            borderWidth="2px"
+            borderRadius="lg"
+            boxShadow={{ base: "0 2px 8px rgba(0,0,0,0.10)", md: "none" }}
+            py={{ base: 0, md: 2 }}
+            px={3}
+            pr={8}
+            mb={{ base: 0, md: 0 }}
+            mt={{ base: 0, md: 0 }}
+            sx={{
+              "& > option": { color: "initial" },
+            }}
           >
-            {isLoadingGrinders
-              ? "..."
-              : activeBounties.length === 0
-              ? "0"
-              : bountyGrinders.length}
-          </Text>
-          <Text
-            fontSize={{ base: "xs", md: "md" }}
-            color="text"
-            lineHeight={1}
-          >
-            {bountyGrinders.length === 1 ? "active hunter" : "active hunters"}
-          </Text>
+            <option value="default">New</option>
+            <option value="rewards">Rewards</option>
+            <option value="hot">Popular</option>
+            <option value="ending">Time</option>
+          </Select>
         </Box>
       </Flex>
-    </Box>
 
-    {/* Tabs and Sort */}
-    <Flex
-      align="center"
-      mb={{ base: 0, md: 4 }}
-      gap={{ base: 0, md: 4 }}
-      direction={{ base: "column", md: "row" }}
-      justifyContent={{ base: "center", md: "flex-start" }}
-      alignItems={{ base: "center", md: "stretch" }}
-    >
-      <Tabs
-        variant="soft-rounded"
-        colorScheme="primary"
-        index={filterToIndex(filter)}
-        onChange={(idx) => setFilter(indexToFilter(idx))}
-        flex="1"
-        width={{ base: "100%", md: "auto" }}
-        display="flex"
-        justifyContent={{ base: "center", md: "flex-start" }}
-      >
-        <TabList
-          sx={{
-            overflowX: { base: "auto", md: "visible" },
-            whiteSpace: { base: "nowrap", md: "normal" },
-            borderBottom: { base: "1px solid", md: "none" },
-            borderColor: { base: "gray.700", md: "none" },
-            boxShadow: { base: "0 2px 4px rgba(0,0,0,0.04)", md: "none" },
-            pb: { base: 2, md: 0 },
-            mb: { base: 0, md: 0 },
-            justifyContent: { base: "center", md: "flex-start" },
-          }}
-        >
-          <Tab
-            borderWidth="2px"
-            borderColor="transparent"
-            minW={0}
-            fontSize={{ base: "lg", md: "sm" }}
-            px={{ base: 1, md: 2 }}
-            py={{ base: 1, md: 1 }}
-            m={{ base: 0, md: 1 }}
-            _selected={{
-              color: "primary",
-              bg: "primary.900",
-              borderColor: "primary",
-              borderWidth: "2px",
-            }}
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-          >
-            <FaBolt style={{ marginRight: 0, marginBottom: 0 }} />
-            <Box display={{ base: "none", md: "inline" }} ml={1}>
-              Active
+      {/* Conditional Rendering for Bounties or Error Messages */}
+      {filteredBounties.length === 0 ? (
+        <Box textAlign="center" my={8}>
+          {filter === "active" && (
+            <Text>No active bounties are available at the moment.</Text>
+          )}
+          {filter === "claimed" && (
+            <Text>No bounties have been claimed yet.</Text>
+          )}
+          {filter === "my-claimed" && user && (
+            <Text>
+              You have not claimed any bounties yet. Go upvote a bounty to claim it!
+            </Text>
+          )}
+          {filter === "my-bounties" && user && (
+            <Text>
+              You have not created any bounties yet. Create your first bounty to get started!
+            </Text>
+          )}
+          {filter === "all" && (
+            <Text>No bounties have been submitted yet.</Text>
+          )}
+          {filter === "completed" && (
+            <Text>No bounties have been completed yet.</Text>
+          )}
+        </Box>
+      ) : (
+        <>
+          <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing={6} my={8}>
+            {sortedBounties.slice(0, visibleCount).map((bounty) => (
+              <BountySnap
+                key={bounty.permlink}
+                discussion={bounty}
+                onOpen={() => {
+                  const url = `/post/${bounty.author}/${bounty.permlink}`;
+                  window.location.href = url;
+                }}
+                setReply={() => { }}
+                setConversation={() => { }}
+                showAuthor={true}
+                disableFooter={true}
+              />
+            ))}
+          </SimpleGrid>
+          {visibleCount < sortedBounties.length && (
+            <Box display="flex" justifyContent="center" my={4}>
+              <Button
+                onClick={handleLoadMore}
+                colorScheme="primary"
+                variant="outline"
+              >
+                Load More
+              </Button>
             </Box>
-          </Tab>
-          <Tab
-            borderWidth="2px"
-            borderColor="transparent"
-            minW={0}
-            fontSize={{ base: "lg", md: "sm" }}
-            px={{ base: 1, md: 2 }}
-            py={{ base: 1, md: 1 }}
-            m={{ base: 0, md: 1 }}
-            _selected={{
-              color: "primary",
-              bg: "primary.900",
-              borderColor: "primary",
-              borderWidth: "2px",
-            }}
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-          >
-            <FaCheckCircle />
-            <Box display={{ base: "none", md: "inline" }} ml={1}>
-              Claimed
-            </Box>
-          </Tab>
-          <Tab
-            borderWidth="2px"
-            borderColor="transparent"
-            minW={0}
-            fontSize={{ base: "lg", md: "sm" }}
-            px={{ base: 1, md: 2 }}
-            py={{ base: 1, md: 1 }}
-            m={{ base: 0, md: 1 }}
-            _selected={{
-              color: "primary",
-              bg: "primary.900",
-              borderColor: "primary",
-              borderWidth: "2px",
-            }}
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-          >
-            <FaUserCheck />
-            <Box display={{ base: "none", md: "inline" }} ml={1}>
-              My Claimed
-            </Box>
-          </Tab>
-          <Tab
-            borderWidth="2px"
-            borderColor="transparent"
-            minW={0}
-            fontSize={{ base: "lg", md: "sm" }}
-            px={{ base: 1, md: 2 }}
-            py={{ base: 1, md: 1 }}
-            m={{ base: 0, md: 1 }}
-            _selected={{
-              color: "primary",
-              bg: "primary.900",
-              borderColor: "primary",
-              borderWidth: "2px",
-            }}
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-          >
-            <FaUserEdit />
-            <Box display={{ base: "none", md: "inline" }} ml={1}>
-              My Bounties
-            </Box>
-          </Tab>
-          <Tab
-            borderWidth="2px"
-            borderColor="transparent"
-            minW={0}
-            fontSize={{ base: "lg", md: "sm" }}
-            px={{ base: 1, md: 2 }}
-            py={{ base: 1, md: 1 }}
-            m={{ base: 0, md: 1 }}
-            _selected={{
-              color: "primary",
-              bg: "primary.900",
-              borderColor: "primary",
-              borderWidth: "2px",
-            }}
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-          >
-            <FaList />
-            <Box display={{ base: "none", md: "inline" }} ml={1}>
-              All
-            </Box>
-          </Tab>
-          <Tab
-            borderWidth="2px"
-            borderColor="transparent"
-            minW={0}
-            fontSize={{ base: "lg", md: "sm" }}
-            px={{ base: 1, md: 2 }}
-            py={{ base: 1, md: 1 }}
-            m={{ base: 0, md: 1 }}
-            _selected={{
-              color: "primary",
-              bg: "primary.900",
-              borderColor: "primary",
-              borderWidth: "2px",
-            }}
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-          >
-            <FaFlagCheckered />
-            <Box display={{ base: "none", md: "inline" }} ml={1}>
-              Completed
-            </Box>
-          </Tab>
-        </TabList>
-      </Tabs>
-      <Box
-        textAlign="center"
-        width={{ base: "100%", md: "auto" }}
-        mt={{ base: 0, md: 0 }}
-        mb={{ base: 0, md: 0 }}
-        gap={0}
-        display="flex"
-        flexDirection="column"
-        alignItems="center"
-      >
-        <Select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as any)}
-          variant="outline"
-          display="inline-block"
-          width={{ base: "90%", md: "180px" }}
-          fontFamily="heading"
-          fontWeight="bold"
-          fontSize={{ base: "lg", md: "sm" }}
-          color="primary.900"
-          bg={{ base: "background", md: "muted" }}
-          borderColor={{ base: "primary.400", md: "gray.300" }}
-          borderWidth="2px"
-          borderRadius="lg"
-          boxShadow={{ base: "0 2px 8px rgba(0,0,0,0.10)", md: "none" }}
-          py={{ base: 0, md: 2 }}
-          px={3}
-          pr={8}
-          mb={{ base: 0, md: 0 }}
-          mt={{ base: 0, md: 0 }}
-          sx={{
-            "& > option": { color: "initial" },
-          }}
-        >
-          <option value="default">New</option>
-          <option value="rewards">Rewards</option>
-          <option value="hot">Popular</option>
-          <option value="ending">Time</option>
-        </Select>
-      </Box>
-    </Flex>
+          )}
+        </>
+      )}
+    </>
+  );
 
-    {/* Conditional Rendering for Bounties or Error Messages */}
-    {displayedBounties.length === 0 && filter !== "claimed" ? (
-      <Box textAlign="center" my={8}>
-        <Text>No bounties have been submitted yet.</Text>
-      </Box>
-    ) : filter === "my-claimed" && user && filteredBounties.length === 0 ? (
-      <Box textAlign="center" my={8}>
-        <Text>
-          You have not claimed any bounties yet. Go upvote a bounty to claim it!
-        </Text>
-      </Box>
-    ) : filter === "my-bounties" && user && filteredBounties.length === 0 ? (
-      <Box textAlign="center" my={8}>
-        <Text>
-          You have not created any bounties yet. Create your first bounty to get started!
-        </Text>
-      </Box>
-    ) : (
-      <>
-        <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing={6} my={8}>
-          {sortedBounties.slice(0, visibleCount).map((bounty) => (
-            <BountySnap
-              key={bounty.permlink}
-              discussion={bounty}
-              onOpen={() => {
-                const url = `/post/${bounty.author}/${bounty.permlink}`;
-                window.location.href = url;
-              }}
-              setReply={() => {}}
-              setConversation={() => {}}
-              showAuthor={true}
-              disableFooter={true}
-            />
-          ))}
-        </SimpleGrid>
-        {visibleCount < sortedBounties.length && (
-          <Box display="flex" justifyContent="center" my={4}>
-            <Button
-              onClick={handleLoadMore}
-              colorScheme="primary"
-              variant="outline"
-            >
-              Load More
-            </Button>
-          </Box>
-        )}
-      </>
-    )}
-  </>
-);
 } 
