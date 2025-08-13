@@ -375,22 +375,67 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
 
     const uploadWithProgress = (formData: FormData): Promise<any> => {
       return new Promise((resolve, reject) => {
+        console.log("📱 Starting upload - Device info:", {
+          userAgent: navigator.userAgent,
+          platform: navigator.platform,
+          mobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
+          formDataKeys: Array.from(formData.keys()),
+          file: formData.get("file"),
+          fileSize: formData.get("file") ? (formData.get("file") as File).size : "no file",
+          fileName: formData.get("file") ? (formData.get("file") as File).name : "no file"
+        });
+
         const xhr = new XMLHttpRequest();
-        xhr.open("POST", "/api/pinata");
-        xhr.upload.onprogress = (event) => {
+        
+        xhr.upload.addEventListener("loadstart", () => {
+          console.log("📱 Upload started");
+        });
+        
+        xhr.upload.addEventListener("progress", (event) => {
           if (event.lengthComputable) {
-            setUploadProgress(Math.round((event.loaded / event.total) * 100));
+            const progress = Math.round((event.loaded / event.total) * 100);
+            console.log(`📱 Upload progress: ${progress}% (${event.loaded}/${event.total} bytes)`);
+            setUploadProgress(progress);
           }
-        };
-        xhr.onload = () => {
+        });
+
+        xhr.addEventListener("load", () => {
+          console.log("📱 Upload completed - Status:", xhr.status, "Response length:", xhr.responseText?.length);
           if (xhr.status >= 200 && xhr.status < 300) {
+            console.log("📱 Upload successful, response:", xhr.responseText.substring(0, 200));
             resolve(xhr.responseText);
           } else {
-            reject(xhr.responseText);
+            console.error("📱 Upload failed with status:", xhr.status, "Response:", xhr.responseText);
+            reject(new Error(`Upload failed: ${xhr.status} - ${xhr.responseText}`));
           }
-        };
-        xhr.onerror = () => reject(xhr.statusText);
-        xhr.send(formData);
+        });
+
+        xhr.addEventListener("error", (event) => {
+          console.error("📱 Upload error event:", event, "XHR state:", xhr.readyState, "Status:", xhr.status);
+          reject(new Error(`Network error: ${xhr.statusText || "Unknown error"}`));
+        });
+
+        xhr.addEventListener("timeout", () => {
+          console.error("📱 Upload timeout");
+          reject(new Error("Upload timeout"));
+        });
+
+        xhr.addEventListener("abort", () => {
+          console.error("📱 Upload aborted");
+          reject(new Error("Upload aborted"));
+        });
+
+        // Set timeout for mobile networks
+        xhr.timeout = 120000; // 2 minutes
+
+        try {
+          xhr.open("POST", "/api/pinata");
+          console.log("📱 XHR opened, sending FormData...");
+          xhr.send(formData);
+        } catch (error) {
+          console.error("📱 Error sending XHR:", error);
+          reject(error);
+        }
       });
     };
 
@@ -558,15 +603,48 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         try {
           setStatus("Uploading video...");
           setUploadProgress(0);
+          
+          const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+          
+          console.log("📱 Preparing upload - Mobile check:", {
+            isMobile,
+            fileSize: processedFile.size,
+            fileSizeMB: Math.round(processedFile.size / 1024 / 1024 * 100) / 100,
+            fileName: processedFile.name,
+            fileType: processedFile.type,
+            attempt: attempt,
+            fallback: fallback
+          });
+
+          // Mobile-specific file size warning
+          if (isMobile && processedFile.size > 50 * 1024 * 1024) { // 50MB
+            console.warn("📱 Large file on mobile:", processedFile.size, "bytes");
+            setStatus("Large file detected on mobile, this may take longer...");
+          }
+
           const formData = new FormData();
           formData.append("file", processedFile);
           if (username) formData.append("creator", username);
           if (thumbnailUrl) formData.append("thumbnailUrl", thumbnailUrl);
+          
+          console.log("📱 FormData prepared:", {
+            hasFile: formData.has("file"),
+            hasCreator: formData.has("creator"),
+            hasThumbnail: formData.has("thumbnailUrl"),
+            creator: username,
+            thumbnailUrl: thumbnailUrl,
+            isMobile
+          });
+
           const responseText = await uploadWithProgress(formData);
+          
+          console.log("📱 Upload response received, parsing...");
           let result;
           try {
             result = JSON.parse(responseText);
-          } catch {
+            console.log("📱 Upload result parsed:", result);
+          } catch (parseError) {
+            console.error("📱 Failed to parse upload response:", parseError, "Response:", responseText);
             errorStep = "upload";
             setStatus("Failed to parse upload response.");
             onUpload(null);
@@ -574,6 +652,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
             return;
           }
           if (!result || !result.IpfsHash) {
+            console.error("📱 Invalid upload result:", result);
             errorStep = "upload";
             setStatus("Failed to upload video.");
             onUpload(null);
@@ -581,17 +660,21 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
             return;
           }
           const videoUrl = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`;
+          console.log("📱 Upload successful! Video URL:", videoUrl);
           setStatus("Upload complete!");
           setUploadProgress(100);
           onUpload(videoUrl);
           if (onUploadFinish) onUploadFinish();
         } catch (err) {
+          console.error("📱 Upload error caught:", err, "Type:", typeof err, "Attempt:", attempt);
           errorStep = "upload";
           setStatus("Upload failed, retrying...");
           if (attempt < 3) {
+            console.log("📱 Retrying upload, attempt:", attempt + 1);
             await processVideoFile(file, attempt + 1, "upload");
             return;
           } else {
+            console.error("📱 Upload failed after all retries");
             setStatus("Upload failed after retries.");
             onUpload(null);
             if (onUploadFinish) onUploadFinish();
