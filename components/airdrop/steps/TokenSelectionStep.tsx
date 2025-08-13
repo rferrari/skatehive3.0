@@ -229,7 +229,7 @@ export function TokenSelectionStep({
               Quick amounts:
             </Text>
             <HStack spacing={2} flexWrap="wrap">
-              {["100", "500", "1000", "5000"].map((amount) => (
+              {["5", "10", "20", "50"].map((amount) => (
                 <Button
                   key={amount}
                   size="sm"
