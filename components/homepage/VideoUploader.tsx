@@ -186,33 +186,33 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
       fallback: boolean
     ): Promise<string | null> => {
       setStatus("Generating thumbnail...");
-      
+
       // Always try Canvas method first for speed (especially for long videos)
       try {
         const video = document.createElement("video");
         video.preload = "metadata";
         video.muted = true; // Prevent autoplay issues
         video.crossOrigin = "anonymous";
-        
+
         // Create object URL and set up video
         const videoUrl = URL.createObjectURL(file);
         video.src = videoUrl;
-        
+
         // Wait for video metadata with timeout
         await Promise.race([
           new Promise((resolve, reject) => {
             video.onloadedmetadata = () => resolve(true);
             video.onerror = () => reject("Video load error");
           }),
-          new Promise((_, reject) => 
+          new Promise((_, reject) =>
             setTimeout(() => reject("Video metadata timeout"), 5000)
-          )
+          ),
         ]);
-        
+
         // Seek to a good thumbnail position (10% into video, max 5 seconds)
         const thumbnailTime = Math.min(Math.max(video.duration * 0.1, 1), 5);
         video.currentTime = thumbnailTime;
-        
+
         // Wait for seek to complete with timeout
         await Promise.race([
           new Promise((resolve) => {
@@ -220,23 +220,23 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
             // Fallback if onseeked doesn't fire
             setTimeout(() => resolve(true), 500);
           }),
-          new Promise((_, reject) => 
+          new Promise((_, reject) =>
             setTimeout(() => reject("Video seek timeout"), 3000)
-          )
+          ),
         ]);
-        
+
         // Create canvas and draw frame
         const canvas = document.createElement("canvas");
         canvas.width = 320;
         canvas.height = 240;
         const ctx = canvas.getContext("2d");
-        
+
         if (!ctx) throw new Error("Canvas context unavailable");
-        
+
         // Calculate aspect ratio and draw centered
         const videoAspect = video.videoWidth / video.videoHeight;
         const canvasAspect = canvas.width / canvas.height;
-        
+
         let drawWidth, drawHeight, drawX, drawY;
         if (videoAspect > canvasAspect) {
           drawWidth = canvas.width;
@@ -249,94 +249,107 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
           drawX = (canvas.width - drawWidth) / 2;
           drawY = 0;
         }
-        
+
         ctx.fillStyle = "#000";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(video, drawX, drawY, drawWidth, drawHeight);
-        
+
         // Clean up video URL
         URL.revokeObjectURL(videoUrl);
-        
+
         // Convert to blob with quality optimization
         const blob = await new Promise<Blob>((resolve) => {
-          canvas.toBlob((blob) => {
-            resolve(blob || new Blob());
-          }, "image/webp", 0.8);
+          canvas.toBlob(
+            (blob) => {
+              resolve(blob || new Blob());
+            },
+            "image/webp",
+            0.8
+          );
         });
-        
+
         if (blob.size === 0) throw new Error("Empty thumbnail blob");
-        
+
         // Upload thumbnail
         const thumbnailFormData = new FormData();
         thumbnailFormData.append("file", blob, "thumbnail.webp");
         if (username) thumbnailFormData.append("creator", username);
-        
+
         const thumbnailResponse = await fetch("/api/pinata", {
           method: "POST",
           body: thumbnailFormData,
         });
-        
-        if (!thumbnailResponse.ok) throw new Error("Failed to upload thumbnail");
-        
+
+        if (!thumbnailResponse.ok)
+          throw new Error("Failed to upload thumbnail");
+
         const thumbnailResult = await thumbnailResponse.json();
         return `https://ipfs.skatehive.app/ipfs/${thumbnailResult.IpfsHash}`;
-        
       } catch (error) {
         console.error("Fast thumbnail generation failed:", error);
-        
+
         // Only try FFmpeg as absolute last resort and only for short videos
-        if (!fallback && file.size < 50 * 1024 * 1024) { // Only for files < 50MB
+        if (!fallback && file.size < 50 * 1024 * 1024) {
+          // Only for files < 50MB
           try {
             setStatus("Generating thumbnail (fallback)...");
-            
+
             if (!ffmpegRef.current) {
               ffmpegRef.current = new FFmpeg();
               await ffmpegRef.current.load();
             }
             const ffmpeg = ffmpegRef.current;
-            
+
             await ffmpeg.writeFile("input_thumb.mp4", await fetchFile(file));
-            
+
             // Ultra-fast thumbnail generation
             await ffmpeg.exec([
-              "-i", "input_thumb.mp4",
-              "-ss", "2", // Seek to 2 seconds
-              "-frames:v", "1",
-              "-vf", "scale=320:240:force_original_aspect_ratio=decrease",
-              "-f", "webp",
-              "-preset", "ultrafast", // Fastest possible
+              "-i",
+              "input_thumb.mp4",
+              "-ss",
+              "2", // Seek to 2 seconds
+              "-frames:v",
+              "1",
+              "-vf",
+              "scale=320:240:force_original_aspect_ratio=decrease",
+              "-f",
+              "webp",
+              "-preset",
+              "ultrafast", // Fastest possible
               "thumbnail.webp",
             ]);
-            
+
             const thumbnailData = await ffmpeg.readFile("thumbnail.webp");
-            const thumbnailBlob = new Blob([thumbnailData.buffer], { type: "image/webp" });
-            
+            const thumbnailBlob = new Blob([thumbnailData.buffer], {
+              type: "image/webp",
+            });
+
             const thumbnailFormData = new FormData();
             thumbnailFormData.append("file", thumbnailBlob, "thumbnail.webp");
             if (username) thumbnailFormData.append("creator", username);
-            
+
             const thumbnailResponse = await fetch("/api/pinata", {
               method: "POST",
               body: thumbnailFormData,
             });
-            
-            if (!thumbnailResponse.ok) throw new Error("Failed to upload thumbnail");
-            
+
+            if (!thumbnailResponse.ok)
+              throw new Error("Failed to upload thumbnail");
+
             const thumbnailResult = await thumbnailResponse.json();
-            
+
             // Cleanup
             try {
               await ffmpeg.deleteFile("input_thumb.mp4");
               await ffmpeg.deleteFile("thumbnail.webp");
             } catch {}
-            
+
             return `https://ipfs.skatehive.app/ipfs/${thumbnailResult.IpfsHash}`;
-            
           } catch (ffmpegError) {
             console.error("FFmpeg thumbnail also failed:", ffmpegError);
           }
         }
-        
+
         // If all else fails, continue without thumbnail
         setStatus("Thumbnail generation failed, continuing upload...");
         return null;
@@ -459,8 +472,10 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         if (!fallback && !skipCompression) {
           try {
             // Smart detection for iPhone .mov files - use fast conversion instead of compression
-            const isIPhoneMov = file.name.toLowerCase().endsWith('.mov') && file.type === 'video/quicktime';
-            
+            const isIPhoneMov =
+              file.name.toLowerCase().endsWith(".mov") &&
+              file.type === "video/quicktime";
+
             if (isIPhoneMov) {
               setStatus("Converting iPhone video to MP4...");
               const mp4Blob = await convertToMp4(file);
