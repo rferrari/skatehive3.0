@@ -1,23 +1,8 @@
 import { Metadata } from "next";
 import HomePageClient from "./HomePageClient";
+import {mainMetadata} from "./metadata"
 
-export const metadata: Metadata = {
-  title: "Skatehive - The Infinity Skateboard Magazine",
-  description:
-    "Discover the latest skateboarding content, tricks, spots, and community posts. Join the global skateboarding community on Skatehive.",
-  openGraph: {
-    title: "Skatehive - The Infinity Skateboard Magazine",
-    description:
-      "Discover the latest skateboarding content, tricks, spots, and community posts. Join the global skateboarding community on Skatehive.",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Skatehive - The Infinity Skateboard Magazine",
-    description:
-      "Discover the latest skateboarding content, tricks, spots, and community posts. Join the global skateboarding community on Skatehive.",
-  },
-};
+export const metadata = mainMetadata;
 
 export default function Home() {
   return <HomePageClient />;

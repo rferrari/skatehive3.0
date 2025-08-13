@@ -2,9 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Import markdown styles */
+
 @import '../styles/markdown.css';
-/* Import snap component styles */
+
 @import '../styles/snap.css';
 
 :root {
@@ -23,19 +23,16 @@
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))) rgb(var(--background-start-rgb));
-  /* Removed overflow-y: hidden !important; to allow scrolling on mobile */
-  /* Hide scrollbar for all browsers */
+  background: linear-gradient(to bottom, transparent, rgb(var(--background-end-rgb))) rgb(var(--background-start-rgb));
+  margin: 0;
+  width: 100%;
+  min-height: 100vh;
   scrollbar-width: none;
-  /* Firefox */
 }
 
 html::-webkit-scrollbar,
 body::-webkit-scrollbar {
   display: none;
-  /* Chrome, Safari, Opera */
 }
 
 @layer utilities {
@@ -45,22 +42,19 @@ body::-webkit-scrollbar {
 }
 
 @media (min-width: 768px) {
-
   html,
   body {
-    overflow: hidden !important;
-    height: 100vh;
+    overflow-x: hidden;
+    min-height: 100vh;
   }
 }
 
 .hide-scrollbar {
   scrollbar-width: none;
-  /* Firefox */
 }
 
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
-  /* Chrome, Safari, Opera */
 }
 
 body.show-splash #app-root {
@@ -69,12 +63,16 @@ body.show-splash #app-root {
 
 body.show-splash #splash-root {
   display: block !important;
+  width: 100vw;
+  height: 100vh;
+  background: black;
 }
 
 #splash-root {
   display: none;
 }
 
+/* Custom Fonts */
 @font-face {
   font-family: 'Joystix';
   src: url('/fonts/joystix.woff2') format('woff2'),
@@ -103,8 +101,6 @@ body.show-splash #splash-root {
 .dash-title {
   font-family: 'Dash', cursive, sans-serif;
 }
-
-
 
 @font-face {
   font-family: 'SpoghettiWestern';
@@ -142,13 +138,11 @@ body.show-splash #splash-root {
   font-family: 'Chicago', sans-serif;
 }
 
-/* --- Aioha Modal Customization --- */
+/* Aioha Modal Customization */
 #aioha-modal {
   background: #000 !important;
   color: #7fff00 !important;
-  /* border-radius: 18px !important; */
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25) !important;
-  /* space for image */
 }
 
 #aioha-modal::before {
@@ -213,22 +207,19 @@ body.show-splash #splash-root {
   padding-right: 48px !important;
 }
 
-/* --- Aioha Modal Inner Content Customization --- */
-/* Modal header and close button */
-#aioha-modal .flex.items-center.justify-between.p-4,
-#aioha-modal .flex.items-center.justify-between.p-4.md\:p-5.border-b.rounded-t {
+/* Aioha Modal Inner Content */
+#aioha-modal .aioha-modal-header-container {
   background: transparent !important;
   border-bottom: 1px solid #222 !important;
-  border-radius: 0 !important;
   padding: 32px 48px 16px 48px !important;
   position: relative;
 }
 
-#aioha-modal .flex.items-center.justify-between.p-4.md\:p-5.border-b.rounded-t::after {
+#aioha-modal .aioha-modal-header-container::after {
   display: none !important;
 }
 
-#aioha-modal h3.text-lg.font-semibold {
+#aioha-modal .aioha-modal-title {
   color: #7fff00 !important;
   font-family: 'VT323', monospace !important;
   font-size: 2rem !important;
@@ -237,8 +228,8 @@ body.show-splash #splash-root {
   gap: 18px;
 }
 
-#aioha-modal h3.text-lg.font-semibold::before {
-  content: "";
+#aioha-modal .aioha-modal-title::before {
+  content: '';
   display: inline-block;
   width: 60px;
   height: 60px;
@@ -247,37 +238,35 @@ body.show-splash #splash-root {
   vertical-align: middle;
 }
 
-#aioha-modal button.text-gray-400 {
+#aioha-modal .aioha-modal-close-button {
   color: #7fff00 !important;
   background: transparent !important;
   border-radius: 8px !important;
   transition: background 0.2s;
 }
 
-#aioha-modal button.text-gray-400:hover {
+#aioha-modal .aioha-modal-close-button:hover {
   background: #222 !important;
   color: #fff !important;
 }
 
-/* Modal body */
-#aioha-modal .p-4.md\:p-5 {
+#aioha-modal .aioha-modal-body {
   background: transparent !important;
   color: #b0ffb0 !important;
-  padding: 32px 48px 32px 48px !important;
+  padding: 32px 48px !important;
 }
 
-#aioha-modal p.text-sm.font-normal {
+#aioha-modal .aioha-modal-body-text {
   color: #b0ffb0 !important;
   font-size: 1.1rem !important;
 }
 
-/* Wallet provider list */
-#aioha-modal ul.mt-4.mb-2.space-y-3 {
+#aioha-modal .aioha-modal-wallet-list {
   margin-top: 32px !important;
   margin-bottom: 16px !important;
 }
 
-#aioha-modal a.flex.items-center.p-3 {
+#aioha-modal .aioha-modal-wallet-option {
   background: #111 !important;
   color: #7fff00 !important;
   border-radius: 10px !important;
@@ -288,15 +277,13 @@ body.show-splash #splash-root {
   box-shadow: none !important;
 }
 
-#aioha-modal a.flex.items-center.p-3:hover {
+#aioha-modal .aioha-modal-wallet-option:hover {
   background: #222 !important;
   color: #fff !important;
 }
 
-/* Better contrast for modal buttons */
-#aioha-modal button,
 #aioha-modal .aioha-modal-button,
-#aioha-modal a[role="button"] {
+#aioha-modal a[role='button'] {
   background: #333 !important;
   color: #7fff00 !important;
   border: 1px solid #555 !important;
@@ -306,23 +293,20 @@ body.show-splash #splash-root {
   transition: all 0.2s ease !important;
 }
 
-#aioha-modal button:hover,
 #aioha-modal .aioha-modal-button:hover,
-#aioha-modal a[role="button"]:hover {
+#aioha-modal a[role='button']:hover {
   background: #555 !important;
   color: #fff !important;
   border-color: #7fff00 !important;
 }
 
-/* Back button specifically */
-#aioha-modal button[type="button"] {
+#aioha-modal .aioha-modal-back-button {
   background: #444 !important;
   color: #b0ffb0 !important;
 }
 
-/* Close button styling */
 #aioha-modal .aioha-modal-close,
-#aioha-modal button.text-gray-400 {
+#aioha-modal .aioha-modal-close-button {
   background: transparent !important;
   color: #7fff00 !important;
   border: none !important;
@@ -331,21 +315,18 @@ body.show-splash #splash-root {
 }
 
 #aioha-modal .aioha-modal-close:hover,
-#aioha-modal button.text-gray-400:hover {
+#aioha-modal .aioha-modal-close-button:hover {
   background: rgba(127, 255, 0, 0.1) !important;
   color: #fff !important;
 }
 
-#aioha-modal span.inline-flex.items-center.justify-center.px-2.py-0\.5 {
+#aioha-modal .aioha-modal-badge {
   background: #222 !important;
   color: #7fff00 !important;
   border-radius: 4px !important;
 }
 
-/* --- Aioha Modal Centering Override --- */
-#aioha-modal,
-#aioha-modal[role="dialog"] {
-  /* position: fixed !important; */
+#aioha-modal {
   top: 50% !important;
   left: 50% !important;
   transform: translate(-50%, -50%) !important;
@@ -357,48 +338,32 @@ body.show-splash #splash-root {
   min-width: unset !important;
 }
 
-/* Force modal body background to black, override all Tailwind and inline styles */
-#aioha-modal .p-4.md\:p-5,
-#aioha-modal .aioha-modal-content,
-#aioha-modal .flex.flex-col.gap-6 #aioha-modal .flex.items-center.justify-between.p-4,
-#aioha-modal .flex.items-center.justify-between.p-4.md\:p-5.border-b.rounded-t {
+#aioha-modal .aioha-modal-body,
+#aioha-modal .aioha-modal-content {
   background: #000 !important;
   color: #b0ffb0 !important;
-  border: #7fff00 2px solid !important;
-
+  border: 2px solid #7fff00 !important;
 }
 
-/* Remove global border-radius and pointer-event-breaking rules for modal and children */
-/* Remove this block to restore modal interactivity */
-#aioha-modal {
-  border-radius: 0 !important;
-}
-
+#aioha-modal,
 #aioha-modal .aioha-modal-content,
-#aioha-modal .p-4.md\:p-5 {
+#aioha-modal .aioha-modal-body {
   border-radius: 0 !important;
 }
 
-/* Hide scrollbars for table containers - more targeted approach */
+/* Table Scrollbars */
 .chakra-table__container {
   scrollbar-width: none;
-  /* Firefox */
   -ms-overflow-style: none;
-  /* IE/Edge */
 }
 
 .chakra-table__container::-webkit-scrollbar {
   display: none;
-  /* Chrome, Safari, Opera */
   width: 0;
   height: 0;
 }
 
-.css-8qd2dv::-webkit-scrollbar {
-  display: none !important;
-}
-
-/* Target the specific container classes visible in DevTools */
+/* Specific Container Classes */
 .css-k38ti2,
 .css-1wx2rq3,
 .css-15y92lb,
