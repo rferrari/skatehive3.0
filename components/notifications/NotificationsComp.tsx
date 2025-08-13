@@ -88,10 +88,11 @@ export default function NotificationsComp({ username }: NotificationCompProps) {
 
   return (
     <Box
-      p={0}
       w="full"
       maxH={"100vh"}
       overflowY="auto"
+      m={4}
+      px={4}
       sx={{
         "&::-webkit-scrollbar": { display: "none" },
         scrollbarWidth: "none",
