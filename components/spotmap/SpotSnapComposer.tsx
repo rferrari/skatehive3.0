@@ -361,6 +361,8 @@ export default function SpotSnapComposer({
             isDisabled={isLoading}
             onKeyDown={handleKeyDown}
             borderColor="muted"
+            minHeight={200}
+            resize="none"
             _focus={{ borderColor: "primary" }}
             _focusVisible={{ border: "tb1" }}
           />

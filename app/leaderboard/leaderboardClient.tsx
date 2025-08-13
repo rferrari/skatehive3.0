@@ -430,6 +430,7 @@ export default function LeaderboardClient({ skatersData }: Props) {
       bg="background"
       color="text"
       overflow="hidden"
+      px={4}
     >
       <RulesModal isOpen={isRulesOpen} onClose={() => setIsRulesOpen(false)} />
 
