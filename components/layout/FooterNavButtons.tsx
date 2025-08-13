@@ -73,7 +73,6 @@ export default function FooterNavButtons() {
   const { signIn, signOut, connect, reconnect, isSuccess, isError } = useSignIn(
     {
       onSuccess: ({ fid, username, bio, displayName, pfpUrl }) => {
-
         // Clear safety timeout and auth progress state first
         clearAuthTimeout();
         setIsFarcasterAuthInProgress(false);
@@ -107,8 +106,7 @@ export default function FooterNavButtons() {
           duration: 3000,
         });
       },
-      onStatusResponse: (res) => {
-      },
+      onStatusResponse: (res) => {},
     }
   );
   const {
@@ -684,7 +682,9 @@ export default function FooterNavButtons() {
       document.addEventListener("touchmove", handleTouchMove, {
         passive: false,
       });
-      document.addEventListener("touchend", handleTouchEnd);
+      document.addEventListener("touchend", handleTouchEnd, {
+        passive: false,
+      });
       return () => {
         document.removeEventListener("touchmove", handleTouchMove);
         document.removeEventListener("touchend", handleTouchEnd);

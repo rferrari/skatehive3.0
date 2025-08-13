@@ -97,14 +97,6 @@ export default function SnapComposer({
   const { hivePower } = useHivePower(user || "");
   const canBypassLimit = hivePower !== null && hivePower >= 100;
 
-  const handleVideoDurationError = (duration: number) => {
-    setVideoDurationError(
-      "Error. Short form video only here. Max 60 sec. Use Mag for longer video."
-    );
-    // Clear error after 7 seconds
-    setTimeout(() => setVideoDurationError(null), 7000);
-  };
-
   const buttonText = submitLabel || (post ? "Reply" : "Post");
 
   // Function to extract hashtags from text
@@ -138,16 +130,23 @@ export default function SnapComposer({
   // Handle video file selection (with duration check for SnapComposer)
   const handleVideoFile = async (file: File) => {
     try {
+      // Clear any previous pending video file to prevent memory leaks
+      if (pendingVideoFile) {
+        setPendingVideoFile(null);
+      }
+
       const duration = await getVideoDuration(file);
 
-      // For SnapComposer (homepage), enforce 15s limit unless user has >100 HP
-      if (!canBypassLimit && duration > 15) {
+      // Always open trim modal for video editing options
+      // Users with >100HP can choose to use original or trim
+      // Users with <100HP must trim if over 15s
+      if (duration > 15 || canBypassLimit) {
         setPendingVideoFile(file);
         setIsTrimModalOpen(true);
         return;
       }
 
-      // If user can bypass or video is under 15s, process normally
+      // Only for videos under 15s and users without bypass - upload directly
       if (videoUploaderRef.current) {
         startUpload();
         await videoUploaderRef.current.handleFile(file);
@@ -175,7 +174,8 @@ export default function SnapComposer({
   // Handle trim modal close
   const handleTrimModalClose = () => {
     setIsTrimModalOpen(false);
-    setPendingVideoFile(null);
+    // Don't immediately clear pendingVideoFile to prevent blob URL errors
+    // It will be cleared when upload completes or new file is selected
   };
 
   // Handler for compressed image upload
