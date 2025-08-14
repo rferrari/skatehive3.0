@@ -18,13 +18,15 @@ import { dynamicRainbowTheme } from "@/lib/themes/rainbowkitTheme";
 import { useState, useEffect } from "react";
 
 // Suppress RainbowKit errorCorrection prop warning in development
-if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
   const originalConsoleError = console.error;
   console.error = (...args: any[]) => {
     const errorMessage = args[0];
     if (
-      typeof errorMessage === 'string' && 
-      errorMessage.includes('React does not recognize the `errorCorrection` prop on a DOM element')
+      typeof errorMessage === "string" &&
+      errorMessage.includes(
+        "React does not recognize the `errorCorrection` prop on a DOM element"
+      )
     ) {
       return; // Suppress this specific RainbowKit warning
     }
@@ -68,22 +70,29 @@ const farcasterAuthConfig = {
 
 export function Providers({ children }: { children: React.ReactNode }) {
   // Create QueryClient inside the component to avoid SSR issues
-  const [queryClient] = useState(() => new QueryClient({
-    defaultOptions: {
-      queries: {
-        staleTime: 1000 * 60 * 5, // 5 minutes
-        gcTime: 1000 * 60 * 30, // 30 minutes (formerly cacheTime)
-        retry: (failureCount, error: any) => {
-          // Don't retry on 4xx errors except 429 (rate limit)
-          if (error?.status >= 400 && error?.status < 500 && error?.status !== 429) {
-            return false;
-          }
-          return failureCount < 3;
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            staleTime: 1000 * 60 * 5, // 5 minutes
+            gcTime: 1000 * 60 * 30, // 30 minutes (formerly cacheTime)
+            retry: (failureCount, error: any) => {
+              // Don't retry on 4xx errors except 429 (rate limit)
+              if (
+                error?.status >= 400 &&
+                error?.status < 500 &&
+                error?.status !== 429
+              ) {
+                return false;
+              }
+              return failureCount < 3;
+            },
+            refetchOnWindowFocus: false,
+          },
         },
-        refetchOnWindowFocus: false,
-      },
-    },
-  }));
+      })
+  );
 
   return (
     <UserProvider>
