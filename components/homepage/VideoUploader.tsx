@@ -195,6 +195,57 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
       return new Blob([data.buffer], { type: "video/mp4" });
     };
 
+    // Basic mobile-friendly compression when FFmpeg isn't available
+    const compressVideoFallback = async (file: File): Promise<Blob> => {
+      setStatus("Compressing video for mobile...");
+      return new Promise((resolve, reject) => {
+        const video = document.createElement("video");
+        video.src = URL.createObjectURL(file);
+        video.muted = true;
+        video.playsInline = true;
+
+        video.addEventListener("loadedmetadata", () => {
+          const maxWidth = 640;
+          const scale = Math.min(1, maxWidth / video.videoWidth);
+          const canvas = document.createElement("canvas");
+          canvas.width = video.videoWidth * scale;
+          canvas.height = video.videoHeight * scale;
+          const ctx = canvas.getContext("2d");
+          const canvasStream = canvas.captureStream();
+          const srcStream = video.captureStream();
+          srcStream.getAudioTracks().forEach((t) => canvasStream.addTrack(t));
+          const recorder = new MediaRecorder(canvasStream, {
+            mimeType: "video/webm",
+            videoBitsPerSecond: 800_000,
+          });
+          const chunks: Blob[] = [];
+          recorder.ondataavailable = (e) => {
+            if (e.data.size > 0) chunks.push(e.data);
+          };
+          recorder.onstop = () => {
+            resolve(new Blob(chunks, { type: "video/webm" }));
+            URL.revokeObjectURL(video.src);
+          };
+          recorder.start();
+          const draw = () => {
+            ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
+            if (!video.paused && !video.ended) {
+              requestAnimationFrame(draw);
+            } else {
+              recorder.stop();
+            }
+          };
+          video.play();
+          draw();
+        });
+
+        video.onerror = () => {
+          URL.revokeObjectURL(video.src);
+          reject(new Error("Failed to load video"));
+        };
+      });
+    };
+
     // Fast HTML5 Canvas thumbnail generation (prioritized over FFmpeg)
     const generateThumbnail = async (
       file: File,
@@ -696,6 +747,16 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
                 "Conversion failed after retries. Uploading original file."
               );
             }
+          }
+        } else if (fallback) {
+          try {
+            const mobileBlob = await compressVideoFallback(file);
+            processedFile = new File([mobileBlob], "mobile-compressed.webm", {
+              type: "video/webm",
+            });
+          } catch {
+            // If compression fails, proceed with original file
+            setStatus("Mobile compression failed, uploading original file...");
           }
         }
 
