@@ -411,17 +411,30 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         });
 
         xhr.addEventListener("error", (event) => {
-          console.error("📱 Upload error event:", event, "XHR state:", xhr.readyState, "Status:", xhr.status);
-          reject(new Error(`Network error: ${xhr.statusText || "Unknown error"}`));
+          const errorInfo = {
+            readyState: xhr.readyState,
+            status: xhr.status,
+            statusText: xhr.statusText,
+            responseText: xhr.responseText,
+            isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+          };
+          console.error("📱 Upload error event:", event, "Error info:", errorInfo);
+          
+          // Show detailed error in UI for mobile debugging
+          const errorMessage = `Network error: ${xhr.statusText || "Unknown error"} (Status: ${xhr.status}, State: ${xhr.readyState})`;
+          setStatus(`Mobile upload failed: ${errorMessage}`);
+          reject(new Error(errorMessage));
         });
 
         xhr.addEventListener("timeout", () => {
           console.error("📱 Upload timeout");
+          setStatus("Mobile upload failed: Connection timeout (2 minutes)");
           reject(new Error("Upload timeout"));
         });
 
         xhr.addEventListener("abort", () => {
           console.error("📱 Upload aborted");
+          setStatus("Mobile upload failed: Connection aborted");
           reject(new Error("Upload aborted"));
         });
 
@@ -430,6 +443,14 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
 
         try {
           xhr.open("POST", "/api/pinata");
+          
+          // Add mobile-specific headers that might help
+          if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            console.log("📱 Setting mobile-specific headers");
+            // These headers sometimes help with mobile uploads
+            xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+          }
+          
           console.log("📱 XHR opened, sending FormData...");
           xhr.send(formData);
         } catch (error) {
@@ -666,16 +687,27 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
           onUpload(videoUrl);
           if (onUploadFinish) onUploadFinish();
         } catch (err) {
-          console.error("📱 Upload error caught:", err, "Type:", typeof err, "Attempt:", attempt);
+          const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+          const errorDetails = {
+            message: err instanceof Error ? err.message : String(err),
+            type: typeof err,
+            attempt: attempt,
+            isMobile,
+            errorStep: "upload"
+          };
+          
+          console.error("📱 Upload error caught:", errorDetails);
+          
           errorStep = "upload";
-          setStatus("Upload failed, retrying...");
+          
           if (attempt < 3) {
+            setStatus(`Mobile upload failed (attempt ${attempt}/3): ${errorDetails.message}. Retrying...`);
             console.log("📱 Retrying upload, attempt:", attempt + 1);
             await processVideoFile(file, attempt + 1, "upload");
             return;
           } else {
             console.error("📱 Upload failed after all retries");
-            setStatus("Upload failed after retries.");
+            setStatus(`Mobile upload failed after 3 attempts: ${errorDetails.message}`);
             onUpload(null);
             if (onUploadFinish) onUploadFinish();
             return;
