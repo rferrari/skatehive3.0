@@ -4,28 +4,6 @@ import { DatabaseTokenStore } from '@/lib/farcaster/database-token-store';
 // Initialize database endpoint - should only be run once
 export async function POST(request: NextRequest) {
     try {
-        // Add basic security for database initialization
-        const body = await request.json().catch(() => ({}));
-        const { password } = body;
-
-        // Allow initialization in development without password
-        const isDevelopment = process.env.NODE_ENV === 'development';
-        const initPassword = process.env.FARCASTER_INIT_PASSWORD || 'dev';
-
-        if (!isDevelopment && password !== initPassword) {
-            return NextResponse.json(
-                { error: 'Unauthorized' },
-                { status: 401 }
-            );
-        }
-
-        if (!isDevelopment && !password) {
-            return NextResponse.json(
-                { error: 'Password required for production' },
-                { status: 401 }
-            );
-        }
-
         const tokenStore = new DatabaseTokenStore();
         await tokenStore.initializeDatabase();
 

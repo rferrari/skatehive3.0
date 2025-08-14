@@ -149,6 +149,8 @@ export class SkateHiveNotifications {
         postTitle: string,
         voteValue: number
     ) {
+        if (voterHiveUsername === postAuthorHiveUsername) return; // Don't notify self
+
         const hasNotifications = await FarcasterUserService.hasNotificationsEnabled(postAuthorHiveUsername);
         if (!hasNotifications) return;
 

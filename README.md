@@ -7,7 +7,6 @@ Skatehive 3.0 is a Next.js application for the [Skatehive](https://www.skatehive
 
 <img width="1440" height="1045" alt="image" src="https://github.com/user-attachments/assets/8e195188-d2cb-4144-b1b5-9eb8adb6e749" />
 
-
 ## Local Development
 
 1. Copy `.env.local.example` to `.env.local` and fill in the values for your environment.
@@ -37,7 +36,6 @@ Next.js dev server. The container installs Node.js 20 with pnpm 9 via the
 official Node feature so the environment matches local development.
 Once setup completes, run `pnpm dev` to launch the application.
 
-
 ## Environment Variables
 
 The app relies on a number of environment variables. The most common ones are provided in `.env.local.example`:
@@ -51,14 +49,7 @@ NEXT_PUBLIC_BASE_URL=http://localhost:3000
 HIVE_POSTING_KEY=posting_key_here
 
 # Optional Postgres database (used for Farcaster notifications)
-POSTGRES_URL=
-POSTGRES_PRISMA_URL=
-POSTGRES_URL_NO_SSL=
-POSTGRES_URL_NON_POOLING=
-POSTGRES_USER=
-POSTGRES_HOST=
-POSTGRES_PASSWORD=
-POSTGRES_DATABASE=
+STORAGE_POSTGRES_URL=postgres://user:password@host:port/database?sslmode=require
 
 # Farcaster notification settings
 FARCASTER_INIT_PASSWORD=your_secure_password_for_database_init
@@ -91,4 +82,3 @@ Additional variables used by specific features:
 ## Deployment
 
 The app is designed for [Vercel](https://vercel.com). After setting up the environment variables in your Vercel project, deploy with the standard Next.js build process.
-
