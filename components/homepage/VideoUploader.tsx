@@ -685,10 +685,10 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
           fallback
         });
 
-        if (isAlreadyProcessed) {
+        if (isAlreadyProcessed && !fallback) {
           setStatus("File already processed, uploading directly...");
           console.log("📱 Skipping processing for pre-processed file");
-          // Don't process already trimmed/processed files
+          // Don't process already trimmed/processed files on first attempt
         } else if (!fallback && !skipCompression) {
           try {
             // Smart detection for iPhone .mov files - use fast conversion instead of compression
@@ -748,7 +748,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
               );
             }
           }
-        } else if (fallback) {
+        } else {
           try {
             const mobileBlob = await compressVideoFallback(file);
             processedFile = new File([mobileBlob], "mobile-compressed.webm", {
