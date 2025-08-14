@@ -6,6 +6,7 @@ import React, {
   forwardRef,
   useState,
 } from "react";
+const PINATA_JWT = process.env.NEXT_PUBLIC_PINATA_JWT;
 // Capability detection helpers
 function detectFFmpegSupport() {
   // SharedArrayBuffer detection
@@ -212,7 +213,11 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
     const compressVideoFallback = async (file: File): Promise<Blob> => {
       setStatus("Compressing video for mobile...");
       return new Promise((resolve, reject) => {
-        if (typeof MediaRecorder === "undefined") {
+        if (
+          typeof MediaRecorder === "undefined" ||
+          typeof (HTMLCanvasElement.prototype as any).captureStream !==
+            "function"
+        ) {
           reject(new Error("MediaRecorder not supported"));
           return;
         }
@@ -226,7 +231,13 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
           URL.revokeObjectURL(video.src);
         };
 
+        const timeoutId = setTimeout(() => {
+          cleanup();
+          reject(new Error("Video load timeout"));
+        }, 10000);
+
         video.addEventListener("loadeddata", () => {
+          clearTimeout(timeoutId);
           try {
             const maxWidth = 640;
             const scale = Math.min(1, maxWidth / video.videoWidth);
@@ -234,9 +245,9 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
             canvas.width = video.videoWidth * scale;
             canvas.height = video.videoHeight * scale;
             const ctx = canvas.getContext("2d");
-            if (!ctx || typeof (canvas as any).captureStream !== "function") {
+            if (!ctx) {
               cleanup();
-              reject(new Error("Canvas captureStream not supported"));
+              reject(new Error("Canvas context not available"));
               return;
             }
             const stream = (canvas as any).captureStream();
@@ -282,9 +293,12 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         });
 
         video.onerror = () => {
+          clearTimeout(timeoutId);
           cleanup();
           reject(new Error("Failed to load video"));
         };
+
+        video.load();
       });
     };
 
@@ -594,15 +608,21 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         xhr.timeout = isMobile ? 180000 : 120000; // 3 minutes for mobile, 2 for desktop
 
         try {
-          // Use mobile-specific endpoint for mobile devices
-          const endpoint = isMobile ? "/api/pinata-mobile" : "/api/pinata";
-          xhr.open("POST", endpoint);
-
-          // Add mobile-specific headers that might help
-          if (isMobile) {
-            console.log("📱 Using mobile-specific endpoint and headers");
-            xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
-            xhr.setRequestHeader("X-Mobile-Upload", "true");
+          let endpoint: string;
+          if (PINATA_JWT) {
+            endpoint = "https://api.pinata.cloud/pinning/pinFileToIPFS";
+            xhr.open("POST", endpoint);
+            xhr.setRequestHeader("Authorization", `Bearer ${PINATA_JWT}`);
+          } else {
+            // Use mobile-specific endpoint for mobile devices
+            endpoint = isMobile ? "/api/pinata-mobile" : "/api/pinata";
+            xhr.open("POST", endpoint);
+            // Add mobile-specific headers that might help
+            if (isMobile) {
+              console.log("📱 Using mobile-specific endpoint and headers");
+              xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+              xhr.setRequestHeader("X-Mobile-Upload", "true");
+            }
           }
 
           console.log("📱 XHR opened, sending FormData to:", endpoint);

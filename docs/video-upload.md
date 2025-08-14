@@ -12,7 +12,7 @@ This document describes how the client-side video upload flow works in Skatehive
    - The recorded blob is saved as `mobile-compressed.webm`.
    - When these APIs are missing the original file is used instead so the upload can still proceed.
 4. **Thumbnail generation** – A `canvas` snapshot is taken around 10 % into the video. If that fails a small FFmpeg job produces a WebP thumbnail.
-5. **Upload** – The processed file and optional thumbnail are sent to the `/api/pinata` endpoint with progress indicators. Mobile uploads are capped at ~45 MB to avoid Vercel's 413 limit.
+5. **Upload** – The processed file and optional thumbnail are uploaded to Pinata. When a `NEXT_PUBLIC_PINATA_JWT` token is available the client sends the request directly to `pinFileToIPFS`, bypassing Vercel's request size limits. Otherwise, a proxy `/api/pinata` route is used and mobile uploads are capped at ~45 MB.
 
 ## Result
 
