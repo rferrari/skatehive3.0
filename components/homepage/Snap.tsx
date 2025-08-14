@@ -340,12 +340,6 @@ const Snap = ({
               }
               post
             />
-            {/* Replies loading indicator */}
-            {inlineRepliesLoading[discussion.permlink] && (
-              <Text mt={2} color="gray.400" fontSize="sm">
-                Loading replies...
-              </Text>
-            )}
             {/* Show replies for this permlink */}
             {inlineRepliesMap[discussion.permlink] &&
               inlineRepliesMap[discussion.permlink].length > 0 && (

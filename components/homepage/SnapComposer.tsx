@@ -330,7 +330,10 @@ export default function SnapComposer({
         .map((img) => {
           const caption = img.caption;
           // Only include caption if it's meaningful (not empty and not just "image")
-          const meaningfulCaption = caption && caption.trim() && caption.trim() !== "image" ? caption : "";
+          const meaningfulCaption =
+            caption && caption.trim() && caption.trim() !== "image"
+              ? caption
+              : "";
           return `![${meaningfulCaption}](${img.url})`;
         })
         .join("\n");
@@ -351,7 +354,10 @@ export default function SnapComposer({
         .map((gif) => {
           const caption = gif.caption;
           // Only include caption if it's meaningful (not empty and not just "gif")
-          const meaningfulCaption = caption && caption.trim() && caption.trim() !== "gif" ? caption : "";
+          const meaningfulCaption =
+            caption && caption.trim() && caption.trim() !== "gif"
+              ? caption
+              : "";
           return `![${meaningfulCaption}](${gif.url})`;
         })
         .join("\n");
@@ -916,16 +922,17 @@ export default function SnapComposer({
         setGifSize={setGifSize}
         setIsProcessingGif={setIsProcessingGif}
       />
-
       {/* Video Trim Modal */}
-      <VideoTrimModal
-        isOpen={isTrimModalOpen}
-        onClose={handleTrimModalClose}
-        videoFile={pendingVideoFile}
-        onTrimComplete={handleTrimComplete}
-        maxDuration={15}
-        canBypass={canBypassLimit}
-      />
+      {isTrimModalOpen && (
+        <VideoTrimModal
+          isOpen={isTrimModalOpen}
+          onClose={handleTrimModalClose}
+          videoFile={pendingVideoFile}
+          onTrimComplete={handleTrimComplete}
+          maxDuration={15}
+          canBypass={canBypassLimit}
+        />
+      )}
 
       {/* Matrix Overlay and login prompt if not logged in */}
       {!user && <></>}

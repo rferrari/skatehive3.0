@@ -8,10 +8,12 @@ import { Discussion } from "@hiveio/dhive";
 import Conversation from "@/components/homepage/Conversation";
 import SnapReplyModal from "@/components/homepage/SnapReplyModal";
 import { useSnaps } from "@/hooks/useSnaps";
+import useIsMobile from "@/hooks/useIsMobile";
 
 export default function HomePageClient() {
   const thread_author = "peak.snaps";
   const thread_permlink = "snaps";
+  const isMobile = useIsMobile();
 
   const [conversation, setConversation] = useState<Discussion | undefined>();
   const [reply, setReply] = useState<Discussion>();
@@ -50,7 +52,9 @@ export default function HomePageClient() {
         }}
         id="scrollableDiv"
       >
-        {!conversation ? (
+        {/* On mobile, always show SnapList and show Conversation as overlay drawer */}
+        {/* On desktop, conditionally show either SnapList or Conversation */}
+        {!conversation || isMobile ? (
           <SnapList
             author={thread_author}
             permlink={thread_permlink}
@@ -67,6 +71,18 @@ export default function HomePageClient() {
             setConversation={setConversation}
             onOpen={onOpen}
             setReply={setReply}
+            isOpen={!!conversation}
+          />
+        )}
+
+        {/* Mobile conversation drawer - always rendered but only visible when conversation exists */}
+        {isMobile && conversation && (
+          <Conversation
+            discussion={conversation}
+            setConversation={setConversation}
+            onOpen={onOpen}
+            setReply={setReply}
+            isOpen={!!conversation}
           />
         )}
       </Box>
