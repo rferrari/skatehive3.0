@@ -1,9 +1,12 @@
+"use client";
+
 import React, {
   useRef,
   useImperativeHandle,
   forwardRef,
   useState,
 } from "react";
+const PINATA_JWT = process.env.NEXT_PUBLIC_PINATA_JWT;
 // Capability detection helpers
 function detectFFmpegSupport() {
   // SharedArrayBuffer detection
@@ -25,8 +28,17 @@ function detectFFmpegSupport() {
     return false;
   }
 }
-import { FFmpeg } from "@ffmpeg/ffmpeg";
-import { fetchFile } from "@ffmpeg/util";
+let FFmpeg: any;
+let fetchFile: any;
+
+async function loadFFmpeg() {
+  if (!FFmpeg || !fetchFile) {
+    const ffmpegMod = await import("@ffmpeg/ffmpeg");
+    const utilMod = await import("@ffmpeg/util");
+    FFmpeg = ffmpegMod.FFmpeg;
+    fetchFile = utilMod.fetchFile;
+  }
+}
 
 interface VideoUploaderProps {
   onUpload: (url: string | null) => void;
@@ -100,6 +112,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
       setStatus("Compressing video...");
       setCompressionProgress(0);
       if (!ffmpegRef.current) {
+        await loadFFmpeg();
         ffmpegRef.current = new FFmpeg();
         await ffmpegRef.current.load();
       }
@@ -161,6 +174,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
       setStatus("Converting to MP4 format...");
       setCompressionProgress(0);
       if (!ffmpegRef.current) {
+        await loadFFmpeg();
         ffmpegRef.current = new FFmpeg();
         await ffmpegRef.current.load();
       }
@@ -193,6 +207,99 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
       const data = await ffmpeg.readFile("output.mp4");
       setCompressionProgress(100);
       return new Blob([data.buffer], { type: "video/mp4" });
+    };
+
+    // Basic mobile-friendly compression when FFmpeg isn't available
+    const compressVideoFallback = async (file: File): Promise<Blob> => {
+      setStatus("Compressing video for mobile...");
+      return new Promise((resolve, reject) => {
+        if (
+          typeof MediaRecorder === "undefined" ||
+          typeof (HTMLCanvasElement.prototype as any).captureStream !==
+            "function"
+        ) {
+          reject(new Error("MediaRecorder not supported"));
+          return;
+        }
+
+        const video = document.createElement("video");
+        video.src = URL.createObjectURL(file);
+        video.muted = true;
+        video.playsInline = true;
+
+        const cleanup = () => {
+          URL.revokeObjectURL(video.src);
+        };
+
+        const timeoutId = setTimeout(() => {
+          cleanup();
+          reject(new Error("Video load timeout"));
+        }, 10000);
+
+        video.addEventListener("loadeddata", () => {
+          clearTimeout(timeoutId);
+          try {
+            const maxWidth = 640;
+            const scale = Math.min(1, maxWidth / video.videoWidth);
+            const canvas = document.createElement("canvas");
+            canvas.width = video.videoWidth * scale;
+            canvas.height = video.videoHeight * scale;
+            const ctx = canvas.getContext("2d");
+            if (!ctx) {
+              cleanup();
+              reject(new Error("Canvas context not available"));
+              return;
+            }
+            const stream = (canvas as any).captureStream();
+            const addTracks = (video as any).captureStream?.();
+            if (addTracks) {
+              addTracks
+                .getAudioTracks()
+                .forEach((t: MediaStreamTrack) => stream.addTrack(t));
+            }
+            const recorder = new MediaRecorder(stream, {
+              mimeType: "video/webm",
+              videoBitsPerSecond: 800_000,
+            });
+            const chunks: Blob[] = [];
+            recorder.ondataavailable = (e) => {
+              if (e.data.size > 0) chunks.push(e.data);
+            };
+            recorder.onstop = () => {
+              cleanup();
+              resolve(new Blob(chunks, { type: "video/webm" }));
+            };
+            recorder.start();
+            const draw = () => {
+              ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+              if (!video.paused && !video.ended) {
+                requestAnimationFrame(draw);
+              } else {
+                recorder.stop();
+              }
+            };
+            video
+              .play()
+              .then(() => draw())
+              .catch((err) => {
+                recorder.stop();
+                cleanup();
+                reject(err);
+              });
+          } catch (err) {
+            cleanup();
+            reject(err as Error);
+          }
+        });
+
+        video.onerror = () => {
+          clearTimeout(timeoutId);
+          cleanup();
+          reject(new Error("Failed to load video"));
+        };
+
+        video.load();
+      });
     };
 
     // Fast HTML5 Canvas thumbnail generation (prioritized over FFmpeg)
@@ -327,6 +434,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
             setStatus("Generating thumbnail (fallback)...");
 
             if (!ffmpegRef.current) {
+              await loadFFmpeg();
               ffmpegRef.current = new FFmpeg();
               await ffmpegRef.current.load();
             }
@@ -570,15 +678,21 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         xhr.timeout = isMobile ? 180000 : 120000; // 3 minutes for mobile, 2 for desktop
 
         try {
-          // Use mobile-specific endpoint for mobile devices
-          const endpoint = isMobile ? "/api/pinata-mobile" : "/api/pinata";
-          xhr.open("POST", endpoint);
-
-          // Add mobile-specific headers that might help
-          if (isMobile) {
-            console.log("📱 Using mobile-specific endpoint and headers");
-            xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
-            xhr.setRequestHeader("X-Mobile-Upload", "true");
+          let endpoint: string;
+          if (PINATA_JWT) {
+            endpoint = "https://api.pinata.cloud/pinning/pinFileToIPFS";
+            xhr.open("POST", endpoint);
+            xhr.setRequestHeader("Authorization", `Bearer ${PINATA_JWT}`);
+          } else {
+            // Use mobile-specific endpoint for mobile devices
+            endpoint = isMobile ? "/api/pinata-mobile" : "/api/pinata";
+            xhr.open("POST", endpoint);
+            // Add mobile-specific headers that might help
+            if (isMobile) {
+              console.log("📱 Using mobile-specific endpoint and headers");
+              xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+              xhr.setRequestHeader("X-Mobile-Upload", "true");
+            }
           }
 
           console.log("📱 XHR opened, sending FormData to:", endpoint);
@@ -704,10 +818,10 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
           fallback
         });
 
-        if (isAlreadyProcessed) {
+        if (isAlreadyProcessed && !fallback) {
           setStatus("File already processed, uploading directly...");
           console.log("📱 Skipping processing for pre-processed file");
-          // Don't process already trimmed/processed files
+          // Don't process already trimmed/processed files on first attempt
         } else if (!fallback && !skipCompression) {
           try {
             // Smart detection for iPhone .mov files - use fast conversion instead of compression
@@ -766,6 +880,16 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
                 "Conversion failed after retries. Uploading original file."
               );
             }
+          }
+        } else {
+          try {
+            const mobileBlob = await compressVideoFallback(file);
+            processedFile = new File([mobileBlob], "mobile-compressed.webm", {
+              type: "video/webm",
+            });
+          } catch {
+            // If compression fails, proceed with original file
+            setStatus("Mobile compression failed, uploading original file...");
           }
         }
 

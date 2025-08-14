@@ -7,4 +7,8 @@ interface Window {
 
 declare module 'exifr' {
   export function gps(file: File): Promise<{ latitude?: number; longitude?: number } | undefined>;
-} 
+}
+
+interface HTMLMediaElement {
+  captureStream(frameRate?: number): MediaStream;
+}
