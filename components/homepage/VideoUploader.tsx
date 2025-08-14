@@ -388,6 +388,76 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
       }
     };
 
+    // Chunked upload for large files to bypass Vercel limits
+    const uploadWithChunks = async (file: File, creator?: string, thumbnailUrl?: string): Promise<any> => {
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const chunkSize = 10 * 1024 * 1024; // 10MB chunks to stay well under limits
+      const totalChunks = Math.ceil(file.size / chunkSize);
+
+      console.log("📱 Starting chunked upload:", {
+        fileSize: file.size,
+        fileSizeMB: Math.round(file.size / 1024 / 1024 * 100) / 100,
+        chunkSize,
+        totalChunks,
+        isMobile
+      });
+
+      setStatus(`Preparing chunked upload (${totalChunks} chunks)...`);
+
+      if (totalChunks === 1) {
+        // File is small enough for single chunk
+        const reader = new FileReader();
+        
+        return new Promise((resolve, reject) => {
+          reader.onload = async () => {
+            try {
+              const arrayBuffer = reader.result as ArrayBuffer;
+              const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+
+              setStatus("Uploading via chunked method...");
+              setUploadProgress(50);
+
+              const response = await fetch('/api/pinata-chunked', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  fileName: file.name,
+                  fileType: file.type,
+                  creator,
+                  thumbnailUrl,
+                  totalSize: file.size,
+                  chunk: base64,
+                  chunkIndex: 0,
+                  totalChunks: 1
+                })
+              });
+
+              setUploadProgress(90);
+
+              if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Chunked upload failed: ${response.status} - ${errorText}`);
+              }
+
+              const result = await response.json();
+              setUploadProgress(100);
+              resolve(JSON.stringify(result));
+            } catch (error) {
+              reject(error);
+            }
+          };
+
+          reader.onerror = () => reject(new Error("Failed to read file"));
+          reader.readAsArrayBuffer(file);
+        });
+      } else {
+        // Multi-chunk upload (not implemented yet, fall back to regular upload)
+        throw new Error("Multi-chunk uploads not yet supported");
+      }
+    };
+
     const uploadWithProgress = (formData: FormData): Promise<any> => {
       return new Promise((resolve, reject) => {
         const isMobile =
@@ -811,7 +881,20 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
             isMobile,
           });
 
-          const responseText = await uploadWithProgress(formData);
+          let responseText: string;
+
+          // Try chunked upload for large files (>20MB) to bypass Vercel limits
+          if (processedFile.size > 20 * 1024 * 1024) {
+            console.log("📱 Large file detected, using chunked upload");
+            try {
+              responseText = await uploadWithChunks(processedFile, username, thumbnailUrl);
+            } catch (chunkError) {
+              console.log("📱 Chunked upload failed, falling back to regular upload:", chunkError);
+              responseText = await uploadWithProgress(formData);
+            }
+          } else {
+            responseText = await uploadWithProgress(formData);
+          }
 
           console.log("📱 Upload response received, parsing...");
           let result;
