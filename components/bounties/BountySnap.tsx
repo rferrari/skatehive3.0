@@ -124,6 +124,7 @@ interface BountySnapProps {
   showPosterBackground?: boolean;
   disableCardClick?: boolean;
   disableFooter?: boolean;
+  submissionCount?: number;
 }
 
 const BountySnap = ({
@@ -138,10 +139,12 @@ const BountySnap = ({
   showPosterBackground = true,
   disableCardClick = false,
   disableFooter = false,
+  submissionCount = 0,
 }: BountySnapProps) => {
   const { aioha, user } = useAioha();
   const { hiveAccount } = useHiveAccount(user || "");
   const theme = useTheme();
+  
   const {
     hivePower,
     isLoading: isHivePowerLoading,
@@ -504,6 +507,14 @@ const BountySnap = ({
         <Flex align="center" justify="center" width="100%" mb={2}>
           <Box>{statusNote}</Box>
         </Flex>
+        {/* Submission count display */}
+        {submissionCount > 0 && (
+          <Flex align="center" justify="center" width="100%" mb={2}>
+            <Tag bg="accent" color="background" size="md">
+              {submissionCount} Submission{submissionCount !== 1 ? 's' : ''}
+            </Tag>
+          </Flex>
+        )}
         {/* Reward bar (now below header, above description, no background) */}
         <Box mb={2}>
           <Text

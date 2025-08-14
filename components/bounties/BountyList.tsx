@@ -53,6 +53,9 @@ export default function BountyList({
   const [sortBy, setSortBy] = useState<
     "default" | "rewards" | "hot" | "ending"
   >("default");
+  const [bountySubmissionCounts, setBountySubmissionCounts] = useState<
+    Record<string, number>
+  >({});
 
   // Claimed bounties logic
   const { user } = useAioha();
@@ -243,30 +246,57 @@ export default function BountyList({
     return total;
   }, [rewardsUpForGrabs, hivePrice, isPriceLoading]);
 
-  // Extract permlinks for dependency
-  const activeBountyPermlinks = activeBounties.map((b) => b.permlink).join(",");
+  // Extract permlinks for dependency - use all displayed bounties, not just active ones
+  const allBountyPermlinks = displayedBounties.map((b) => b.permlink).join(",");
 
-  // Fetch replies for all active bounties to get bounty grinders
+  // Fetch replies for all displayed bounties to get bounty grinders and submission counts
   useEffect(() => {
     let cancelled = false;
     async function fetchGrinders() {
       setIsLoadingGrinders(true);
       const usernames = new Set<string>();
+      const submissionCounts: Record<string, number> = {};
+      
       await Promise.all(
-        activeBounties.map(async (bounty) => {
+        displayedBounties.map(async (bounty) => {
           try {
             const replies = await HiveClient.database.call(
               "get_content_replies",
               [bounty.author, bounty.permlink]
             );
-            replies.forEach((reply: any) => {
-              if (reply.author) usernames.add(reply.author);
-            });
-          } catch {}
+            
+            // Get bounty deadline
+            const deadline = getDeadlineFromBody(bounty.body);
+            
+            // Count submissions (replies) that were made before the deadline
+            let submissionCount = 0;
+            if (replies && Array.isArray(replies)) {
+              replies.forEach((reply: any) => {
+                if (reply.author) {
+                  usernames.add(reply.author);
+                  
+                  // Only count submissions made before the deadline
+                  if (deadline && reply.created) {
+                    const replyDate = new Date(reply.created);
+                    if (replyDate < deadline) {
+                      submissionCount++;
+                    }
+                  }
+                }
+              });
+            }
+            
+            // Store submission count for this bounty
+            submissionCounts[`${bounty.author}-${bounty.permlink}`] = submissionCount;
+          } catch (error) {
+            // Set submission count to 0 on error
+            submissionCounts[`${bounty.author}-${bounty.permlink}`] = 0;
+          }
         })
       );
       if (!cancelled) {
         setBountyGrinders(Array.from(usernames));
+        setBountySubmissionCounts(submissionCounts);
         setIsLoadingGrinders(false);
       }
     }
@@ -274,7 +304,7 @@ export default function BountyList({
     return () => {
       cancelled = true;
     };
-  }, [activeBountyPermlinks, activeBounties]);
+  }, [allBountyPermlinks, displayedBounties]);
 
   // Mapping for short labels (button display)
   const sortByLabels: Record<string, string> = {
@@ -284,7 +314,7 @@ export default function BountyList({
     ending: "Ending soon",
   };
 
-  if (isLoading || (filter === "claimed" && isLoadingGrinders)) {
+  if (isLoading || isLoadingGrinders) {
     return (
       <Box textAlign="center" my={8}>
         <Spinner size="xl" />
@@ -675,6 +705,7 @@ export default function BountyList({
             setConversation={() => {}}
             showAuthor={true}
             disableFooter={true}
+            submissionCount={bountySubmissionCounts[`${bounty.author}-${bounty.permlink}`] || 0}
           />
         ))}
       </SimpleGrid>
