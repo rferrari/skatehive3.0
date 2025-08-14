@@ -887,7 +887,11 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
           if (processedFile.size > 20 * 1024 * 1024) {
             console.log("📱 Large file detected, using chunked upload");
             try {
-              responseText = await uploadWithChunks(processedFile, username, thumbnailUrl);
+              responseText = await uploadWithChunks(
+                processedFile, 
+                username, 
+                thumbnailUrl || undefined
+              );
             } catch (chunkError) {
               console.log("📱 Chunked upload failed, falling back to regular upload:", chunkError);
               responseText = await uploadWithProgress(formData);
