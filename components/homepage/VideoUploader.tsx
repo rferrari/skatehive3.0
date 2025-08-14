@@ -1,3 +1,5 @@
+"use client";
+
 import React, {
   useRef,
   useImperativeHandle,
@@ -25,8 +27,17 @@ function detectFFmpegSupport() {
     return false;
   }
 }
-import { FFmpeg } from "@ffmpeg/ffmpeg";
-import { fetchFile } from "@ffmpeg/util";
+let FFmpeg: any;
+let fetchFile: any;
+
+async function loadFFmpeg() {
+  if (!FFmpeg || !fetchFile) {
+    const ffmpegMod = await import("@ffmpeg/ffmpeg");
+    const utilMod = await import("@ffmpeg/util");
+    FFmpeg = ffmpegMod.FFmpeg;
+    fetchFile = utilMod.fetchFile;
+  }
+}
 
 interface VideoUploaderProps {
   onUpload: (url: string | null) => void;
@@ -100,6 +111,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
       setStatus("Compressing video...");
       setCompressionProgress(0);
       if (!ffmpegRef.current) {
+        await loadFFmpeg();
         ffmpegRef.current = new FFmpeg();
         await ffmpegRef.current.load();
       }
@@ -161,6 +173,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
       setStatus("Converting to MP4 format...");
       setCompressionProgress(0);
       if (!ffmpegRef.current) {
+        await loadFFmpeg();
         ffmpegRef.current = new FFmpeg();
         await ffmpegRef.current.load();
       }
@@ -199,48 +212,77 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
     const compressVideoFallback = async (file: File): Promise<Blob> => {
       setStatus("Compressing video for mobile...");
       return new Promise((resolve, reject) => {
+        if (typeof MediaRecorder === "undefined") {
+          reject(new Error("MediaRecorder not supported"));
+          return;
+        }
+
         const video = document.createElement("video");
         video.src = URL.createObjectURL(file);
         video.muted = true;
         video.playsInline = true;
 
-        video.addEventListener("loadedmetadata", () => {
-          const maxWidth = 640;
-          const scale = Math.min(1, maxWidth / video.videoWidth);
-          const canvas = document.createElement("canvas");
-          canvas.width = video.videoWidth * scale;
-          canvas.height = video.videoHeight * scale;
-          const ctx = canvas.getContext("2d");
-          const canvasStream = canvas.captureStream();
-          const srcStream = video.captureStream();
-          srcStream.getAudioTracks().forEach((t) => canvasStream.addTrack(t));
-          const recorder = new MediaRecorder(canvasStream, {
-            mimeType: "video/webm",
-            videoBitsPerSecond: 800_000,
-          });
-          const chunks: Blob[] = [];
-          recorder.ondataavailable = (e) => {
-            if (e.data.size > 0) chunks.push(e.data);
-          };
-          recorder.onstop = () => {
-            resolve(new Blob(chunks, { type: "video/webm" }));
-            URL.revokeObjectURL(video.src);
-          };
-          recorder.start();
-          const draw = () => {
-            ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
-            if (!video.paused && !video.ended) {
-              requestAnimationFrame(draw);
-            } else {
-              recorder.stop();
+        const cleanup = () => {
+          URL.revokeObjectURL(video.src);
+        };
+
+        video.addEventListener("loadeddata", () => {
+          try {
+            const maxWidth = 640;
+            const scale = Math.min(1, maxWidth / video.videoWidth);
+            const canvas = document.createElement("canvas");
+            canvas.width = video.videoWidth * scale;
+            canvas.height = video.videoHeight * scale;
+            const ctx = canvas.getContext("2d");
+            if (!ctx || typeof (canvas as any).captureStream !== "function") {
+              cleanup();
+              reject(new Error("Canvas captureStream not supported"));
+              return;
             }
-          };
-          video.play();
-          draw();
+            const stream = (canvas as any).captureStream();
+            const addTracks = (video as any).captureStream?.();
+            if (addTracks) {
+              addTracks
+                .getAudioTracks()
+                .forEach((t: MediaStreamTrack) => stream.addTrack(t));
+            }
+            const recorder = new MediaRecorder(stream, {
+              mimeType: "video/webm",
+              videoBitsPerSecond: 800_000,
+            });
+            const chunks: Blob[] = [];
+            recorder.ondataavailable = (e) => {
+              if (e.data.size > 0) chunks.push(e.data);
+            };
+            recorder.onstop = () => {
+              cleanup();
+              resolve(new Blob(chunks, { type: "video/webm" }));
+            };
+            recorder.start();
+            const draw = () => {
+              ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+              if (!video.paused && !video.ended) {
+                requestAnimationFrame(draw);
+              } else {
+                recorder.stop();
+              }
+            };
+            video
+              .play()
+              .then(() => draw())
+              .catch((err) => {
+                recorder.stop();
+                cleanup();
+                reject(err);
+              });
+          } catch (err) {
+            cleanup();
+            reject(err as Error);
+          }
         });
 
         video.onerror = () => {
-          URL.revokeObjectURL(video.src);
+          cleanup();
           reject(new Error("Failed to load video"));
         };
       });
@@ -378,6 +420,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
             setStatus("Generating thumbnail (fallback)...");
 
             if (!ffmpegRef.current) {
+              await loadFFmpeg();
               ffmpegRef.current = new FFmpeg();
               await ffmpegRef.current.load();
             }
