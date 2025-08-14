@@ -23,45 +23,6 @@ export default function AuctionMobileNavbar() {
   // Only render on mobile
   if (!isMobile) return null;
 
-  const handleGoBack = () => {
-    router.push("/");
-  };
-
-  return (
-    <Box
-      position="sticky"
-      top={0}
-      bg="background"
-      borderBottom="1px solid"
-      borderColor="primary"
-      zIndex={1000}
-      py={3}
-      backdropFilter="blur(15px)"
-    >
-      <Container maxW="7xl" px={{ base: 4, md: 6 }}>
-        <HStack justify="space-between" align="center" w="full">
-          {/* Back Button */}
-          <IconButton
-            aria-label="Go back"
-            icon={<ArrowBackIcon />}
-            onClick={handleGoBack}
-            variant="ghost"
-            color="primary"
-            size="md"
-            _hover={{
-              bg: "rgba(124, 255, 0, 0.1)",
-              transform: "scale(1.05)",
-            }}
-            _active={{
-              transform: "scale(0.95)",
-            }}
-            transition="all 0.2s ease"
-          />
-
-          {/* Connect Button */}
-          <CustomConnectButton />
-        </HStack>
-      </Container>
-    </Box>
-  );
+  // Removed entire navbar to eliminate blank space
+  return null;
 }

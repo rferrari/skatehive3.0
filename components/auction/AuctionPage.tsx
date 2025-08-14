@@ -30,6 +30,7 @@ import {
   ListIcon,
   Center,
 } from "@chakra-ui/react";
+import { IconButton } from "@chakra-ui/react";
 import { CheckCircleIcon, InfoIcon } from "@chakra-ui/icons";
 import MatrixOverlay from "@/components/graphics/MatrixOverlay";
 import { Name, Avatar } from "@coinbase/onchainkit/identity";
@@ -208,13 +209,13 @@ export default function AuctionPage({
       {/* Mobile Navbar */}
       <AuctionMobileNavbar />
 
-      <Box bg="background" minH="100vh" py={{ base: 4, md: 8 }}>
-        <Container maxW="7xl" px={{ base: 4, md: 6 }}>
-          <VStack spacing={{ base: 2, md: 3 }}>
+      <Box bg="background" minH="100vh" py={{ base: 2, md: 4, lg: 8 }}>
+        <Container maxW="7xl" px={{ base: 3, md: 4, lg: 6 }}>
+          <VStack spacing={{ base: 4, md: 6, lg: 8 }}>
             {/* Header Section */}
-            <Box textAlign="center" maxW="4xl" mx="auto">
+            <Box textAlign="center" maxW="4xl" mx="auto" w="full">
               <Heading
-                size={{ base: "3xl", md: "4xl" }}
+                size={{ base: "2xl", md: "3xl", lg: "4xl" }}
                 color="primary"
                 fontFamily="heading"
                 textTransform="uppercase"
@@ -243,40 +244,115 @@ export default function AuctionPage({
             </Box>
 
             {/* Main Auction Layout */}
-            <Box maxW="4xl" mx="auto" w="full" mb={16} mt={6}>
-              <Grid
-                templateColumns={{ base: "1fr", lg: "1fr 1fr" }}
-                gap={{ base: 6, md: 6 }}
-                w="full"
-                alignItems="stretch"
-              >
-                {/* Auction Details */}
-                <GridItem
-                  order={{ base: 2, lg: 2 }}
-                  ml={{ base: 0, lg: 4 }}
-                  display="flex"
-                  flexDirection="column"
+            <Box maxW="6xl" mx="auto" w="full" mb={{ base: 8, md: 12, lg: 16 }} mt={{ base: 4, md: 6 }}>
+              <VStack spacing={{ base: 6, md: 8, lg: 12 }} w="full">
+                {/* Large NFT Image - Centered on its own line */}
+                <Box position="relative" w="full" textAlign="center">
+                  <VStack spacing={4}>
+                    {/* NFT Image */}
+                    <Box
+                      position="relative"
+                      w={{ base: "100%", md: "500px", lg: "600px" }}
+                      h={{ base: "auto", md: "500px", lg: "600px" }}
+                      maxW="600px"
+                      maxH="600px"
+                      mx="auto"
+                    >
+                      <Image
+                        src={activeAuction.token.image}
+                        alt={activeAuction.token.name}
+                        w="full"
+                        h="full"
+                        aspectRatio="1"
+                        objectFit="cover"
+                        fallbackSrc="/images/placeholder.png"
+                      />
+                      {/* Stamped Latest Champ Box - Centered and Rotated */}
+                      {!auctionData.isRunning && activeAuction.highestBid && (
+                        <Box
+                          position="absolute"
+                          top="50%"
+                          left="50%"
+                          transform="translate(-50%, -50%) rotate(30deg)"
+                          bg="background"
+                          color="primary"
+                          p={3}
+                          borderRadius="none"
+                          boxShadow="lg"
+                          border="2px dashed"
+                          borderColor="primary"
+                          zIndex={2}
+                          minW={{ base: "160px", md: "200px", lg: "220px" }}
+                          opacity={0}
+                          _hover={{
+                            opacity: 1,
+                            transition: "opacity 0.2s ease",
+                            transform:
+                              "translate(-50%, -50%) rotate(30deg) scale(1.05)",
+                          }}
+                        >
+                          <VStack spacing={2} align="stretch" w="full">
+                            <Text
+                              fontSize="sm"
+                              fontWeight="bold"
+                              color="primary"
+                              textAlign="center"
+                              letterSpacing="wide"
+                              textTransform="uppercase"
+                            >
+                              Proud Winner
+                            </Text>
+                            <Center>
+                              <HStack color={"primary"} spacing={2}>
+                                <Avatar
+                                  address={activeAuction.highestBid.bidder}
+                                />
+                                <Name
+                                  className="text-lg font-bold text-white"
+                                  address={activeAuction.highestBid.bidder}
+                                />
+                              </HStack>
+                            </Center>
+                            <Text
+                              fontSize="lg"
+                              fontWeight="bold"
+                              color="success"
+                              textAlign="center"
+                              w="full"
+                            >
+                              {auctionData.bidAmount} Ξ
+                            </Text>
+                          </VStack>
+                        </Box>
+                      )}
+                    </Box>
+                  </VStack>
+                </Box>
+
+                {/* Auction Details - Below the artwork */}
+                <Box
+                  w="full"
+                  maxW={{ base: "100%", md: "600px", lg: "700px" }}
+                  mx="auto"
                 >
                   <Box
-                    p={{ base: 0, lg: 0 }}
+                    p={{ base: 4, md: 6, lg: 8 }}
                     position="relative"
                     overflow="hidden"
-                    border={"1px solid"}
-                    borderColor="border"
-                    flex="1"
                     display="flex"
                     flexDirection="column"
+                    justifyContent="space-between"
                   >
                     {isHoveringBid && <MatrixOverlay />}
                     <VStack
-                      spacing={6}
-                      align="center"
+                      spacing={{ base: 4, md: 6 }}
+                      align="stretch"
                       flex="1"
-                      justify="space-between"
+                      justifyContent="space-between"
                     >
                       {/* Time Remaining */}
-                      <VStack spacing={2} position="relative" zIndex={1}>
-                        <Text fontSize="sm" color="primary" fontWeight="medium">
+                      <VStack spacing={3} position="relative" zIndex={1}>
+                        <Text fontSize="sm" color="primary" fontWeight="medium" textAlign="center">
                           Auction ends in
                         </Text>
                         {auctionData.isRunning ? (
@@ -292,45 +368,48 @@ export default function AuctionPage({
                               if (completed) {
                                 return (
                                   <Text
-                                    fontSize="3xl"
+                                    fontSize={{ base: "2xl", md: "3xl" }}
                                     fontWeight="bold"
                                     color="error"
                                     fontFamily="mono"
+                                    textAlign="center"
                                   >
                                     ENDED
                                   </Text>
                                 );
                               }
                               return (
-                                <HStack spacing={2} align="center">
+                                <VStack spacing={2} align="center">
                                   <Image
                                     src="/images/clock.gif"
                                     alt="clock"
-                                    boxSize="32px"
+                                    boxSize={{ base: "24px", md: "32px" }}
                                     objectFit="contain"
                                   />
                                   <Text
-                                    fontSize="4xl"
+                                    fontSize={{ base: "2xl", md: "3xl", lg: "4xl" }}
                                     fontWeight="bold"
                                     color="primary"
                                     fontFamily="mono"
+                                    textAlign="center"
                                   >
                                     {days > 0 && `${days}d `}
                                     {String(hours).padStart(2, "0")}h{" "}
                                     {String(minutes).padStart(2, "0")}m{" "}
                                     {String(seconds).padStart(2, "0")}s
                                   </Text>
-                                </HStack>
+                                </VStack>
                               );
                             }}
                             onComplete={() => refetch()}
                           />
                         ) : (
                           <Text
-                            fontSize="3xl"
+                            fontSize={{ base: "2xl", md: "3xl" }}
                             fontWeight="bold"
                             color="error"
                             fontFamily="mono"
+                            textAlign="center"
                           >
                             ENDED
                           </Text>
@@ -343,6 +422,7 @@ export default function AuctionPage({
                         display="flex"
                         flexDirection="column"
                         justifyContent="center"
+                        flex="1"
                       >
                         <AuctionBid
                           tokenId={activeAuction.token.tokenId}
@@ -368,99 +448,13 @@ export default function AuctionPage({
                       </Box>
                     </VStack>
                   </Box>
-                </GridItem>
-
-                {/* Large NFT Image */}
-                <GridItem order={{ base: 1, lg: 1 }}>
-                  <Box position="relative" h="full">
-                    <VStack spacing={0}>
-                      {/* NFT Image */}
-                      <Box
-                        position="relative"
-                        w={{ base: "full", md: "400px", lg: "600px" }}
-                        h={{ base: "auto", md: "400px", lg: "600px" }}
-                        mx="auto"
-                      >
-                        <Image
-                          src={activeAuction.token.image}
-                          alt={activeAuction.token.name}
-                          w={{ base: "full", md: "400px", lg: "600px" }}
-                          h={{ base: "auto", md: "400px", lg: "600px" }}
-                          aspectRatio="1"
-                          objectFit="cover"
-                          fallbackSrc="/images/placeholder.png"
-                        />
-                        {/* Stamped Latest Champ Box - Centered and Rotated */}
-                        {!auctionData.isRunning && activeAuction.highestBid && (
-                          <Box
-                            position="absolute"
-                            top="50%"
-                            left="50%"
-                            transform="translate(-50%, -50%) rotate(30deg)"
-                            bg="background"
-                            color="primary"
-                            p={3}
-                            borderRadius="none"
-                            boxShadow="lg"
-                            border="2px dashed"
-                            borderColor="primary"
-                            zIndex={2}
-                            minW={{ base: "180px", md: "220px" }}
-                            opacity={0}
-                            _hover={{
-                              opacity: 1,
-                              transition: "opacity 0.2s ease",
-                              transform:
-                                "translate(-50%, -50%) rotate(30deg) scale(1.05)",
-                            }}
-                          >
-                            <VStack spacing={2} align="stretch" w="full">
-                              <Text
-                                fontSize="sm"
-                                fontWeight="bold"
-                                color="primary"
-                                textAlign="center"
-                                letterSpacing="wide"
-                                textTransform="uppercase"
-                              >
-                                Proud Winner
-                              </Text>
-                              <Center>
-                                <HStack color={"primary"} spacing={2}>
-                                  <Avatar
-                                    address={activeAuction.highestBid.bidder}
-                                  />
-                                  <Name
-                                    className="text-lg font-bold text-white"
-                                    address={activeAuction.highestBid.bidder}
-                                  />
-                                </HStack>
-                              </Center>
-                              <Text
-                                fontSize="lg"
-                                fontWeight="bold"
-                                color="success"
-                                textAlign="center"
-                                w="full"
-                              >
-                                {auctionData.bidAmount} Ξ
-                              </Text>
-                            </VStack>
-                          </Box>
-                        )}
-                      </Box>
-
-                      {/* NFT Image Only - Title, Date, and Navigation moved to AuctionHeader */}
-                      <Box />
-                    </VStack>
-                  </Box>
-                </GridItem>
-              </Grid>
+                </Box>
+              </VStack>
             </Box>
 
-            {/* Widgets Row - 3 Columns */}
+            {/* Widgets Row - Responsive Grid */}
             <Grid
-              templateColumns={{ base: "1fr", md: "repeat(3, 1fr)" }}
+              templateColumns={{ base: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }}
               gap={{ base: 4, md: 6 }}
               w="full"
               maxW="6xl"
@@ -473,11 +467,11 @@ export default function AuctionPage({
                   borderRadius="xl"
                   border="1px solid"
                   borderColor="border"
-                  p={6}
+                  p={{ base: 4, md: 6 }}
                   shadow="sm"
                   h="full"
                 >
-                  <Heading size="md" color="text" mb={4} fontSize="lg">
+                  <Heading size="md" color="text" mb={4} fontSize={{ base: "md", md: "lg" }}>
                     How it works
                   </Heading>
                   <List spacing={3}>
@@ -518,11 +512,11 @@ export default function AuctionPage({
                   borderRadius="xl"
                   border="1px solid"
                   borderColor="border"
-                  p={6}
+                  p={{ base: 4, md: 6 }}
                   shadow="sm"
                   h="full"
                 >
-                  <Heading size="md" color="text" mb={4} fontSize="lg">
+                  <Heading size="md" color="text" mb={4} fontSize={{ base: "md", md: "lg" }}>
                     Auction Rules
                   </Heading>
                   <VStack spacing={3}>
@@ -573,19 +567,19 @@ export default function AuctionPage({
               </GridItem>
 
               {/* Pro Tips */}
-              <GridItem>
+              <GridItem gridColumn={{ base: "1", md: "span 2", lg: "span 1" }}>
                 <Box
                   bg="muted"
                   borderRadius="xl"
                   border="1px solid"
                   borderColor="primary"
-                  p={6}
+                  p={{ base: 4, md: 6 }}
                   shadow="sm"
                   h="full"
                 >
                   <HStack spacing={2} mb={3}>
                     <InfoIcon color="primary" />
-                    <Heading size="md" color="primary" fontSize="lg">
+                    <Heading size="md" color="primary" fontSize={{ base: "md", md: "lg" }}>
                       Pro Tips
                     </Heading>
                   </HStack>

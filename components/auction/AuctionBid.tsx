@@ -214,7 +214,7 @@ export function AuctionBid({
   }, [writeSettle, onSettle]);
 
   return (
-    <VStack spacing={2} align="stretch" w="full">
+    <VStack spacing={{ base: 3, md: 4 }} align="stretch" w="full">
       {/* Error Alert */}
       {errorMessage && (
         <Alert
@@ -238,13 +238,13 @@ export function AuctionBid({
       {isAuctionRunning ? (
         <Box as="form" onSubmit={handleSubmit(onSubmitBid)} w="full">
           <VStack
-            spacing={4}
+            spacing={{ base: 3, md: 4 }}
             align={alignContent === "right" ? "end" : "stretch"}
           >
             <FormControl isInvalid={!!errors.bidAmount}>
               <FormLabel
                 color="text"
-                fontSize="sm"
+                fontSize={{ base: "sm", md: "md" }}
                 fontWeight="medium"
                 mb={2}
                 textAlign={alignContent === "right" ? "right" : "left"}
@@ -306,7 +306,7 @@ export function AuctionBid({
               isDisabled={!account.isConnected || isLoading}
               isLoading={isLoading}
               loadingText={isOnBaseNetwork ? "Placing Bid..." : "Switching..."}
-              h="48px"
+              h={{ base: "44px", md: "48px" }}
               onMouseEnter={() => {
                 onBidButtonHover?.(true);
                 onBidSectionHover?.(true);
@@ -349,7 +349,7 @@ export function AuctionBid({
                 isDisabled={!account.isConnected || isLoading}
                 isLoading={isLoading}
                 loadingText={isOnBaseNetwork ? "Settling..." : "Switching..."}
-                h="48px"
+                h={{ base: "44px", md: "48px" }}
               >
                 {isLoading
                   ? isOnBaseNetwork
@@ -370,7 +370,9 @@ export function AuctionBid({
         bg="background"
         border="1px solid"
         borderColor="border"
+        borderRadius="md"
         overflowY="auto"
+        maxH={{ base: "200px", md: "300px" }}
         sx={{
           "&::-webkit-scrollbar": { width: "4px" },
           "&::-webkit-scrollbar-track": { background: "transparent" },
@@ -386,13 +388,14 @@ export function AuctionBid({
           <HStack
             justify="center"
             spacing={2}
-            py={2}
-            px={3}
+            py={{ base: 2, md: 3 }}
+            px={{ base: 2, md: 3 }}
             borderBottom="1px solid"
             borderColor="border"
+            bg="muted"
           >
             <Text
-              fontSize="xs"
+              fontSize={{ base: "xs", md: "sm" }}
               color="primary"
               fontWeight="bold"
               textTransform="uppercase"
@@ -407,8 +410,8 @@ export function AuctionBid({
               display="flex"
               alignItems="center"
               justifyContent="center"
-              minH="80px"
-              py={4}
+              minH={{ base: "60px", md: "80px" }}
+              py={{ base: 3, md: 4 }}
             >
               <Text fontSize="sm" color="text" opacity={0.5}>
                 No bids yet
@@ -425,19 +428,20 @@ export function AuctionBid({
                 <Box
                   key={index}
                   bg="muted"
-                  px={3}
-                  py={2}
-                  mx={2}
+                  px={{ base: 2, md: 3 }}
+                  py={{ base: 2, md: 3 }}
+                  mx={{ base: 1, md: 2 }}
                   mb={1}
                   borderRadius="md"
                   transition="all 0.2s ease"
                   _hover={{
                     bg: "background",
                     transform: "translateY(-1px)",
+                    boxShadow: "sm",
                   }}
                 >
-                  <HStack justify="space-between" w="full">
-                    <HStack spacing={2}>
+                  <HStack justify="space-between" w="full" spacing={{ base: 2, md: 3 }}>
+                    <HStack spacing={{ base: 1, md: 2 }}>
                       <Avatar
                         address={bid.bidder as `0x${string}`}
                         className="w-6 h-6 rounded-full"
@@ -454,7 +458,7 @@ export function AuctionBid({
                       </VStack>
                     </HStack>
                     <VStack spacing={0} align="end">
-                      <Text fontSize="sm" fontWeight="bold" color="text">
+                      <Text fontSize={{ base: "sm", md: "md" }} fontWeight="bold" color="text">
                         {formatEther(BigInt(bid.amount))} Ξ
                       </Text>
                       {index === 0 && (

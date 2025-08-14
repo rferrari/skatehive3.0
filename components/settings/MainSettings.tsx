@@ -149,6 +149,8 @@ const MainSettings: React.FC<MainSettingsProps> = ({ userData }) => {
               Interactive elements and animations
             </Text>
           </Box>
+          
+          {/* Lottie Animation */}
           <Box py={4}>
             <LottieAnimation src="https://lottie.host/911167fe-726b-4e03-a295-56839461ebc4/WOauo8GTeO.lottie" />
           </Box>

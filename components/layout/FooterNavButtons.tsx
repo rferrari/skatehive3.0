@@ -10,53 +10,40 @@ import {
   IconButton,
   Image,
   useToast,
+  Icon,
 } from "@chakra-ui/react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAioha } from "@aioha/react-ui";
-import { useRive, useStateMachineInput } from "@rive-app/react-canvas";
 import { AiohaModal } from "@aioha/react-ui";
 import { KeyTypes } from "@aioha/aioha";
-import { useTheme } from "../../app/themeProvider";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useFarcasterSession } from "@/hooks/useFarcasterSession";
 import { useFarcasterMiniapp } from "@/hooks/useFarcasterMiniapp";
 import { useSignIn } from "@farcaster/auth-kit";
 import ConnectionModal from "./ConnectionModal";
-// Modular Rive Button for Menu Items -- what is that , why do we call the hook again ?
-const MenuRiveButton = ({
-  src,
-  themeValue,
-}: {
-  src: string;
-  themeValue: number | undefined;
-}) => {
-  const STATE_MACHINE_NAME = "ButtonStateMachine";
-  const THEME_INPUT_NAME = "theme";
-  const { rive, RiveComponent } = useRive({
-    src,
-    stateMachines: STATE_MACHINE_NAME,
-    autoplay: true,
-  });
-  const themeInput = useStateMachineInput(
-    rive,
-    STATE_MACHINE_NAME,
-    THEME_INPUT_NAME
-  );
-  const { user } = useAioha();
-  React.useEffect(() => {
-    if (
-      themeInput &&
-      typeof themeValue === "number" &&
-      themeValue >= 0 &&
-      themeValue <= 5
-    ) {
-      themeInput.value = themeValue;
-    }
-  }, [themeInput, themeValue]);
+import {
+  FiHome,
+  FiBell,
+  FiUser,
+  FiBook,
+  FiMap,
+  FiCreditCard,
+  FiSettings,
+  FiMail,
+  FiAward,
+  FiTarget,
+  FiTrendingUp,
+} from "react-icons/fi";
 
+// Icon component for menu items - using the same icons as desktop sidebar
+const MenuIcon = ({
+  icon,
+}: {
+  icon: any;
+}) => {
   return (
     <Box display="inline-block">
-      <RiveComponent style={{ width: 24, height: 24 }} />
+      <Icon as={icon} boxSize={6} color="primary" />
     </Box>
   );
 };
@@ -66,7 +53,6 @@ export default function FooterNavButtons() {
   const pathname = usePathname();
   const { user } = useAioha();
   const [modalDisplayed, setModalDisplayed] = useState(false);
-  const { themeName } = useTheme();
   const toast = useToast();
 
   // Farcaster integration with proper callbacks and mobile detection
@@ -707,38 +693,26 @@ export default function FooterNavButtons() {
     return null;
   }
 
-  // Map themeName to Rive theme value
-  const themeToRiveValue: Record<string, number> = {
-    hackerPlus: 0,
-    hackerRed: 1,
-    windows95: 2,
-    hacker: 3,
-    gay: 4,
-    paper: 5,
-  };
-
-  const themeValue = themeToRiveValue[themeName];
-
   // Navigation items with their routes and names
   const navigationItems = [
-    { src: "/buttons/home.riv", onClick: () => router.push("/"), name: "Home" },
+    { icon: FiHome, onClick: () => router.push("/"), name: "Home" },
     {
-      src: "/buttons/blog.riv",
+      icon: FiBook,
       onClick: () => router.push("/blog"),
       name: "Pages",
     },
     {
-      src: "/buttons/leaderboard.riv",
+      icon: FiAward,
       onClick: () => router.push("/leaderboard"),
       name: "Leaderboard",
     },
     {
-      src: "/buttons/map.riv",
+      icon: FiMap,
       onClick: () => router.push("/map"),
       name: "Skate Spots",
     },
     {
-      src: "/buttons/bounties.riv",
+      icon: FiTarget,
       onClick: () => router.push("/bounties"),
       name: "Bounties",
     },
@@ -746,16 +720,17 @@ export default function FooterNavButtons() {
     ...(!pathname.startsWith("/auction")
       ? [
           {
-            src: "/buttons/bounties.riv", // Using bounties icon as placeholder
+            icon: FiTrendingUp, // Using trending up icon for auction
             onClick: () => router.push("/auction"),
             name: "Auction",
           },
         ]
       : []),
+    // Notifications (conditional - only for logged in users)
     ...(user
       ? [
           {
-            src: "/buttons/notif.riv",
+            icon: FiBell,
             onClick: () => router.push("/notifications"),
             name: "Notifications",
             badge: newNotificationCount,
@@ -763,17 +738,17 @@ export default function FooterNavButtons() {
         ]
       : []),
     {
-      src: "/buttons/wallet.riv",
+      icon: FiCreditCard,
       onClick: () => router.push("/wallet"),
       name: "Wallet",
     },
     {
-      src: "/buttons/profile.riv",
+      icon: FiSettings,
       onClick: () => router.push("/settings"),
       name: "Settings",
     },
     {
-      src: "/buttons/profile.riv",
+      icon: FiUser,
       onClick: () => {
         if (user) {
           router.push(`/user/${user}?view=snaps`);
@@ -1065,7 +1040,7 @@ export default function FooterNavButtons() {
                 bg={"background"}
               >
                 <HStack spacing={3} w="full">
-                  <MenuRiveButton src={item.src} themeValue={themeValue} />
+                  <MenuIcon icon={item.icon} />
                   <Text fontWeight="medium">{item.name}</Text>
                   {item.badge && item.badge > 0 && (
                     <Box

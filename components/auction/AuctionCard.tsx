@@ -95,24 +95,35 @@ export default function AuctionCard({
   }
 
   return (
-    <Box p={6}>
-      <VStack spacing={6} align="stretch">
-        {/* Token Info */}
-        <HStack spacing={4} align="start">
-          <Box position="relative" width="50%">
+    <Box p={{ base: 4, md: 6 }}>
+      <VStack spacing={{ base: 4, md: 6 }} align="stretch">
+        {/* Token Info - Centered artwork above details */}
+        <VStack spacing={{ base: 3, md: 4 }} align="center">
+          <Box 
+            position="relative" 
+            width={{ base: "100%", md: "500px", lg: "600px" }}
+            height={{ base: "auto", md: "500px", lg: "600px" }}
+            maxW="600px"
+            maxH="600px"
+          >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <Image
               src={activeAuction.token.image}
               alt={activeAuction.token.name}
               width="100%"
+              height="100%"
               aspectRatio="1"
-              borderRadius="md"
               objectFit="cover"
               fallbackSrc="/images/placeholder.png"
             />
           </Box>
-          <VStack align="start" flex={1} spacing={1}>
-            <Text fontSize="xl" fontWeight="bold" color="text">
+          <VStack align="center" spacing={2} textAlign="center">
+            <Text 
+              fontSize={{ base: "lg", md: "xl" }} 
+              fontWeight="bold" 
+              color="text"
+              lineHeight="tight"
+            >
               {activeAuction.token.name.includes(
                 `#${activeAuction.token.tokenId.toString()}`
               )
@@ -122,8 +133,8 @@ export default function AuctionCard({
                   } #${activeAuction.token.tokenId.toString()}`}
             </Text>
             {activeAuction.highestBid && (
-              <VStack align="start" spacing={1}>
-                <Text fontSize="lg" fontWeight="semibold" color="success">
+              <VStack align="center" spacing={2}>
+                <Text fontSize={{ base: "md", md: "lg" }} fontWeight="semibold" color="success">
                   Current bid: {auctionData.bidAmount} ETH
                 </Text>
                 <HStack spacing={2}>
@@ -142,12 +153,12 @@ export default function AuctionCard({
               </Text>
             )}
           </VStack>
-        </HStack>
+        </VStack>
 
         <Divider borderColor="border" />
 
         {/* Auction Status */}
-        <VStack spacing={4}>
+        <VStack spacing={{ base: 3, md: 4 }}>
           <HStack justify="space-between" w="full">
             <Text fontSize="sm" fontWeight="medium" color="text">
               {auctionData.isRunning ? "Time remaining:" : "Auction has"}
@@ -158,14 +169,19 @@ export default function AuctionCard({
                 renderer={({ days, hours, minutes, seconds, completed }) => {
                   if (completed) {
                     return (
-                      <Text color="error" fontFamily="mono">
+                      <Text color="error" fontFamily="mono" fontSize={{ base: "sm", md: "md" }}>
                         ENDED
                       </Text>
                     );
                   }
 
                   return (
-                    <Text fontSize="lg" fontFamily="mono" color="primary">
+                    <Text 
+                      fontSize={{ base: "md", md: "lg" }} 
+                      fontFamily="mono" 
+                      color="primary"
+                      fontWeight="bold"
+                    >
                       {days > 0 && `${days}d `}
                       {String(hours).padStart(2, "0")}:
                       {String(minutes).padStart(2, "0")}:
@@ -220,12 +236,12 @@ export default function AuctionCard({
           <>
             <Divider borderColor="border" />
             <VStack align="stretch" spacing={3}>
-              <Text fontWeight="medium" color="text">
+              <Text fontWeight="medium" color="text" fontSize={{ base: "sm", md: "md" }}>
                 Recent Bids
               </Text>
               <VStack
                 spacing={2}
-                maxH="160px"
+                maxH={{ base: "120px", md: "160px" }}
                 overflowY="auto"
                 className="hide-scrollbar"
               >
@@ -237,12 +253,12 @@ export default function AuctionCard({
                       key={index}
                       justify="space-between"
                       w="full"
-                      py={3}
-                      px={4}
+                      py={{ base: 2, md: 3 }}
+                      px={{ base: 3, md: 4 }}
                       bg="muted"
                       borderRadius="md"
                     >
-                      <HStack spacing={4}>
+                      <HStack spacing={{ base: 2, md: 4 }}>
                         <Text fontSize="sm" fontWeight="bold" color="primary">
                           {formatAddress(bid.bidder)}
                         </Text>
