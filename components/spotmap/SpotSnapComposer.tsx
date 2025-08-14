@@ -121,7 +121,8 @@ export default function SpotSnapComposer({
     let validUrls: string[] = compressedImages.map((img) => img.url);
     // Compose the post body
     let locationLine = "";
-    if (hasCoords && hasAddress) {
+    if (hasCoords && hasAddress && address.trim() !== `${lat}, ${lon}`) {
+      // Only show both if address is different from coordinates
       locationLine = `🌐 ${lat}, ${lon} (${address})`;
     } else if (hasCoords) {
       locationLine = `🌐 ${lat}, ${lon}`;
@@ -211,8 +212,7 @@ export default function SpotSnapComposer({
         const lonStr = translateCoordinateDirection(gps.longitude.toString());
         setLat(latStr);
         setLon(lonStr);
-        // Auto-fill the address field with GPS coordinates
-        setAddress(`${latStr}, ${lonStr}`);
+        // Don't auto-fill address with coordinates to avoid duplication
         console.log('✅ GPS coordinates extracted successfully');
         return true; // Return true if GPS data was found
       } else {
