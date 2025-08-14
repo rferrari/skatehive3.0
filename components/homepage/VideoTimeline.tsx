@@ -254,27 +254,6 @@ const VideoTimeline: React.FC<VideoTimelineProps> = ({
           <Text color="blue.400">{formatTime(currentTime)}</Text>
           <Text>{formatTime(endTime)}</Text>
         </Flex>{" "}
-        {/* Duration Info */}
-        <Text
-          fontSize="sm"
-          textAlign="center"
-          mt={2}
-          color={
-            canBypass
-              ? isValidSelection
-                ? "green.400"
-                : "blue.400"
-              : isValidSelection
-              ? "green.400"
-              : "red.400"
-          }
-        >
-          Selected: {formatTime(selectedDuration)}
-          {canBypass
-            ? " (No limit with >100 HP)"
-            : ` / ${formatTime(maxDuration)}`}
-          {!canBypass && !isValidSelection && " ⚠️ Too long!"}
-        </Text>
       </Box>
     </VStack>
   );

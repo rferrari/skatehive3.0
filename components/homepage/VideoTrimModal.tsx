@@ -107,11 +107,7 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = ({
       // Force metadata check after a short delay
       setTimeout(() => {
         if (videoRef.current && videoRef.current.readyState >= 1) {
-          console.log("🔄 Force checking video metadata after delay");
-          console.log("🔄 Video readyState:", videoRef.current.readyState);
-          console.log("🔄 Video duration:", videoRef.current.duration);
           if (videoRef.current.duration && !isNaN(videoRef.current.duration)) {
-            console.log("🔄 Manually triggering handleLoadedMetadata");
             handleLoadedMetadata();
           }
         }
@@ -137,25 +133,11 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = ({
     console.log("📊 Video metadata loaded");
     if (videoRef.current) {
       const videoDuration = videoRef.current.duration;
-      console.log("⏱️ Video duration:", videoDuration);
-      console.log("📏 maxDuration prop:", maxDuration);
-      console.log(
-        "🔢 Math.min calculation:",
-        Math.min(videoDuration, maxDuration)
-      );
 
       setDuration(videoDuration);
       const calculatedEndTime = Math.min(videoDuration, maxDuration);
       setEndTime(calculatedEndTime);
       setCurrentTime(0);
-
-      console.log("🎯 Set endTime to:", calculatedEndTime);
-      console.log(
-        "✅ Final state - duration:",
-        videoDuration,
-        "endTime:",
-        calculatedEndTime
-      );
     }
   };
 
@@ -255,27 +237,6 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = ({
 
     video.currentTime = time;
     setCurrentTime(time);
-  };
-
-  // Play the selected segment for preview
-  const playSelection = () => {
-    if (videoRef.current) {
-      seekTo(startTime);
-
-      setTimeout(() => {
-        if (videoRef.current) {
-          videoRef.current
-            .play()
-            .then(() => {
-              setIsPlaying(true);
-            })
-            .catch((error) => {
-              console.error("Failed to play video:", error);
-              setIsPlaying(false);
-            });
-        }
-      }, 50);
-    }
   };
 
   // Generate thumbnail from current video position and upload to Hive.blog
@@ -520,37 +481,11 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = ({
     };
   }, []);
 
-  // Debug modal state
-  useEffect(() => {
-    console.log("🎭 VideoTrimModal state:", {
-      isOpen,
-      hasVideoFile: !!videoFile,
-      hasVideoUrl: !!videoUrl,
-      videoUrlValue: videoUrl,
-      duration,
-      startTime,
-      endTime,
-      isValidSelection,
-      canBypass,
-      isProcessing,
-    });
-  }, [
-    isOpen,
-    videoFile,
-    videoUrl,
-    duration,
-    startTime,
-    endTime,
-    isValidSelection,
-    canBypass,
-    isProcessing,
-  ]);
-
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      size={{ base: "full", md: "xl" }}
+      size={{ base: "xl", md: "xl" }}
       onCloseComplete={() => {
         setVideoUrl(null);
         setIsPlaying(false);
@@ -563,7 +498,7 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = ({
       trapFocus={true}
       autoFocus={false}
     >
-      <ModalOverlay bg="blackAlpha.600" />
+      <ModalOverlay bg="blackAlpha.800" />
       <ModalContent
         bg={"background"}
         maxH={{ base: "100vh", md: "90vh" }}
@@ -580,8 +515,8 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = ({
             </Text>
             {canBypass ? (
               <Text fontSize="sm" color="primary">
-                ✨ You have {">"}100 HP - You can use the full video or trim it
-                as needed
+                ✨ You have more than 100 HP - You can use the full video or
+                trim it as needed
               </Text>
             ) : (
               <Text fontSize="sm" color="accent">

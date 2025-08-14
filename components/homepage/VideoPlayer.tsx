@@ -19,14 +19,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   onTimeUpdate,
   onTogglePlayPause,
 }) => {
-  // Debug logging
-  console.log("🎥 VideoPlayer rendered with:", {
-    hasVideoRef: !!videoRef,
-    videoUrl,
-    isPlaying,
-    videoUrlLength: videoUrl?.length,
-  });
-
   return (
     <Box
       width="100%"
@@ -44,15 +36,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
           objectFit: "contain",
         }}
         onLoadedMetadata={() => {
-          console.log("🎬 VideoPlayer: metadata loaded");
-          console.log(
-            "🎬 Video element ready state:",
-            videoRef.current?.readyState
-          );
-          console.log(
-            "🎬 Video duration from element:",
-            videoRef.current?.duration
-          );
           onLoadedMetadata();
         }}
         onLoadedData={() => {
@@ -68,21 +51,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
           }
         }}
         onTimeUpdate={onTimeUpdate}
-        onPlay={() => {
-          console.log("▶️ VideoPlayer: play event");
-        }}
-        onPause={() => {
-          console.log("⏸️ VideoPlayer: pause event");
-        }}
         onError={(e) => {
           console.error("❌ VideoPlayer error:", e);
           console.error("❌ Video error details:", e.currentTarget.error);
-        }}
-        onLoadStart={() => {
-          console.log("📡 VideoPlayer: load start");
-        }}
-        onCanPlay={() => {
-          console.log("✅ VideoPlayer: can play");
         }}
         playsInline
         controls={false}
