@@ -43,8 +43,8 @@ const ProfileHeader = memo(function ProfileHeader({
   const [background] = useToken("colors", ["background"]);
 
   return (
-    <Box position="relative" w="100%">
-      {/* Mobile Component */}
+    <Box position="relative" w="100%" maxWidth="container.lg" overflowX="hidden" mx="auto">
+      {/* Mobile */}
       <MobileProfileHeader
         profileData={profileData}
         username={username}
@@ -57,28 +57,16 @@ const ProfileHeader = memo(function ProfileHeader({
         onEditModalOpen={onEditModalOpen}
       />
 
-      {/* Desktop Layout - Original Clean Version */}
+      {/* Desktop */}
       <Box display={{ base: "none", md: "block" }}>
         <Flex
           direction="row"
           align="flex-start"
-          justify="space-between"
+          gap={8}
           w="100%"
-          maxW="container.md"
-          zIndex={2}
-          px={8}
-          gap={6}
         >
-          {/* Desktop: Avatar and Power Bars */}
-          <Flex
-            direction="row"
-            align="flex-start"
-            gap={4}
-            flexShrink={0}
-            flexBasis="25%"
-            maxW="25%"
-            w="25%"
-          >
+          {/* Avatar + Power Bars */}
+          <Flex align="center" gap={6} flexShrink={0}>
             <Avatar
               src={profileData.profileImage}
               name={username}
@@ -89,8 +77,6 @@ const ProfileHeader = memo(function ProfileHeader({
               <PowerBars
                 vpPercent={profileData.vp_percent}
                 rcPercent={profileData.rc_percent}
-                height={100}
-                width={25}
               />
             )}
           </Flex>
@@ -98,23 +84,13 @@ const ProfileHeader = memo(function ProfileHeader({
           {/* Profile Info */}
           <Flex
             direction="column"
+            flex="1"
+            minW={0}
             align="flex-end"
-            justify="center"
-            flexBasis="75%"
-            maxW="75%"
-            w="75%"
             gap={3}
-            flexShrink={1}
-            minWidth={0}
           >
-            {/* Name and Action Button Row */}
-            <Flex
-              direction="row"
-              align="center"
-              justify="flex-end"
-              w="100%"
-              gap={2}
-            >
+            {/* Name + Actions */}
+            <Flex align="center" justify="flex-end" w="100%" gap={2}>
               {!isOwner && user && (
                 <Box mr={3}>
                   <FollowButton
@@ -151,7 +127,8 @@ const ProfileHeader = memo(function ProfileHeader({
                 </Box>
               )}
             </Flex>
-            {/* About (Desktop Speech Bubble) */}
+
+            {/* About */}
             {profileData.about && (
               <Box
                 position="relative"
@@ -162,44 +139,31 @@ const ProfileHeader = memo(function ProfileHeader({
                 fontSize="0.625rem"
                 fontStyle="italic"
                 noOfLines={4}
-                whiteSpace="normal"
                 wordBreak="break-word"
-                _after={{
-                  content: '""',
-                  position: "absolute",
-                  left: "-16px",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  borderWidth: "8px",
-                  borderStyle: "solid",
-                  borderColor: "transparent",
-                  borderRightColor: "transparent",
-                }}
                 sx={{
                   display: "-webkit-box",
                   WebkitLineClamp: 2,
                   WebkitBoxOrient: "vertical",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
-                  whiteSpace: "normal",
                 }}
               >
                 {`"${profileData.about}"`}
               </Box>
             )}
-            {/* Stats Row */}
+
+            {/* Stats */}
             <Text
               fontSize="sm"
               color="text"
               textAlign="right"
               fontWeight="medium"
             >
-              Following: {profileData.following} | Followers:{" "}
-              {profileData.followers}
+              Following: {profileData.following} | Followers: {profileData.followers}
               {profileData.location && ` | ${profileData.location}`}
             </Text>
 
-            {/* Website Link */}
+            {/* Website */}
             {profileData.website && (
               <Flex alignItems="center" justifyContent="flex-end">
                 <Link

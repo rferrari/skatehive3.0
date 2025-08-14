@@ -35,9 +35,12 @@ const SnapGridItem = React.memo(
           transform: "scale(1.02)",
           transition: "transform 0.2s",
         }}
-        overflow="hidden"
+        overflow="hidden" // Contain hover scaling
         bg="muted"
         width="100%"
+        maxWidth="100%" // Prevent exceeding parent width
+        aspectRatio="1 / 1" // Standardize aspect ratio
+        maxHeight="300px" // Limit height to prevent tall content
       >
         {firstImage ? (
           <Image
@@ -45,11 +48,12 @@ const SnapGridItem = React.memo(
             alt="Snap content"
             objectFit="cover"
             width="100%"
-            height="auto"
+            height="100%" // Match aspect ratio
             loading="lazy"
+            maxWidth="100%"
           />
         ) : firstVideo ? (
-          <Box width="100%" overflow="hidden">
+          <Box width="100%" maxWidth="100%" height="100%" overflow="hidden">
             <VideoPreview src={firstVideo} onClick={onClick} />
           </Box>
         ) : (
@@ -57,8 +61,10 @@ const SnapGridItem = React.memo(
             display="flex"
             alignItems="center"
             justifyContent="center"
-            height="200px"
+            height="100%" // Match aspect ratio
             bg="muted"
+            width="100%"
+            maxWidth="100%"
           >
             <Icon as={FaImage} boxSize={8} color="text" />
           </Box>
@@ -95,7 +101,7 @@ export default function SnapsGrid({ username }: SnapsGridProps) {
     if (snaps.length > 0) {
       const videoUrls = snaps
         .filter((snap) => snap.media.videos.length > 0)
-        .slice(0, 6) // Only preload first 6 videos
+        .slice(0, 6)
         .map((snap) => snap.media.videos[0]);
 
       if (videoUrls.length > 0) {
@@ -108,16 +114,14 @@ export default function SnapsGrid({ username }: SnapsGridProps) {
 
   // Memoize URL parsing to avoid repeated calculations
   const urlPermlink = useMemo(() => {
-    if (typeof window === "undefined") return null; // SSR safety
+    if (typeof window === "undefined") return null;
 
-    // First check URL search params (for redirected URLs like ?view=snaps&snap=permlink)
     const searchParams = new URLSearchParams(window.location.search);
     const snapParam = searchParams.get("snap");
     if (snapParam) {
       return snapParam;
     }
 
-    // Then check path-based URLs (/user/username/snap/permlink)
     const pathParts = window.location.pathname.split("/");
     const snapIndex = pathParts.indexOf("snap");
     return snapIndex !== -1 && pathParts.length >= snapIndex + 2
@@ -126,9 +130,7 @@ export default function SnapsGrid({ username }: SnapsGridProps) {
   }, []);
 
   // Check for snap parameter in URL on component mount and when snaps load
-  // Only run this when modal is closed to prevent reopening during navigation
   useEffect(() => {
-    // Only open modal if it's not already open and we have a URL permlink and haven't checked yet
     if (
       urlPermlink &&
       snaps.length > 0 &&
@@ -136,17 +138,15 @@ export default function SnapsGrid({ username }: SnapsGridProps) {
       !isOpen &&
       !hasCheckedUrl
     ) {
-      // Find the snap index by permlink (author is inferred from username context)
       const foundSnapIndex = snaps.findIndex(
         (snap) => snap.permlink === urlPermlink
       );
       if (foundSnapIndex !== -1) {
         setSelectedSnapIndex(foundSnapIndex);
         setHasCheckedUrl(true);
-        // Small delay to ensure state is set before opening modal
         setTimeout(() => onOpen(), 50);
       } else {
-        setHasCheckedUrl(true); // Mark as checked even if not found
+        setHasCheckedUrl(true);
       }
     }
   }, [snaps, isLoading, onOpen, urlPermlink, isOpen, hasCheckedUrl]);
@@ -156,8 +156,6 @@ export default function SnapsGrid({ username }: SnapsGridProps) {
       const snap = snaps[snapIndex];
       setSelectedSnapIndex(snapIndex);
 
-      // Create clean URL: /user/snap-author/snap/permlink
-      // Use the snap's actual author for the URL to ensure correct context
       const cleanUrl = `/user/${snap.author}/snap/${snap.permlink}`;
       window.history.pushState({}, "", cleanUrl);
 
@@ -171,7 +169,6 @@ export default function SnapsGrid({ username }: SnapsGridProps) {
       const snap = snaps[newSnapIndex];
       setSelectedSnapIndex(newSnapIndex);
 
-      // Update URL with clean format using snap's author
       const cleanUrl = `/user/${snap.author}/snap/${snap.permlink}`;
       window.history.pushState({}, "", cleanUrl);
     },
@@ -179,27 +176,21 @@ export default function SnapsGrid({ username }: SnapsGridProps) {
   );
 
   const handleModalClose = useCallback(() => {
-    // Close the modal first
     onClose();
 
-    // Then update the URL
     const searchParams = new URLSearchParams(window.location.search);
     const hasSnapParam = searchParams.has("snap");
 
     if (hasSnapParam) {
-      // Remove snap parameter and update URL
       searchParams.delete("snap");
       const baseUrl = `/user/${username}?${searchParams.toString()}`;
       window.history.pushState({}, "", baseUrl);
     } else {
-      // Return to clean profile URL with snaps view
-      // Use the original username from props for consistency
       const baseUrl = `/user/${username}?view=snaps`;
       window.history.pushState({}, "", baseUrl);
     }
   }, [username, onClose]);
 
-  // Optimized infinite scroll with better debouncing and throttling
   useEffect(() => {
     if (!hasMore || isLoading) return;
 
@@ -213,7 +204,6 @@ export default function SnapsGrid({ username }: SnapsGridProps) {
           const documentHeight = document.documentElement.offsetHeight;
 
           if (scrollPosition >= documentHeight - 500) {
-            // Increased threshold for better UX
             if (hasMore && !isLoading) {
               loadMoreSnaps();
             }
@@ -245,7 +235,8 @@ export default function SnapsGrid({ username }: SnapsGridProps) {
   return (
     <>
       <Box
-        w="full"
+        maxWidth="container.lg"
+        overflowX="hidden"
         sx={{
           columnCount: { base: 2, md: 3, lg: 4 },
           columnGap: "0px",
@@ -253,9 +244,9 @@ export default function SnapsGrid({ username }: SnapsGridProps) {
       >
         {snaps.map((snap, index) => (
           <Box
-            key={`${snap.author}-${snap.permlink}`} // More specific key
+            key={`${snap.author}-${snap.permlink}`}
             mb="0px"
-            sx={{ breakInside: "avoid" }}
+            sx={{ breakInside: "avoid", display: "inline-block", width: "100%" }}
           >
             <SnapGridItem snap={snap} onClick={() => handleSnapClick(index)} />
           </Box>

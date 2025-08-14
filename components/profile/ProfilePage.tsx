@@ -7,7 +7,7 @@ import React, {
   useRef,
   useEffect,
 } from "react";
-import { Box, Alert, AlertIcon, Container, Center } from "@chakra-ui/react";
+import { Box, Alert, AlertIcon } from "@chakra-ui/react";
 import useHiveAccount from "@/hooks/useHiveAccount";
 import LoadingComponent from "../homepage/loadingComponent";
 import PostInfiniteScroll from "../blog/PostInfiniteScroll";
@@ -68,9 +68,8 @@ const ContentViews = memo(function ContentViews({
   };
   username: string;
 }) {
-  // Use conditional rendering with style display to avoid unmounting/remounting
   return (
-    <>
+    <Box maxWidth="container.lg">
       <Box display={viewMode === "videoparts" ? "block" : "none"}>
         {viewMode === "videoparts" && <VideoPartsView {...videoPartsProps} />}
       </Box>
@@ -87,7 +86,7 @@ const ContentViews = memo(function ContentViews({
           />
         )}
       </Box>
-    </>
+    </Box>
   );
 });
 
@@ -152,24 +151,19 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
   // Optimized view mode change handler with debouncing to prevent rapid switches
   const memoizedViewModeChange = useCallback(
     (mode: "grid" | "list" | "magazine" | "videoparts" | "snaps") => {
-      // Prevent rapid changes
       if (isTransitioning.current) return;
 
-      // Clear previous timer
       if (viewModeTimer.current) {
         clearTimeout(viewModeTimer.current);
       }
 
       isTransitioning.current = true;
 
-      // Debounce the view mode change to prevent rapid switching
       viewModeTimer.current = setTimeout(() => {
-        // Use requestIdleCallback if available for non-blocking execution
         if (window.requestIdleCallback) {
           window.requestIdleCallback(
             () => {
               handleViewModeChange(mode);
-              // Reset transition flag after a brief delay
               setTimeout(() => {
                 isTransitioning.current = false;
               }, 100);
@@ -177,7 +171,6 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
             { timeout: 100 }
           );
         } else {
-          // Fallback to requestAnimationFrame
           requestAnimationFrame(() => {
             handleViewModeChange(mode);
             setTimeout(() => {
@@ -185,7 +178,7 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
             }, 100);
           });
         }
-      }, 100); // Reduced to 100ms for better responsiveness
+      }, 100);
     },
     [handleViewModeChange]
   );
@@ -203,7 +196,6 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
 
   // Memoize chronologically sorted posts - only when needed for grid/list views
   const sortedPosts = useMemo(() => {
-    // Skip expensive sorting if we're in snaps or videoparts mode
     if (!["grid", "list", "magazine"].includes(viewMode)) {
       return [];
     }
@@ -214,7 +206,6 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
 
   // Memoize post-related props - only when needed for grid/list views
   const postProps = useMemo(() => {
-    // Skip creating props if not in grid/list mode
     if (!["grid", "list"].includes(viewMode)) {
       return {
         allPosts: [],
@@ -290,59 +281,58 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
           isOpen={viewMode === "magazine"}
           onClose={throttledCloseMagazine}
           username={username}
-          posts={sortedPosts} // Use pre-sorted posts
+          posts={sortedPosts}
         />
       )}
-      <Center>
-        <Container maxW="container.md" p={0} m={0}>
-          {/* Main Profile Content */}
-          <Box
-            id="scrollableDiv"
-            color="text"
-            maxW="container.lg"
-            mx="auto"
-            p={0}
-            m={0}
-            maxH="100vh"
-            overflowY="auto"
-            sx={{
-              "&::-webkit-scrollbar": { display: "none" },
-              scrollbarWidth: "none",
-            }}
-          >
-            {/* Cover Image - Now enabled for mobile too */}
-            <ProfileCoverImage
-              coverImage={profileData.coverImage}
-              username={username}
-            />
 
-            {/* Profile Header */}
-            <ProfileHeader
-              profileData={profileData}
-              username={username}
-              isOwner={isOwner}
-              user={user}
-              {...followProps}
-              onEditModalOpen={handleEditModalOpen}
-            />
+      <Box w="100%" h="100vh" px={8} >
+        <Box
+          id="scrollableDiv"
+          color="text"
+          w="100%"
+          maxW="container.lg" // Standardized to container.lg
+          mx={0}
+          p={0}
+          maxH="100vh"
+          overflowY="auto"
+          overflowX="hidden" // Added to clip horizontal overflow
+          sx={{
+            "&::-webkit-scrollbar": { display: "none" },
+            scrollbarWidth: "none",
+          }}
+        >
+          {/* Cover Image - Now enabled for mobile too */}
+          <ProfileCoverImage
+            coverImage={profileData.coverImage}
+            username={username}
+          />
 
-            {/* View Mode Selector */}
-            <ViewModeSelector
-              viewMode={viewMode}
-              onViewModeChange={memoizedViewModeChange}
-              isMobile={isMobile}
-            />
+          {/* Profile Header */}
+          <ProfileHeader
+            profileData={profileData}
+            username={username}
+            isOwner={isOwner}
+            user={user}
+            {...followProps}
+            onEditModalOpen={handleEditModalOpen}
+          />
 
-            {/* Content Views - Optimized conditional rendering */}
-            <ContentViews
-              viewMode={viewMode}
-              postProps={postProps}
-              videoPartsProps={videoPartsProps}
-              username={username}
-            />
-          </Box>
-        </Container>
-      </Center>
+          {/* View Mode Selector */}
+          <ViewModeSelector
+            viewMode={viewMode}
+            onViewModeChange={memoizedViewModeChange}
+            isMobile={isMobile}
+          />
+
+          {/* Content Views - Optimized conditional rendering */}
+          <ContentViews
+            viewMode={viewMode}
+            postProps={postProps}
+            videoPartsProps={videoPartsProps}
+            username={username}
+          />
+        </Box>
+      </Box>
 
       {/* Edit Profile Modal - Only render when modal is open */}
       {isEditModalOpen && (

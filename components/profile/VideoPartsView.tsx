@@ -81,7 +81,7 @@ const VideoPartsView = memo(function VideoPartsView({
   }, [profileData.video_parts, updateVideoParts]);
 
   return (
-    <Box>
+    <Box mx="auto" maxWidth="container.lg"> {/* Center and constrain width */}
       <Text
         fontSize={{ base: "4xl", md: "7xl" }}
         fontWeight="extrabold"
@@ -107,7 +107,7 @@ const VideoPartsView = memo(function VideoPartsView({
         onClose={onClose}
         onNewVideoPart={handleNewVideoPart}
       />
-      <VStack spacing={4}>
+      <VStack spacing={4} maxWidth="100%"> {/* Constrain VStack width */}
         {profileData.video_parts && profileData.video_parts.length > 0 ? (
           (profileData.video_parts as unknown as VideoPart[]).map(
             (part, index) => (

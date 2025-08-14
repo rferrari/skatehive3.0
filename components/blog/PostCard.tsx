@@ -28,7 +28,7 @@ import {
   extractYoutubeLinks,
   LinkWithDomain,
   extractImageUrls,
-} from "@/lib/utils/extractImageUrls"; // Import YouTube extraction function
+} from "@/lib/utils/extractImageUrls";
 import useHivePower from "@/hooks/useHivePower";
 import { parseJsonMetadata } from "@/lib/hive/metadata-utils";
 import MatrixOverlay from "@/components/graphics/MatrixOverlay";
@@ -49,21 +49,21 @@ interface PostCardProps {
   post: Discussion;
   listView?: boolean;
   hideAuthorInfo?: boolean;
+  maxWidth?: string;
 }
 
 export default function PostCard({
   post,
   listView = false,
   hideAuthorInfo = false,
+  maxWidth = "100%",
 }: PostCardProps) {
   const { title, author, body, json_metadata, created } = post;
   const postDate = getPostDate(created);
 
-  // Use useMemo to parse JSON only when json_metadata changes
   const metadata = useMemo((): PostJsonMetadata => {
     const parsed = parseJsonMetadata(json_metadata);
-    // Ensure we always return a valid object, even if parseJsonMetadata fails
-    return (parsed && typeof parsed === 'object') ? parsed : {};
+    return (parsed && typeof parsed === "object") ? parsed : {};
   }, [json_metadata]);
 
   const [imageUrls, setImageUrls] = useState<string[]>([]);
@@ -77,17 +77,12 @@ export default function PostCard({
     estimateVoteValue,
   } = useHivePower(user);
   const [activeVotes, setActiveVotes] = useState(post.active_votes || []);
-  const [payoutValue, setPayoutValue] = useState(
-    parseFloat(getPayoutValue(post))
-  );
+  const [payoutValue, setPayoutValue] = useState(parseFloat(getPayoutValue(post)));
   const [voted, setVoted] = useState(
-    post.active_votes?.some(
-      (item) => item.voter.toLowerCase() === user?.toLowerCase()
-    )
+    post.active_votes?.some((item) => item.voter.toLowerCase() === user?.toLowerCase())
   );
   const router = useRouter();
-  const default_thumbnail =
-    "https://images.hive.blog/u/" + author + "/avatar/large";
+  const default_thumbnail = "https://images.hive.blog/u/" + author + "/avatar/large";
   const [visibleImages, setVisibleImages] = useState<number>(3);
   const {
     isOpen: isPayoutOpen,
@@ -97,32 +92,22 @@ export default function PostCard({
   } = useDisclosure();
   const [showMatrix, setShowMatrix] = useState(false);
 
-  // Calculate days remaining for pending payout
   const createdDate = new Date(post.created);
   const now = new Date();
   const timeDifferenceInMs = now.getTime() - createdDate.getTime();
   const timeDifferenceInDays = timeDifferenceInMs / (1000 * 60 * 60 * 24);
   const daysRemaining = Math.max(0, 7 - Math.floor(timeDifferenceInDays));
   const isPending = timeDifferenceInDays < 7;
-  // Calculate payout timestamp (creation + 7 days)
 
   useEffect(() => {
     let images: string[] = [];
     if (metadata.image) {
-      images = Array.isArray(metadata.image)
-        ? metadata.image
-        : [metadata.image];
+      images = Array.isArray(metadata.image) ? metadata.image : [metadata.image];
     }
-    // Extract additional images from markdown content
     const markdownImages = extractImageUrls(body);
     images = images.concat(markdownImages);
 
-    // Filter out failed images only
-    const validImages = images.filter((img) => {
-      if (failedImages.has(img)) return false;
-      return true;
-    });
-
+    const validImages = images.filter((img) => !failedImages.has(img));
     if (validImages.length > 0) {
       setImageUrls(validImages);
     } else {
@@ -136,79 +121,58 @@ export default function PostCard({
     }
   }, [body, metadata, default_thumbnail, post, failedImages]);
 
-  // **Function to load more slides**
   function handleSlideChange(swiper: any) {
-    // Check if user is reaching the end of currently visible images
-    if (
-      swiper.activeIndex === visibleImages - 1 &&
-      visibleImages < imageUrls.length
-    ) {
-      setVisibleImages((prev) => Math.min(prev + 3, imageUrls.length)); // Load 3 more slides
+    if (swiper.activeIndex === visibleImages - 1 && visibleImages < imageUrls.length) {
+      setVisibleImages((prev) => Math.min(prev + 3, imageUrls.length));
     }
   }
 
-  // Modified to only stop propagation
-  function stopPropagation(e: React.MouseEvent) {
+  function stopPropagation(e: Event) {
     e.stopPropagation();
   }
 
-  // Enhanced function to handle image load errors with fallback
   function handleImageError(e: React.SyntheticEvent<HTMLImageElement, Event>) {
     const img = e.currentTarget;
     const originalSrc = img.src;
 
-    // Track failed images to avoid retrying them
     setFailedImages((prev) => new Set(prev).add(originalSrc));
 
-    // If this is not already the fallback image, try to set it
     if (img.src !== default_thumbnail) {
       img.src = default_thumbnail;
-      img.onerror = null; // Prevent infinite loop
+      img.onerror = null;
     }
 
-    // Prevent the error from bubbling up
     e.preventDefault();
     e.stopPropagation();
-
-    // Return false to prevent the default error handling
     return false;
   }
 
-  // Extract summary for listView: remove image markdown, allow up to 3 lines, no char limit
   let summarySource = body;
   if (listView) {
-    summarySource = summarySource.replace(/!\[[^\]]*\]\([^\)]*\)/g, ""); // Remove ![alt](url)
-    summarySource = summarySource.replace(/!\[\]\([^\)]*\)/g, ""); // Remove ![](url)
-    // Remove markdown links [text](url)
+    summarySource = summarySource.replace(/!\[[^\]]*\]\([^\)]*\)/g, "");
+    summarySource = summarySource.replace(/!\[\]\([^\)]*\)/g, "");
     summarySource = summarySource.replace(/\[[^\]]*\]\([^\)]*\)/g, "");
-    // Remove raw URLs (http/https/ftp)
     summarySource = summarySource.replace(
       /https?:\/\/[\w\-._~:/?#[\]@!$&'()*+,;=%]+/g,
       ""
     );
-    // Remove HTML tags
     summarySource = summarySource.replace(/<[^>]+>/g, "");
   }
-  // For listView, do not slice to a char limit; let noOfLines handle truncation
   const summary = summarySource
     .replace(/[#*_`>\[\]()!\-]/g, "")
     .replace(/\n+/g, " ");
 
-  // Deduplicate votes by voter (keep the last occurrence)
   const uniqueVotesMap = new Map();
   activeVotes.forEach((vote) => {
     uniqueVotesMap.set(vote.voter, vote);
   });
   const uniqueVotes = Array.from(uniqueVotesMap.values());
 
-  // Helper to convert Asset or string to string
   function assetToString(val: string | { toString: () => string }): string {
     return typeof val === "string" ? val : val.toString();
   }
-  // Helper to parse payout strings like "1.234 HBD"
-  function parsePayout(
-    val: string | { toString: () => string } | undefined
-  ): number {
+
+  function parsePayout(val: string | { toString: () => string } | undefined): number {
     if (!val) return 0;
     const str = assetToString(val);
     return parseFloat(str.replace(" HBD", "").replace(",", ""));
@@ -224,18 +188,19 @@ export default function PostCard({
         display="flex"
         flexDirection="row"
         bg="background"
-        border={"1px solid"}
+        border="1px solid"
         borderColor="muted"
+        maxWidth={maxWidth}
       >
-        {/* Thumbnail */}
         <Box
-          w="160px"
+          w={{ base: "120px", md: "160px" }}
           h="100%"
           flexShrink={0}
           display="flex"
           alignItems="center"
           justifyContent="center"
           bg="muted"
+          maxWidth="100%"
         >
           {imageUrls.length > 0 ? (
             <Image
@@ -261,8 +226,7 @@ export default function PostCard({
             />
           )}
         </Box>
-        {/* Content */}
-        <Flex direction="column" flex={1} p={4} minW={0}>
+        <Flex direction="column" flex={1} p={4} minW={0} maxWidth="100%">
           <Box flex={1} overflow="hidden">
             <Link
               href={`/post/${author}/${post.permlink}`}
@@ -294,7 +258,6 @@ export default function PostCard({
               {summary}
             </Text>
           </Box>
-          {/* Horizontal buttons at bottom right - always visible */}
           <Flex
             alignItems="center"
             justifyContent="flex-end"
@@ -351,8 +314,7 @@ export default function PostCard({
                         <b>Pending</b>
                       </div>
                       <div>
-                        {daysRemaining} day{daysRemaining !== 1 ? "s" : ""}{" "}
-                        until payout
+                        {daysRemaining} day{daysRemaining !== 1 ? "s" : ""} until payout
                       </div>
                     </div>
                   ) : (
@@ -406,7 +368,7 @@ export default function PostCard({
         .custom-swiper .swiper-pagination-bullet {
           width: 6px;
           height: 6px;
-          border-radius: 0; /* Make the dots squared */
+          border-radius: 0;
         }
 
         .subtle-pulse {
@@ -430,9 +392,9 @@ export default function PostCard({
         borderColor="muted"
         overflow="hidden"
         height="100%"
+        maxWidth={maxWidth}
         cursor="default"
       >
-        {/* MatrixOverlay covers the whole card, only when showMatrix is true */}
         {showMatrix && (
           <Box
             position="absolute"
@@ -455,14 +417,15 @@ export default function PostCard({
           height="100%"
           position="relative"
           zIndex={2}
+          maxWidth={maxWidth}
         >
-          {/* Only show author info if not hidden */}
           {!hideAuthorInfo && (
             <Box mb={4}>
               <Flex
                 alignItems="center"
                 minWidth={0}
                 justifyContent="space-between"
+                maxWidth={maxWidth}
               >
                 <Link
                   href={`/@${author}`}
@@ -499,21 +462,21 @@ export default function PostCard({
             </Box>
           )}
 
-          {/* Content Box with Green Border */}
           <Box
             border="2px solid"
             borderColor="muted"
             borderRadius="none"
             overflow="hidden"
             bg="background"
+            maxWidth={maxWidth}
           >
-            {/* Image Section */}
             <Box
               flex="1"
               display="flex"
               alignItems="flex-end"
               justifyContent="center"
               zIndex={2}
+              maxWidth={maxWidth}
             >
               {imageUrls.length > 0 ? (
                 <Swiper
@@ -524,29 +487,20 @@ export default function PostCard({
                   modules={[Navigation, Pagination]}
                   onSlideChange={handleSlideChange}
                   className="custom-swiper"
+                  style={{ maxWidth: "100%" }}
                   onSwiper={(swiper) => {
                     setTimeout(() => {
                       if (!swiper.el) return;
-                      const next = swiper.el.querySelector(
-                        ".swiper-button-next"
-                      );
-                      const prev = swiper.el.querySelector(
-                        ".swiper-button-prev"
-                      );
-                      if (next)
-                        next.addEventListener("click", (e) =>
-                          e.stopPropagation()
-                        );
-                      if (prev)
-                        prev.addEventListener("click", (e) =>
-                          e.stopPropagation()
-                        );
+                      const next = swiper.el.querySelector(".swiper-button-next");
+                      const prev = swiper.el.querySelector(".swiper-button-prev");
+                      if (next) next.addEventListener("click", stopPropagation);
+                      if (prev) prev.addEventListener("click", stopPropagation);
                     }, 0);
                   }}
                 >
                   {imageUrls.slice(0, visibleImages).map((url, index) => (
                     <SwiperSlide key={index}>
-                      <Box h="200px" w="100%" sx={{ userSelect: "none" }}>
+                      <Box h="200px" w="100%" maxWidth="100%" sx={{ userSelect: "none" }}>
                         <Image
                           src={url}
                           alt={title}
@@ -568,35 +522,38 @@ export default function PostCard({
                   navigation={true}
                   modules={[Navigation, Pagination]}
                   className="custom-swiper"
+                  style={{ maxWidth: "100%" }}
                   onSwiper={(swiper) => {
                     setTimeout(() => {
                       if (!swiper.el) return;
-                      const next = swiper.el.querySelector(
-                        ".swiper-button-next"
-                      );
-                      const prev = swiper.el.querySelector(
-                        ".swiper-button-prev"
-                      );
-                      if (next)
-                        next.addEventListener("click", (e) =>
-                          e.stopPropagation()
-                        );
-                      if (prev)
-                        prev.addEventListener("click", (e) =>
-                          e.stopPropagation()
-                        );
+                      const next = swiper.el.querySelector(".swiper-button-next");
+                      const prev = swiper.el.querySelector(".swiper-button-prev");
+                      if (next) next.addEventListener("click", stopPropagation);
+                      if (prev) prev.addEventListener("click", stopPropagation);
                     }, 0);
                   }}
                 >
                   {youtubeLinks.map((link, index) => (
                     <SwiperSlide key={index}>
-                      <Box h="200px" w="100%">
+                      <Box
+                        h="200px"
+                        w="100%"
+                        maxWidth="100%"
+                        position="relative"
+                        paddingTop="56.25%"
+                      >
                         <iframe
                           src={link.url}
                           title={`YouTube video from ${link.domain}`}
-                          width="100%"
-                          height="100%"
-                          frameBorder="0"
+                          style={{
+                            position: "absolute",
+                            top: 0,
+                            left: 0,
+                            width: "100%",
+                            height: "100%",
+                            maxWidth: "100%",
+                            border: 0,
+                          }}
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                           allowFullScreen
                         ></iframe>
@@ -605,7 +562,7 @@ export default function PostCard({
                   ))}
                 </Swiper>
               ) : (
-                <Box h="200px" w="100%">
+                <Box h="200px" w="100%" maxWidth="100%">
                   <Image
                     src={default_thumbnail}
                     alt="default thumbnail"
@@ -619,7 +576,6 @@ export default function PostCard({
               )}
             </Box>
 
-            {/* Title Section with border separator */}
             <Link
               href={`/post/${author}/${post.permlink}`}
               _hover={{ textDecoration: "none" }}
@@ -640,6 +596,7 @@ export default function PostCard({
                 onMouseLeave={() => setShowMatrix(false)}
                 position="relative"
                 zIndex={3}
+                maxWidth={maxWidth}
               >
                 <Text
                   className="post-title-text"
@@ -682,6 +639,7 @@ export default function PostCard({
                 justifyContent="space-between"
                 alignItems="center"
                 gap={6}
+                maxWidth={maxWidth}
               >
                 <UpvoteButton
                   discussion={post}
@@ -709,8 +667,7 @@ export default function PostCard({
                           <b>Pending</b>
                         </div>
                         <div>
-                          {daysRemaining} day{daysRemaining !== 1 ? "s" : ""}{" "}
-                          until payout
+                          {daysRemaining} day{daysRemaining !== 1 ? "s" : ""} until payout
                         </div>
                       </Box>
                     ) : (

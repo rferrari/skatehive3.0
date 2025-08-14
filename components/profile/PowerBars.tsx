@@ -1,23 +1,26 @@
 "use client";
 import React, { memo } from "react";
-import { Box, Text, Flex, Tooltip } from "@chakra-ui/react";
+import { Box, Text, Flex, Tooltip, useToken } from "@chakra-ui/react";
 
 interface PowerBarsProps {
   vpPercent: string;
   rcPercent: string;
-  height?: number;
-  width?: number;
+  barHeight?: number; // bar thickness
+  barWidth?: number;  // bar length
+  totalHeight?: number; // match avatar size (component height)
 }
 
-const PowerBars = memo(function PowerBars({ 
-  vpPercent, 
-  rcPercent, 
-  height = 100, 
-  width = 6 
+const PowerBars = memo(function PowerBars({
+  vpPercent,
+  rcPercent,
+  barHeight = 10,
+  barWidth = 100,
+  totalHeight = 100 // match Avatar boxSize
 }: PowerBarsProps) {
-  // Parse percentage strings to numbers
+  const [primary, accent, error] = useToken("colors", ["primary", "accent", "error"]);
+
   const parsePercentage = (percentStr: string): number => {
-    const cleaned = percentStr.replace('%', '');
+    const cleaned = percentStr.replace("%", "");
     const parsed = parseFloat(cleaned);
     return isNaN(parsed) ? 0 : Math.min(100, Math.max(0, parsed));
   };
@@ -25,69 +28,65 @@ const PowerBars = memo(function PowerBars({
   const vpValue = parsePercentage(vpPercent);
   const rcValue = parsePercentage(rcPercent);
 
-  // Calculate fill widths (rotated 90 degrees)
-  const vpFillWidth = (vpValue / 100) * height;
-  const rcFillWidth = (rcValue / 100) * height;
-
   return (
-    <Flex direction="column" align="center" gap={3} minW="fit-content" maxW="fit-content">
-      {/* Bars Container */}
-      <Flex direction="column" gap={3} align="center" minW="fit-content" maxW="fit-content">
-        {/* Voting Power Bar */}
+    <Flex
+      direction="column"
+      justify="center"
+      h={`${totalHeight}px`}
+      gap={8} // space between VP and RC rows
+    >
+      {/* VP Row */}
+      <Flex align="center" gap={6} w={`${barWidth + 40}px`}>
+        <Text fontSize="xs" color="primary" fontWeight="bold" w="24px" textAlign="right">
+          VP
+        </Text>
         <Tooltip label={`Voting Power: ${vpPercent}`} placement="top">
-          <Box position="relative" cursor="pointer" minW={`${height}px`} maxW={`${height}px`} w={`${height}px`}>
-            <svg width={height} height={width} viewBox={`0 0 ${height} ${width}`}>
-              {/* Background track */}
-              <rect
-                x="0"
-                y="0"
-                width={height}
-                height={width}
-                rx="4"
-                fill="var(--chakra-colors-error)"
-                opacity="0.3"
-              />
-              {/* Fill */}
-              <rect
-                x="0"
-                y="0"
-                width={vpFillWidth}
-                height={width}
-                rx="4"
-                fill="var(--chakra-colors-primary)"
-                opacity="0.8"
-              />
-            </svg>
-
+          <Box
+            position="relative"
+            flex="1"
+            h={`${barHeight}px`}
+            borderRadius="full"
+            bg={`${error}33`}
+            overflow="hidden"
+          >
+            <Box
+              position="absolute"
+              left="0"
+              top="0"
+              h="100%"
+              w={`${vpValue}%`}
+              bg={primary}
+              borderRadius="full"
+              transition="width 0.4s ease"
+            />
           </Box>
         </Tooltip>
+      </Flex>
 
-        {/* Resource Credits Bar */}
+      {/* RC Row */}
+      <Flex align="center" gap={6} w={`${barWidth + 40}px`}>
+        <Text fontSize="xs" color="accent" fontWeight="bold" w="24px" textAlign="right">
+          RC
+        </Text>
         <Tooltip label={`Resource Credits: ${rcPercent}`} placement="top">
-          <Box position="relative" cursor="pointer" minW={`${height}px`} maxW={`${height}px`} w={`${height}px`}>
-            <svg width={height} height={width} viewBox={`0 0 ${height} ${width}`}>
-              {/* Background track */}
-              <rect
-                x="0"
-                y="0"
-                width={height}
-                height={width}
-                rx="4"
-                fill="var(--chakra-colors-error)"
-                opacity="0.3"
-              />
-              {/* Fill */}
-              <rect
-                x="0"
-                y="0"
-                width={rcFillWidth}
-                height={width}
-                rx="4"
-                fill="var(--chakra-colors-accent)"
-                opacity="0.8"
-              />
-            </svg>
-
+          <Box
+            position="relative"
+            flex="1"
+            h={`${barHeight}px`}
+            borderRadius="full"
+            bg={`${error}33`}
+            overflow="hidden"
+          >
+            <Box
+              position="absolute"
+              left="0"
+              top="0"
+              h="100%"
+              w={`${rcValue}%`}
+              bg={accent}
+              borderRadius="full"
+              transition="width 0.4s ease"
+            />
           </Box>
         </Tooltip>
       </Flex>

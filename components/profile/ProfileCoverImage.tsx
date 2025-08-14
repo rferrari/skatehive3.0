@@ -14,9 +14,9 @@ const ProfileCoverImage = memo(function ProfileCoverImage({
   return (
     <Box
       position="relative"
-      w={{ base: "100vw", md: "100%" }}
-      maxW={{ base: "100vw", md: "container.lg" }}
-      mx={{ base: "unset", md: "auto" }}
+      w="100%" // Simplified to 100% for consistency
+      maxW="container.lg" // Standardized to container.lg
+      mx="auto" // Center across all breakpoints
       overflow="hidden"
       height={{ base: "120px", md: "200px" }}
       p={0}
@@ -26,7 +26,7 @@ const ProfileCoverImage = memo(function ProfileCoverImage({
       <Image
         src={coverImage}
         alt={`${username} cover`}
-        w={{ base: "100vw", md: "100%" }}
+        w="100%" // Matches parent width
         h={{ base: "120px", md: "200px" }}
         objectFit="cover"
         fallback={<Box height="100%" />}

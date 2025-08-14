@@ -43,7 +43,7 @@ const ViewModeSelector = memo(function ViewModeSelector({
   }, [isMobile, onViewModeChange]);
 
   return (
-    <Box my={4}>
+    <Box my={4} mx="auto" maxWidth="container.lg" w="100%">
       <Tabs
         index={currentTabIndex}
         onChange={handleTabChange}
