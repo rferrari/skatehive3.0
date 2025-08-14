@@ -39,6 +39,7 @@ import { AiOutlineHeart, AiFillHeart } from "react-icons/ai";
 import { BiMessage } from "react-icons/bi";
 import { useAioha } from "@aioha/react-ui";
 import useIsMobile from "@/hooks/useIsMobile";
+import { useFarcasterMiniapp } from "@/hooks/useFarcasterMiniapp";
 import Snap from "./Snap";
 import SnapComposer from "./SnapComposer";
 import { EnhancedMarkdownRenderer } from "../markdown/EnhancedMarkdownRenderer";
@@ -75,6 +76,11 @@ const Conversation = ({
   // ALL HOOKS MUST BE CALLED AT THE TOP LEVEL
   const { user, aioha } = useAioha();
   const isMobile = useIsMobile();
+  const { isInMiniapp } = useFarcasterMiniapp();
+  
+  // Use mobile UI for both mobile devices and Farcaster miniapps
+  const useSmallScreenUI = isMobile || isInMiniapp;
+  
   const { comments, isLoading, error } = useComments(
     discussion.author,
     discussion.permlink,
@@ -113,10 +119,10 @@ const Conversation = ({
 
   // Effects
   useEffect(() => {
-    if (isMobile) {
+    if (useSmallScreenUI) {
       window.scrollTo(0, 0);
     }
-  }, [isMobile]);
+  }, [useSmallScreenUI]);
 
   // Helper function to format time like Instagram
   const formatTimeAgo = useCallback((dateString: string) => {
@@ -463,15 +469,15 @@ const Conversation = ({
     return (
       <Box
         h="100vh"
-        bg={isMobile ? mobileBgColor : "background"}
+        bg={useSmallScreenUI ? mobileBgColor : "background"}
         display="flex"
         alignItems="center"
         justifyContent="center"
-        borderTopRadius={isMobile ? "20px" : "0"}
+        borderTopRadius={useSmallScreenUI ? "20px" : "0"}
       >
         <VStack spacing={4}>
           <Spinner size="xl" color={primaryColor} />
-          <Text color={isMobile ? mobileTextColor : textColor}>
+          <Text color={useSmallScreenUI ? mobileTextColor : textColor}>
             Loading conversation...
           </Text>
         </VStack>
@@ -484,11 +490,11 @@ const Conversation = ({
     return (
       <Box
         h="100vh"
-        bg={isMobile ? mobileBgColor : "background"}
+        bg={useSmallScreenUI ? mobileBgColor : "background"}
         display="flex"
         alignItems="center"
         justifyContent="center"
-        borderTopRadius={isMobile ? "20px" : "0"}
+        borderTopRadius={useSmallScreenUI ? "20px" : "0"}
         p={4}
       >
         <Alert status="error" borderRadius="md">
@@ -639,8 +645,8 @@ const Conversation = ({
     );
   };
 
-  // Mobile Instagram-style component
-  const MobileConversation = () => (
+  // Mobile Instagram-style component (now used for both mobile and miniapp)
+  const SmallScreenConversation = () => (
     <Box
       bg={"background"}
       color={textColor}
@@ -937,8 +943,8 @@ const Conversation = ({
     </Box>
   );
 
-  // For mobile, use a full-screen Drawer that slides up from bottom like Instagram
-  if (isMobile) {
+  // For mobile and miniapp, use a full-screen Drawer that slides up from bottom like Instagram
+  if (useSmallScreenUI) {
     return (
       <Drawer
         isOpen={isOpen}
@@ -959,7 +965,7 @@ const Conversation = ({
           boxShadow="0 -4px 20px rgba(0, 0, 0, 0.3)"
           overflow="hidden"
         >
-          <MobileConversation />
+          <SmallScreenConversation />
         </DrawerContent>
       </Drawer>
     );
