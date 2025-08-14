@@ -118,7 +118,8 @@
       "@types/react": "^19.1.6",
       "@types/react-dom": "^19.1.5",
       "@farcaster/frame-sdk": "npm:@farcaster/miniapp-sdk@^0.1.7",
-      "@farcaster/frame-wagmi-connector": "npm:@farcaster/miniapp-wagmi-connector@^1.0.0"
+      "@farcaster/frame-wagmi-connector": "npm:@farcaster/miniapp-wagmi-connector@^1.0.0",
+      "cuer": "0.0.2"
     }
   }
 }
