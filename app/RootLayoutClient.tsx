@@ -17,6 +17,7 @@ import { NotificationProvider } from "@/contexts/NotificationContext";
 import { Analytics } from "@vercel/analytics/next";
 import InitFrameSDK from "@/hooks/init-frame-sdk";
 import { SkaterData } from "@/types/leaderboard";
+import "@/lib/utils/mobileInputFix"; // Import mobile input fix utility
 
 export default function RootLayoutClient({
   children,

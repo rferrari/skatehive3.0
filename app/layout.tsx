@@ -113,6 +113,8 @@ export const metadata: Metadata = {
 export const viewport = {
   width: "device-width",
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({
@@ -133,6 +135,50 @@ export default function RootLayout({
         <link rel="preconnect" href="https://ipfs.skatehive.app" />
         {/* Force reload of global styles for modal overrides */}
         {/* <style>{`@import url('/app/globals.css');`}</style> */}
+        
+        {/* Mobile input zoom prevention script */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                function preventInputZoom() {
+                  if (window.innerWidth <= 768) {
+                    const inputs = document.querySelectorAll('input, textarea, select');
+                    inputs.forEach(input => {
+                      if (input.style.fontSize !== '16px') {
+                        input.style.fontSize = '16px';
+                        input.style.webkitTextSizeAdjust = '100%';
+                        input.style.webkitAppearance = 'none';
+                        input.style.appearance = 'none';
+                        input.style.minHeight = '44px';
+                        input.style.zoom = '1';
+                      }
+                    });
+                  }
+                }
+                
+                // Run on load
+                if (document.readyState === 'loading') {
+                  document.addEventListener('DOMContentLoaded', preventInputZoom);
+                } else {
+                  preventInputZoom();
+                }
+                
+                // Run when new content is added (for dynamic modals like AIOHA)
+                if (typeof MutationObserver !== 'undefined') {
+                  const observer = new MutationObserver(preventInputZoom);
+                  observer.observe(document.body, { 
+                    childList: true, 
+                    subtree: true 
+                  });
+                }
+                
+                // Run periodically as fallback
+                setInterval(preventInputZoom, 1000);
+              })();
+            `,
+          }}
+        />
       </head>
       <body className="chakra-ui-dark">
         <div id="splash-root">

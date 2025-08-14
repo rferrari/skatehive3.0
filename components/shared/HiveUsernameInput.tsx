@@ -16,6 +16,7 @@ import {
 } from "@chakra-ui/react";
 import { FaCheck, FaTimes } from "react-icons/fa";
 import { useHiveUserValidation } from "@/hooks/useHiveUserValidation";
+import useIsMobile from "@/hooks/useIsMobile";
 
 interface UsernameSuggestion {
   username: string;
@@ -58,6 +59,8 @@ export default function HiveUsernameInput({
 
   const { validateUsername, searchUsernames, getCachedValidation } =
     useHiveUserValidation();
+
+  const isMobile = useIsMobile();
 
   // Color mode values
   const bgColor = useColorModeValue("white", "gray.800");
@@ -221,6 +224,7 @@ export default function HiveUsernameInput({
             onChange={handleInputChange}
             placeholder={placeholder}
             borderColor={getBorderColor()}
+            fontSize={isMobile ? "16px" : "md"}
             _focus={{
               borderColor: validationState.isValid ? "green.400" : "blue.400",
               boxShadow: `0 0 0 1px ${

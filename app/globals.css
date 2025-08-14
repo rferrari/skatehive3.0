@@ -30,6 +30,10 @@ body {
   /* Hide scrollbar for all browsers */
   scrollbar-width: none;
   /* Firefox */
+  /* Prevent zoom on mobile devices */
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 html::-webkit-scrollbar,
@@ -41,6 +45,43 @@ body::-webkit-scrollbar {
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+}
+
+/* Prevent mobile zoom on input focus */
+@media screen and (max-width: 768px) {
+  input[type="text"],
+  input[type="email"], 
+  input[type="password"],
+  input[type="number"],
+  input[type="search"],
+  input[type="url"],
+  textarea,
+  select {
+    font-size: 16px !important;
+    min-height: 44px !important;
+    -webkit-text-size-adjust: 100% !important;
+  }
+  
+  /* Specific fix for AIOHA modal inputs */
+  #aioha-modal input[type="text"],
+  #aioha-modal input[type="email"],
+  #aioha-modal input[type="password"],
+  #aioha-modal input[type="number"],
+  #aioha-modal input[type="search"],
+  #aioha-modal input[type="url"],
+  #aioha-modal input,
+  #aioha-modal textarea,
+  #aioha-modal select,
+  div[id="aioha-modal"] input,
+  .aioha-modal input,
+  .aioha-modal-content input {
+    font-size: 16px !important;
+    min-height: 44px !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    -webkit-text-size-adjust: 100% !important;
+    zoom: 1 !important;
   }
 }
 
@@ -144,15 +185,35 @@ body.show-splash #splash-root {
 
 /* --- Aioha Modal Customization --- */
 #aioha-modal {
-  background: #000 !important;
+  background: transparent !important;
   color: #7fff00 !important;
   /* border-radius: 18px !important; */
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25) !important;
+  box-shadow: none !important;
   /* space for image */
 }
 
 #aioha-modal::before {
   display: none !important;
+}
+
+/* Make the modal overlay transparent too */
+#aioha-modal ~ div[role="presentation"],
+.aioha-modal-overlay,
+div[role="presentation"] {
+  background: rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Ensure the modal backdrop is subtle */
+#aioha-modal::backdrop,
+.aioha-backdrop {
+  background: rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Make any modal wrapper containers transparent */
+div[class*="aioha"],
+.aioha-modal-wrapper,
+[data-aioha] {
+  background: transparent !important;
 }
 
 #aioha-modal .aioha-modal-content {
@@ -257,6 +318,70 @@ body.show-splash #splash-root {
 #aioha-modal button.text-gray-400:hover {
   background: #222 !important;
   color: #fff !important;
+}
+
+/* AIOHA Modal Input Styling */
+#aioha-modal input {
+  background: #111 !important;
+  border: 1px solid #333 !important;
+  color: #7fff00 !important;
+  border-radius: 6px !important;
+  padding: 8px 12px !important;
+  font-family: 'VT323', monospace !important;
+  font-size: 1.1rem !important;
+}
+
+#aioha-modal input:focus {
+  border-color: #7fff00 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(127, 255, 0, 0.2) !important;
+}
+
+#aioha-modal input::placeholder {
+  color: #666 !important;
+  font-family: 'VT323', monospace !important;
+}
+
+/* Mobile-specific input fixes for AIOHA modal */
+@media screen and (max-width: 768px) {
+  #aioha-modal input,
+  #aioha-modal input[type="text"],
+  #aioha-modal input[type="email"],
+  #aioha-modal input[type="password"],
+  #aioha-modal input[type="search"],
+  div[id="aioha-modal"] input,
+  .aioha-modal input,
+  .aioha-modal-content input,
+  [role="dialog"] input,
+  [data-aioha] input {
+    font-size: 16px !important;
+    min-height: 44px !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    transform: translateZ(0) !important;
+    -webkit-text-size-adjust: 100% !important;
+    zoom: 1 !important;
+  }
+  
+  /* Prevent any zoom on AIOHA modal container */
+  #aioha-modal {
+    -webkit-text-size-adjust: 100% !important;
+    -moz-text-size-adjust: 100% !important;
+    text-size-adjust: 100% !important;
+  }
+  
+  /* Ensure modal stays properly positioned on mobile */
+  #aioha-modal,
+  #aioha-modal[role="dialog"] {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: calc(100vw - 32px) !important;
+    max-width: 400px !important;
+    max-height: 80vh !important;
+    overflow-y: auto !important;
+  }
 }
 
 /* Modal body */
@@ -418,4 +543,46 @@ body.show-splash #splash-root {
   display: none !important;
   width: 0 !important;
   height: 0 !important;
+}
+
+/* Ultimate mobile input zoom prevention - catch all third-party inputs */
+@media screen and (max-width: 768px) {
+  * input,
+  * input[type="text"],
+  * input[type="email"],
+  * input[type="password"],
+  * input[type="number"],
+  * input[type="search"],
+  * input[type="url"],
+  * textarea,
+  * select,
+  [class*="input"],
+  [class*="Input"],
+  [id*="input"],
+  [id*="Input"],
+  input[placeholder*="Enter"],
+  input[placeholder*="enter"],
+  input[placeholder*="Username"],
+  input[placeholder*="username"] {
+    font-size: 16px !important;
+    min-height: 44px !important;
+    -webkit-text-size-adjust: 100% !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    zoom: 1 !important;
+    transform: translateZ(0) !important;
+  }
+  
+  /* Force prevent zoom on any modal or dialog inputs */
+  [role="dialog"] input,
+  [role="modal"] input,
+  .modal input,
+  .Modal input {
+    font-size: 16px !important;
+    min-height: 44px !important;
+    -webkit-text-size-adjust: 100% !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    zoom: 1 !important;
+  }
 }
