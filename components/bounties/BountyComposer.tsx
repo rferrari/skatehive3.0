@@ -115,7 +115,12 @@ export default function BountyComposer({
     // Add image markdown
     if (compressedImages.length > 0) {
       const imageMarkup = compressedImages
-        .map((img) => `![${img.caption || "image"}](${img.url})`)
+        .map((img) => {
+          const caption = img.caption;
+          // Only include caption if it's meaningful (not empty and not just "image")
+          const meaningfulCaption = caption && caption.trim() && caption.trim() !== "image" ? caption : "";
+          return `![${meaningfulCaption}](${img.url})`;
+        })
         .join("\n");
       bountyBody += `\n\n${imageMarkup}`;
     }

@@ -135,9 +135,12 @@ export default function SpotSnapComposer({
     if (validUrls.length > 0) {
       const imageMarkup = validUrls
         .map(
-          (url: string | null, idx: number) =>
-            `![${compressedImages[idx]?.caption || spotName}](${url?.toString() || ""
-            })`
+          (url: string | null, idx: number) => {
+            const caption = compressedImages[idx]?.caption;
+            // Only include caption if it's meaningful (not empty and not just the spot name)
+            const meaningfulCaption = caption && caption.trim() && caption.trim() !== spotName ? caption : "";
+            return `![${meaningfulCaption}](${url?.toString() || ""})`;
+          }
         )
         .join("\n");
       commentBody += `\n\n${imageMarkup}`;

@@ -4,6 +4,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
 import { EnhancedMarkdownRenderer } from "@/components/markdown/EnhancedMarkdownRenderer";
 import VideoRenderer from "../layout/VideoRenderer";
+import { isMeaningfulCaption, extractImageCaption } from "@/lib/utils/captionUtils";
 
 // Import Swiper styles
 import "swiper/css";
@@ -22,8 +23,6 @@ interface MediaCarouselProps {
 
 const MediaCarousel: React.FC<MediaCarouselProps> = ({ mediaItems }) => {
   const isMobile = useBreakpointValue({ base: true, md: false });
-
-
 
   if (mediaItems.length === 0) return null;
 
@@ -66,12 +65,6 @@ const MediaCarousel: React.FC<MediaCarouselProps> = ({ mediaItems }) => {
 };
 
 function renderMediaItem(item: MediaItem) {
-  // Function to extract caption from markdown image syntax
-  const extractImageCaption = (markdownContent: string): string | null => {
-    const match = markdownContent.match(/!\[(.*?)\]\(.*?\)/);
-    return match ? match[1] : null;
-  };
-
   switch (item.type) {
     case "image":
       const caption = extractImageCaption(item.content);
@@ -92,7 +85,7 @@ function renderMediaItem(item: MediaItem) {
           >
             <EnhancedMarkdownRenderer content={item.content} />
           </Box>
-          {caption && (
+          {caption && isMeaningfulCaption(caption) && (
             <Text
               fontSize="xs"
               fontStyle="italic"

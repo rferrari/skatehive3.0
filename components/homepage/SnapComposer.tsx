@@ -327,7 +327,12 @@ export default function SnapComposer({
     let validUrls: string[] = compressedImages.map((img) => img.url);
     if (validUrls.length > 0) {
       const imageMarkup = compressedImages
-        .map((img) => `![${img.caption || "image"}](${img.url})`)
+        .map((img) => {
+          const caption = img.caption;
+          // Only include caption if it's meaningful (not empty and not just "image")
+          const meaningfulCaption = caption && caption.trim() && caption.trim() !== "image" ? caption : "";
+          return `![${meaningfulCaption}](${img.url})`;
+        })
         .join("\n");
       commentBody += `\n\n${imageMarkup}`;
     }
@@ -343,7 +348,12 @@ export default function SnapComposer({
     // Add GIF URLs from gifUrls array
     if (gifUrls.length > 0) {
       const gifMarkup = gifUrls
-        .map((gif) => `![${gif.caption || "gif"}](${gif.url})`)
+        .map((gif) => {
+          const caption = gif.caption;
+          // Only include caption if it's meaningful (not empty and not just "gif")
+          const meaningfulCaption = caption && caption.trim() && caption.trim() !== "gif" ? caption : "";
+          return `![${meaningfulCaption}](${gif.url})`;
+        })
         .join("\n");
       commentBody += `\n\n${gifMarkup}`;
       validUrls = [...validUrls, ...gifUrls.map((gif) => gif.url)];

@@ -4,6 +4,7 @@ import VideoRenderer from "@/components/layout/VideoRenderer";
 import MediaCarousel from "@/components/shared/MediaCarousel";
 import OpenGraphPreview from "@/components/shared/OpenGraphPreview";
 import { parseMediaContent, extractLastUrl } from "@/lib/utils/snapUtils";
+import { isMeaningfulCaption, extractImageCaption } from "@/lib/utils/captionUtils";
 
 interface MediaRendererProps {
   mediaContent: string;
@@ -13,12 +14,6 @@ interface MediaRendererProps {
 const MediaRenderer = ({ mediaContent, fullContent }: MediaRendererProps) => {
   const mediaItems = parseMediaContent(mediaContent);
   const lastUrl = extractLastUrl(fullContent);
-
-  // Function to extract caption from markdown image syntax
-  const extractImageCaption = (markdownContent: string): string | null => {
-    const match = markdownContent.match(/!\[(.*?)\]\(.*?\)/);
-    return match ? match[1] : null;
-  };
 
   return (
     <>
@@ -46,7 +41,7 @@ const MediaRenderer = ({ mediaContent, fullContent }: MediaRendererProps) => {
                 >
                   <EnhancedMarkdownRenderer content={item.content} />
                 </Box>
-                {caption && (
+                {caption && isMeaningfulCaption(caption) && (
                   <Text
                     fontSize="xs"
                     fontStyle="italic"

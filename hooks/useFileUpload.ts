@@ -16,7 +16,9 @@ export const useImageUpload = (insertAtCursor: (content: string) => void) => {
                     blob,
                     fileName || "compressed-image.jpg"
                 );
-                insertAtCursor(`\n![${fileName || "image"}](${ipfsUrl})\n`);
+                // Only include caption if it's meaningful (not empty and not just "image")
+                const meaningfulCaption = fileName && fileName.trim() && fileName.trim() !== "image" ? fileName : "";
+                insertAtCursor(`\n![${meaningfulCaption}](${ipfsUrl})\n`);
             } catch (error) {
                 console.error("Error uploading compressed image to IPFS:", error);
             } finally {
@@ -123,7 +125,9 @@ export const useGifUpload = () => {
         setIsUploading(true);
         try {
             const ipfsUrl = await uploadToIpfs(file, file.name);
-            insertAtCursor(`\n![${file.name}](${ipfsUrl})\n`);
+            // Only include caption if it's meaningful (not empty and not just the file extension)
+            const meaningfulCaption = file.name && file.name.trim() && !file.name.match(/\.(jpg|jpeg|png|gif|webp|mp4|mov|avi)$/i) ? file.name : "";
+            insertAtCursor(`\n![${meaningfulCaption}](${ipfsUrl})\n`);
         } catch (error) {
             alert("Error uploading GIF/WEBP to IPFS.");
             console.error("Error uploading GIF/WEBP:", error);
@@ -182,7 +186,9 @@ export const useFileDropUpload = (insertAtCursor: (content: string) => void) => 
             try {
                 const url = await uploadToIpfs(fileToUpload, fileName);
                 if (file.type.startsWith("image/")) {
-                    insertAtCursor(`\n![${fileName}](${url})\n`);
+                    // Only include caption if it's meaningful (not empty and not just the file extension)
+                    const meaningfulCaption = fileName && fileName.trim() && !fileName.match(/\.(jpg|jpeg|png|gif|webp|mp4|mov|avi)$/i) ? fileName : "";
+                    insertAtCursor(`\n![${meaningfulCaption}](${url})\n`);
                 } else if (file.type.startsWith("video/")) {
                     insertAtCursor(
                         `\n<iframe src=\"${url}\" frameborder=\"0\" allowfullscreen></iframe>\n`

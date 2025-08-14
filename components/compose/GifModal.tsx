@@ -69,7 +69,9 @@ export default function GifModal({
 
       const ipfsUrl = await uploadToIpfs(blob, filename);
 
-      insertAtCursor(`\n![${filename}](${ipfsUrl})\n`);
+      // Only include caption if it's meaningful (not empty and not just "skatehive-gif")
+      const meaningfulCaption = safeCaption && safeCaption.trim() && safeCaption.trim() !== "skatehive-gif" ? safeCaption : "";
+      insertAtCursor(`\n![${meaningfulCaption}](${ipfsUrl})\n`);
       gifMakerWithSelectorRef.current?.reset();
       setGifUrl(null);
       setGifSize(null);
@@ -104,7 +106,9 @@ export default function GifModal({
     setIsUploadingGif(true);
     try {
       const ipfsUrl = await uploadToIpfs(file, file.name);
-      insertAtCursor(`\n![${file.name}](${ipfsUrl})\n`);
+      // Only include caption if it's meaningful (not empty and not just the file extension)
+      const meaningfulCaption = file.name && file.name.trim() && !file.name.match(/\.(jpg|jpeg|png|gif|webp|mp4|mov|avi)$/i) ? file.name : "";
+      insertAtCursor(`\n![${meaningfulCaption}](${ipfsUrl})\n`);
       onClose();
     } catch (error) {
       alert("Error uploading GIF/WEBP to IPFS.");
