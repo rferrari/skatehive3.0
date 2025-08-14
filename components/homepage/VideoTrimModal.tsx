@@ -461,10 +461,12 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = ({
       }
 
       const trimmedFile = new File([trimmedBlob], `trimmed_${videoFile.name}`, {
-        type: videoFile.type,
+        type: "video/webm", // Explicitly set as WebM since that's what we create
       });
 
+      // Mark this file as already processed to skip compression
       (trimmedFile as any).thumbnailUrl = finalThumbnailUrl;
+      (trimmedFile as any).fromTrimModal = true;
 
       onTrimComplete(trimmedFile);
       onClose();
@@ -490,11 +492,13 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = ({
         }
 
         (videoFile as any).thumbnailUrl = finalThumbnailUrl;
+        (videoFile as any).fromTrimModal = true; // Mark as processed even for bypass
 
         onTrimComplete(videoFile);
         onClose();
       } catch (error) {
         console.error("Error generating thumbnail for bypass:", error);
+        (videoFile as any).fromTrimModal = true; // Mark even on error
         onTrimComplete(videoFile);
         onClose();
       }

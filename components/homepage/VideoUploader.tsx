@@ -619,7 +619,26 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
 
         // Video processing
         let processedFile: File = file;
-        if (!fallback && !skipCompression) {
+        
+        // Check if this file is already processed from VideoTrimModal
+        const isAlreadyProcessed = file.name.includes("trimmed_") || 
+                                 file.type === "video/webm" ||
+                                 (file as any).fromTrimModal;
+        
+        console.log("📱 File processing check:", {
+          fileName: file.name,
+          fileType: file.type,
+          isAlreadyProcessed,
+          hasThumbail: !!(file as any).thumbnailUrl,
+          skipCompression,
+          fallback
+        });
+
+        if (isAlreadyProcessed) {
+          setStatus("File already processed, uploading directly...");
+          console.log("📱 Skipping processing for pre-processed file");
+          // Don't process already trimmed/processed files
+        } else if (!fallback && !skipCompression) {
           try {
             // Smart detection for iPhone .mov files - use fast conversion instead of compression
             const isIPhoneMov =
