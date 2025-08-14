@@ -1,4 +1,4 @@
-import { Box } from "@chakra-ui/react";
+import { Box, Text } from "@chakra-ui/react";
 import { EnhancedMarkdownRenderer } from "@/components/markdown/EnhancedMarkdownRenderer";
 import VideoRenderer from "@/components/layout/VideoRenderer";
 import MediaCarousel from "@/components/shared/MediaCarousel";
@@ -14,6 +14,12 @@ const MediaRenderer = ({ mediaContent, fullContent }: MediaRendererProps) => {
   const mediaItems = parseMediaContent(mediaContent);
   const lastUrl = extractLastUrl(fullContent);
 
+  // Function to extract caption from markdown image syntax
+  const extractImageCaption = (markdownContent: string): string | null => {
+    const match = markdownContent.match(/!\[(.*?)\]\(.*?\)/);
+    return match ? match[1] : null;
+  };
+
   return (
     <>
       {/* Render media content */}
@@ -24,19 +30,34 @@ const MediaRenderer = ({ mediaContent, fullContent }: MediaRendererProps) => {
           const item = mediaItems[0];
 
           if (item.type === "image") {
+            const caption = extractImageCaption(item.content);
             return (
-              <Box
-                sx={{
-                  img: {
-                    width: "100%",
-                    height: "auto",
-                    objectFit: "contain",
-                    marginTop: "0.5rem",
-                    marginBottom: "0.5rem",
-                  },
-                }}
-              >
-                <EnhancedMarkdownRenderer content={item.content} />
+              <Box>
+                <Box
+                  sx={{
+                    img: {
+                      width: "100%",
+                      height: "auto",
+                      objectFit: "contain",
+                      marginTop: "0.5rem",
+                      marginBottom: "0.5rem",
+                    },
+                  }}
+                >
+                  <EnhancedMarkdownRenderer content={item.content} />
+                </Box>
+                {caption && (
+                  <Text
+                    fontSize="xs"
+                    fontStyle="italic"
+                    textAlign="center"
+                    color="secondary"
+                    mt={2}
+                    mb={2}
+                  >
+                    {caption}
+                  </Text>
+                )}
               </Box>
             );
           }

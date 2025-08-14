@@ -40,6 +40,7 @@ const EditPostModal = ({
   const primaryColor = useColorModeValue("primary", "primary");
   const mutedColor = useColorModeValue("muted", "muted");
   const secondaryColor = useColorModeValue("secondary", "secondary");
+  const errorColor = useColorModeValue("error", "error");
   const isMobile = useIsMobile();
 
   return (
@@ -57,15 +58,15 @@ const EditPostModal = ({
           Edit Post
         </ModalHeader>
         <ModalCloseButton
-          color="red.500"
+          color={errorColor}
           bg="none"
           _hover={{
             bg: "none",
-            color: "red.600",
+            color: errorColor,
           }}
           _active={{
             bg: "none",
-            color: "red.700",
+            color: errorColor,
           }}
         />
         <ModalBody flex="1" overflowY="auto">
@@ -115,15 +116,15 @@ const EditPostModal = ({
             mr={3}
             onClick={onClose}
             disabled={isSaving}
-            color="red.500"
+            color={errorColor}
             bg="none"
             _hover={{
               bg: "none",
-              color: "red.600",
+              color: errorColor,
             }}
             _active={{
               bg: "none",
-              color: "red.700",
+              color: errorColor,
             }}
           >
             Cancel
@@ -134,8 +135,8 @@ const EditPostModal = ({
             onClick={onSave}
             isLoading={isSaving}
             loadingText="Saving..."
-            _hover={{ bg: primaryColor, color: mutedColor }}
-            _active={{ bg: primaryColor }}
+            _hover={{ bg: primaryColor, color: bgColor }}
+            _active={{ bg: primaryColor, color: bgColor }}
           >
             Save Changes
           </Button>

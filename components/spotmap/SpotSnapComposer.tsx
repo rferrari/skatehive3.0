@@ -48,7 +48,9 @@ export default function SpotSnapComposer({
   const [address, setAddress] = useState("");
   const [isDragOver, setIsDragOver] = useState(false);
 
-  const buttonText = "Post Spot";
+  const buttonText = () => {
+    return "Publish";
+  };
 
   const handleCompressedImageUpload = async (
     url: string | null,
@@ -90,16 +92,25 @@ export default function SpotSnapComposer({
 
   async function handleComment() {
     let description = postBodyRef.current?.value || "";
-    // Require either GPS coordinates (from photos) or address
-    const hasCoords = lat.trim() && lon.trim();
-    const hasAddress = address.trim();
-    if (!spotName.trim() || (!hasCoords && !hasAddress)) {
-      alert("Please enter a spot name and either upload a photo with GPS data or enter an address.");
+    // Only require spot name and either description or images
+    if (!spotName.trim()) {
+      alert("Please enter a spot name.");
       return;
     }
     if (!description.trim() && compressedImages.length === 0) {
       alert("Please enter a description or upload an image before posting.");
       return;
+    }
+    
+    // Check if we have location data
+    const hasCoords = lat.trim() && lon.trim();
+    const hasAddress = address.trim();
+    const hasLocation = hasCoords || hasAddress;
+    
+    // Warn user if no location data, but allow posting
+    if (!hasLocation) {
+      const proceed = confirm("No location data detected. You can post the spot now and add location details later by editing the post. Would you like to continue?");
+      if (!proceed) return;
     }
     setIsLoading(true);
     setUploadProgress([]);
@@ -111,11 +122,13 @@ export default function SpotSnapComposer({
     // Compose the post body
     let locationLine = "";
     if (hasCoords && hasAddress) {
-      locationLine = `Location: ${lat}, ${lon} (${address})`;
+      locationLine = `🌐 ${lat}, ${lon} (${address})`;
     } else if (hasCoords) {
-      locationLine = `Location: ${lat}, ${lon}`;
+      locationLine = `🌐 ${lat}, ${lon}`;
     } else if (hasAddress) {
-      locationLine = `Location: ${address}`;
+      locationLine = `🌐 ${address}`;
+    } else {
+      locationLine = "🌐 [To be added - edit this post to add location details]";
     }
     let commentBody = `Spot Name: ${spotName}\n${locationLine}\n`;
     if (description) commentBody += `\n${description}`;
@@ -183,7 +196,13 @@ export default function SpotSnapComposer({
   // Add this function to extract GPS from image files
   const extractGPS = async (file: File) => {
     try {
+      // Log file details for debugging
+      const fileInfo = `File: ${file.name} (${file.type}, ${Math.round(file.size / 1024)}KB)`;
+      console.log('🔍 GPS Debug:', fileInfo);
+      
       const gps = await exifr.gps(file);
+      console.log('🔍 GPS Data:', gps);
+      
       if (gps && gps.latitude && gps.longitude) {
         const latStr = translateCoordinateDirection(gps.latitude.toString());
         const lonStr = translateCoordinateDirection(gps.longitude.toString());
@@ -191,10 +210,15 @@ export default function SpotSnapComposer({
         setLon(lonStr);
         // Auto-fill the address field with GPS coordinates
         setAddress(`${latStr}, ${lonStr}`);
+        console.log('✅ GPS coordinates extracted successfully');
         return true; // Return true if GPS data was found
+      } else {
+        // No GPS data found - just log it, no need to alert user
+        console.log('⚠️ No GPS data found in image:', fileInfo);
       }
     } catch (e) {
-      // No GPS data or error reading EXIF
+      // Error reading EXIF - just log it, no need to alert user
+      console.error('❌ GPS extraction error:', e);
     }
     return false; // Return false if no GPS data found
   };
@@ -293,7 +317,7 @@ export default function SpotSnapComposer({
       )}
       <VStack spacing={3} align="stretch">
         <FormControl isRequired>
-          <FormLabel>Spot Name</FormLabel>
+          <FormLabel>Name</FormLabel>
           <Input
             id="spot-name-field"
             placeholder="Enter spot name"
@@ -304,51 +328,24 @@ export default function SpotSnapComposer({
             _focus={{ borderColor: "primary" }}
           />
         </FormControl>
-        {lat && lon && (
-          <FormControl>
-            <FormLabel color="green.500" fontWeight="bold">
-              📍 GPS Coordinates (extracted from photo)
-            </FormLabel>
-            <HStack spacing={2}>
-              <Input
-                placeholder="Latitude"
-                value={lat}
-                isReadOnly
-                isDisabled={isLoading}
-                size="sm"
-                bg="green.50"
-                borderColor="green.200"
-                _focus={{ borderColor: "green.400" }}
-              />
-              <Input
-                placeholder="Longitude"
-                value={lon}
-                isReadOnly
-                isDisabled={isLoading}
-                size="sm"
-                bg="green.50"
-                borderColor="green.200"
-                _focus={{ borderColor: "green.400" }}
-              />
-            </HStack>
-          </FormControl>
-        )}
         <FormControl>
           <FormLabel>
-            Address {!lat && !lon && compressedImages.length > 0 && (
+            🌐 Loc. {!lat && !lon && compressedImages.length > 0 && (
               <Box as="span" color="orange.500" fontSize="sm">
-                (No GPS data found in photos - please enter address)
+                (No GPS data found in photos)
               </Box>
             )}
           </FormLabel>
           <Input
-            placeholder="e.g. 123 Skate St, New York, NY"
-            value={address}
+            placeholder={lat && lon ? `${lat}, ${lon}` : "e.g. 123 Skate St, New York, NY"}
+            value={lat && lon ? `${lat}, ${lon}` : address}
             onChange={(e) => setAddress(e.target.value)}
             isDisabled={isLoading}
             borderColor="muted"
+            bg={lat && lon ? "muted" : "background"}
             _focus={{ borderColor: "primary" }}
           />
+
         </FormControl>
         <FormControl>
           <Textarea
@@ -397,7 +394,7 @@ export default function SpotSnapComposer({
             onClick={handleComment}
             isDisabled={isLoading}
           >
-            {isLoading ? <Spinner size="sm" /> : buttonText}
+            {isLoading ? <Spinner size="sm" /> : buttonText()}
           </Button>
         </HStack>
         <ImageCompressor
@@ -417,7 +414,7 @@ export default function SpotSnapComposer({
               />
               <Input
                 mt={2}
-                placeholder="Enter caption"
+                placeholder="caption"
                 value={imgObj.caption}
                 onChange={(e) => {
                   const newImages = [...compressedImages];
@@ -425,6 +422,7 @@ export default function SpotSnapComposer({
                   setCompressedImages(newImages);
                 }}
                 size="sm"
+                width="100px"
               />
               <IconButton
                 aria-label="Remove image"

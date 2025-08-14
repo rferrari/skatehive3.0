@@ -1,7 +1,7 @@
 import React from "react";
-import { Box, useBreakpointValue } from "@chakra-ui/react";
+import { Box, Text, useBreakpointValue } from "@chakra-ui/react";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation, Pagination } from "swiper/modules";
+import { Navigation } from "swiper/modules";
 import { EnhancedMarkdownRenderer } from "@/components/markdown/EnhancedMarkdownRenderer";
 import VideoRenderer from "../layout/VideoRenderer";
 
@@ -23,6 +23,8 @@ interface MediaCarouselProps {
 const MediaCarousel: React.FC<MediaCarouselProps> = ({ mediaItems }) => {
   const isMobile = useBreakpointValue({ base: true, md: false });
 
+
+
   if (mediaItems.length === 0) return null;
 
   // If only one media item, render without carousel
@@ -38,20 +40,14 @@ const MediaCarousel: React.FC<MediaCarouselProps> = ({ mediaItems }) => {
   return (
     <Box position="relative" width="100%" mt={2} mb={2}>
       <Swiper
-        modules={[Navigation, Pagination]}
+        modules={[Navigation]}
         navigation={!isMobile}
-        pagination={{
-          clickable: true,
-          dynamicBullets: true,
-          dynamicMainBullets: 3,
-        }}
         spaceBetween={0}
         slidesPerView={1}
         loop={mediaItems.length > 2}
         style={
           {
             "--swiper-navigation-color": "var(--chakra-colors-primary)",
-            "--swiper-pagination-color": "var(--chakra-colors-primary)",
             "--swiper-navigation-size": "20px",
           } as React.CSSProperties
         }
@@ -70,23 +66,44 @@ const MediaCarousel: React.FC<MediaCarouselProps> = ({ mediaItems }) => {
 };
 
 function renderMediaItem(item: MediaItem) {
+  // Function to extract caption from markdown image syntax
+  const extractImageCaption = (markdownContent: string): string | null => {
+    const match = markdownContent.match(/!\[(.*?)\]\(.*?\)/);
+    return match ? match[1] : null;
+  };
+
   switch (item.type) {
     case "image":
+      const caption = extractImageCaption(item.content);
       return (
-        <Box
-          sx={{
-            img: {
-              width: "100%",
-              height: "auto",
-              objectFit: "contain",
-              maxHeight: "500px",
-              borderRadius: "md",
-              display: "block",
-              margin: "0 auto",
-            },
-          }}
-        >
-          <EnhancedMarkdownRenderer content={item.content} />
+        <Box>
+          <Box
+            sx={{
+              img: {
+                width: "100%",
+                height: "auto",
+                objectFit: "contain",
+                maxHeight: "500px",
+                borderRadius: "md",
+                display: "block",
+                margin: "0 auto",
+              },
+            }}
+          >
+            <EnhancedMarkdownRenderer content={item.content} />
+          </Box>
+          {caption && (
+            <Text
+              fontSize="xs"
+              fontStyle="italic"
+              textAlign="center"
+              color="secondary"
+              mt={2}
+              mb={2}
+            >
+              {caption}
+          </Text>
+          )}
         </Box>
       );
     case "video":
