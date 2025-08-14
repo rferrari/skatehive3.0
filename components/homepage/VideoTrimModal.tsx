@@ -99,7 +99,7 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = ({
       setEndTime(0);
       setCurrentTime(0);
       setIsPlaying(false);
-      
+
       const url = URL.createObjectURL(videoFile);
       console.log("🔗 Created blob URL:", url);
       setVideoUrl(url);
@@ -139,15 +139,23 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = ({
       const videoDuration = videoRef.current.duration;
       console.log("⏱️ Video duration:", videoDuration);
       console.log("📏 maxDuration prop:", maxDuration);
-      console.log("🔢 Math.min calculation:", Math.min(videoDuration, maxDuration));
-      
+      console.log(
+        "🔢 Math.min calculation:",
+        Math.min(videoDuration, maxDuration)
+      );
+
       setDuration(videoDuration);
       const calculatedEndTime = Math.min(videoDuration, maxDuration);
       setEndTime(calculatedEndTime);
       setCurrentTime(0);
-      
+
       console.log("🎯 Set endTime to:", calculatedEndTime);
-      console.log("✅ Final state - duration:", videoDuration, "endTime:", calculatedEndTime);
+      console.log(
+        "✅ Final state - duration:",
+        videoDuration,
+        "endTime:",
+        calculatedEndTime
+      );
     }
   };
 
@@ -337,63 +345,67 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = ({
     end: number
   ): Promise<Blob> => {
     console.log(`Creating trimmed video: ${start}s to ${end}s`);
-    
+
     return new Promise((resolve, reject) => {
       const video = document.createElement("video");
       const videoUrl = URL.createObjectURL(file);
       video.src = videoUrl;
       video.muted = true;
       video.playsInline = true;
-      
+
       video.onloadedmetadata = () => {
         const duration = end - start;
-        console.log(`Video duration: ${video.duration}s, trim duration: ${duration}s`);
-        
+        console.log(
+          `Video duration: ${video.duration}s, trim duration: ${duration}s`
+        );
+
         if (duration <= 0 || start >= video.duration) {
           URL.revokeObjectURL(videoUrl);
           reject(new Error("Invalid trim range"));
           return;
         }
-        
+
         // Create canvas for recording
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d")!;
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
-        
+
         // Create MediaRecorder that will capture in real-time
         const stream = canvas.captureStream(30);
         const mediaRecorder = new MediaRecorder(stream, {
-          mimeType: "video/webm"
+          mimeType: "video/webm",
         });
-        
+
         const chunks: Blob[] = [];
-        
+
         mediaRecorder.ondataavailable = (event) => {
           if (event.data.size > 0) {
             chunks.push(event.data);
           }
         };
-        
+
         mediaRecorder.onstop = () => {
           const blob = new Blob(chunks, { type: "video/webm" });
           URL.revokeObjectURL(videoUrl);
           console.log(`Trimmed video created: ${blob.size} bytes`);
           resolve(blob);
         };
-        
+
         // Position video at start time
         video.currentTime = start;
-        
+
         video.onseeked = () => {
-          console.log(`Video positioned at ${video.currentTime}s, starting recording`);
-          
+          console.log(
+            `Video positioned at ${video.currentTime}s, starting recording`
+          );
+
           // Start recording
           mediaRecorder.start();
-          
+
           // Play video at normal speed
           video.play();
-          
+
           // Set up timer to stop at exact duration
           setTimeout(() => {
             console.log(`Stopping recording after ${duration}s`);
@@ -401,7 +413,7 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = ({
             mediaRecorder.stop();
           }, duration * 1000);
         };
-        
+
         // Continuously draw video frames to canvas
         const drawFrame = () => {
           if (!video.paused && !video.ended) {
@@ -409,17 +421,17 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = ({
             requestAnimationFrame(drawFrame);
           }
         };
-        
+
         video.onplay = () => {
           drawFrame();
         };
-        
+
         video.onerror = () => {
           URL.revokeObjectURL(videoUrl);
           reject(new Error("Video playback error"));
         };
       };
-      
+
       video.onerror = () => {
         URL.revokeObjectURL(videoUrl);
         reject(new Error("Failed to load video"));

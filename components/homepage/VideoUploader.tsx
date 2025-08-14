@@ -94,7 +94,8 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
 
     const compressVideo = async (
       file: File,
-      shouldResize: boolean
+      shouldResize: boolean,
+      qualityFactor: number = 1.0 // 1.0 = normal, 0.5 = more aggressive, 0.3 = very aggressive
     ): Promise<Blob> => {
       setStatus("Compressing video...");
       setCompressionProgress(0);
@@ -109,7 +110,13 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
       });
       await ffmpeg.writeFile(file.name, await fetchFile(file));
 
-      // Ultra-fast compression settings optimized for mobile
+      // Adaptive compression settings based on quality factor
+      const baseCRF = 28;
+      const adjustedCRF = Math.min(
+        51,
+        Math.round(baseCRF + (1 - qualityFactor) * 15)
+      ); // Higher CRF = more compression
+
       const ffmpegArgs = [
         "-i",
         file.name,
@@ -118,20 +125,28 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         "-c:a",
         "aac",
         "-crf",
-        "28", // Higher CRF for faster encoding (slightly lower quality but much faster)
+        adjustedCRF.toString(),
         "-preset",
-        "ultrafast", // Fastest preset available
+        qualityFactor < 0.5 ? "faster" : "ultrafast", // Use faster preset for aggressive compression
         "-tune",
-        "fastdecode", // Optimize for fast decoding
+        "fastdecode",
         "-movflags",
-        "+faststart", // Web optimization for MP4
+        "+faststart",
         "-threads",
-        "0", // Use all available CPU threads
+        "0",
       ];
 
+      // More aggressive scaling for mobile
       if (shouldResize) {
-        ffmpegArgs.push("-vf", "scale=854:-2");
+        const scale = qualityFactor < 0.5 ? "640:-2" : "854:-2"; // Smaller resolution for aggressive mode
+        ffmpegArgs.push("-vf", scale);
       }
+
+      // Add bitrate limit for very aggressive compression
+      if (qualityFactor < 0.5) {
+        ffmpegArgs.push("-maxrate", "500k", "-bufsize", "1000k");
+      }
+
       ffmpegArgs.push("output.mp4");
 
       await ffmpeg.exec(ffmpegArgs);
@@ -375,38 +390,64 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
 
     const uploadWithProgress = (formData: FormData): Promise<any> => {
       return new Promise((resolve, reject) => {
+        const isMobile =
+          /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+            navigator.userAgent
+          );
+
         console.log("📱 Starting upload - Device info:", {
           userAgent: navigator.userAgent,
           platform: navigator.platform,
-          mobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
+          mobile: isMobile,
           formDataKeys: Array.from(formData.keys()),
           file: formData.get("file"),
-          fileSize: formData.get("file") ? (formData.get("file") as File).size : "no file",
-          fileName: formData.get("file") ? (formData.get("file") as File).name : "no file"
+          fileSize: formData.get("file")
+            ? (formData.get("file") as File).size
+            : "no file",
+          fileName: formData.get("file")
+            ? (formData.get("file") as File).name
+            : "no file",
         });
 
         const xhr = new XMLHttpRequest();
-        
+
         xhr.upload.addEventListener("loadstart", () => {
           console.log("📱 Upload started");
         });
-        
+
         xhr.upload.addEventListener("progress", (event) => {
           if (event.lengthComputable) {
             const progress = Math.round((event.loaded / event.total) * 100);
-            console.log(`📱 Upload progress: ${progress}% (${event.loaded}/${event.total} bytes)`);
+            console.log(
+              `📱 Upload progress: ${progress}% (${event.loaded}/${event.total} bytes)`
+            );
             setUploadProgress(progress);
           }
         });
 
         xhr.addEventListener("load", () => {
-          console.log("📱 Upload completed - Status:", xhr.status, "Response length:", xhr.responseText?.length);
+          console.log(
+            "📱 Upload completed - Status:",
+            xhr.status,
+            "Response length:",
+            xhr.responseText?.length
+          );
           if (xhr.status >= 200 && xhr.status < 300) {
-            console.log("📱 Upload successful, response:", xhr.responseText.substring(0, 200));
+            console.log(
+              "📱 Upload successful, response:",
+              xhr.responseText.substring(0, 200)
+            );
             resolve(xhr.responseText);
           } else {
-            console.error("📱 Upload failed with status:", xhr.status, "Response:", xhr.responseText);
-            reject(new Error(`Upload failed: ${xhr.status} - ${xhr.responseText}`));
+            console.error(
+              "📱 Upload failed with status:",
+              xhr.status,
+              "Response:",
+              xhr.responseText
+            );
+            reject(
+              new Error(`Upload failed: ${xhr.status} - ${xhr.responseText}`)
+            );
           }
         });
 
@@ -416,42 +457,61 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
             status: xhr.status,
             statusText: xhr.statusText,
             responseText: xhr.responseText,
-            isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+            isMobile,
           };
-          console.error("📱 Upload error event:", event, "Error info:", errorInfo);
-          
+          console.error(
+            "📱 Upload error event:",
+            event,
+            "Error info:",
+            errorInfo
+          );
+
           // Show detailed error in UI for mobile debugging
-          const errorMessage = `Network error: ${xhr.statusText || "Unknown error"} (Status: ${xhr.status}, State: ${xhr.readyState})`;
-          setStatus(`Mobile upload failed: ${errorMessage}`);
+          const errorMessage = `Network error: ${
+            xhr.statusText || "Unknown error"
+          } (Status: ${xhr.status}, State: ${xhr.readyState})`;
+          setStatus(
+            `${isMobile ? "Mobile" : "Desktop"} upload failed: ${errorMessage}`
+          );
           reject(new Error(errorMessage));
         });
 
         xhr.addEventListener("timeout", () => {
           console.error("📱 Upload timeout");
-          setStatus("Mobile upload failed: Connection timeout (2 minutes)");
+          setStatus(
+            `${
+              isMobile ? "Mobile" : "Desktop"
+            } upload failed: Connection timeout (2 minutes)`
+          );
           reject(new Error("Upload timeout"));
         });
 
         xhr.addEventListener("abort", () => {
           console.error("📱 Upload aborted");
-          setStatus("Mobile upload failed: Connection aborted");
+          setStatus(
+            `${
+              isMobile ? "Mobile" : "Desktop"
+            } upload failed: Connection aborted`
+          );
           reject(new Error("Upload aborted"));
         });
 
         // Set timeout for mobile networks
-        xhr.timeout = 120000; // 2 minutes
+        xhr.timeout = isMobile ? 180000 : 120000; // 3 minutes for mobile, 2 for desktop
 
         try {
-          xhr.open("POST", "/api/pinata");
-          
+          // Use mobile-specific endpoint for mobile devices
+          const endpoint = isMobile ? "/api/pinata-mobile" : "/api/pinata";
+          xhr.open("POST", endpoint);
+
           // Add mobile-specific headers that might help
-          if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-            console.log("📱 Setting mobile-specific headers");
-            // These headers sometimes help with mobile uploads
+          if (isMobile) {
+            console.log("📱 Using mobile-specific endpoint and headers");
             xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+            xhr.setRequestHeader("X-Mobile-Upload", "true");
           }
-          
-          console.log("📱 XHR opened, sending FormData...");
+
+          console.log("📱 XHR opened, sending FormData to:", endpoint);
           xhr.send(formData);
         } catch (error) {
           console.error("📱 Error sending XHR:", error);
@@ -624,22 +684,97 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         try {
           setStatus("Uploading video...");
           setUploadProgress(0);
-          
-          const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-          
+
+          const isMobile =
+            /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+              navigator.userAgent
+            );
+
           console.log("📱 Preparing upload - Mobile check:", {
             isMobile,
             fileSize: processedFile.size,
-            fileSizeMB: Math.round(processedFile.size / 1024 / 1024 * 100) / 100,
+            fileSizeMB:
+              Math.round((processedFile.size / 1024 / 1024) * 100) / 100,
             fileName: processedFile.name,
             fileType: processedFile.type,
             attempt: attempt,
-            fallback: fallback
+            fallback: fallback,
           });
 
-          // Mobile-specific file size warning
-          if (isMobile && processedFile.size > 50 * 1024 * 1024) { // 50MB
-            console.warn("📱 Large file on mobile:", processedFile.size, "bytes");
+          // Mobile-specific file size limits (Vercel has 50MB limit)
+          const maxSizeForMobile = 45 * 1024 * 1024; // 45MB to be safe
+          const maxSizeForDesktop = 50 * 1024 * 1024; // 50MB
+          const maxSize = isMobile ? maxSizeForMobile : maxSizeForDesktop;
+
+          if (processedFile.size > maxSize) {
+            const sizeMB =
+              Math.round((processedFile.size / 1024 / 1024) * 100) / 100;
+            const maxSizeMB = Math.round(maxSize / 1024 / 1024);
+
+            console.error("📱 File too large for upload:", {
+              fileSizeMB: sizeMB,
+              maxSizeMB,
+              isMobile,
+              isOver413Limit: processedFile.size > 50 * 1024 * 1024,
+            });
+
+            if (isMobile && !fallback && sizeMB > 45) {
+              // Try aggressive compression for mobile
+              setStatus(
+                "File too large for mobile, compressing more aggressively..."
+              );
+              try {
+                const aggressivelyCompressed = await compressVideo(
+                  processedFile,
+                  true,
+                  0.3
+                ); // Lower quality
+                if (aggressivelyCompressed.size < maxSizeForMobile) {
+                  processedFile = new File(
+                    [aggressivelyCompressed],
+                    "mobile_compressed.mp4",
+                    {
+                      type: "video/mp4",
+                    }
+                  );
+                  console.log(
+                    "📱 Aggressive compression successful:",
+                    processedFile.size
+                  );
+                } else {
+                  throw new Error(
+                    "Still too large after aggressive compression"
+                  );
+                }
+              } catch (compressionError) {
+                console.error(
+                  "📱 Aggressive compression failed:",
+                  compressionError
+                );
+                setStatus(
+                  `File too large (${sizeMB}MB) for mobile upload. Maximum: ${maxSizeMB}MB`
+                );
+                onUpload(null);
+                if (onUploadFinish) onUploadFinish();
+                return;
+              }
+            } else {
+              setStatus(
+                `File too large (${sizeMB}MB). Maximum: ${maxSizeMB}MB`
+              );
+              onUpload(null);
+              if (onUploadFinish) onUploadFinish();
+              return;
+            }
+          }
+
+          if (isMobile && processedFile.size > 30 * 1024 * 1024) {
+            // 30MB+
+            console.warn(
+              "📱 Large file on mobile:",
+              processedFile.size,
+              "bytes"
+            );
             setStatus("Large file detected on mobile, this may take longer...");
           }
 
@@ -647,25 +782,30 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
           formData.append("file", processedFile);
           if (username) formData.append("creator", username);
           if (thumbnailUrl) formData.append("thumbnailUrl", thumbnailUrl);
-          
+
           console.log("📱 FormData prepared:", {
             hasFile: formData.has("file"),
             hasCreator: formData.has("creator"),
             hasThumbnail: formData.has("thumbnailUrl"),
             creator: username,
             thumbnailUrl: thumbnailUrl,
-            isMobile
+            isMobile,
           });
 
           const responseText = await uploadWithProgress(formData);
-          
+
           console.log("📱 Upload response received, parsing...");
           let result;
           try {
             result = JSON.parse(responseText);
             console.log("📱 Upload result parsed:", result);
           } catch (parseError) {
-            console.error("📱 Failed to parse upload response:", parseError, "Response:", responseText);
+            console.error(
+              "📱 Failed to parse upload response:",
+              parseError,
+              "Response:",
+              responseText
+            );
             errorStep = "upload";
             setStatus("Failed to parse upload response.");
             onUpload(null);
@@ -687,27 +827,34 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
           onUpload(videoUrl);
           if (onUploadFinish) onUploadFinish();
         } catch (err) {
-          const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+          const isMobile =
+            /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+              navigator.userAgent
+            );
           const errorDetails = {
             message: err instanceof Error ? err.message : String(err),
             type: typeof err,
             attempt: attempt,
             isMobile,
-            errorStep: "upload"
+            errorStep: "upload",
           };
-          
+
           console.error("📱 Upload error caught:", errorDetails);
-          
+
           errorStep = "upload";
-          
+
           if (attempt < 3) {
-            setStatus(`Mobile upload failed (attempt ${attempt}/3): ${errorDetails.message}. Retrying...`);
+            setStatus(
+              `Mobile upload failed (attempt ${attempt}/3): ${errorDetails.message}. Retrying...`
+            );
             console.log("📱 Retrying upload, attempt:", attempt + 1);
             await processVideoFile(file, attempt + 1, "upload");
             return;
           } else {
             console.error("📱 Upload failed after all retries");
-            setStatus(`Mobile upload failed after 3 attempts: ${errorDetails.message}`);
+            setStatus(
+              `Mobile upload failed after 3 attempts: ${errorDetails.message}`
+            );
             onUpload(null);
             if (onUploadFinish) onUploadFinish();
             return;
