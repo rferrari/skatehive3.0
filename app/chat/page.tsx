@@ -27,19 +27,19 @@ const cleanCorruptedLocalStorage = () => {
     const key = localStorage.key(i);
     if (!key) continue;
     const value = localStorage.getItem(key);
-    if (value && (value.startsWith('#') || value.includes('#{"keys":'))) {
+    if (value && (value.startsWith("#") || value.includes('#{"keys":'))) {
       keysToRemove.push(key);
     } else {
       try {
         JSON.parse(value!);
       } catch {
-        if (value && (value.includes('{') || value.includes('['))) {
+        if (value && (value.includes("{") || value.includes("["))) {
           keysToRemove.push(key);
         }
       }
     }
   }
-  keysToRemove.forEach(key => localStorage.removeItem(key));
+  keysToRemove.forEach((key) => localStorage.removeItem(key));
 };
 
 // Widget options (configurable)
@@ -55,7 +55,6 @@ export default function ChatPage() {
   const chatRef = useRef<HTMLDivElement | null>(null);
   const [debug, setDebug] = useState<string[]>([]);
   const widgetRef = useRef<any>(null);
-  const isInitializedRef = useRef(false);
   const mountedRef = useRef(true);
   const [isLoading, setIsLoading] = useState(true);
   const [widgetReady, setWidgetReady] = useState(false);
@@ -71,7 +70,8 @@ export default function ChatPage() {
     cleanCorruptedLocalStorage();
     const container = chatRef.current;
     if (!container) return;
-    if (container.children.length > 0 && container.querySelector('iframe')) return;
+    if (container.children.length > 0 && container.querySelector("iframe"))
+      return;
 
     let isMounted = true;
     let fallbackTimeout: NodeJS.Timeout;
@@ -80,9 +80,16 @@ export default function ChatPage() {
       if (!isMounted) return;
       if (typeof StWidget === "function" && container) {
         container.innerHTML = "";
-        widgetRef.current = new StWidget("https://chat.peakd.com/t/hive-173115/0");
+        widgetRef.current = new StWidget(
+          "https://chat.peakd.com/t/hive-173115/0"
+        );
         widgetRef.current.setProperties(widgetOptions);
-        const element = widgetRef.current.createElement("100%", "80vh", false, false);
+        const element = widgetRef.current.createElement(
+          "100%",
+          "80vh",
+          false,
+          false
+        );
         container.appendChild(element);
         setWidgetReady(true);
         setIsLoading(false);
@@ -96,7 +103,7 @@ export default function ChatPage() {
         setTimeout(initializeWidget, 500);
       } catch (err) {
         setIsLoading(false);
-        setDebug(d => [...d, `Widget script load error: ${err}`]);
+        setDebug((d) => [...d, `Widget script load error: ${err}`]);
       }
     };
 
@@ -109,7 +116,7 @@ export default function ChatPage() {
     fallbackTimeout = setTimeout(() => {
       if (isMounted && isLoading) {
         setIsLoading(false);
-        setDebug(d => [...d, "Widget load fallback timeout reached"]);
+        setDebug((d) => [...d, "Widget load fallback timeout reached"]);
       }
     }, 10000);
 

@@ -15,6 +15,7 @@ import { VoteWeightProvider } from "@/contexts/VoteWeightContext";
 import { AuthKitProvider } from "@farcaster/auth-kit";
 import "@farcaster/auth-kit/styles.css";
 import { dynamicRainbowTheme } from "@/lib/themes/rainbowkitTheme";
+import { useState } from "react";
 
 const aioha = new Aioha();
 
@@ -28,8 +29,6 @@ if (typeof window !== "undefined") {
   });
   aioha.loadAuth();
 }
-
-const queryClient = new QueryClient();
 
 export const wagmiConfig = getDefaultConfig({
   appName: process.env.NEXT_PUBLIC_COMMUNITY_NAME || "skatehive",
@@ -53,6 +52,9 @@ const farcasterAuthConfig = {
 };
 
 export function Providers({ children }: { children: React.ReactNode }) {
+  // Create QueryClient inside the component to avoid SSR issues
+  const [queryClient] = useState(() => new QueryClient());
+
   return (
     <UserProvider>
       <ThemeProvider>

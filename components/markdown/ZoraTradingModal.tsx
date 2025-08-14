@@ -121,7 +121,6 @@ export default function ZoraTradingModal({
     decimals: number;
   } | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
-  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const {
     executeTrade,
@@ -180,7 +179,10 @@ export default function ZoraTradingModal({
     if (tradeType === "buy") {
       // For buying, user can choose between ETH and USDC
       // Keep current selection if it's already ETH or USDC
-      if (fromCurrency.type === "erc20" && fromCurrency.address === coinAddress) {
+      if (
+        fromCurrency.type === "erc20" &&
+        fromCurrency.address === coinAddress
+      ) {
         setFromCurrency(SUPPORTED_CURRENCIES[0]); // Default to ETH
       }
       setToCurrency(creatorCoin);
@@ -335,7 +337,6 @@ export default function ZoraTradingModal({
 
   const handleSwitchToBase = async () => {
     try {
-      
       // Show loading state
       toast({
         title: "Switching to Base",
@@ -343,18 +344,18 @@ export default function ZoraTradingModal({
         status: "info",
         duration: 3000,
       });
-      
+
       await switchChain({ chainId: base.id });
-      
+
       // Wait for chain change to be reflected in the hook
       let attempts = 0;
       const maxAttempts = 20; // 2 seconds max wait
-      
+
       while (chainId !== base.id && attempts < maxAttempts) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
         attempts++;
       }
-      
+
       if (chainId === base.id) {
         toast({
           title: "Switched to Base",
@@ -362,7 +363,7 @@ export default function ZoraTradingModal({
           status: "success",
           duration: 3000,
         });
-        
+
         // Refresh balance after successful chain switch
         setTimeout(async () => {
           try {
@@ -372,40 +373,51 @@ export default function ZoraTradingModal({
             );
             setFromBalance(newBalance);
           } catch (error) {
-            console.error("Error refreshing balance after chain switch:", error);
+            console.error(
+              "Error refreshing balance after chain switch:",
+              error
+            );
           }
         }, 500);
       } else {
         throw new Error("Chain switch timeout - still not on Base network");
       }
-      
     } catch (error: any) {
       console.error("Chain switch failed:", error);
-      
+
       // More specific error messages
-      let errorMessage = "Please switch to Base network manually in your wallet";
-      let status: 'error' | 'warning' = 'error';
+      let errorMessage =
+        "Please switch to Base network manually in your wallet";
+      let status: "error" | "warning" = "error";
       let title = "Failed to switch network";
-      
-      if (error?.message?.includes("User rejected") || error?.message?.includes("User denied")) {
+
+      if (
+        error?.message?.includes("User rejected") ||
+        error?.message?.includes("User denied")
+      ) {
         title = "Network switch cancelled";
-        errorMessage = "You cancelled the network switch. You can try again or switch manually in your wallet";
-        status = 'warning';
+        errorMessage =
+          "You cancelled the network switch. You can try again or switch manually in your wallet";
+        status = "warning";
       } else if (error?.message?.includes("Unrecognized chain")) {
-        errorMessage = "Base network not found in wallet. Please add Base network first";
+        errorMessage =
+          "Base network not found in wallet. Please add Base network first";
       } else if (error?.message?.includes("timeout")) {
-        errorMessage = "Chain switch timed out. Please try again or switch manually";
+        errorMessage =
+          "Chain switch timed out. Please try again or switch manually";
       } else if (error?.code === 4902) {
-        errorMessage = "Base network not found. Please add Base network to your wallet first";
+        errorMessage =
+          "Base network not found. Please add Base network to your wallet first";
       } else if (error?.code === -32002) {
-        errorMessage = "Switch request already pending. Please check your wallet";
+        errorMessage =
+          "Switch request already pending. Please check your wallet";
       }
-      
+
       toast({
         title,
         description: errorMessage,
         status,
-        duration: status === 'warning' ? 3000 : 5000,
+        duration: status === "warning" ? 3000 : 5000,
       });
     }
   };
@@ -463,12 +475,11 @@ export default function ZoraTradingModal({
     }
 
     try {
-
       // Last-second chain check
       if (chainId !== base.id) {
         console.error("Chain mismatch detected at trade execution:", {
           current: chainId,
-          expected: base.id
+          expected: base.id,
         });
         toast({
           title: "Chain mismatch detected",
@@ -548,11 +559,13 @@ export default function ZoraTradingModal({
       onClose();
     } catch (error: any) {
       // Additional error handling for edge cases not covered in the hook
-      console.error('Trade execution error in modal:', error);
-      
+      console.error("Trade execution error in modal:", error);
+
       // Only show additional error if it's not a user cancellation
-      if (!error?.message?.toLowerCase().includes('user denied') && 
-          !error?.message?.toLowerCase().includes('user rejected')) {
+      if (
+        !error?.message?.toLowerCase().includes("user denied") &&
+        !error?.message?.toLowerCase().includes("user rejected")
+      ) {
         // The hook already showed a toast, but we might want to do additional UI updates here
       }
     }
@@ -595,7 +608,7 @@ export default function ZoraTradingModal({
                   borderRadius="lg"
                   onClick={() => setTradeType("buy")}
                   _hover={{
-                    bg: tradeType === "buy" ? "green.600" : "muted"
+                    bg: tradeType === "buy" ? "green.600" : "muted",
                   }}
                 >
                   Buy
@@ -608,7 +621,7 @@ export default function ZoraTradingModal({
                   borderRadius="lg"
                   onClick={() => setTradeType("sell")}
                   _hover={{
-                    bg: tradeType === "sell" ? "pink.600" : "muted"
+                    bg: tradeType === "sell" ? "pink.600" : "muted",
                   }}
                 >
                   Sell
@@ -617,12 +630,17 @@ export default function ZoraTradingModal({
 
               {/* Balance Display */}
               <HStack justify="space-between">
-                <Text fontSize="sm" color="gray.400">Balance</Text>
+                <Text fontSize="sm" color="gray.400">
+                  Balance
+                </Text>
                 <Text fontSize="sm" color="primary">
-                  {fromBalance 
-                    ? `${Number(fromBalance.formatted).toFixed(fromCurrency.symbol === "USDC" ? 2 : 6)} ${fromCurrency.symbol}`
-                    : `0.${"0".repeat(fromCurrency.symbol === "USDC" ? 2 : 6)} ${fromCurrency.symbol}`
-                  }
+                  {fromBalance
+                    ? `${Number(fromBalance.formatted).toFixed(
+                        fromCurrency.symbol === "USDC" ? 2 : 6
+                      )} ${fromCurrency.symbol}`
+                    : `0.${"0".repeat(
+                        fromCurrency.symbol === "USDC" ? 2 : 6
+                      )} ${fromCurrency.symbol}`}
                 </Text>
               </HStack>
 
@@ -643,17 +661,21 @@ export default function ZoraTradingModal({
                     flex={1}
                   />
                   <Select
-                    value={tradeType === "buy" ? 
-                      `${fromCurrency.type}-${fromCurrency.address || "eth"}` : 
-                      `${toCurrency.type}-${toCurrency.address || "eth"}`
+                    value={
+                      tradeType === "buy"
+                        ? `${fromCurrency.type}-${
+                            fromCurrency.address || "eth"
+                          }`
+                        : `${toCurrency.type}-${toCurrency.address || "eth"}`
                     }
                     onChange={(e) => {
                       const [type, addr] = e.target.value.split("-");
                       const selectedCurrency = SUPPORTED_CURRENCIES.find(
-                        c => (c.type === "eth" && addr === "eth") || 
-                             (c.type === "erc20" && c.address === addr)
+                        (c) =>
+                          (c.type === "eth" && addr === "eth") ||
+                          (c.type === "erc20" && c.address === addr)
                       );
-                      
+
                       if (selectedCurrency) {
                         if (tradeType === "buy") {
                           setFromCurrency(selectedCurrency);
@@ -674,7 +696,10 @@ export default function ZoraTradingModal({
                       <option
                         key={`${currency.type}-${currency.address || "eth"}`}
                         value={`${currency.type}-${currency.address || "eth"}`}
-                        style={{ backgroundColor: 'var(--chakra-colors-background)', color: 'var(--chakra-colors-primary)' }}
+                        style={{
+                          backgroundColor: "var(--chakra-colors-background)",
+                          color: "var(--chakra-colors-primary)",
+                        }}
                       >
                         {currency.symbol}
                       </option>
@@ -684,35 +709,37 @@ export default function ZoraTradingModal({
 
                 {/* Quick Amount Buttons */}
                 <HStack spacing={2}>
-                  {tradeType === "buy" 
+                  {tradeType === "buy"
                     ? // For buying, show preset amounts in the selected currency
-                      (tradeType === "buy" ? fromCurrency.symbol : toCurrency.symbol) === "ETH" 
-                        ? [0.001, 0.01, 0.1].map((val) => (
-                            <Button
-                              key={val}
-                              size="sm"
-                              variant="outline"
-                              borderColor="muted"
-                              color="primary"
-                              flex={1}
-                              onClick={() => setAmount(val.toString())}
-                            >
-                              {val} ETH
-                            </Button>
-                          ))
-                        : [1, 10, 100].map((val) => (
-                            <Button
-                              key={val}
-                              size="sm"
-                              variant="outline"
-                              borderColor="muted"
-                              color="primary"
-                              flex={1}
-                              onClick={() => setAmount(val.toString())}
-                            >
-                              {val} USDC
-                            </Button>
-                          ))
+                      (tradeType === "buy"
+                        ? fromCurrency.symbol
+                        : toCurrency.symbol) === "ETH"
+                      ? [0.001, 0.01, 0.1].map((val) => (
+                          <Button
+                            key={val}
+                            size="sm"
+                            variant="outline"
+                            borderColor="muted"
+                            color="primary"
+                            flex={1}
+                            onClick={() => setAmount(val.toString())}
+                          >
+                            {val} ETH
+                          </Button>
+                        ))
+                      : [1, 10, 100].map((val) => (
+                          <Button
+                            key={val}
+                            size="sm"
+                            variant="outline"
+                            borderColor="muted"
+                            color="primary"
+                            flex={1}
+                            onClick={() => setAmount(val.toString())}
+                          >
+                            {val} USDC
+                          </Button>
+                        ))
                     : // For selling, show percentage buttons
                       [25, 50, 75].map((percentage) => (
                         <Button
@@ -723,23 +750,32 @@ export default function ZoraTradingModal({
                           color="primary"
                           flex={1}
                           onClick={() => handlePercentageClick(percentage)}
-                          isDisabled={!fromBalance || fromBalance.raw === BigInt(0)}
+                          isDisabled={
+                            !fromBalance || fromBalance.raw === BigInt(0)
+                          }
                         >
                           {percentage}%
                         </Button>
-                      ))
-                  }
+                      ))}
                   <Button
-                    size="sm" 
+                    size="sm"
                     variant="outline"
                     borderColor="muted"
                     color="primary"
                     onClick={() => {
                       if (fromBalance) {
-                        const maxAmount = fromCurrency.type === "eth"
-                          ? formatEther(fromBalance.raw)
-                          : formatUnits(fromBalance.raw, fromBalance.decimals);
-                        setAmount(Number(maxAmount).toFixed(6).replace(/\.?0+$/, ""));
+                        const maxAmount =
+                          fromCurrency.type === "eth"
+                            ? formatEther(fromBalance.raw)
+                            : formatUnits(
+                                fromBalance.raw,
+                                fromBalance.decimals
+                              );
+                        setAmount(
+                          Number(maxAmount)
+                            .toFixed(6)
+                            .replace(/\.?0+$/, "")
+                        );
                       }
                     }}
                     isDisabled={!fromBalance || fromBalance.raw === BigInt(0)}
@@ -760,7 +796,13 @@ export default function ZoraTradingModal({
                 {/* Trade Button */}
                 <Button
                   size="lg"
-                  bg={isWrongChain ? "orange.500" : (tradeType === "buy" ? "green.500" : "pink.500")}
+                  bg={
+                    isWrongChain
+                      ? "orange.500"
+                      : tradeType === "buy"
+                      ? "green.500"
+                      : "pink.500"
+                  }
                   color="white"
                   borderRadius="xl"
                   onClick={isWrongChain ? handleSwitchToBase : handleTrade}
@@ -768,27 +810,36 @@ export default function ZoraTradingModal({
                   loadingText="Trading..."
                   isDisabled={
                     !isConnected ||
-                    (!isWrongChain && (!amount || parseFloat(amount) <= 0 || isAmountExceedsBalance))
+                    (!isWrongChain &&
+                      (!amount ||
+                        parseFloat(amount) <= 0 ||
+                        isAmountExceedsBalance))
                   }
                   _hover={{
-                    bg: isWrongChain ? "orange.600" : (tradeType === "buy" ? "green.600" : "pink.600")
+                    bg: isWrongChain
+                      ? "orange.600"
+                      : tradeType === "buy"
+                      ? "green.600"
+                      : "pink.600",
                   }}
                   py={6}
                 >
-                  {isWrongChain 
-                    ? "Switch to Base Network" 
-                    : (tradeType === "buy" ? "Buy" : "Sell")
-                  }
+                  {isWrongChain
+                    ? "Switch to Base Network"
+                    : tradeType === "buy"
+                    ? "Buy"
+                    : "Sell"}
                 </Button>
 
                 {/* Minimum Received / Output Info */}
                 <HStack justify="space-between">
                   <Text fontSize="sm" color="gray.400">
-                    {tradeType === "buy" ? "Minimum received" : "Only"} 
+                    {tradeType === "buy" ? "Minimum received" : "Only"}
                   </Text>
                   <HStack>
                     <Text fontSize="sm" color="green.400">
-                      {estimatedOutput || (tradeType === "sell" ? "7,856,810" : "3,205")}
+                      {estimatedOutput ||
+                        (tradeType === "sell" ? "7,856,810" : "3,205")}
                     </Text>
                     {coinData.image && (
                       <Image
@@ -821,10 +872,13 @@ export default function ZoraTradingModal({
                   <AlertIcon />
                   <VStack align="start" spacing={1}>
                     <Text fontSize="sm">
-                      Wrong network detected. Zora trading requires Base network.
+                      Wrong network detected. Zora trading requires Base
+                      network.
                     </Text>
                     <Text fontSize="xs" color="gray.400">
-                      Current: {chainId === 1 ? "Ethereum Mainnet" : `Chain ${chainId}`} | Required: Base (8453)
+                      Current:{" "}
+                      {chainId === 1 ? "Ethereum Mainnet" : `Chain ${chainId}`}{" "}
+                      | Required: Base (8453)
                     </Text>
                   </VStack>
                 </Alert>

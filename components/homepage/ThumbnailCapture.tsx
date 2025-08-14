@@ -1,5 +1,5 @@
 import React from "react";
-import { VStack, HStack, Text, Button, Box } from "@chakra-ui/react";
+import { VStack, HStack, Text, Button, Box, Image } from "@chakra-ui/react";
 
 interface ThumbnailCaptureProps {
   thumbnailUrl: string | null;
@@ -46,7 +46,7 @@ const ThumbnailCapture: React.FC<ThumbnailCaptureProps> = ({
           position="relative"
           mx="auto"
         >
-          <img
+          <Image
             src={thumbnailUrl}
             alt="Video thumbnail"
             style={{

@@ -14,7 +14,6 @@ export default function robots(): MetadataRoute.Robots {
                     '/_next/',
                     '/pages/',
                     '/src/',
-                    '/test-thumbnails/',
                     '/_vercel/',
                     '/notifications.db'
                 ],
@@ -28,8 +27,7 @@ export default function robots(): MetadataRoute.Robots {
                     '/api/',
                     '/compose/',
                     '/settings/',
-                    '/_next/',
-                    '/test-thumbnails/'
+                    '/_next/'
                 ],
                 crawlDelay: 0.5,
             },
@@ -41,8 +39,7 @@ export default function robots(): MetadataRoute.Robots {
                     '/api/',
                     '/compose/',
                     '/settings/',
-                    '/_next/',
-                    '/test-thumbnails/'
+                    '/_next/'
                 ],
                 crawlDelay: 1,
             }

@@ -1,11 +1,11 @@
-/** @type {import('next').NextConfig} */
+q/** @type {import('next').NextConfig} */
 const nextConfig = {
     experimental: {
         serverActions: {
             bodySizeLimit: '10mb', // Increase the body size limit
         },
     },
-    webpack: (config, { isServer }) => {
+    webpack: (config, { isServer, dev }) => {
         if (!isServer) {
             config.resolve.fallback = {
                 fs: false,
@@ -21,6 +21,15 @@ const nextConfig = {
                 path: false,
                 memcpy: false,
                 'pino-pretty': false,
+            };
+        }
+        
+        // Remove console.log statements in production
+        if (!dev) {
+            config.optimization = {
+                ...config.optimization,
+                usedExports: true,
+                sideEffects: false,
             };
         }
         

@@ -1,3 +1,4 @@
+import "../lib/polyfills";
 import { VT323 } from "next/font/google";
 import RootLayoutClient from "./RootLayoutClient";
 import "./globals.css";

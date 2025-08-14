@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
+    // Only allow in development environment
+    if (process.env.NODE_ENV === 'production') {
+        return NextResponse.json({ error: 'Not available in production' }, { status: 404 })
+    }
+
     try {
         const { searchParams } = new URL(request.url)
         const username = searchParams.get('username')

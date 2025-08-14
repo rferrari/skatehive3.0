@@ -6,6 +6,11 @@ import { AutomatedNotificationService } from '@/lib/farcaster/automated-notifica
  * POST /api/farcaster/test-notifications
  */
 export async function POST(req: NextRequest) {
+    // Only allow in development environment
+    if (process.env.NODE_ENV === 'production') {
+        return NextResponse.json({ error: 'Not available in production' }, { status: 404 })
+    }
+
     try {
 
         // Process all unread notifications

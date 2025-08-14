@@ -5,8 +5,11 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:prod": "NODE_ENV=production next build",
     "start": "next start",
     "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "type-check": "tsc --noEmit",
     "approve-builds": "pnpm config set strict-peer-dependencies false && pnpm install",
     "build:fast": "NODE_ENV=production next build --experimental-build-mode=compile"
   },
@@ -33,7 +36,6 @@
     "@rainbow-me/rainbowkit": "^2.2.8",
     "@rive-app/react-canvas": "^4.21.4",
     "@tanstack/react-query": "^5.79.2",
-    "@types/html2canvas": "^1.0.0",
     "@types/pg": "^8.15.4",
     "@types/qrcode": "^1.5.5",
     "@types/unist": "^3.0.3",
@@ -87,7 +89,6 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.8",
-    "@types/dompurify": "^3.2.0",
     "@types/html-to-text": "^9.0.4",
     "@types/jsdom": "^21.1.7",
     "@types/node": "^22.15.29",
