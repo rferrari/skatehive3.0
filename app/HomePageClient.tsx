@@ -15,23 +15,6 @@ export default function HomePageClient() {
   const thread_permlink = "snaps";
   const isMobile = useIsMobile();
 
-  // Custom mobile detection with proper hydration handling
-  const [isCustomMobile, setIsCustomMobile] = useState(false);
-  const [isHydrated, setIsHydrated] = useState(false);
-
-  // Handle hydration and mobile detection
-  useEffect(() => {
-    setIsHydrated(true);
-    setIsCustomMobile(window.innerWidth < 768);
-
-    const handleResize = () => {
-      setIsCustomMobile(window.innerWidth < 768);
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
   const [conversation, setConversation] = useState<Discussion | undefined>();
   const [reply, setReply] = useState<Discussion>();
   const [isOpen, setIsOpen] = useState(false);
@@ -71,7 +54,7 @@ export default function HomePageClient() {
       >
         {/* On mobile, always show SnapList and show Conversation as overlay drawer */}
         {/* On desktop, conditionally show either SnapList or Conversation */}
-        {!conversation || (isHydrated && isCustomMobile) ? (
+        {!conversation ? (
           <SnapList
             author={thread_author}
             permlink={thread_permlink}
@@ -83,25 +66,45 @@ export default function HomePageClient() {
             data={snaps}
           />
         ) : (
-          <Conversation
-            discussion={conversation}
-            setConversation={setConversation}
-            onOpen={onOpen}
-            setReply={setReply}
-            isOpen={!!conversation}
-          />
+          <>
+            {/* Mobile: Show SnapList always */}
+            <Box display={{ base: "block", md: "none" }}>
+              <SnapList
+                author={thread_author}
+                permlink={thread_permlink}
+                setConversation={setConversation}
+                onOpen={onOpen}
+                setReply={setReply}
+                newComment={newComment}
+                setNewComment={setNewComment}
+                data={snaps}
+              />
+            </Box>
+            {/* Desktop: Show Conversation */}
+            <Box display={{ base: "none", md: "block" }}>
+              <Conversation
+                discussion={conversation}
+                setConversation={setConversation}
+                onOpen={onOpen}
+                setReply={setReply}
+                isOpen={!!conversation}
+              />
+            </Box>
+          </>
         )}
 
-        {/* Mobile conversation drawer - only show after hydration and on mobile */}
-        {isHydrated && isCustomMobile && conversation && (
-          <Conversation
-            discussion={conversation}
-            setConversation={setConversation}
-            onOpen={onOpen}
-            setReply={setReply}
-            isOpen={!!conversation}
-          />
-        )}
+        {/* Mobile conversation drawer - always show on mobile when conversation exists */}
+        <Box display={{ base: "block", md: "none" }}>
+          {conversation && (
+            <Conversation
+              discussion={conversation}
+              setConversation={setConversation}
+              onOpen={onOpen}
+              setReply={setReply}
+              isOpen={!!conversation}
+            />
+          )}
+        </Box>
       </Box>
 
       <Box display={{ base: "none", md: "block", lg: "block" }}>
