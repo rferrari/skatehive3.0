@@ -78,8 +78,26 @@ const Conversation = ({
   const isMobile = useIsMobile();
   const { isInMiniapp } = useFarcasterMiniapp();
 
-  // Use mobile UI for both mobile devices and Farcaster miniapps
-  const useSmallScreenUI = isMobile || isInMiniapp;
+  // Custom mobile detection based on screen width for this component
+  const [isCustomMobile, setIsCustomMobile] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 768;
+    }
+    return false;
+  });
+
+  // Listen for resize events to update custom mobile state
+  useEffect(() => {
+    const handleResize = () => {
+      setIsCustomMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Use custom mobile detection or Farcaster miniapp for small screen UI
+  const useSmallScreenUI = isCustomMobile || isInMiniapp;
 
   const { comments, isLoading, error } = useComments(
     discussion.author,
