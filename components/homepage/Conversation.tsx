@@ -10,7 +10,6 @@ import {
   Text,
   HStack,
   Button,
-  Divider,
   VStack,
   Spinner,
   useToken,
@@ -38,10 +37,6 @@ import { ArrowBackIcon, CloseIcon, ChatIcon } from "@chakra-ui/icons";
 import { AiOutlineHeart, AiFillHeart } from "react-icons/ai";
 import { BiMessage } from "react-icons/bi";
 import { useAioha } from "@aioha/react-ui";
-import useIsMobile from "@/hooks/useIsMobile";
-import { useFarcasterMiniapp } from "@/hooks/useFarcasterMiniapp";
-import Snap from "./Snap";
-import SnapComposer from "./SnapComposer";
 import { EnhancedMarkdownRenderer } from "../markdown/EnhancedMarkdownRenderer";
 
 interface ConversationProps {
@@ -75,11 +70,6 @@ const Conversation = ({
 }: ConversationProps) => {
   // ALL HOOKS MUST BE CALLED AT THE TOP LEVEL
   const { user, aioha } = useAioha();
-  const isMobile = useIsMobile();
-  const { isInMiniapp } = useFarcasterMiniapp();
-
-  // Use original mobile detection or Farcaster miniapp for small screen UI
-  const useSmallScreenUI = isMobile || isInMiniapp;
 
   const { comments, isLoading, error } = useComments(
     discussion.author,
@@ -119,10 +109,9 @@ const Conversation = ({
 
   // Effects
   useEffect(() => {
-    if (useSmallScreenUI) {
-      window.scrollTo(0, 0);
-    }
-  }, [useSmallScreenUI]);
+    // Scroll to top when opening conversation
+    window.scrollTo(0, 0);
+  }, []);
 
   // Helper function to format time like Instagram
   const formatTimeAgo = useCallback((dateString: string) => {
@@ -448,36 +437,20 @@ const Conversation = ({
     setConversation(undefined);
   }, [setConversation]);
 
-  // New onNewComment handler for SnapComposer with optimistic update
-  const handleNewReply = useCallback(
-    (newComment: Partial<Discussion>) => {
-      const newReply = newComment as Discussion;
-      setOptimisticReplies((prev) => [...prev, newReply]);
-      setReply(newReply);
-    },
-    [setReply]
-  );
-
-  // Callback to update comment count when a new comment is added
-  const handleCommentAdded = useCallback(() => {
-    // This will be called when a comment is added to update the count
-    // The count is already updated optimistically in the Snap component
-  }, []);
-
   // Early return AFTER all hooks have been called
   if (isLoading) {
     return (
       <Box
         h="100vh"
-        bg={useSmallScreenUI ? mobileBgColor : "background"}
+        bg={mobileBgColor}
         display="flex"
         alignItems="center"
         justifyContent="center"
-        borderTopRadius={useSmallScreenUI ? "20px" : "0"}
+        borderTopRadius="20px"
       >
         <VStack spacing={4}>
           <Spinner size="xl" color={primaryColor} />
-          <Text color={useSmallScreenUI ? mobileTextColor : textColor}>
+          <Text color={mobileTextColor}>
             Loading conversation...
           </Text>
         </VStack>
@@ -490,11 +463,11 @@ const Conversation = ({
     return (
       <Box
         h="100vh"
-        bg={useSmallScreenUI ? mobileBgColor : "background"}
+        bg={mobileBgColor}
         display="flex"
         alignItems="center"
         justifyContent="center"
-        borderTopRadius={useSmallScreenUI ? "20px" : "0"}
+        borderTopRadius="20px"
         p={4}
       >
         <Alert status="error" borderRadius="md">
@@ -644,7 +617,7 @@ const Conversation = ({
     );
   };
 
-  // Mobile Instagram-style component (now used for both mobile and miniapp)
+  // Mobile Instagram-style component (mobile detection handled in parent)
   const SmallScreenConversation = () => (
     <Box
       bg={"background"}
@@ -892,86 +865,31 @@ const Conversation = ({
     </Box>
   );
 
-  // Desktop original component
-  const DesktopConversation = () => (
-    <Box bg="muted" p={4} mt={1} mb={1} borderRadius="base" boxShadow="lg">
-      <HStack mb={4} spacing={2}>
-        <Text fontSize="2xl" fontWeight="extrabold">
-          Conversation
-        </Text>
-        <Button
-          onClick={onBackClick}
-          variant="ghost"
-          ml="auto"
-          aria-label="Close"
-          _hover={{ bg: primaryColor + "20" }}
-        >
-          <CloseIcon color={primaryColor} />
-        </Button>
-      </HStack>
-      <Snap
-        discussion={{ ...discussion, depth: 0 } as any}
-        onOpen={onOpen}
-        setReply={setReply}
-        setConversation={setConversation}
-        onCommentAdded={handleCommentAdded}
-      />
-      <Divider my={4} />
-      <Box mt={2}>
-        <SnapComposer
-          pa={discussion.author}
-          pp={discussion.permlink}
-          onNewComment={
-            handleNewReply as (newComment: Partial<Discussion>) => void
-          }
-          onClose={() => {}}
-          post
-        />
-      </Box>
-      <Divider my={4} />
-      <VStack spacing={2} align="stretch">
-        {[...optimisticReplies, ...replies].map((reply: any) => (
-          <Snap
-            key={reply.permlink}
-            discussion={reply}
-            onOpen={onOpen}
-            setReply={setReply}
-          />
-        ))}
-      </VStack>
-    </Box>
-  );
-
-  // For mobile and miniapp, use a full-screen Drawer that slides up from bottom like Instagram
-  if (useSmallScreenUI) {
-    return (
-      <Drawer
-        isOpen={isOpen}
-        placement="bottom"
-        onClose={onBackClick}
-        size="full"
-        closeOnOverlayClick={true}
-        closeOnEsc={true}
+  // Always use mobile UI - full-screen Drawer that slides up from bottom like Instagram
+  return (
+    <Drawer
+      isOpen={isOpen}
+      placement="bottom"
+      onClose={onBackClick}
+      size="full"
+      closeOnOverlayClick={true}
+      closeOnEsc={true}
+    >
+      <DrawerOverlay bg="blackAlpha.600" />
+      <DrawerContent
+        bg={"background"}
+        color={textColor}
+        borderTopRadius="20px"
+        h="90vh"
+        maxH="90vh"
+        mt="10vh"
+        boxShadow="0 -4px 20px rgba(0, 0, 0, 0.3)"
+        overflow="hidden"
       >
-        <DrawerOverlay bg="blackAlpha.600" />
-        <DrawerContent
-          bg={"background"}
-          color={textColor}
-          borderTopRadius="20px"
-          h="90vh"
-          maxH="90vh"
-          mt="10vh"
-          boxShadow="0 -4px 20px rgba(0, 0, 0, 0.3)"
-          overflow="hidden"
-        >
-          <SmallScreenConversation />
-        </DrawerContent>
-      </Drawer>
-    );
-  }
-
-  // For desktop, return the original component
-  return <DesktopConversation />;
+        <SmallScreenConversation />
+      </DrawerContent>
+    </Drawer>
+  );
 };
 
 export default Conversation;

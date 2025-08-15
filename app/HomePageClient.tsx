@@ -9,11 +9,13 @@ import Conversation from "@/components/homepage/Conversation";
 import SnapReplyModal from "@/components/homepage/SnapReplyModal";
 import { useSnaps } from "@/hooks/useSnaps";
 import useIsMobile from "@/hooks/useIsMobile";
+import { useRouter } from "next/navigation";
 
 export default function HomePageClient() {
   const thread_author = "peak.snaps";
   const thread_permlink = "snaps";
   const isMobile = useIsMobile();
+  const router = useRouter();
 
   const [conversation, setConversation] = useState<Discussion | undefined>();
   const [reply, setReply] = useState<Discussion>();
@@ -27,6 +29,17 @@ export default function HomePageClient() {
     newComment: Partial<Discussion> | CharacterData
   ) => {
     setNewComment(newComment as Discussion);
+  };
+
+  // Handle conversation navigation based on device type
+  const handleSetConversation = (discussion: Discussion | undefined) => {
+    if (discussion && !isMobile) {
+      // Desktop: Navigate to post page
+      router.push(`/post/${discussion.author}/${discussion.permlink}`);
+    } else {
+      // Mobile: Set conversation for drawer
+      setConversation(discussion);
+    }
   };
 
   const snaps = useSnaps();
@@ -52,50 +65,21 @@ export default function HomePageClient() {
         }}
         id="scrollableDiv"
       >
-        {/* On mobile, always show SnapList and show Conversation as overlay drawer */}
-        {/* On desktop, conditionally show either SnapList or Conversation */}
-        {!conversation ? (
-          <SnapList
-            author={thread_author}
-            permlink={thread_permlink}
-            setConversation={setConversation}
-            onOpen={onOpen}
-            setReply={setReply}
-            newComment={newComment}
-            setNewComment={setNewComment}
-            data={snaps}
-          />
-        ) : (
-          <>
-            {/* Mobile: Show SnapList always */}
-            <Box display={{ base: "block", md: "none" }}>
-              <SnapList
-                author={thread_author}
-                permlink={thread_permlink}
-                setConversation={setConversation}
-                onOpen={onOpen}
-                setReply={setReply}
-                newComment={newComment}
-                setNewComment={setNewComment}
-                data={snaps}
-              />
-            </Box>
-            {/* Desktop: Show Conversation */}
-            <Box display={{ base: "none", md: "block" }}>
-              <Conversation
-                discussion={conversation}
-                setConversation={setConversation}
-                onOpen={onOpen}
-                setReply={setReply}
-                isOpen={!!conversation}
-              />
-            </Box>
-          </>
-        )}
+        {/* Always show SnapList */}
+        <SnapList
+          author={thread_author}
+          permlink={thread_permlink}
+          setConversation={handleSetConversation}
+          onOpen={onOpen}
+          setReply={setReply}
+          newComment={newComment}
+          setNewComment={setNewComment}
+          data={snaps}
+        />
 
-        {/* Mobile conversation drawer - always show on mobile when conversation exists */}
-        <Box display={{ base: "block", md: "none" }}>
-          {conversation && (
+        {/* Mobile conversation drawer - only show on mobile when conversation exists */}
+        {conversation && (
+          <Box display={{ base: "block", md: "none" }}>
             <Conversation
               discussion={conversation}
               setConversation={setConversation}
@@ -103,8 +87,8 @@ export default function HomePageClient() {
               setReply={setReply}
               isOpen={!!conversation}
             />
-          )}
-        </Box>
+          </Box>
+        )}
       </Box>
 
       <Box display={{ base: "none", md: "block", lg: "block" }}>
