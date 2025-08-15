@@ -78,16 +78,15 @@ const Conversation = ({
   const isMobile = useIsMobile();
   const { isInMiniapp } = useFarcasterMiniapp();
 
-  // Custom mobile detection based on screen width for this component
-  const [isCustomMobile, setIsCustomMobile] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return window.innerWidth < 768;
-    }
-    return false;
-  });
+  // Custom mobile detection with proper hydration handling
+  const [isCustomMobile, setIsCustomMobile] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
 
-  // Listen for resize events to update custom mobile state
+  // Handle hydration and mobile detection
   useEffect(() => {
+    setIsHydrated(true);
+    setIsCustomMobile(window.innerWidth < 768);
+
     const handleResize = () => {
       setIsCustomMobile(window.innerWidth < 768);
     };
@@ -97,7 +96,7 @@ const Conversation = ({
   }, []);
 
   // Use custom mobile detection or Farcaster miniapp for small screen UI
-  const useSmallScreenUI = isCustomMobile || isInMiniapp;
+  const useSmallScreenUI = (isHydrated && isCustomMobile) || isInMiniapp;
 
   const { comments, isLoading, error } = useComments(
     discussion.author,

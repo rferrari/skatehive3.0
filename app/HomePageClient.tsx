@@ -15,16 +15,15 @@ export default function HomePageClient() {
   const thread_permlink = "snaps";
   const isMobile = useIsMobile();
 
-  // Custom mobile detection based on screen width for consistency with Conversation component
-  const [isCustomMobile, setIsCustomMobile] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return window.innerWidth < 768;
-    }
-    return false;
-  });
+  // Custom mobile detection with proper hydration handling
+  const [isCustomMobile, setIsCustomMobile] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
 
-  // Listen for resize events to update custom mobile state
+  // Handle hydration and mobile detection
   useEffect(() => {
+    setIsHydrated(true);
+    setIsCustomMobile(window.innerWidth < 768);
+
     const handleResize = () => {
       setIsCustomMobile(window.innerWidth < 768);
     };
@@ -72,7 +71,7 @@ export default function HomePageClient() {
       >
         {/* On mobile, always show SnapList and show Conversation as overlay drawer */}
         {/* On desktop, conditionally show either SnapList or Conversation */}
-        {!conversation || isCustomMobile ? (
+        {!conversation || (isHydrated && isCustomMobile) ? (
           <SnapList
             author={thread_author}
             permlink={thread_permlink}
@@ -93,8 +92,8 @@ export default function HomePageClient() {
           />
         )}
 
-        {/* Mobile conversation drawer - always rendered but only visible when conversation exists */}
-        {isCustomMobile && conversation && (
+        {/* Mobile conversation drawer - only show after hydration and on mobile */}
+        {isHydrated && isCustomMobile && conversation && (
           <Conversation
             discussion={conversation}
             setConversation={setConversation}
