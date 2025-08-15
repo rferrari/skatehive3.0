@@ -135,7 +135,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://ipfs.skatehive.app" />
         {/* Force reload of global styles for modal overrides */}
         {/* <style>{`@import url('/app/globals.css');`}</style> */}
-        
+
         {/* Mobile input zoom prevention script */}
         <script
           dangerouslySetInnerHTML={{

@@ -77,10 +77,10 @@ const Conversation = ({
   const { user, aioha } = useAioha();
   const isMobile = useIsMobile();
   const { isInMiniapp } = useFarcasterMiniapp();
-  
+
   // Use mobile UI for both mobile devices and Farcaster miniapps
   const useSmallScreenUI = isMobile || isInMiniapp;
-  
+
   const { comments, isLoading, error } = useComments(
     discussion.author,
     discussion.permlink,
@@ -278,7 +278,7 @@ const Conversation = ({
     } finally {
       setIsSubmitting(false);
     }
-  }, [commentText, isSubmitting, user, toast]);
+  }, [commentText, isSubmitting, user, toast, discussion, aioha]);
 
   const handleEmojiClick = useCallback(
     (emoji: string) => {
@@ -590,7 +590,6 @@ const Conversation = ({
                   </Tooltip>
                 </Box>
               </HStack>
-              {comment.body}
               <EnhancedMarkdownRenderer content={comment.body} />
               <HStack spacing={4}>
                 <Button
