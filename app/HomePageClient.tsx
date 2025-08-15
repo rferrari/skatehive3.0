@@ -3,7 +3,7 @@
 import { Flex, Box } from "@chakra-ui/react";
 import SnapList from "@/components/homepage/SnapList";
 import RightSidebar from "@/components/layout/RightSideBar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Discussion } from "@hiveio/dhive";
 import Conversation from "@/components/homepage/Conversation";
 import SnapReplyModal from "@/components/homepage/SnapReplyModal";
@@ -14,6 +14,24 @@ export default function HomePageClient() {
   const thread_author = "peak.snaps";
   const thread_permlink = "snaps";
   const isMobile = useIsMobile();
+
+  // Custom mobile detection based on screen width for consistency with Conversation component
+  const [isCustomMobile, setIsCustomMobile] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 768;
+    }
+    return false;
+  });
+
+  // Listen for resize events to update custom mobile state
+  useEffect(() => {
+    const handleResize = () => {
+      setIsCustomMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const [conversation, setConversation] = useState<Discussion | undefined>();
   const [reply, setReply] = useState<Discussion>();
@@ -54,7 +72,7 @@ export default function HomePageClient() {
       >
         {/* On mobile, always show SnapList and show Conversation as overlay drawer */}
         {/* On desktop, conditionally show either SnapList or Conversation */}
-        {!conversation || isMobile ? (
+        {!conversation || isCustomMobile ? (
           <SnapList
             author={thread_author}
             permlink={thread_permlink}
@@ -76,7 +94,7 @@ export default function HomePageClient() {
         )}
 
         {/* Mobile conversation drawer - always rendered but only visible when conversation exists */}
-        {isMobile && conversation && (
+        {isCustomMobile && conversation && (
           <Conversation
             discussion={conversation}
             setConversation={setConversation}
