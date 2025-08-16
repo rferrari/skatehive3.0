@@ -57,46 +57,44 @@ export async function generateThumbnailWithCanvas(
       ),
     ]);
 
-    // Create canvas and draw frame
+    // Create canvas with optimized dimensions based on video aspect ratio
     const canvas = document.createElement("canvas");
-    canvas.width = 320;
-    canvas.height = 240;
+    
+    // Calculate optimal thumbnail size - maintain aspect ratio but optimize for web
+    const aspectRatio = video.videoWidth / video.videoHeight;
+    const maxWidth = 640; // Reduced for faster loading
+    const maxHeight = 640;
+    
+    if (aspectRatio > 1) {
+      // Landscape video
+      canvas.width = maxWidth;
+      canvas.height = Math.round(maxWidth / aspectRatio);
+    } else {
+      // Portrait or square video
+      canvas.height = maxHeight;
+      canvas.width = Math.round(maxHeight * aspectRatio);
+    }
+    
     const ctx = canvas.getContext("2d");
 
     if (!ctx) throw new Error("Canvas context unavailable");
 
-    // Calculate aspect ratio and draw centered
-    const videoAspect = video.videoWidth / video.videoHeight;
-    const canvasAspect = canvas.width / canvas.height;
-
-    let drawWidth, drawHeight, drawX, drawY;
-    if (videoAspect > canvasAspect) {
-      drawWidth = canvas.width;
-      drawHeight = canvas.width / videoAspect;
-      drawX = 0;
-      drawY = (canvas.height - drawHeight) / 2;
-    } else {
-      drawWidth = canvas.height * videoAspect;
-      drawHeight = canvas.height;
-      drawX = (canvas.width - drawWidth) / 2;
-      drawY = 0;
-    }
-
+    // Fill with black background and draw video centered (no cropping needed since we match aspect ratio)
     ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(video, drawX, drawY, drawWidth, drawHeight);
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
     // Clean up video URL
     URL.revokeObjectURL(videoUrl);
 
-    // Convert to blob
+    // Convert to blob with optimized quality for web delivery
     const blob = await new Promise<Blob>((resolve) => {
       canvas.toBlob(
         (blob) => {
           resolve(blob || new Blob());
         },
         "image/webp",
-        0.8
+        0.75 // Balanced quality for fast loading
       );
     });
 
@@ -125,7 +123,7 @@ export async function generateThumbnailWithFFmpeg(
 
     await ffmpeg.writeFile("input_thumb.mp4", await fetchFile(file));
 
-    // Ultra-fast thumbnail generation
+    // Optimized thumbnail generation with dynamic aspect ratio
     await ffmpeg.exec([
       "-i",
       "input_thumb.mp4",
@@ -134,11 +132,11 @@ export async function generateThumbnailWithFFmpeg(
       "-frames:v",
       "1",
       "-vf",
-      "scale=320:240:force_original_aspect_ratio=decrease",
+      "scale='min(640,iw)':'min(640,ih)':force_original_aspect_ratio=decrease", // Maintain aspect ratio, max 640px
       "-f",
       "webp",
-      "-preset",
-      "ultrafast",
+      "-quality",
+      "75", // Reduced quality for faster loading
       "thumbnail.webp",
     ]);
 

@@ -149,11 +149,11 @@ const VideoTimeline: React.FC<VideoTimelineProps> = ({
             left={`${(startTime / duration) * 100}%`}
             width={`${((endTime - startTime) / duration) * 100}%`}
             height="100%"
-            bg="yellow.400"
+            bg="primary"
             opacity={0.8}
             borderRadius="6px"
             border="2px solid"
-            borderColor="yellow.300"
+            borderColor="yellow"
             zIndex={1}
           />
 

@@ -272,24 +272,41 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = ({
         return null;
       }
 
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+      // Use optimized dimensions with aspect ratio preservation (same as videoThumbnailUtils)
+      const aspectRatio = video.videoWidth / video.videoHeight;
+      const maxWidth = 640;
+      const maxHeight = 640;
+      
+      if (aspectRatio > 1) {
+        // Landscape video
+        canvas.width = maxWidth;
+        canvas.height = Math.round(maxWidth / aspectRatio);
+      } else {
+        // Portrait or square video
+        canvas.height = maxHeight;
+        canvas.width = Math.round(maxHeight * aspectRatio);
+      }
+
+      // Fill with black background and draw video
+      ctx.fillStyle = "#000";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
+      // Use WebP format with optimized quality (consistent with videoThumbnailUtils)
       const blob = await new Promise<Blob>((resolve) => {
         canvas.toBlob(
           (blob) => {
             resolve(blob!);
           },
-          "image/jpeg",
-          0.9
+          "image/webp",
+          0.75
         );
       });
 
       setThumbnailBlob(blob);
 
-      const thumbnailFile = new File([blob], "thumbnail.jpg", {
-        type: "image/jpeg",
+      const thumbnailFile = new File([blob], "thumbnail.webp", {
+        type: "image/webp",
       });
       const signature = await getFileSignature(thumbnailFile);
       const hiveUrl = await uploadImage(thumbnailFile, signature);

@@ -45,24 +45,14 @@ const VideoTrimModalFooter: React.FC<VideoTrimModalFooterProps> = ({
             isLoading={isProcessing}
             loadingText="Processing..."
             isDisabled={!canBypass && !isValidSelection}
+            variant={"outline"}
             size={{ base: "md", md: "lg" }}
             width={{ base: "100%", md: "auto" }}
             minW={{ base: "auto", md: "160px" }}
-            bg={canBypass || isValidSelection ? "blue.600" : "gray.600"}
-            color="white"
-            _hover={{
-              bg: canBypass || isValidSelection ? "blue.500" : "gray.600",
-              transform: {
-                base: "none",
-                md: canBypass || isValidSelection ? "translateY(-1px)" : "none",
-              },
-            }}
-            _active={{
-              bg: canBypass || isValidSelection ? "blue.700" : "gray.600",
-              transform: "translateY(0)",
-            }}
+            bg={canBypass || isValidSelection ? "background" : "gray.600"}
+            color="primary"
             _disabled={{
-              bg: "gray.600",
+              bg: "muted",
               color: "gray.400",
               cursor: "not-allowed",
               opacity: 0.6,

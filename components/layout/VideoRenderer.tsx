@@ -253,6 +253,8 @@ const VIDEO_STYLE = {
   background: "transparent",
   marginBottom: "20px",
   width: "100%",
+  height: "100%",
+  objectFit: "cover" as React.CSSProperties["objectFit"],
   zIndex: 2,
 };
 
@@ -313,9 +315,18 @@ const VideoRenderer = ({
   const handleLoadedData = useCallback(() => {
     setIsVideoLoaded(true);
     if (videoRef.current) {
-      setIsHorizontal(
-        videoRef.current.videoWidth > videoRef.current.videoHeight
-      );
+      const vw = videoRef.current.videoWidth || 0;
+      const vh = videoRef.current.videoHeight || 0;
+      setIsHorizontal(vw > vh);
+      // Debug: log intrinsic video size and container size to diagnose cropping
+      try {
+        const container = (videoRef.current.parentElement || videoRef.current.closest('picture')) as HTMLElement | null;
+        const cw = container?.clientWidth || 0;
+        const ch = container?.clientHeight || 0;
+        console.debug('[VideoRenderer] video intrinsic:', vw, vh, 'container:', cw, ch);
+      } catch (err) {
+        // ignore
+      }
     }
   }, []);
 
@@ -528,13 +539,14 @@ const VideoRenderer = ({
       position="relative"
       display="flex"
       justifyContent="center"
-      alignItems="center"
+      alignItems="stretch"
       paddingTop="10px"
-      minWidth="100%"
+      width="100%"
+      minHeight="100%"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <Box width="100%" aspectRatio="16/9" position="relative">
+      <Box width="100%" position="relative" minHeight="100%">
         <picture
           style={{ position: "relative", width: "100%", height: "100%" }}
           ref={setVideoRef}
@@ -555,7 +567,7 @@ const VideoRenderer = ({
             style={VIDEO_STYLE}
           />
 
-          {/* Thumbnail Poster Overlay */}
+          {/* Thumbnail Poster Overlay: use an <img> to allow inspecting natural sizes and avoid background-image cropping differences */}
           {showPoster && thumbnailUrl && (
             <Box
               position="absolute"
@@ -564,17 +576,42 @@ const VideoRenderer = ({
               width="100%"
               height="100%"
               minH="100%"
-              backgroundImage={`url(${thumbnailUrl})`}
-              backgroundSize="cover"
-              backgroundPosition="center"
-              backgroundRepeat="no-repeat"
               zIndex={2}
               cursor="pointer"
               onClick={handlePlayPause}
               display="flex"
               alignItems="center"
               justifyContent="center"
+              overflow="hidden"
             >
+              <img
+                src={thumbnailUrl}
+                alt="video poster"
+                onLoad={(e) => {
+                  try {
+                    const img = e.currentTarget as HTMLImageElement;
+                    const naturalW = img.naturalWidth || 0;
+                    const naturalH = img.naturalHeight || 0;
+                    // measure container size for debugging
+                    const container = img.parentElement as HTMLElement | null;
+                    const cw = container?.clientWidth || 0;
+                    const ch = container?.clientHeight || 0;
+                    console.debug("[VideoRenderer] thumbnail natural:", naturalW, naturalH, "container:", cw, ch);
+                  } catch (err) {
+                    // swallow errors
+                  }
+                }}
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  objectPosition: "center",
+                }}
+                draggable={false}
+              />
+
               {/* Play button overlay */}
               <Box
                 bg="rgba(0,0,0,0.6)"
@@ -582,6 +619,7 @@ const VideoRenderer = ({
                 p={4}
                 _hover={{ bg: "rgba(0,0,0,0.8)" }}
                 transition="background 0.2s"
+                zIndex={3}
               >
                 <LuPlay size={32} color="white" />
               </Box>
