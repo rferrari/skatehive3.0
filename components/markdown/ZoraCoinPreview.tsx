@@ -1,6 +1,7 @@
 import {
   Box,
   HStack,
+  Stack,
   Image,
   Link,
   Text,
@@ -40,29 +41,6 @@ function IPFSVideoRenderer({ originalUrl }: { originalUrl: string }) {
     debug("🎬 IPFSVideoRenderer - Available gateways:", urls);
     return urls;
   });
-
-  const handleVideoError = () => {
-    debug(
-      `🎬 Video failed to load from gateway ${currentUrlIndex + 1}/${
-        gatewayUrls.length
-      }:`,
-      gatewayUrls[currentUrlIndex]
-    );
-
-    if (currentUrlIndex < gatewayUrls.length - 1) {
-      setCurrentUrlIndex(currentUrlIndex + 1);
-      debug(`🎬 Trying next gateway:`, gatewayUrls[currentUrlIndex + 1]);
-    } else {
-      debugError("🎬 All IPFS gateways failed for video:", originalUrl);
-    }
-  };
-
-  const handleVideoLoad = () => {
-    debug(
-      `✅ Video loaded successfully from gateway ${currentUrlIndex + 1}:`,
-      gatewayUrls[currentUrlIndex]
-    );
-  };
 
   return <VideoRenderer src={gatewayUrls[currentUrlIndex]} loop={true} />;
 }
@@ -283,16 +261,21 @@ export default function ZoraCoinPreview({ address }: ZoraCoinPreviewProps) {
           </VStack>
         </Center>
         <Divider my={3} />
-        <HStack spacing={3} align="center" width="full">
+        <Stack
+          direction={{ base: "column", md: "row" }}
+          spacing={3}
+          align={{ base: "stretch", md: "center" }}
+          width="full"
+        >
           <Box flex={1} overflow="hidden">
             {token.marketCap && (
-              <HStack spacing={2} align="center">
+              <HStack spacing={2} align="center" flexWrap="wrap">
                 <Text as="span" color="primary.400">
                   MarketCap: ${token.marketCap}
                 </Text>
                 <FaChartLine color="primary.400" />
-                <Text as="span" color="gray.400" ml={1}>
-                  {`  • ${token.uniqueHolders} holders`}
+                <Text as="span" color="gray.400">
+                  {`• ${token.uniqueHolders} holders`}
                 </Text>
               </HStack>
             )}
@@ -319,10 +302,11 @@ export default function ZoraCoinPreview({ address }: ZoraCoinPreviewProps) {
             borderRadius="md"
             _hover={{ transform: "scale(1.05)" }}
             transition="all 0.2s"
+            width={{ base: "full", md: "auto" }}
           >
             Trade
           </Button>
-        </HStack>
+        </Stack>
       </Box>
 
       {/* Trading Modal */}
