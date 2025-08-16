@@ -31,6 +31,60 @@ export interface UserBalance {
   decimals: number;
 }
 
+export interface CoinHolder {
+  ownerAddress: string;
+  balance: string;
+  ownerProfile?: {
+    handle?: string;
+    avatar?: {
+      previewImage?: {
+        small?: string;
+        medium?: string;
+      };
+    };
+  };
+}
+
+export interface CoinHoldersData {
+  holders: CoinHolder[];
+  hasNextPage: boolean;
+  endCursor?: string;
+  totalCount?: number;
+}
+
+export interface CoinComment {
+  commentId: string;
+  nonce: string;
+  userAddress: string;
+  txHash: string;
+  comment: string;
+  timestamp: number;
+  userProfile?: {
+    id: string;
+    handle: string;
+    avatar?: {
+      previewImage: {
+        blurhash?: string;
+        small: string;
+        medium: string;
+      };
+    };
+  };
+  replies?: {
+    count: number;
+    edges: Array<{
+      node: CoinComment;
+    }>;
+  };
+}
+
+export interface CoinCommentsData {
+  comments: CoinComment[];
+  hasNextPage: boolean;
+  endCursor?: string;
+  totalCount: number;
+}
+
 export interface ZoraCoinPageClientProps {
   address: string;
   initialCoinData: CoinData | null;

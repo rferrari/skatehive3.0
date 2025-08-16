@@ -11,6 +11,7 @@ import {
   VStack,
   Divider,
 } from "@chakra-ui/react";
+import NextLink from "next/link";
 import { useEffect, useState } from "react";
 import { getCoin } from "@zoralabs/coins-sdk";
 import { base } from "viem/chains";
@@ -235,8 +236,8 @@ export default function ZoraCoinPreview({ address }: ZoraCoinPreviewProps) {
         <Center>
           <VStack spacing={2} width="full">
             <Link
-              href={`https://skatehive.app/coin/${address}`}
-              isExternal
+              as={NextLink}
+              href={`/coin/${address}`}
               fontWeight="bold"
               textAlign="center"
               wordBreak="break-word"
