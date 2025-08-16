@@ -16,7 +16,7 @@ import VideoUploader, { VideoUploaderRef } from "./VideoUploader";
 import VideoTrimModal from "./VideoTrimModal";
 import { IGif } from "@giphy/js-types";
 import { FaImage } from "react-icons/fa";
-import { MdGif, MdMovieCreation } from "react-icons/md";
+import { MdGif } from "react-icons/md";
 import { Discussion } from "@hiveio/dhive";
 import {
   getFileSignature,
@@ -31,6 +31,7 @@ import imageCompression from "browser-image-compression";
 import GifModal from "../compose/GifModal";
 import { GIFMakerRef as GIFMakerWithSelectorRef } from "./GIFMakerWithSelector";
 import useHivePower from "@/hooks/useHivePower";
+import { TbGif } from "react-icons/tb";
 
 interface SnapComposerProps {
   pa: string;
@@ -645,7 +646,7 @@ export default function SnapComposer({
                   data-testid="snap-composer-giphy"
                   aria-label="Add GIF from Giphy"
                   icon={
-                    <MdGif size={22} color="var(--chakra-colors-primary)" />
+                    <TbGif size={22} color="var(--chakra-colors-primary)" />
                   }
                   variant="ghost"
                   isDisabled={isLoading}
@@ -697,12 +698,7 @@ export default function SnapComposer({
                 id="snap-composer-gif-maker-btn"
                 data-testid="snap-composer-gif-maker"
                 aria-label="GIF Maker"
-                icon={
-                  <MdMovieCreation
-                    color="var(--chakra-colors-primary)"
-                    size={22}
-                  />
-                }
+                icon={<TbGif color="var(--chakra-colors-primary)" size={22} />}
                 variant="ghost"
                 isDisabled={isLoading}
                 border="2px solid transparent"
