@@ -16,6 +16,7 @@ import {
   Tab,
   TabPanel,
   Box,
+  Button,
 } from "@chakra-ui/react";
 import { getFileSignature, uploadImage } from "@/lib/hive/client-functions";
 import { formatTime } from "@/lib/utils/timeUtils";
@@ -67,6 +68,10 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = ({
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
   const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false);
 
+  // Advanced options toggle
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [activeTab, setActiveTab] = useState(0);
+
   // Reset state when modal opens with a new video
   useEffect(() => {
     if (isOpen && videoFile) {
@@ -79,6 +84,7 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = ({
       setThumbnailBlob(null);
       setThumbnailUrl(null);
       setIsGeneratingThumbnail(false);
+      setActiveTab(0); // Reset to thumbnail tab
     }
   }, [isOpen, videoFile]);
 
@@ -138,6 +144,16 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = ({
       const calculatedEndTime = Math.min(videoDuration, maxDuration);
       setEndTime(calculatedEndTime);
       setCurrentTime(0);
+
+      // Auto-show advanced options if user needs to trim
+      const needsTrimming = !canBypass && videoDuration > maxDuration;
+      if (needsTrimming) {
+        setShowAdvanced(true);
+        setActiveTab(1); // Switch to trim tab
+      } else {
+        setShowAdvanced(false);
+        setActiveTab(0); // Default to thumbnail tab
+      }
     }
   };
 
@@ -471,6 +487,18 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = ({
     : endTime - startTime <= maxDuration && endTime - startTime > 0;
   const selectedDuration = endTime - startTime;
 
+  // UX Logic
+  const videoExceedsLimit = duration > maxDuration;
+  const selectionExceedsLimit = selectedDuration > maxDuration;
+  const trimmingRequired =
+    !canBypass && videoExceedsLimit && selectionExceedsLimit;
+  const showAdvancedToggle = !trimmingRequired; // Hide toggle when trimming is required
+
+  // Detect if user has actively trimmed (not using default full selection)
+  const hasActiveTrim = canBypass
+    ? startTime !== 0 || endTime !== duration
+    : startTime !== 0 || endTime !== Math.min(duration, maxDuration);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -482,170 +510,213 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = ({
   }, []);
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      size={{ base: "xl", md: "xl" }}
-      onCloseComplete={() => {
-        setVideoUrl(null);
-        setIsPlaying(false);
-        setThumbnailBlob(null);
-        setThumbnailUrl(null);
-        setIsGeneratingThumbnail(false);
-      }}
-      closeOnOverlayClick={false}
-      motionPreset="slideInBottom"
-      trapFocus={true}
-      autoFocus={false}
-    >
-      <ModalOverlay bg="blackAlpha.800" />
-      <ModalContent
-        bg={"background"}
-        maxH={{ base: "100vh", md: "90vh" }}
-        overflowY="auto"
-        mx={{ base: 0, md: 4 }}
-        my={{ base: 0, md: 4 }}
+    <>
+      <style>
+        {`
+          @keyframes fadeIn {
+            from {
+              opacity: 0;
+              transform: translateY(-10px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+        `}
+      </style>
+      <Modal
+        isOpen={isOpen}
+        onClose={onClose}
+        size={{ base: "xl", md: "xl" }}
+        onCloseComplete={() => {
+          setVideoUrl(null);
+          setIsPlaying(false);
+          setThumbnailBlob(null);
+          setThumbnailUrl(null);
+          setIsGeneratingThumbnail(false);
+        }}
+        closeOnOverlayClick={false}
+        motionPreset="slideInBottom"
+        trapFocus={true}
+        autoFocus={false}
       >
-        <ModalHeader pb={{ base: 2, md: 4 }}>
-          <VStack align="start" spacing={2}>
-            <Text fontSize={{ base: "lg", md: "xl" }}>
-              {canBypass
-                ? "Video Editor"
-                : `Trim Video - Max ${maxDuration} seconds`}
-            </Text>
-            {canBypass ? (
-              <Text fontSize="sm" color="primary">
-                ✨ You have more than 100 HP - You can use the full video or
-                trim it as needed
+        <ModalOverlay bg="blackAlpha.800" />
+        <ModalContent
+          bg={"background"}
+          maxH={{ base: "100vh", md: "90vh" }}
+          overflowY="auto"
+          mx={{ base: 0, md: 4 }}
+          my={{ base: 0, md: 4 }}
+        >
+          <ModalHeader pb={{ base: 2, md: 4 }}>
+            <VStack align="start" spacing={2}>
+              <Text fontSize={{ base: "lg", md: "xl" }}>
+                {trimmingRequired ? "Video Trimming Required" : "Video Editor"}
               </Text>
-            ) : (
-              <Text fontSize="sm" color="accent">
-                📹 Videos are limited to {maxDuration} seconds in the feed. Get{" "}
-                {">"}100 HP to bypass this limit.
-              </Text>
-            )}
-          </VStack>
-        </ModalHeader>
-        <ModalCloseButton />
+              {canBypass ? (
+                <Text fontSize="sm" color="primary">
+                  ✨ You have more than 100 HP - You can use the full video or
+                  trim it as needed
+                </Text>
+              ) : (
+                <Text fontSize="sm" color="accent">
+                  📹 Videos are limited to {maxDuration} seconds in the feed.
+                  Get {">"}100 HP to bypass this limit.
+                </Text>
+              )}
+            </VStack>
+          </ModalHeader>
+          <ModalCloseButton />
 
-        <ModalBody px={{ base: 3, md: 6 }} py={{ base: 3, md: 4 }}>
-          <VStack spacing={{ base: 3, md: 4 }}>
-            {/* Video Player - Always at the top */}
-            {videoUrl ? (
-              <>
-                {console.log(
-                  "🎮 Rendering VideoPlayer with videoUrl:",
-                  videoUrl
-                )}
-                <VideoPlayer
-                  videoRef={videoRef}
-                  videoUrl={videoUrl}
-                  isPlaying={isPlaying}
-                  onLoadedMetadata={handleLoadedMetadata}
-                  onTimeUpdate={handleTimeUpdate}
-                  onTogglePlayPause={togglePlayPause}
-                />
-              </>
-            ) : (
-              <>
+          <ModalBody px={{ base: 3, md: 6 }} py={{ base: 3, md: 4 }}>
+            <VStack spacing={{ base: 3, md: 4 }}>
+              {/* Video Player - Always at the top */}
+              {videoUrl ? (
+                <>
+                  {console.log(
+                    "🎮 Rendering VideoPlayer with videoUrl:",
+                    videoUrl
+                  )}
+                  <VideoPlayer
+                    videoRef={videoRef}
+                    videoUrl={videoUrl}
+                    isPlaying={isPlaying}
+                    onLoadedMetadata={handleLoadedMetadata}
+                    onTimeUpdate={handleTimeUpdate}
+                    onTogglePlayPause={togglePlayPause}
+                  />
+                </>
+              ) : (
+                <>
+                  <Box
+                    width="100%"
+                    height="200px"
+                    bg="red.100"
+                    border="2px solid red"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                  >
+                    <Text color="red.600" fontWeight="bold">
+                      DEBUG: No videoUrl - videoFile:{" "}
+                      {videoFile ? "exists" : "missing"}
+                    </Text>
+                  </Box>
+                </>
+              )}
+
+              {/* Required Trimming Notice */}
+              {trimmingRequired && (
+                <Alert status="warning" size="sm">
+                  <AlertIcon />
+                  <Text fontSize="sm" fontWeight="medium">
+                    🎬 Video trimming required - Your video is longer than{" "}
+                    {maxDuration} seconds. Please trim it below.
+                  </Text>
+                </Alert>
+              )}
+
+              {/* Show Advanced Toggle - Only show when trimming is not required */}
+              {showAdvancedToggle && (
+                <Button
+                  onClick={() => setShowAdvanced(!showAdvanced)}
+                  variant="ghost"
+                  size="sm"
+                  width="100%"
+                  leftIcon={
+                    <Text fontSize="lg">{showAdvanced ? "▼" : "▶"}</Text>
+                  }
+                >
+                  Show Advanced Options
+                </Button>
+              )}
+
+              {/* Advanced Options - Always show when trimming required, or when user toggles */}
+              {(showAdvanced || trimmingRequired) && (
                 <Box
                   width="100%"
-                  height="200px"
-                  bg="red.100"
-                  border="2px solid red"
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
+                  style={{
+                    animation: "fadeIn 0.2s ease-in-out",
+                  }}
                 >
-                  <Text color="red.600" fontWeight="bold">
-                    DEBUG: No videoUrl - videoFile:{" "}
-                    {videoFile ? "exists" : "missing"}
-                  </Text>
+                  {/* Tabs for Trim and Thumbnail functionality */}
+                  <Tabs
+                    width="100%"
+                    variant="enclosed"
+                    colorScheme="blue"
+                    index={activeTab}
+                    onChange={setActiveTab}
+                  >
+                    <TabList>
+                      <Tab>📸 Thumbnail</Tab>
+                      <Tab
+                        color={trimmingRequired ? "orange.500" : undefined}
+                        fontWeight={trimmingRequired ? "semibold" : undefined}
+                        _selected={{
+                          color: trimmingRequired ? "orange.300" : "blue.500",
+                          borderColor: trimmingRequired
+                            ? "orange.300"
+                            : "blue.500",
+                        }}
+                      >
+                        ✂️{" "}
+                        {trimmingRequired
+                          ? "Trim Video (Required)"
+                          : "Trim Video"}
+                      </Tab>
+                    </TabList>
+
+                    <TabPanels>
+                      {/* Thumbnail Tab */}
+                      <TabPanel px={0}>
+                        <ThumbnailCapture
+                          thumbnailUrl={thumbnailUrl}
+                          isGeneratingThumbnail={isGeneratingThumbnail}
+                          onCaptureFrame={handleCaptureFrame}
+                        />
+                      </TabPanel>
+                      {/* Trim Tab */}
+                      <TabPanel px={0}>
+                        <VideoTimeline
+                          duration={duration}
+                          currentTime={currentTime}
+                          startTime={startTime}
+                          endTime={endTime}
+                          isValidSelection={isValidSelection}
+                          maxDuration={maxDuration}
+                          canBypass={canBypass}
+                          onSeek={seekTo}
+                          onSeekDuringDrag={seekDuringDrag}
+                          onStartTimeChange={setStartTime}
+                          onEndTimeChange={setEndTime}
+                          onDragStart={() => {
+                            setIsPreviewingSlider(true);
+                            setIsDragging(true);
+                          }}
+                          onDragEnd={handleSliderChangeEnd}
+                        />
+                      </TabPanel>
+                    </TabPanels>
+                  </Tabs>
                 </Box>
-              </>
-            )}
+              )}
+            </VStack>
+          </ModalBody>
 
-            {/* Duration Info */}
-            <Alert
-              status={
-                canBypass
-                  ? isValidSelection
-                    ? "success"
-                    : "info"
-                  : isValidSelection
-                  ? "success"
-                  : "warning"
-              }
-              size="sm"
-            >
-              <AlertIcon />
-              <Text fontSize="sm">
-                Original: {formatTime(duration)} | Selected:{" "}
-                {formatTime(selectedDuration)}
-                {canBypass
-                  ? isValidSelection
-                    ? " ✓"
-                    : " (You can use the full video)"
-                  : isValidSelection
-                  ? " ✓"
-                  : ` ⚠️ Exceeds ${maxDuration}s`}
-              </Text>
-            </Alert>
-
-            {/* Tabs for Trim and Thumbnail functionality */}
-            <Tabs width="100%" variant="enclosed" colorScheme="blue">
-              <TabList>
-                <Tab>✂️ Trim Video</Tab>
-                <Tab>📸 Thumbnail</Tab>
-              </TabList>
-
-              <TabPanels>
-                {/* Trim Tab */}
-                <TabPanel px={0}>
-                  <VideoTimeline
-                    duration={duration}
-                    currentTime={currentTime}
-                    startTime={startTime}
-                    endTime={endTime}
-                    isValidSelection={isValidSelection}
-                    maxDuration={maxDuration}
-                    canBypass={canBypass}
-                    onSeek={seekTo}
-                    onSeekDuringDrag={seekDuringDrag}
-                    onStartTimeChange={setStartTime}
-                    onEndTimeChange={setEndTime}
-                    onDragStart={() => {
-                      setIsPreviewingSlider(true);
-                      setIsDragging(true);
-                    }}
-                    onDragEnd={handleSliderChangeEnd}
-                  />
-                </TabPanel>
-
-                {/* Thumbnail Tab */}
-                <TabPanel px={0}>
-                  <ThumbnailCapture
-                    thumbnailUrl={thumbnailUrl}
-                    isGeneratingThumbnail={isGeneratingThumbnail}
-                    onCaptureFrame={handleCaptureFrame}
-                  />
-                </TabPanel>
-              </TabPanels>
-            </Tabs>
-          </VStack>
-        </ModalBody>
-
-        <VideoTrimModalFooter
-          isValidSelection={isValidSelection}
-          maxDuration={maxDuration}
-          canBypass={canBypass}
-          isProcessing={isProcessing}
-          onClose={onClose}
-          onBypass={handleBypass}
-          onTrim={handleTrim}
-        />
-      </ModalContent>
-    </Modal>
+          <VideoTrimModalFooter
+            isValidSelection={isValidSelection}
+            maxDuration={maxDuration}
+            canBypass={canBypass}
+            isProcessing={isProcessing}
+            hasActiveTrim={hasActiveTrim}
+            onClose={onClose}
+            onBypass={handleBypass}
+            onTrim={handleTrim}
+          />
+        </ModalContent>
+      </Modal>
+    </>
   );
 };
 

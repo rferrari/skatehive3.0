@@ -113,11 +113,6 @@ const VideoTimeline: React.FC<VideoTimelineProps> = ({
 
   return (
     <VStack spacing={{ base: 3, md: 4 }}>
-      {/* Current Time Display */}
-      <Text fontSize="sm" textAlign="center" color="gray.400">
-        Current Position: {formatTime(currentTime)}
-      </Text>
-
       {/* Timeline Trimmer with Play Button */}
       <Box width="100%" px={2}>
         <Text fontSize="xs" mb={3} textAlign="center" color="gray.400">

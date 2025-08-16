@@ -8,13 +8,14 @@ import {
   Text,
   Divider,
 } from "@chakra-ui/react";
-import { FaCut, FaVideo, FaTimes } from "react-icons/fa";
+import { FaCut, FaVideo, FaArrowRight } from "react-icons/fa";
 
 interface VideoTrimModalFooterProps {
   isValidSelection: boolean;
   maxDuration: number;
   canBypass: boolean;
   isProcessing: boolean;
+  hasActiveTrim: boolean; // New prop to detect if user has actively trimmed
   onClose: () => void;
   onBypass: () => void;
   onTrim: () => void;
@@ -25,6 +26,7 @@ const VideoTrimModalFooter: React.FC<VideoTrimModalFooterProps> = ({
   maxDuration,
   canBypass,
   isProcessing,
+  hasActiveTrim,
   onClose,
   onBypass,
   onTrim,
@@ -56,92 +58,126 @@ const VideoTrimModalFooter: React.FC<VideoTrimModalFooterProps> = ({
           direction={{ base: "column", md: "row" }}
           as={HStack}
         >
-          {/* Cancel Button - Hidden on mobile when bypass is available */}
-          <Button
-            leftIcon={<FaTimes />}
-            variant="ghost"
-            onClick={onClose}
-            size={{ base: "md", md: "lg" }}
-            width={{ base: canBypass ? "auto" : "100%", md: "auto" }}
-            minW={{ base: "auto", md: "120px" }}
-            display={{ base: canBypass ? "none" : "flex", md: "flex" }}
-            color="gray.400"
-            _hover={{
-              color: "white",
-              bg: "whiteAlpha.100",
-            }}
-            _active={{
-              bg: "whiteAlpha.200",
-            }}
-          >
-            Cancel
-          </Button>
+          {/* Smart Primary Button - Changes based on user action */}
+          {canBypass ? (
+            hasActiveTrim ? (
+              <>
+                {/* Secondary: Use Original Button when user has trimmed */}
+                <Button
+                  leftIcon={<FaVideo />}
+                  onClick={onBypass}
+                  size={{ base: "md", md: "lg" }}
+                  width={{ base: "100%", md: "auto" }}
+                  minW={{ base: "auto", md: "140px" }}
+                  variant="outline"
+                  borderColor="blue.500"
+                  color="blue.500"
+                  _hover={{
+                    bg: "blue.50",
+                    borderColor: "blue.600",
+                    color: "blue.600",
+                  }}
+                  _active={{
+                    bg: "blue.100",
+                  }}
+                  transition="all 0.2s ease"
+                  fontWeight="medium"
+                >
+                  Use Original
+                </Button>
 
-          {/* Use Original Video Button (for >100 HP users) */}
-          {canBypass && (
+                {/* Primary: Trim & Use button */}
+                <Button
+                  leftIcon={isProcessing ? undefined : <FaCut />}
+                  onClick={onTrim}
+                  isLoading={isProcessing}
+                  loadingText="Processing..."
+                  size={{ base: "md", md: "lg" }}
+                  width={{ base: "100%", md: "auto" }}
+                  minW={{ base: "auto", md: "160px" }}
+                  bg="green.600"
+                  color="white"
+                  _hover={{
+                    bg: "green.500",
+                    transform: { base: "none", md: "translateY(-1px)" },
+                  }}
+                  _active={{
+                    bg: "green.700",
+                    transform: "translateY(0)",
+                  }}
+                  transition="all 0.2s ease"
+                  boxShadow="md"
+                  fontWeight="semibold"
+                >
+                  {isProcessing ? "Processing" : "Trim & Use"}
+                </Button>
+              </>
+            ) : (
+              // User hasn't trimmed - show Next button (use original)
+              <Button
+                leftIcon={<FaArrowRight />}
+                onClick={onBypass}
+                size={{ base: "md", md: "lg" }}
+                width={{ base: "100%", md: "auto" }}
+                minW={{ base: "auto", md: "160px" }}
+                bg="blue.600"
+                color="white"
+                _hover={{
+                  bg: "blue.500",
+                  transform: { base: "none", md: "translateY(-1px)" },
+                }}
+                _active={{
+                  bg: "blue.700",
+                  transform: "translateY(0)",
+                }}
+                transition="all 0.2s ease"
+                boxShadow="md"
+                fontWeight="semibold"
+              >
+                Next
+              </Button>
+            )
+          ) : (
+            // User must trim - show Trim & Use button
             <Button
-              leftIcon={<FaVideo />}
-              variant="solid"
-              onClick={onBypass}
+              leftIcon={isProcessing ? undefined : <FaCut />}
+              onClick={onTrim}
+              isLoading={isProcessing}
+              loadingText="Processing..."
+              isDisabled={!isValidSelection}
               size={{ base: "md", md: "lg" }}
               width={{ base: "100%", md: "auto" }}
               minW={{ base: "auto", md: "160px" }}
-              bg="blue.600"
+              bg={isValidSelection ? "green.600" : "gray.600"}
               color="white"
               _hover={{
-                bg: "blue.500",
-                transform: { base: "none", md: "translateY(-1px)" },
+                bg: isValidSelection ? "green.500" : "gray.600",
+                transform: {
+                  base: "none",
+                  md: isValidSelection ? "translateY(-1px)" : "none",
+                },
               }}
               _active={{
-                bg: "blue.700",
+                bg: isValidSelection ? "green.700" : "gray.600",
                 transform: "translateY(0)",
               }}
+              _disabled={{
+                bg: "gray.600",
+                color: "gray.400",
+                cursor: "not-allowed",
+                opacity: 0.6,
+                _hover: {
+                  bg: "gray.600",
+                  transform: "none",
+                },
+              }}
               transition="all 0.2s ease"
-              boxShadow="md"
+              boxShadow={isValidSelection ? "md" : "none"}
+              fontWeight="semibold"
             >
-              Use Original
+              {isProcessing ? "Processing" : "Trim & Use"}
             </Button>
           )}
-
-          {/* Primary Trim Button */}
-          <Button
-            leftIcon={isProcessing ? undefined : <FaCut />}
-            onClick={onTrim}
-            isLoading={isProcessing}
-            loadingText="Processing..."
-            isDisabled={!canBypass && !isValidSelection}
-            size={{ base: "md", md: "lg" }}
-            width={{ base: "100%", md: "auto" }}
-            minW={{ base: "auto", md: "160px" }}
-            bg={canBypass || isValidSelection ? "green.600" : "gray.600"}
-            color="white"
-            _hover={{
-              bg: canBypass || isValidSelection ? "green.500" : "gray.600",
-              transform: {
-                base: "none",
-                md: canBypass || isValidSelection ? "translateY(-1px)" : "none",
-              },
-            }}
-            _active={{
-              bg: canBypass || isValidSelection ? "green.700" : "gray.600",
-              transform: "translateY(0)",
-            }}
-            _disabled={{
-              bg: "gray.600",
-              color: "gray.400",
-              cursor: "not-allowed",
-              opacity: 0.6,
-              _hover: {
-                bg: "gray.600",
-                transform: "none",
-              },
-            }}
-            transition="all 0.2s ease"
-            boxShadow={canBypass || isValidSelection ? "md" : "none"}
-            fontWeight="semibold"
-          >
-            {isProcessing ? "Processing" : "Trim & Use"}
-          </Button>
         </VStack>
       </VStack>
     </ModalFooter>

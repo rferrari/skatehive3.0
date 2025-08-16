@@ -14,25 +14,16 @@ const ThumbnailCapture: React.FC<ThumbnailCaptureProps> = ({
 }) => {
   return (
     <VStack width="100%" spacing={4}>
-      <Text fontSize="sm" color="gray.400" textAlign="center">
-        Capture a custom thumbnail from the current video frame
-      </Text>
-
-      <HStack width="100%" justify="space-between" align="center">
-        <Text fontSize="sm" fontWeight="medium">
-          📸 Video Thumbnail
-        </Text>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={onCaptureFrame}
-          color="blue.400"
-          isLoading={isGeneratingThumbnail}
-          loadingText="Capturing..."
-        >
-          {thumbnailUrl ? "Update Frame" : "Capture Frame"}
-        </Button>
-      </HStack>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={onCaptureFrame}
+        colorScheme="green"
+        isLoading={isGeneratingThumbnail}
+        loadingText="Capturing..."
+      >
+        {thumbnailUrl ? "Update Frame" : "Capture Frame"}
+      </Button>
 
       {/* Thumbnail Preview */}
       {thumbnailUrl ? (
