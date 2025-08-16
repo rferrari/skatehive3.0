@@ -427,7 +427,9 @@ export async function convertToMp4iOS(
   const fetchFile = getFetchFile();
 
   ffmpeg.on("progress", ({ progress }: { progress: number }) => {
-    onProgress(Math.round(progress * 100));
+    // Ensure progress is a valid number between 0 and 1
+    const validProgress = Math.max(0, Math.min(1, progress || 0));
+    onProgress(Math.round(validProgress * 100));
   });
 
   await ffmpeg.writeFile(file.name, await fetchFile(file));
@@ -610,7 +612,9 @@ export async function compressVideo(
   
   // Set up progress handler
   ffmpeg.on("progress", ({ progress }: { progress: number }) => {
-    onProgress(Math.round(progress * 100));
+    // Ensure progress is a valid number between 0 and 1
+    const validProgress = Math.max(0, Math.min(1, progress || 0));
+    onProgress(Math.round(validProgress * 100));
   });
   
   await ffmpeg.writeFile(file.name, await fetchFile(file));
@@ -665,7 +669,9 @@ export async function convertToMp4(
 
   // Set up progress handler
   ffmpeg.on("progress", ({ progress }: { progress: number }) => {
-    onProgress(Math.round(progress * 100));
+    // Ensure progress is a valid number between 0 and 1
+    const validProgress = Math.max(0, Math.min(1, progress || 0));
+    onProgress(Math.round(validProgress * 100));
   });
 
   await ffmpeg.writeFile(file.name, await fetchFile(file));

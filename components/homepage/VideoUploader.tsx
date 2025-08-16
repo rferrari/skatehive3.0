@@ -78,9 +78,71 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
   ) => {
     const inputRef = useRef<HTMLInputElement>(null);
     const ffmpegRef = useRef<any>(null);
-    const [status, setStatus] = useState<string>("");
-    const [compressionProgress, setCompressionProgress] = useState<number>(0);
-    const [uploadProgress, setUploadProgress] = useState<number>(0);
+    // Unified progress state
+    const [progressState, setProgressState] = useState<{
+      phase:
+        | "idle"
+        | "analyzing"
+        | "processing"
+        | "uploading"
+        | "complete"
+        | "error";
+      progress: number;
+      message: string;
+      subMessage?: string;
+    }>({
+      phase: "idle",
+      progress: 0,
+      message: "",
+    });
+
+    // Helper functions for progress updates
+    const updateProgress = (
+      phase: typeof progressState.phase,
+      progress: number,
+      message: string,
+      subMessage?: string
+    ) => {
+      const boundedProgress = Math.max(
+        0,
+        Math.min(100, Math.round(progress || 0))
+      );
+      setProgressState({
+        phase,
+        progress: boundedProgress,
+        message,
+        subMessage,
+      });
+    };
+
+    const setStatus = (message: string) => {
+      setProgressState((prev) => ({ ...prev, message }));
+    };
+
+    const setCompressionProgress = (progress: number) => {
+      const boundedProgress = Math.max(
+        0,
+        Math.min(100, Math.round(progress || 0))
+      );
+      setProgressState((prev) => ({
+        ...prev,
+        progress: boundedProgress,
+        phase: "processing",
+      }));
+    };
+
+    const setUploadProgress = (progress: number) => {
+      const boundedProgress = Math.max(
+        0,
+        Math.min(100, Math.round(progress || 0))
+      );
+      setProgressState((prev) => ({
+        ...prev,
+        progress: boundedProgress,
+        phase: "uploading",
+      }));
+    };
+
     const [fallbackMode, setFallbackMode] = useState<boolean>(false);
     const [retryCount, setRetryCount] = useState<number>(0);
     const [inputVideoMetadata, setInputVideoMetadata] =
@@ -95,14 +157,18 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
     );
     const [useIOSOptimized, setUseIOSOptimized] = useState(false);
 
-    // Device detection
-    const device = React.useMemo(
-      () => ({
-        isIOS: detectiOSDevice(),
-        supportsMobileOptimization: true, // We'll check file-specific optimization later
-      }),
-      []
-    );
+    // Memoized device detection to avoid repeated calculations
+    const deviceInfo = React.useMemo(() => {
+      const ios = detectiOSDevice();
+      const android = detectAndroidDevice();
+      return {
+        isIOS: ios,
+        isAndroid: android.isAndroid,
+        isOldAndroid: android.isOldAndroid,
+        androidDevice: android,
+        supportsMobileOptimization: true,
+      };
+    }, []);
     const [processingTime, setProcessingTime] = useState<number>(0);
     const [isDevelopment, setIsDevelopment] = useState<boolean>(false);
 
@@ -123,9 +189,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
       lastError: string = ""
     ) => {
       if (!file) {
-        setStatus("");
-        setCompressionProgress(0);
-        setUploadProgress(0);
+        updateProgress("idle", 0, "");
         // Reset metadata
         setInputVideoMetadata(null);
         setOutputVideoMetadata(null);
@@ -158,15 +222,15 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         hasSharedArrayBuffer:
           typeof window !== "undefined" && "SharedArrayBuffer" in window,
         hasWebAssembly: typeof WebAssembly !== "undefined",
-        isIOSDevice: device.isIOS,
+        isIOSDevice: deviceInfo.isIOS,
       });
 
       // Provide better user feedback based on device and capabilities
-      if (device.isIOS && !ffmpegSupported) {
+      if (deviceInfo.isIOS && !ffmpegSupported) {
         console.log(
           "📱 iOS device detected without FFmpeg support - will use optimized fallback"
         );
-      } else if (device.isIOS && ffmpegSupported) {
+      } else if (deviceInfo.isIOS && ffmpegSupported) {
         console.log(
           "📱 iOS device with FFmpeg support - will use iOS-optimized processing"
         );
@@ -175,7 +239,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
       try {
         // Duration check
         if (maxDurationSeconds) {
-          setStatus("Checking video duration...");
+          updateProgress("analyzing", 10, "Checking video duration...");
           try {
             const duration = await getVideoDuration(file);
             const validation = validateVideoDuration(
@@ -183,7 +247,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
               maxDurationSeconds
             );
             if (!validation.isValid) {
-              setStatus("");
+              updateProgress("error", 0, "Video duration exceeds limit");
               if (onDurationError) onDurationError(duration);
               onUpload(null);
               if (onUploadFinish) onUploadFinish();
@@ -201,9 +265,10 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         // Check if thumbnail was already generated by VideoTrimModal
         if ((file as any).thumbnailUrl) {
           thumbnailUrl = (file as any).thumbnailUrl;
-          setStatus("Using existing thumbnail...");
+          updateProgress("analyzing", 20, "Using existing thumbnail...");
         } else {
           try {
+            updateProgress("analyzing", 15, "Generating thumbnail...");
             thumbnailUrl = await generateThumbnail(
               file,
               ffmpegRef,
@@ -212,14 +277,18 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
             );
           } catch (err) {
             errorStep = "thumbnail";
-            setStatus("Thumbnail generation failed, continuing upload...");
+            updateProgress(
+              "analyzing",
+              25,
+              "Thumbnail generation failed, continuing upload..."
+            );
           }
         }
 
         // Check file size and HP requirements first
         const fileSizeCheck = checkFileSizeAndHP(file, userHP);
         if (!fileSizeCheck.canUpload && onFileSizeError) {
-          setStatus("");
+          updateProgress("error", 0, "File size exceeds limits");
           onFileSizeError(fileSizeCheck.reason || "File size exceeds limits");
           onUpload(null);
           if (onUploadFinish) onUploadFinish();
@@ -230,7 +299,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         const startTime = Date.now();
         if (isDevelopment) {
           try {
-            setStatus("Analyzing video metadata...");
+            updateProgress("analyzing", 30, "Analyzing video metadata...");
             const metadata = await analyzeVideoFile(file);
             setInputVideoMetadata(metadata);
 
@@ -274,17 +343,16 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
           file.name.toLowerCase().endsWith(".mov") ||
           file.type === "video/quicktime";
         const iosOptimized =
-          device.isIOS && shouldUseiOSOptimizedProcessing(file);
+          deviceInfo.isIOS && shouldUseiOSOptimizedProcessing(file);
 
         // Android optimization - check if we should skip processing
-        const androidDevice = detectAndroidDevice();
         const androidSkipInfo = shouldSkipAndroidProcessing(file);
 
         console.log(`📱 Device info:`, {
-          isIOS: device.isIOS,
+          isIOS: deviceInfo.isIOS,
           iosOptimized,
-          isAndroid: androidDevice.isAndroid,
-          isOldAndroid: androidDevice.isOldAndroid,
+          isAndroid: deviceInfo.isAndroid,
+          isOldAndroid: deviceInfo.isOldAndroid,
           androidSkip: androidSkipInfo.shouldSkip,
           androidReason: androidSkipInfo.reason,
           fallbackMode,
@@ -296,7 +364,11 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
           console.log(
             `🤖 Skipping Android processing: ${androidSkipInfo.reason}`
           );
-          setStatus("Android MP4 detected - uploading without processing...");
+          updateProgress(
+            "processing",
+            100,
+            "Android MP4 detected - uploading without processing..."
+          );
           processedFile = file;
         } else {
           console.log(`📱 Use iOS optimized processing: ${iosOptimized}`);
@@ -305,24 +377,30 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
           setUseIOSOptimized(iosOptimized);
 
           // Enhanced processing status messages
-          if (device.isIOS) {
+          if (deviceInfo.isIOS) {
             if (iosOptimized) {
-              setStatus(
+              updateProgress(
+                "processing",
+                0,
                 "Detected iPhone video - using optimized processing..."
               );
             } else {
-              setStatus("Processing iPhone video...");
+              updateProgress("processing", 0, "Processing iPhone video...");
             }
-          } else if (androidDevice.isAndroid) {
+          } else if (deviceInfo.isAndroid) {
             if (isMovFile) {
-              setStatus("Converting Android .MOV video...");
+              updateProgress(
+                "processing",
+                0,
+                "Converting Android .MOV video..."
+              );
             } else {
-              setStatus("Processing Android video...");
+              updateProgress("processing", 0, "Processing Android video...");
             }
           } else if (isMovFile) {
-            setStatus("Processing .MOV video file...");
+            updateProgress("processing", 0, "Processing .MOV video file...");
           } else {
-            setStatus("Processing video...");
+            updateProgress("processing", 0, "Processing video...");
           }
 
           if (isMovFile) {
@@ -364,14 +442,22 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
             try {
               if (shouldSkipCompression) {
                 // Just convert to MP4 format without compression
-                if (device.isIOS && isMovFile && iosOptimized) {
-                  setStatus("Converting iPhone video to MP4 (optimized)...");
+                if (deviceInfo.isIOS && isMovFile && iosOptimized) {
+                  updateProgress(
+                    "processing",
+                    0,
+                    "Converting iPhone video to MP4 (optimized)..."
+                  );
                 } else {
-                  setStatus("Converting to MP4 format...");
+                  updateProgress(
+                    "processing",
+                    0,
+                    "Converting to MP4 format..."
+                  );
                 }
 
                 let mp4Blob: Blob;
-                if (device.isIOS && isMovFile && iosOptimized) {
+                if (deviceInfo.isIOS && isMovFile && iosOptimized) {
                   console.log(
                     "📱 Using iOS-optimized conversion for .mov file"
                   );
@@ -396,10 +482,18 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
                 );
               } else {
                 // Compress the video using simple settings
-                if (device.isIOS && iosOptimized) {
-                  setStatus("Compressing iPhone video (optimized)...");
+                if (deviceInfo.isIOS && iosOptimized) {
+                  updateProgress(
+                    "processing",
+                    0,
+                    "Making iPhone video more awesome..."
+                  );
                 } else {
-                  setStatus("Compressing video...");
+                  updateProgress(
+                    "processing",
+                    0,
+                    "Send video to skate gods..."
+                  );
                 }
 
                 const compressedBlob = await compressVideo(
@@ -417,23 +511,31 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
                   throw new Error("Compressed file is larger than original");
                 }
 
-                processedFile = new File([compressedBlob], "compressed.mp4", {
-                  type: "video/mp4",
-                });
+                processedFile = new File(
+                  [compressedBlob],
+                  "skatehivesnapvideo.mp4",
+                  {
+                    type: "video/mp4",
+                  }
+                );
                 console.log("📱 Successfully compressed video");
               }
             } catch (err) {
               console.error("📱 FFmpeg processing failed:", err);
 
               // For iOS devices, try iOS-specific fallback first
-              if (device.isIOS) {
+              if (deviceInfo.isIOS) {
                 try {
                   console.log("📱 Trying iOS-specific fallback...");
-                  setStatus("Using iOS fallback compression...");
+                  updateProgress(
+                    "processing",
+                    0,
+                    "Using iOS fallback compression..."
+                  );
                   const iosFallbackBlob = await compressVideoiOSFallback(file);
                   processedFile = new File(
                     [iosFallbackBlob],
-                    "ios-compressed.mp4",
+                    "ios-skatehivesnapvideo.mp4",
                     {
                       type: "video/mp4",
                     }
@@ -447,7 +549,11 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
                       console.log(
                         "📱 Retrying .mov file with simple conversion only"
                       );
-                      setStatus("Retrying with simple conversion...");
+                      updateProgress(
+                        "processing",
+                        0,
+                        "Retrying with simple conversion..."
+                      );
                       const mp4Blob = await convertToMp4(
                         file,
                         ffmpegRef,
@@ -464,7 +570,9 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
                         "📱 All attempts failed, uploading original file:",
                         retryErr
                       );
-                      setStatus(
+                      updateProgress(
+                        "processing",
+                        100,
                         "All processing failed, uploading original file..."
                       );
                       processedFile = file;
@@ -473,7 +581,9 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
                     console.log(
                       "📱 Uploading original file due to iOS processing failure"
                     );
-                    setStatus(
+                    updateProgress(
+                      "processing",
+                      100,
                       "iOS processing failed, uploading original file..."
                     );
                     processedFile = file;
@@ -483,19 +593,50 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
                 // For .mov files on non-iOS, try one more time with just basic conversion
                 if (isMovFile && !shouldSkipCompression) {
                   try {
-                    console.log(
-                      "📱 Retrying .mov file with simple conversion only"
-                    );
-                    setStatus("Retrying with simple conversion...");
-                    const mp4Blob = await convertToMp4(
-                      file,
-                      ffmpegRef,
-                      setCompressionProgress
-                    );
-                    processedFile = new File([mp4Blob], "converted.mp4", {
-                      type: "video/mp4",
-                    });
-                    console.log("📱 Successfully converted .mov file on retry");
+                    if (isMovFile && !shouldSkipCompression) {
+                      try {
+                        console.log(
+                          "📱 Retrying .mov file with simple conversion only"
+                        );
+                        updateProgress(
+                          "processing",
+                          0,
+                          "Retrying with simple conversion..."
+                        );
+                        const mp4Blob = await convertToMp4(
+                          file,
+                          ffmpegRef,
+                          setCompressionProgress
+                        );
+                        processedFile = new File([mp4Blob], "converted.mp4", {
+                          type: "video/mp4",
+                        });
+                        console.log(
+                          "📱 Successfully converted .mov file on retry"
+                        );
+                      } catch (retryErr) {
+                        console.error(
+                          "📱 Retry also failed, uploading original file:",
+                          retryErr
+                        );
+                        updateProgress(
+                          "processing",
+                          100,
+                          "Conversion failed, uploading original file..."
+                        );
+                        processedFile = file;
+                      }
+                    } else {
+                      console.log(
+                        "📱 Uploading original file due to processing failure"
+                      );
+                      updateProgress(
+                        "processing",
+                        100,
+                        "Processing failed, uploading original file..."
+                      );
+                      processedFile = file;
+                    }
                   } catch (retryErr) {
                     console.error(
                       "📱 Retry also failed, uploading original file:",
@@ -519,9 +660,13 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
             );
             // Use fallback compression only as last resort
             try {
-              if (device.isIOS) {
+              if (deviceInfo.isIOS) {
                 console.log("📱 Using iOS-optimized fallback for iOS device");
-                setStatus("Using iPhone-optimized fallback compression...");
+                updateProgress(
+                  "processing",
+                  0,
+                  "Using iPhone-optimized fallback compression..."
+                );
                 const iosFallbackBlob = await compressVideoiOSFallback(file);
                 processedFile = new File(
                   [iosFallbackBlob],
@@ -531,7 +676,11 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
                   }
                 );
               } else {
-                setStatus("Using fallback compression...");
+                updateProgress(
+                  "processing",
+                  0,
+                  "Using fallback compression..."
+                );
                 const mobileBlob = await compressVideoFallback(file);
                 processedFile = new File(
                   [mobileBlob],
@@ -542,7 +691,9 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
                 );
               }
             } catch {
-              setStatus(
+              updateProgress(
+                "processing",
+                100,
                 "Fallback compression failed, uploading original file..."
               );
               processedFile = file;
@@ -567,7 +718,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         if (isDevelopment) {
           try {
             if (processedFile !== file) {
-              setStatus("Analyzing processed video...");
+              updateProgress("analyzing", 90, "Analyzing processed video...");
               const outputMetadata = await analyzeVideoFile(processedFile);
               setOutputVideoMetadata(outputMetadata);
 
@@ -621,8 +772,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
 
         // Upload
         try {
-          setStatus("Uploading video...");
-          setUploadProgress(0);
+          updateProgress("uploading", 0, "Uploading video...");
 
           const limits = getFileSizeLimits();
           const isMobile = isMobileDevice();
@@ -633,7 +783,9 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
             const maxSizeMB = Math.round(limits.maxSize / 1024 / 1024);
 
             if (isMobile && !fallback && sizeMB > 45) {
-              setStatus(
+              updateProgress(
+                "processing",
+                0,
                 "File too large for mobile, compressing more aggressively..."
               );
               try {
@@ -657,7 +809,9 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
                   );
                 }
               } catch (compressionError) {
-                setStatus(
+                updateProgress(
+                  "error",
+                  0,
                   `File too large (${sizeMB}MB) for mobile upload. Maximum: ${maxSizeMB}MB`
                 );
                 onUpload(null);
@@ -665,7 +819,9 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
                 return;
               }
             } else {
-              setStatus(
+              updateProgress(
+                "error",
+                0,
                 `File too large (${sizeMB}MB). Maximum: ${maxSizeMB}MB`
               );
               onUpload(null);
@@ -685,14 +841,15 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
             throw new Error(result.error || "Upload failed");
           }
 
-          setStatus("Upload complete!");
-          setUploadProgress(100);
+          updateProgress("complete", 100, "Upload complete!");
           onUpload(result.url || null);
           if (onUploadFinish) onUploadFinish();
         } catch (err) {
           errorStep = "upload";
           if (attempt < 3) {
-            setStatus(
+            updateProgress(
+              "error",
+              0,
               `Upload failed (attempt ${attempt}/3): ${
                 err instanceof Error ? err.message : String(err)
               }. Retrying...`
@@ -700,7 +857,9 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
             await processVideoFile(file, attempt + 1, "upload");
             return;
           } else {
-            setStatus(
+            updateProgress(
+              "error",
+              0,
               `Upload failed after 3 attempts: ${
                 err instanceof Error ? err.message : String(err)
               }`
@@ -723,9 +882,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         else if (errorStep === "upload") failMsg = "Video upload failed.";
         else failMsg = "Unknown error.";
 
-        setStatus(`Upload failed: ${failMsg}`);
-        setCompressionProgress(0);
-        setUploadProgress(0);
+        updateProgress("error", 0, `Upload failed: ${failMsg}`);
         onUpload(null);
         if (onUploadFinish) onUploadFinish();
       }
@@ -770,17 +927,14 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
           onChange={handleVideoUpload}
           disabled={isProcessing}
         />
-        {status && (
+        {progressState.phase !== "idle" && (
           <div
             style={{
               marginTop: 8,
-              color:
-                status.includes("Error") || status.includes("Failed")
-                  ? "red"
-                  : "#333",
+              color: progressState.phase === "error" ? "red" : "#333",
             }}
           >
-            {status}
+            {progressState.message}
             {retryCount > 0 && (
               <div style={{ fontSize: 12, color: "accent" }}>
                 Retried {retryCount} {retryCount === 1 ? "time" : "times"}
@@ -792,9 +946,17 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
                 compatibility
               </div>
             )}
+            {progressState.subMessage && (
+              <div style={{ fontSize: 12, color: "#666", marginTop: 4 }}>
+                {progressState.subMessage}
+              </div>
+            )}
           </div>
         )}
-        {status === "Compressing video..." && (
+
+        {/* Unified Progress Bar with Phase Indicator */}
+        {(progressState.phase === "processing" ||
+          progressState.phase === "uploading") && (
           <div style={{ marginTop: 8 }}>
             <div
               style={{
@@ -803,45 +965,106 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
                 borderRadius: 4,
                 overflow: "hidden",
                 width: 200,
+                position: "relative",
               }}
             >
               <div
                 style={{
-                  width: `${compressionProgress}%`,
+                  width: `${Math.max(
+                    0,
+                    Math.min(100, progressState.progress || 0)
+                  )}%`,
                   height: "100%",
-                  background: backgroundPrimary,
-                  transition: "width 0.2s",
+                  background:
+                    progressState.phase === "uploading"
+                      ? backgroundAccent
+                      : backgroundPrimary,
+                  transition: "width 0.3s ease-out",
                 }}
               />
+              {/* Animated shimmer effect for processing */}
+              {progressState.phase === "processing" && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: "-100%",
+                    width: "100%",
+                    height: "100%",
+                    background:
+                      "linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)",
+                    animation: "shimmer 2s infinite",
+                  }}
+                />
+              )}
             </div>
-            <div style={{ fontSize: 12, marginTop: 2 }}>
-              {compressionProgress}%
+            <div
+              style={{
+                fontSize: 12,
+                marginTop: 2,
+                color: "#666",
+                display: "flex",
+                justifyContent: "space-between",
+              }}
+            >
+              <span>
+                {Math.max(0, Math.min(100, progressState.progress || 0))}%
+              </span>
+              <span style={{ textTransform: "capitalize" }}>
+                {progressState.phase === "processing"
+                  ? "⚙️ Processing"
+                  : "📤 Uploading"}
+              </span>
             </div>
           </div>
         )}
-        {status === "Uploading video..." && (
+
+        {/* Analyzing phase indicator */}
+        {progressState.phase === "analyzing" && (
           <div style={{ marginTop: 8 }}>
             <div
               style={{
-                height: 8,
-                background: backgroundMuted,
-                borderRadius: 4,
-                overflow: "hidden",
-                width: 200,
+                display: "flex",
+                alignItems: "center",
+                fontSize: 12,
+                color: "#666",
               }}
             >
               <div
                 style={{
-                  width: `${uploadProgress}%`,
-                  height: "100%",
-                  background: backgroundAccent,
-                  transition: "width 0.2s",
+                  width: 12,
+                  height: 12,
+                  borderRadius: "50%",
+                  border: "2px solid #ddd",
+                  borderTop: "2px solid " + backgroundPrimary,
+                  animation: "spin 1s linear infinite",
+                  marginRight: 8,
                 }}
               />
+              🔍 Analyzing...
             </div>
-            <div style={{ fontSize: 12, marginTop: 2 }}>{uploadProgress}%</div>
           </div>
         )}
+
+        {/* Add CSS animations */}
+        <style jsx>{`
+          @keyframes spin {
+            0% {
+              transform: rotate(0deg);
+            }
+            100% {
+              transform: rotate(360deg);
+            }
+          }
+          @keyframes shimmer {
+            0% {
+              left: -100%;
+            }
+            100% {
+              left: 100%;
+            }
+          }
+        `}</style>
 
         {/* Development Video Details */}
         {isDevelopment && (inputVideoMetadata || outputVideoMetadata) && (
@@ -849,7 +1072,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
             style={{
               marginTop: 16,
               padding: 12,
-              background: "#f5f5f5",
+              background: "background",
               borderRadius: 8,
               fontSize: 12,
               fontFamily: "monospace",
@@ -953,15 +1176,11 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
             >
               <strong>📱 Device & Processing Info:</strong>
               <div style={{ marginLeft: 12, marginTop: 4 }}>
-                <div>📱 iOS Device: {device.isIOS ? "Yes" : "No"}</div>
+                <div>📱 iOS Device: {deviceInfo.isIOS ? "Yes" : "No"}</div>
                 <div>
                   🤖 Android Device:{" "}
-                  {detectAndroidDevice().isAndroid
-                    ? `Yes ${
-                        detectAndroidDevice().isOldAndroid
-                          ? "(Old)"
-                          : "(Modern)"
-                      }`
+                  {deviceInfo.isAndroid
+                    ? `Yes ${deviceInfo.isOldAndroid ? "(Old)" : "(Modern)"}`
                     : "No"}
                 </div>
                 <div>🔧 iOS Optimized: {useIOSOptimized ? "Yes" : "No"}</div>
