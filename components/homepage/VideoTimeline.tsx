@@ -246,8 +246,8 @@ const VideoTimeline: React.FC<VideoTimelineProps> = ({
           mt={2}
         >
           <Text>{formatTime(startTime)}</Text>
-          <Text color="blue.400">{formatTime(currentTime)}</Text>
-          <Text>{formatTime(endTime)}</Text>
+          <Text color="blue.400">{formatTime(selectedDuration)}</Text>
+          <Text>{formatTime(duration)}</Text>
         </Flex>{" "}
       </Box>
     </VStack>

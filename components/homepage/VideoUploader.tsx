@@ -492,7 +492,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
                   updateProgress(
                     "processing",
                     0,
-                    "Send video to skate gods..."
+                    "Sending video to skate gods..."
                   );
                 }
 

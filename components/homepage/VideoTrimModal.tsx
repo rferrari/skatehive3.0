@@ -141,7 +141,8 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = ({
       const videoDuration = videoRef.current.duration;
 
       setDuration(videoDuration);
-      const calculatedEndTime = Math.min(videoDuration, maxDuration);
+      // Only auto-trim to maxDuration if user cannot bypass the limit
+      const calculatedEndTime = canBypass ? videoDuration : Math.min(videoDuration, maxDuration);
       setEndTime(calculatedEndTime);
       setCurrentTime(0);
 
@@ -710,7 +711,6 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = ({
             canBypass={canBypass}
             isProcessing={isProcessing}
             hasActiveTrim={hasActiveTrim}
-            onClose={onClose}
             onBypass={handleBypass}
             onTrim={handleTrim}
           />

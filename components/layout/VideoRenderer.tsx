@@ -563,6 +563,7 @@ const VideoRenderer = ({
               left={0}
               width="100%"
               height="100%"
+              minH="100%"
               backgroundImage={`url(${thumbnailUrl})`}
               backgroundSize="cover"
               backgroundPosition="center"
