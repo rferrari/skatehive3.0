@@ -39,8 +39,8 @@ export const useSnaps = () => {
 
   // Fetch comments with a minimum size
   async function getMoreSnaps(): Promise<Discussion[]> {
-    const tag = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || ''
-    const author = "peak.snaps";
+  const tag = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || 'hive-173115';
+  const author = process.env.NEXT_PUBLIC_THREAD_AUTHOR || "peak.snaps";
     const limit = 3;
     const allFilteredComments: Discussion[] = [];
 

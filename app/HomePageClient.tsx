@@ -12,8 +12,8 @@ import useIsMobile from "@/hooks/useIsMobile";
 import { useRouter } from "next/navigation";
 
 export default function HomePageClient() {
-  const thread_author = "peak.snaps";
-  const thread_permlink = "snaps";
+  const thread_author = process.env.NEXT_PUBLIC_THREAD_AUTHOR || "peak.snaps";
+  const thread_permlink = process.env.NEXT_PUBLIC_THREAD_PERMLINK || "snaps";
   const isMobile = useIsMobile();
   const router = useRouter();
 

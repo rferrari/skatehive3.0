@@ -137,15 +137,29 @@ export default function SnapComposer({
 
       const duration = await getVideoDuration(file);
 
+      console.log("🎬 Video file duration check:", {
+        fileName: file.name,
+        duration: duration,
+        durationFormatted: `${duration.toFixed(1)}s`,
+        canBypassLimit,
+        hivePower,
+        user,
+        shouldOpenTrimModal: duration > 15 || canBypassLimit,
+      });
+
       // Always open trim modal for video editing options
       // Users with >100HP can choose to use original or trim
       // Users with <100HP must trim if over 15s
       if (duration > 15 || canBypassLimit) {
+        console.log(
+          "✅ Opening trim modal - duration > 15s or user can bypass"
+        );
         setPendingVideoFile(file);
         setIsTrimModalOpen(true);
         return;
       }
 
+      console.log("⚡ Uploading directly - short video and no bypass ability");
       // Only for videos under 15s and users without bypass - upload directly
       if (videoUploaderRef.current) {
         startUpload();

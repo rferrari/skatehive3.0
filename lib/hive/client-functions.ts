@@ -14,6 +14,8 @@ interface HiveKeychainResponse {
 }
 
 const communityTag = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG;
+const defaultThreadAuthor = process.env.NEXT_PUBLIC_THREAD_AUTHOR || 'peak.snaps';
+const defaultThreadPermlink = process.env.NEXT_PUBLIC_THREAD_PERMLINK || 'snaps';
 
 export async function vote(props: Vote): Promise<KeychainRequestResponse> {
   const keychain = new KeychainSDK(window)
@@ -498,7 +500,7 @@ export async function findPosts(query: string, params: any[]) {
 }
 
 export async function getLastSnapsContainer() {
-  const author = "peak.snaps";
+  const author = process.env.NEXT_PUBLIC_THREAD_AUTHOR || defaultThreadAuthor;
   const beforeDate = new Date().toISOString().split('.')[0];
   const permlink = '';
   const limit = 1;

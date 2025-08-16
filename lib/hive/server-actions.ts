@@ -8,7 +8,7 @@ import HiveClient from "./hiveclient";
 // Note: This is a workaround since getLastSnapsContainer is in client-functions
 // In a real app, you might want to extract this to a shared utilities file
 async function getLastSnapsContainer() {
-  const author = "peak.snaps";
+  const author = process.env.NEXT_PUBLIC_THREAD_AUTHOR || 'peak.snaps';
   const beforeDate = new Date().toISOString().split('.')[0];
   const permlink = '';
   const limit = 1;
@@ -145,8 +145,8 @@ export async function createSnapAsSkatedev({
     }
 
     // Get the latest snaps container for parent
-    let parentAuthor = "peak.snaps";
-    let parentPermlink = "snaps";
+    let parentAuthor = process.env.NEXT_PUBLIC_THREAD_AUTHOR || 'peak.snaps';
+    let parentPermlink = process.env.NEXT_PUBLIC_THREAD_PERMLINK || 'snaps';
     
     try {
       const lastSnapsContainer = await getLastSnapsContainer();
