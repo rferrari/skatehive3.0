@@ -25,7 +25,6 @@ import CoinCreatorComposer from "./CoinCreatorComposer";
 import { AirdropModal } from "../airdrop/AirdropModal";
 import { Discussion } from "@hiveio/dhive"; // Add this import for consistency
 import LogoMatrix from "../graphics/LogoMatrix";
-import UpvoteSnapContainer from "./UpvoteSnapContainer";
 import { countDownvotes } from "@/lib/utils/postUtils";
 import { useAioha } from "@aioha/react-ui";
 import { useAccount } from "wagmi";
@@ -380,8 +379,6 @@ export default function SnapList({
               )}
             </>
           )}
-
-          <UpvoteSnapContainer hideIfVoted />
 
           {/* Coin Creator Modal */}
           <Modal

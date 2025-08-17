@@ -1,9 +1,16 @@
 "use client";
 import React, { useState } from "react";
-import { Box, Select, Text, useToast, VStack, Heading, Button } from "@chakra-ui/react";
+import {
+  Box,
+  Select,
+  Text,
+  useToast,
+  VStack,
+  Heading,
+  Button,
+} from "@chakra-ui/react";
 import { useTheme, ThemeName, themeMap } from "@/app/themeProvider";
 import LottieAnimation from "@/components/shared/LottieAnimation";
-import UpvoteSnapContainer from "@/components/homepage/UpvoteSnapContainer";
 import LogoMatrix from "@/components/graphics/LogoMatrix";
 import FarcasterUniversalLink from "@/components/farcaster/FarcasterUniversalLink";
 import VoteWeightSlider from "@/components/settings/VoteWeightSlider";
@@ -19,7 +26,9 @@ interface MainSettingsProps {
 const MainSettings: React.FC<MainSettingsProps> = ({ userData }) => {
   const { themeName, setThemeName } = useTheme();
   const toast = useToast();
-  const [stokeInstances, setStokeInstances] = useState<Array<{id: number, value: number, isVisible: boolean}>>([]);
+  const [stokeInstances, setStokeInstances] = useState<
+    Array<{ id: number; value: number; isVisible: boolean }>
+  >([]);
 
   const handleThemeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const newTheme = event.target.value as ThemeName;
@@ -124,10 +133,11 @@ const MainSettings: React.FC<MainSettingsProps> = ({ userData }) => {
                 🏆 Community
               </Heading>
               <Text color="primary" fontSize="sm">
-                Help support the SkateHive community
+                SkateHive shows periodic reminders to upvote the community snap
+                container post (desktop only). This helps support the platform
+                and community content.
               </Text>
             </Box>
-            <UpvoteSnapContainer />
           </VStack>
         </Box>
       )}
@@ -149,12 +159,12 @@ const MainSettings: React.FC<MainSettingsProps> = ({ userData }) => {
               Interactive elements and animations
             </Text>
           </Box>
-          
+
           {/* Lottie Animation */}
           <Box py={4}>
             <LottieAnimation src="https://lottie.host/911167fe-726b-4e03-a295-56839461ebc4/WOauo8GTeO.lottie" />
           </Box>
-          
+
           {/* UpvoteStoke Test */}
           <Box textAlign="center" py={4}>
             <Text color="primary" fontSize="sm" mb={3}>
@@ -165,11 +175,13 @@ const MainSettings: React.FC<MainSettingsProps> = ({ userData }) => {
                 const newInstance = {
                   id: Date.now(),
                   value: 0.123,
-                  isVisible: true
+                  isVisible: true,
                 };
-                setStokeInstances(prev => [...prev, newInstance]);
+                setStokeInstances((prev) => [...prev, newInstance]);
                 setTimeout(() => {
-                  setStokeInstances(prev => prev.filter(instance => instance.id !== newInstance.id));
+                  setStokeInstances((prev) =>
+                    prev.filter((instance) => instance.id !== newInstance.id)
+                  );
                 }, 4000);
               }}
               bg="primary"
@@ -187,13 +199,13 @@ const MainSettings: React.FC<MainSettingsProps> = ({ userData }) => {
       <Box py={8}>
         <LogoMatrix />
       </Box>
-      
+
       {/* UpvoteStoke Components */}
-      {stokeInstances.map(instance => (
-        <UpvoteStoke 
+      {stokeInstances.map((instance) => (
+        <UpvoteStoke
           key={instance.id}
-          estimatedValue={instance.value} 
-          isVisible={instance.isVisible} 
+          estimatedValue={instance.value}
+          isVisible={instance.isVisible}
         />
       ))}
     </VStack>

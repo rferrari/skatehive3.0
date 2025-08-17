@@ -15,11 +15,6 @@ import { useAioha } from "@aioha/react-ui";
 import { getLastSnapsContainer, getPost } from "@/lib/hive/client-functions";
 import { Discussion } from "@hiveio/dhive";
 
-interface SnapContainer {
-  author: string;
-  permlink: string;
-}
-
 interface UpvoteSnapContainerProps {
   hideIfVoted?: boolean;
 }
@@ -194,9 +189,9 @@ export default function UpvoteSnapContainer({
       <Text fontSize={textSize} mb={2}>
         Help the community by upvoting the main post where all snaps are stored.
       </Text>
-      <Box 
-        display="flex" 
-        alignItems="center" 
+      <Box
+        display="flex"
+        alignItems="center"
         gap={gap}
         flexDirection={{ base: "column", sm: "row" }}
         width="100%"
@@ -215,8 +210,8 @@ export default function UpvoteSnapContainer({
         >
           {hasVoted ? "Already Voted" : "Upvote Container Post"}
         </Button>
-        <Text 
-          fontSize={containerTextSize} 
+        <Text
+          fontSize={containerTextSize}
           mt={0}
           textAlign={{ base: "center", sm: "left" }}
           wordBreak="break-all"

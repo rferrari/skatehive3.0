@@ -59,7 +59,7 @@ export const CoinTabs: React.FC<CoinTabsProps> = ({ coinData }) => {
       const balanceBigInt = BigInt(balance);
       const weiDivisor = BigInt("1000000000000000000"); // 1e18
       const balanceInTokens = balanceBigInt / weiDivisor; // Convert from wei to tokens
-      
+
       const totalSupplyBigInt = BigInt(totalSupply);
 
       // Calculate percentage: (balanceInTokens / totalSupply) * 100
