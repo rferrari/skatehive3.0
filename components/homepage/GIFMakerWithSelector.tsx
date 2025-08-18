@@ -7,13 +7,17 @@ import React, {
 } from "react";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile } from "@ffmpeg/util";
-import { Box, Input, Button, Text, Select } from "@chakra-ui/react";
+import { Box, Input, Button, Text, Select, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody } from "@chakra-ui/react";
 import { useTheme } from "@/app/themeProvider";
 
 interface GIFMakerWithSelectorProps {
   onUpload: (url: string | null, caption?: string) => void;
   isProcessing?: boolean;
   onVideoSelected?: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
+  asModal?: boolean;
+  onGifCreated?: (gifBlob: Blob, fileName: string) => Promise<void>;
 }
 
 export interface GIFMakerRef {
@@ -22,7 +26,7 @@ export interface GIFMakerRef {
 }
 
 const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
-  ({ onUpload, isProcessing = false, onVideoSelected }, ref) => {
+  ({ onUpload, isProcessing = false, onVideoSelected, isOpen = true, onClose, asModal = false, onGifCreated }, ref) => {
     const inputRef = useRef<HTMLInputElement>(null);
     const ffmpegRef = useRef<any>(null);
     const videoRef = useRef<HTMLVideoElement>(null);
@@ -64,6 +68,7 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
         setStartTime(null);
         setEndTime(null);
         setCanConvert(false);
+        setIsConverting(false);
       },
     }));
 
@@ -74,6 +79,17 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
         }
       };
     }, [videoUrl]);
+
+    // Auto-trigger video selection when modal opens
+    useEffect(() => {
+      if (asModal && isOpen && !videoUrl && inputRef.current) {
+        // Small delay to ensure modal is fully rendered
+        const timer = setTimeout(() => {
+          inputRef.current?.click();
+        }, 100);
+        return () => clearTimeout(timer);
+      }
+    }, [asModal, isOpen, videoUrl]);
 
     const validateDuration = (file: File): Promise<{ valid: boolean; duration: number }> => {
       return new Promise((resolve) => {
@@ -206,9 +222,19 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
         ]);
         const data = await ffmpeg.readFile("output.gif");
         const gifBlob = new Blob([data.buffer], { type: "image/gif" });
-        const gifUrl = URL.createObjectURL(gifBlob);
-        setStatus("GIF created successfully!");
-        onUpload(gifUrl, "skatehive-gif");
+        
+        if (onGifCreated) {
+          // Use the new direct upload pipeline
+          setStatus("Uploading GIF...");
+          const fileName = `skatehive-gif-${Date.now()}.gif`;
+          await onGifCreated(gifBlob, fileName);
+          setStatus("GIF uploaded successfully!");
+        } else {
+          // Fallback to old behavior for backward compatibility
+          const gifUrl = URL.createObjectURL(gifBlob);
+          setStatus("GIF created successfully!");
+          onUpload(gifUrl, "skatehive-gif");
+        }
       } catch (error) {
         setStatus("Error converting video.");
         console.error("Error during GIF conversion:", error);
@@ -266,7 +292,7 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
       };
     }, [startTime, endTime]);
 
-    return (
+    const content = (
       <Box maxW={400} mx="auto" p={6} bg={colors.background} borderRadius={borderRadius} boxShadow={boxShadow} textAlign="center">
         {/* Hidden file input for video selection */}
         <Input
@@ -277,7 +303,34 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
           onChange={handleFileChange}
           isDisabled={isProcessing}
         />
-                {/* After video is selected, show the rest of the UI */}
+        
+        {/* Show video selection prompt when no video is loaded */}
+        {!videoUrl && (
+          <Box>
+            <Text fontSize={fontSizeLg} fontWeight={fontWeightBold} mb={4} color={colors.primary}>
+              Create GIF from Video
+            </Text>
+            <Button
+              onClick={() => inputRef.current?.click()}
+              px={6}
+              py={3}
+              fontSize={fontSizeMd}
+              borderRadius={theme.radii?.base || 6}
+              bg={colors.primary}
+              color={colors.background}
+              fontWeight={fontWeightBold}
+              _hover={{ bg: colors.accent }}
+              _active={{ bg: colors.accent }}
+            >
+              Choose Video
+            </Button>
+            <Text mt={3} fontSize={fontSizeSm} color={colors.text}>
+              Video must be 30 seconds or less
+            </Text>
+          </Box>
+        )}
+        
+        {/* After video is selected, show the rest of the UI */}
         {videoUrl && videoFile && (
           <>
             <Box as="video"
@@ -376,7 +429,7 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
                   return (
                     <>
                       <Text mt={1} fontSize={fontSizeSm} fontWeight={fontWeightMedium}>
-                        Estimated GIF size: <Box as="span" color={getEstimateColor(est)} bg={colors.muted} borderRadius={theme.radii?.base || 6} px={2} py={0.5} ml={2} display="inline-block">{est} MB</Box>
+                        Estimated GIF size: <Box as="span" color={getEstimateColor(est)} bg="muted" borderRadius={theme.radii?.base || 6} px={2} py={0.5} ml={2} display="inline-block">{est} MB</Box>
                       </Text>
                       {est > 2 && (
                         <Text mt={1} fontSize={fontSizeSm} color={colors.error || "#FF6B6B"} fontWeight={fontWeightMedium}>
@@ -417,6 +470,25 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
         )}
       </Box>
     );
+
+    if (asModal) {
+      return (
+        <Modal isOpen={isOpen} onClose={onClose || (() => {})} size="xl">
+          <ModalOverlay />
+          <ModalContent bg={colors.background} borderRadius={borderRadius}>
+            <ModalHeader color={colors.primary} fontWeight={fontWeightBold}>
+              GIF Maker
+            </ModalHeader>
+            <ModalCloseButton color={colors.primary} />
+            <ModalBody pb={6}>
+              {content}
+            </ModalBody>
+          </ModalContent>
+        </Modal>
+      );
+    }
+
+    return content;
   }
 );
 
