@@ -32,6 +32,7 @@ import GifModal from "../compose/GifModal";
 import { GIFMakerRef as GIFMakerWithSelectorRef } from "./GIFMakerWithSelector";
 import useHivePower from "@/hooks/useHivePower";
 import { TbGif } from "react-icons/tb";
+import MatrixOverlay from "@/components/graphics/MatrixOverlay";
 
 interface SnapComposerProps {
   pa: string;
@@ -540,8 +541,27 @@ export default function SnapComposer({
 
   return (
     <Box position="relative">
+      {/* Matrix Overlay during media processing */}
+      {isUploadingMedia && (
+        <Box
+          position="absolute"
+          top={0}
+          left={0}
+          right={0}
+          bottom={0}
+          zIndex={0}
+          pointerEvents="none"
+          borderRadius="base"
+          overflow="hidden"
+        >
+          <MatrixOverlay />
+        </Box>
+      )}
+      
       {/* Snap Composer UI, blurred and unclickable if not logged in */}
       <Box
+        position="relative"
+        zIndex={1}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
@@ -594,6 +614,162 @@ export default function SnapComposer({
             onKeyDown={handleKeyDown} // Attach the keydown handler
             _focusVisible={{ border: "tb1" }}
           />
+          
+          {/* Media Preview Section - Moved above upload buttons */}
+          {(compressedImages.length > 0 || selectedGif || videoUrl || gifUrls.length > 0) && (
+            <Wrap spacing={4} mb={3}>
+              {compressedImages.map((img, index) => (
+                <Box key={index} position="relative">
+                  <Image
+                    alt={img.fileName}
+                    src={img.url}
+                    boxSize="100px"
+                    borderRadius="base"
+                  />
+                  <Input
+                    mt={2}
+                    placeholder="Enter caption"
+                    value={img.caption}
+                    onChange={(e) => {
+                      const newImages = [...compressedImages];
+                      newImages[index].caption = e.target.value;
+                      setCompressedImages(newImages);
+                    }}
+                    size="sm"
+                    isDisabled={isLoading}
+                  />
+                  <IconButton
+                    id={`snap-composer-remove-image-${index}`}
+                    data-testid={`snap-composer-remove-image-${index}`}
+                    aria-label="Remove image"
+                    icon={<FaTimes />}
+                    size="xs"
+                    position="absolute"
+                    top="0"
+                    right="0"
+                    onClick={() =>
+                      setCompressedImages((prevImages) =>
+                        prevImages.filter((_, i) => i !== index)
+                      )
+                    }
+                    isDisabled={isLoading}
+                  />
+                  <Progress
+                    value={uploadProgress[index]}
+                    size="xs"
+                    colorScheme="green"
+                    mt={2}
+                  />
+                </Box>
+              ))}
+              {selectedGif && (
+                <Box key={selectedGif.id} position="relative">
+                  <Image
+                    alt=""
+                    src={selectedGif.images.downsized_medium.url}
+                    boxSize="100px"
+                    borderRadius="base"
+                  />
+                  <IconButton
+                    id="snap-composer-remove-gif"
+                    data-testid="snap-composer-remove-gif"
+                    aria-label="Remove GIF"
+                    icon={<FaTimes />}
+                    size="xs"
+                    position="absolute"
+                    top="0"
+                    right="0"
+                    onClick={() => setSelectedGif(null)}
+                    isDisabled={isLoading}
+                  />
+                </Box>
+              )}
+              {videoUrl && (
+                <Box position="relative" width="100%" maxW="600px">
+                  <Box
+                    position="relative"
+                    width="100%"
+                    paddingBottom="56.25%" // 16:9 aspect ratio (9/16 = 0.5625)
+                    height="0"
+                    overflow="hidden"
+                    borderRadius="8px"
+                    bg="black"
+                  >
+                    <iframe
+                      src={videoUrl}
+                      title="Uploaded Video"
+                      frameBorder="0"
+                      style={{
+                        position: "absolute",
+                        top: "0",
+                        left: "0",
+                        width: "100%",
+                        height: "100%",
+                        borderRadius: "8px",
+                      }}
+                      allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </Box>
+                  <IconButton
+                    id="snap-composer-remove-video"
+                    data-testid="snap-composer-remove-video"
+                    aria-label="Remove video"
+                    icon={<FaTimes />}
+                    size="xs"
+                    position="absolute"
+                    top="2"
+                    right="2"
+                    onClick={() => setVideoUrl(null)}
+                    isDisabled={isLoading}
+                    bg="blackAlpha.700"
+                    color="white"
+                    _hover={{ bg: "blackAlpha.800" }}
+                  />
+                </Box>
+              )}
+              {/* Display GIFs from gifUrls array */}
+              {gifUrls.map((gif, index) => (
+                <Box key={index} position="relative">
+                  <Image
+                    alt={gif.caption || "gif"}
+                    src={gif.url}
+                    boxSize="100px"
+                    borderRadius="base"
+                  />
+                  <Input
+                    mt={2}
+                    placeholder="Enter caption"
+                    value={gif.caption}
+                    onChange={(e) => {
+                      const newGifUrls = [...gifUrls];
+                      newGifUrls[index].caption = e.target.value;
+                      setGifUrls(newGifUrls);
+                    }}
+                    size="sm"
+                    isDisabled={isLoading}
+                  />
+                  <IconButton
+                    id={`snap-composer-remove-gif-${index}`}
+                    data-testid={`snap-composer-remove-gif-${index}`}
+                    aria-label="Remove GIF"
+                    icon={<FaTimes />}
+                    size="xs"
+                    position="absolute"
+                    top="0"
+                    right="0"
+                    onClick={() =>
+                      setGifUrls((prevGifUrls) =>
+                        prevGifUrls.filter((_, i) => i !== index)
+                      )
+                    }
+                    isDisabled={isLoading}
+                  />
+                </Box>
+              ))}
+            </Wrap>
+          )}
+
           <HStack justify="space-between" mb={1}>
             <HStack>
               {/* Image Upload Button */}
@@ -762,142 +938,6 @@ export default function SnapComposer({
               // Remove maxDurationSeconds and onDurationError since we handle trimming in modal
             />
           </Box>
-          <Wrap spacing={4}>
-            {compressedImages.map((img, index) => (
-              <Box key={index} position="relative">
-                <Image
-                  alt={img.fileName}
-                  src={img.url}
-                  boxSize="100px"
-                  borderRadius="base"
-                />
-                <Input
-                  mt={2}
-                  placeholder="Enter caption"
-                  value={img.caption}
-                  onChange={(e) => {
-                    const newImages = [...compressedImages];
-                    newImages[index].caption = e.target.value;
-                    setCompressedImages(newImages);
-                  }}
-                  size="sm"
-                  isDisabled={isLoading}
-                />
-                <IconButton
-                  id={`snap-composer-remove-image-${index}`}
-                  data-testid={`snap-composer-remove-image-${index}`}
-                  aria-label="Remove image"
-                  icon={<FaTimes />}
-                  size="xs"
-                  position="absolute"
-                  top="0"
-                  right="0"
-                  onClick={() =>
-                    setCompressedImages((prevImages) =>
-                      prevImages.filter((_, i) => i !== index)
-                    )
-                  }
-                  isDisabled={isLoading}
-                />
-                <Progress
-                  value={uploadProgress[index]}
-                  size="xs"
-                  colorScheme="green"
-                  mt={2}
-                />
-              </Box>
-            ))}
-            {selectedGif && (
-              <Box key={selectedGif.id} position="relative">
-                <Image
-                  alt=""
-                  src={selectedGif.images.downsized_medium.url}
-                  boxSize="100px"
-                  borderRadius="base"
-                />
-                <IconButton
-                  id="snap-composer-remove-gif"
-                  data-testid="snap-composer-remove-gif"
-                  aria-label="Remove GIF"
-                  icon={<FaTimes />}
-                  size="xs"
-                  position="absolute"
-                  top="0"
-                  right="0"
-                  onClick={() => setSelectedGif(null)}
-                  isDisabled={isLoading}
-                />
-              </Box>
-            )}
-            {videoUrl && (
-              <Box position="relative" width="100%">
-                <iframe
-                  src={videoUrl}
-                  title="Uploaded Video"
-                  frameBorder="0"
-                  style={{
-                    width: "100%",
-                    minHeight: "435px",
-                    borderRadius: "8px",
-                    maxWidth: "100vw",
-                  }}
-                  allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-                <IconButton
-                  id="snap-composer-remove-video"
-                  data-testid="snap-composer-remove-video"
-                  aria-label="Remove video"
-                  icon={<FaTimes />}
-                  size="xs"
-                  position="absolute"
-                  top="0"
-                  right="0"
-                  onClick={() => setVideoUrl(null)}
-                  isDisabled={isLoading}
-                />
-              </Box>
-            )}
-            {/* Display GIFs from gifUrls array */}
-            {gifUrls.map((gif, index) => (
-              <Box key={index} position="relative">
-                <Image
-                  alt={gif.caption || "gif"}
-                  src={gif.url}
-                  boxSize="100px"
-                  borderRadius="base"
-                />
-                <Input
-                  mt={2}
-                  placeholder="Enter caption"
-                  value={gif.caption}
-                  onChange={(e) => {
-                    const newGifUrls = [...gifUrls];
-                    newGifUrls[index].caption = e.target.value;
-                    setGifUrls(newGifUrls);
-                  }}
-                  size="sm"
-                  isDisabled={isLoading}
-                />
-                <IconButton
-                  id={`snap-composer-remove-gif-${index}`}
-                  data-testid={`snap-composer-remove-gif-${index}`}
-                  aria-label="Remove GIF"
-                  icon={<FaTimes />}
-                  size="xs"
-                  position="absolute"
-                  top="0"
-                  right="0"
-                  onClick={() =>
-                    setGifUrls((prevGifUrls) =>
-                      prevGifUrls.filter((_, i) => i !== index)
-                    )
-                  }
-                  isDisabled={isLoading}
-                />
-              </Box>
-            ))}
-          </Wrap>
           {isGiphyModalOpen && (
             <Box position="relative">
               <GiphySelector

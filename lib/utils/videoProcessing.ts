@@ -28,15 +28,32 @@ export interface VideoDetails {
 // File size limits and HP requirements
 export const FILE_SIZE_LIMITS = {
   MAX_SIZE_DEFAULT: 500 * 1024 * 1024, // 500MB
+  MAX_SIZE_HIGH_HP: 2 * 1024 * 1024 * 1024, // 2GB for 100+ HP users
   MIN_HP_FOR_LARGE_FILES: 100, // 100 HP required for files > 500MB
+  
+  // Processing limits to prevent crashes
+  PROCESSING_TIMEOUT: 5 * 60 * 1000, // 5 minutes max processing time
+  MAX_DURATION_SECONDS: 30 * 60, // 30 minutes max video duration
+  FORCE_COMPRESSION_THRESHOLD: 1 * 1024 * 1024 * 1024, // Force compression for 1GB+ files
 };
 
 export function checkFileSizeAndHP(file: File, userHP: number = 0): {
   canUpload: boolean;
   needsCompression: boolean;
   reason?: string;
+  forceCompression?: boolean;
 } {
   const fileSizeMB = file.size / (1024 * 1024);
+  const fileSizeGB = fileSizeMB / 1024;
+  
+  // Hard limit check - even high HP users can't exceed 2GB
+  if (file.size > FILE_SIZE_LIMITS.MAX_SIZE_HIGH_HP) {
+    return {
+      canUpload: false,
+      needsCompression: false,
+      reason: `File too large (${fileSizeGB.toFixed(1)}GB). Maximum allowed: 2GB`,
+    };
+  }
   
   // If file is under 500MB, always allow
   if (file.size <= FILE_SIZE_LIMITS.MAX_SIZE_DEFAULT) {
@@ -46,11 +63,18 @@ export function checkFileSizeAndHP(file: File, userHP: number = 0): {
     };
   }
   
-  // If file is over 500MB, check HP
+  // File is 500MB-2GB, check HP
   if (userHP >= FILE_SIZE_LIMITS.MIN_HP_FOR_LARGE_FILES) {
+    // High HP users can upload larger files but with safeguards
+    const forceCompression = file.size >= FILE_SIZE_LIMITS.FORCE_COMPRESSION_THRESHOLD;
+    
     return {
       canUpload: true,
-      needsCompression: false,
+      needsCompression: forceCompression,
+      forceCompression: forceCompression,
+      reason: forceCompression 
+        ? `Large file (${fileSizeGB.toFixed(1)}GB) will be compressed for stability`
+        : undefined,
     };
   }
   
@@ -59,6 +83,38 @@ export function checkFileSizeAndHP(file: File, userHP: number = 0): {
     canUpload: false,
     needsCompression: true,
     reason: `File size (${fileSizeMB.toFixed(1)}MB) exceeds 500MB limit. You need at least ${FILE_SIZE_LIMITS.MIN_HP_FOR_LARGE_FILES} HP to upload larger files.`,
+  };
+}
+
+export function checkVideoDurationAndHP(duration: number, userHP: number = 0): {
+  canUpload: boolean;
+  needsTrimming: boolean;
+  reason?: string;
+} {
+  // Hard limit for everyone - even high HP users
+  if (duration > FILE_SIZE_LIMITS.MAX_DURATION_SECONDS) {
+    const maxMinutes = FILE_SIZE_LIMITS.MAX_DURATION_SECONDS / 60;
+    const durationMinutes = Math.round(duration / 60);
+    return {
+      canUpload: false,
+      needsTrimming: false,
+      reason: `Video too long (${durationMinutes} min). Maximum allowed: ${maxMinutes} minutes`,
+    };
+  }
+  
+  // 15-second limit for users with <100 HP
+  if (userHP < FILE_SIZE_LIMITS.MIN_HP_FOR_LARGE_FILES && duration > 15) {
+    return {
+      canUpload: true,
+      needsTrimming: true,
+      reason: `Video exceeds 15-second limit. Trim required or get 100+ HP to bypass.`,
+    };
+  }
+  
+  // High HP users can upload any length up to the hard limit
+  return {
+    canUpload: true,
+    needsTrimming: false,
   };
 }
 
@@ -635,9 +691,9 @@ export async function compressVideo(
 
   // Smart resolution handling
   if (shouldResize) {
-    // Force resize to 720p for large files
-    console.log("📐 Large video detected - reducing to 720p (1280x720)");
-    ffmpegArgs.push("-vf", "scale=1280:720");
+    // Resize large files while preserving aspect ratio - max 720p bounds
+    console.log("📐 Large video detected - reducing to max 720p while preserving aspect ratio");
+    ffmpegArgs.push("-vf", "scale='min(1280,iw)':'min(720,ih)':force_original_aspect_ratio=decrease");
   } else {
     // Auto-resize if video is larger than 720p to maintain quality/size balance
     console.log("📐 Applying smart resize filter - max 720p if larger");

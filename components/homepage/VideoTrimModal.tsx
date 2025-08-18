@@ -20,10 +20,10 @@ import {
 } from "@chakra-ui/react";
 import { getFileSignature, uploadImage } from "@/lib/hive/client-functions";
 import { formatTime } from "@/lib/utils/timeUtils";
+import { FaArrowRight } from "react-icons/fa";
 import VideoPlayer from "./VideoPlayer";
 import VideoTimeline from "./VideoTimeline";
 import ThumbnailCapture from "./ThumbnailCapture";
-import VideoTrimModalFooter from "./VideoTrimModalFooter";
 
 interface VideoTrimModalProps {
   isOpen: boolean;
@@ -570,14 +570,9 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = ({
           <ModalHeader pb={{ base: 2, md: 4 }}>
             <VStack align="start" spacing={2}>
               <Text fontSize={{ base: "lg", md: "xl" }}>
-                {trimmingRequired ? "Video Trimming Required" : "Video Editor"}
+                {trimmingRequired ? "Video Trimming Required" : "Add Video"}
               </Text>
-              {canBypass ? (
-                <Text fontSize="sm" color="primary">
-                  ✨ You have more than 100 HP - You can use the full video or
-                  trim it as needed
-                </Text>
-              ) : (
+              {!canBypass && (
                 <Text fontSize="sm" color="accent">
                   📹 Videos are limited to {maxDuration} seconds in the feed.
                   Get {">"}100 HP to bypass this limit.
@@ -635,6 +630,36 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = ({
                 </Alert>
               )}
 
+              {/* Next Button - Moved above Show Advanced Options */}
+              <Button
+                leftIcon={isProcessing ? undefined : <FaArrowRight />}
+                onClick={hasActiveTrim ? handleTrim : handleBypass}
+                isLoading={isProcessing}
+                loadingText="Processing..."
+                isDisabled={!canBypass && !isValidSelection}
+                variant="outline"
+                size={{ base: "md", md: "lg" }}
+                width={{ base: "100%", md: "auto" }}
+                minW={{ base: "auto", md: "160px" }}
+                bg={canBypass || isValidSelection ? "background" : "gray.600"}
+                color="primary"
+                _disabled={{
+                  bg: "muted",
+                  color: "gray.400",
+                  cursor: "not-allowed",
+                  opacity: 0.6,
+                  _hover: {
+                    bg: "gray.600",
+                    transform: "none",
+                  },
+                }}
+                transition="all 0.2s ease"
+                boxShadow={canBypass || isValidSelection ? "md" : "none"}
+                fontWeight="semibold"
+              >
+                {isProcessing ? "Processing" : "Next"}
+              </Button>
+
               {/* Show Advanced Toggle - Only show when trimming is not required */}
               {showAdvancedToggle && (
                 <Button
@@ -642,6 +667,7 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = ({
                   variant="ghost"
                   size="sm"
                   width="100%"
+                  bg="muted"
                   leftIcon={
                     <Text fontSize="lg">{showAdvanced ? "▼" : "▶"}</Text>
                   }
@@ -722,15 +748,7 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = ({
             </VStack>
           </ModalBody>
 
-          <VideoTrimModalFooter
-            isValidSelection={isValidSelection}
-            maxDuration={maxDuration}
-            canBypass={canBypass}
-            isProcessing={isProcessing}
-            hasActiveTrim={hasActiveTrim}
-            onBypass={handleBypass}
-            onTrim={handleTrim}
-          />
+
         </ModalContent>
       </Modal>
     </>

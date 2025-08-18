@@ -254,7 +254,7 @@ const VIDEO_STYLE = {
   marginBottom: "20px",
   width: "100%",
   height: "100%",
-  objectFit: "cover" as React.CSSProperties["objectFit"],
+  objectFit: "contain" as React.CSSProperties["objectFit"],
   zIndex: 2,
 };
 
@@ -606,7 +606,7 @@ const VideoRenderer = ({
                   inset: 0,
                   width: "100%",
                   height: "100%",
-                  objectFit: "cover",
+                  objectFit: "contain",
                   objectPosition: "center",
                 }}
                 draggable={false}

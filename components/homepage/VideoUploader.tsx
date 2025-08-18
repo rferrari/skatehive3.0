@@ -186,6 +186,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
     }, []);
     const [processingTime, setProcessingTime] = useState<number>(0);
     const [isDevelopment, setIsDevelopment] = useState<boolean>(false);
+    const [showDevDetails, setShowDevDetails] = useState<boolean>(true);
 
     // Check if we're in development mode
     React.useEffect(() => {
@@ -825,7 +826,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
 
         // Upload
         try {
-          updateProgress("uploading", 0, "Uploading video...");
+          updateProgress("uploading", 0, "Skate Gods Sending back to Earth...");
 
           const limits = getFileSizeLimits();
           const isMobile = isMobileDevice();
@@ -984,7 +985,11 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
           <div
             style={{
               marginTop: 8,
-              color: progressState.phase === "error" ? "red" : "#333",
+              color: progressState.phase === "error" 
+                ? "red" 
+                : (progressState.message.includes("skate gods") || progressState.message.includes("Skate Gods"))
+                  ? "var(--chakra-colors-primary)"
+                  : "#333",
             }}
           >
             {progressState.message}
@@ -1120,7 +1125,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         `}</style>
 
         {/* Development Video Details */}
-        {isDevelopment && (inputVideoMetadata || outputVideoMetadata) && (
+        {isDevelopment && (inputVideoMetadata || outputVideoMetadata) && showDevDetails && (
           <div
             style={{
               marginTop: 16,
@@ -1130,11 +1135,38 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
               fontSize: 12,
               fontFamily: "monospace",
               border: "1px solid #ddd",
+              position: "relative",
             }}
           >
-            <h4 style={{ marginTop: 0, marginBottom: 8, color: "#333" }}>
-              🎥 Video Processing Details (Development)
-            </h4>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <h4 style={{ margin: 0, color: "#333" }}>
+                🎥 Video Processing Details (Development)
+              </h4>
+              <button
+                onClick={() => setShowDevDetails(false)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  fontSize: 16,
+                  cursor: "pointer",
+                  color: "#666",
+                  padding: "4px 8px",
+                  borderRadius: "4px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.backgroundColor = "#f0f0f0";
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                }}
+                title="Close dev details"
+              >
+                ✕
+              </button>
+            </div>
 
             {inputVideoMetadata && (
               <div style={{ marginBottom: 12 }}>

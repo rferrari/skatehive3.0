@@ -45,15 +45,33 @@ export function isAlreadyProcessed(file: File): boolean {
   );
 }
 
-export function getFileSizeLimits() {
+export function getFileSizeLimits(userHP: number = 0) {
   const isMobile = isMobileDevice();
-  return {
-    maxSizeForMobile: 45 * 1024 * 1024, // 45MB
-    maxSizeForDesktop: 50 * 1024 * 1024, // 50MB
-    maxSize: isMobile ? 45 * 1024 * 1024 : 50 * 1024 * 1024,
+  const hasHighHP = userHP >= 100; // FILE_SIZE_LIMITS.MIN_HP_FOR_LARGE_FILES
+  
+  // Base limits for processing (not upload limits)
+  const baseLimits = {
     chunkedUploadThreshold: 20 * 1024 * 1024, // 20MB
     largeFileThreshold: 30 * 1024 * 1024, // 30MB
     compressionThreshold: 12 * 1024 * 1024, // 12MB
+  };
+  
+  if (hasHighHP) {
+    // High HP users get higher processing limits
+    return {
+      ...baseLimits,
+      maxSizeForMobile: 2 * 1024 * 1024 * 1024, // 2GB
+      maxSizeForDesktop: 2 * 1024 * 1024 * 1024, // 2GB
+      maxSize: 2 * 1024 * 1024 * 1024, // 2GB
+    };
+  }
+  
+  // Standard users get conservative limits
+  return {
+    ...baseLimits,
+    maxSizeForMobile: 45 * 1024 * 1024, // 45MB
+    maxSizeForDesktop: 50 * 1024 * 1024, // 50MB
+    maxSize: isMobile ? 45 * 1024 * 1024 : 50 * 1024 * 1024,
   };
 }
 
@@ -186,10 +204,11 @@ export async function handleVideoUpload(
   file: File,
   username?: string,
   thumbnailUrl?: string,
-  onProgress?: (progress: number) => void
+  onProgress?: (progress: number) => void,
+  userHP: number = 0
 ): Promise<UploadResult> {
   try {
-    const limits = getFileSizeLimits();
+    const limits = getFileSizeLimits(userHP);
     
     if (file.size > limits.maxSize) {
       const sizeMB = Math.round((file.size / 1024 / 1024) * 100) / 100;
