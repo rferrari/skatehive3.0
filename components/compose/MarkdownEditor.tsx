@@ -74,7 +74,7 @@ export default function MarkdownEditor({
                 if (insertAtCursor) {
                     insertAtCursor(`\n![${gifFileName}](${gifUrl})\n`);
                 } else {
-                    setMarkdown(prev => prev + `\n![${gifFileName}](${gifUrl})\n`);
+                    setMarkdown(markdown + `\n![${gifFileName}](${gifUrl})\n`);
                 }
             }
         } else {
@@ -83,7 +83,7 @@ export default function MarkdownEditor({
             if (insertAtCursor) {
                 insertAtCursor(`\n![${gifFileName}](${gifUrl})\n`);
             } else {
-                setMarkdown(prev => prev + `\n![${gifFileName}](${gifUrl})\n`);
+                setMarkdown(markdown + `\n![${gifFileName}](${gifUrl})\n`);
             }
         }
     };

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useState } from "react";
-import { Flex, Input, Button, Center, Spinner, Box, Text, Image, VStack, HStack, Tabs, TabList, Tab, TabPanels, TabPanel } from "@chakra-ui/react";
+import { Flex, Input, Button, Center, Spinner, Box, Text, Image, VStack, HStack } from "@chakra-ui/react";
 import ImageCompressor, {
   ImageCompressorRef,
 } from "@/lib/utils/ImageCompressor";
@@ -39,9 +39,6 @@ export default function Composer() {
     selectedThumbnail,
     setSelectedThumbnail,
     previewMode,
-    setPreviewMode,
-    showThumbnailPicker,
-    setShowThumbnailPicker,
     placeholders,
     user,
     insertAtCursorWrapper,
@@ -49,18 +46,11 @@ export default function Composer() {
     isSubmitting,
   } = useComposeForm();
 
-  // Use the original submit handler since captions are now managed inline
   const handleSubmit = originalHandleSubmit;
-
-  // Debug log compose form state
-  React.useEffect(() => {
-  }, [beneficiaries, title, markdown, hashtags, isSubmitting]);
 
   // Refs
   const imageCompressorRef = useRef<ImageCompressorRef>(null);
   const videoUploaderRef = useRef<VideoUploaderRef>(null);
-
-
 
   // Custom image upload handler that inserts inline with editable captions
   const handleImageUploadWithCaption = async (url: string | null, fileName?: string) => {
@@ -74,7 +64,7 @@ export default function Composer() {
           fileName || "compressed-image.jpg"
         );
         
-        // Insert into markdown immediately (user controls placement) with empty caption for inline editing
+        // Insert into markdown at cursor position
         insertAtCursorWrapper(`\n![](${ipfsUrl})\n`);
       } catch (error) {
         console.error("Error uploading compressed image to IPFS:", error);
@@ -110,7 +100,7 @@ export default function Composer() {
       const { uploadToIpfs } = await import("@/lib/markdown/composeUtils");
       const ipfsUrl = await uploadToIpfs(gifFile, gifFileName);
       
-      // Insert into markdown immediately (user controls placement) with empty caption for inline editing
+      // Insert into markdown at cursor position
       insertAtCursorWrapper(`\n![](${ipfsUrl})\n`);
     } catch (error) {
       console.error("Error uploading GIF to IPFS:", error);
@@ -264,8 +254,6 @@ export default function Composer() {
           isProcessing={isCompressingImage}
           hideStatus={true}
         />
-
-
       </Flex>
 
       <HashtagInput
