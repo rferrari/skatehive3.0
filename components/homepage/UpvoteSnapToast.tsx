@@ -68,6 +68,7 @@ export default function UpvoteSnapToast({
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const witnessInitialTimerRef = useRef<NodeJS.Timeout | null>(null);
   const witnessIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const activeWitnessToastIdRef = useRef<string | number | null>(null);
 
   const fetchSnapContainerData = useCallback(async () => {
     if (!user) return;
@@ -100,17 +101,21 @@ export default function UpvoteSnapToast({
     try {
       console.log("🔍 Checking witness votes for:", user);
 
-      // Use HiveClient to get account witness votes
-      const witnessVotes = await HiveClient.database.call("get_account_votes", [
-        user,
-      ]);
+      // Get account data which includes witness votes
+      const accountData = await HiveClient.database.call("get_accounts", [[user]]);
+      
+      let hasVotedForSkateHive = false;
+      let witnessVotes: string[] = [];
 
-      console.log("�️ Witness votes:", witnessVotes);
+      if (accountData && accountData[0] && accountData[0].witness_votes) {
+        witnessVotes = accountData[0].witness_votes;
+        console.log("🗳️ Witness votes:", witnessVotes);
 
-      // Check if user has voted for skatehive witness
-      const hasVotedForSkateHive = witnessVotes.some(
-        (vote: any) => vote.witness === "skatehive" && vote.approve === 1
-      );
+        // Check if user has voted for skatehive witness
+        hasVotedForSkateHive = witnessVotes.includes("skatehive");
+      } else {
+        console.log("No witness votes found for user");
+      }
 
       console.log("👤 User witness vote status:", {
         user,
@@ -121,8 +126,10 @@ export default function UpvoteSnapToast({
       setHasVotedWitness(hasVotedForSkateHive);
     } catch (error) {
       console.error("Failed to get witness votes", error);
+      // Set to false on error to avoid blocking the toast unnecessarily
+      setHasVotedWitness(false);
     }
-  }, [user || null]);
+  }, [user, hiveAccount]);
 
   const handleUpvote = async () => {
     if (!user || !snapContainer) return;
@@ -388,13 +395,21 @@ export default function UpvoteSnapToast({
                 colorScheme="green"
                 onClick={async () => {
                   await handleWitnessVote();
+                  activeWitnessToastIdRef.current = null;
                   onClose();
                 }}
                 leftIcon={<FaVoteYea size={12} />}
               >
                 Vote Now
               </Button>
-              <Button size="sm" variant="ghost" onClick={onClose}>
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                onClick={() => {
+                  activeWitnessToastIdRef.current = null;
+                  onClose();
+                }}
+              >
                 Maybe Later
               </Button>
             </div>
@@ -403,10 +418,14 @@ export default function UpvoteSnapToast({
       ),
     });
 
+    // Store the active toast ID so we can close it if vote status changes
+    activeWitnessToastIdRef.current = toastId;
+
     // Auto-close after duration if user hasn't interacted
     setTimeout(() => {
       if (toast.isActive(toastId)) {
         toast.close(toastId);
+        activeWitnessToastIdRef.current = null;
       }
     }, displayDuration);
   }, [
@@ -582,6 +601,14 @@ export default function UpvoteSnapToast({
       };
     }
   }, [user || null, isMounted, fetchSnapContainerData, fetchUserData]);
+
+  // Close active witness toast if user has voted for witness
+  useEffect(() => {
+    if (hasVotedWitness && activeWitnessToastIdRef.current) {
+      toast.close(activeWitnessToastIdRef.current);
+      activeWitnessToastIdRef.current = null;
+    }
+  }, [hasVotedWitness, toast]);
 
   // This component doesn't render anything - it only shows toasts
   return null;
