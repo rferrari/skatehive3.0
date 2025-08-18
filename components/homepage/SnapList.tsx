@@ -28,6 +28,7 @@ import LogoMatrix from "../graphics/LogoMatrix";
 import { countDownvotes } from "@/lib/utils/postUtils";
 import { useAioha } from "@aioha/react-ui";
 import { useAccount } from "wagmi";
+import { getPayoutValue } from "@/lib/hive/client-functions";
 import SidebarLogo from "../graphics/SidebarLogo";
 
 interface SnapListProps {
@@ -129,7 +130,10 @@ export default function SnapList({
       return shouldShow;
     })
     .sort((a: Discussion, b: Discussion) => {
-      return new Date(b.created).getTime() - new Date(a.created).getTime();
+      // Sort by payout value (highest first)
+      const aValue = parseFloat(getPayoutValue(a));
+      const bValue = parseFloat(getPayoutValue(b));
+      return bValue - aValue; // Descending order (highest value first)
     });
 
   // Conditionally render after all hooks have run
