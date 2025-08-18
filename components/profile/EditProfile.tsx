@@ -59,6 +59,7 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
     });
     const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
     const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
+    const [zineCoverFile, setZineCoverFile] = useState<File | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isEditingEthAddress, setIsEditingEthAddress] = useState(false);
@@ -96,6 +97,7 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
         });
         setProfileImageFile(null);
         setCoverImageFile(null);
+        setZineCoverFile(null);
         setError(null);
       }
     }, [isOpen, profileData]);
@@ -207,6 +209,28 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
       []
     );
 
+    const handleZineCoverChange = useCallback(
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+          setZineCoverFile(file);
+          setFormData((prev) => ({
+            ...prev,
+            zineCover: URL.createObjectURL(file),
+          }));
+        }
+      },
+      []
+    );
+
+    const handleZineCoverUrlChange = useCallback(
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        setFormData((prev) => ({ ...prev, zineCover: e.target.value }));
+        setZineCoverFile(null);
+      },
+      []
+    );
+
     const handleConnectEthWallet = useCallback(() => {
       if (isConnected && address) {
         const updatedData = {
@@ -293,6 +317,7 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
 
       let finalProfileImage = formData.profileImage;
       let finalCoverImage = formData.coverImage;
+      let finalZineCover = formData.zineCover;
 
       try {
         // Check if user is logged in
@@ -314,6 +339,10 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
         if (coverImageFile) {
           const url = await uploadToIpfs(coverImageFile, coverImageFile.name);
           if (url) finalCoverImage = url;
+        }
+        if (zineCoverFile) {
+          const url = await uploadToIpfs(zineCoverFile, zineCoverFile.name);
+          if (url) finalZineCover = url;
         }
 
         // Use Keychain SDK for the update
@@ -340,7 +369,7 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
         migrated.extensions.video_parts = profileData.video_parts || [];
         migrated.extensions.settings = migrated.extensions.settings || {};
         migrated.extensions.settings.appSettings = migrated.extensions.settings.appSettings || {};
-        migrated.extensions.settings.appSettings.zineCover = formData.zineCover || "";
+        migrated.extensions.settings.appSettings.zineCover = finalZineCover || "";
         migrated.extensions.settings.appSettings.svs_profile = formData.svs_profile || "";
 
         const extMetadata = migrated;
@@ -376,6 +405,7 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
           ...formData,
           profileImage: finalProfileImage,
           coverImage: finalCoverImage,
+          zineCover: finalZineCover,
           ethereum_address: profileData.ethereum_address,
           video_parts: profileData.video_parts,
         };
@@ -403,6 +433,7 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
       formData,
       profileImageFile,
       coverImageFile,
+      zineCoverFile,
       profileData.ethereum_address,
       profileData.video_parts,
       onProfileUpdate,
@@ -467,7 +498,14 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
           <FormLabel>Ethereum Wallet</FormLabel>
           <VStack spacing={2} align="stretch">
             {hasEthAddress ? (
-              <>
+              <Flex gap={2}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleEditEthAddress}
+                >
+                  Change
+                </Button>
                 <Text
                   fontSize="sm"
                   fontFamily="mono"
@@ -476,17 +514,11 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
                   p={2}
                   borderRadius="md"
                   wordBreak="break-all"
+                  flex={1}
                 >
                   {profileData.ethereum_address}
                 </Text>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleEditEthAddress}
-                >
-                  Change Wallet
-                </Button>
-              </>
+              </Flex>
             ) : (
               <>
                 <Text fontSize="sm" color="gray.500">
@@ -553,6 +585,12 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
             border="4px solid white"
             _dark={{ borderColor: "gray.800" }}
             bg="white"
+            cursor="pointer"
+            _hover={{ opacity: 0.8 }}
+            transition="opacity 0.2s"
+            onClick={() =>
+              document.getElementById("profilePictureInput")?.click()
+            }
           >
             {formData.profileImage ? (
               <Image
@@ -579,20 +617,7 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
             )}
           </Box>
 
-          <Box
-            position="absolute"
-            top="4"
-            left="4"
-            bg="blackAlpha.700"
-            color="white"
-            px="3"
-            py="1"
-            borderRadius="md"
-            fontSize="sm"
-            fontWeight="semibold"
-          >
-            Edit Profile
-          </Box>
+
         </ModalHeader>
       ),
       [formData.coverImage, formData.profileImage]
@@ -604,30 +629,41 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
         <ModalOverlay blur={"lg"} />
         <ModalContent bg={"background"}>
           {ModalHeaderContent}
-          <ModalCloseButton
-            color="white"
-            bg="blackAlpha.700"
-            _hover={{ bg: "blackAlpha.800" }}
-          />
+
           <ModalBody mt="40px">
             <VStack spacing={4} align="stretch">
+              {error && (
+                <Box color="red.400" mb={2} w="100%">
+                  {error}
+                </Box>
+              )}
+              <Button
+                colorScheme="green"
+                onClick={handleSave}
+                w="100%"
+                isLoading={isSaving}
+                loadingText="Saving..."
+              >
+                Save Changes
+              </Button>
               <FormControl>
                 <FormLabel>Profile Picture</FormLabel>
-                <VStack spacing={2} align="stretch">
-                  <Input
-                    value={profileImageFile ? "" : formData.profileImage}
-                    onChange={handleProfileImageUrlChange}
-                    placeholder="Paste image URL here"
-                    size="sm"
-                  />
+                <Flex spacing={2} gap={2}>
                   <Button
                     size="sm"
                     onClick={() =>
                       document.getElementById("profilePictureInput")?.click()
                     }
                   >
-                    Upload from Device
+                    Upload
                   </Button>
+                  <Input
+                    value={profileImageFile ? "" : formData.profileImage}
+                    onChange={handleProfileImageUrlChange}
+                    placeholder="Paste image URL here"
+                    size="sm"
+                    flex={1}
+                  />
                   <Input
                     id="profilePictureInput"
                     type="file"
@@ -635,26 +671,27 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
                     onChange={handleProfileImageChange}
                     display="none"
                   />
-                </VStack>
+                </Flex>
               </FormControl>
 
               <FormControl>
-                <FormLabel>Cover Image</FormLabel>
-                <VStack spacing={2} align="stretch">
-                  <Input
-                    value={coverImageFile ? "" : formData.coverImage}
-                    onChange={handleCoverImageUrlChange}
-                    placeholder="Paste image URL here"
-                    size="sm"
-                  />
+                <FormLabel>Profile Background</FormLabel>
+                <Flex spacing={2} gap={2}>
                   <Button
                     size="sm"
                     onClick={() =>
                       document.getElementById("backgroundImageInput")?.click()
                     }
                   >
-                    Upload from Device
+                    Upload
                   </Button>
+                  <Input
+                    value={coverImageFile ? "" : formData.coverImage}
+                    onChange={handleCoverImageUrlChange}
+                    placeholder="Paste image URL here"
+                    size="sm"
+                    flex={1}
+                  />
                   <Input
                     id="backgroundImageInput"
                     type="file"
@@ -662,34 +699,38 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
                     onChange={handleCoverImageChange}
                     display="none"
                   />
-                </VStack>
+                </Flex>
               </FormControl>
 
               {EthereumWalletSection}
 
               <FormControl>
-                <FormLabel>Location</FormLabel>
-                <Select
-                  value={formData.location}
-                  onChange={handleFormChange("location")}
-                  placeholder="Select your country"
-                >
-                  {countryOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.value} - {option.label}
-                    </option>
-                  ))}
-                </Select>
+                <Flex gap={2} align="center">
+                  <FormLabel mb={0} minWidth="80px">Location</FormLabel>
+                  <Select
+                    value={formData.location}
+                    onChange={handleFormChange("location")}
+                    placeholder="Select your country"
+                    flex={1}
+                  >
+                    {countryOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.value} - {option.label}
+                      </option>
+                    ))}
+                  </Select>
+                </Flex>
               </FormControl>
 
               <FormControl>
-                <FormLabel>
-                  Website - a clickable link to your personal website
-                </FormLabel>
-                <Input
-                  value={formData.website}
-                  onChange={handleFormChange("website")}
-                />
+                <Flex gap={2} align="center">
+                  <FormLabel mb={0} minWidth="80px">Website</FormLabel>
+                  <Input
+                    value={formData.website}
+                    onChange={handleFormChange("website")}
+                    flex={1}
+                  />
+                </Flex>
               </FormControl>
 
               <FormControl>
@@ -701,12 +742,31 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
               </FormControl>
 
               <FormControl>
-                <FormLabel>Zine Cover URL (optional)</FormLabel>
-                <Input
-                  value={formData.zineCover}
-                  onChange={handleFormChange("zineCover")}
-                  placeholder="Enter URL for your zine cover image"
-                />
+                <FormLabel>Mag Cover (optional)</FormLabel>
+                <Flex spacing={2} gap={2}>
+                  <Button
+                    size="sm"
+                    onClick={() =>
+                      document.getElementById("zineCoverInput")?.click()
+                    }
+                  >
+                    Upload
+                  </Button>
+                  <Input
+                    value={zineCoverFile ? "" : formData.zineCover}
+                    onChange={handleZineCoverUrlChange}
+                    placeholder="Paste image URL here"
+                    size="sm"
+                    flex={1}
+                  />
+                  <Input
+                    id="zineCoverInput"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleZineCoverChange}
+                    display="none"
+                  />
+                </Flex>
               </FormControl>
 
               <FormControl>
@@ -720,20 +780,6 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
             </VStack>
           </ModalBody>
           <ModalFooter>
-            {error && (
-              <Box color="red.400" mb={2} w="100%">
-                {error}
-              </Box>
-            )}
-            <Button
-              colorScheme="green"
-              onClick={handleSave}
-              w="100%"
-              isLoading={isSaving}
-              loadingText="Saving..."
-            >
-              Save Changes
-            </Button>
       </ModalFooter>
     </ModalContent>
       </Modal>

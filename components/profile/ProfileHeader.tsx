@@ -11,7 +11,7 @@ import {
   Link,
   useToken,
 } from "@chakra-ui/react";
-import { FaGlobe, FaEdit } from "react-icons/fa";
+import { FaGlobe, FaCog } from "react-icons/fa";
 import FollowButton from "./FollowButton";
 import PowerBars from "./PowerBars";
 import MobileProfileHeader from "./MobileProfileHeader";
@@ -84,6 +84,10 @@ const ProfileHeader = memo(function ProfileHeader({
               name={username}
               borderRadius="md"
               boxSize="100px"
+              cursor={isOwner ? "pointer" : "default"}
+              _hover={isOwner ? { opacity: 0.8 } : {}}
+              transition="opacity 0.2s"
+              onClick={isOwner ? onEditModalOpen : undefined}
             />
             {profileData.vp_percent && profileData.rc_percent && (
               <PowerBars
@@ -142,7 +146,7 @@ const ProfileHeader = memo(function ProfileHeader({
                 <Box ml={2}>
                   <IconButton
                     aria-label="Edit Profile"
-                    icon={<FaEdit />}
+                    icon={<FaCog />}
                     size="sm"
                     variant="ghost"
                     colorScheme="primary"

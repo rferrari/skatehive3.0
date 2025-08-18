@@ -100,10 +100,7 @@ const MobileProfileHeader = memo(function MobileProfileHeader({
     }
   }, [aioha]);
 
-  // Memoized settings navigation
-  const handleSettingsClick = useCallback(() => {
-    router.push("/settings");
-  }, [router]);
+
 
   return (
     <Box display={{ base: "block", md: "none" }} position="relative" w="100%">
@@ -120,6 +117,10 @@ const MobileProfileHeader = memo(function MobileProfileHeader({
             bg="white"
             shadow="lg"
             loading="lazy"
+            cursor={isOwner ? "pointer" : "default"}
+            _hover={isOwner ? { opacity: 0.8 } : {}}
+            transition="opacity 0.2s"
+            onClick={isOwner ? onEditModalOpen : undefined}
           />
 
           {/* Top-right settings (only for owner) */}
@@ -133,7 +134,7 @@ const MobileProfileHeader = memo(function MobileProfileHeader({
               _hover={{ bg: "blackAlpha.800" }}
               size="sm"
               borderRadius="full"
-              onClick={handleSettingsClick}
+              onClick={onEditModalOpen}
             />
           )}
         </Flex>
@@ -256,26 +257,17 @@ const MobileProfileHeader = memo(function MobileProfileHeader({
 
         {/* Action Buttons - Only for Owners */}
         {isOwner && (
-          <Flex gap={2}>
+          <Flex gap={2} justify="flex-end">
             <Button
-              flex={1}
-              size="sm"
-              variant="outline"
-              borderColor="whiteAlpha.400"
-              color="white"
-              _hover={{ bg: "whiteAlpha.200" }}
-              onClick={onEditModalOpen}
-            >
-              Edit profile
-            </Button>
-            <IconButton
               aria-label="Logout"
-              icon={<FaSignOutAlt />}
+              leftIcon={<FaSignOutAlt />}
               size="sm"
               variant="solid"
               colorScheme="red"
               onClick={handleLogout}
-            />
+            >
+              logout
+            </Button>
           </Flex>
         )}
       </Box>
