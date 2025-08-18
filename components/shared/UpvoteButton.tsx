@@ -34,6 +34,7 @@ interface UpvoteButtonProps {
   showSlider?: boolean;
   setShowSlider?: (show: boolean) => void;
   className?: string;
+  onUpvoteStoke?: (estimatedValue: number) => void; // New prop for UpvoteStoke integration
 }
 
 const UpvoteButton = ({
@@ -50,6 +51,7 @@ const UpvoteButton = ({
   showSlider = false,
   setShowSlider,
   className,
+  onUpvoteStoke,
 }: UpvoteButtonProps) => {
   const { aioha, user } = useAioha();
   const toast = useToast();
@@ -118,6 +120,10 @@ const handleVote = useCallback(
             try {
               const estimatedValue = await estimateVoteValue(votePercentage);
               onVoteSuccess(estimatedValue);
+              // Trigger UpvoteStoke animation if callback provided
+              if (onUpvoteStoke && estimatedValue) {
+                onUpvoteStoke(estimatedValue);
+              }
             } catch (e) {
               onVoteSuccess();
             }

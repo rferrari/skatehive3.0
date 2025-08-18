@@ -42,6 +42,7 @@ import { usePostEdit } from "@/hooks/usePostEdit";
 import ThumbnailPicker from "@/components/compose/ThumbnailPicker";
 import { DEFAULT_VOTE_WEIGHT } from "@/lib/utils/constants";
 import useVoteWeight from "@/hooks/useVoteWeight";
+import UpvoteStoke from "@/components/graphics/UpvoteStoke";
 
 interface PostDetailsProps {
   post: Discussion;
@@ -68,6 +69,46 @@ export default function PostDetails({
     )
   );
   const toast = useToast();
+
+  // UpvoteStoke state management
+  const [stokeInstances, setStokeInstances] = useState<Array<{
+    id: number;
+    value: number;
+    isVisible: boolean;
+  }>>([]);
+  
+  // Track previous payout value to detect changes
+  const prevPayoutValueRef = useRef(payoutValue);
+
+  // Helper function to trigger UpvoteStoke animation
+  const triggerUpvoteStoke = useCallback((estimatedValue: number) => {
+    const newInstance = {
+      id: Date.now(),
+      value: estimatedValue,
+      isVisible: true
+    };
+    setStokeInstances(prev => [...prev, newInstance]);
+    
+    // Remove the instance after animation completes
+    setTimeout(() => {
+      setStokeInstances(prev => prev.filter(instance => instance.id !== newInstance.id));
+    }, 4000); // Total animation duration from UpvoteStoke.tsx
+  }, []);
+
+  // Watch for payoutValue changes and trigger animation
+  useEffect(() => {
+    const currentPayout = payoutValue;
+    const previousPayout = prevPayoutValueRef.current;
+    
+    // Only trigger if the value increased (not on very first render)
+    if (currentPayout > previousPayout) {
+      const increase = currentPayout - previousPayout;
+      triggerUpvoteStoke(increase);
+    }
+    
+    // Update the ref with current value
+    prevPayoutValueRef.current = currentPayout;
+  }, [payoutValue, triggerUpvoteStoke]);
 
   // Check if current user is the author
   const isAuthor = user && user.toLowerCase() === author.toLowerCase();
@@ -185,6 +226,7 @@ export default function PostDetails({
         try {
           const estimatedValue = await estimateVoteValue(sliderValue);
           setPayoutValue((prev) => prev + estimatedValue);
+          // UpvoteStoke will trigger automatically when payoutValue changes
         } catch (e) {
           // fallback: do not update payout
         }
@@ -265,15 +307,25 @@ export default function PostDetails({
                 closeOnBlur={true}
               >
                 <PopoverTrigger>
-                  <span
-                    style={{ cursor: "pointer" }}
-                    onMouseDown={openPayout}
-                    onMouseUp={closePayout}
-                  >
-                    <Text fontWeight="bold" color="primary" fontSize="sm">
-                      ${payoutValue.toFixed(2)}
-                    </Text>
-                  </span>
+                  <Box position="relative">
+                    <span
+                      style={{ cursor: "pointer" }}
+                      onMouseDown={openPayout}
+                      onMouseUp={closePayout}
+                    >
+                      <Text fontWeight="bold" color="primary" fontSize="sm">
+                        ${payoutValue.toFixed(2)}
+                      </Text>
+                    </span>
+                    {/* UpvoteStoke animations for mobile */}
+                    {stokeInstances.map(instance => (
+                      <UpvoteStoke 
+                        key={instance.id}
+                        estimatedValue={instance.value} 
+                        isVisible={instance.isVisible} 
+                      />
+                    ))}
+                  </Box>
                 </PopoverTrigger>
                 <PopoverContent
                   w="auto"
@@ -438,15 +490,25 @@ export default function PostDetails({
               onClose={closePayout}
             >
               <PopoverTrigger>
-                <span
-                  style={{ cursor: "pointer" }}
-                  onMouseDown={openPayout}
-                  onMouseUp={closePayout}
-                >
-                  <Text fontWeight="bold" color="primary" fontSize="xs" mt={1}>
-                    ${payoutValue.toFixed(2)}
-                  </Text>
-                </span>
+                <Box position="relative">
+                  <span
+                    style={{ cursor: "pointer" }}
+                    onMouseDown={openPayout}
+                    onMouseUp={closePayout}
+                  >
+                    <Text fontWeight="bold" color="primary" fontSize="xs" mt={1}>
+                      ${payoutValue.toFixed(2)}
+                    </Text>
+                  </span>
+                  {/* UpvoteStoke animations for desktop */}
+                  {stokeInstances.map(instance => (
+                    <UpvoteStoke 
+                      key={instance.id}
+                      estimatedValue={instance.value} 
+                      isVisible={instance.isVisible} 
+                    />
+                  ))}
+                </Box>
               </PopoverTrigger>
               <PopoverContent
                 w="auto"
@@ -721,6 +783,7 @@ export default function PostDetails({
           />
         )}
       </Box>
+
     </Box>
   );
 }

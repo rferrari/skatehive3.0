@@ -1,10 +1,15 @@
-import React, { useMemo } from "react";
-import { Box } from "@chakra-ui/react";
+import React, { useMemo, useState, useRef } from "react";
+import { Box, Button, HStack, IconButton } from "@chakra-ui/react";
 import MDEditor, { commands } from "@uiw/react-md-editor";
 import { useDropzone } from "react-dropzone";
 import { Components } from "@uiw/react-markdown-preview";
 import VideoRenderer from "../layout/VideoRenderer";
 import HiveMarkdown from "../shared/HiveMarkdown";
+import { FaImage, FaVideo } from "react-icons/fa";
+import { TbGif } from "react-icons/tb";
+import MatrixOverlay from "../graphics/MatrixOverlay";
+import GIFMakerWithSelector, { GIFMakerRef as GIFMakerWithSelectorRef } from "../homepage/GIFMakerWithSelector";
+
 
 interface MarkdownEditorProps {
     markdown: string;
@@ -12,6 +17,12 @@ interface MarkdownEditorProps {
     onDrop: (acceptedFiles: File[]) => void;
     isDragActive: boolean;
     previewMode: "edit" | "preview" | "live";
+    user?: any;
+    handleImageTrigger?: () => void;
+    handleVideoTrigger?: () => void;
+    isUploading?: boolean;
+    insertAtCursor?: (text: string) => void;
+    handleGifUpload?: (blob: Blob, fileName: string) => Promise<void>;
 }
 
 export default function MarkdownEditor({
@@ -20,7 +31,17 @@ export default function MarkdownEditor({
     onDrop,
     isDragActive,
     previewMode,
+    user,
+    handleImageTrigger,
+    handleVideoTrigger,
+    isUploading = false,
+    insertAtCursor,
+    handleGifUpload,
 }: MarkdownEditorProps) {
+    // GIF functionality state
+    const [isGifMakerOpen, setGifMakerOpen] = useState(false);
+    const gifMakerWithSelectorRef = useRef<GIFMakerWithSelectorRef>(null);
+    
     const { getRootProps } = useDropzone({
         onDrop,
         accept: {
@@ -30,16 +51,83 @@ export default function MarkdownEditor({
         multiple: false,
     });
 
+    // GIF handlers
+    const handleGifCreated = async (gifBlob: Blob, fileName: string) => {
+        // Ensure the filename has .gif extension
+        const gifFileName = fileName.endsWith('.gif') ? fileName : `${fileName}.gif`;
+        
+        // If a handleGifUpload function is provided, use it for proper IPFS upload
+        if (handleGifUpload) {
+            try {
+                await handleGifUpload(gifBlob, gifFileName);
+            } catch (error) {
+                console.error("Error uploading GIF:", error);
+                // Fallback to blob URL if upload fails
+                const gifUrl = URL.createObjectURL(gifBlob);
+                if (insertAtCursor) {
+                    insertAtCursor(`\n![${gifFileName}](${gifUrl})\n`);
+                } else {
+                    setMarkdown(prev => prev + `\n![${gifFileName}](${gifUrl})\n`);
+                }
+            }
+        } else {
+            // Fallback: create a blob URL for immediate display
+            const gifUrl = URL.createObjectURL(gifBlob);
+            if (insertAtCursor) {
+                insertAtCursor(`\n![${gifFileName}](${gifUrl})\n`);
+            } else {
+                setMarkdown(prev => prev + `\n![${gifFileName}](${gifUrl})\n`);
+            }
+        }
+    };
+
     const headerCommand = {
         name: "header",
         keyCommand: "header",
         buttonProps: { "aria-label": "Insert Header" },
-        icon: <span style={{ fontWeight: "bold", fontSize: 18 }}>H</span>,
+        icon: <span style={{ fontWeight: "bold", fontSize: 22 }}>H</span>,
         execute: (
             state: import("@uiw/react-md-editor").TextState,
             api: import("@uiw/react-md-editor").TextAreaTextApi
         ) => {
             api.replaceSelection("# Header\n");
+        },
+    };
+
+    // Media upload commands
+    const imageCommand = {
+        name: "image",
+        keyCommand: "image",
+        buttonProps: { "aria-label": "Upload Image" },
+        icon: <FaImage size={20} />,
+        execute: () => {
+            if (handleImageTrigger) {
+                handleImageTrigger();
+            }
+        },
+    };
+
+    const videoCommand = {
+        name: "video", 
+        keyCommand: "video",
+        buttonProps: { "aria-label": "Upload Video" },
+        icon: <FaVideo size={20} />,
+        execute: () => {
+            if (handleVideoTrigger) {
+                handleVideoTrigger();
+            }
+        },
+    };
+
+    const gifCommand = {
+        name: "gif",
+        keyCommand: "gif", 
+        buttonProps: { "aria-label": "Create GIF" },
+        icon: <TbGif size={20} />,
+        execute: () => {
+            // Reset the GIF maker before opening
+            gifMakerWithSelectorRef.current?.reset();
+            setGifMakerOpen(true);
         },
     };
 
@@ -188,6 +276,7 @@ export default function MarkdownEditor({
                 preview={previewMode}
                 components={memoizedComponents}
                 commands={[
+                    ...(user ? [imageCommand, videoCommand, gifCommand] : []),
                     headerCommand,
                     commands.bold,
                     commands.italic,
@@ -206,6 +295,23 @@ export default function MarkdownEditor({
             />
             {/* Custom preview using Hive renderer when in preview mode */}
             {previewMode === "preview" && <HiveMarkdown markdown={markdown} />}
+            
+            {/* GIF Maker Modal */}
+            <GIFMakerWithSelector
+                ref={gifMakerWithSelectorRef}
+                isOpen={isGifMakerOpen}
+                onClose={() => {
+                    // Reset the GIF maker when closing
+                    gifMakerWithSelectorRef.current?.reset();
+                    setGifMakerOpen(false);
+                }}
+                asModal={true}
+                onGifCreated={handleGifCreated}
+                onUpload={() => {}} // Not used with onGifCreated
+                isProcessing={false}
+            />
+            
+
         </Box>
     );
 }

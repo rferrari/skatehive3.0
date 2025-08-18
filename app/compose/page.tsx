@@ -8,18 +8,17 @@ import ImageCompressor, {
 import VideoUploader, {
   VideoUploaderRef,
 } from "../../components/homepage/VideoUploader";
-import { GIFMakerRef as GIFMakerWithSelectorRef } from "../../components/homepage/GIFMakerWithSelector";
-import MediaUploadButtons from "../../components/compose/MediaUploadButtons";
+
+
 import HashtagInput from "../../components/compose/HashtagInput";
 import BeneficiariesInput from "../../components/compose/BeneficiariesInput";
-import GifModal from "../../components/compose/GifModal";
+
 import ThumbnailPicker from "../../components/compose/ThumbnailPicker";
 import MarkdownEditor from "../../components/compose/MarkdownEditor";
 import { useComposeForm } from "../../hooks/useComposeForm";
 import {
   useImageUpload,
   useVideoUpload,
-  useGifUpload,
   useFileDropUpload,
 } from "../../hooks/useFileUpload";
 import { useDropzone } from "react-dropzone";
@@ -57,10 +56,8 @@ export default function Composer() {
   // Refs
   const imageCompressorRef = useRef<ImageCompressorRef>(null);
   const videoUploaderRef = useRef<VideoUploaderRef>(null);
-  const gifMakerWithSelectorRef = useRef<GIFMakerWithSelectorRef>(null);
 
-  // Modal state
-  const [isGifModalOpen, setGifModalOpen] = useState(false);
+
 
   // Upload hooks
   const {
@@ -73,6 +70,27 @@ export default function Composer() {
 
   const { isCompressingVideo, handleVideoUpload, createVideoTrigger } =
     useVideoUpload(insertAtCursorWrapper);
+
+  // GIF upload handler
+  const handleGifUpload = async (gifBlob: Blob, fileName: string) => {
+    try {
+      // Ensure filename has .gif extension
+      const gifFileName = fileName.endsWith('.gif') ? fileName : `${fileName}.gif`;
+      
+      // Create a File object from the blob with proper .gif extension
+      const gifFile = new File([gifBlob], gifFileName, { type: "image/gif" });
+      
+      // Upload to IPFS using the same method as images
+      const { uploadToIpfs } = await import("@/lib/markdown/composeUtils");
+      const ipfsUrl = await uploadToIpfs(gifFile, gifFileName);
+      
+      // Insert the GIF into the markdown with proper filename
+      insertAtCursorWrapper(`\n![${gifFileName}](${ipfsUrl})\n`);
+    } catch (error) {
+      console.error("Error uploading GIF to IPFS:", error);
+      throw error; // Re-throw so MarkdownEditor can handle fallback
+    }
+  };
 
   // Create trigger functions with refs
   const handleImageTrigger = createImageTrigger(imageCompressorRef);
@@ -89,19 +107,7 @@ export default function Composer() {
     setTimeout(() => setVideoDurationError(null), 5000);
   };
 
-  const {
-    isProcessingGif,
-    isUploadingGif,
-    gifUrl,
-    gifSize,
-    gifCaption,
-    setIsProcessingGif,
-    setIsUploadingGif,
-    setGifUrl,
-    setGifSize,
-    setGifCaption,
-    handleGifUpload,
-  } = useGifUpload();
+
 
   const { isUploading: isDropUploading, onDrop } = useFileDropUpload(
     insertAtCursorWrapper
@@ -111,15 +117,7 @@ export default function Composer() {
   // Combined uploading state
   const isUploading = isImageUploading || isDropUploading;
 
-  // Handle GIF modal effects
-  React.useEffect(() => {
-    if (isGifModalOpen) {
-      gifMakerWithSelectorRef.current?.reset();
-      setGifUrl(null);
-      setGifSize(null);
-      setIsProcessingGif(false);
-    }
-  }, [isGifModalOpen, setGifUrl, setGifSize, setIsProcessingGif]);
+
 
 
 
@@ -156,14 +154,7 @@ export default function Composer() {
           minW={0}
         />
 
-        <MediaUploadButtons
-          user={user}
-          handleImageTrigger={handleImageTrigger}
-          handleVideoTrigger={handleVideoTrigger}
-          setGifModalOpen={setGifModalOpen}
-          isUploading={isUploading}
-          isGifModalOpen={isGifModalOpen}
-        />
+
       </Flex>
 
       {isUploading && (
@@ -202,6 +193,12 @@ export default function Composer() {
           onDrop={onDrop}
           isDragActive={isDragActive}
           previewMode={previewMode}
+          user={user}
+          handleImageTrigger={handleImageTrigger}
+          handleVideoTrigger={handleVideoTrigger}
+          isUploading={isUploading}
+          insertAtCursor={insertAtCursorWrapper}
+          handleGifUpload={handleGifUpload}
         />
 
         <ImageCompressor
@@ -211,22 +208,7 @@ export default function Composer() {
           hideStatus={true}
         />
 
-        <GifModal
-          isOpen={isGifModalOpen}
-          onClose={() => setGifModalOpen(false)}
-          gifMakerWithSelectorRef={gifMakerWithSelectorRef}
-          handleGifUpload={handleGifUpload}
-          isProcessingGif={isProcessingGif}
-          gifUrl={gifUrl}
-          gifSize={gifSize}
-          isUploadingGif={isUploadingGif}
-          setIsUploadingGif={setIsUploadingGif}
-          insertAtCursor={insertAtCursorWrapper}
-          gifCaption={gifCaption}
-          setGifUrl={setGifUrl}
-          setGifSize={setGifSize}
-          setIsProcessingGif={setIsProcessingGif}
-        />
+
       </Flex>
 
       <HashtagInput

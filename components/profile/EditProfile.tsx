@@ -648,7 +648,7 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
               </Button>
               <FormControl>
                 <FormLabel>Profile Picture</FormLabel>
-                <Flex spacing={2} gap={2}>
+                <Flex gap={2}>
                   <Button
                     size="sm"
                     onClick={() =>
@@ -676,7 +676,7 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
 
               <FormControl>
                 <FormLabel>Profile Background</FormLabel>
-                <Flex spacing={2} gap={2}>
+                <Flex gap={2}>
                   <Button
                     size="sm"
                     onClick={() =>
@@ -743,7 +743,7 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
 
               <FormControl>
                 <FormLabel>Mag Cover (optional)</FormLabel>
-                <Flex spacing={2} gap={2}>
+                <Flex gap={2}>
                   <Button
                     size="sm"
                     onClick={() =>
