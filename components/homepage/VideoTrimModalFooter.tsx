@@ -1,5 +1,5 @@
 import React from "react";
-import { ModalFooter, VStack, HStack, Button } from "@chakra-ui/react";
+import { ModalFooter, VStack, HStack, Button, Box, Text } from "@chakra-ui/react";
 import { FaArrowRight } from "react-icons/fa";
 
 interface VideoTrimModalFooterProps {
@@ -40,10 +40,37 @@ const VideoTrimModalFooter: React.FC<VideoTrimModalFooterProps> = ({
         >
           {/* Single Next Button - Always enabled for bypass users, conditional for non-bypass */}
           <Button
-            leftIcon={isProcessing ? undefined : <FaArrowRight />}
+            leftIcon={
+              isProcessing ? (
+                <Box
+                  width="12px"
+                  height="12px"
+                  borderRadius="50%"
+                  bg="red.500"
+                  animation="pulse 1.5s infinite"
+                  sx={{
+                    '@keyframes pulse': {
+                      '0%': {
+                        transform: 'scale(1)',
+                        opacity: 1,
+                      },
+                      '50%': {
+                        transform: 'scale(1.2)',
+                        opacity: 0.7,
+                      },
+                      '100%': {
+                        transform: 'scale(1)',
+                        opacity: 1,
+                      },
+                    },
+                  }}
+                />
+              ) : (
+                <FaArrowRight />
+              )
+            }
             onClick={hasActiveTrim ? onTrim : onBypass}
-            isLoading={isProcessing}
-            loadingText="Processing..."
+            isLoading={false}
             isDisabled={!canBypass && !isValidSelection}
             variant={"outline"}
             size={{ base: "md", md: "lg" }}
@@ -65,7 +92,7 @@ const VideoTrimModalFooter: React.FC<VideoTrimModalFooterProps> = ({
             boxShadow={canBypass || isValidSelection ? "md" : "none"}
             fontWeight="semibold"
           >
-            {isProcessing ? "Processing" : "Next"}
+            {isProcessing ? "Trimming Video" : "Next"}
           </Button>
         </VStack>
       </VStack>

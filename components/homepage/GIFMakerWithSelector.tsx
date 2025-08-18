@@ -9,6 +9,7 @@ import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile } from "@ffmpeg/util";
 import { Box, Input, Button, Text, Select, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody } from "@chakra-ui/react";
 import { useTheme } from "@/app/themeProvider";
+import VideoTimeline from "./VideoTimeline";
 
 interface GIFMakerWithSelectorProps {
   onUpload: (url: string | null, caption?: string) => void;
@@ -39,6 +40,12 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
     const [canConvert, setCanConvert] = useState<boolean>(false);
     const [isConverting, setIsConverting] = useState<boolean>(false);
     const [fps, setFps] = useState<number>(10);
+    
+    // Timeline-specific state
+    const [currentTime, setCurrentTime] = useState<number>(0);
+    const [isDragging, setIsDragging] = useState<boolean>(false);
+    const [isSeeking, setIsSeeking] = useState<boolean>(false);
+    
     // Ref to track if user is seeking
     const isSeekingRef = useRef(false);
 
@@ -69,6 +76,9 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
         setEndTime(null);
         setCanConvert(false);
         setIsConverting(false);
+        setCurrentTime(0);
+        setIsDragging(false);
+        setIsSeeking(false);
       },
     }));
 
@@ -137,9 +147,11 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
       setVideoUrl(url);
       setVideoFile(file);
       setVideoDuration(duration);
-      setStartTime(null);
-      setEndTime(null);
+      // Initialize with full video duration for timeline
+      setStartTime(0);
+      setEndTime(Math.min(duration, 6)); // Default to 6 seconds or video duration, whichever is smaller
       setCanConvert(false);
+      setCurrentTime(0);
       setStatus("");
       // Notify parent that video was selected
       if (onVideoSelected) {
@@ -147,53 +159,69 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
       }
     };
 
-    const handleSetStart = () => {
+    // Seek functions for timeline
+    const seekTo = (time: number) => {
       if (videoRef.current) {
-        const current = videoRef.current.currentTime;
-        setStartTime(current);
-        if (endTime !== null) {
-          if (current >= endTime) {
-            setStatus("Start time must be before end time.");
-          } else if (endTime - current > 6) {
-            setStatus("Segment cannot be longer than 6 seconds.");
-          } else {
-            setStatus("");
-          }
-        } else {
-          setStatus("");
-        }
+        videoRef.current.currentTime = time;
+        setCurrentTime(time);
       }
     };
 
-    const handleSetEnd = () => {
+    const seekDuringDrag = (time: number) => {
       if (videoRef.current) {
-        const current = videoRef.current.currentTime;
-        setEndTime(current);
-        if (startTime !== null) {
-          if (current <= startTime) {
-            setStatus("End time must be after start time.");
-          } else if (current - startTime > 6) {
-            setStatus("Segment cannot be longer than 6 seconds.");
-          } else {
-            setStatus("");
-          }
+        videoRef.current.currentTime = time;
+        setCurrentTime(time);
+      }
+    };
+
+    // Timeline change handlers
+    const handleStartTimeChange = (newStartTime: number) => {
+      setStartTime(newStartTime);
+      if (endTime !== null) {
+        if (newStartTime >= endTime) {
+          setStatus("Start time must be before end time.");
+        } else if (endTime - newStartTime > 6) {
+          setStatus("Segment cannot be longer than 6 seconds.");
         } else {
           setStatus("");
         }
+      } else {
+        setStatus("");
       }
+    };
+
+    const handleEndTimeChange = (newEndTime: number) => {
+      setEndTime(newEndTime);
+      if (startTime !== null) {
+        if (newEndTime <= startTime) {
+          setStatus("End time must be after start time.");
+        } else if (newEndTime - startTime > 6) {
+          setStatus("Segment cannot be longer than 6 seconds.");
+        } else {
+          setStatus("");
+        }
+      } else {
+        setStatus("");
+      }
+    };
+
+    const handleDragStart = () => {
+      setIsDragging(true);
+    };
+
+    const handleDragEnd = () => {
+      setIsDragging(false);
+    };
+
+    // Check if selection is valid for GIF creation
+    const isValidSelection = () => {
+      if (startTime === null || endTime === null) return false;
+      const duration = endTime - startTime;
+      return duration > 0 && duration <= 6;
     };
 
     useEffect(() => {
-      if (
-        startTime !== null &&
-        endTime !== null &&
-        endTime > startTime &&
-        endTime - startTime <= 6
-      ) {
-        setCanConvert(true);
-      } else {
-        setCanConvert(false);
-      }
+      setCanConvert(isValidSelection());
     }, [startTime, endTime]);
 
     const handleConvert = async () => {
@@ -265,35 +293,51 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
     useEffect(() => {
       const video = videoRef.current;
       if (!video) return;
-      if (startTime === null || endTime === null || endTime <= startTime) return;
 
       const handleSeeking = () => {
         isSeekingRef.current = true;
+        setIsSeeking(true);
       };
       const handleSeeked = () => {
         isSeekingRef.current = false;
+        setIsSeeking(false);
       };
       const handleTimeUpdate = () => {
-        if (isSeekingRef.current) return;
-        if (video.currentTime >= endTime) {
-          video.currentTime = startTime;
-          if (!isSeekingRef.current) {
-            video.play();
+        if (!isDragging && !isSeeking) {
+          setCurrentTime(video.currentTime);
+        }
+        
+        // Handle looping within selected segment (if both start and end are set)
+        if (!isSeekingRef.current && startTime !== null && endTime !== null && endTime > startTime) {
+          if (video.currentTime >= endTime) {
+            video.currentTime = startTime;
+            if (!isSeekingRef.current) {
+              video.play();
+            }
           }
         }
       };
+      
+      const handleLoadedMetadata = () => {
+        setVideoDuration(video.duration);
+        setCurrentTime(0);
+      };
+      
       video.addEventListener('seeking', handleSeeking);
       video.addEventListener('seeked', handleSeeked);
       video.addEventListener('timeupdate', handleTimeUpdate);
+      video.addEventListener('loadedmetadata', handleLoadedMetadata);
+      
       return () => {
         video.removeEventListener('seeking', handleSeeking);
         video.removeEventListener('seeked', handleSeeked);
         video.removeEventListener('timeupdate', handleTimeUpdate);
+        video.removeEventListener('loadedmetadata', handleLoadedMetadata);
       };
-    }, [startTime, endTime]);
+    }, [startTime, endTime, isDragging, isSeeking]);
 
     const content = (
-      <Box maxW={400} mx="auto" p={6} bg={colors.background} borderRadius={borderRadius} boxShadow={boxShadow} textAlign="center">
+      <>
         {/* Hidden file input for video selection */}
         <Input
           type="file"
@@ -343,45 +387,23 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
               mx="auto"
               display="block"
             />
-            <Box display="flex" justifyContent="center" gap={3} my={4}>
-              {/* Set Start Button */}
-              <Button
-                onClick={handleSetStart}
-                isDisabled={isConverting}
-                px={4}
-                py={2}
-                fontSize={fontSizeMd}
-                borderRadius={theme.radii?.base || 6}
-                bg={colors.background}
-                color={colors.primary}
-                borderWidth="2px"
-                borderColor={colors.primary}
-                fontWeight={fontWeightBold}
-                _hover={{ bg: colors.primary, color: colors.background, borderColor: colors.primary }}
-                _active={{ bg: colors.primary, color: colors.background, borderColor: colors.primary }}
-                cursor={isConverting ? "not-allowed" : "pointer"}
-              >
-                Set Start
-              </Button>
-              {/* Set End Button */}
-              <Button
-                onClick={handleSetEnd}
-                isDisabled={isConverting}
-                px={4}
-                py={2}
-                fontSize={fontSizeMd}
-                borderRadius={theme.radii?.base || 6}
-                bg={colors.background}
-                color={colors.primary}
-                borderWidth="2px"
-                borderColor={colors.primary}
-                fontWeight={fontWeightBold}
-                _hover={{ bg: colors.primary, color: colors.background, borderColor: colors.primary }}
-                _active={{ bg: colors.primary, color: colors.background, borderColor: colors.primary }}
-                cursor={isConverting ? "not-allowed" : "pointer"}
-              >
-                Set End
-              </Button>
+            {/* VideoTimeline for segment selection */}
+            <Box my={4} width="100%">
+              <VideoTimeline
+                duration={videoDuration}
+                currentTime={currentTime}
+                startTime={startTime || 0}
+                endTime={endTime || videoDuration}
+                isValidSelection={isValidSelection()}
+                maxDuration={6} // 6 second limit for GIFs
+                canBypass={false} // No bypass for GIFs
+                onSeek={seekTo}
+                onSeekDuringDrag={seekDuringDrag}
+                onStartTimeChange={handleStartTimeChange}
+                onEndTimeChange={handleEndTimeChange}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+              />
             </Box>
             <Text mt={3} fontSize={fontSizeSm} color={colors.text}>
               {startTime !== null && endTime !== null ? (
@@ -468,7 +490,7 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
         {status && (
           <Text mt={2} color={status.startsWith("Error") ? colors.error : colors.text}>{status}</Text>
         )}
-      </Box>
+      </>
     );
 
     if (asModal) {
@@ -480,7 +502,7 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
               GIF Maker
             </ModalHeader>
             <ModalCloseButton color={colors.primary} />
-            <ModalBody pb={6}>
+            <ModalBody pb={6} textAlign="center">
               {content}
             </ModalBody>
           </ModalContent>

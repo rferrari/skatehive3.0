@@ -53,6 +53,10 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = ({
   const [startTime, setStartTime] = useState(0);
   const [endTime, setEndTime] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
+  
+  // Frame counter state
+  const [frameCount, setFrameCount] = useState(0);
+  const [totalFrames, setTotalFrames] = useState(0);
 
   // UI state
   const [isDragging, setIsDragging] = useState(false);
@@ -85,6 +89,8 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = ({
       setThumbnailUrl(null);
       setIsGeneratingThumbnail(false);
       setActiveTab(0); // Reset to thumbnail tab
+      setFrameCount(0);
+      setTotalFrames(0);
     }
   }, [isOpen, videoFile]);
 
@@ -373,6 +379,12 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = ({
         });
 
         const chunks: Blob[] = [];
+        
+        // Frame counting setup - use time-based progress instead of frame counting
+        const startTimestamp = Date.now();
+        const durationMs = duration * 1000;
+        setTotalFrames(100); // Use percentage instead of frames
+        setFrameCount(0);
 
         mediaRecorder.ondataavailable = (event) => {
           if (event.data.size > 0) {
@@ -413,6 +425,12 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = ({
         const drawFrame = () => {
           if (!video.paused && !video.ended) {
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Update progress based on elapsed time (more accurate than frame counting)
+            const elapsed = Date.now() - startTimestamp;
+            const progress = Math.min(Math.round((elapsed / durationMs) * 100), 100);
+            setFrameCount(progress);
+            
             requestAnimationFrame(drawFrame);
           }
         };
@@ -630,35 +648,85 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = ({
                 </Alert>
               )}
 
-              {/* Next Button - Moved above Show Advanced Options */}
-              <Button
-                leftIcon={isProcessing ? undefined : <FaArrowRight />}
-                onClick={hasActiveTrim ? handleTrim : handleBypass}
-                isLoading={isProcessing}
-                loadingText="Processing..."
-                isDisabled={!canBypass && !isValidSelection}
-                variant="outline"
-                size={{ base: "md", md: "lg" }}
-                width={{ base: "100%", md: "auto" }}
-                minW={{ base: "auto", md: "160px" }}
-                bg={canBypass || isValidSelection ? "background" : "gray.600"}
-                color="primary"
-                _disabled={{
-                  bg: "muted",
-                  color: "gray.400",
-                  cursor: "not-allowed",
-                  opacity: 0.6,
-                  _hover: {
-                    bg: "gray.600",
-                    transform: "none",
-                  },
-                }}
-                transition="all 0.2s ease"
-                boxShadow={canBypass || isValidSelection ? "md" : "none"}
-                fontWeight="semibold"
-              >
-                {isProcessing ? "Processing" : "Next"}
-              </Button>
+              {/* Next Button or Processing Indicator */}
+              {isProcessing ? (
+                /* Processing Indicator - Replaces button during processing */
+                <VStack spacing={3} py={4}>
+                  <Box
+                    display="flex"
+                    alignItems="center"
+                    gap={3}
+                    px={6}
+                    py={4}
+                    bg="red.50"
+                    borderRadius="lg"
+                    border="2px solid"
+                    borderColor="red.200"
+                  >
+                    <Box
+                      width="16px"
+                      height="16px"
+                      borderRadius="50%"
+                      bg="red.500"
+                      animation="pulse 1.5s infinite"
+                      sx={{
+                        '@keyframes pulse': {
+                          '0%': {
+                            transform: 'scale(1)',
+                            opacity: 1,
+                          },
+                          '50%': {
+                            transform: 'scale(1.3)',
+                            opacity: 0.6,
+                          },
+                          '100%': {
+                            transform: 'scale(1)',
+                            opacity: 1,
+                          },
+                        },
+                      }}
+                    />
+                    <VStack spacing={1} align="flex-start">
+                      <Text fontWeight="bold" color="red.600" fontSize="lg">
+                        Trimming Video...
+                      </Text>
+                      {totalFrames > 0 && (
+                        <Text fontSize="sm" color="red.500" fontFamily="mono">
+                          {frameCount}% complete
+                        </Text>
+                      )}
+                    </VStack>
+                  </Box>
+                </VStack>
+              ) : (
+                /* Next Button - Only shown when not processing */
+                <Button
+                  leftIcon={<FaArrowRight />}
+                  onClick={hasActiveTrim ? handleTrim : handleBypass}
+                  isDisabled={!canBypass && !isValidSelection}
+                  variant="outline"
+                  size={{ base: "md", md: "lg" }}
+                  width={{ base: "100%", md: "auto" }}
+                  minW={{ base: "auto", md: "160px" }}
+                  bg={canBypass || isValidSelection ? "background" : "gray.600"}
+                  color="primary"
+                  _disabled={{
+                    bg: "muted",
+                    color: "gray.400",
+                    cursor: "not-allowed",
+                    opacity: 0.6,
+                    _hover: {
+                      bg: "gray.600",
+                      transform: "none",
+                    },
+                  }}
+                  transition="all 0.2s ease"
+                  boxShadow={canBypass || isValidSelection ? "md" : "none"}
+                  fontWeight="semibold"
+                >
+                  Next
+                </Button>
+              )}
 
               {/* Show Advanced Toggle - Only show when trimming is not required */}
               {showAdvancedToggle && (

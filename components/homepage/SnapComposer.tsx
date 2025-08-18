@@ -838,7 +838,11 @@ export default function SnapComposer({
                   boxShadow: "0 0 0 2px var(--chakra-colors-primary)",
                 }}
                 _active={{ borderColor: "accent" }}
-                onClick={() => setGifMakerOpen(true)}
+                onClick={() => {
+                  // Reset the GIF maker before opening
+                  gifMakerWithSelectorRef.current?.reset();
+                  setGifMakerOpen(true);
+                }}
               />
             </HStack>
             <Box display={buttonSize === "sm" ? "inline-block" : undefined}>
@@ -907,13 +911,7 @@ export default function SnapComposer({
       <GIFMakerWithSelector
         ref={gifMakerWithSelectorRef}
         isOpen={isGifMakerOpen}
-        onClose={() => {
-          setGifMakerOpen(false);
-          // Reset the GIF maker when closing
-          setTimeout(() => {
-            gifMakerWithSelectorRef.current?.reset();
-          }, 100);
-        }}
+        onClose={() => setGifMakerOpen(false)}
         asModal={true}
         onGifCreated={handleGifCreated}
         onUpload={() => {}} // Not used with onGifCreated
