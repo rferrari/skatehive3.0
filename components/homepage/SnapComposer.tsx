@@ -887,6 +887,7 @@ export default function SnapComposer({
               username={user || undefined}
               onUploadStart={handleVideoUploadStart}
               onUploadFinish={handleVideoUploadFinish}
+              hideCompletionMessage={true}
               // Remove maxDurationSeconds and onDurationError since we handle trimming in modal
             />
           </Box>

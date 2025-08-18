@@ -53,6 +53,7 @@ interface VideoUploaderProps {
   maxDurationSeconds?: number; // Maximum allowed video duration
   onDurationError?: (duration: number) => void; // Callback for duration violations
   onFileSizeError?: (reason: string) => void; // Callback for file size violations
+  hideCompletionMessage?: boolean; // Hide "Upload complete!" message
 }
 
 export interface VideoUploaderRef {
@@ -73,6 +74,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
       maxDurationSeconds,
       onDurationError,
       onFileSizeError,
+      hideCompletionMessage = false,
     },
     ref
   ) => {
@@ -895,7 +897,11 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
             throw new Error(result.error || "Upload failed");
           }
 
-          updateProgress("complete", 100, "Upload complete!");
+          if (hideCompletionMessage) {
+            updateProgress("idle", 0, "");
+          } else {
+            updateProgress("complete", 100, "Upload complete!");
+          }
           onUpload(result.url || null);
           if (onUploadFinish) onUploadFinish();
         } catch (err) {
