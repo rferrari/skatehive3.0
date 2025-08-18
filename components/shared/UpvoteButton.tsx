@@ -220,18 +220,16 @@ const handleVote = useCallback(
             onClick={handleHeartClick}
             p={1}
             borderRadius="full"
-            bg={voted ? "muted" : !voted ? "muted" : undefined}
+            bg={voted ? "primary" : "muted"}
             border="1px solid"
             borderColor="primary"
             _hover={{ bg: "muted" }}
             transition="background 0.2s, border-radius 0.2s"
-            className={`upvote-container ${className} ${
-              !voted ? "arrow-bg-fade" : ""
-            }`}
+            className={`upvote-container ${className}`}
           >
-            <LuArrowUpRight
+                        <LuArrowUpRight
               size={24}
-              color={voted ? "var(--chakra-colors-success)" : "var(--chakra-colors-primary)"}
+              color={voted ? "var(--chakra-colors-background)" : "var(--chakra-colors-primary)"}
               style={{ opacity: 1 }}
               className={!voted ? "arrow-pulse-hover" : ""}
             />
@@ -259,18 +257,16 @@ const handleVote = useCallback(
             onClick={handleHeartClick}
             p={1}
             borderRadius="full"
-            bg={voted ? "muted" : !voted ? "muted" : undefined}
+            bg={voted ? "primary" : "muted"}
             border="1px solid"
             borderColor="primary"
             _hover={{ bg: "muted" }}
             transition="background 0.2s, border-radius 0.2s"
-            className={`upvote-container ${className} ${
-              !voted ? "arrow-bg-fade" : ""
-            }`}
+            className={`upvote-container ${className}`}
           >
-            <LuArrowUpRight
+                        <LuArrowUpRight
               size={24}
-              color={voted ? "var(--chakra-colors-success)" : "var(--chakra-colors-primary)"}
+              color={voted ? "var(--chakra-colors-background)" : "var(--chakra-colors-primary)"}
               style={{ opacity: 1 }}
               className={!voted ? "arrow-pulse-hover" : ""}
             />
@@ -316,7 +312,7 @@ const handleVote = useCallback(
               onClick={handleHeartClick}
               p={1}
               borderRadius="full"
-              bg={voted ? "muted" : !voted ? "muted" : undefined}
+              bg={voted ? "primary" : "muted"}
               border="1px solid"
               borderColor="primary"
               _hover={{ bg: "muted" }}
@@ -325,12 +321,12 @@ const handleVote = useCallback(
                 !voted ? "arrow-bg-fade" : ""
               }`}
             >
-              <LuArrowUpRight
-                size={24}
-                color={voted ? "var(--chakra-colors-success)" : "var(--chakra-colors-primary)"}
-                style={{ opacity: 1 }}
-                className={!voted ? "arrow-pulse-hover" : ""}
-              />
+                          <LuArrowUpRight
+              size={24}
+              color={voted ? "var(--chakra-colors-background)" : "var(--chakra-colors-primary)"}
+              style={{ opacity: 1 }}
+              className={!voted ? "arrow-pulse-hover" : ""}
+            />
             </Box>
           </Tooltip>
           <VoteListPopover
@@ -398,7 +394,7 @@ const handleVote = useCallback(
             color="background"
             _hover={{ bg: "accent" }}
             fontWeight="bold"
-            className="subtle-pulse"
+
             isDisabled={isVoting}
             isLoading={isVoting}
           >
@@ -434,18 +430,16 @@ const handleVote = useCallback(
             onClick={handleHeartClick}
             p={1}
             borderRadius="full"
-            bg={voted ? "muted" : !voted ? "muted" : undefined}
+            bg={voted ? "primary" : "muted"}
             border="1px solid"
             borderColor="primary"
             _hover={{ bg: "muted" }}
             transition="background 0.2s, border-radius 0.2s"
-            className={`upvote-container ${className} ${
-              !voted ? "arrow-bg-fade" : ""
-            }`}
+            className={`upvote-container ${className}`}
           >
-            <LuArrowUpRight
+                        <LuArrowUpRight
               size={24}
-              color={voted ? "var(--chakra-colors-success)" : "var(--chakra-colors-primary)"}
+              color={voted ? "var(--chakra-colors-background)" : "var(--chakra-colors-primary)"}
               style={{ opacity: 1 }}
               className={!voted ? "arrow-pulse-hover" : ""}
             />
