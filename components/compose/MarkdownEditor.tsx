@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef } from "react";
+import React, { useMemo, useState, useRef, useEffect } from "react";
 import { Box, Button, HStack, IconButton } from "@chakra-ui/react";
 import MDEditor, { commands } from "@uiw/react-md-editor";
 import { useDropzone } from "react-dropzone";
@@ -41,6 +41,13 @@ export default function MarkdownEditor({
     // GIF functionality state
     const [isGifMakerOpen, setGifMakerOpen] = useState(false);
     const gifMakerWithSelectorRef = useRef<GIFMakerWithSelectorRef>(null);
+    
+    // Client-side mounting state to prevent hydration mismatch
+    const [isMounted, setIsMounted] = useState(false);
+    
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
     
     const { getRootProps } = useDropzone({
         onDrop,
@@ -251,7 +258,7 @@ export default function MarkdownEditor({
                 return children;
             },
         }),
-        []
+        [markdown, setMarkdown]
     );
 
     return (
@@ -276,7 +283,7 @@ export default function MarkdownEditor({
                 preview={previewMode}
                 components={memoizedComponents}
                 commands={[
-                    ...(user ? [imageCommand, videoCommand, gifCommand] : []),
+                    ...(isMounted && user ? [imageCommand, videoCommand, gifCommand] : []),
                     headerCommand,
                     commands.bold,
                     commands.italic,

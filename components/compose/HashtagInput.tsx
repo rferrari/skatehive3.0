@@ -41,7 +41,17 @@ export default function HashtagInput({
 
     return (
         <Flex width="100%" direction="row" alignItems="center" mt={4} mb={2}>
-            <Box flex="1">
+            <Box>
+                <Input
+                    placeholder="Enter hashtags"
+                    value={hashtagInput}
+                    onChange={(e) => setHashtagInput(e.target.value)}
+                    onKeyDown={handleHashtagKeyDown}
+                    borderRadius="base"
+                    width="200px"
+                />
+            </Box>
+            <Box flex="1" ml={4}>
                 <Wrap justify="flex-start">
                     {hashtags.map((tag, index) => (
                         <WrapItem key={index}>
@@ -57,16 +67,6 @@ export default function HashtagInput({
                         </WrapItem>
                     ))}
                 </Wrap>
-            </Box>
-            <Box>
-                <Input
-                    placeholder="Enter hashtags"
-                    value={hashtagInput}
-                    onChange={(e) => setHashtagInput(e.target.value)}
-                    onKeyDown={handleHashtagKeyDown}
-                    borderRadius="base"
-                    width="200px"
-                />
             </Box>
         </Flex>
     );

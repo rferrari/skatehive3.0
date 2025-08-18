@@ -24,15 +24,8 @@ export default function ThumbnailPicker({
   const videoUrls = extractVideoUrls(markdown);
 
   return (
-    <Box
-      mt={4}
-      p={3}
-      border="1px solid"
-      borderColor="primary"
-      borderRadius="md"
-      bg="background"
-    >
-      <Box mb={2} fontWeight="bold" color="colorBackground">
+    <Box>
+      <Box mb={3} fontWeight="bold" color="primary">
         Choose a thumbnail:
       </Box>
       <Flex wrap="wrap" gap={3}>
@@ -99,7 +92,7 @@ export default function ThumbnailPicker({
           <span
             style={{
               wordBreak: "break-all",
-              color: "var(--chakra-colors-colorBackground)",
+              color: "var(--chakra-colors-primary)",
             }}
           >
             {selectedThumbnail}

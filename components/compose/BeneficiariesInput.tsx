@@ -164,128 +164,106 @@ export default function BeneficiariesInput({
   }, [beneficiaries, totalPercentage, isOpen, errors.length]);
 
   return (
-    <Box mb={4}>
-      <Button
-        size="sm"
-        colorScheme="purple"
-        variant="outline"
-        onClick={onToggle}
-        leftIcon={<FaPercentage />}
-        isDisabled={isSubmitting}
-      >
-        Beneficiaries {beneficiaries.length > 0 && `(${beneficiaries.length})`}
-      </Button>
-
-      {isOpen && (
-        <Box
-          mt={3}
-          p={4}
-          border="1px solid"
-          borderColor="purple.200"
-          borderRadius="md"
-          bg="background"
-        >
-          <VStack spacing={4} align="stretch">
-            <Box>
-              <Text fontSize="sm" color="gray.600" mb={2}>
-                Set reward beneficiaries who will receive a percentage of this
-                post&apos;s earnings.{" "}
-              </Text>
-              <Text fontSize="xs" color="gray.500">
-                Total: {totalPercentage.toFixed(1)}% | Author keeps:{" "}
-                {(100 - totalPercentage).toFixed(1)}%
-              </Text>
-            </Box>
-
-            {beneficiaries.map((beneficiary, index) => (
-              <HStack key={index} spacing={2}>
-                <FormControl flex="2">
-                  <FormLabel fontSize="xs" mb={1}>
-                    Account
-                  </FormLabel>
-                  <HiveUsernameInput
-                    value={beneficiary.account}
-                    onChange={(value, isValid) => {
-                      updateBeneficiary(index, "account", value);
-                      updateBeneficiary(index, "isValidAccount", isValid);
-                    }}
-                    placeholder="hive-username"
-                    size="sm"
-                    isDisabled={isSubmitting}
-                    validateOnChange={true}
-                    showSuggestions={true}
-                  />
-                </FormControl>
-
-                <FormControl flex="1">
-                  <FormLabel fontSize="xs" mb={1}>
-                    Percentage
-                  </FormLabel>
-                  <Input
-                    type="number"
-                    placeholder="5"
-                    min="0.1"
-                    max="100"
-                    step="0.1"
-                    value={(beneficiary.weight / 100).toFixed(1)}
-                    onChange={(e) =>
-                      updateBeneficiary(index, "weight", e.target.value)
-                    }
-                    size="sm"
-                    isDisabled={isSubmitting}
-                  />
-                </FormControl>
-
-                <IconButton
-                  aria-label="Remove beneficiary"
-                  icon={<FaTrash />}
-                  size="sm"
-                  colorScheme="red"
-                  variant="ghost"
-                  onClick={() => removeBeneficiary(index)}
-                  isDisabled={isSubmitting}
-                  mt={6}
-                />
-              </HStack>
-            ))}
-
-            <Button
-              leftIcon={<FaPlus />}
-              onClick={addBeneficiary}
-              size="sm"
-              variant="ghost"
-              colorScheme="purple"
-              isDisabled={isSubmitting || beneficiaries.length >= 8} // Hive limit is 8 beneficiaries
-            >
-              Add Beneficiary
-            </Button>
-
-            {errors.length > 0 && (
-              <Alert status="error" size="sm">
-                <AlertIcon />
-                <VStack align="start" spacing={1}>
-                  {errors.map((error, index) => (
-                    <Text key={index} fontSize="xs">
-                      {error}
-                    </Text>
-                  ))}
-                </VStack>
-              </Alert>
-            )}
-
-            {totalPercentage > 0 && errors.length === 0 && (
-              <Alert status="info" size="sm">
-                <AlertIcon />
-                <Text fontSize="xs">
-                  {beneficiaries.length}{" "}
-                  {beneficiaries.length === 1 ? "beneficiary" : "beneficiaries"}{" "}
-                  will receive {totalPercentage.toFixed(1)}% of post rewards
-                </Text>
-              </Alert>
-            )}
-          </VStack>
+    <Box>
+      <VStack spacing={4} align="stretch">
+        <Box>
+          <Text fontSize="sm" color="gray.600" mb={2}>
+            Set reward beneficiaries who will receive a percentage of this
+            post&apos;s earnings.{" "}
+          </Text>
+          <Text fontSize="xs" color="gray.500">
+            Total: {totalPercentage.toFixed(1)}% | Author keeps:{" "}
+            {(100 - totalPercentage).toFixed(1)}%
+          </Text>
         </Box>
-      )}
+
+        {beneficiaries.map((beneficiary, index) => (
+          <HStack key={index} spacing={2}>
+            <FormControl flex="2">
+              <FormLabel fontSize="xs" mb={1}>
+                Account
+              </FormLabel>
+              <HiveUsernameInput
+                value={beneficiary.account}
+                onChange={(value, isValid) => {
+                  updateBeneficiary(index, "account", value);
+                  updateBeneficiary(index, "isValidAccount", isValid);
+                }}
+                placeholder="hive-username"
+                size="sm"
+                isDisabled={isSubmitting}
+                validateOnChange={true}
+                showSuggestions={true}
+              />
+            </FormControl>
+
+            <FormControl flex="1">
+              <FormLabel fontSize="xs" mb={1}>
+                Percentage
+              </FormLabel>
+              <Input
+                type="number"
+                placeholder="5"
+                min="0.1"
+                max="100"
+                step="0.1"
+                value={(beneficiary.weight / 100).toFixed(1)}
+                onChange={(e) =>
+                  updateBeneficiary(index, "weight", e.target.value)
+                }
+                size="sm"
+                isDisabled={isSubmitting}
+              />
+            </FormControl>
+
+            <IconButton
+              aria-label="Remove beneficiary"
+              icon={<FaTrash />}
+              size="sm"
+              colorScheme="red"
+              variant="ghost"
+              onClick={() => removeBeneficiary(index)}
+              isDisabled={isSubmitting}
+              mt={6}
+            />
+          </HStack>
+        ))}
+
+        <Button
+          leftIcon={<FaPlus />}
+          onClick={addBeneficiary}
+          size="sm"
+          variant="ghost"
+          colorScheme="purple"
+          isDisabled={isSubmitting || beneficiaries.length >= 8} // Hive limit is 8 beneficiaries
+        >
+          Add Beneficiary
+        </Button>
+
+        {errors.length > 0 && (
+          <Alert status="error" size="sm">
+            <AlertIcon />
+            <VStack align="start" spacing={1}>
+              {errors.map((error, index) => (
+                <Text key={index} fontSize="xs">
+                  {error}
+                </Text>
+              ))}
+            </VStack>
+          </Alert>
+        )}
+
+        {totalPercentage > 0 && errors.length === 0 && (
+          <Alert status="info" size="sm">
+            <AlertIcon />
+            <Text fontSize="xs">
+              {beneficiaries.length}{" "}
+              {beneficiaries.length === 1 ? "beneficiary" : "beneficiaries"}{" "}
+              will receive {totalPercentage.toFixed(1)}% of post rewards
+            </Text>
+          </Alert>
+        )}
+      </VStack>
     </Box>
   );
 }
