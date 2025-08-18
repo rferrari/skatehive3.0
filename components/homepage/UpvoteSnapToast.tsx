@@ -47,8 +47,10 @@ export default function UpvoteSnapToast({
   const { user, aioha } = useAioha();
   const [snapContainer, setSnapContainer] = useState<Discussion | null>(null);
   const [hasVoted, setHasVoted] = useState(false);
+  const [isSnapVoteLoading, setIsSnapVoteLoading] = useState(true);
   const [lastShownTime, setLastShownTime] = useState<number>(0);
   const [hasVotedWitness, setHasVotedWitness] = useState(false);
+  const [isWitnessVoteLoading, setIsWitnessVoteLoading] = useState(true);
   const [lastShownWitnessTime, setLastShownWitnessTime] = useState<number>(0);
   const [hasShownLoginWitnessToast, setHasShownLoginWitnessToast] =
     useState(false);
@@ -71,7 +73,12 @@ export default function UpvoteSnapToast({
   const activeWitnessToastIdRef = useRef<string | number | null>(null);
 
   const fetchSnapContainerData = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      setIsSnapVoteLoading(false);
+      return;
+    }
+
+    setIsSnapVoteLoading(true);
 
     try {
       const containerInfo = await getLastSnapsContainer();
@@ -92,15 +99,21 @@ export default function UpvoteSnapToast({
       }
     } catch (error) {
       console.error("Failed to get snap container", error);
+      setHasVoted(false);
+    } finally {
+      setIsSnapVoteLoading(false);
     }
   }, [user || null]);
 
   const fetchUserData = useCallback(async () => {
-    if (!user || !hiveAccount) return;
+    if (!user || !hiveAccount) {
+      setIsWitnessVoteLoading(false);
+      return;
+    }
+
+    setIsWitnessVoteLoading(true);
 
     try {
-      console.log("🔍 Checking witness votes for:", user);
-
       // Get account data which includes witness votes
       const accountData = await HiveClient.database.call("get_accounts", [[user]]);
       
@@ -109,25 +122,23 @@ export default function UpvoteSnapToast({
 
       if (accountData && accountData[0] && accountData[0].witness_votes) {
         witnessVotes = accountData[0].witness_votes;
-        console.log("🗳️ Witness votes:", witnessVotes);
-
         // Check if user has voted for skatehive witness
         hasVotedForSkateHive = witnessVotes.includes("skatehive");
-      } else {
-        console.log("No witness votes found for user");
       }
 
-      console.log("👤 User witness vote status:", {
-        user,
-        hasVotedForSkateHive,
-        totalWitnessVotes: witnessVotes.length,
-      });
-
       setHasVotedWitness(hasVotedForSkateHive);
+      
+      // If user has voted for witness, immediately close any active witness toast
+      if (hasVotedForSkateHive && activeWitnessToastIdRef.current) {
+        toast.close(activeWitnessToastIdRef.current);
+        activeWitnessToastIdRef.current = null;
+      }
     } catch (error) {
       console.error("Failed to get witness votes", error);
       // Set to false on error to avoid blocking the toast unnecessarily
       setHasVotedWitness(false);
+    } finally {
+      setIsWitnessVoteLoading(false);
     }
   }, [user, hiveAccount]);
 
@@ -198,7 +209,7 @@ export default function UpvoteSnapToast({
   };
 
   const showUpvoteToast = useCallback(() => {
-    if (!isMounted || !isDesktop || !user || !snapContainer || hasVoted) {
+    if (!isMounted || !isDesktop || !user || !snapContainer || hasVoted || isSnapVoteLoading) {
       return;
     }
 
@@ -311,10 +322,11 @@ export default function UpvoteSnapToast({
     displayDuration,
     toast,
     handleUpvote,
+    isSnapVoteLoading,
   ]);
 
   const showWitnessVoteToast = useCallback(() => {
-    if (!isMounted || !isDesktop || !user || hasVotedWitness) {
+    if (!isMounted || !isDesktop || !user || hasVotedWitness || isWitnessVoteLoading) {
       return;
     }
 
@@ -438,6 +450,7 @@ export default function UpvoteSnapToast({
     displayDuration,
     toast,
     handleWitnessVote,
+    isWitnessVoteLoading,
   ]);
 
   // Load snap container data when user changes
@@ -462,11 +475,27 @@ export default function UpvoteSnapToast({
       isDesktop &&
       hiveAccount &&
       !hasVotedWitness &&
-      !hasShownLoginWitnessToast
+      !hasShownLoginWitnessToast &&
+      !isWitnessVoteLoading
     ) {
       setHasShownLoginWitnessToast(true);
       // Show witness toast after a short delay (2 seconds after login)
-      setTimeout(() => {
+      setTimeout(async () => {
+        // Do a final check right before showing toast
+        if (user && hiveAccount) {
+          try {
+            const accountData = await HiveClient.database.call("get_accounts", [[user]]);
+            if (accountData && accountData[0] && accountData[0].witness_votes) {
+              const hasVotedForSkateHive = accountData[0].witness_votes.includes("skatehive");
+              if (hasVotedForSkateHive) {
+                return;
+              }
+            }
+          } catch (error) {
+            console.error("Failed final login witness vote check:", error);
+          }
+        }
+        
         showWitnessVoteToast();
       }, 2000);
     }
@@ -478,12 +507,15 @@ export default function UpvoteSnapToast({
     hasVotedWitness,
     hasShownLoginWitnessToast,
     showWitnessVoteToast,
+    isWitnessVoteLoading,
   ]);
 
   // Reset login toast flag when user changes
   useEffect(() => {
     if (!user) {
       setHasShownLoginWitnessToast(false);
+      setIsWitnessVoteLoading(true); // Reset loading state when user changes
+      setIsSnapVoteLoading(true); // Reset snap loading state when user changes
     }
   }, [user || null]);
 
@@ -534,7 +566,9 @@ export default function UpvoteSnapToast({
       clearTimeout(initialTimerRef.current);
     }
 
-    if (!isMounted || !isDesktop || !user || !snapContainer) return;
+    if (!isMounted || !isDesktop || !user || !snapContainer || hasVoted || isSnapVoteLoading) {
+      return;
+    }
 
     initialTimerRef.current = setTimeout(() => {
       showUpvoteToast();
@@ -551,6 +585,8 @@ export default function UpvoteSnapToast({
     user || null,
     snapContainer || null,
     showUpvoteToast,
+    hasVoted,
+    isSnapVoteLoading,
   ]);
 
   // Show witness vote toast initially after a delay
@@ -560,11 +596,26 @@ export default function UpvoteSnapToast({
       clearTimeout(witnessInitialTimerRef.current);
     }
 
-    if (!isMounted || !isDesktop || !user || !hiveAccount || hasVotedWitness) {
+    if (!isMounted || !isDesktop || !user || !hiveAccount || hasVotedWitness || isWitnessVoteLoading) {
       return;
     }
 
-    witnessInitialTimerRef.current = setTimeout(() => {
+    witnessInitialTimerRef.current = setTimeout(async () => {
+      // Do a final check right before showing toast
+      if (user && hiveAccount) {
+        try {
+          const accountData = await HiveClient.database.call("get_accounts", [[user]]);
+          if (accountData && accountData[0] && accountData[0].witness_votes) {
+            const hasVotedForSkateHive = accountData[0].witness_votes.includes("skatehive");
+            if (hasVotedForSkateHive) {
+              return;
+            }
+          }
+        } catch (error) {
+          console.error("Failed final witness vote check:", error);
+        }
+      }
+      
       showWitnessVoteToast();
     }, 15000); // Show witness toast after 15 seconds (more offset from upvote toast)
 
@@ -580,6 +631,7 @@ export default function UpvoteSnapToast({
     hiveAccount || null,
     hasVotedWitness,
     showWitnessVoteToast,
+    isWitnessVoteLoading,
   ]);
 
   // Refresh data when page becomes visible
