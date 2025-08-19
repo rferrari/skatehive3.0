@@ -364,7 +364,7 @@ export default function UpvoteSnapToast({
                 lineHeight: "1.4",
               }}
             >
-              Support SkateHive's blockchain infrastructure by voting for our
+              Support SkateHive blockchain infrastructure by voting for our
               witness. Your vote helps secure the network and supports our
               community.
             </div>
