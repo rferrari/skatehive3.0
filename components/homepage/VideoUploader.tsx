@@ -34,13 +34,13 @@ import {
   isMobileDevice,
   getFileSizeLimits,
   handleVideoUpload as uploadVideo,
-  UploadResult,
 } from "@/lib/utils/videoUploadUtils";
 import { generateThumbnail } from "@/lib/utils/videoThumbnailUtils";
+import { validateVideoDuration } from "@/lib/utils/videoValidation";
 import {
-  validateVideoDuration,
-  getVideoFileInfo,
-} from "@/lib/utils/videoValidation";
+  videoApiService,
+  VideoConversionRequest,
+} from "@/services/videoApiService";
 
 interface VideoUploaderProps {
   onUpload: (url: string | null) => void;
@@ -186,10 +186,196 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
     }, []);
     const [processingTime, setProcessingTime] = useState<number>(0);
     const [isDevelopment, setIsDevelopment] = useState<boolean>(false);
+    const [apiAvailability, setApiAvailability] = useState<{
+      primaryAPI: boolean;
+      fallbackAPI: boolean;
+      checked: boolean;
+    }>({
+      primaryAPI: false,
+      fallbackAPI: false,
+      checked: false,
+    });
+    const [processingMethod, setProcessingMethod] = useState<
+      "api" | "native" | null
+    >(null);
 
-    // Check if we're in development mode
+    // Helper function to handle native processing fallbacks
+    const handleNativeProcessingFallback = async (
+      file: File,
+      deviceInfo: any,
+      isMovFile: boolean,
+      shouldSkipCompression: boolean,
+      updateProgress: Function
+    ): Promise<File> => {
+      // For iOS devices, try iOS-specific fallback first
+      if (deviceInfo.isIOS) {
+        try {
+          console.log("📱 Trying iOS-specific fallback...");
+          updateProgress("processing", 70, "Using iOS fallback compression...");
+          const iosFallbackBlob = await compressVideoiOSFallback(file);
+          return new File([iosFallbackBlob], "ios-skatehivesnapvideo.mp4", {
+            type: "video/mp4",
+          });
+        } catch (iosErr) {
+          console.error("📱 iOS fallback also failed:", iosErr);
+          // For .mov files, try one more time with just basic conversion
+          if (isMovFile && !shouldSkipCompression) {
+            try {
+              console.log("📱 Retrying .mov file with simple conversion only");
+              updateProgress(
+                "processing",
+                80,
+                "Retrying with simple conversion..."
+              );
+              const mp4Blob = await convertToMp4(
+                file,
+                ffmpegRef,
+                setCompressionProgress
+              );
+              return new File([mp4Blob], "converted.mp4", {
+                type: "video/mp4",
+              });
+            } catch (retryErr) {
+              console.error(
+                "📱 All attempts failed, uploading original file:",
+                retryErr
+              );
+              updateProgress(
+                "processing",
+                90,
+                "All processing failed, uploading original file..."
+              );
+              return file;
+            }
+          } else {
+            updateProgress(
+              "processing",
+              90,
+              "iOS processing failed, uploading original file..."
+            );
+            return file;
+          }
+        }
+      } else {
+        // For .mov files on non-iOS, try one more time with just basic conversion
+        if (isMovFile && !shouldSkipCompression) {
+          try {
+            console.log("📱 Retrying .mov file with simple conversion only");
+            updateProgress(
+              "processing",
+              80,
+              "Retrying with simple conversion..."
+            );
+            const mp4Blob = await convertToMp4(
+              file,
+              ffmpegRef,
+              setCompressionProgress
+            );
+            return new File([mp4Blob], "converted.mp4", { type: "video/mp4" });
+          } catch (retryErr) {
+            console.error(
+              "📱 Retry also failed, uploading original file:",
+              retryErr
+            );
+            updateProgress(
+              "processing",
+              90,
+              "Conversion failed, uploading original file..."
+            );
+            return file;
+          }
+        } else {
+          updateProgress(
+            "processing",
+            90,
+            "Processing failed, uploading original file..."
+          );
+          return file;
+        }
+      }
+    };
+
+    // Helper function to handle fallback compression
+    const handleFallbackCompression = async (
+      file: File,
+      deviceInfo: any,
+      updateProgress: Function
+    ): Promise<File> => {
+      try {
+        if (deviceInfo.isIOS) {
+          console.log("📱 Using iOS-optimized fallback for iOS device");
+          updateProgress(
+            "processing",
+            70,
+            "Using iPhone-optimized fallback compression..."
+          );
+          const iosFallbackBlob = await compressVideoiOSFallback(file);
+          return new File([iosFallbackBlob], "ios-fallback.mp4", {
+            type: "video/mp4",
+          });
+        } else {
+          updateProgress("processing", 70, "Using fallback compression...");
+          const mobileBlob = await compressVideoFallback(file);
+          return new File([mobileBlob], "mobile-compressed.webm", {
+            type: "video/webm",
+          });
+        }
+      } catch (fallbackErr) {
+        updateProgress(
+          "processing",
+          90,
+          "Fallback compression failed, uploading original file..."
+        );
+        return file;
+      }
+    };
+
+    // Check if we're in development mode and API availability
     React.useEffect(() => {
       setIsDevelopment(process.env.NODE_ENV === "development");
+
+      // Check API availability on component mount
+      const checkAPIs = async () => {
+        console.log("🔍 VideoUploader: Starting API availability check...");
+        try {
+          const availability = await videoApiService.getApiStatus();
+          setApiAvailability({
+            primaryAPI: availability.primaryApi.available,
+            fallbackAPI: availability.fallbackApi.available,
+            checked: true,
+          });
+
+          console.log("🔌 VideoUploader API Availability Results:", {
+            primaryAPI: availability.primaryApi.available,
+            primaryURL: availability.primaryApi.url,
+            fallbackAPI: availability.fallbackApi.available,
+            fallbackURL: availability.fallbackApi.url,
+            checkDuration: availability.checkDuration,
+            timestamp: availability.timestamp,
+          });
+
+          // If you want to test direct API connection, uncomment these:
+          // const directTest = await videoApiService.testDirectApi();
+          // console.log("🧪 Direct API test:", directTest);
+          
+          // const corsTest = await videoApiService.testDirectApiWithCors();
+          // console.log("🧪 CORS API test:", corsTest);
+          
+        } catch (error) {
+          console.error("❌ VideoUploader: Failed to check API availability:", {
+            error,
+            message: error instanceof Error ? error.message : 'Unknown error',
+            name: error instanceof Error ? error.name : 'Unknown',
+          });
+          setApiAvailability({
+            primaryAPI: false,
+            fallbackAPI: false,
+            checked: true,
+          });
+        }
+      };
+
+      checkAPIs();
     }, []);
 
     // Replace hardcoded background and color values with theme variables
@@ -313,19 +499,23 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
               fallback
             );
             const thumbnailEndTime = Date.now();
-            const thumbnailGenerationTime = (thumbnailEndTime - thumbnailStartTime) / 1000;
-            
+            const thumbnailGenerationTime =
+              (thumbnailEndTime - thumbnailStartTime) / 1000;
+
             setThumbnailDebugInfo({
               url: thumbnailUrl,
-              generationMethod: fallback ? "FFmpeg fallback" : "Canvas (primary)",
+              generationMethod: fallback
+                ? "FFmpeg fallback"
+                : "Canvas (primary)",
               wasPreGenerated: false,
               generationTime: thumbnailGenerationTime,
               error: null,
             });
           } catch (err) {
             errorStep = "thumbnail";
-            const thumbnailError = err instanceof Error ? err.message : "Unknown error";
-            setThumbnailDebugInfo(prev => ({
+            const thumbnailError =
+              err instanceof Error ? err.message : "Unknown error";
+            setThumbnailDebugInfo((prev) => ({
               ...prev,
               error: thumbnailError,
               generationMethod: "Failed",
@@ -374,42 +564,100 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
           }
         }
 
-        // Simple processing logic like the working reference code
+        // NEW API-FIRST PROCESSING APPROACH
         let processedFile: File = file;
-        const processingInfo = shouldProcessFile(file);
+        let uploadUrl: string | null = null;
 
-        console.log("📱 File processing check:", {
+        console.log("� Starting API-first video processing...", {
           fileName: file.name,
           fileType: file.type,
           fileSizeMB: (file.size / (1024 * 1024)).toFixed(1),
-          userHP,
+          hasAPIs: apiAvailability.checked,
+          primaryAPI: apiAvailability.primaryAPI,
+          fallbackAPI: apiAvailability.fallbackAPI,
+        });
+
+        // Step 1: Try API processing first (if APIs are available)
+        if (
+          apiAvailability.checked &&
+          (apiAvailability.primaryAPI || apiAvailability.fallbackAPI)
+        ) {
+          try {
+            updateProgress("processing", 10, "Trying video conversion API...");
+            setProcessingMethod("api");
+
+            const apiRequest: VideoConversionRequest = {
+              video: file,
+              creator: username || "anonymous",
+              thumbnailUrl: thumbnailUrl || undefined,
+            };
+
+            const apiResult = await videoApiService.processVideo(
+              apiRequest,
+              (progress: number) => {
+                // Update progress for API upload (10-80% range)
+                updateProgress(
+                  "processing",
+                  10 + progress * 0.7,
+                  `API processing: ${progress}%`
+                );
+              }
+            );
+
+            if (apiResult && apiResult.success && apiResult.ipfsUrl) {
+              console.log("✅ API processing successful!", {
+                method: "api",
+                url: apiResult.ipfsUrl,
+                thumbnailUrl: apiResult.thumbnailUrl,
+                processingTime: apiResult.processingTime,
+              });
+
+              updateProgress("complete", 100, "Upload complete via API!");
+              onUpload(apiResult.ipfsUrl);
+              if (onUploadFinish) onUploadFinish();
+              return;
+            } else {
+              console.log(
+                "⚠️ API processing failed, falling back to native processing",
+                {
+                  error: apiResult?.error || "Unknown error",
+                  available: false,
+                }
+              );
+            }
+          } catch (apiError) {
+            console.error("❌ API processing error:", apiError);
+            updateProgress(
+              "processing",
+              15,
+              "API failed, trying native processing..."
+            );
+          }
+        } else {
+          console.log("⚡ APIs not available, using native processing");
+        }
+
+        // Step 2: Native processing fallback
+        setProcessingMethod("native");
+        updateProgress("processing", 20, "Starting native video processing...");
+
+        const processingInfo = shouldProcessFile(file);
+        const isMovFile =
+          file.name.toLowerCase().endsWith(".mov") ||
+          file.type === "video/quicktime";
+        const iosOptimized =
+          deviceInfo.isIOS && shouldUseiOSOptimizedProcessing(file);
+        const androidSkipInfo = shouldSkipAndroidProcessing(file);
+
+        console.log("📱 Native processing info:", {
           shouldProcess: processingInfo.shouldProcess,
           isMovFile: processingInfo.isMovFile,
           isMp4File: processingInfo.isMp4File,
           justConvert: processingInfo.justConvert,
           skipCompression,
           fallback,
-        });
-
-        // For .mov files, force FFmpeg processing even if detection suggests otherwise
-        const isMovFile =
-          file.name.toLowerCase().endsWith(".mov") ||
-          file.type === "video/quicktime";
-        const iosOptimized =
-          deviceInfo.isIOS && shouldUseiOSOptimizedProcessing(file);
-
-        // Android optimization - check if we should skip processing
-        const androidSkipInfo = shouldSkipAndroidProcessing(file);
-
-        console.log(`📱 Device info:`, {
-          isIOS: deviceInfo.isIOS,
           iosOptimized,
-          isAndroid: deviceInfo.isAndroid,
-          isOldAndroid: deviceInfo.isOldAndroid,
           androidSkip: androidSkipInfo.shouldSkip,
-          androidReason: androidSkipInfo.reason,
-          fallbackMode,
-          ffmpegSupported,
         });
 
         // Android MP4 optimization - skip processing for MP4 files from Android
@@ -419,41 +667,31 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
           );
           updateProgress(
             "processing",
-            100,
+            90,
             "Android MP4 detected - uploading without processing..."
           );
           processedFile = file;
         } else {
-          console.log(`📱 Use iOS optimized processing: ${iosOptimized}`);
-
           // Update state for UI feedback
           setUseIOSOptimized(iosOptimized);
 
           // Enhanced processing status messages
-          if (deviceInfo.isIOS) {
-            if (iosOptimized) {
-              updateProgress(
-                "processing",
-                0,
-                "Detected iPhone video - using optimized processing..."
-              );
-            } else {
-              updateProgress("processing", 0, "Processing iPhone video...");
-            }
-          } else if (deviceInfo.isAndroid) {
-            if (isMovFile) {
-              updateProgress(
-                "processing",
-                0,
-                "Converting Android .MOV video..."
-              );
-            } else {
-              updateProgress("processing", 0, "Processing Android video...");
-            }
+          if (deviceInfo.isIOS && iosOptimized) {
+            updateProgress(
+              "processing",
+              25,
+              "Detected iPhone video - using optimized processing..."
+            );
+          } else if (deviceInfo.isAndroid && isMovFile) {
+            updateProgress(
+              "processing",
+              25,
+              "Converting Android .MOV video..."
+            );
           } else if (isMovFile) {
-            updateProgress("processing", 0, "Processing .MOV video file...");
+            updateProgress("processing", 25, "Processing .MOV video file...");
           } else {
-            updateProgress("processing", 0, "Processing video...");
+            updateProgress("processing", 25, "Processing video...");
           }
 
           if (isMovFile) {
@@ -466,7 +704,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
           const shouldResize = file.size > twelveMB;
           let shouldSkipCompression = skipCompression;
 
-          // Auto-skip compression for videos over 1 minute (like working code)
+          // Auto-skip compression for videos over 1 minute
           if (
             !shouldSkipCompression &&
             !maxDurationSeconds &&
@@ -495,19 +733,13 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
             try {
               if (shouldSkipCompression) {
                 // Just convert to MP4 format without compression
-                if (deviceInfo.isIOS && isMovFile && iosOptimized) {
-                  updateProgress(
-                    "processing",
-                    0,
-                    "Converting iPhone video to MP4 (optimized)..."
-                  );
-                } else {
-                  updateProgress(
-                    "processing",
-                    0,
-                    "Converting to MP4 format..."
-                  );
-                }
+                updateProgress(
+                  "processing",
+                  30,
+                  deviceInfo.isIOS && isMovFile && iosOptimized
+                    ? "Converting iPhone video to MP4 (optimized)..."
+                    : "Converting to MP4 format..."
+                );
 
                 let mp4Blob: Blob;
                 if (deviceInfo.isIOS && isMovFile && iosOptimized) {
@@ -535,19 +767,13 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
                 );
               } else {
                 // Compress the video using simple settings
-                if (deviceInfo.isIOS && iosOptimized) {
-                  updateProgress(
-                    "processing",
-                    0,
-                    "Making iPhone video more awesome..."
-                  );
-                } else {
-                  updateProgress(
-                    "processing",
-                    0,
-                    "Sending video to skate gods..."
-                  );
-                }
+                updateProgress(
+                  "processing",
+                  30,
+                  deviceInfo.isIOS && iosOptimized
+                    ? "Making iPhone video more awesome..."
+                    : "Sending video to skate gods..."
+                );
 
                 const compressedBlob = await compressVideo(
                   file,
@@ -575,182 +801,23 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
               }
             } catch (err) {
               console.error("📱 FFmpeg processing failed:", err);
-
-              // For iOS devices, try iOS-specific fallback first
-              if (deviceInfo.isIOS) {
-                try {
-                  console.log("📱 Trying iOS-specific fallback...");
-                  updateProgress(
-                    "processing",
-                    0,
-                    "Using iOS fallback compression..."
-                  );
-                  const iosFallbackBlob = await compressVideoiOSFallback(file);
-                  processedFile = new File(
-                    [iosFallbackBlob],
-                    "ios-skatehivesnapvideo.mp4",
-                    {
-                      type: "video/mp4",
-                    }
-                  );
-                  console.log("✅ iOS fallback successful");
-                } catch (iosErr) {
-                  console.error("📱 iOS fallback also failed:", iosErr);
-                  // For .mov files, try one more time with just basic conversion
-                  if (isMovFile && !shouldSkipCompression) {
-                    try {
-                      console.log(
-                        "📱 Retrying .mov file with simple conversion only"
-                      );
-                      updateProgress(
-                        "processing",
-                        0,
-                        "Retrying with simple conversion..."
-                      );
-                      const mp4Blob = await convertToMp4(
-                        file,
-                        ffmpegRef,
-                        setCompressionProgress
-                      );
-                      processedFile = new File([mp4Blob], "converted.mp4", {
-                        type: "video/mp4",
-                      });
-                      console.log(
-                        "📱 Successfully converted .mov file on retry"
-                      );
-                    } catch (retryErr) {
-                      console.error(
-                        "📱 All attempts failed, uploading original file:",
-                        retryErr
-                      );
-                      updateProgress(
-                        "processing",
-                        100,
-                        "All processing failed, uploading original file..."
-                      );
-                      processedFile = file;
-                    }
-                  } else {
-                    console.log(
-                      "📱 Uploading original file due to iOS processing failure"
-                    );
-                    updateProgress(
-                      "processing",
-                      100,
-                      "iOS processing failed, uploading original file..."
-                    );
-                    processedFile = file;
-                  }
-                }
-              } else {
-                // For .mov files on non-iOS, try one more time with just basic conversion
-                if (isMovFile && !shouldSkipCompression) {
-                  try {
-                    if (isMovFile && !shouldSkipCompression) {
-                      try {
-                        console.log(
-                          "📱 Retrying .mov file with simple conversion only"
-                        );
-                        updateProgress(
-                          "processing",
-                          0,
-                          "Retrying with simple conversion..."
-                        );
-                        const mp4Blob = await convertToMp4(
-                          file,
-                          ffmpegRef,
-                          setCompressionProgress
-                        );
-                        processedFile = new File([mp4Blob], "converted.mp4", {
-                          type: "video/mp4",
-                        });
-                        console.log(
-                          "📱 Successfully converted .mov file on retry"
-                        );
-                      } catch (retryErr) {
-                        console.error(
-                          "📱 Retry also failed, uploading original file:",
-                          retryErr
-                        );
-                        updateProgress(
-                          "processing",
-                          100,
-                          "Conversion failed, uploading original file..."
-                        );
-                        processedFile = file;
-                      }
-                    } else {
-                      console.log(
-                        "📱 Uploading original file due to processing failure"
-                      );
-                      updateProgress(
-                        "processing",
-                        100,
-                        "Processing failed, uploading original file..."
-                      );
-                      processedFile = file;
-                    }
-                  } catch (retryErr) {
-                    console.error(
-                      "📱 Retry also failed, uploading original file:",
-                      retryErr
-                    );
-                    setStatus("Conversion failed, uploading original file...");
-                    processedFile = file;
-                  }
-                } else {
-                  console.log(
-                    "📱 Uploading original file due to processing failure"
-                  );
-                  setStatus("Processing failed, uploading original file...");
-                  processedFile = file;
-                }
-              }
+              processedFile = await handleNativeProcessingFallback(
+                file,
+                deviceInfo,
+                isMovFile,
+                shouldSkipCompression,
+                updateProgress
+              );
             }
           } else {
             console.warn(
               "📱 Using fallback compression - reduced quality expected"
             );
-            // Use fallback compression only as last resort
-            try {
-              if (deviceInfo.isIOS) {
-                console.log("📱 Using iOS-optimized fallback for iOS device");
-                updateProgress(
-                  "processing",
-                  0,
-                  "Using iPhone-optimized fallback compression..."
-                );
-                const iosFallbackBlob = await compressVideoiOSFallback(file);
-                processedFile = new File(
-                  [iosFallbackBlob],
-                  "ios-fallback.mp4",
-                  {
-                    type: "video/mp4",
-                  }
-                );
-              } else {
-                updateProgress(
-                  "processing",
-                  0,
-                  "Using fallback compression..."
-                );
-                const mobileBlob = await compressVideoFallback(file);
-                processedFile = new File(
-                  [mobileBlob],
-                  "mobile-compressed.webm",
-                  {
-                    type: "video/webm",
-                  }
-                );
-              }
-            } catch {
-              updateProgress(
-                "processing",
-                100,
-                "Fallback compression failed, uploading original file..."
-              );
-              processedFile = file;
-            }
+            processedFile = await handleFallbackCompression(
+              file,
+              deviceInfo,
+              updateProgress
+            );
           }
         }
 
@@ -823,103 +890,119 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
           }
         }
 
-        // Upload
-        try {
-          updateProgress("uploading", 0, "Uploading video...");
+        // Upload (only if not already uploaded via API)
+        if (!uploadUrl) {
+          try {
+            updateProgress("uploading", 0, "Uploading video...");
 
-          const limits = getFileSizeLimits();
-          const isMobile = isMobileDevice();
+            const limits = getFileSizeLimits();
+            const isMobile = isMobileDevice();
 
-          if (processedFile.size > limits.maxSize) {
-            const sizeMB =
-              Math.round((processedFile.size / 1024 / 1024) * 100) / 100;
-            const maxSizeMB = Math.round(limits.maxSize / 1024 / 1024);
+            if (processedFile.size > limits.maxSize) {
+              const sizeMB =
+                Math.round((processedFile.size / 1024 / 1024) * 100) / 100;
+              const maxSizeMB = Math.round(limits.maxSize / 1024 / 1024);
 
-            if (isMobile && !fallback && sizeMB > 45) {
-              updateProgress(
-                "processing",
-                0,
-                "File too large for mobile, compressing more aggressively..."
-              );
-              try {
-                const aggressivelyCompressed = await compressVideo(
-                  processedFile,
-                  ffmpegRef,
-                  setCompressionProgress,
-                  true,
-                  0.3
+              if (isMobile && !fallback && sizeMB > 45) {
+                updateProgress(
+                  "processing",
+                  85,
+                  "File too large for mobile, compressing more aggressively..."
                 );
+                try {
+                  const aggressivelyCompressed = await compressVideo(
+                    processedFile,
+                    ffmpegRef,
+                    setCompressionProgress,
+                    true,
+                    0.3
+                  );
 
-                if (aggressivelyCompressed.size < limits.maxSizeForMobile) {
-                  processedFile = new File(
-                    [aggressivelyCompressed],
-                    "mobile_compressed.mp4",
-                    { type: "video/mp4" }
+                  if (aggressivelyCompressed.size < limits.maxSizeForMobile) {
+                    processedFile = new File(
+                      [aggressivelyCompressed],
+                      "mobile_compressed.mp4",
+                      {
+                        type: "video/mp4",
+                      }
+                    );
+                  } else {
+                    throw new Error(
+                      "Still too large after aggressive compression"
+                    );
+                  }
+                } catch (compressionError) {
+                  updateProgress(
+                    "error",
+                    0,
+                    `File too large (${sizeMB}MB) for mobile upload. Maximum: ${maxSizeMB}MB`
                   );
-                } else {
-                  throw new Error(
-                    "Still too large after aggressive compression"
-                  );
+                  onUpload(null);
+                  if (onUploadFinish) onUploadFinish();
+                  return;
                 }
-              } catch (compressionError) {
+              } else {
                 updateProgress(
                   "error",
                   0,
-                  `File too large (${sizeMB}MB) for mobile upload. Maximum: ${maxSizeMB}MB`
+                  `File too large (${sizeMB}MB). Maximum: ${maxSizeMB}MB`
                 );
                 onUpload(null);
                 if (onUploadFinish) onUploadFinish();
                 return;
               }
+            }
+
+            console.log("📤 Starting native upload...", {
+              fileName: processedFile.name,
+              fileSize: `${(processedFile.size / 1024 / 1024).toFixed(2)}MB`,
+              processingMethod,
+            });
+
+            const result = await uploadVideo(
+              processedFile,
+              username,
+              thumbnailUrl || undefined,
+              setUploadProgress
+            );
+
+            if (!result.success) {
+              throw new Error(result.error || "Upload failed");
+            }
+
+            updateProgress(
+              "complete",
+              100,
+              `Upload complete via ${
+                processingMethod === "native" ? "native processing" : "fallback"
+              }!`
+            );
+            onUpload(result.url || null);
+            if (onUploadFinish) onUploadFinish();
+          } catch (err) {
+            errorStep = "upload";
+            if (attempt < 3) {
+              updateProgress(
+                "error",
+                0,
+                `Upload failed (attempt ${attempt}/3): ${
+                  err instanceof Error ? err.message : String(err)
+                }. Retrying...`
+              );
+              await processVideoFile(file, attempt + 1, "upload");
+              return;
             } else {
               updateProgress(
                 "error",
                 0,
-                `File too large (${sizeMB}MB). Maximum: ${maxSizeMB}MB`
+                `Upload failed after 3 attempts: ${
+                  err instanceof Error ? err.message : String(err)
+                }`
               );
               onUpload(null);
               if (onUploadFinish) onUploadFinish();
               return;
             }
-          }
-
-          const result = await uploadVideo(
-            processedFile,
-            username,
-            thumbnailUrl || undefined,
-            setUploadProgress
-          );
-
-          if (!result.success) {
-            throw new Error(result.error || "Upload failed");
-          }
-
-          updateProgress("complete", 100, "Upload complete!");
-          onUpload(result.url || null);
-          if (onUploadFinish) onUploadFinish();
-        } catch (err) {
-          errorStep = "upload";
-          if (attempt < 3) {
-            updateProgress(
-              "error",
-              0,
-              `Upload failed (attempt ${attempt}/3): ${
-                err instanceof Error ? err.message : String(err)
-              }. Retrying...`
-            );
-            await processVideoFile(file, attempt + 1, "upload");
-            return;
-          } else {
-            updateProgress(
-              "error",
-              0,
-              `Upload failed after 3 attempts: ${
-                err instanceof Error ? err.message : String(err)
-              }`
-            );
-            onUpload(null);
-            if (onUploadFinish) onUploadFinish();
-            return;
           }
         }
       } catch (error) {
@@ -1211,10 +1294,19 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
               <div style={{ marginBottom: 12 }}>
                 <strong>🖼️ Thumbnail Generation:</strong>
                 <div style={{ marginLeft: 12, marginTop: 4 }}>
-                  <div>🔧 Method: {thumbnailDebugInfo.generationMethod || "Unknown"}</div>
-                  <div>⚡ Pre-generated: {thumbnailDebugInfo.wasPreGenerated ? "Yes" : "No"}</div>
+                  <div>
+                    🔧 Method:{" "}
+                    {thumbnailDebugInfo.generationMethod || "Unknown"}
+                  </div>
+                  <div>
+                    ⚡ Pre-generated:{" "}
+                    {thumbnailDebugInfo.wasPreGenerated ? "Yes" : "No"}
+                  </div>
                   {thumbnailDebugInfo.generationTime !== null && (
-                    <div>⏱️ Generation Time: {thumbnailDebugInfo.generationTime.toFixed(2)}s</div>
+                    <div>
+                      ⏱️ Generation Time:{" "}
+                      {thumbnailDebugInfo.generationTime.toFixed(2)}s
+                    </div>
                   )}
                   {thumbnailDebugInfo.url ? (
                     <>
@@ -1235,12 +1327,16 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
                               objectFit: "cover",
                             }}
                             onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = "none";
+                              (e.target as HTMLImageElement).style.display =
+                                "none";
                               const errorDiv = document.createElement("div");
-                              errorDiv.textContent = "❌ Thumbnail preview failed";
+                              errorDiv.textContent =
+                                "❌ Thumbnail preview failed";
                               errorDiv.style.color = "red";
                               errorDiv.style.fontSize = "10px";
-                              (e.target as HTMLImageElement).parentNode?.appendChild(errorDiv);
+                              (
+                                e.target as HTMLImageElement
+                              ).parentNode?.appendChild(errorDiv);
                             }}
                           />
                         </div>
@@ -1248,7 +1344,8 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
                     </>
                   ) : (
                     <div style={{ color: "red" }}>
-                      ❌ Generation Failed: {thumbnailDebugInfo.error || "Unknown error"}
+                      ❌ Generation Failed:{" "}
+                      {thumbnailDebugInfo.error || "Unknown error"}
                     </div>
                   )}
                 </div>
@@ -1278,7 +1375,30 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
             >
               <strong>📱 Device & Processing Info:</strong>
               <div style={{ marginLeft: 12, marginTop: 4 }}>
-                <div>📱 iOS Device: {deviceInfo.isIOS ? "Yes" : "No"}</div>
+                <div>� Processing Method: {processingMethod || "None"}</div>
+                <div>
+                  🔌 Primary API:{" "}
+                  {apiAvailability.checked
+                    ? apiAvailability.primaryAPI
+                      ? "Available ✅"
+                      : "Unavailable ❌"
+                    : "Checking..."}
+                </div>
+                <div>
+                  🔄 Fallback API:{" "}
+                  {apiAvailability.checked
+                    ? apiAvailability.fallbackAPI
+                      ? "Available ✅"
+                      : "Unavailable ❌"
+                    : "Checking..."}
+                </div>
+                <div style={{ fontSize: '12px', color: '#666', marginTop: 4 }}>
+                  📡 Primary URL: https://raspberrypi.tail83ea3e.ts.net
+                </div>
+                <div style={{ fontSize: '12px', color: '#666' }}>
+                  📡 Fallback: https://video-worker-e7s1.onrender.com
+                </div>
+                <div>�📱 iOS Device: {deviceInfo.isIOS ? "Yes" : "No"}</div>
                 <div>
                   🤖 Android Device:{" "}
                   {deviceInfo.isAndroid
