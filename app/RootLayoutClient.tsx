@@ -12,7 +12,7 @@ import FooterNavButtons from "@/components/layout/FooterNavButtons";
 import SplashScreen from "@/components/layout/SplashScreen";
 import SearchOverlay from "@/components/shared/SearchOverlay";
 import AirdropModal from "@/components/airdrop/AirdropModal";
-import UpvoteSnapToast from "@/components/homepage/UpvoteSnapToast";
+import CommunityToasts from "@/components/homepage/CommunityToasts";
 import { Providers } from "./providers";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import { Analytics } from "@vercel/analytics/next";
@@ -193,8 +193,8 @@ function InnerLayout({
         />
       )}
 
-      {/* Global Upvote Snap Toast - Desktop only */}
-      <UpvoteSnapToast />
+      {/* Global Community Toast Notifications - Desktop only */}
+      <CommunityToasts />
 
       <Flex direction={{ base: "column", md: "row" }} minH="100vh">
         <Sidebar />

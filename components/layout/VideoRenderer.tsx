@@ -320,10 +320,18 @@ const VideoRenderer = ({
       setIsHorizontal(vw > vh);
       // Debug: log intrinsic video size and container size to diagnose cropping
       try {
-        const container = (videoRef.current.parentElement || videoRef.current.closest('picture')) as HTMLElement | null;
+        const container = (videoRef.current.parentElement ||
+          videoRef.current.closest("picture")) as HTMLElement | null;
         const cw = container?.clientWidth || 0;
         const ch = container?.clientHeight || 0;
-        console.debug('[VideoRenderer] video intrinsic:', vw, vh, 'container:', cw, ch);
+        console.debug(
+          "[VideoRenderer] video intrinsic:",
+          vw,
+          vh,
+          "container:",
+          cw,
+          ch
+        );
       } catch (err) {
         // ignore
       }
@@ -596,7 +604,6 @@ const VideoRenderer = ({
                     const container = img.parentElement as HTMLElement | null;
                     const cw = container?.clientWidth || 0;
                     const ch = container?.clientHeight || 0;
-                    console.debug("[VideoRenderer] thumbnail natural:", naturalW, naturalH, "container:", cw, ch);
                   } catch (err) {
                     // swallow errors
                   }
