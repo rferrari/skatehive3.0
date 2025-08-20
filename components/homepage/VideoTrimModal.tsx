@@ -44,6 +44,7 @@ const ComponentLoader = memo(() => (
     <Spinner size="lg" color="primary" />
   </Center>
 ));
+ComponentLoader.displayName = 'ComponentLoader';
 
 interface VideoTrimModalProps {
   isOpen: boolean;
@@ -140,6 +141,32 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = memo(
       }
     }, [isOpen, videoFile, resetState]);
 
+    // Optimized event handlers with useCallback
+    const handleLoadedMetadata = useCallback(() => {
+      console.log("📊 Video metadata loaded");
+      if (videoRef.current) {
+        const videoDuration = videoRef.current.duration;
+
+        setDuration(videoDuration);
+        // Only auto-trim to maxDuration if user cannot bypass the limit
+        const calculatedEndTime = canBypass
+          ? videoDuration
+          : Math.min(videoDuration, maxDuration);
+        setEndTime(calculatedEndTime);
+        setCurrentTime(0);
+
+        // Auto-show advanced options if user needs to trim
+        const needsTrimming = !canBypass && videoDuration > maxDuration;
+        if (needsTrimming) {
+          setShowAdvanced(true);
+          setActiveTab(1); // Switch to trim tab
+        } else {
+          setShowAdvanced(false);
+          setActiveTab(0); // Default to thumbnail tab
+        }
+      }
+    }, [canBypass, maxDuration]);
+
     // Optimized video URL management with proper cleanup
     useEffect(() => {
       console.log("🎬 VideoTrimModal: videoFile changed", {
@@ -206,66 +233,7 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = memo(
         console.log("❌ No video file, clearing URL");
         setVideoUrl(null);
       }
-    }, [videoFile, resetState]);
-
-    // Optimized event handlers with useCallback
-    const handleLoadedMetadata = useCallback(() => {
-      console.log("📊 Video metadata loaded");
-      if (videoRef.current) {
-        const videoDuration = videoRef.current.duration;
-
-        setDuration(videoDuration);
-        // Only auto-trim to maxDuration if user cannot bypass the limit
-        const calculatedEndTime = canBypass
-          ? videoDuration
-          : Math.min(videoDuration, maxDuration);
-        setEndTime(calculatedEndTime);
-        setCurrentTime(0);
-
-        // Auto-show advanced options if user needs to trim
-        const needsTrimming = !canBypass && videoDuration > maxDuration;
-        if (needsTrimming) {
-          setShowAdvanced(true);
-          setActiveTab(1); // Switch to trim tab
-        } else {
-          setShowAdvanced(false);
-          setActiveTab(0); // Default to thumbnail tab
-        }
-      }
-    }, [canBypass, maxDuration]);
-
-    const handleTimeUpdate = useCallback(() => {
-      if (videoRef.current && !isDragging && !isSeeking) {
-        const newTime = videoRef.current.currentTime;
-        setCurrentTime(newTime);
-
-        // Auto-pause when reaching end of selection during playback
-        if (isPlaying && newTime >= endTime) {
-          videoRef.current.pause();
-          setIsPlaying(false);
-          seekTo(startTime);
-        }
-      }
-    }, [isDragging, isSeeking, isPlaying, endTime, startTime]);
-
-    const togglePlayPause = useCallback(() => {
-      if (videoRef.current) {
-        if (isPlaying) {
-          videoRef.current.pause();
-          setIsPlaying(false);
-        } else {
-          videoRef.current
-            .play()
-            .then(() => {
-              setIsPlaying(true);
-            })
-            .catch((error) => {
-              console.error("Failed to play video:", error);
-              setIsPlaying(false);
-            });
-        }
-      }
-    }, [isPlaying]);
+    }, [videoFile, resetState, handleLoadedMetadata]);
 
     // Optimized seek function with throttling
     const seekTo = useCallback(
@@ -322,6 +290,39 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = memo(
       },
       [isSeeking, isDragging]
     );
+
+    const handleTimeUpdate = useCallback(() => {
+      if (videoRef.current && !isDragging && !isSeeking) {
+        const newTime = videoRef.current.currentTime;
+        setCurrentTime(newTime);
+
+        // Auto-pause when reaching end of selection during playback
+        if (isPlaying && newTime >= endTime) {
+          videoRef.current.pause();
+          setIsPlaying(false);
+          seekTo(startTime);
+        }
+      }
+    }, [isDragging, isSeeking, isPlaying, endTime, startTime, seekTo]);
+
+    const togglePlayPause = useCallback(() => {
+      if (videoRef.current) {
+        if (isPlaying) {
+          videoRef.current.pause();
+          setIsPlaying(false);
+        } else {
+          videoRef.current
+            .play()
+            .then(() => {
+              setIsPlaying(true);
+            })
+            .catch((error) => {
+              console.error("Failed to play video:", error);
+              setIsPlaying(false);
+            });
+        }
+      }
+    }, [isPlaying]);
 
     // Seek during handle dragging (bypasses dragging check)
     const seekDuringDrag = useCallback((time: number) => {
