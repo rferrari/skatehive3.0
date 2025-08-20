@@ -93,12 +93,33 @@ class VideoApiService {
   }
 
   /**
-   * Upload video with proxy fallback (for CORS issues)
+   * Upload video using direct API calls only
    * @param video - Video file to upload
    * @param options - Upload options including creator
    * @returns Promise with CID and gateway URL
    */
-  async uploadVideoWithProxy(
+  async uploadVideo(
+    video: File,
+    options: VideoUploadOptions
+  ): Promise<VideoUploadResult> {
+    console.log('🎬 Starting video upload process...');
+    console.log('📁 File info:', {
+      name: video.name,
+      size: `${(video.size / 1024 / 1024).toFixed(2)}MB`,
+      type: video.type
+    });
+    
+    console.log('🚀 Using direct API calls (no proxy needed)');
+    return this.uploadVideoDirectly(video, options);
+  }
+
+  /**
+   * Upload video directly to APIs (for production to avoid Vercel size limits)
+   * @param video - Video file to upload
+   * @param options - Upload options including creator
+   * @returns Promise with CID and gateway URL
+   */
+  async uploadVideoDirectly(
     video: File,
     options: VideoUploadOptions
   ): Promise<VideoUploadResult> {
@@ -110,9 +131,7 @@ class VideoApiService {
 
     for (const api of apiUrls) {
       try {
-        const proxyUrl = '/api/video-proxy?url=' + encodeURIComponent(api.url);
-        
-        console.log(`🔄 Uploading video via proxy to ${api.name} API...`);
+        console.log(`🔄 Uploading video directly to ${api.name} API...`);
         
         // Create FormData for the upload
         const formData = new FormData();
@@ -128,14 +147,16 @@ class VideoApiService {
           formData.append('thumbnailUrl', options.thumbnailUrl);
         }
 
-        const uploadResponse = await fetch(proxyUrl, {
+        const uploadResponse = await fetch(api.url, {
           method: 'POST',
           body: formData,
+          // Include credentials for CORS if needed
+          mode: 'cors',
         });
 
         if (!uploadResponse.ok) {
           const errorText = await uploadResponse.text();
-          console.warn(`${api.name} upload failed:`, uploadResponse.status, errorText);
+          console.warn(`${api.name} direct upload failed:`, uploadResponse.status, errorText);
           continue; // Try next API
         }
 
@@ -146,13 +167,13 @@ class VideoApiService {
           continue; // Try next API
         }
 
-        console.log(`✅ ${api.name} video upload successful:`, result);
+        console.log(`✅ ${api.name} direct video upload successful:`, result);
         return {
           cid: result.cid,
           gatewayUrl: result.gatewayUrl,
         };
       } catch (error) {
-        console.warn(`${api.name} upload error:`, error);
+        console.warn(`${api.name} direct upload error:`, error);
         continue; // Try next API
       }
     }
@@ -162,19 +183,61 @@ class VideoApiService {
   }
 
   /**
-   * Smart upload method - uses proxy for browser CORS compatibility
+   * Upload video with proxy fallback (for development CORS issues)
    * @param video - Video file to upload
    * @param options - Upload options including creator
    * @returns Promise with CID and gateway URL
    */
-  async uploadVideo(
+  async uploadVideoWithProxy(
     video: File,
     options: VideoUploadOptions
   ): Promise<VideoUploadResult> {
-    // For web browsers, go straight to proxy to avoid CORS issues
-    // (Direct calls work in curl/mobile but not in browsers)
-    console.log('🌐 Using proxy upload for browser CORS compatibility...');
-    return await this.uploadVideoWithProxy(video, options);
+    // Try Render API via proxy (Raspberry Pi doesn't work via proxy)
+    const proxyUrl = '/api/video-proxy?url=' + encodeURIComponent(`${this.fallbackApiUrl}/transcode`);
+
+    try {
+      console.log('🔄 Uploading video via proxy to Render API...');
+      
+      // Create FormData for the upload
+      const formData = new FormData();
+      formData.append('video', video);
+      
+      // Add creator info if provided
+      if (options.creator) {
+        formData.append('creator', options.creator);
+      }
+      
+      // Add thumbnail URL if provided
+      if (options.thumbnailUrl) {
+        formData.append('thumbnailUrl', options.thumbnailUrl);
+      }
+
+      const uploadResponse = await fetch(proxyUrl, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!uploadResponse.ok) {
+        const errorText = await uploadResponse.text();
+        console.error('Proxy video upload failed:', uploadResponse.status, errorText);
+        throw new Error(`Proxy upload failed: ${uploadResponse.status} - ${errorText}`);
+      }
+
+      const result = await uploadResponse.json();
+
+      if (!result.cid || !result.gatewayUrl) {
+        throw new Error('Invalid response from proxy upload service');
+      }
+
+      console.log('✅ Proxy video upload successful:', result);
+      return {
+        cid: result.cid,
+        gatewayUrl: result.gatewayUrl,
+      };
+    } catch (error) {
+      console.error('Failed to upload video via proxy:', error);
+      throw new Error(`Proxy upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
   /**

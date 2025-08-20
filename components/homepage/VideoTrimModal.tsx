@@ -44,7 +44,7 @@ const ComponentLoader = memo(() => (
     <Spinner size="lg" color="primary" />
   </Center>
 ));
-ComponentLoader.displayName = 'ComponentLoader';
+ComponentLoader.displayName = "ComponentLoader";
 
 interface VideoTrimModalProps {
   isOpen: boolean;

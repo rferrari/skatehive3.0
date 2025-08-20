@@ -37,9 +37,7 @@ import {
 } from "@/lib/utils/videoUploadUtils";
 import { generateThumbnail } from "@/lib/utils/videoThumbnailUtils";
 import { validateVideoDuration } from "@/lib/utils/videoValidation";
-import {
-  videoApiService,
-} from "@/services/videoApiService";
+import { videoApiService } from "@/services/videoApiService";
 
 interface VideoUploaderProps {
   onUpload: (url: string | null) => void;
