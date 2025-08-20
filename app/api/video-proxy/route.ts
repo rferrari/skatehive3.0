@@ -16,13 +16,22 @@ export async function GET(request: NextRequest) {
     
     console.log(`🔗 Proxying request to: ${apiUrl}`);
     
+    // Create abort controller for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      console.log(`⏰ Proxy request timeout for: ${apiUrl}`);
+      controller.abort();
+    }, 10000); // 10 second timeout
+
     const response = await fetch(apiUrl, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
+      signal: controller.signal,
     });
 
+    clearTimeout(timeoutId);
     const data = await response.json();
     
     return NextResponse.json(data, { 
@@ -35,7 +44,8 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Proxy error:', error);
-    return NextResponse.json({ error: 'Proxy request failed' }, { status: 500 });
+    const errorMsg = error instanceof Error ? error.message : 'Proxy request failed';
+    return NextResponse.json({ error: errorMsg }, { status: 500 });
   }
 }
 
@@ -56,11 +66,20 @@ export async function POST(request: NextRequest) {
     
     console.log(`🔗 Proxying POST request to: ${apiUrl}`);
     
+    // Create abort controller for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      console.log(`⏰ Proxy POST request timeout for: ${apiUrl}`);
+      controller.abort();
+    }, 300000); // 5 minute timeout for file uploads
+
     const response = await fetch(apiUrl, {
       method: 'POST',
       body: formData,
+      signal: controller.signal,
     });
 
+    clearTimeout(timeoutId);
     const data = await response.json();
     
     return NextResponse.json(data, { 
@@ -72,8 +91,9 @@ export async function POST(request: NextRequest) {
       }
     });
   } catch (error) {
-    console.error('POST Proxy error:', error);
-    return NextResponse.json({ error: 'POST Proxy request failed' }, { status: 500 });
+    console.error('Proxy POST error:', error);
+    const errorMsg = error instanceof Error ? error.message : 'Proxy request failed';
+    return NextResponse.json({ error: errorMsg }, { status: 500 });
   }
 }
 

@@ -39,7 +39,6 @@ import { generateThumbnail } from "@/lib/utils/videoThumbnailUtils";
 import { validateVideoDuration } from "@/lib/utils/videoValidation";
 import {
   videoApiService,
-  VideoConversionRequest,
 } from "@/services/videoApiService";
 
 interface VideoUploaderProps {
@@ -340,16 +339,16 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         try {
           const availability = await videoApiService.getApiStatus();
           setApiAvailability({
-            primaryAPI: availability.primaryApi.available,
-            fallbackAPI: availability.fallbackApi.available,
+            primaryAPI: availability.primaryAPI,
+            fallbackAPI: availability.fallbackAPI,
             checked: true,
           });
 
           console.log("🔌 VideoUploader API Availability Results:", {
-            primaryAPI: availability.primaryApi.available,
-            primaryURL: availability.primaryApi.url,
-            fallbackAPI: availability.fallbackApi.available,
-            fallbackURL: availability.fallbackApi.url,
+            primaryAPI: availability.primaryAPI,
+            primaryURL: availability.primaryURL,
+            fallbackAPI: availability.fallbackAPI,
+            fallbackURL: availability.fallbackURL,
             checkDuration: availability.checkDuration,
             timestamp: availability.timestamp,
           });
@@ -357,15 +356,14 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
           // If you want to test direct API connection, uncomment these:
           // const directTest = await videoApiService.testDirectApi();
           // console.log("🧪 Direct API test:", directTest);
-          
+
           // const corsTest = await videoApiService.testDirectApiWithCors();
           // console.log("🧪 CORS API test:", corsTest);
-          
         } catch (error) {
           console.error("❌ VideoUploader: Failed to check API availability:", {
             error,
-            message: error instanceof Error ? error.message : 'Unknown error',
-            name: error instanceof Error ? error.name : 'Unknown',
+            message: error instanceof Error ? error.message : "Unknown error",
+            name: error instanceof Error ? error.name : "Unknown",
           });
           setApiAvailability({
             primaryAPI: false,
@@ -586,43 +584,31 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
             updateProgress("processing", 10, "Trying video conversion API...");
             setProcessingMethod("api");
 
-            const apiRequest: VideoConversionRequest = {
-              video: file,
+            // Use the simplified upload method
+            const uploadOptions = {
               creator: username || "anonymous",
               thumbnailUrl: thumbnailUrl || undefined,
             };
 
-            const apiResult = await videoApiService.processVideo(
-              apiRequest,
-              (progress: number) => {
-                // Update progress for API upload (10-80% range)
-                updateProgress(
-                  "processing",
-                  10 + progress * 0.7,
-                  `API processing: ${progress}%`
-                );
-              }
+            const apiResult = await videoApiService.uploadVideo(
+              file,
+              uploadOptions
             );
 
-            if (apiResult && apiResult.success && apiResult.ipfsUrl) {
+            if (apiResult && apiResult.cid && apiResult.gatewayUrl) {
               console.log("✅ API processing successful!", {
                 method: "api",
-                url: apiResult.ipfsUrl,
-                thumbnailUrl: apiResult.thumbnailUrl,
-                processingTime: apiResult.processingTime,
+                url: apiResult.gatewayUrl,
+                cid: apiResult.cid,
               });
 
               updateProgress("complete", 100, "Upload complete via API!");
-              onUpload(apiResult.ipfsUrl);
+              onUpload(apiResult.gatewayUrl);
               if (onUploadFinish) onUploadFinish();
               return;
             } else {
               console.log(
-                "⚠️ API processing failed, falling back to native processing",
-                {
-                  error: apiResult?.error || "Unknown error",
-                  available: false,
-                }
+                "⚠️ API processing failed, falling back to native processing"
               );
             }
           } catch (apiError) {
@@ -1392,10 +1378,10 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
                       : "Unavailable ❌"
                     : "Checking..."}
                 </div>
-                <div style={{ fontSize: '12px', color: '#666', marginTop: 4 }}>
+                <div style={{ fontSize: "12px", color: "#666", marginTop: 4 }}>
                   📡 Primary URL: https://raspberrypi.tail83ea3e.ts.net
                 </div>
-                <div style={{ fontSize: '12px', color: '#666' }}>
+                <div style={{ fontSize: "12px", color: "#666" }}>
                   📡 Fallback: https://video-worker-e7s1.onrender.com
                 </div>
                 <div>�📱 iOS Device: {deviceInfo.isIOS ? "Yes" : "No"}</div>

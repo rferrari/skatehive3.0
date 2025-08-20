@@ -1,4 +1,13 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo, memo, lazy, Suspense } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useMemo,
+  memo,
+  lazy,
+  Suspense,
+} from "react";
 import {
   Modal,
   ModalOverlay,
@@ -45,589 +54,633 @@ interface VideoTrimModalProps {
   canBypass?: boolean;
 }
 
-const VideoTrimModal: React.FC<VideoTrimModalProps> = memo(({
-  isOpen,
-  onClose,
-  videoFile,
-  onTrimComplete,
-  maxDuration = 15,
-  canBypass = false,
-}) => {
-  // Video refs and state
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
-  const [duration, setDuration] = useState(0);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
+const VideoTrimModal: React.FC<VideoTrimModalProps> = memo(
+  ({
+    isOpen,
+    onClose,
+    videoFile,
+    onTrimComplete,
+    maxDuration = 15,
+    canBypass = false,
+  }) => {
+    // Video refs and state
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const [videoUrl, setVideoUrl] = useState<string | null>(null);
+    const [duration, setDuration] = useState(0);
+    const [currentTime, setCurrentTime] = useState(0);
+    const [isPlaying, setIsPlaying] = useState(false);
 
-  // Trimming state
-  const [startTime, setStartTime] = useState(0);
-  const [endTime, setEndTime] = useState(0);
-  const [isProcessing, setIsProcessing] = useState(false);
+    // Trimming state
+    const [startTime, setStartTime] = useState(0);
+    const [endTime, setEndTime] = useState(0);
+    const [isProcessing, setIsProcessing] = useState(false);
 
-  // UI state
-  const [isDragging, setIsDragging] = useState(false);
-  const [isSeeking, setIsSeeking] = useState(false);
-  const [isPreviewingSlider, setIsPreviewingSlider] = useState(false);
+    // UI state
+    const [isDragging, setIsDragging] = useState(false);
+    const [isSeeking, setIsSeeking] = useState(false);
+    const [isPreviewingSlider, setIsPreviewingSlider] = useState(false);
 
-  // Refs for throttling seeks
-  const lastSeekTime = useRef(0);
-  const seekTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    // Refs for throttling seeks
+    const lastSeekTime = useRef(0);
+    const seekTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Thumbnail selection states
-  const [thumbnailBlob, setThumbnailBlob] = useState<Blob | null>(null);
-  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
-  const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false);
+    // Thumbnail selection states
+    const [thumbnailBlob, setThumbnailBlob] = useState<Blob | null>(null);
+    const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
+    const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false);
 
-  // Advanced options toggle
-  const [showAdvanced, setShowAdvanced] = useState(false);
-  const [activeTab, setActiveTab] = useState(0);
+    // Advanced options toggle
+    const [showAdvanced, setShowAdvanced] = useState(false);
+    const [activeTab, setActiveTab] = useState(0);
 
-  // Memoized computed values
-  const trimmingRequired = useMemo(() => 
-    !canBypass && duration > maxDuration, 
-    [canBypass, duration, maxDuration]
-  );
+    // Memoized computed values
+    const trimmingRequired = useMemo(
+      () => !canBypass && duration > maxDuration,
+      [canBypass, duration, maxDuration]
+    );
 
-  const showAdvancedToggle = useMemo(() => 
-    !trimmingRequired && duration > 0, 
-    [trimmingRequired, duration]
-  );
+    const showAdvancedToggle = useMemo(
+      () => !trimmingRequired && duration > 0,
+      [trimmingRequired, duration]
+    );
 
-  const isValidSelection = useMemo(() => {
-    if (!duration) return false;
-    const selectionDuration = endTime - startTime;
-    return selectionDuration > 0 && (canBypass || selectionDuration <= maxDuration);
-  }, [startTime, endTime, duration, canBypass, maxDuration]);
+    const isValidSelection = useMemo(() => {
+      if (!duration) return false;
+      const selectionDuration = endTime - startTime;
+      return (
+        selectionDuration > 0 && (canBypass || selectionDuration <= maxDuration)
+      );
+    }, [startTime, endTime, duration, canBypass, maxDuration]);
 
-  const hasActiveTrim = useMemo(() => 
-    Math.abs(startTime) > 0.1 || Math.abs(endTime - duration) > 0.1, 
-    [startTime, endTime, duration]
-  );
+    const hasActiveTrim = useMemo(
+      () => Math.abs(startTime) > 0.1 || Math.abs(endTime - duration) > 0.1,
+      [startTime, endTime, duration]
+    );
 
-  // Optimized reset function
-  const resetState = useCallback(() => {
-    console.log("🔄 Resetting modal state");
-    setDuration(0);
-    setStartTime(0);
-    setEndTime(0);
-    setCurrentTime(0);
-    setIsPlaying(false);
-    setThumbnailBlob(null);
-    setThumbnailUrl(null);
-    setIsGeneratingThumbnail(false);
-    setActiveTab(0);
-    setShowAdvanced(false);
-  }, []);
+    // Optimized reset function
+    const resetState = useCallback(() => {
+      console.log("🔄 Resetting modal state");
+      setDuration(0);
+      setStartTime(0);
+      setEndTime(0);
+      setCurrentTime(0);
+      setIsPlaying(false);
+      setThumbnailBlob(null);
+      setThumbnailUrl(null);
+      setIsGeneratingThumbnail(false);
+      setActiveTab(0);
+      setShowAdvanced(false);
+    }, []);
 
-  // Reset state when modal opens with a new video
-  useEffect(() => {
-    if (isOpen && videoFile) {
-      console.log("🎭 Modal opened with video file - resetting state");
-      resetState();
-    }
-  }, [isOpen, videoFile, resetState]);
+    // Reset state when modal opens with a new video
+    useEffect(() => {
+      if (isOpen && videoFile) {
+        console.log("🎭 Modal opened with video file - resetting state");
+        resetState();
+      }
+    }, [isOpen, videoFile, resetState]);
 
-  // Optimized video URL management with proper cleanup
-  useEffect(() => {
-    console.log("🎬 VideoTrimModal: videoFile changed", {
-      hasFile: !!videoFile,
-      fileName: videoFile?.name,
-      fileSize: videoFile?.size,
-      fileType: videoFile?.type,
-    });
+    // Optimized video URL management with proper cleanup
+    useEffect(() => {
+      console.log("🎬 VideoTrimModal: videoFile changed", {
+        hasFile: !!videoFile,
+        fileName: videoFile?.name,
+        fileSize: videoFile?.size,
+        fileType: videoFile?.type,
+      });
 
-    if (videoFile) {
-      // Reset state when new video file is loaded
-      console.log("🔄 Resetting video state for new file");
-      resetState();
+      if (videoFile) {
+        // Reset state when new video file is loaded
+        console.log("🔄 Resetting video state for new file");
+        resetState();
 
-      // Use requestIdleCallback for better performance
-      const createVideoUrl = () => {
-        const url = URL.createObjectURL(videoFile);
-        console.log("🔗 Created blob URL:", url);
-        setVideoUrl(url);
+        // Use requestIdleCallback for better performance
+        const createVideoUrl = () => {
+          const url = URL.createObjectURL(videoFile);
+          console.log("🔗 Created blob URL:", url);
+          setVideoUrl(url);
 
-        // Force metadata check after a short delay
-        const checkMetadata = () => {
-          if (videoRef.current && videoRef.current.readyState >= 1) {
-            if (videoRef.current.duration && !isNaN(videoRef.current.duration)) {
-              handleLoadedMetadata();
+          // Force metadata check after a short delay
+          const checkMetadata = () => {
+            if (videoRef.current && videoRef.current.readyState >= 1) {
+              if (
+                videoRef.current.duration &&
+                !isNaN(videoRef.current.duration)
+              ) {
+                handleLoadedMetadata();
+              }
             }
-          }
+          };
+
+          // Use requestAnimationFrame for smoother performance
+          requestAnimationFrame(() => {
+            setTimeout(checkMetadata, 300); // Reduced delay
+          });
+
+          return url;
         };
 
-        // Use requestAnimationFrame for smoother performance
-        requestAnimationFrame(() => {
-          setTimeout(checkMetadata, 300); // Reduced delay
+        let url: string;
+        if ("requestIdleCallback" in window) {
+          requestIdleCallback(
+            () => {
+              url = createVideoUrl();
+            },
+            { timeout: 100 }
+          );
+        } else {
+          url = createVideoUrl();
+        }
+
+        // Cleanup function with debounced URL revocation
+        return () => {
+          console.log("🧹 Scheduling blob URL cleanup:", url);
+          // Use a longer delay to prevent issues with pending operations
+          setTimeout(() => {
+            if (url) {
+              URL.revokeObjectURL(url);
+            }
+          }, 2000); // Increased cleanup delay
+        };
+      } else {
+        console.log("❌ No video file, clearing URL");
+        setVideoUrl(null);
+      }
+    }, [videoFile, resetState]);
+
+    // Optimized event handlers with useCallback
+    const handleLoadedMetadata = useCallback(() => {
+      console.log("📊 Video metadata loaded");
+      if (videoRef.current) {
+        const videoDuration = videoRef.current.duration;
+
+        setDuration(videoDuration);
+        // Only auto-trim to maxDuration if user cannot bypass the limit
+        const calculatedEndTime = canBypass
+          ? videoDuration
+          : Math.min(videoDuration, maxDuration);
+        setEndTime(calculatedEndTime);
+        setCurrentTime(0);
+
+        // Auto-show advanced options if user needs to trim
+        const needsTrimming = !canBypass && videoDuration > maxDuration;
+        if (needsTrimming) {
+          setShowAdvanced(true);
+          setActiveTab(1); // Switch to trim tab
+        } else {
+          setShowAdvanced(false);
+          setActiveTab(0); // Default to thumbnail tab
+        }
+      }
+    }, [canBypass, maxDuration]);
+
+    const handleTimeUpdate = useCallback(() => {
+      if (videoRef.current && !isDragging && !isSeeking) {
+        const newTime = videoRef.current.currentTime;
+        setCurrentTime(newTime);
+
+        // Auto-pause when reaching end of selection during playback
+        if (isPlaying && newTime >= endTime) {
+          videoRef.current.pause();
+          setIsPlaying(false);
+          seekTo(startTime);
+        }
+      }
+    }, [isDragging, isSeeking, isPlaying, endTime, startTime]);
+
+    const togglePlayPause = useCallback(() => {
+      if (videoRef.current) {
+        if (isPlaying) {
+          videoRef.current.pause();
+          setIsPlaying(false);
+        } else {
+          videoRef.current
+            .play()
+            .then(() => {
+              setIsPlaying(true);
+            })
+            .catch((error) => {
+              console.error("Failed to play video:", error);
+              setIsPlaying(false);
+            });
+        }
+      }
+    }, [isPlaying]);
+
+    // Optimized seek function with throttling
+    const seekTo = useCallback(
+      (time: number) => {
+        if (isSeeking || isDragging || !videoRef.current) {
+          return;
+        }
+
+        const video = videoRef.current;
+        if (video.readyState < 2) {
+          return;
+        }
+
+        const currentTime = video.currentTime;
+        if (Math.abs(currentTime - time) < 0.1) {
+          return;
+        }
+
+        const now = Date.now();
+        if (now - lastSeekTime.current < 100) {
+          if (seekTimeoutRef.current) {
+            clearTimeout(seekTimeoutRef.current);
+          }
+          seekTimeoutRef.current = setTimeout(() => {
+            if (videoRef.current && videoRef.current.readyState >= 2) {
+              videoRef.current.currentTime = time;
+              setCurrentTime(time);
+              lastSeekTime.current = Date.now();
+            }
+            seekTimeoutRef.current = null;
+          }, 50);
+          return;
+        }
+
+        setIsSeeking(true);
+        video.currentTime = time;
+        setCurrentTime(time);
+        lastSeekTime.current = now;
+
+        const handleSeeked = () => {
+          setIsSeeking(false);
+          video.removeEventListener("seeked", handleSeeked);
+        };
+
+        video.addEventListener("seeked", handleSeeked);
+
+        // Fallback timeout
+        setTimeout(() => {
+          if (video.readyState >= 2) {
+            setIsSeeking(false);
+            video.removeEventListener("seeked", handleSeeked);
+          }
+        }, 1000);
+      },
+      [isSeeking, isDragging]
+    );
+
+    // Seek during handle dragging (bypasses dragging check)
+    const seekDuringDrag = useCallback((time: number) => {
+      if (!videoRef.current) return;
+
+      const video = videoRef.current;
+      if (video.readyState < 2) return;
+
+      video.currentTime = time;
+      setCurrentTime(time);
+    }, []);
+
+    // Optimized thumbnail generation with Web Workers (if available)
+    const generateThumbnail = useCallback(async () => {
+      if (!videoRef.current) return null;
+
+      setIsGeneratingThumbnail(true);
+
+      try {
+        const video = videoRef.current;
+
+        // Use OffscreenCanvas if available for better performance
+        const useOffscreenCanvas = "OffscreenCanvas" in window;
+
+        let canvas: HTMLCanvasElement | OffscreenCanvas;
+        let ctx:
+          | CanvasRenderingContext2D
+          | OffscreenCanvasRenderingContext2D
+          | null;
+
+        if (useOffscreenCanvas) {
+          canvas = new OffscreenCanvas(640, 640);
+          ctx = canvas.getContext("2d");
+        } else {
+          canvas = document.createElement("canvas");
+          ctx = (canvas as HTMLCanvasElement).getContext("2d");
+        }
+
+        if (!ctx) {
+          setIsGeneratingThumbnail(false);
+          return null;
+        }
+
+        // Use optimized dimensions with aspect ratio preservation
+        const aspectRatio = video.videoWidth / video.videoHeight;
+        const maxWidth = 640;
+        const maxHeight = 640;
+
+        if (aspectRatio > 1) {
+          // Landscape video
+          canvas.width = maxWidth;
+          canvas.height = Math.round(maxWidth / aspectRatio);
+        } else {
+          // Portrait or square video
+          canvas.height = maxHeight;
+          canvas.width = Math.round(maxHeight * aspectRatio);
+        }
+
+        // Fill with black background and draw video
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // Convert to blob with optimized settings
+        let blob: Blob;
+        if (useOffscreenCanvas) {
+          blob = await (canvas as OffscreenCanvas).convertToBlob({
+            type: "image/webp",
+            quality: 0.75,
+          });
+        } else {
+          blob = await new Promise<Blob>((resolve) => {
+            (canvas as HTMLCanvasElement).toBlob(
+              (blob) => resolve(blob!),
+              "image/webp",
+              0.75
+            );
+          });
+        }
+
+        setThumbnailBlob(blob);
+
+        const thumbnailFile = new File([blob], "thumbnail.webp", {
+          type: "image/webp",
         });
 
-        return url;
-      };
+        // Upload in parallel for better performance
+        const [signature, hiveUrl] = await Promise.all([
+          getFileSignature(thumbnailFile),
+          uploadImage(thumbnailFile, await getFileSignature(thumbnailFile)),
+        ]);
 
-      let url: string;
-      if ('requestIdleCallback' in window) {
-        requestIdleCallback(() => {
-          url = createVideoUrl();
-        }, { timeout: 100 });
-      } else {
-        url = createVideoUrl();
-      }
-
-      // Cleanup function with debounced URL revocation
-      return () => {
-        console.log("🧹 Scheduling blob URL cleanup:", url);
-        // Use a longer delay to prevent issues with pending operations
-        setTimeout(() => {
-          if (url) {
-            URL.revokeObjectURL(url);
-          }
-        }, 2000); // Increased cleanup delay
-      };
-    } else {
-      console.log("❌ No video file, clearing URL");
-      setVideoUrl(null);
-    }
-  }, [videoFile, resetState]);
-
-  // Optimized event handlers with useCallback
-  const handleLoadedMetadata = useCallback(() => {
-    console.log("📊 Video metadata loaded");
-    if (videoRef.current) {
-      const videoDuration = videoRef.current.duration;
-
-      setDuration(videoDuration);
-      // Only auto-trim to maxDuration if user cannot bypass the limit
-      const calculatedEndTime = canBypass ? videoDuration : Math.min(videoDuration, maxDuration);
-      setEndTime(calculatedEndTime);
-      setCurrentTime(0);
-
-      // Auto-show advanced options if user needs to trim
-      const needsTrimming = !canBypass && videoDuration > maxDuration;
-      if (needsTrimming) {
-        setShowAdvanced(true);
-        setActiveTab(1); // Switch to trim tab
-      } else {
-        setShowAdvanced(false);
-        setActiveTab(0); // Default to thumbnail tab
-      }
-    }
-  }, [canBypass, maxDuration]);
-
-  const handleTimeUpdate = useCallback(() => {
-    if (videoRef.current && !isDragging && !isSeeking) {
-      const newTime = videoRef.current.currentTime;
-      setCurrentTime(newTime);
-
-      // Auto-pause when reaching end of selection during playback
-      if (isPlaying && newTime >= endTime) {
-        videoRef.current.pause();
-        setIsPlaying(false);
-        seekTo(startTime);
-      }
-    }
-  }, [isDragging, isSeeking, isPlaying, endTime, startTime]);
-
-  const togglePlayPause = useCallback(() => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-        setIsPlaying(false);
-      } else {
-        videoRef.current
-          .play()
-          .then(() => {
-            setIsPlaying(true);
-          })
-          .catch((error) => {
-            console.error("Failed to play video:", error);
-            setIsPlaying(false);
-          });
-      }
-    }
-  }, [isPlaying]);
-
-  // Optimized seek function with throttling
-  const seekTo = useCallback((time: number) => {
-    if (isSeeking || isDragging || !videoRef.current) {
-      return;
-    }
-
-    const video = videoRef.current;
-    if (video.readyState < 2) {
-      return;
-    }
-
-    const currentTime = video.currentTime;
-    if (Math.abs(currentTime - time) < 0.1) {
-      return;
-    }
-
-    const now = Date.now();
-    if (now - lastSeekTime.current < 100) {
-      if (seekTimeoutRef.current) {
-        clearTimeout(seekTimeoutRef.current);
-      }
-      seekTimeoutRef.current = setTimeout(() => {
-        if (videoRef.current && videoRef.current.readyState >= 2) {
-          videoRef.current.currentTime = time;
-          setCurrentTime(time);
-          lastSeekTime.current = Date.now();
-        }
-        seekTimeoutRef.current = null;
-      }, 50);
-      return;
-    }
-
-    setIsSeeking(true);
-    video.currentTime = time;
-    setCurrentTime(time);
-    lastSeekTime.current = now;
-
-    const handleSeeked = () => {
-      setIsSeeking(false);
-      video.removeEventListener("seeked", handleSeeked);
-    };
-
-    video.addEventListener("seeked", handleSeeked);
-
-    // Fallback timeout
-    setTimeout(() => {
-      if (video.readyState >= 2) {
-        setIsSeeking(false);
-        video.removeEventListener("seeked", handleSeeked);
-      }
-    }, 1000);
-  }, [isSeeking, isDragging]);
-
-  // Seek during handle dragging (bypasses dragging check)
-  const seekDuringDrag = useCallback((time: number) => {
-    if (!videoRef.current) return;
-
-    const video = videoRef.current;
-    if (video.readyState < 2) return;
-
-    video.currentTime = time;
-    setCurrentTime(time);
-  }, []);
-
-  // Optimized thumbnail generation with Web Workers (if available)
-  const generateThumbnail = useCallback(async () => {
-    if (!videoRef.current) return null;
-
-    setIsGeneratingThumbnail(true);
-
-    try {
-      const video = videoRef.current;
-      
-      // Use OffscreenCanvas if available for better performance
-      const useOffscreenCanvas = 'OffscreenCanvas' in window;
-      
-      let canvas: HTMLCanvasElement | OffscreenCanvas;
-      let ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null;
-
-      if (useOffscreenCanvas) {
-        canvas = new OffscreenCanvas(640, 640);
-        ctx = canvas.getContext('2d');
-      } else {
-        canvas = document.createElement("canvas");
-        ctx = (canvas as HTMLCanvasElement).getContext("2d");
-      }
-
-      if (!ctx) {
+        setThumbnailUrl(hiveUrl);
+        setIsGeneratingThumbnail(false);
+        return hiveUrl;
+      } catch (error) {
+        console.error("Error generating/uploading thumbnail:", error);
         setIsGeneratingThumbnail(false);
         return null;
       }
+    }, []);
 
-      // Use optimized dimensions with aspect ratio preservation
-      const aspectRatio = video.videoWidth / video.videoHeight;
-      const maxWidth = 640;
-      const maxHeight = 640;
-      
-      if (aspectRatio > 1) {
-        // Landscape video
-        canvas.width = maxWidth;
-        canvas.height = Math.round(maxWidth / aspectRatio);
-      } else {
-        // Portrait or square video
-        canvas.height = maxHeight;
-        canvas.width = Math.round(maxHeight * aspectRatio);
-      }
+    // Optimized event handlers
+    const handleCaptureFrame = useCallback(async () => {
+      await generateThumbnail();
+    }, [generateThumbnail]);
 
-      // Fill with black background and draw video
-      ctx.fillStyle = "#000";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const handleSliderChangeEnd = useCallback(() => {
+      setIsPreviewingSlider(false);
+      setIsDragging(false);
+    }, []);
 
-      // Convert to blob with optimized settings
-      let blob: Blob;
-      if (useOffscreenCanvas) {
-        blob = await (canvas as OffscreenCanvas).convertToBlob({
-          type: 'image/webp',
-          quality: 0.75
-        });
-      } else {
-        blob = await new Promise<Blob>((resolve) => {
-          (canvas as HTMLCanvasElement).toBlob(
-            (blob) => resolve(blob!),
-            "image/webp",
-            0.75
-          );
-        });
-      }
+    const handleDragStart = useCallback(() => {
+      setIsPreviewingSlider(true);
+      setIsDragging(true);
+    }, []);
 
-      setThumbnailBlob(blob);
+    // Optimized video trimming with better memory management
+    const createTrimmedVideo = useCallback(
+      async (file: File, start: number, end: number): Promise<Blob> => {
+        console.log(`🎬 Creating trimmed video: ${start}s to ${end}s`);
 
-      const thumbnailFile = new File([blob], "thumbnail.webp", {
-        type: "image/webp",
-      });
-      
-      // Upload in parallel for better performance
-      const [signature, hiveUrl] = await Promise.all([
-        getFileSignature(thumbnailFile),
-        uploadImage(thumbnailFile, await getFileSignature(thumbnailFile))
-      ]);
+        return new Promise((resolve, reject) => {
+          const video = document.createElement("video");
+          const videoUrl = URL.createObjectURL(file);
+          video.src = videoUrl;
+          video.muted = true;
+          video.playsInline = true;
 
-      setThumbnailUrl(hiveUrl);
-      setIsGeneratingThumbnail(false);
-      return hiveUrl;
-    } catch (error) {
-      console.error("Error generating/uploading thumbnail:", error);
-      setIsGeneratingThumbnail(false);
-      return null;
-    }
-  }, []);
+          video.onloadedmetadata = () => {
+            const duration = end - start;
+            console.log(
+              `📊 Video duration: ${video.duration}s, trim duration: ${duration}s`
+            );
 
-  // Optimized event handlers
-  const handleCaptureFrame = useCallback(async () => {
-    await generateThumbnail();
-  }, [generateThumbnail]);
+            if (duration <= 0 || start >= video.duration) {
+              URL.revokeObjectURL(videoUrl);
+              reject(new Error("Invalid trim range"));
+              return;
+            }
 
-  const handleSliderChangeEnd = useCallback(() => {
-    setIsPreviewingSlider(false);
-    setIsDragging(false);
-  }, []);
+            // Create canvas for recording with optimized settings
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d", {
+              alpha: false,
+              desynchronized: true,
+            });
 
-  const handleDragStart = useCallback(() => {
-    setIsPreviewingSlider(true);
-    setIsDragging(true);
-  }, []);
+            if (!ctx) {
+              URL.revokeObjectURL(videoUrl);
+              reject(new Error("Failed to get canvas context"));
+              return;
+            }
 
-  // Optimized video trimming with better memory management
-  const createTrimmedVideo = useCallback(async (
-    file: File,
-    start: number,
-    end: number
-  ): Promise<Blob> => {
-    console.log(`🎬 Creating trimmed video: ${start}s to ${end}s`);
+            canvas.width = Math.min(video.videoWidth, 1920); // Limit resolution for performance
+            canvas.height = Math.min(video.videoHeight, 1080);
 
-    return new Promise((resolve, reject) => {
-      const video = document.createElement("video");
-      const videoUrl = URL.createObjectURL(file);
-      video.src = videoUrl;
-      video.muted = true;
-      video.playsInline = true;
+            // Create MediaRecorder with optimized settings
+            const stream = canvas.captureStream(30);
+            const mediaRecorder = new MediaRecorder(stream, {
+              mimeType: "video/webm;codecs=vp9",
+              videoBitsPerSecond: 2500000, // 2.5 Mbps for good quality/size balance
+            });
 
-      video.onloadedmetadata = () => {
-        const duration = end - start;
-        console.log(`📊 Video duration: ${video.duration}s, trim duration: ${duration}s`);
+            const chunks: Blob[] = [];
 
-        if (duration <= 0 || start >= video.duration) {
-          URL.revokeObjectURL(videoUrl);
-          reject(new Error("Invalid trim range"));
-          return;
-        }
+            mediaRecorder.ondataavailable = (event) => {
+              if (event.data.size > 0) {
+                chunks.push(event.data);
+              }
+            };
 
-        // Create canvas for recording with optimized settings
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d", { 
-          alpha: false,
-          desynchronized: true 
-        });
-        
-        if (!ctx) {
-          URL.revokeObjectURL(videoUrl);
-          reject(new Error("Failed to get canvas context"));
-          return;
-        }
+            mediaRecorder.onstop = () => {
+              const blob = new Blob(chunks, { type: "video/webm" });
+              URL.revokeObjectURL(videoUrl);
+              console.log(
+                `✅ Trimmed video created: ${(blob.size / 1024 / 1024).toFixed(
+                  2
+                )} MB`
+              );
+              resolve(blob);
+            };
 
-        canvas.width = Math.min(video.videoWidth, 1920); // Limit resolution for performance
-        canvas.height = Math.min(video.videoHeight, 1080);
+            mediaRecorder.onerror = (event) => {
+              console.error("MediaRecorder error:", event);
+              URL.revokeObjectURL(videoUrl);
+              reject(new Error("Recording failed"));
+            };
 
-        // Create MediaRecorder with optimized settings
-        const stream = canvas.captureStream(30);
-        const mediaRecorder = new MediaRecorder(stream, {
-          mimeType: "video/webm;codecs=vp9",
-          videoBitsPerSecond: 2500000, // 2.5 Mbps for good quality/size balance
-        });
+            // Position video at start time
+            video.currentTime = start;
 
-        const chunks: Blob[] = [];
+            video.onseeked = () => {
+              console.log(
+                `🎯 Video positioned at ${video.currentTime}s, starting recording`
+              );
 
-        mediaRecorder.ondataavailable = (event) => {
-          if (event.data.size > 0) {
-            chunks.push(event.data);
-          }
-        };
+              // Start recording
+              mediaRecorder.start(100); // Record in 100ms chunks
 
-        mediaRecorder.onstop = () => {
-          const blob = new Blob(chunks, { type: "video/webm" });
-          URL.revokeObjectURL(videoUrl);
-          console.log(`✅ Trimmed video created: ${(blob.size / 1024 / 1024).toFixed(2)} MB`);
-          resolve(blob);
-        };
+              // Play video at normal speed
+              video.play().catch((error) => {
+                console.error("Video play error:", error);
+                URL.revokeObjectURL(videoUrl);
+                reject(new Error("Video playback failed"));
+              });
 
-        mediaRecorder.onerror = (event) => {
-          console.error("MediaRecorder error:", event);
-          URL.revokeObjectURL(videoUrl);
-          reject(new Error("Recording failed"));
-        };
+              // Set up timer to stop at exact duration
+              setTimeout(() => {
+                console.log(`⏹️ Stopping recording after ${duration}s`);
+                video.pause();
+                mediaRecorder.stop();
+              }, duration * 1000);
+            };
 
-        // Position video at start time
-        video.currentTime = start;
+            // Optimized frame drawing with requestAnimationFrame
+            let animationId: number;
+            const drawFrame = () => {
+              if (!video.paused && !video.ended && video.currentTime < end) {
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                animationId = requestAnimationFrame(drawFrame);
+              }
+            };
 
-        video.onseeked = () => {
-          console.log(`🎯 Video positioned at ${video.currentTime}s, starting recording`);
+            video.onplay = () => {
+              drawFrame();
+            };
 
-          // Start recording
-          mediaRecorder.start(100); // Record in 100ms chunks
+            video.onpause = () => {
+              if (animationId) {
+                cancelAnimationFrame(animationId);
+              }
+            };
 
-          // Play video at normal speed
-          video.play().catch((error) => {
-            console.error("Video play error:", error);
+            video.onerror = () => {
+              URL.revokeObjectURL(videoUrl);
+              reject(new Error("Video playback error"));
+            };
+          };
+
+          video.onerror = () => {
             URL.revokeObjectURL(videoUrl);
-            reject(new Error("Video playback failed"));
-          });
+            reject(new Error("Failed to load video"));
+          };
+        });
+      },
+      []
+    );
 
-          // Set up timer to stop at exact duration
-          setTimeout(() => {
-            console.log(`⏹️ Stopping recording after ${duration}s`);
-            video.pause();
-            mediaRecorder.stop();
-          }, duration * 1000);
-        };
+    // Optimized trim handler
+    const handleTrim = useCallback(async () => {
+      if (!videoFile || !videoRef.current) return;
 
-        // Optimized frame drawing with requestAnimationFrame
-        let animationId: number;
-        const drawFrame = () => {
-          if (!video.paused && !video.ended && video.currentTime < end) {
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            animationId = requestAnimationFrame(drawFrame);
-          }
-        };
+      setIsProcessing(true);
 
-        video.onplay = () => {
-          drawFrame();
-        };
-
-        video.onpause = () => {
-          if (animationId) {
-            cancelAnimationFrame(animationId);
-          }
-        };
-
-        video.onerror = () => {
-          URL.revokeObjectURL(videoUrl);
-          reject(new Error("Video playback error"));
-        };
-      };
-
-      video.onerror = () => {
-        URL.revokeObjectURL(videoUrl);
-        reject(new Error("Failed to load video"));
-      };
-    });
-  }, []);
-
-  // Optimized trim handler
-  const handleTrim = useCallback(async () => {
-    if (!videoFile || !videoRef.current) return;
-
-    setIsProcessing(true);
-
-    try {
-      console.log("🎬 Starting video trimming process...");
-      
-      const trimmedBlob = await createTrimmedVideo(
-        videoFile,
-        startTime,
-        endTime
-      );
-
-      let finalThumbnailUrl = thumbnailUrl;
-      if (!finalThumbnailUrl) {
-        console.log("📸 Generating thumbnail for trimmed video...");
-        const middleTime = startTime + (endTime - startTime) / 2;
-        videoRef.current.currentTime = middleTime;
-        await new Promise((resolve) => setTimeout(resolve, 100));
-        finalThumbnailUrl = await generateThumbnail();
-      }
-
-      const trimmedFile = new File([trimmedBlob], `trimmed_${videoFile.name}`, {
-        type: "video/webm",
-      });
-
-      // Mark this file as already processed to skip compression
-      (trimmedFile as any).thumbnailUrl = finalThumbnailUrl;
-      (trimmedFile as any).fromTrimModal = true;
-
-      console.log("✅ Video trimming completed successfully");
-      onTrimComplete(trimmedFile);
-      onClose();
-    } catch (error) {
-      console.error("❌ Error trimming video:", error);
-      alert("Failed to trim video. Please try again.");
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [videoFile, startTime, endTime, thumbnailUrl, createTrimmedVideo, generateThumbnail, onTrimComplete, onClose]);
-
-  // Optimized bypass handler
-  const handleBypass = useCallback(async () => {
-    if (videoFile) {
       try {
+        console.log("🎬 Starting video trimming process...");
+
+        const trimmedBlob = await createTrimmedVideo(
+          videoFile,
+          startTime,
+          endTime
+        );
+
         let finalThumbnailUrl = thumbnailUrl;
         if (!finalThumbnailUrl) {
-          if (videoRef.current) {
-            videoRef.current.currentTime = duration / 2;
-            await new Promise((resolve) => setTimeout(resolve, 100));
-            finalThumbnailUrl = await generateThumbnail();
-          }
+          console.log("📸 Generating thumbnail for trimmed video...");
+          const middleTime = startTime + (endTime - startTime) / 2;
+          videoRef.current.currentTime = middleTime;
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          finalThumbnailUrl = await generateThumbnail();
         }
 
-        (videoFile as any).thumbnailUrl = finalThumbnailUrl;
-        (videoFile as any).fromTrimModal = true;
+        const trimmedFile = new File(
+          [trimmedBlob],
+          `trimmed_${videoFile.name}`,
+          {
+            type: "video/webm",
+          }
+        );
 
-        onTrimComplete(videoFile);
+        // Mark this file as already processed to skip compression
+        (trimmedFile as any).thumbnailUrl = finalThumbnailUrl;
+        (trimmedFile as any).fromTrimModal = true;
+
+        console.log("✅ Video trimming completed successfully");
+        onTrimComplete(trimmedFile);
         onClose();
       } catch (error) {
-        console.error("Error generating thumbnail for bypass:", error);
-        (videoFile as any).fromTrimModal = true;
-        onTrimComplete(videoFile);
-        onClose();
+        console.error("❌ Error trimming video:", error);
+        alert("Failed to trim video. Please try again.");
+      } finally {
+        setIsProcessing(false);
       }
-    }
-  }, [videoFile, thumbnailUrl, duration, generateThumbnail, onTrimComplete, onClose]);
+    }, [
+      videoFile,
+      startTime,
+      endTime,
+      thumbnailUrl,
+      createTrimmedVideo,
+      generateThumbnail,
+      onTrimComplete,
+      onClose,
+    ]);
 
-  const selectedDuration = endTime - startTime;
+    // Optimized bypass handler
+    const handleBypass = useCallback(async () => {
+      if (videoFile) {
+        try {
+          let finalThumbnailUrl = thumbnailUrl;
+          if (!finalThumbnailUrl) {
+            if (videoRef.current) {
+              videoRef.current.currentTime = duration / 2;
+              await new Promise((resolve) => setTimeout(resolve, 100));
+              finalThumbnailUrl = await generateThumbnail();
+            }
+          }
 
-  // UX Logic
-  const videoExceedsLimit = duration > maxDuration;
-  const selectionExceedsLimit = selectedDuration > maxDuration;
+          (videoFile as any).thumbnailUrl = finalThumbnailUrl;
+          (videoFile as any).fromTrimModal = true;
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (seekTimeoutRef.current) {
-        clearTimeout(seekTimeoutRef.current);
-        seekTimeoutRef.current = null;
+          onTrimComplete(videoFile);
+          onClose();
+        } catch (error) {
+          console.error("Error generating thumbnail for bypass:", error);
+          (videoFile as any).fromTrimModal = true;
+          onTrimComplete(videoFile);
+          onClose();
+        }
       }
-    };
-  }, []);
+    }, [
+      videoFile,
+      thumbnailUrl,
+      duration,
+      generateThumbnail,
+      onTrimComplete,
+      onClose,
+    ]);
 
-  return (
-    <>
-      <style>
-        {`
+    const selectedDuration = endTime - startTime;
+
+    // UX Logic
+    const videoExceedsLimit = duration > maxDuration;
+    const selectionExceedsLimit = selectedDuration > maxDuration;
+
+    // Cleanup on unmount
+    useEffect(() => {
+      return () => {
+        if (seekTimeoutRef.current) {
+          clearTimeout(seekTimeoutRef.current);
+          seekTimeoutRef.current = null;
+        }
+      };
+    }, []);
+
+    return (
+      <>
+        <style>
+          {`
           @keyframes fadeIn {
             from {
               opacity: 0;
@@ -639,199 +692,202 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = memo(({
             }
           }
         `}
-      </style>
-      <Modal
-        isOpen={isOpen}
-        onClose={onClose}
-        size={{ base: "xl", md: "xl" }}
-        onCloseComplete={() => {
-          setVideoUrl(null);
-          setIsPlaying(false);
-          setThumbnailBlob(null);
-          setThumbnailUrl(null);
-          setIsGeneratingThumbnail(false);
-        }}
-        closeOnOverlayClick={false}
-        motionPreset="slideInBottom"
-        trapFocus={true}
-        autoFocus={false}
-      >
-        <ModalOverlay bg="blackAlpha.800" />
-        <ModalContent
-          bg={"background"}
-          maxH={{ base: "100vh", md: "90vh" }}
-          overflowY="auto"
-          mx={{ base: 0, md: 4 }}
-          my={{ base: 0, md: 4 }}
+        </style>
+        <Modal
+          isOpen={isOpen}
+          onClose={onClose}
+          size={{ base: "xl", md: "xl" }}
+          onCloseComplete={() => {
+            setVideoUrl(null);
+            setIsPlaying(false);
+            setThumbnailBlob(null);
+            setThumbnailUrl(null);
+            setIsGeneratingThumbnail(false);
+          }}
+          closeOnOverlayClick={false}
+          motionPreset="slideInBottom"
+          trapFocus={true}
+          autoFocus={false}
         >
-          <ModalHeader pb={{ base: 2, md: 4 }}>
-            <VStack align="start" spacing={2}>
-              <Text fontSize={{ base: "lg", md: "xl" }}>
-                {trimmingRequired ? "Video Trimming Required" : "Video Editor"}
-              </Text>
-              {canBypass ? (
-                <Text fontSize="sm" color="primary">
-                  ✨ You have more than 100 HP - You can use the full video or
-                  trim it as needed
+          <ModalOverlay bg="blackAlpha.800" />
+          <ModalContent
+            bg={"background"}
+            maxH={{ base: "100vh", md: "90vh" }}
+            overflowY="auto"
+            mx={{ base: 0, md: 4 }}
+            my={{ base: 0, md: 4 }}
+          >
+            <ModalHeader pb={{ base: 2, md: 4 }}>
+              <VStack align="start" spacing={2}>
+                <Text fontSize={{ base: "lg", md: "xl" }}>
+                  {trimmingRequired
+                    ? "Video Trimming Required"
+                    : "Video Editor"}
                 </Text>
-              ) : (
-                <Text fontSize="sm" color="accent">
-                  📹 Videos are limited to {maxDuration} seconds in the feed.
-                  Get {">"}100 HP to bypass this limit.
-                </Text>
-              )}
-            </VStack>
-          </ModalHeader>
-          <ModalCloseButton />
-
-          <ModalBody px={{ base: 3, md: 6 }} py={{ base: 3, md: 4 }}>
-            <VStack spacing={{ base: 3, md: 4 }}>
-              {/* Video Player - Always at the top */}
-              {videoUrl ? (
-                <Suspense fallback={<ComponentLoader />}>
-                  <VideoPlayer
-                    videoRef={videoRef}
-                    videoUrl={videoUrl}
-                    isPlaying={isPlaying}
-                    onLoadedMetadata={handleLoadedMetadata}
-                    onTimeUpdate={handleTimeUpdate}
-                    onTogglePlayPause={togglePlayPause}
-                  />
-                </Suspense>
-              ) : (
-                <Box
-                  width="100%"
-                  height="200px"
-                  bg="red.100"
-                  border="2px solid red"
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                >
-                  <Text color="red.600" fontWeight="bold">
-                    DEBUG: No videoUrl - videoFile:{" "}
-                    {videoFile ? "exists" : "missing"}
+                {canBypass ? (
+                  <Text fontSize="sm" color="primary">
+                    ✨ You have more than 100 HP - You can use the full video or
+                    trim it as needed
                   </Text>
-                </Box>
-              )}
-
-              {/* Required Trimming Notice */}
-              {trimmingRequired && (
-                <Alert status="warning" size="sm">
-                  <AlertIcon />
-                  <Text fontSize="sm" fontWeight="medium">
-                    🎬 Video trimming required - Your video is longer than{" "}
-                    {maxDuration} seconds. Please trim it below.
+                ) : (
+                  <Text fontSize="sm" color="accent">
+                    📹 Videos are limited to {maxDuration} seconds in the feed.
+                    Get {">"}100 HP to bypass this limit.
                   </Text>
-                </Alert>
-              )}
+                )}
+              </VStack>
+            </ModalHeader>
+            <ModalCloseButton />
 
-              {/* Show Advanced Toggle - Only show when trimming is not required */}
-              {showAdvancedToggle && (
-                <Button
-                  onClick={() => setShowAdvanced(!showAdvanced)}
-                  variant="ghost"
-                  size="sm"
-                  width="100%"
-                  leftIcon={
-                    <Text fontSize="lg">{showAdvanced ? "▼" : "▶"}</Text>
-                  }
-                >
-                  Show Advanced Options
-                </Button>
-              )}
-
-              {/* Advanced Options - Always show when trimming required, or when user toggles */}
-              {(showAdvanced || trimmingRequired) && (
-                <Box
-                  width="100%"
-                  style={{
-                    animation: "fadeIn 0.2s ease-in-out",
-                  }}
-                >
-                  {/* Tabs for Trim and Thumbnail functionality */}
-                  <Tabs
+            <ModalBody px={{ base: 3, md: 6 }} py={{ base: 3, md: 4 }}>
+              <VStack spacing={{ base: 3, md: 4 }}>
+                {/* Video Player - Always at the top */}
+                {videoUrl ? (
+                  <Suspense fallback={<ComponentLoader />}>
+                    <VideoPlayer
+                      videoRef={videoRef}
+                      videoUrl={videoUrl}
+                      isPlaying={isPlaying}
+                      onLoadedMetadata={handleLoadedMetadata}
+                      onTimeUpdate={handleTimeUpdate}
+                      onTogglePlayPause={togglePlayPause}
+                    />
+                  </Suspense>
+                ) : (
+                  <Box
                     width="100%"
-                    variant="enclosed"
-                    colorScheme="blue"
-                    index={activeTab}
-                    onChange={setActiveTab}
+                    height="200px"
+                    bg="red.100"
+                    border="2px solid red"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
                   >
-                    <TabList>
-                      <Tab>📸 Thumbnail</Tab>
-                      <Tab
-                        color={trimmingRequired ? "orange.500" : undefined}
-                        fontWeight={trimmingRequired ? "semibold" : undefined}
-                        _selected={{
-                          color: trimmingRequired ? "orange.300" : "blue.500",
-                          borderColor: trimmingRequired
-                            ? "orange.300"
-                            : "blue.500",
-                        }}
-                      >
-                        ✂️{" "}
-                        {trimmingRequired
-                          ? "Trim Video (Required)"
-                          : "Trim Video"}
-                      </Tab>
-                    </TabList>
+                    <Text color="red.600" fontWeight="bold">
+                      DEBUG: No videoUrl - videoFile:{" "}
+                      {videoFile ? "exists" : "missing"}
+                    </Text>
+                  </Box>
+                )}
 
-                    <TabPanels>
-                      {/* Thumbnail Tab */}
-                      <TabPanel px={0}>
-                        <Suspense fallback={<ComponentLoader />}>
-                          <ThumbnailCapture
-                            thumbnailUrl={thumbnailUrl}
-                            isGeneratingThumbnail={isGeneratingThumbnail}
-                            onCaptureFrame={handleCaptureFrame}
-                          />
-                        </Suspense>
-                      </TabPanel>
-                      {/* Trim Tab */}
-                      <TabPanel px={0}>
-                        <Suspense fallback={<ComponentLoader />}>
-                          <VideoTimeline
-                            duration={duration}
-                            currentTime={currentTime}
-                            startTime={startTime}
-                            endTime={endTime}
-                            isValidSelection={isValidSelection}
-                            maxDuration={maxDuration}
-                            canBypass={canBypass}
-                            onSeek={seekTo}
-                            onSeekDuringDrag={seekDuringDrag}
-                            onStartTimeChange={setStartTime}
-                            onEndTimeChange={setEndTime}
-                            onDragStart={() => {
-                              setIsPreviewingSlider(true);
-                              setIsDragging(true);
-                            }}
-                            onDragEnd={handleSliderChangeEnd}
-                          />
-                        </Suspense>
-                      </TabPanel>
-                    </TabPanels>
-                  </Tabs>
-                </Box>
-              )}
-            </VStack>
-          </ModalBody>
+                {/* Required Trimming Notice */}
+                {trimmingRequired && (
+                  <Alert status="warning" size="sm">
+                    <AlertIcon />
+                    <Text fontSize="sm" fontWeight="medium">
+                      🎬 Video trimming required - Your video is longer than{" "}
+                      {maxDuration} seconds. Please trim it below.
+                    </Text>
+                  </Alert>
+                )}
 
-          <VideoTrimModalFooter
-            isValidSelection={isValidSelection}
-            maxDuration={maxDuration}
-            canBypass={canBypass}
-            isProcessing={isProcessing}
-            hasActiveTrim={hasActiveTrim}
-            onBypass={handleBypass}
-            onTrim={handleTrim}
-          />
-        </ModalContent>
-      </Modal>
-    </>
-  );
-});
+                {/* Show Advanced Toggle - Only show when trimming is not required */}
+                {showAdvancedToggle && (
+                  <Button
+                    onClick={() => setShowAdvanced(!showAdvanced)}
+                    variant="ghost"
+                    size="sm"
+                    width="100%"
+                    leftIcon={
+                      <Text fontSize="lg">{showAdvanced ? "▼" : "▶"}</Text>
+                    }
+                  >
+                    Show Advanced Options
+                  </Button>
+                )}
 
-VideoTrimModal.displayName = 'VideoTrimModal';
+                {/* Advanced Options - Always show when trimming required, or when user toggles */}
+                {(showAdvanced || trimmingRequired) && (
+                  <Box
+                    width="100%"
+                    style={{
+                      animation: "fadeIn 0.2s ease-in-out",
+                    }}
+                  >
+                    {/* Tabs for Trim and Thumbnail functionality */}
+                    <Tabs
+                      width="100%"
+                      variant="enclosed"
+                      colorScheme="blue"
+                      index={activeTab}
+                      onChange={setActiveTab}
+                    >
+                      <TabList>
+                        <Tab>📸 Thumbnail</Tab>
+                        <Tab
+                          color={trimmingRequired ? "orange.500" : undefined}
+                          fontWeight={trimmingRequired ? "semibold" : undefined}
+                          _selected={{
+                            color: trimmingRequired ? "orange.300" : "blue.500",
+                            borderColor: trimmingRequired
+                              ? "orange.300"
+                              : "blue.500",
+                          }}
+                        >
+                          ✂️{" "}
+                          {trimmingRequired
+                            ? "Trim Video (Required)"
+                            : "Trim Video"}
+                        </Tab>
+                      </TabList>
+
+                      <TabPanels>
+                        {/* Thumbnail Tab */}
+                        <TabPanel px={0}>
+                          <Suspense fallback={<ComponentLoader />}>
+                            <ThumbnailCapture
+                              thumbnailUrl={thumbnailUrl}
+                              isGeneratingThumbnail={isGeneratingThumbnail}
+                              onCaptureFrame={handleCaptureFrame}
+                            />
+                          </Suspense>
+                        </TabPanel>
+                        {/* Trim Tab */}
+                        <TabPanel px={0}>
+                          <Suspense fallback={<ComponentLoader />}>
+                            <VideoTimeline
+                              duration={duration}
+                              currentTime={currentTime}
+                              startTime={startTime}
+                              endTime={endTime}
+                              isValidSelection={isValidSelection}
+                              maxDuration={maxDuration}
+                              canBypass={canBypass}
+                              onSeek={seekTo}
+                              onSeekDuringDrag={seekDuringDrag}
+                              onStartTimeChange={setStartTime}
+                              onEndTimeChange={setEndTime}
+                              onDragStart={() => {
+                                setIsPreviewingSlider(true);
+                                setIsDragging(true);
+                              }}
+                              onDragEnd={handleSliderChangeEnd}
+                            />
+                          </Suspense>
+                        </TabPanel>
+                      </TabPanels>
+                    </Tabs>
+                  </Box>
+                )}
+              </VStack>
+            </ModalBody>
+
+            <VideoTrimModalFooter
+              isValidSelection={isValidSelection}
+              maxDuration={maxDuration}
+              canBypass={canBypass}
+              isProcessing={isProcessing}
+              hasActiveTrim={hasActiveTrim}
+              onBypass={handleBypass}
+              onTrim={handleTrim}
+            />
+          </ModalContent>
+        </Modal>
+      </>
+    );
+  }
+);
+
+VideoTrimModal.displayName = "VideoTrimModal";
 
 export default VideoTrimModal;
