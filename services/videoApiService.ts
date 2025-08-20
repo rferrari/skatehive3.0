@@ -12,266 +12,416 @@ interface VideoConversionRequest {
   thumbnailUrl?: string;
 }
 
+interface ApiHealthStatus {
+  available: boolean;
+  responseTime: number;
+  lastChecked: number;
+  error?: string;
+}
+
+interface CachedHealthCheck {
+  [url: string]: ApiHealthStatus;
+}
+
 class VideoApiService {
-  private primaryApiUrl = 'https://raspberrypi.tail83ea3e.ts.net';
-  private fallbackApiUrl = 'https://video-worker-e7s1.onrender.com';
+  private readonly primaryApiUrl = 'https://raspberrypi.tail83ea3e.ts.net';
+  private readonly fallbackApiUrl = 'https://video-worker-e7s1.onrender.com';
   
-  // Check if API is available
-  async checkApiAvailability(apiUrl: string): Promise<boolean> {
-    const startTime = Date.now();
-    console.log(`🔍 Starting health check for: ${apiUrl}`);
+  // Cache health checks for 30 seconds to avoid excessive requests
+  private readonly HEALTH_CACHE_TTL = 30000;
+  private healthCache: CachedHealthCheck = {};
+  
+  // Configurable timeouts
+  private readonly HEALTH_CHECK_TIMEOUT = 5000;
+  private readonly CONVERSION_TIMEOUT = 300000; // 5 minutes
+  
+  // Request retry configuration
+  private readonly MAX_RETRIES = 2;
+  private readonly RETRY_DELAY = 1000;
+  // Optimized health check with caching and smart retry
+  async checkHealth(apiUrl: string, useCache: boolean = true): Promise<boolean> {
+    const now = Date.now();
     
+    // Check cache first if enabled
+    if (useCache && this.healthCache[apiUrl]) {
+      const cached = this.healthCache[apiUrl];
+      const isExpired = (now - cached.lastChecked) > this.HEALTH_CACHE_TTL;
+      
+      if (!isExpired) {
+        console.log(`💾 Using cached health status for ${apiUrl}: ${cached.available} (${cached.responseTime}ms)`);
+        return cached.available;
+      }
+    }
+
+    const healthUrl = `${apiUrl}/healthz`;
+    console.log(`🏥 Health check for: ${healthUrl}`);
+
+    // Try direct request with timeout
+    const result = await this.attemptHealthCheck(healthUrl, apiUrl);
+    
+    // Cache the result
+    this.healthCache[apiUrl] = {
+      available: result.success,
+      responseTime: result.duration,
+      lastChecked: now,
+      error: result.error
+    };
+
+    return result.success;
+  }
+
+  // Private method for actual health check attempt
+  private async attemptHealthCheck(healthUrl: string, apiUrl: string): Promise<{
+    success: boolean;
+    duration: number;
+    error?: string;
+  }> {
+    const startTime = Date.now();
+
+    // Try direct request first
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => {
-        console.log(`⏰ Health check timeout (10s) for ${apiUrl}`);
-        controller.abort();
-      }, 10000);
-      
-      const healthEndpoint = `${apiUrl}/healthz`;
-      
-      console.log(`📡 Making request to: ${healthEndpoint}`);
-      
-      const response = await fetch(healthEndpoint, {
+      const timeoutId = setTimeout(() => controller.abort(), this.HEALTH_CHECK_TIMEOUT);
+
+      const response = await fetch(healthUrl, {
         method: 'GET',
         signal: controller.signal,
+        cache: 'no-cache',
+        mode: 'cors',
+        credentials: 'omit',
         headers: {
           'Accept': 'application/json',
-          'User-Agent': 'SkateHive-VideoUploader/1.0',
+          'Content-Type': 'application/json',
         },
       });
       
       clearTimeout(timeoutId);
       const duration = Date.now() - startTime;
-      
-      console.log(`✅ Health check response for ${apiUrl}:`, {
-        status: response.status,
-        statusText: response.statusText,
-        ok: response.ok,
-        headers: Object.fromEntries(response.headers.entries()),
-        duration: `${duration}ms`,
-        url: response.url,
-        type: response.type,
-        redirected: response.redirected,
-      });
 
       if (response.ok) {
-        try {
-          const responseText = await response.text();
-          console.log(`📄 Response body:`, responseText);
-          const data = responseText ? JSON.parse(responseText) : null;
-          console.log(`📊 Parsed response:`, data);
-        } catch (parseError) {
-          console.warn(`⚠️ Could not parse response as JSON:`, parseError);
-        }
+        const data = await this.parseHealthResponse(response);
+        const isHealthy = this.validateHealthResponse(data);
+        
+        console.log(`✅ Direct health check success for ${apiUrl}: ${isHealthy} (${duration}ms)`);
+        return { success: isHealthy, duration };
       }
       
-      return response.ok;
-    } catch (error) {
-      const duration = Date.now() - startTime;
-      console.error(`❌ Health check failed for ${apiUrl} after ${duration}ms:`, {
-        error: error,
-        message: error instanceof Error ? error.message : 'Unknown error',
-        name: error instanceof Error ? error.name : 'Unknown',
-        stack: error instanceof Error ? error.stack : undefined,
-      });
+      return { success: false, duration, error: `HTTP ${response.status}` };
       
-      if (error instanceof Error && error.name === 'AbortError') {
-        console.warn(`🔄 Trying fallback health check without timeout for ${apiUrl}`);
-        try {
-          const fallbackHealthEndpoint = `${apiUrl}/healthz`;
-            
-          console.log(`📡 Fallback request to: ${fallbackHealthEndpoint}`);
-          const fallbackResponse = await fetch(fallbackHealthEndpoint, {
-            method: 'GET',
-            headers: { 
-              'Accept': 'application/json',
-              'User-Agent': 'SkateHive-VideoUploader/1.0-Fallback',
-            },
-          });
-          
-          console.log(`✅ Fallback health check result:`, {
-            status: fallbackResponse.status,
-            ok: fallbackResponse.ok,
-            statusText: fallbackResponse.statusText,
-          });
-          
-          return fallbackResponse.ok;
-        } catch (fallbackError) {
-          console.error(`❌ Fallback health check also failed:`, fallbackError);
-          return false;
-        }
-      }
-      return false;
+    } catch (directError) {
+      const errorMsg = directError instanceof Error ? directError.message : String(directError);
+      console.warn(`⚠️ Direct fetch failed, trying proxy: ${errorMsg}`);
+      
+      // Fallback to proxy
+      return await this.attemptProxyHealthCheck(healthUrl, startTime);
     }
   }
 
-  // Convert and upload video using API
+  // Private method for proxy health check
+  private async attemptProxyHealthCheck(healthUrl: string, startTime: number): Promise<{
+    success: boolean;
+    duration: number;
+    error?: string;
+  }> {
+    try {
+      const proxyUrl = `/api/video-proxy?url=${encodeURIComponent(healthUrl)}`;
+      
+      const proxyResponse = await fetch(proxyUrl, {
+        method: 'GET',
+        cache: 'no-cache',
+        signal: AbortSignal.timeout(this.HEALTH_CHECK_TIMEOUT + 2000),
+      });
+
+      const duration = Date.now() - startTime;
+
+      if (proxyResponse.ok) {
+        const data = await this.parseHealthResponse(proxyResponse);
+        const isHealthy = this.validateHealthResponse(data);
+        
+        console.log(`🔄 Proxy health check success: ${isHealthy} (${duration}ms)`);
+        return { success: isHealthy, duration };
+      }
+      
+      return { success: false, duration, error: `Proxy HTTP ${proxyResponse.status}` };
+      
+    } catch (proxyError) {
+      const duration = Date.now() - startTime;
+      const errorMsg = proxyError instanceof Error ? proxyError.message : String(proxyError);
+      
+      console.error(`❌ Both direct and proxy health checks failed (${duration}ms): ${errorMsg}`);
+      return { success: false, duration, error: errorMsg };
+    }
+  }
+
+  // Helper to safely parse health response
+  private async parseHealthResponse(response: Response): Promise<any> {
+    try {
+      const text = await response.text();
+      return text ? JSON.parse(text) : null;
+    } catch (error) {
+      console.warn('Failed to parse health response as JSON, treating as text');
+      return null;
+    }
+  }
+
+  // Helper to validate health response data
+  private validateHealthResponse(data: any): boolean {
+    if (!data) return false;
+    return data.ok === true || data.status === 'ok' || data.healthy === true;
+  }
+
+  // Optimized video conversion with retry logic and better error handling
   async convertAndUploadVideo(
     apiUrl: string,
     request: VideoConversionRequest,
     onProgress?: (progress: number) => void
   ): Promise<VideoConversionResponse> {
     const startTime = Date.now();
-    console.log(`🎬 Starting video conversion with API: ${apiUrl}`);
-    console.log(`📋 Request details:`, {
+    
+    console.log(`🎬 Starting video conversion:`, {
+      api: apiUrl,
       creator: request.creator,
-      thumbnailUrl: request.thumbnailUrl,
       videoFile: {
         name: request.video.name,
-        size: request.video.size,
-        type: request.video.type,
-        lastModified: new Date(request.video.lastModified).toISOString(),
-      }
+        size: `${(request.video.size / 1024 / 1024).toFixed(2)} MB`,
+        type: request.video.type
+      },
+      hasThumbnail: !!request.thumbnailUrl
     });
 
-    try {
-      const formData = new FormData();
-      formData.append('video', request.video);
-      formData.append('creator', request.creator);
-      
-      if (request.thumbnailUrl) {
-        formData.append('thumbnailUrl', request.thumbnailUrl);
+    // Retry with exponential backoff
+    for (let attempt = 1; attempt <= this.MAX_RETRIES; attempt++) {
+      try {
+        const result = await this.attemptVideoConversion(apiUrl, request, onProgress, attempt);
+        
+        if (result.success) {
+          const totalTime = Date.now() - startTime;
+          console.log(`✅ Video conversion successful on attempt ${attempt} (${totalTime}ms)`);
+          return { ...result, processingTime: totalTime };
+        }
+        
+        // If not successful and not the last attempt, retry
+        if (attempt < this.MAX_RETRIES) {
+          const delay = this.RETRY_DELAY * Math.pow(2, attempt - 1);
+          console.log(`⏳ Retrying conversion in ${delay}ms (attempt ${attempt + 1}/${this.MAX_RETRIES})`);
+          await this.delay(delay);
+        } else {
+          return result; // Return the last attempt's result
+        }
+        
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        console.error(`❌ Conversion attempt ${attempt} failed: ${errorMsg}`);
+        
+        if (attempt === this.MAX_RETRIES) {
+          const totalTime = Date.now() - startTime;
+          return {
+            success: false,
+            error: `All ${this.MAX_RETRIES} attempts failed. Last error: ${errorMsg}`,
+            processingTime: totalTime
+          };
+        }
+        
+        // Wait before retry
+        const delay = this.RETRY_DELAY * Math.pow(2, attempt - 1);
+        await this.delay(delay);
       }
+    }
 
+    // This should never be reached, but TypeScript requires it
+    return {
+      success: false,
+      error: 'Unexpected error in retry logic',
+      processingTime: Date.now() - startTime
+    };
+  }
+
+  // Private method for single conversion attempt
+  private async attemptVideoConversion(
+    apiUrl: string,
+    request: VideoConversionRequest,
+    onProgress?: (progress: number) => void,
+    attempt: number = 1
+  ): Promise<VideoConversionResponse> {
+    const startTime = Date.now();
+    
+    try {
+      const formData = this.createFormData(request);
       const transcodeEndpoint = `${apiUrl}/transcode`;
 
-      console.log(`📡 Sending POST request to: ${transcodeEndpoint}`);
-      console.log(`📦 FormData contents:`, {
-        creator: request.creator,
-        thumbnailUrl: request.thumbnailUrl || 'not provided',
-        videoFileName: request.video.name,
-        videoSize: `${(request.video.size / 1024 / 1024).toFixed(2)} MB`,
-      });
+      console.log(`📡 Conversion attempt ${attempt} to: ${transcodeEndpoint}`);
+
+      // Create controller for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+        console.warn(`⏰ Conversion timeout after ${this.CONVERSION_TIMEOUT}ms`);
+      }, this.CONVERSION_TIMEOUT);
 
       const response = await fetch(transcodeEndpoint, {
         method: 'POST',
         body: formData,
+        signal: controller.signal,
+        // Don't set Content-Type for FormData - let browser set it with boundary
       });
 
+      clearTimeout(timeoutId);
       const duration = Date.now() - startTime;
-      console.log(`📨 Video conversion response:`, {
+
+      console.log(`📨 Conversion response:`, {
         status: response.status,
         statusText: response.statusText,
         ok: response.ok,
-        headers: Object.fromEntries(response.headers.entries()),
         duration: `${duration}ms`,
-        url: response.url,
-        type: response.type,
+        attempt
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`❌ API error response:`, {
-          status: response.status,
-          statusText: response.statusText,
-          body: errorText,
-        });
-        throw new Error(`API responded with status: ${response.status} - ${errorText}`);
+        const errorText = await response.text().catch(() => 'Failed to read error response');
+        return {
+          success: false,
+          error: `HTTP ${response.status}: ${response.statusText}. ${errorText}`,
+          processingTime: duration
+        };
       }
 
-      const responseText = await response.text();
-      console.log(`📄 Raw response body:`, responseText);
+      const result = await this.parseConversionResponse(response);
       
-      let result;
-      try {
-        result = JSON.parse(responseText);
-        console.log(`📊 Parsed response:`, result);
-      } catch (parseError) {
-        console.error(`❌ Failed to parse response as JSON:`, parseError);
-        throw new Error(`Invalid JSON response: ${responseText}`);
+      // Validate the response structure
+      if (this.isValidConversionResponse(result)) {
+        onProgress?.(100); // Signal completion
+        return {
+          success: true,
+          ipfsUrl: result.ipfsUrl,
+          thumbnailUrl: result.thumbnailUrl,
+          processingTime: duration
+        };
+      } else {
+        return {
+          success: false,
+          error: 'Invalid response format from API',
+          processingTime: duration
+        };
       }
-      
-      const finalResponse = {
-        success: result.success || result.cid || result.ipfsUrl || result.gatewayUrl ? true : false,
-        ipfsUrl: result.ipfsUrl || result.gatewayUrl,
-        thumbnailUrl: result.thumbnailUrl || request.thumbnailUrl,
-        processingTime: result.processingTime || duration,
-      };
 
-      console.log(`✅ Final processed response:`, finalResponse);
-      return finalResponse;
-      
     } catch (error) {
       const duration = Date.now() - startTime;
-      console.error(`❌ Video conversion failed with API ${apiUrl} after ${duration}ms:`, {
-        error: error,
-        message: error instanceof Error ? error.message : 'Unknown error',
-        name: error instanceof Error ? error.name : 'Unknown',
-        stack: error instanceof Error ? error.stack : undefined,
-      });
+      const errorMsg = error instanceof Error ? error.message : String(error);
       
+      console.error(`❌ Conversion attempt ${attempt} error:`, {
+        error: errorMsg,
+        duration: `${duration}ms`,
+        api: apiUrl
+      });
+
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error occurred during video conversion',
+        error: errorMsg,
+        processingTime: duration
       };
     }
   }
 
-  // Try primary API, then fallback, then return null for native processing
+  // Helper methods
+  private createFormData(request: VideoConversionRequest): FormData {
+    const formData = new FormData();
+    formData.append('video', request.video);
+    formData.append('creator', request.creator);
+    
+    if (request.thumbnailUrl) {
+      formData.append('thumbnailUrl', request.thumbnailUrl);
+    }
+    
+    return formData;
+  }
+
+  private async parseConversionResponse(response: Response): Promise<any> {
+    try {
+      return await response.json();
+    } catch (error) {
+      console.warn('Failed to parse conversion response as JSON');
+      const text = await response.text();
+      return { error: `Invalid JSON response: ${text}` };
+    }
+  }
+
+  private isValidConversionResponse(result: any): boolean {
+    return result && 
+           typeof result === 'object' && 
+           typeof result.ipfsUrl === 'string' && 
+           result.ipfsUrl.length > 0;
+  }
+
+  private delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  // Main processing pipeline with smart API selection
   async processVideo(
     request: VideoConversionRequest,
     onProgress?: (progress: number) => void
   ): Promise<VideoConversionResponse | null> {
-    console.log(`🚀 Starting video processing pipeline`);
-    console.log(`📋 Request summary:`, {
-      creator: request.creator,
-      hasVideo: !!request.video,
-      videoName: request.video?.name,
-      videoSize: request.video ? `${(request.video.size / 1024 / 1024).toFixed(2)} MB` : 'N/A',
-      hasThumbnail: !!request.thumbnailUrl,
-    });
-
-    // Check primary API availability
-    console.log(`🔍 Checking primary API availability...`);
-    const primaryAvailable = await this.checkApiAvailability(this.primaryApiUrl);
-    console.log(`🔌 Primary API (${this.primaryApiUrl}) available: ${primaryAvailable}`);
+    console.log(`🚀 Starting optimized video processing pipeline`);
     
+    // Check both APIs concurrently
+    const [primaryAvailable, fallbackAvailable] = await Promise.all([
+      this.checkHealth(this.primaryApiUrl),
+      this.checkHealth(this.fallbackApiUrl)
+    ]);
+
+    console.log(`📊 API availability: Primary=${primaryAvailable}, Fallback=${fallbackAvailable}`);
+
+    // Try primary API first if available
     if (primaryAvailable) {
-      console.log(`✅ Using primary API for video processing`);
-      const result = await this.convertAndUploadVideo(this.primaryApiUrl, request, onProgress);
+      console.log(`🔧 Attempting primary API conversion...`);
+      const result = await this.convertAndUploadVideo(
+        this.primaryApiUrl,
+        request,
+        onProgress
+      );
+      
       if (result.success) {
-        console.log(`🎉 Primary API processing successful!`);
+        console.log(`✅ Primary API conversion successful`);
         return result;
-      } else {
-        console.warn(`⚠️ Primary API processing failed, trying fallback...`);
       }
-    } else {
-      console.warn(`❌ Primary API unavailable, trying fallback...`);
+      
+      console.log(`⚠️ Primary API failed, trying fallback...`);
     }
 
-    // Check fallback API availability
-    console.log(`🔍 Checking fallback API availability...`);
-    const fallbackAvailable = await this.checkApiAvailability(this.fallbackApiUrl);
-    console.log(`🔌 Fallback API (${this.fallbackApiUrl}) available: ${fallbackAvailable}`);
-    
+    // Try fallback API if available
     if (fallbackAvailable) {
-      console.log(`✅ Using fallback API for video processing`);
-      const result = await this.convertAndUploadVideo(this.fallbackApiUrl, request, onProgress);
+      console.log(`� Attempting fallback API conversion...`);
+      const result = await this.convertAndUploadVideo(
+        this.fallbackApiUrl,
+        request,
+        onProgress
+      );
+      
       if (result.success) {
-        console.log(`🎉 Fallback API processing successful!`);
+        console.log(`✅ Fallback API conversion successful`);
         return result;
-      } else {
-        console.warn(`⚠️ Fallback API processing also failed`);
       }
-    } else {
-      console.warn(`❌ Fallback API also unavailable`);
+      
+      console.log(`❌ Fallback API also failed`);
     }
 
-    // Both APIs failed or unavailable, return null to trigger native processing
-    console.log(`🔄 Both APIs unavailable or failed, will use native processing`);
+    console.log(`❌ All APIs failed or unavailable`);
     return null;
   }
 
-  // Get API status for debugging
+  // Optimized status check with concurrent health checks
   async getApiStatus() {
-    console.log(`🔍 Checking status of all APIs...`);
     const startTime = Date.now();
-    
-    const [primaryAvailable, fallbackAvailable] = await Promise.all([
-      this.checkApiAvailability(this.primaryApiUrl),
-      this.checkApiAvailability(this.fallbackApiUrl),
+    console.log(`📊 Starting concurrent API status check...`);
+
+    // Run health checks concurrently for better performance
+    const [primaryResult, fallbackResult] = await Promise.allSettled([
+      this.checkHealth(this.primaryApiUrl),
+      this.checkHealth(this.fallbackApiUrl)
     ]);
+
+    const primaryAvailable = primaryResult.status === 'fulfilled' ? primaryResult.value : false;
+    const fallbackAvailable = fallbackResult.status === 'fulfilled' ? fallbackResult.value : false;
 
     const duration = Date.now() - startTime;
     const status = {
@@ -287,88 +437,19 @@ class VideoApiService {
       timestamp: new Date().toISOString(),
     };
 
-    console.log(`📊 Complete API status check results:`, status);
+    console.log(`📊 Optimized API status check complete (${duration}ms):`, status);
     return status;
   }
 
-  // Test method to bypass proxy and test direct API (for debugging CORS)
-  async testDirectApi() {
-    console.log(`🧪 Testing direct API connection (bypassing proxy)...`);
-    const startTime = Date.now();
-    
-    try {
-      console.log(`📡 Making direct request to: https://video-worker-e7s1.onrender.com/healthz`);
-      const response = await fetch('https://video-worker-e7s1.onrender.com/healthz', {
-        method: 'GET',
-        mode: 'no-cors', // This will bypass CORS but limit response access
-      });
-      
-      const duration = Date.now() - startTime;
-      const result = { 
-        success: true, 
-        type: response.type, 
-        status: response.status,
-        duration: `${duration}ms`,
-      };
-      
-      console.log(`✅ Direct API test (no-cors mode) results:`, result);
-      return result;
-    } catch (error) {
-      const duration = Date.now() - startTime;
-      const result = { 
-        success: false, 
-        error,
-        duration: `${duration}ms`,
-      };
-      
-      console.error(`❌ Direct API test failed:`, result);
-      return result;
-    }
+  // Clear health cache (useful for testing or forced refresh)
+  clearHealthCache(): void {
+    this.healthCache = {};
+    console.log(`🧹 Health cache cleared`);
   }
 
-  // Test method with CORS to see exact error
-  async testDirectApiWithCors() {
-    console.log(`🧪 Testing direct API with CORS (to see exact error)...`);
-    const startTime = Date.now();
-    
-    try {
-      console.log(`📡 Making CORS request to: https://video-worker-e7s1.onrender.com/healthz`);
-      const response = await fetch('https://video-worker-e7s1.onrender.com/healthz', {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-        },
-      });
-      
-      const duration = Date.now() - startTime;
-      const responseText = await response.text();
-      
-      const result = { 
-        success: response.ok, 
-        status: response.status,
-        statusText: response.statusText,
-        headers: Object.fromEntries(response.headers.entries()),
-        body: responseText,
-        duration: `${duration}ms`,
-      };
-      
-      console.log(`✅ Direct API CORS test results:`, result);
-      return result;
-    } catch (error) {
-      const duration = Date.now() - startTime;
-      const result = { 
-        success: false, 
-        error: error instanceof Error ? {
-          name: error.name,
-          message: error.message,
-          stack: error.stack,
-        } : error,
-        duration: `${duration}ms`,
-      };
-      
-      console.error(`❌ Direct API CORS test failed:`, result);
-      return result;
-    }
+  // Get cache status for debugging
+  getCacheStatus(): CachedHealthCheck {
+    return { ...this.healthCache };
   }
 }
 
