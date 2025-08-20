@@ -50,8 +50,13 @@ class VideoApiService {
     try {
       console.log('🎬 Starting video upload to worker...');
       
-      // Create FormData for the upload
-      const formData = new FormData();
+  // Create FormData for the upload
+  // IMPORTANT: Do NOT manually set the "Content-Type" header when sending
+  // FormData. The browser/XHR will set the correct multipart boundary. If you
+  // set Content-Type yourself (for example to 'multipart/form-data') the
+  // boundary is omitted and the server will reject the request.
+  // Reference: MDN - Using FormData objects
+  const formData = new FormData();
       formData.append('video', video);
       
       // Add creator info if provided
@@ -133,8 +138,13 @@ class VideoApiService {
       try {
         console.log(`🔄 Uploading video directly to ${api.name} API...`);
         
-        // Create FormData for the upload
-        const formData = new FormData();
+  // Create FormData for the upload
+  // IMPORTANT: Do NOT manually set the "Content-Type" header when sending
+  // FormData. The browser/XHR will set the correct multipart boundary. If you
+  // set Content-Type yourself (for example to 'multipart/form-data') the
+  // boundary is omitted and the server will reject the request.
+  // Reference: MDN - Using FormData objects
+  const formData = new FormData();
         formData.append('video', video);
         
         // Add creator info if provided
@@ -198,8 +208,13 @@ class VideoApiService {
     try {
       console.log('🔄 Uploading video via proxy to Render API...');
       
-      // Create FormData for the upload
-      const formData = new FormData();
+  // Create FormData for the upload
+  // IMPORTANT: Do NOT manually set the "Content-Type" header when sending
+  // FormData. The browser/XHR will set the correct multipart boundary. If you
+  // set Content-Type yourself (for example to 'multipart/form-data') the
+  // boundary is omitted and the server will reject the request.
+  // Reference: MDN - Using FormData objects
+  const formData = new FormData();
       formData.append('video', video);
       
       // Add creator info if provided

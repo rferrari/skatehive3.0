@@ -202,7 +202,8 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
       deviceInfo: any,
       isMovFile: boolean,
       shouldSkipCompression: boolean,
-      updateProgress: Function
+      updateProgress: Function,
+      setCompressionProgress: (progress: number) => void
     ): Promise<File> => {
       // For iOS devices, try iOS-specific fallback first
       if (deviceInfo.isIOS) {
@@ -330,12 +331,14 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
     // Check if we're in development mode and API availability
     React.useEffect(() => {
       setIsDevelopment(process.env.NODE_ENV === "development");
+      let isMounted = true;
 
       // Check API availability on component mount
       const checkAPIs = async () => {
         console.log("🔍 VideoUploader: Starting API availability check...");
         try {
           const availability = await videoApiService.getApiStatus();
+          if (!isMounted) return;
           setApiAvailability({
             primaryAPI: availability.primaryAPI,
             fallbackAPI: availability.fallbackAPI,
@@ -358,6 +361,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
           // const corsTest = await videoApiService.testDirectApiWithCors();
           // console.log("🧪 CORS API test:", corsTest);
         } catch (error) {
+          if (!isMounted) return;
           console.error("❌ VideoUploader: Failed to check API availability:", {
             error,
             message: error instanceof Error ? error.message : "Unknown error",
@@ -372,6 +376,10 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
       };
 
       checkAPIs();
+
+      return () => {
+        isMounted = false;
+      };
     }, []);
 
     // Replace hardcoded background and color values with theme variables
@@ -543,20 +551,21 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
             setInputVideoMetadata(metadata);
 
             // Get FFmpeg analysis if available
+            let ffmpegMeta;
             if (!fallback) {
-              const ffmpegMeta = await analyzeVideoWithFFmpeg(file, ffmpegRef);
+              ffmpegMeta = await analyzeVideoWithFFmpeg(file, ffmpegRef);
               setFFmpegAnalysis(ffmpegMeta);
             }
 
             logVideoProcessingDetails(
-              "Input Analysis",
+              "analysis",
               file,
               undefined,
               metadata,
-              ffmpegAnalysis || undefined
+              ffmpegMeta
             );
-          } catch (err) {
-            console.warn("📊 Video analysis failed:", err);
+          } catch (analysisError) {
+            console.warn("🔍 Video analysis failed:", analysisError);
           }
         }
 
@@ -564,7 +573,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         let processedFile: File = file;
         let uploadUrl: string | null = null;
 
-        console.log("� Starting API-first video processing...", {
+        console.log("🚀 Starting API-first video processing...", {
           fileName: file.name,
           fileType: file.type,
           fileSizeMB: (file.size / (1024 * 1024)).toFixed(1),
@@ -790,7 +799,8 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
                 deviceInfo,
                 isMovFile,
                 shouldSkipCompression,
-                updateProgress
+                updateProgress,
+                setCompressionProgress
               );
             }
           } else {
