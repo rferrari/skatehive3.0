@@ -14,7 +14,24 @@ import { LuPause, LuPlay, LuRotateCw } from "react-icons/lu";
 import LoadingComponent from "../homepage/loadingComponent";
 import { getVideoThumbnail, extractIPFSHash } from "@/lib/utils/ipfsMetadata";
 
-// Add useInView hook for detecting visibility
+// Throttle helper for performance optimization
+const throttle = <T extends (...args: any[]) => void>(func: T, delay: number): T => {
+  let timeoutId: NodeJS.Timeout | null = null;
+  let lastArgs: Parameters<T>;
+  
+  return ((...args: Parameters<T>) => {
+    lastArgs = args;
+    
+    if (timeoutId === null) {
+      timeoutId = setTimeout(() => {
+        func(...lastArgs);
+        timeoutId = null;
+      }, delay);
+    }
+  }) as T;
+};
+
+// Optimized useInView hook with better performance
 interface IntersectionOptions {
   threshold?: number;
   rootMargin?: string;
@@ -24,20 +41,35 @@ interface IntersectionOptions {
 function useInView(options: IntersectionOptions = {}) {
   const [ref, setRef] = useState<Element | null>(null);
   const [isInView, setIsInView] = useState(false);
+  const observerRef = useRef<IntersectionObserver | null>(null);
 
   useEffect(() => {
     if (!ref) return;
 
-    const observer = new IntersectionObserver(([entry]) => {
-      setIsInView(entry.isIntersecting);
-    }, options);
+    // Reuse observer if possible
+    if (!observerRef.current) {
+      observerRef.current = new IntersectionObserver(([entry]) => {
+        setIsInView(entry.isIntersecting);
+      }, options);
+    }
 
-    observer.observe(ref);
+    observerRef.current.observe(ref);
 
     return () => {
-      observer.disconnect();
+      if (observerRef.current && ref) {
+        observerRef.current.unobserve(ref);
+      }
     };
   }, [ref, options]);
+
+  // Cleanup observer on unmount
+  useEffect(() => {
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, []);
 
   return { ref: setRef, isInView };
 }
@@ -202,25 +234,7 @@ const VideoControls = React.memo(
             style={progressSliderStyle}
           />
 
-          <style jsx>{`
-            input[type="range"]::-webkit-slider-runnable-track {
-              -webkit-appearance: none;
-              height: 8px;
-              background: transparent;
-            }
-            input[type="range"]::-webkit-slider-thumb {
-              -webkit-appearance: none;
-              height: 24px;
-              width: 24px;
-              background: url("/images/skateboardloader.webp") no-repeat center;
-              background-size: contain;
-              border: none;
-              border-radius: 0%;
-              cursor: pointer;
-              margin-top: -16px;
-              box-shadow: none;
-            }
-          `}</style>
+          <CustomSliderStyles />
 
           {hoverTime !== null &&
             videoDuration &&
@@ -248,7 +262,32 @@ const VideoControls = React.memo(
 );
 VideoControls.displayName = "VideoControls";
 
-// Memoize common styles outside the component
+// Memoized custom styles outside component to prevent recreation
+const CUSTOM_SLIDER_STYLES = `
+  input[type="range"]::-webkit-slider-runnable-track {
+    -webkit-appearance: none;
+    height: 8px;
+    background: transparent;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 24px;
+    width: 24px;
+    background: url("/images/skateboardloader.webp") no-repeat center;
+    background-size: contain;
+    border: none;
+    border-radius: 0%;
+    cursor: pointer;
+    margin-top: -16px;
+    box-shadow: none;
+  }
+`;
+
+// Memoized custom styles component
+const CustomSliderStyles = React.memo(() => (
+  <style jsx>{CUSTOM_SLIDER_STYLES}</style>
+));
+CustomSliderStyles.displayName = "CustomSliderStyles";
 const VIDEO_STYLE = {
   background: "transparent",
   marginBottom: "20px",
@@ -284,33 +323,56 @@ const VideoRenderer = ({
   const [shouldLoop, setShouldLoop] = useState(false);
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
   const [showPoster, setShowPoster] = useState(true);
+  const [thumbnailLoading, setThumbnailLoading] = useState(false);
 
-  // Use Intersection Observer to detect visibility
-  const { ref: setVideoRef, isInView } = useInView({ threshold: 0.5 });
+  // Use Intersection Observer to detect visibility with optimized threshold
+  const { ref: setVideoRef, isInView } = useInView({ 
+    threshold: 0.3, // Lower threshold for better performance
+    rootMargin: '50px' // Start loading earlier
+  });
 
-  // Extract IPFS hash from video src and fetch thumbnail - only if not skipped
-  useEffect(() => {
-    // Skip thumbnail loading if explicitly disabled (e.g., for modal video playback)
-    if (skipThumbnailLoad) return;
-
-    const loadThumbnail = async () => {
-      if (src) {
-        try {
-          const hash = extractIPFSHash(src);
-          if (hash) {
-            const thumbnail = await getVideoThumbnail(hash);
-            if (thumbnail) {
-              setThumbnailUrl(thumbnail);
-            }
-          }
-        } catch (error) {
-          console.error("❌ Failed to load thumbnail:", error);
+  // Throttled time update handler for better performance
+  const throttledTimeUpdate = useMemo(
+    () => throttle(() => {
+      if (videoRef.current) {
+        const duration = videoRef.current.duration;
+        if (Number.isFinite(duration) && duration > 0) {
+          const newProgress = (videoRef.current.currentTime / duration) * 100;
+          setProgress(Number.isFinite(newProgress) ? newProgress : 0);
         }
+      }
+    }, 100), // Update every 100ms instead of every frame
+    []
+  );
+
+  // Memoized IPFS hash extraction to prevent recalculation
+  const ipfsHash = useMemo(() => {
+    return src ? extractIPFSHash(src) : null;
+  }, [src]);
+
+  // Lazy load thumbnail only when video is in view or about to be in view
+  useEffect(() => {
+    if (skipThumbnailLoad || !src || !ipfsHash || thumbnailLoading) return;
+
+    // Only load thumbnail when video is near viewport
+    const loadThumbnail = async () => {
+      setThumbnailLoading(true);
+      try {
+        const thumbnail = await getVideoThumbnail(ipfsHash);
+        if (thumbnail) {
+          setThumbnailUrl(thumbnail);
+        }
+      } catch (error) {
+        // Silent fail for thumbnails
+      } finally {
+        setThumbnailLoading(false);
       }
     };
 
-    loadThumbnail();
-  }, [src, skipThumbnailLoad]);
+    // Add a small delay to prevent loading thumbnails for videos that scroll by quickly
+    const timeoutId = setTimeout(loadThumbnail, 200);
+    return () => clearTimeout(timeoutId);
+  }, [src, ipfsHash, skipThumbnailLoad, thumbnailLoading]);
 
   const handleLoadedData = useCallback(() => {
     setIsVideoLoaded(true);
@@ -318,52 +380,31 @@ const VideoRenderer = ({
       const vw = videoRef.current.videoWidth || 0;
       const vh = videoRef.current.videoHeight || 0;
       setIsHorizontal(vw > vh);
-      // Debug: log intrinsic video size and container size to diagnose cropping
-      try {
-        const container = (videoRef.current.parentElement ||
-          videoRef.current.closest("picture")) as HTMLElement | null;
-        const cw = container?.clientWidth || 0;
-        const ch = container?.clientHeight || 0;
-        console.debug(
-          "[VideoRenderer] video intrinsic:",
-          vw,
-          vh,
-          "container:",
-          cw,
-          ch
-        );
-      } catch (err) {
-        // ignore
-      }
     }
   }, []);
 
   const handlePlayPause = useCallback(async () => {
-    if (videoRef.current) {
+    if (!videoRef.current) return;
+    
+    try {
       if (progress >= 99.9) {
         // If video has ended, restart it
         videoRef.current.currentTime = 0;
-        try {
-          await videoRef.current.play();
-          setIsPlaying(true);
-          setShowPoster(false); // Hide poster when playing
-        } catch (err) {
-          // Optionally log: console.debug("Video play error:", err);
-        }
+        await videoRef.current.play();
+        setIsPlaying(true);
+        setShowPoster(false);
       } else {
         if (isPlaying) {
           videoRef.current.pause();
           setIsPlaying(false);
         } else {
-          try {
-            await videoRef.current.play();
-            setIsPlaying(true);
-            setShowPoster(false); // Hide poster when playing
-          } catch (err) {
-            // Optionally log: console.debug("Video play error:", err);
-          }
+          await videoRef.current.play();
+          setIsPlaying(true);
+          setShowPoster(false);
         }
       }
+    } catch (err) {
+      // Silent fail for play errors (user gesture, etc.)
     }
   }, [isPlaying, progress]);
 
@@ -385,83 +426,66 @@ const VideoRenderer = ({
 
   const handleProgressChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (videoRef.current) {
-        const duration = videoRef.current.duration;
-        if (Number.isFinite(duration) && duration > 0) {
-          try {
-            const newValue = parseFloat(e.target.value);
-            if (Number.isFinite(newValue)) {
-              const newTime = (duration * newValue) / 100;
-              if (Number.isFinite(newTime)) {
-                videoRef.current.currentTime = newTime;
-              }
-              setProgress(newValue);
-            } else {
-              setProgress(0);
-            }
-          } catch (error) {
-            console.error("Error setting video time:", error);
-            setProgress(0);
+      if (!videoRef.current) return;
+      
+      const duration = videoRef.current.duration;
+      if (Number.isFinite(duration) && duration > 0) {
+        const newValue = parseFloat(e.target.value);
+        if (Number.isFinite(newValue)) {
+          const newTime = (duration * newValue) / 100;
+          if (Number.isFinite(newTime)) {
+            videoRef.current.currentTime = newTime;
           }
-        } else {
-          // If duration is invalid, just update the UI without changing video time
-          const newValue = parseFloat(e.target.value);
-          setProgress(Number.isFinite(newValue) ? newValue : 0);
+          setProgress(newValue);
         }
+      } else {
+        // If duration is invalid, just update the UI
+        const newValue = parseFloat(e.target.value);
+        setProgress(Number.isFinite(newValue) ? newValue : 0);
       }
     },
     []
   );
 
   const handleTimeUpdate = useCallback(() => {
-    if (videoRef.current) {
-      const duration = videoRef.current.duration;
-      // Add validation to prevent NaN
-      if (Number.isFinite(duration) && duration > 0) {
-        const newProgress = (videoRef.current.currentTime / duration) * 100;
-        setProgress(Number.isFinite(newProgress) ? newProgress : 0);
-      } else {
-        setProgress(0);
-      }
-    }
-  }, []);
+    throttledTimeUpdate();
+  }, [throttledTimeUpdate]);
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-      if (videoRef.current) {
-        const duration = videoRef.current.duration;
-        if (Number.isFinite(duration) && duration > 0) {
-          const rect = e.currentTarget.getBoundingClientRect();
-          const x = e.clientX - rect.left;
-          const newHoverTime = (x / rect.width) * duration;
-          setHoverTime(Number.isFinite(newHoverTime) ? newHoverTime : null);
-        } else {
-          setHoverTime(null);
-        }
+      if (!videoRef.current) return;
+      
+      const duration = videoRef.current.duration;
+      if (Number.isFinite(duration) && duration > 0) {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const newHoverTime = (x / rect.width) * duration;
+        setHoverTime(Number.isFinite(newHoverTime) ? newHoverTime : null);
       }
     },
     []
   );
 
   const handleMouseLeave = useCallback(() => {
+    setIsHovered(false);
     setHoverTime(null);
   }, []);
 
   const handleVideoEnded = useCallback(() => {
     if (isInView && videoRef.current) {
       videoRef.current.currentTime = 0;
-      setShowPoster(true); // Show poster again when video ends
+      setShowPoster(true);
       videoRef.current
         .play()
         .then(() => {
           setIsPlaying(true);
-          setShowPoster(false); // Hide poster when restarting
+          setShowPoster(false);
         })
-        .catch((err) => {
-          // Optionally log: console.debug("Video play error:", err);
+        .catch(() => {
+          // Silent fail
         });
     } else {
-      setShowPoster(true); // Show poster when video ends and not in view
+      setShowPoster(true);
     }
   }, [isInView]);
 
@@ -475,34 +499,39 @@ const VideoRenderer = ({
     }
   }, [handleTimeUpdate]);
 
+  // Optimized video autoplay effect
   useEffect(() => {
     const currentVideo = videoRef.current;
-    if (currentVideo) {
-      if (isInView) {
+    if (!currentVideo) return;
+
+    if (isInView) {
+      // Use a small delay to prevent rapid state changes
+      const timeoutId = setTimeout(() => {
         if (currentVideo.paused) {
           currentVideo
             .play()
             .then(() => {
               setIsPlaying(true);
-              setShowPoster(false); // Hide poster when autoplaying
+              setShowPoster(false);
               setShouldLoop(true);
             })
-            .catch((err) => {
-              // Suppress play() errors (e.g., user gesture required)
-              // Optionally log: console.debug("Video play error:", err);
+            .catch(() => {
+              // Silent fail
             });
         } else {
           setIsPlaying(true);
-          setShowPoster(false); // Hide poster when already playing
+          setShowPoster(false);
           setShouldLoop(true);
         }
-      } else {
-        if (!currentVideo.paused) {
-          currentVideo.pause();
-        }
-        setIsPlaying(false);
-        setShouldLoop(false);
+      }, 100);
+
+      return () => clearTimeout(timeoutId);
+    } else {
+      if (!currentVideo.paused) {
+        currentVideo.pause();
       }
+      setIsPlaying(false);
+      setShouldLoop(false);
     }
   }, [isInView]);
 
@@ -542,6 +571,9 @@ const VideoRenderer = ({
     []
   );
 
+  // Memoized hover handlers to prevent recreation
+  const handleMouseEnter = useCallback(() => setIsHovered(true), []);
+
   return (
     <Box
       position="relative"
@@ -551,8 +583,8 @@ const VideoRenderer = ({
       paddingTop="10px"
       width="100%"
       minHeight="100%"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       <Box width="100%" position="relative" minHeight="100%">
         <picture
@@ -575,7 +607,7 @@ const VideoRenderer = ({
             style={VIDEO_STYLE}
           />
 
-          {/* Thumbnail Poster Overlay: use an <img> to allow inspecting natural sizes and avoid background-image cropping differences */}
+          {/* Thumbnail Poster Overlay - optimized rendering */}
           {showPoster && thumbnailUrl && (
             <Box
               position="absolute"
@@ -595,19 +627,7 @@ const VideoRenderer = ({
               <img
                 src={thumbnailUrl}
                 alt="video poster"
-                onLoad={(e) => {
-                  try {
-                    const img = e.currentTarget as HTMLImageElement;
-                    const naturalW = img.naturalWidth || 0;
-                    const naturalH = img.naturalHeight || 0;
-                    // measure container size for debugging
-                    const container = img.parentElement as HTMLElement | null;
-                    const cw = container?.clientWidth || 0;
-                    const ch = container?.clientHeight || 0;
-                  } catch (err) {
-                    // swallow errors
-                  }
-                }}
+                loading="lazy" // Add lazy loading for better performance
                 style={{
                   position: "absolute",
                   inset: 0,

@@ -103,6 +103,45 @@ export const removeLastUrlFromContent = (content: string): string => {
   return content;
 };
 
+// Helper function to check if a URL is a video file based on extension
+const isVideoUrl = (url: string): boolean => {
+  const videoExtensions = ['.mp4', '.webm', '.mov', '.avi', '.wmv', '.flv', '.mkv', '.m4v'];
+  const lowercaseUrl = url.toLowerCase();
+  return videoExtensions.some(ext => lowercaseUrl.includes(ext));
+};
+
+// Helper function to detect IPFS URLs from various gateways
+const isIpfsUrl = (url: string): boolean => {
+  return (
+    url.includes('/ipfs/') || 
+    url.includes('ipfs.') ||
+    url.includes('.ipfs.') ||
+    url.includes('pinata.cloud') ||
+    url.includes('gateway.pinata.cloud') ||
+    url.includes('mypinata.cloud') ||
+    url.includes('ipfs.skatehive.app') ||
+    url.includes('ipfs.io') ||
+    url.includes('cloudflare-ipfs.com') ||
+    url.includes('dweb.link') ||
+    url.includes('nftstorage.link') ||
+    url.includes('w3s.link') ||
+    url.includes('.mypinata.cloud') ||
+    url.startsWith('ipfs://')
+  );
+};
+
+// Helper function to extract IPFS hash from any IPFS URL
+const extractIpfsHash = (url: string): string | null => {
+  const ipfsMatch = url.match(/\/ipfs\/([a-zA-Z0-9]{46,})/);
+  return ipfsMatch ? ipfsMatch[1] : null;
+};
+
+// Helper function to convert any IPFS URL to skatehive gateway
+const convertToSkatehiveGateway = (url: string): string => {
+  const hash = extractIpfsHash(url);
+  return hash ? `https://ipfs.skatehive.app/ipfs/${hash}` : url;
+};
+
 export const parseMediaContent = (mediaContent: string): MediaItem[] => {
   const mediaItems: MediaItem[] = [];
 
@@ -110,28 +149,72 @@ export const parseMediaContent = (mediaContent: string): MediaItem[] => {
     const trimmedItem = item.trim();
     if (!trimmedItem) return;
 
-    // Handle markdown images with IPFS
-    if (
-      trimmedItem.includes("![") &&
-      trimmedItem.includes("ipfs.skatehive.app/ipfs/")
-    ) {
-      mediaItems.push({
-        type: "image",
-        content: trimmedItem,
-      });
-      return;
+    // Handle markdown images/videos with any IPFS gateway
+    if (trimmedItem.includes("![") && trimmedItem.includes("http")) {
+      // Extract the URL from markdown syntax
+      const urlMatch = trimmedItem.match(/!\[.*?\]\((.*?)\)/);
+      if (urlMatch && urlMatch[1]) {
+        const url = urlMatch[1];
+        
+        // Check if it's an IPFS URL
+        if (isIpfsUrl(url)) {
+          // Convert to skatehive gateway for consistency
+          const skatehiveUrl = convertToSkatehiveGateway(url);
+          
+          // Check if it's a video based on URL or assume video for IPFS without clear extension
+          if (isVideoUrl(url)) {
+            mediaItems.push({
+              type: "video",
+              content: trimmedItem,
+              src: skatehiveUrl,
+            });
+          } else {
+            // For IPFS URLs without clear video extension, we could check content-type
+            // For now, treat as image but this could be enhanced
+            mediaItems.push({
+              type: "image",
+              content: trimmedItem,
+            });
+          }
+          return;
+        }
+        
+        // Handle non-IPFS URLs
+        if (isVideoUrl(url)) {
+          mediaItems.push({
+            type: "video",
+            content: trimmedItem,
+            src: url,
+          });
+        } else {
+          mediaItems.push({
+            type: "image",
+            content: trimmedItem,
+          });
+        }
+        return;
+      }
     }
 
-    // Handle other markdown images
-    if (
-      trimmedItem.includes("![") &&
-      (trimmedItem.includes("http") || trimmedItem.includes("ipfs:"))
-    ) {
-      mediaItems.push({
-        type: "image",
-        content: trimmedItem,
-      });
-      return;
+    // Handle markdown images/videos with ipfs: protocol
+    if (trimmedItem.includes("![") && trimmedItem.includes("ipfs:")) {
+      const urlMatch = trimmedItem.match(/!\[.*?\]\((.*?)\)/);
+      if (urlMatch && urlMatch[1]) {
+        const url = urlMatch[1];
+        if (isVideoUrl(url)) {
+          mediaItems.push({
+            type: "video",
+            content: trimmedItem,
+            src: url,
+          });
+        } else {
+          mediaItems.push({
+            type: "image",
+            content: trimmedItem,
+          });
+        }
+        return;
+      }
     }
 
     // Handle iframes
@@ -149,23 +232,13 @@ export const parseMediaContent = (mediaContent: string): MediaItem[] => {
           return;
         }
 
-        // Handle IPFS videos
-        if (url.includes("gateway.pinata.cloud/ipfs/")) {
-          const ipfsHash = url.match(/\/ipfs\/([\w-]+)/)?.[1];
-          if (ipfsHash) {
-            const skatehiveUrl = `https://ipfs.skatehive.app/ipfs/${ipfsHash}`;
-            mediaItems.push({
-              type: "video",
-              content: trimmedItem,
-              src: skatehiveUrl,
-            });
-            return;
-          }
-        } else if (url.includes("ipfs.skatehive.app/ipfs/")) {
+        // Handle IPFS videos from any gateway
+        if (isIpfsUrl(url)) {
+          const skatehiveUrl = convertToSkatehiveGateway(url);
           mediaItems.push({
             type: "video",
             content: trimmedItem,
-            src: url,
+            src: skatehiveUrl,
           });
           return;
         }
