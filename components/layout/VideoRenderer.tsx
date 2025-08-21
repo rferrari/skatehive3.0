@@ -11,17 +11,20 @@ import React, {
 } from "react";
 import { FiMaximize, FiMinimize, FiVolume2, FiVolumeX } from "react-icons/fi";
 import { LuPause, LuPlay, LuRotateCw } from "react-icons/lu";
-import LoadingComponent from "../homepage/loadingComponent";
 import { getVideoThumbnail, extractIPFSHash } from "@/lib/utils/ipfsMetadata";
+import MatrixOverlay from "../graphics/MatrixOverlay";
 
 // Throttle helper for performance optimization
-const throttle = <T extends (...args: any[]) => void>(func: T, delay: number): T => {
+const throttle = <T extends (...args: any[]) => void>(
+  func: T,
+  delay: number
+): T => {
   let timeoutId: NodeJS.Timeout | null = null;
   let lastArgs: Parameters<T>;
-  
+
   return ((...args: Parameters<T>) => {
     lastArgs = args;
-    
+
     if (timeoutId === null) {
       timeoutId = setTimeout(() => {
         func(...lastArgs);
@@ -103,7 +106,7 @@ interface VideoControlsProps {
 }
 
 // Memoized LoadingComponent to prevent unnecessary re-renders
-const MemoizedLoadingComponent = React.memo(LoadingComponent);
+const MemoizedLoadingComponent = React.memo(MatrixOverlay);
 
 // Extract VideoControls to a separate component to prevent unnecessary re-renders
 const VideoControls = React.memo(
@@ -326,22 +329,23 @@ const VideoRenderer = ({
   const [thumbnailLoading, setThumbnailLoading] = useState(false);
 
   // Use Intersection Observer to detect visibility with optimized threshold
-  const { ref: setVideoRef, isInView } = useInView({ 
+  const { ref: setVideoRef, isInView } = useInView({
     threshold: 0.3, // Lower threshold for better performance
-    rootMargin: '50px' // Start loading earlier
+    rootMargin: "50px", // Start loading earlier
   });
 
   // Throttled time update handler for better performance
   const throttledTimeUpdate = useMemo(
-    () => throttle(() => {
-      if (videoRef.current) {
-        const duration = videoRef.current.duration;
-        if (Number.isFinite(duration) && duration > 0) {
-          const newProgress = (videoRef.current.currentTime / duration) * 100;
-          setProgress(Number.isFinite(newProgress) ? newProgress : 0);
+    () =>
+      throttle(() => {
+        if (videoRef.current) {
+          const duration = videoRef.current.duration;
+          if (Number.isFinite(duration) && duration > 0) {
+            const newProgress = (videoRef.current.currentTime / duration) * 100;
+            setProgress(Number.isFinite(newProgress) ? newProgress : 0);
+          }
         }
-      }
-    }, 100), // Update every 100ms instead of every frame
+      }, 100), // Update every 100ms instead of every frame
     []
   );
 
@@ -385,7 +389,7 @@ const VideoRenderer = ({
 
   const handlePlayPause = useCallback(async () => {
     if (!videoRef.current) return;
-    
+
     try {
       if (progress >= 99.9) {
         // If video has ended, restart it
@@ -427,7 +431,7 @@ const VideoRenderer = ({
   const handleProgressChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       if (!videoRef.current) return;
-      
+
       const duration = videoRef.current.duration;
       if (Number.isFinite(duration) && duration > 0) {
         const newValue = parseFloat(e.target.value);
@@ -454,7 +458,7 @@ const VideoRenderer = ({
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
       if (!videoRef.current) return;
-      
+
       const duration = videoRef.current.duration;
       if (Number.isFinite(duration) && duration > 0) {
         const rect = e.currentTarget.getBoundingClientRect();
