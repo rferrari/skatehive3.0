@@ -1202,7 +1202,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
             style={{
               marginTop: 16,
               padding: 12,
-              background: "background",
+              background: backgroundMuted,
               borderRadius: 8,
               fontSize: 12,
               fontFamily: "monospace",
