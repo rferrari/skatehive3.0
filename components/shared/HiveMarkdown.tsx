@@ -1,6 +1,5 @@
 import React from "react";
 import markdownRenderer from "@/lib/markdown/MarkdownRenderer";
-import { Image } from "@chakra-ui/react";
 import SkateErrorBoundary from "./SkateErrorBoundary";
 
 interface HiveMarkdownProps {
@@ -8,46 +7,6 @@ interface HiveMarkdownProps {
   className?: string;
   style?: React.CSSProperties;
 }
-
-// Mention component for inline rendering
-const Mention: React.FC<{ username: string }> = ({ username }) => (
-  <span
-    style={{
-      display: "inline-flex",
-      alignItems: "center",
-      gap: 3,
-      verticalAlign: "middle",
-    }}
-  >
-    <Image
-      src={`https://images.ecency.com/webp/u/${username}/avatar/small`}
-      alt={`@${username}`}
-      style={{
-        width: 18,
-        height: 18,
-        borderRadius: "50%",
-        objectFit: "cover",
-        verticalAlign: "middle",
-        display: "inline-block",
-        flexShrink: 0,
-        marginTop: -1, // Slight upward adjustment to align with text
-      }}
-      loading="lazy"
-    />
-    <a
-      href={`/@${username}`}
-      style={{
-        textDecoration: "underline",
-        color: "#3182ce",
-        verticalAlign: "middle",
-        lineHeight: "1",
-        fontSize: "inherit",
-      }}
-    >
-      {username}
-    </a>
-  </span>
-);
 
 const HiveMarkdown: React.FC<HiveMarkdownProps> = ({
   markdown,
@@ -57,28 +16,14 @@ const HiveMarkdown: React.FC<HiveMarkdownProps> = ({
   // Get sanitized HTML from the updated markdownRenderer
   let rawHtml = markdownRenderer(markdown);
 
-  // Replace <mention data-username="username">@username</mention> with <Mention />
+  // Replace <mention data-username="username">@username</mention> with inline HTML
   const processMentions = (html: string) => {
-    const regex =
-      /<mention data-username="([a-zA-Z0-9._-]+)">@([a-zA-Z0-9._-]+)<\/mention>/g;
-    const parts: Array<string | React.ReactElement> = [];
-    let lastIndex = 0;
-    let match: RegExpExecArray | null;
-    while ((match = regex.exec(html)) !== null) {
-      const fullMatch = match[0];
-      const username = match[1];
-      // Push preceding HTML
-      if (match.index > lastIndex) {
-        parts.push(html.slice(lastIndex, match.index));
+    return html.replace(
+      /<mention data-username="([a-zA-Z0-9._-]+)">@([a-zA-Z0-9._-]+)<\/mention>/g,
+      (_, username) => {
+        return `<a href="/@${username}" style="display: inline; text-decoration: underline; color: #3182ce; white-space: nowrap;"><img src="https://images.ecency.com/webp/u/${username}/avatar/small" alt="@${username}" style="width: 16px; height: 16px; border-radius: 50%; object-fit: cover; vertical-align: text-bottom; display: inline; margin-right: 4px; margin-bottom: 2px;" loading="lazy" />${username}</a>`;
       }
-      parts.push(<Mention key={username + match.index} username={username} />);
-      lastIndex = match.index + fullMatch.length;
-    }
-    // Push remaining HTML
-    if (lastIndex < html.length) {
-      parts.push(html.slice(lastIndex));
-    }
-    return parts;
+    );
   };
 
   // Post-process YouTube tags in the HTML
@@ -102,24 +47,9 @@ const HiveMarkdown: React.FC<HiveMarkdownProps> = ({
     );
   };
 
+  // Process mentions and YouTube embeds
   rawHtml = processYouTubeEmbeds(rawHtml);
-
-  // If there are mentions, process them, else just dangerouslySetInnerHTML
-  if (rawHtml.includes("<mention")) {
-    return (
-      <SkateErrorBoundary>
-        <div className={className} style={style}>
-          {processMentions(rawHtml).map((part, i) =>
-            typeof part === "string" ? (
-              <span key={i} dangerouslySetInnerHTML={{ __html: part }} />
-            ) : (
-              part
-            )
-          )}
-        </div>
-      </SkateErrorBoundary>
-    );
-  }
+  rawHtml = processMentions(rawHtml);
 
   return (
     <SkateErrorBoundary>
