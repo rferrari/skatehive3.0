@@ -38,6 +38,7 @@ import {
 import { generateThumbnail } from "@/lib/utils/videoThumbnailUtils";
 import { validateVideoDuration } from "@/lib/utils/videoValidation";
 import { videoApiService } from "@/services/videoApiService";
+import { Image } from "@chakra-ui/react";
 
 interface VideoUploaderProps {
   onUpload: (url: string | null) => void;
@@ -1310,7 +1311,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
                       <div style={{ marginTop: 8 }}>
                         <strong>📸 Preview:</strong>
                         <div style={{ marginTop: 4 }}>
-                          <img
+                          <Image
                             src={thumbnailDebugInfo.url}
                             alt="Generated thumbnail"
                             style={{

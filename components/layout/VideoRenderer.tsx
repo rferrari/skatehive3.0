@@ -46,6 +46,7 @@ interface VideoControlsProps {
 
 // Memoized LoadingComponent to prevent unnecessary re-renders
 const MemoizedLoadingComponent = React.memo(LogoMatrix);
+MemoizedLoadingComponent.displayName = 'MemoizedLoadingComponent';
 
 // Extract VideoControls to a separate component to prevent unnecessary re-renders
 const VideoControls = React.memo(
@@ -195,6 +196,8 @@ const VideoControls = React.memo(
     );
   }
 );
+
+VideoControls.displayName = 'VideoControls';
 
 // Memoize common styles outside the component
 const VIDEO_STYLE = {
@@ -515,4 +518,6 @@ const VideoRenderer = ({ src, ...props }: RendererProps) => {
 };
 
 // Export with React.memo to prevent unnecessary re-renders
-export default React.memo(VideoRenderer);
+const MemoizedVideoRenderer = React.memo(VideoRenderer);
+MemoizedVideoRenderer.displayName = 'VideoRenderer';
+export default MemoizedVideoRenderer;
