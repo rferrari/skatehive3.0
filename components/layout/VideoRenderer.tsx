@@ -1,4 +1,11 @@
-import { Box, Button, HStack, IconButton, Text } from "@chakra-ui/react";
+import {
+  Box,
+  Button,
+  HStack,
+  IconButton,
+  Text,
+  useBreakpointValue,
+} from "@chakra-ui/react";
 import React, {
   useCallback,
   useEffect,
@@ -6,8 +13,6 @@ import React, {
   useRef,
   useState,
   RefObject,
-  Dispatch,
-  SetStateAction,
 } from "react";
 import { FiMaximize, FiMinimize, FiVolume2, FiVolumeX } from "react-icons/fi";
 import { LuPause, LuPlay, LuRotateCw } from "react-icons/lu";
@@ -25,9 +30,6 @@ interface VideoControlsProps {
   isPlaying: boolean;
   handlePlayPause: () => void;
   volume: number;
-  setVolume: Dispatch<SetStateAction<number>>;
-  showVolumeSlider: boolean;
-  setShowVolumeSlider: Dispatch<SetStateAction<boolean>>;
   handleVolumeToggle: () => void;
   isFullscreen: boolean;
   handleFullscreenToggle: () => void;
@@ -38,8 +40,8 @@ interface VideoControlsProps {
   hoverTime: number | null;
   videoDuration: number | undefined;
   progressSliderStyle: React.CSSProperties;
-  volumeSliderStyle: React.CSSProperties;
   videoRef: RefObject<HTMLVideoElement>;
+  showProgressBar: boolean;
 }
 
 // Memoized LoadingComponent to prevent unnecessary re-renders
@@ -51,9 +53,6 @@ const VideoControls = React.memo(
     isPlaying,
     handlePlayPause,
     volume,
-    setVolume,
-    showVolumeSlider,
-    setShowVolumeSlider,
     handleVolumeToggle,
     isFullscreen,
     handleFullscreenToggle,
@@ -64,8 +63,8 @@ const VideoControls = React.memo(
     hoverTime,
     videoDuration,
     progressSliderStyle,
-    volumeSliderStyle,
     videoRef,
+    showProgressBar,
   }: VideoControlsProps) => {
     // Check if video has ended (progress is at or very close to 100%)
     const isVideoEnded = progress >= 99.9;
@@ -79,30 +78,32 @@ const VideoControls = React.memo(
         px={4}
         display="flex"
         alignItems="center"
-        justifyContent="space-between"
+        justifyContent={showProgressBar ? "space-between" : "flex-start"}
         zIndex={3}
       >
         <HStack gap={0}>
-          <Button
-            onClick={(e) => {
-              e.stopPropagation();
-              handlePlayPause();
-            }}
-            size="md"
-            p={2}
-            variant={"ghost"}
-            color={"white"}
-            _hover={{ bg: "transparent", color: "limegreen" }}
-            zIndex={3}
-          >
-            {isVideoEnded ? (
-              <LuRotateCw />
-            ) : isPlaying ? (
-              <LuPause />
-            ) : (
-              <LuPlay />
-            )}
-          </Button>
+          {showProgressBar && (
+            <Button
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePlayPause();
+              }}
+              size="md"
+              p={2}
+              variant={"ghost"}
+              color={"white"}
+              _hover={{ bg: "transparent", color: "limegreen" }}
+              zIndex={3}
+            >
+              {isVideoEnded ? (
+                <LuRotateCw />
+              ) : isPlaying ? (
+                <LuPause />
+              ) : (
+                <LuPlay />
+              )}
+            </Button>
+          )}
           <Box display="flex" alignItems="center" position="relative">
             <IconButton
               aria-label="Volume"
@@ -110,8 +111,23 @@ const VideoControls = React.memo(
                 e.stopPropagation();
                 handleVolumeToggle();
               }}
-              onMouseEnter={() => setShowVolumeSlider(true)}
-              onMouseLeave={() => setShowVolumeSlider(false)}
+              p={showProgressBar ? 2 : 3} // Larger padding on mobile for better touch target
+              variant={"ghost"}
+              color={"white"}
+              _hover={{ bg: "transparent", color: "limegreen" }}
+              size={showProgressBar ? "md" : "lg"} // Larger size on mobile
+              zIndex={3}
+            >
+              {volume === 0 ? <FiVolumeX /> : <FiVolume2 />}
+            </IconButton>
+          </Box>
+          {showProgressBar && (
+            <IconButton
+              aria-label="Fullscreen"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleFullscreenToggle();
+              }}
               p={2}
               variant={"ghost"}
               color={"white"}
@@ -119,103 +135,62 @@ const VideoControls = React.memo(
               size="md"
               zIndex={3}
             >
-              {volume === 0 ? <FiVolumeX /> : <FiVolume2 />}
+              {isFullscreen ? <FiMinimize /> : <FiMaximize />}
             </IconButton>
-            {showVolumeSlider && (
+          )}
+        </HStack>
+
+        {showProgressBar && (
+          <Box position="relative" flex="1" mx={4}>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={Number.isFinite(progress) ? progress : 0}
+              onChange={handleProgressChange}
+              onMouseMove={handleMouseMove}
+              onMouseLeave={handleMouseLeave}
+              style={progressSliderStyle}
+            />
+
+            <style jsx>{`
+              input[type="range"]::-webkit-slider-runnable-track {
+                -webkit-appearance: none;
+                height: 8px;
+                background: transparent;
+              }
+              input[type="range"]::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                height: 24px;
+                width: 24px;
+                background: url("/images/skateboardloader.webp") no-repeat
+                  center;
+                background-size: contain;
+                border: none;
+                border-radius: 0%;
+                cursor: pointer;
+                margin-top: -16px;
+                box-shadow: none;
+              }
+            `}</style>
+
+            {hoverTime !== null && videoDuration && (
               <Box
                 position="absolute"
-                bottom="100%"
-                left="50%"
-                transform="translate(-50%, -8px)"
-                zIndex={4}
-                onMouseEnter={() => setShowVolumeSlider(true)}
-                onMouseLeave={() => setShowVolumeSlider(false)}
+                top="-25px"
+                left={`${(hoverTime / videoDuration) * 100}%`}
+                transform="translateX(-50%)"
+                bg="black"
+                color="white"
+                p={1}
+                rounded="md"
+                fontSize="xs"
               >
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.05"
-                  value={volume}
-                  onChange={(e) => {
-                    const newVolume = parseFloat(e.target.value);
-                    setVolume(newVolume);
-                    if (videoRef.current) {
-                      videoRef.current.volume = newVolume;
-                      // Unmute when user adjusts volume above 0, mute when at 0
-                      videoRef.current.muted = newVolume === 0;
-                    }
-                  }}
-                  style={volumeSliderStyle}
-                />
+                {new Date(hoverTime * 1000).toISOString().substr(11, 8)}
               </Box>
             )}
           </Box>
-          <IconButton
-            aria-label="Fullscreen"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleFullscreenToggle();
-            }}
-            p={2}
-            variant={"ghost"}
-            color={"white"}
-            _hover={{ bg: "transparent", color: "limegreen" }}
-            size="md"
-            zIndex={3}
-          >
-            {isFullscreen ? <FiMinimize /> : <FiMaximize />}
-          </IconButton>
-        </HStack>
-
-        <Box position="relative" flex="1" mx={4}>
-          <input
-            type="range"
-            min="0"
-            max="100"
-            value={Number.isFinite(progress) ? progress : 0}
-            onChange={handleProgressChange}
-            onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
-            style={progressSliderStyle}
-          />
-
-          <style jsx>{`
-            input[type="range"]::-webkit-slider-runnable-track {
-              -webkit-appearance: none;
-              height: 8px;
-              background: transparent;
-            }
-            input[type="range"]::-webkit-slider-thumb {
-              -webkit-appearance: none;
-              height: 24px;
-              width: 24px;
-              background: url("/images/skateboardloader.webp") no-repeat center;
-              background-size: contain;
-              border: none;
-              border-radius: 0%;
-              cursor: pointer;
-              margin-top: -16px;
-              box-shadow: none;
-            }
-          `}</style>
-
-          {hoverTime !== null && videoDuration && (
-            <Box
-              position="absolute"
-              top="-25px"
-              left={`${(hoverTime / videoDuration) * 100}%`}
-              transform="translateX(-50%)"
-              bg="black"
-              color="white"
-              p={1}
-              rounded="md"
-              fontSize="xs"
-            >
-              {new Date(hoverTime * 1000).toISOString().substr(11, 8)}
-            </Box>
-          )}
-        </Box>
+        )}
       </Box>
     );
   }
@@ -241,16 +216,7 @@ const VideoRenderer = ({ src, ...props }: RendererProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isHorizontal, setIsHorizontal] = useState(false);
-  const [volume, setVolume] = useState(() => {
-    // Always start muted for autoplay, but check if user has volume preference stored for later use
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("videoVolume");
-      // Store the preference but start muted (0) for autoplay
-      return 0; // Always start muted for autoplay
-    }
-    return 0; // Always start muted
-  });
-  const [showVolumeSlider, setShowVolumeSlider] = useState(false);
+  const [volume, setVolume] = useState(0); // Always start muted for autoplay
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -258,6 +224,9 @@ const VideoRenderer = ({ src, ...props }: RendererProps) => {
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const [shouldLoop, setShouldLoop] = useState(false);
   const [hasError, setHasError] = useState(false);
+
+  // Hide progress bar on mobile (show only audio controls)
+  const showProgressBar = useBreakpointValue({ base: false, md: true }) ?? true;
 
   // Use Intersection Observer to detect visibility
   const { ref: setVideoRef, inView: isInView } = useInView({ threshold: 0.5 });
@@ -271,22 +240,11 @@ const VideoRenderer = ({ src, ...props }: RendererProps) => {
     [setVideoRef]
   );
 
-  // Save volume preference (only when volume > 0)
-  useEffect(() => {
-    if (typeof window !== "undefined" && volume > 0) {
-      localStorage.setItem("videoVolume", volume.toString());
-    }
-  }, [volume]);
-
   // Function to handle volume button click (toggle mute/unmute)
   const handleVolumeToggle = useCallback(() => {
     if (volume === 0) {
-      // Unmute: restore to saved volume or default to 0.5
-      const savedVolume =
-        typeof window !== "undefined"
-          ? localStorage.getItem("videoVolume")
-          : null;
-      const newVolume = savedVolume ? parseFloat(savedVolume) : 0.5;
+      // Unmute: set to fixed volume level
+      const newVolume = 0.5;
       setVolume(newVolume);
       if (videoRef.current) {
         videoRef.current.volume = newVolume;
@@ -465,18 +423,6 @@ const VideoRenderer = ({ src, ...props }: RendererProps) => {
     [sliderBackground]
   );
 
-  const volumeSliderStyle = useMemo(
-    () => ({
-      ...BASE_SLIDER_STYLE,
-      writingMode: "vertical-lr" as React.CSSProperties["writingMode"],
-      WebkitAppearance:
-        "slider-vertical" as React.CSSProperties["WebkitAppearance"],
-      height: "80px",
-      transform: "rotate(180deg)",
-    }),
-    []
-  );
-
   return (
     <Box
       position="relative"
@@ -550,9 +496,6 @@ const VideoRenderer = ({ src, ...props }: RendererProps) => {
           isPlaying={isPlaying}
           handlePlayPause={handlePlayPause}
           volume={volume}
-          setVolume={setVolume}
-          showVolumeSlider={showVolumeSlider}
-          setShowVolumeSlider={setShowVolumeSlider}
           handleVolumeToggle={handleVolumeToggle}
           isFullscreen={isFullscreen}
           handleFullscreenToggle={handleFullscreenToggle}
@@ -563,8 +506,8 @@ const VideoRenderer = ({ src, ...props }: RendererProps) => {
           hoverTime={hoverTime}
           videoDuration={videoRef.current?.duration}
           progressSliderStyle={progressSliderStyle}
-          volumeSliderStyle={volumeSliderStyle}
           videoRef={videoRef as React.RefObject<HTMLVideoElement>}
+          showProgressBar={showProgressBar}
         />
       )}
     </Box>
