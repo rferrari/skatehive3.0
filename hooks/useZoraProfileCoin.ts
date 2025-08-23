@@ -1,0 +1,121 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { getProfile } from "@zoralabs/coins-sdk";
+import { Address } from "viem";
+import { convertIpfsUrl } from "@/lib/utils/ipfsMetadata";
+
+export interface ZoraProfileCoinData {
+  address: Address;
+  symbol: string;
+  name: string;
+  marketCap?: string;
+  price?: string;
+  image?: string;
+  totalSupply?: string;
+  holderCount?: number;
+  isCreatedByUser?: boolean;
+}
+
+// Helper function to format IPFS URLs
+function formatImageUrl(url: string | undefined): string | undefined {
+  if (!url) return undefined;
+  return convertIpfsUrl(url);
+}
+
+export function useZoraProfileCoin(walletAddress: string | undefined) {
+  const [profileCoin, setProfileCoin] = useState<ZoraProfileCoinData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchProfileCoin = async () => {
+      console.log("🔍 useZoraProfileCoin: Starting fetch", { walletAddress });
+      
+      if (!walletAddress) {
+        console.log("❌ useZoraProfileCoin: No wallet address provided");
+        setProfileCoin(null);
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        console.log("📡 useZoraProfileCoin: Calling getProfile for address:", walletAddress);
+        
+        const response = await getProfile({
+          identifier: walletAddress as Address,
+        });
+
+        console.log("📦 useZoraProfileCoin: Response received", { 
+          hasData: !!response.data,
+          profileExists: !!response.data?.profile 
+        });
+        
+        const profile = response.data?.profile;
+        
+        if (profile?.creatorCoin) {
+          console.log("💰 useZoraProfileCoin: Found creator coin (profile coin)");
+          
+          const creatorCoin = profile.creatorCoin;
+          
+          console.log("✅ useZoraProfileCoin: Profile coin details:", {
+            address: creatorCoin.address,
+            marketCap: creatorCoin.marketCap,
+            marketCapDelta24h: creatorCoin.marketCapDelta24h,
+            handle: profile.handle,
+            displayName: profile.displayName,
+            walletAddress,
+          });
+
+          // Use profile handle as symbol and displayName as coin name
+          const profileCoinData: ZoraProfileCoinData = {
+            address: creatorCoin.address as Address,
+            symbol: profile.handle || "PROFILE", // Use handle as symbol
+            name: profile.displayName || profile.handle || "Profile Coin", // Use displayName or fallback to handle
+            marketCap: creatorCoin.marketCap || undefined,
+            price: undefined, // Not available in this API response
+            image: profile.avatar?.medium || profile.avatar?.small || undefined, // Use profile avatar
+            totalSupply: undefined, // Not available in getProfile response
+            holderCount: undefined, // Not available in getProfile response
+            isCreatedByUser: true,
+          };
+          
+          console.log("🎯 useZoraProfileCoin: Profile coin data:", profileCoinData);
+          setProfileCoin(profileCoinData);
+        } else {
+          console.log("❌ useZoraProfileCoin: No creator coin found for this profile");
+          setProfileCoin(null);
+        }
+      } catch (err) {
+        console.error("💥 useZoraProfileCoin: Error fetching profile coin:", err);
+        console.error("💥 useZoraProfileCoin: Error details:", {
+          message: err instanceof Error ? err.message : "Unknown error",
+          stack: err instanceof Error ? err.stack : undefined,
+          err
+        });
+        setError(err instanceof Error ? err.message : "Failed to fetch profile coin");
+        setProfileCoin(null);
+      } finally {
+        setLoading(false);
+        console.log("🏁 useZoraProfileCoin: Fetch completed");
+      }
+    };
+
+    fetchProfileCoin();
+  }, [walletAddress]);
+
+  return {
+    profileCoin,
+    loading,
+    error,
+    refetch: () => {
+      if (walletAddress) {
+        setProfileCoin(null);
+        setError(null);
+        // The useEffect will handle the refetch
+      }
+    },
+  };
+}

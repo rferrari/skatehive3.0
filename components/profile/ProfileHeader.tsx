@@ -10,11 +10,13 @@ import {
   IconButton,
   Link,
   useToken,
+  VStack,
 } from "@chakra-ui/react";
 import { FaGlobe, FaEdit } from "react-icons/fa";
 import FollowButton from "./FollowButton";
 import PowerBars from "./PowerBars";
 import MobileProfileHeader from "./MobileProfileHeader";
+import ZoraProfileCoinDisplay from "./ZoraProfileCoinDisplay";
 import { ProfileData } from "./ProfilePage";
 
 interface ProfileHeaderProps {
@@ -79,20 +81,30 @@ const ProfileHeader = memo(function ProfileHeader({
             maxW="25%"
             w="25%"
           >
-            <Avatar
-              src={profileData.profileImage}
-              name={username}
-              borderRadius="md"
-              boxSize="100px"
-            />
-            {profileData.vp_percent && profileData.rc_percent && (
-              <PowerBars
-                vpPercent={profileData.vp_percent}
-                rcPercent={profileData.rc_percent}
-                height={100}
-                width={25}
+            <Flex direction="column" align="center" gap={2}>
+              <Avatar
+                src={profileData.profileImage}
+                name={username}
+                borderRadius="md"
+                boxSize="100px"
               />
-            )}
+
+              {/* Zora Profile Coin Display */}
+            </Flex>
+            <VStack>
+              <ZoraProfileCoinDisplay
+                walletAddress={profileData.ethereum_address}
+                size="sm"
+              />
+              {profileData.vp_percent && profileData.rc_percent && (
+                <PowerBars
+                  vpPercent={profileData.vp_percent}
+                  rcPercent={profileData.rc_percent}
+                  height={100}
+                  width={25}
+                />
+              )}
+            </VStack>
           </Flex>
 
           {/* Profile Info */}

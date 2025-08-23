@@ -16,6 +16,7 @@ import { ProfileData } from "./ProfilePage";
 import { useRouter } from "next/navigation";
 import { useAioha } from "@aioha/react-ui";
 import { checkFollow, changeFollow } from "@/lib/hive/client-functions";
+import ZoraProfileCoinDisplay from "./ZoraProfileCoinDisplay";
 
 interface MobileProfileHeaderProps {
   profileData: ProfileData;
@@ -136,9 +137,7 @@ const MobileProfileHeader = memo(function MobileProfileHeader({
               onClick={handleSettingsClick}
             />
           )}
-        </Flex>
-
-        {/* Profile Info Section */}
+        </Flex>        {/* Profile Info Section */}
         <VStack align="flex-start" spacing={2} mb={4}>
           {/* Name and Username with Follow Button */}
           <VStack align="flex-start" spacing={0}>
@@ -229,8 +228,8 @@ const MobileProfileHeader = memo(function MobileProfileHeader({
             )}
           </Flex>
 
-          {/* Stats Row - Farcaster Style */}
-          <Flex gap={4} fontSize="sm">
+          {/* Stats Row - Farcaster Style with Zora Coin */}
+          <Flex gap={4} fontSize="sm" wrap="wrap">
             <Flex align="center" gap={1}>
               <Text fontWeight="bold" color="white">
                 {profileData.following}
@@ -251,6 +250,13 @@ const MobileProfileHeader = memo(function MobileProfileHeader({
                 <Text color="whiteAlpha.700">VP</Text>
               </Flex>
             )}
+            {/* Zora Profile Coin Display integrated into stats */}
+            <Box>
+              <ZoraProfileCoinDisplay
+                walletAddress={profileData.ethereum_address}
+                size="xs"
+              />
+            </Box>
           </Flex>
         </VStack>
 
