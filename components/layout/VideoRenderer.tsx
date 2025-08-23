@@ -1,4 +1,4 @@
-import { Box, Button, HStack, IconButton } from "@chakra-ui/react";
+import { Box, Button, HStack, IconButton, Text } from "@chakra-ui/react";
 import React, {
   useCallback,
   useEffect,
@@ -11,34 +11,8 @@ import React, {
 } from "react";
 import { FiMaximize, FiMinimize, FiVolume2, FiVolumeX } from "react-icons/fi";
 import { LuPause, LuPlay, LuRotateCw } from "react-icons/lu";
+import { useInView } from "react-intersection-observer";
 import LogoMatrix from "../graphics/LogoMatrix";
-// Add useInView hook for detecting visibility
-interface IntersectionOptions {
-  threshold?: number;
-  rootMargin?: string;
-  root?: Element | null;
-}
-
-function useInView(options: IntersectionOptions = {}) {
-  const [ref, setRef] = useState<Element | null>(null);
-  const [isInView, setIsInView] = useState(false);
-
-  useEffect(() => {
-    if (!ref) return;
-
-    const observer = new IntersectionObserver(([entry]) => {
-      setIsInView(entry.isIntersecting);
-    }, options);
-
-    observer.observe(ref);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [ref, options]);
-
-  return { ref: setRef, isInView };
-}
 
 type RendererProps = {
   src?: string;
@@ -54,6 +28,7 @@ interface VideoControlsProps {
   setVolume: Dispatch<SetStateAction<number>>;
   showVolumeSlider: boolean;
   setShowVolumeSlider: Dispatch<SetStateAction<boolean>>;
+  handleVolumeToggle: () => void;
   isFullscreen: boolean;
   handleFullscreenToggle: () => void;
   progress: number;
@@ -79,6 +54,7 @@ const VideoControls = React.memo(
     setVolume,
     showVolumeSlider,
     setShowVolumeSlider,
+    handleVolumeToggle,
     isFullscreen,
     handleFullscreenToggle,
     progress,
@@ -132,8 +108,10 @@ const VideoControls = React.memo(
               aria-label="Volume"
               onClick={(e) => {
                 e.stopPropagation();
-                setShowVolumeSlider((prev: boolean) => !prev);
+                handleVolumeToggle();
               }}
+              onMouseEnter={() => setShowVolumeSlider(true)}
+              onMouseLeave={() => setShowVolumeSlider(false)}
               p={2}
               variant={"ghost"}
               color={"white"}
@@ -150,6 +128,8 @@ const VideoControls = React.memo(
                 left="50%"
                 transform="translate(-50%, -8px)"
                 zIndex={4}
+                onMouseEnter={() => setShowVolumeSlider(true)}
+                onMouseLeave={() => setShowVolumeSlider(false)}
               >
                 <input
                   type="range"
@@ -162,6 +142,7 @@ const VideoControls = React.memo(
                     setVolume(newVolume);
                     if (videoRef.current) {
                       videoRef.current.volume = newVolume;
+                      // Unmute when user adjusts volume above 0, mute when at 0
                       videoRef.current.muted = newVolume === 0;
                     }
                   }}
@@ -209,7 +190,7 @@ const VideoControls = React.memo(
               -webkit-appearance: none;
               height: 24px;
               width: 24px;
-              background: url("/skateboardloader.webp") no-repeat center;
+              background: url("/images/skateboardloader.webp") no-repeat center;
               background-size: contain;
               border: none;
               border-radius: 0%;
@@ -260,7 +241,15 @@ const VideoRenderer = ({ src, ...props }: RendererProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isHorizontal, setIsHorizontal] = useState(false);
-  const [volume, setVolume] = useState(0);
+  const [volume, setVolume] = useState(() => {
+    // Always start muted for autoplay, but check if user has volume preference stored for later use
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("videoVolume");
+      // Store the preference but start muted (0) for autoplay
+      return 0; // Always start muted for autoplay
+    }
+    return 0; // Always start muted
+  });
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -268,33 +257,92 @@ const VideoRenderer = ({ src, ...props }: RendererProps) => {
   const [hoverTime, setHoverTime] = useState<number | null>(null);
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const [shouldLoop, setShouldLoop] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   // Use Intersection Observer to detect visibility
-  const { ref: setVideoRef, isInView } = useInView({ threshold: 0.5 });
+  const { ref: setVideoRef, inView: isInView } = useInView({ threshold: 0.5 });
+
+  // Combined ref callback to handle both video ref and intersection observer
+  const setRefs = useCallback(
+    (node: HTMLVideoElement | null) => {
+      videoRef.current = node;
+      setVideoRef(node);
+    },
+    [setVideoRef]
+  );
+
+  // Save volume preference (only when volume > 0)
+  useEffect(() => {
+    if (typeof window !== "undefined" && volume > 0) {
+      localStorage.setItem("videoVolume", volume.toString());
+    }
+  }, [volume]);
+
+  // Function to handle volume button click (toggle mute/unmute)
+  const handleVolumeToggle = useCallback(() => {
+    if (volume === 0) {
+      // Unmute: restore to saved volume or default to 0.5
+      const savedVolume =
+        typeof window !== "undefined"
+          ? localStorage.getItem("videoVolume")
+          : null;
+      const newVolume = savedVolume ? parseFloat(savedVolume) : 0.5;
+      setVolume(newVolume);
+      if (videoRef.current) {
+        videoRef.current.volume = newVolume;
+        videoRef.current.muted = false;
+      }
+    } else {
+      // Mute
+      setVolume(0);
+      if (videoRef.current) {
+        videoRef.current.muted = true;
+      }
+    }
+  }, [volume]);
 
   const handleLoadedData = useCallback(() => {
     setIsVideoLoaded(true);
+    setHasError(false);
     if (videoRef.current) {
       setIsHorizontal(
         videoRef.current.videoWidth > videoRef.current.videoHeight
       );
+      // Ensure video starts muted for autoplay
+      videoRef.current.muted = true;
+      videoRef.current.volume = 0;
     }
   }, []);
 
+  const handleVideoError = useCallback(() => {
+    setHasError(true);
+    setIsVideoLoaded(false);
+    setIsPlaying(false);
+  }, []);
+
   const handlePlayPause = useCallback(() => {
-    if (videoRef.current) {
+    if (videoRef.current && !hasError) {
       if (progress >= 99.9) {
         // If video has ended, restart it
         videoRef.current.currentTime = 0;
-        videoRef.current.play();
+        videoRef.current.play().catch(() => {
+          // Silent fail if play is blocked
+        });
         setIsPlaying(true);
       } else {
         // Normal play/pause toggle
-        isPlaying ? videoRef.current.pause() : videoRef.current.play();
-        setIsPlaying(!isPlaying);
+        if (isPlaying) {
+          videoRef.current.pause();
+          setIsPlaying(false);
+        } else {
+          videoRef.current.play().catch(() => {
+            // Silent fail if play is blocked
+          });
+          setIsPlaying(true);
+        }
       }
     }
-  }, [isPlaying, progress]);
+  }, [isPlaying, progress, hasError]);
 
   const handleFullscreenToggle = useCallback(() => {
     if (videoRef.current) {
@@ -334,14 +382,6 @@ const VideoRenderer = ({ src, ...props }: RendererProps) => {
     []
   );
 
-  const handleTimeUpdate = useCallback(() => {
-    if (videoRef.current) {
-      const newProgress =
-        (videoRef.current.currentTime / videoRef.current.duration) * 100;
-      setProgress(newProgress);
-    }
-  }, []);
-
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
       if (videoRef.current) {
@@ -359,26 +399,38 @@ const VideoRenderer = ({ src, ...props }: RendererProps) => {
   }, []);
 
   const handleVideoEnded = useCallback(() => {
-    if (isInView && videoRef.current) {
+    if (isInView && videoRef.current && !hasError) {
       videoRef.current.currentTime = 0;
-      videoRef.current.play();
+      videoRef.current.play().catch(() => {
+        // Silent fail if autoplay is blocked
+      });
       setIsPlaying(true);
     }
-  }, [isInView]);
+  }, [isInView, hasError]);
 
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.addEventListener("timeupdate", handleTimeUpdate);
-      return () => {
-        videoRef.current?.removeEventListener("timeupdate", handleTimeUpdate);
-      };
-    }
-  }, [handleTimeUpdate]);
+    const video = videoRef.current;
+    if (!video) return;
+
+    const handler = () => {
+      if (video) {
+        const newProgress = (video.currentTime / video.duration) * 100;
+        setProgress(newProgress);
+      }
+    };
+
+    video.addEventListener("timeupdate", handler);
+    return () => {
+      video.removeEventListener("timeupdate", handler);
+    };
+  }, []);
 
   useEffect(() => {
-    if (videoRef.current) {
+    if (videoRef.current && !hasError) {
       if (isInView) {
-        videoRef.current.play();
+        videoRef.current.play().catch(() => {
+          // Silent fail if autoplay is blocked
+        });
         setIsPlaying(true);
         setShouldLoop(true);
       } else {
@@ -387,7 +439,7 @@ const VideoRenderer = ({ src, ...props }: RendererProps) => {
         setShouldLoop(false);
       }
     }
-  }, [isInView]);
+  }, [isInView, hasError]);
 
   // Memoize slider background to prevent re-computation on every render
   const sliderBackground = useMemo(
@@ -436,15 +488,12 @@ const VideoRenderer = ({ src, ...props }: RendererProps) => {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <picture
-        style={{ position: "relative", width: "100%", height: "100%" }}
-        ref={setVideoRef}
-      >
+      <picture style={{ position: "relative", width: "100%", height: "100%" }}>
         <video
           {...props}
-          ref={videoRef}
+          ref={setRefs}
           src={src}
-          muted={volume === 0}
+          muted={true} // Always start muted for autoplay
           controls={false}
           playsInline={true}
           autoPlay={true}
@@ -452,10 +501,11 @@ const VideoRenderer = ({ src, ...props }: RendererProps) => {
           preload="metadata"
           onLoadedData={handleLoadedData}
           onEnded={handleVideoEnded}
+          onError={handleVideoError}
           onClick={(e) => e.stopPropagation()}
           style={VIDEO_STYLE}
         />
-        {!isVideoLoaded && (
+        {!isVideoLoaded && !hasError && (
           <Box
             position="absolute"
             top={0}
@@ -471,6 +521,29 @@ const VideoRenderer = ({ src, ...props }: RendererProps) => {
             <MemoizedLoadingComponent />
           </Box>
         )}
+        {hasError && (
+          <Box
+            position="absolute"
+            top={0}
+            left={0}
+            width="100%"
+            height="100%"
+            zIndex={3}
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            bg="gray.800"
+            borderRadius="md"
+          >
+            <Text color="gray.400" fontSize="sm" textAlign="center">
+              Video failed to load
+              <br />
+              <Text as="span" fontSize="xs" color="gray.500">
+                Please check your connection and try again
+              </Text>
+            </Text>
+          </Box>
+        )}
       </picture>
       {isHovered && (
         <VideoControls
@@ -480,6 +553,7 @@ const VideoRenderer = ({ src, ...props }: RendererProps) => {
           setVolume={setVolume}
           showVolumeSlider={showVolumeSlider}
           setShowVolumeSlider={setShowVolumeSlider}
+          handleVolumeToggle={handleVolumeToggle}
           isFullscreen={isFullscreen}
           handleFullscreenToggle={handleFullscreenToggle}
           progress={progress}
