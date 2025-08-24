@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 
 // Enhanced mobile detection function
 const detectMobileDevice = () => {
-    if (typeof window === 'undefined') return false;
+    if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
     
     // User agent detection for actual mobile devices
     const userAgentMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(

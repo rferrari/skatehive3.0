@@ -314,6 +314,15 @@ export function detectiOSDevice(): {
   isIPad: boolean;
   iosVersion?: number;
 } {
+  if (typeof navigator === 'undefined') {
+    return {
+      isIOS: false,
+      isIPhone: false,
+      isIPad: false,
+      iosVersion: undefined
+    };
+  }
+  
   const userAgent = navigator.userAgent;
   const isIOS = /iPad|iPhone|iPod/.test(userAgent);
   const isIPhone = /iPhone/.test(userAgent);
@@ -342,6 +351,15 @@ export function detectAndroidDevice(): {
   androidVersion?: number;
   chromeVersion?: number;
 } {
+  if (typeof navigator === 'undefined') {
+    return {
+      isAndroid: false,
+      isOldAndroid: false,
+      androidVersion: undefined,
+      chromeVersion: undefined
+    };
+  }
+  
   const ua = navigator.userAgent;
   const isAndroid = /Android/i.test(ua);
   
@@ -549,7 +567,7 @@ export function detectFFmpegSupport(): boolean {
       }
       
       // Check available memory (rough estimate)
-      if ((navigator as any).deviceMemory && (navigator as any).deviceMemory < 4) {
+      if (typeof navigator !== 'undefined' && (navigator as any).deviceMemory && (navigator as any).deviceMemory < 4) {
         console.log("📱 Low device memory detected, using fallback");
         return false;
       }
@@ -568,7 +586,7 @@ export function detectFFmpegSupport(): boolean {
       }
       
       // Check available memory for newer Android
-      if ((navigator as any).deviceMemory && (navigator as any).deviceMemory < 2) {
+      if (typeof navigator !== 'undefined' && (navigator as any).deviceMemory && (navigator as any).deviceMemory < 2) {
         console.log("🤖 Low Android device memory, using fallback");
         return false;
       }
@@ -578,6 +596,9 @@ export function detectFFmpegSupport(): boolean {
     }
     
     // For other mobile devices, let's be more lenient and try FFmpeg anyway
+    if (typeof navigator === 'undefined') {
+      return false; // SSR environment
+    }
     const ua = navigator.userAgent;
     const isMobile = /webOS|BlackBerry|IEMobile|Opera Mini/i.test(ua);
     
