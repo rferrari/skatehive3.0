@@ -60,6 +60,13 @@ const ProfileHeader = memo(function ProfileHeader({
   );
   const [zoraDataFetched, setZoraDataFetched] = useState(false);
 
+  // Reset Zora cache when identity changes
+  useEffect(() => {
+    setCachedZoraData(null);
+    setZoraDataFetched(false);
+    // Optional: ensure we don't render Zora layout if no wallet
+    if (!profileData.ethereum_address) setShowZoraProfile(false);
+  }, [username, profileData.ethereum_address]);
   // Only fetch Zora data when needed and not already cached
   const shouldFetchZora =
     showZoraProfile && !zoraDataFetched && profileData.ethereum_address;
@@ -104,7 +111,7 @@ const ProfileHeader = memo(function ProfileHeader({
         <Box w="100%" maxW="container.xl" mx="auto" px={6} py={4}>
           {/* Single Row Layout - Everything Balanced */}
           {/* Conditional Profile Layout */}
-          {showZoraProfile ? (
+          {showZoraProfile && profileData.ethereum_address ? (
             <ZoraProfileLayout
               walletAddress={profileData.ethereum_address}
               username={username}

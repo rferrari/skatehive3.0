@@ -1,13 +1,7 @@
 "use client";
 
 import React, { memo } from "react";
-import {
-  Box,
-  Text,
-  Flex,
-  Spinner,
-  Link,
-} from "@chakra-ui/react";
+import { Box, Text, Flex, Spinner, Link } from "@chakra-ui/react";
 import {
   useZoraProfileCoin,
   ZoraProfileData,
@@ -30,7 +24,7 @@ const ZoraProfileCoinDisplay = memo(function ZoraProfileCoinDisplay({
   cachedError,
 }: ZoraProfileCoinDisplayProps) {
   // Use cached data if provided, otherwise fetch fresh data
-  const shouldFetch = !cachedProfileData && !cachedLoading && !cachedError;
+  const shouldFetch = !cachedProfileData && !cachedLoading;
   const { profileCoin, loading, error } = useZoraProfileCoin(
     shouldFetch ? walletAddress : undefined
   );

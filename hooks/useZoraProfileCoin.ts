@@ -114,7 +114,7 @@ export function useZoraProfileCoin(walletAddress: string | undefined) {
           
           // Update profile data with coin information
           setProfileData(prev => ({
-            ...prev!,
+            ...(prev || {}),
             coinData: profileCoinData
           }));
         } else {

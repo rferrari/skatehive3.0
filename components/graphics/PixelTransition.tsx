@@ -32,7 +32,7 @@ const PixelTransition: React.FC<PixelTransitionProps> = ({
 
     const isTouchDevice = typeof window !== "undefined" && (
         "ontouchstart" in window ||
-        navigator.maxTouchPoints > 0 ||
+        (typeof navigator !== "undefined" && navigator.maxTouchPoints > 0) ||
         window.matchMedia("(pointer: coarse)").matches
     );
 
