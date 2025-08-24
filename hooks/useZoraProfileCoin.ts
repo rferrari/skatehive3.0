@@ -15,6 +15,15 @@ export interface ZoraProfileCoinData {
   totalSupply?: string;
   holderCount?: number;
   isCreatedByUser?: boolean;
+  handle?: string;
+}
+
+export interface ZoraProfileData {
+  handle?: string;
+  displayName?: string;
+  avatar?: string;
+  bio?: string;
+  coinData?: ZoraProfileCoinData;
 }
 
 // Helper function to format IPFS URLs
@@ -25,6 +34,7 @@ function formatImageUrl(url: string | undefined): string | undefined {
 
 export function useZoraProfileCoin(walletAddress: string | undefined) {
   const [profileCoin, setProfileCoin] = useState<ZoraProfileCoinData | null>(null);
+  const [profileData, setProfileData] = useState<ZoraProfileData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,6 +45,7 @@ export function useZoraProfileCoin(walletAddress: string | undefined) {
       if (!walletAddress) {
         console.log("❌ useZoraProfileCoin: No wallet address provided");
         setProfileCoin(null);
+        setProfileData(null);
         return;
       }
 
@@ -54,6 +65,21 @@ export function useZoraProfileCoin(walletAddress: string | undefined) {
         });
         
         const profile = response.data?.profile;
+        
+        // Always set profile data if profile exists
+        if (profile) {
+          const zoraProfileData: ZoraProfileData = {
+            handle: profile.handle || undefined,
+            displayName: profile.displayName || undefined,
+            avatar: profile.avatar?.medium || profile.avatar?.small || undefined,
+            bio: profile.bio || undefined,
+          };
+          
+          console.log("👤 useZoraProfileCoin: Profile data:", zoraProfileData);
+          setProfileData(zoraProfileData);
+        } else {
+          setProfileData(null);
+        }
         
         if (profile?.creatorCoin) {
           console.log("💰 useZoraProfileCoin: Found creator coin (profile coin)");
@@ -80,10 +106,17 @@ export function useZoraProfileCoin(walletAddress: string | undefined) {
             totalSupply: undefined, // Not available in getProfile response
             holderCount: undefined, // Not available in getProfile response
             isCreatedByUser: true,
+            handle: profile.handle || undefined,
           };
           
           console.log("🎯 useZoraProfileCoin: Profile coin data:", profileCoinData);
           setProfileCoin(profileCoinData);
+          
+          // Update profile data with coin information
+          setProfileData(prev => ({
+            ...prev!,
+            coinData: profileCoinData
+          }));
         } else {
           console.log("❌ useZoraProfileCoin: No creator coin found for this profile");
           setProfileCoin(null);
@@ -97,6 +130,7 @@ export function useZoraProfileCoin(walletAddress: string | undefined) {
         });
         setError(err instanceof Error ? err.message : "Failed to fetch profile coin");
         setProfileCoin(null);
+        setProfileData(null);
       } finally {
         setLoading(false);
         console.log("🏁 useZoraProfileCoin: Fetch completed");
@@ -108,11 +142,13 @@ export function useZoraProfileCoin(walletAddress: string | undefined) {
 
   return {
     profileCoin,
+    profileData,
     loading,
     error,
     refetch: () => {
       if (walletAddress) {
         setProfileCoin(null);
+        setProfileData(null);
         setError(null);
         // The useEffect will handle the refetch
       }

@@ -1,6 +1,6 @@
 "use client";
 import React, { memo, useMemo, useCallback } from "react";
-import { Tabs, TabList, Tab, Box, ß } from "@chakra-ui/react";
+import { Tabs, TabList, Tab, Box } from "@chakra-ui/react";
 import {
   FaTh,
   FaBars,
