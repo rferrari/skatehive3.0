@@ -34,41 +34,12 @@ const ZoraProfileHeader = function ZoraProfileHeader({
   const [zoraDataFetched, setZoraDataFetched] = useState(false);
   const [avatarLoaded, setAvatarLoaded] = useState(false);
 
-  // Reset Zora cache when identity changes
-  useEffect(() => {
-    setCachedZoraData(null);
-    setZoraDataFetched(false);
-    setAvatarLoaded(false);
-  }, [username, profileData.ethereum_address]);
-
   // Fetch Zora data when ethereum address is available
   const {
     profileData: zoraProfileData,
     loading: zoraLoading,
     error: zoraError,
   } = useZoraProfileCoin(profileData.ethereum_address);
-
-  // Cache the Zora data once it's loaded
-  useEffect(() => {
-    if (zoraProfileData && !zoraLoading && !zoraError) {
-      setCachedZoraData(zoraProfileData);
-      setZoraDataFetched(true);
-    }
-  }, [zoraProfileData, zoraLoading, zoraError]);
-
-  // Preload avatar image to prevent flickering
-  useEffect(() => {
-    if (cachedZoraData?.avatar && !avatarLoaded) {
-      const img = new Image();
-      img.onload = () => setAvatarLoaded(true);
-      img.onerror = () => setAvatarLoaded(true); // Still set to true to prevent infinite loading
-      img.src = cachedZoraData.avatar;
-    }
-  }, [cachedZoraData?.avatar, avatarLoaded]);
-
-  if (!profileData.ethereum_address) {
-    return null;
-  }
 
   // Helper function to format market cap - memoized
   const formatMarketCap = useMemo(() => {
@@ -103,7 +74,7 @@ const ZoraProfileHeader = function ZoraProfileHeader({
   // Memoize the formatted market cap value
   const formattedMarketCap = useMemo(() => {
     if (!cachedZoraData?.coinData?.marketCap) return "N/A";
-
+    
     const num = parseFloat(cachedZoraData.coinData.marketCap);
     if (isNaN(num)) return "N/A";
 
@@ -154,7 +125,35 @@ const ZoraProfileHeader = function ZoraProfileHeader({
     cachedZoraData?.coinData?.marketCapDelta24h,
   ]);
 
-  // Loading state
+  // Reset Zora cache when identity changes
+  useEffect(() => {
+    setCachedZoraData(null);
+    setZoraDataFetched(false);
+    setAvatarLoaded(false);
+  }, [username, profileData.ethereum_address]);
+
+  // Cache the Zora data once it's loaded
+  useEffect(() => {
+    if (zoraProfileData && !zoraLoading && !zoraError) {
+      setCachedZoraData(zoraProfileData);
+      setZoraDataFetched(true);
+    }
+  }, [zoraProfileData, zoraLoading, zoraError]);
+
+  // Preload avatar image to prevent flickering
+  useEffect(() => {
+    if (cachedZoraData?.avatar && !avatarLoaded) {
+      const img = new Image();
+      img.onload = () => setAvatarLoaded(true);
+      img.onerror = () => setAvatarLoaded(true); // Still set to true to prevent infinite loading
+      img.src = cachedZoraData.avatar;
+    }
+  }, [cachedZoraData?.avatar, avatarLoaded]);
+
+  // Early return after all hooks are called
+  if (!profileData.ethereum_address) {
+    return null;
+  }  // Loading state
   if (zoraLoading) {
     return (
       <Box w="100%">
