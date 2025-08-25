@@ -23,7 +23,6 @@ import {
   Spinner,
   Image,
   useToast,
-  Divider,
 } from "@chakra-ui/react";
 import {
   parseEther,
@@ -33,7 +32,7 @@ import {
   Address,
 } from "viem";
 import { useZoraTrade } from "@/hooks/useZoraTrade";
-import { ChevronDownIcon, ChevronUpIcon } from "@chakra-ui/icons";
+import { useProfileCoins } from "@/hooks/useProfileCoins";
 import { useSwitchChain, useChainId } from "wagmi";
 import { base } from "wagmi/chains";
 
@@ -73,11 +72,13 @@ interface Currency {
   symbol: string;
   decimals: number;
   name: string;
+  image?: string; // Add optional image property
 }
 
 const USDC_ADDRESS = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" as Address; // Base USDC
 
-const SUPPORTED_CURRENCIES: Currency[] = [
+// Base currencies that are always available
+const BASE_CURRENCIES: Currency[] = [
   {
     type: "eth",
     symbol: "ETH",
@@ -101,7 +102,7 @@ export default function ZoraTradingModal({
 }: ZoraTradingModalProps) {
   const [tradeType, setTradeType] = useState<"buy" | "sell">("buy");
   const [fromCurrency, setFromCurrency] = useState<Currency>(
-    SUPPORTED_CURRENCIES[0]
+    BASE_CURRENCIES[0]
   );
   const [toCurrency, setToCurrency] = useState<Currency>({
     type: "erc20",
@@ -121,12 +122,41 @@ export default function ZoraTradingModal({
     decimals: number;
   } | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [availableCurrencies, setAvailableCurrencies] =
+    useState<Currency[]>(BASE_CURRENCIES);
+
+  // Get profile coins for enhanced trading options
+  const { profileCoins } = useProfileCoins();
+
+  // Build available currencies from base currencies + profile coins
+  useEffect(() => {
+    const currencies = [...BASE_CURRENCIES];
+
+    if (profileCoins && profileCoins.length > 0) {
+      profileCoins.forEach((coin) => {
+        // Don't add the current coin being traded
+        if (coin.address.toLowerCase() !== coinAddress.toLowerCase()) {
+          currencies.push({
+            type: "erc20" as const,
+            address: coin.address as Address,
+            symbol: coin.symbol,
+            decimals: 18,
+            name: coin.name,
+            image: coin.image,
+          });
+        }
+      });
+    }
+
+    setAvailableCurrencies(currencies);
+  }, [profileCoins, coinAddress]);
 
   const {
     executeTrade,
     getTradeQuote,
     getFormattedBalance,
     getTokenDecimals,
+    getZoraInternalBalance,
     refreshBalance,
     isTrading,
     isConnected,
@@ -183,7 +213,7 @@ export default function ZoraTradingModal({
         fromCurrency.type === "erc20" &&
         fromCurrency.address === coinAddress
       ) {
-        setFromCurrency(SUPPORTED_CURRENCIES[0]); // Default to ETH
+        setFromCurrency(availableCurrencies[0]); // Default to ETH
       }
       setToCurrency(creatorCoin);
     } else {
@@ -191,7 +221,7 @@ export default function ZoraTradingModal({
       setFromCurrency(creatorCoin);
       // To currency can be ETH or USDC, keep current selection if valid
       if (toCurrency.type === "erc20" && toCurrency.address === coinAddress) {
-        setToCurrency(SUPPORTED_CURRENCIES[0]); // Default to ETH
+        setToCurrency(availableCurrencies[0]); // Default to ETH
       }
     }
   }, [tradeType, coinAddress, coinData]);
@@ -205,14 +235,45 @@ export default function ZoraTradingModal({
       }
 
       try {
+        console.log('🪙 Fetching balance for currency:', fromCurrency);
+        
+        // Check if this is a profile coin first
+        const profileCoin = profileCoins?.find(coin => 
+          coin.address.toLowerCase() === fromCurrency.address?.toLowerCase()
+        );
+
+        if (profileCoin && profileCoin.formattedBalance) {
+          // Use the balance from profile coins data
+          console.log('🎯 Found profile coin with balance:', profileCoin.formattedBalance);
+          
+          // Convert formatted balance back to raw (approximate)
+          const decimals = fromCurrency.decimals || 18;
+          const rawBalance = parseUnits(profileCoin.formattedBalance, decimals);
+          
+          setFromBalance({
+            raw: rawBalance,
+            formatted: profileCoin.formattedBalance,
+            symbol: fromCurrency.symbol,
+            decimals: decimals,
+          });
+          
+          console.log('✅ Using profile coin balance:', {
+            formatted: profileCoin.formattedBalance,
+            symbol: fromCurrency.symbol
+          });
+          return;
+        }
+        
+        // For non-profile coins (ETH, USDC), use the regular balance fetching
+        console.log('👛 Using external wallet balance for non-profile coin');
         const balance = await getFormattedBalance(
           fromCurrency.type,
           fromCurrency.address
-          // Don't pass decimals, let the hook fetch the real ones
         );
-
+        console.log('💰 Balance result:', balance);
         setFromBalance(balance);
       } catch (error) {
+        console.error('Error fetching balance:', error);
         // Set a default balance to prevent UI errors
         setFromBalance({
           raw: BigInt(0),
@@ -224,7 +285,7 @@ export default function ZoraTradingModal({
     };
 
     fetchBalance();
-  }, [fromCurrency, isConnected, getFormattedBalance, isHydrated]);
+  }, [fromCurrency, isConnected, getFormattedBalance, profileCoins, isHydrated]);
 
   // Get trade quote when amount changes
   useEffect(() => {
@@ -367,6 +428,7 @@ export default function ZoraTradingModal({
         // Refresh balance after successful chain switch
         setTimeout(async () => {
           try {
+            // Use external wallet balance for all tokens
             const newBalance = await getFormattedBalance(
               fromCurrency.type,
               fromCurrency.address
@@ -495,19 +557,6 @@ export default function ZoraTradingModal({
         fromCurrency.type === "eth"
           ? parseEther(amount)
           : parseUnits(amount, fromBalance?.decimals || fromCurrency.decimals);
-
-      await executeTrade({
-        fromToken: {
-          type: fromCurrency.type,
-          address: fromCurrency.address,
-          amount: amountIn,
-        },
-        toToken: {
-          type: toCurrency.type,
-          address: toCurrency.address,
-        },
-        slippage,
-      });
 
       const result = await executeTrade({
         fromToken: {
@@ -670,8 +719,8 @@ export default function ZoraTradingModal({
                     }
                     onChange={(e) => {
                       const [type, addr] = e.target.value.split("-");
-                      const selectedCurrency = SUPPORTED_CURRENCIES.find(
-                        (c) =>
+                      const selectedCurrency = availableCurrencies.find(
+                        (c: Currency) =>
                           (c.type === "eth" && addr === "eth") ||
                           (c.type === "erc20" && c.address === addr)
                       );
@@ -692,7 +741,7 @@ export default function ZoraTradingModal({
                     width="120px"
                     _focus={{ border: "none", boxShadow: "none" }}
                   >
-                    {SUPPORTED_CURRENCIES.map((currency) => (
+                    {availableCurrencies.map((currency: Currency) => (
                       <option
                         key={`${currency.type}-${currency.address || "eth"}`}
                         value={`${currency.type}-${currency.address || "eth"}`}

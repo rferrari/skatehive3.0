@@ -18,6 +18,7 @@ import {
   useZoraProfileCoin,
   ZoraProfileData,
 } from "@/hooks/useZoraProfileCoin";
+import TradeProfileCoinButton from "./TradeProfileCoinButton";
 
 interface ZoraProfileHeaderProps {
   profileData: ProfileData;
@@ -74,7 +75,7 @@ const ZoraProfileHeader = function ZoraProfileHeader({
   // Memoize the formatted market cap value
   const formattedMarketCap = useMemo(() => {
     if (!cachedZoraData?.coinData?.marketCap) return "N/A";
-    
+
     const num = parseFloat(cachedZoraData.coinData.marketCap);
     if (isNaN(num)) return "N/A";
 
@@ -153,7 +154,7 @@ const ZoraProfileHeader = function ZoraProfileHeader({
   // Early return after all hooks are called
   if (!profileData.ethereum_address) {
     return null;
-  }  // Loading state
+  } // Loading state
   if (zoraLoading) {
     return (
       <Box w="100%">
@@ -208,6 +209,34 @@ const ZoraProfileHeader = function ZoraProfileHeader({
               {cachedZoraData.displayName}
             </Text>
           )}
+          <Text
+            fontSize="sm"
+            color="gray.400"
+            fontWeight="medium"
+            isTruncated
+            w="100%"
+          >
+            {cachedZoraData.bio ? (
+              <Tooltip
+                label={cachedZoraData.bio}
+                placement="top"
+                bg="gray.800"
+                color="white"
+                fontSize="sm"
+                borderRadius="md"
+                px={3}
+                py={2}
+                maxW="300px"
+                textAlign="center"
+              >
+                <Text as="span" cursor="help" _hover={{ color: "primary" }}>
+                  @{cachedZoraData.handle || username}
+                </Text>
+              </Tooltip>
+            ) : (
+              <>@{cachedZoraData.handle || username}</>
+            )}
+          </Text>
         </GridItem>
 
         {/* Market Cap - top row, right column */}
@@ -258,36 +287,18 @@ const ZoraProfileHeader = function ZoraProfileHeader({
           )}
         </GridItem>
 
-        {/* Handle/Username - second row, middle column */}
+        {/* Trade Profile Coin button */}
         <GridItem colStart={2} rowStart={2}>
-          <Text
-            fontSize="sm"
-            color="gray.400"
-            fontWeight="medium"
-            isTruncated
-            w="100%"
-          >
-            {cachedZoraData.bio ? (
-              <Tooltip
-                label={cachedZoraData.bio}
-                placement="top"
-                bg="gray.800"
-                color="white"
-                fontSize="sm"
-                borderRadius="md"
-                px={3}
-                py={2}
-                maxW="300px"
-                textAlign="center"
-              >
-                <Text as="span" cursor="help" _hover={{ color: "primary" }}>
-                  @{cachedZoraData.handle || username}
-                </Text>
-              </Tooltip>
-            ) : (
-              <>@{cachedZoraData.handle || username}</>
-            )}
-          </Text>
+          <TradeProfileCoinButton
+            coinAddress={cachedZoraData?.coinData?.address}
+            coinData={{
+              name: cachedZoraData?.coinData?.name,
+              symbol: cachedZoraData?.coinData?.symbol,
+              image: cachedZoraData?.coinData?.image,
+              marketCap: cachedZoraData?.coinData?.marketCap,
+              uniqueHolders: cachedZoraData?.coinData?.holderCount,
+            }}
+          />
         </GridItem>
       </Grid>
     </Box>

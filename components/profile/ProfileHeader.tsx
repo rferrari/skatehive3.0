@@ -55,20 +55,24 @@ const ProfileHeader = function ProfileHeader({
       <Box display={{ base: "none", md: "block" }} position="relative">
         <Box w="100%" maxW="container.xl" mx="auto" px={6} py={4}>
           {/* Both Profile Layouts - visibility controlled by CSS */}
-          
+
           {/* Zora Profile Layout */}
           {profileData.ethereum_address && (
-            <Box 
-              display={showZoraProfile ? "block" : "none"}
-              w="100%"
-            >
-              <ZoraProfileHeader profileData={profileData} username={username} />
+            <Box display={showZoraProfile ? "block" : "none"} w="100%">
+              <ZoraProfileHeader
+                profileData={profileData}
+                username={username}
+              />
             </Box>
           )}
-          
+
           {/* Hive Profile Layout */}
-          <Box 
-            display={!showZoraProfile || !profileData.ethereum_address ? "block" : "none"}
+          <Box
+            display={
+              !showZoraProfile || !profileData.ethereum_address
+                ? "block"
+                : "none"
+            }
             w="100%"
           >
             <HiveProfileHeader
