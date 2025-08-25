@@ -10,6 +10,7 @@ export interface ZoraProfileCoinData {
   symbol: string;
   name: string;
   marketCap?: string;
+  marketCapDelta24h?: string;
   price?: string;
   image?: string;
   totalSupply?: string;
@@ -86,6 +87,8 @@ export function useZoraProfileCoin(walletAddress: string | undefined) {
           
           const creatorCoin = profile.creatorCoin;
           
+          console.log("🔍 useZoraProfileCoin: Full creatorCoin object:", creatorCoin);
+          
           console.log("✅ useZoraProfileCoin: Profile coin details:", {
             address: creatorCoin.address,
             marketCap: creatorCoin.marketCap,
@@ -101,6 +104,7 @@ export function useZoraProfileCoin(walletAddress: string | undefined) {
             symbol: profile.handle || "PROFILE", // Use handle as symbol
             name: profile.displayName || profile.handle || "Profile Coin", // Use displayName or fallback to handle
             marketCap: creatorCoin.marketCap || undefined,
+            marketCapDelta24h: creatorCoin.marketCapDelta24h || undefined,
             price: undefined, // Not available in this API response
             image: profile.avatar?.medium || profile.avatar?.small || undefined, // Use profile avatar
             totalSupply: undefined, // Not available in getProfile response

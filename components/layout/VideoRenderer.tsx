@@ -22,6 +22,7 @@ import LogoMatrix from "../graphics/LogoMatrix";
 type RendererProps = {
   src?: string;
   loop?: boolean;
+  skipThumbnailLoad?: boolean;
   [key: string]: any;
 };
 
@@ -46,7 +47,7 @@ interface VideoControlsProps {
 
 // Memoized LoadingComponent to prevent unnecessary re-renders
 const MemoizedLoadingComponent = React.memo(LogoMatrix);
-MemoizedLoadingComponent.displayName = 'MemoizedLoadingComponent';
+MemoizedLoadingComponent.displayName = "MemoizedLoadingComponent";
 
 // Extract VideoControls to a separate component to prevent unnecessary re-renders
 const VideoControls = React.memo(
@@ -197,7 +198,7 @@ const VideoControls = React.memo(
   }
 );
 
-VideoControls.displayName = 'VideoControls';
+VideoControls.displayName = "VideoControls";
 
 // Memoize common styles outside the component
 const VIDEO_STYLE = {
@@ -215,7 +216,7 @@ const BASE_SLIDER_STYLE = {
   cursor: "pointer",
 };
 
-const VideoRenderer = ({ src, ...props }: RendererProps) => {
+const VideoRenderer = ({ src, skipThumbnailLoad, ...props }: RendererProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isHorizontal, setIsHorizontal] = useState(false);
@@ -519,5 +520,5 @@ const VideoRenderer = ({ src, ...props }: RendererProps) => {
 
 // Export with React.memo to prevent unnecessary re-renders
 const MemoizedVideoRenderer = React.memo(VideoRenderer);
-MemoizedVideoRenderer.displayName = 'VideoRenderer';
+MemoizedVideoRenderer.displayName = "VideoRenderer";
 export default MemoizedVideoRenderer;

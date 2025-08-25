@@ -18,7 +18,7 @@ interface ProfileHeaderProps {
   onEditModalOpen: () => void;
 }
 
-const ProfileHeader = function ProfileHeader({
+const ProfileHeader = memo(function ProfileHeader({
   profileData,
   username,
   isOwner,
@@ -54,23 +54,10 @@ const ProfileHeader = function ProfileHeader({
       {/* Desktop Layout */}
       <Box display={{ base: "none", md: "block" }} position="relative">
         <Box w="100%" maxW="container.xl" mx="auto" px={6} py={4}>
-          {/* Both Profile Layouts - visibility controlled by CSS */}
-          
-          {/* Zora Profile Layout */}
-          {profileData.ethereum_address && (
-            <Box 
-              display={showZoraProfile ? "block" : "none"}
-              w="100%"
-            >
-              <ZoraProfileHeader profileData={profileData} username={username} />
-            </Box>
-          )}
-          
-          {/* Hive Profile Layout */}
-          <Box 
-            display={!showZoraProfile || !profileData.ethereum_address ? "block" : "none"}
-            w="100%"
-          >
+          {/* Conditional Profile Layout */}
+          {showZoraProfile && profileData.ethereum_address ? (
+            <ZoraProfileHeader profileData={profileData} username={username} />
+          ) : (
             <HiveProfileHeader
               profileData={profileData}
               username={username}
@@ -82,7 +69,7 @@ const ProfileHeader = function ProfileHeader({
               onLoadingChange={onLoadingChange}
               onEditModalOpen={onEditModalOpen}
             />
-          </Box>
+          )}
 
           {/* Profile Type Toggle - Bottom Right Corner */}
           {profileData.ethereum_address && (
@@ -146,16 +133,6 @@ const ProfileHeader = function ProfileHeader({
       </Box>
     </Box>
   );
-};
-
-export default memo(ProfileHeader, (prevProps, nextProps) => {
-  return (
-    prevProps.username === nextProps.username &&
-    prevProps.profileData.ethereum_address ===
-      nextProps.profileData.ethereum_address &&
-    prevProps.isOwner === nextProps.isOwner &&
-    prevProps.user === nextProps.user &&
-    prevProps.isFollowing === nextProps.isFollowing &&
-    prevProps.isFollowLoading === nextProps.isFollowLoading
-  );
 });
+
+export default ProfileHeader;

@@ -438,7 +438,8 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         ffmpegSupported,
         fallbackMode,
         willUseFallback: fallback,
-        userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "SSR",
+        userAgent:
+          typeof navigator !== "undefined" ? navigator.userAgent : "SSR",
         hasSharedArrayBuffer:
           typeof window !== "undefined" && "SharedArrayBuffer" in window,
         hasWebAssembly: typeof WebAssembly !== "undefined",
@@ -1403,7 +1404,8 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
                 <div>🔧 iOS Optimized: {useIOSOptimized ? "Yes" : "No"}</div>
                 <div>🛠️ FFmpeg Supported: {!fallbackMode ? "Yes" : "No"}</div>
                 <div>
-                  🌐 User Agent: {typeof navigator !== "undefined" 
+                  🌐 User Agent:{" "}
+                  {typeof navigator !== "undefined"
                     ? navigator.userAgent.substring(0, 50) + "..."
                     : "SSR Environment"}
                 </div>
