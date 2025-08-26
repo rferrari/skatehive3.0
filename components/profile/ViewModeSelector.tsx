@@ -8,18 +8,20 @@ import {
   FaVideo,
   FaCamera,
   FaFileAlt,
+  FaCoins,
 } from "react-icons/fa";
 
 interface ViewModeSelectorProps {
-  viewMode: "grid" | "list" | "magazine" | "videoparts" | "snaps";
+  viewMode: "grid" | "list" | "magazine" | "videoparts" | "snaps" | "tokens";
   onViewModeChange: (
-    mode: "grid" | "list" | "magazine" | "videoparts" | "snaps"
+    mode: "grid" | "list" | "magazine" | "videoparts" | "snaps" | "tokens"
   ) => void;
   isMobile: boolean;
+  hasEthereumAddress?: boolean;
 }
 
-const getMainTabs = (isMobile: boolean) =>
-  [
+const getMainTabs = (isMobile: boolean, hasEthereumAddress: boolean) => {
+  const baseTabs = [
     { key: "snaps", label: "Snaps", icon: FaCamera },
     { key: "posts", label: "Pages", icon: FaFileAlt },
     {
@@ -28,6 +30,17 @@ const getMainTabs = (isMobile: boolean) =>
       icon: FaVideo,
     },
   ] as const;
+
+  // Add tokens tab only if user has an Ethereum address
+  if (hasEthereumAddress) {
+    return [
+      ...baseTabs,
+      { key: "tokens", label: "Tokens", icon: FaCoins },
+    ] as const;
+  }
+
+  return baseTabs;
+};
 
 const postViewModes = [
   { key: "grid", label: "Grid", icon: FaTh },
@@ -39,9 +52,13 @@ const ViewModeSelector = memo(function ViewModeSelector({
   viewMode,
   onViewModeChange,
   isMobile,
+  hasEthereumAddress = false,
 }: ViewModeSelectorProps) {
-  // Get main tabs based on mobile state
-  const mainTabs = useMemo(() => getMainTabs(isMobile), [isMobile]);
+  // Get main tabs based on mobile state and ethereum address
+  const mainTabs = useMemo(
+    () => getMainTabs(isMobile, hasEthereumAddress),
+    [isMobile, hasEthereumAddress]
+  );
 
   // Determine which main tab is currently active
   const currentMainTab = useMemo(() => {
@@ -84,10 +101,10 @@ const ViewModeSelector = memo(function ViewModeSelector({
           : "grid";
         onViewModeChange(postMode as "grid" | "list" | "magazine");
       } else {
-        onViewModeChange(selectedTab.key as "snaps" | "videoparts");
+        onViewModeChange(selectedTab.key as "snaps" | "videoparts" | "tokens");
       }
     },
-    [viewMode, onViewModeChange]
+    [viewMode, onViewModeChange, mainTabs]
   );
 
   const handlePostViewModeChange = useCallback(

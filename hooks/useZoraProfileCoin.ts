@@ -41,7 +41,6 @@ export function useZoraProfileCoin(walletAddress: string | undefined) {
 
   useEffect(() => {
     const fetchProfileCoin = async () => {
-      console.log("🔍 useZoraProfileCoin: Starting fetch", { walletAddress });
       
       if (!walletAddress) {
         console.log("❌ useZoraProfileCoin: No wallet address provided");
@@ -60,10 +59,6 @@ export function useZoraProfileCoin(walletAddress: string | undefined) {
           identifier: walletAddress as Address,
         });
 
-        console.log("📦 useZoraProfileCoin: Response received", { 
-          hasData: !!response.data,
-          profileExists: !!response.data?.profile 
-        });
         
         const profile = response.data?.profile;
         
@@ -76,27 +71,16 @@ export function useZoraProfileCoin(walletAddress: string | undefined) {
             bio: profile.bio || undefined,
           };
           
-          console.log("👤 useZoraProfileCoin: Profile data:", zoraProfileData);
           setProfileData(zoraProfileData);
         } else {
           setProfileData(null);
         }
         
         if (profile?.creatorCoin) {
-          console.log("💰 useZoraProfileCoin: Found creator coin (profile coin)");
           
           const creatorCoin = profile.creatorCoin;
           
-          console.log("🔍 useZoraProfileCoin: Full creatorCoin object:", creatorCoin);
-          
-          console.log("✅ useZoraProfileCoin: Profile coin details:", {
-            address: creatorCoin.address,
-            marketCap: creatorCoin.marketCap,
-            marketCapDelta24h: creatorCoin.marketCapDelta24h,
-            handle: profile.handle,
-            displayName: profile.displayName,
-            walletAddress,
-          });
+      
 
           // Use profile handle as symbol and displayName as coin name
           const profileCoinData: ZoraProfileCoinData = {
@@ -113,7 +97,6 @@ export function useZoraProfileCoin(walletAddress: string | undefined) {
             handle: profile.handle || undefined,
           };
           
-          console.log("🎯 useZoraProfileCoin: Profile coin data:", profileCoinData);
           setProfileCoin(profileCoinData);
           
           // Update profile data with coin information
@@ -137,7 +120,6 @@ export function useZoraProfileCoin(walletAddress: string | undefined) {
         setProfileData(null);
       } finally {
         setLoading(false);
-        console.log("🏁 useZoraProfileCoin: Fetch completed");
       }
     };
 
