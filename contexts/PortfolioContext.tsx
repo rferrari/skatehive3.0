@@ -124,44 +124,40 @@ export function PortfolioProvider({
     )
       return null;
 
+    // Helper functions to reduce repetition
+    const toArray = (value: any[] | undefined): any[] =>
+      Array.isArray(value) ? value : [];
+
+    const tagToken = (
+      token: any,
+      source: "ethereum" | "farcaster" | "verified",
+      sourceAddress: string
+    ) => ({
+      ...token,
+      source,
+      sourceAddress,
+    });
+
     const combinedTokens = [
       // Tag ethereum portfolio tokens
-      ...(portfolio?.tokens && Array.isArray(portfolio.tokens)
-        ? portfolio.tokens.map((token) => ({
-            ...token,
-            source: "ethereum" as const,
-            sourceAddress: address,
-          }))
-        : []),
+      ...toArray(portfolio?.tokens).map((token) =>
+        tagToken(token, "ethereum", address || "")
+      ),
       // Tag farcaster portfolio tokens
-      ...(farcasterPortfolio?.tokens && Array.isArray(farcasterPortfolio.tokens)
-        ? farcasterPortfolio.tokens.map((token) => ({
-            ...token,
-            source: "farcaster" as const,
-            sourceAddress: farcasterAddress,
-          }))
-        : []),
+      ...toArray(farcasterPortfolio?.tokens).map((token) =>
+        tagToken(token, "farcaster", farcasterAddress || "")
+      ),
       // Tag verified portfolio tokens
       ...Object.entries(farcasterVerifiedPortfolios).flatMap(([addr, p]) =>
-        p.tokens && Array.isArray(p.tokens)
-          ? p.tokens.map((token) => ({
-              ...token,
-              source: "verified" as const,
-              sourceAddress: addr,
-            }))
-          : []
+        toArray(p.tokens).map((t) => tagToken(t, "verified", addr))
       ),
     ];
 
     const combinedNfts = [
-      ...(portfolio?.nfts && Array.isArray(portfolio.nfts)
-        ? portfolio.nfts
-        : []),
-      ...(farcasterPortfolio?.nfts && Array.isArray(farcasterPortfolio.nfts)
-        ? farcasterPortfolio.nfts
-        : []),
+      ...toArray(portfolio?.nfts),
+      ...toArray(farcasterPortfolio?.nfts),
       ...Object.values(farcasterVerifiedPortfolios).flatMap((p) =>
-        p.nfts && Array.isArray(p.nfts) ? p.nfts : []
+        toArray(p.nfts)
       ),
     ];
 

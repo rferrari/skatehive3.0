@@ -64,11 +64,9 @@ export async function GET(
     
     const apps = rawData.apps || [];
     const nftNetWorth = rawData.nftNetWorth?.[addressLower] || 0;
-    
-    const tokens = rawTokens;
 
     // Calculate totals from the nested token data
-    const totalBalanceUsdTokens = tokens.reduce((sum: number, token: any) => {
+    const totalBalanceUsdTokens = rawTokens.reduce((sum: number, token: any) => {
       const tokenData = token.token || token;
       const balanceUSD = parseFloat(tokenData.balanceUSD || token.balanceUSD || 0);
       return sum + balanceUSD;
@@ -86,7 +84,7 @@ export async function GET(
       totalBalanceUsdTokens,
       totalBalanceUSDApp,
       nftUsdNetWorth: { [addressLower]: nftNetWorth.toString() },
-      tokens: tokens.map((token: any) => {
+      tokens: rawTokens.map((token: any) => {
         // The external API has nested token structure: token.token contains the actual token data
         const tokenData = token.token || token;
         

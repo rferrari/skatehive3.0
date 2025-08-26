@@ -569,39 +569,6 @@ export default function MainWallet({ username }: MainWalletProps) {
                           isWalletView={true}
                         />
 
-                        <Box
-                          p={4}
-                          mt={2}
-                          mb={2}
-                          bg="transparent"
-                          borderRadius="md"
-                          border="1px solid"
-                          borderColor="gray.200"
-                        >
-                          <Text color="primary" mb={4}>
-                            Estimated Hive Account Value:{" "}
-                            <strong>{formatValue(totalHiveAssetsValue)}</strong>
-                            <br />
-                            <small>
-                              USD value of all Hive tokens and Ivenstments in
-                              your wallet.
-                            </small>
-                          </Text>
-
-                          {hiveAccount?.savings_withdraw_requests &&
-                            hiveAccount.savings_withdraw_requests > 0 && (
-                              <Text color="orange.400" fontSize="sm" mt={1}>
-                                🚨 You have{" "}
-                                {hiveAccount.savings_withdraw_requests} savings
-                                withdrawal
-                                {hiveAccount.savings_withdraw_requests > 1
-                                  ? "s"
-                                  : ""}{" "}
-                                in progress.
-                              </Text>
-                            )}
-                        </Box>
-
                         <ClaimRewards
                           reward_hbd_balance={hiveAccount?.reward_hbd_balance}
                           reward_hive_balance={hiveAccount?.reward_hive_balance}
