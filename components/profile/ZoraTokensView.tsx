@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, memo } from "react";
+import React, { useState, memo, useCallback, useMemo } from "react";
 import {
   Box,
   Grid,
@@ -25,28 +25,39 @@ interface ZoraTokensViewProps {
 
 const ZoraTokensView: React.FC<ZoraTokensViewProps> = ({ ethereumAddress }) => {
   const [activeTab, setActiveTab] = useState(0);
+
   const { createdCoins, heldTokens, isLoading, error } = useZoraProfileTokens({
     ethereumAddress,
+    enabled: Boolean(ethereumAddress),
   });
 
   const borderColor = useColorModeValue("gray.200", "gray.700");
 
-  if (!ethereumAddress) {
-    return (
+  const handleTabChange = useCallback((index: number) => {
+    setActiveTab(index);
+  }, []);
+
+  const noAddressComponent = useMemo(
+    () => (
       <Center py={8}>
         <Alert status="info" borderRadius="lg" maxW="md">
           <AlertIcon />
           Connect an Ethereum wallet to view Zora tokens
         </Alert>
       </Center>
-    );
+    ),
+    []
+  );
+
+  if (!ethereumAddress) {
+    return noAddressComponent;
   }
 
   return (
     <Box w="100%" p={4}>
       <Tabs
         index={activeTab}
-        onChange={setActiveTab}
+        onChange={handleTabChange}
         variant="enclosed"
         bg={"background"}
         borderRadius="xl"
@@ -69,17 +80,26 @@ const ZoraTokensView: React.FC<ZoraTokensViewProps> = ({ ethereumAddress }) => {
         </TabList>
 
         <TabPanels>
-          {/* Created Coins Tab */}
           <TabPanel p={6}>
             {isLoading ? (
-              <Grid
-                templateColumns="repeat(auto-fill, minmax(280px, 1fr))"
-                gap={6}
-              >
-                {[...Array(6)].map((_, i) => (
-                  <Skeleton key={i} height="340px" borderRadius="xl" />
-                ))}
-              </Grid>
+              <Center>
+                <Grid
+                  templateColumns="repeat(auto-fit, minmax(280px, 1fr))"
+                  gap={6}
+                  maxW="1200px"
+                  w="100%"
+                  justifyItems="center"
+                >
+                  {[...Array(6)].map((_, i) => (
+                    <Skeleton
+                      key={i}
+                      height="400px"
+                      width="280px"
+                      borderRadius="xl"
+                    />
+                  ))}
+                </Grid>
+              </Center>
             ) : error ? (
               <Center py={8}>
                 <Alert status="error" borderRadius="lg" maxW="md">
@@ -90,18 +110,23 @@ const ZoraTokensView: React.FC<ZoraTokensViewProps> = ({ ethereumAddress }) => {
             ) : (
               <>
                 {createdCoins && createdCoins.length > 0 ? (
-                  <Grid
-                    templateColumns="repeat(auto-fill, minmax(280px, 1fr))"
-                    gap={6}
-                  >
-                    {createdCoins.map((coin) => (
-                      <ZoraTokenCard
-                        key={coin.address}
-                        coin={coin}
-                        variant="created"
-                      />
-                    ))}
-                  </Grid>
+                  <Center>
+                    <Grid
+                      templateColumns="repeat(auto-fit, minmax(280px, 1fr))"
+                      gap={6}
+                      maxW="1200px"
+                      w="100%"
+                      justifyItems="center"
+                    >
+                      {createdCoins.map((coin) => (
+                        <ZoraTokenCard
+                          key={coin.address}
+                          coin={coin}
+                          variant="created"
+                        />
+                      ))}
+                    </Grid>
+                  </Center>
                 ) : (
                   <Center py={12}>
                     <Alert status="info" borderRadius="lg" maxW="md">
@@ -114,17 +139,26 @@ const ZoraTokensView: React.FC<ZoraTokensViewProps> = ({ ethereumAddress }) => {
             )}
           </TabPanel>
 
-          {/* Holdings Tab */}
           <TabPanel p={6}>
             {isLoading ? (
-              <Grid
-                templateColumns="repeat(auto-fill, minmax(280px, 1fr))"
-                gap={6}
-              >
-                {[...Array(6)].map((_, i) => (
-                  <Skeleton key={i} height="340px" borderRadius="xl" />
-                ))}
-              </Grid>
+              <Center>
+                <Grid
+                  templateColumns="repeat(auto-fit, minmax(280px, 1fr))"
+                  gap={6}
+                  maxW="1200px"
+                  w="100%"
+                  justifyItems="center"
+                >
+                  {[...Array(6)].map((_, i) => (
+                    <Skeleton
+                      key={i}
+                      height="400px"
+                      width="280px"
+                      borderRadius="xl"
+                    />
+                  ))}
+                </Grid>
+              </Center>
             ) : error ? (
               <Center py={8}>
                 <Alert status="error" borderRadius="lg" maxW="md">
@@ -135,18 +169,23 @@ const ZoraTokensView: React.FC<ZoraTokensViewProps> = ({ ethereumAddress }) => {
             ) : (
               <>
                 {heldTokens && heldTokens.length > 0 ? (
-                  <Grid
-                    templateColumns="repeat(auto-fill, minmax(280px, 1fr))"
-                    gap={6}
-                  >
-                    {heldTokens.map((balance, index) => (
-                      <ZoraTokenCard
-                        key={`${balance.token?.address}-${index}`}
-                        balance={balance}
-                        variant="held"
-                      />
-                    ))}
-                  </Grid>
+                  <Center>
+                    <Grid
+                      templateColumns="repeat(auto-fit, minmax(280px, 1fr))"
+                      gap={6}
+                      maxW="1200px"
+                      w="100%"
+                      justifyItems="center"
+                    >
+                      {heldTokens.map((balance, index) => (
+                        <ZoraTokenCard
+                          key={`${balance.token?.address}-${index}`}
+                          balance={balance}
+                          variant="held"
+                        />
+                      ))}
+                    </Grid>
+                  </Center>
                 ) : (
                   <Center py={12}>
                     <Alert status="info" borderRadius="lg" maxW="md">

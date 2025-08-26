@@ -1,10 +1,8 @@
 "use client";
-import React, { memo } from "react";
+import React, { memo, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   Box,
-  Card,
-  CardBody,
   Image,
   Text,
   Badge,
@@ -12,19 +10,15 @@ import {
   VStack,
   useColorModeValue,
 } from "@chakra-ui/react";
-import { FaUsers, FaChartLine } from "react-icons/fa";
 import { ZoraCoin, ZoraBalance } from "@/hooks/useZoraProfileTokens";
 import { formatNumber, formatTokenName } from "@/lib/zora-utils";
 
 interface ZoraTokenCardProps {
-  // Can accept either a coin directly or a balance object
   coin?: ZoraCoin;
   balance?: ZoraBalance;
-  // Styling variants
   variant?: "created" | "held";
 }
 
-// Helper function to format balance
 const formatBalance = (amount: number, decimals: number = 18) => {
   if (amount === 0) return "0";
   const adjustedAmount =
@@ -42,51 +36,71 @@ const formatBalance = (amount: number, decimals: number = 18) => {
   return adjustedAmount.toExponential(2);
 };
 
+const formatPercentageValue = (value: string | undefined) => {
+  if (!value) return null;
+  const num = parseFloat(value);
+  const isPositive = num >= 0;
+  return {
+    value: num,
+    isPositive,
+    display: `${isPositive ? "+" : ""}${num.toFixed(1)}%`,
+    color: isPositive ? "green.400" : "red.400",
+  };
+};
+
 const ZoraTokenCard = memo(function ZoraTokenCard({
   coin,
   balance,
   variant = "created",
 }: ZoraTokenCardProps) {
   const router = useRouter();
-  const borderColor = useColorModeValue("gray.200", "gray.700");
   const textPrimary = useColorModeValue("gray.900", "white");
   const textSecondary = useColorModeValue("gray.600", "gray.400");
 
-  // Extract token data from either coin or balance
   const tokenData = coin || balance?.token;
   if (!tokenData) return null;
 
-  // Determine styling based on variant
-  const isHeldToken = variant === "held" || Boolean(balance);
-  const hoverBorderColor = isHeldToken ? "secondary.400" : "primary.400";
-  const badgeColorScheme = isHeldToken ? "secondary" : "primary";
+  const derivedValues = useMemo(() => {
+    const isHeldToken = variant === "held" || Boolean(balance);
+    const hoverBorderColor = isHeldToken ? "secondary.400" : "primary.400";
+    const badgeColorScheme = isHeldToken ? "secondary" : "primary";
 
-  const handleCardClick = () => {
+    const imageSource =
+      tokenData.mediaContent?.previewImage?.medium ||
+      tokenData.mediaContent?.previewImage?.small ||
+      tokenData.mediaContent?.originalUri ||
+      "/logos/Zorb.png";
+
+    return {
+      isHeldToken,
+      hoverBorderColor,
+      badgeColorScheme,
+      imageSource,
+    };
+  }, [variant, balance, tokenData.mediaContent]);
+
+  // Memoize click handler to prevent recreation
+  const handleCardClick = useCallback(() => {
     router.push(`/coin/${tokenData.address}`);
-  };
+  }, [router, tokenData.address]);
 
-  const formatPercentage = (value: string | undefined) => {
-    if (!value) return null;
-    const num = parseFloat(value);
-    const isPositive = num >= 0;
+  // Memoize percentage formatting
+  const percentageData = useMemo(
+    () => formatPercentageValue(tokenData.marketCapDelta24h),
+    [tokenData.marketCapDelta24h]
+  );
+
+  const formatPercentage = useCallback((data: typeof percentageData) => {
+    if (!data) return null;
     return (
-      <Text
-        fontSize="xs"
-        color={isPositive ? "green.400" : "red.400"}
-        fontWeight="semibold"
-      >
-        {isPositive ? "+" : ""}
-        {num.toFixed(1)}%
+      <Text fontSize="xs" color={data.color} fontWeight="semibold">
+        {data.display}
       </Text>
     );
-  };
+  }, []);
 
-  // Get image source with fallback
-  const imageSource =
-    tokenData.mediaContent?.previewImage?.medium ||
-    tokenData.mediaContent?.previewImage?.small ||
-    tokenData.mediaContent?.originalUri ||
-    "/logos/zora.svg";
+  const { isHeldToken, hoverBorderColor, badgeColorScheme, imageSource } =
+    derivedValues;
 
   return (
     <Box
@@ -220,7 +234,7 @@ const ZoraTokenCard = memo(function ZoraTokenCard({
                 <Text fontSize="sm" color={textSecondary}>
                   24h Change:
                 </Text>
-                {formatPercentage(tokenData.marketCapDelta24h)}
+                {formatPercentage(percentageData)}
               </HStack>
             )}
           </VStack>

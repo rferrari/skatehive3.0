@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { getProfileCoins, getProfileBalances } from "@zoralabs/coins-sdk";
 
 export interface ZoraCoin {
@@ -47,6 +47,73 @@ export interface ZoraProfileTokensData {
   error: string | null;
 }
 
+// API Response Interfaces
+interface PreviewImage {
+  small?: string;
+  medium?: string;
+  blurhash?: string;
+}
+
+interface MediaContent {
+  mimeType?: string;
+  originalUri?: string;
+  previewImage?: PreviewImage;
+}
+
+interface CoinNode {
+  id: string;
+  name: string;
+  symbol: string;
+  description: string;
+  address: string;
+  chainId: number;
+  totalSupply: string;
+  marketCap: string;
+  marketCapDelta24h?: string;
+  volume24h: string;
+  uniqueHolders: number;
+  createdAt?: string;
+  creatorAddress?: string;
+  mediaContent?: MediaContent;
+}
+
+interface BalanceNode {
+  id: string;
+  balance: string;
+  coin?: CoinNode;
+}
+
+interface Edge<T> {
+  node: T;
+}
+
+interface CreatedCoinsCollection {
+  edges?: Edge<CoinNode>[];
+  count?: number;
+}
+
+interface CoinBalancesCollection {
+  edges: Edge<BalanceNode>[];
+  count?: number;
+}
+
+interface ProfileData {
+  createdCoins?: CreatedCoinsCollection;
+  coinBalances?: CoinBalancesCollection;
+}
+
+interface ProfileCoinsResponse {
+  data?: {
+    profile?: ProfileData;
+  };
+}
+
+interface ProfileBalancesResponse {
+  data?: {
+    profile?: ProfileData;
+  };
+}
+
 interface UseZoraProfileTokensProps {
   ethereumAddress?: string;
   enabled?: boolean;
@@ -69,16 +136,14 @@ const useZoraProfileTokens = ({
 
   const fetchCreatedCoins = useCallback(async (address: string) => {
     try {
-      console.log("🪙 Fetching created coins for address:", address);
-      
       const response = await getProfileCoins({
         identifier: address,
-        count: 20, // Reduced from 50 to 20
-      });
+        count: 20,
+      }) as ProfileCoinsResponse;
 
       const profile = response?.data?.profile;
-      if (profile?.createdCoins) {
-        const coins: ZoraCoin[] = profile.createdCoins.edges?.map((edge: any) => ({
+      if (profile?.createdCoins?.edges) {
+        const coins: ZoraCoin[] = profile.createdCoins.edges.map((edge: Edge<CoinNode>) => ({
           id: edge.node.id,
           name: edge.node.name,
           symbol: edge.node.symbol,
@@ -90,8 +155,8 @@ const useZoraProfileTokens = ({
           marketCapDelta24h: edge.node.marketCapDelta24h,
           volume24h: edge.node.volume24h,
           uniqueHolders: edge.node.uniqueHolders,
-          createdAt: edge.node.createdAt,
-          creatorAddress: edge.node.creatorAddress,
+          createdAt: edge.node.createdAt || "",
+          creatorAddress: edge.node.creatorAddress || "",
           mediaContent: edge.node.mediaContent ? {
             mimeType: edge.node.mediaContent.mimeType,
             originalUri: edge.node.mediaContent.originalUri,
@@ -101,12 +166,11 @@ const useZoraProfileTokens = ({
               blurhash: edge.node.mediaContent.previewImage.blurhash,
             } : undefined,
           } : undefined,
-        })) || [];
+        }));
 
         setCreatedCoins(coins);
         setTotalCreatedCoins(profile.createdCoins.count || 0);
         
-        console.log(`✅ Found ${coins.length} created coins`);
         return coins;
       } else {
         setCreatedCoins([]);
@@ -114,25 +178,23 @@ const useZoraProfileTokens = ({
         return [];
       }
     } catch (err) {
-      console.error("❌ Error fetching created coins:", err);
-      throw err;
+      const errorMessage = err instanceof Error ? err.message : "Failed to fetch created coins";
+      throw new Error(errorMessage);
     }
   }, []);
 
   const fetchHeldTokens = useCallback(async (address: string) => {
     try {
-      console.log("💰 Fetching held tokens for address:", address);
-      
       const response = await getProfileBalances({
         identifier: address,
-        count: 20, // Reduced from 50 to 20
-      });
+        count: 20,
+      }) as ProfileBalancesResponse;
 
       const profile = response?.data?.profile;
       const coinBalances = profile?.coinBalances;
       
       if (coinBalances?.edges && Array.isArray(coinBalances.edges)) {
-        const tokens: ZoraBalance[] = coinBalances.edges.map((edge: any) => ({
+        const tokens: ZoraBalance[] = coinBalances.edges.map((edge: Edge<BalanceNode>) => ({
           id: edge.node.id,
           token: {
             id: edge.node.coin?.id || "",
@@ -161,14 +223,13 @@ const useZoraProfileTokens = ({
             amountRaw: edge.node.balance || "0",
             amountDecimal: parseFloat(edge.node.balance || "0"),
           },
-          valueUsd: undefined, // Not available in this response structure
-          timestamp: "", // Not available in this response structure
+          valueUsd: undefined,
+          timestamp: "",
         }));
 
         setHeldTokens(tokens);
         setTotalHeldTokens(coinBalances.count || tokens.length);
         
-        console.log(`✅ Found ${tokens.length} held tokens`);
         return tokens;
       } else {
         setHeldTokens([]);
@@ -176,8 +237,8 @@ const useZoraProfileTokens = ({
         return [];
       }
     } catch (err) {
-      console.error("❌ Error fetching held tokens:", err);
-      throw err;
+      const errorMessage = err instanceof Error ? err.message : "Failed to fetch token holdings";
+      throw new Error(errorMessage);
     }
   }, []);
 
@@ -188,7 +249,6 @@ const useZoraProfileTokens = ({
     setError(null);
 
     try {
-      // Fetch both created coins and held tokens in parallel
       await Promise.all([
         fetchCreatedCoins(ethereumAddress!),
         fetchHeldTokens(ethereumAddress!)
@@ -196,18 +256,20 @@ const useZoraProfileTokens = ({
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to fetch Zora token data";
       setError(errorMessage);
-      console.error("❌ Error in fetchAllData:", err);
     } finally {
       setIsLoading(false);
     }
   }, [shouldFetch, ethereumAddress, fetchCreatedCoins, fetchHeldTokens]);
 
-  // Effect to fetch data when dependencies change
+  const fetchedAddressRef = useRef<string | undefined>(undefined);
+  
   useEffect(() => {
-    fetchAllData();
-  }, [fetchAllData]);
+    if (shouldFetch && ethereumAddress !== fetchedAddressRef.current) {
+      fetchedAddressRef.current = ethereumAddress;
+      fetchAllData();
+    }
+  }, [shouldFetch, ethereumAddress, fetchAllData]);
 
-  // Reset state when address changes or is cleared
   useEffect(() => {
     if (!ethereumAddress) {
       setCreatedCoins([]);
