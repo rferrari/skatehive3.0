@@ -1,5 +1,6 @@
 "use client";
 import React, { memo } from "react";
+import { useRouter } from "next/navigation";
 import {
   Box,
   Card,
@@ -19,9 +20,14 @@ interface ZoraCoinCardProps {
 }
 
 const ZoraCoinCard = memo(function ZoraCoinCard({ coin }: ZoraCoinCardProps) {
+  const router = useRouter();
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const textPrimary = useColorModeValue("gray.900", "white");
   const textSecondary = useColorModeValue("gray.600", "gray.400");
+
+  const handleCardClick = () => {
+    router.push(`/coin/${coin.address}`);
+  };
 
   const formatPercentage = (value: string | undefined) => {
     if (!value) return null;
@@ -62,6 +68,7 @@ const ZoraCoinCard = memo(function ZoraCoinCard({ coin }: ZoraCoinCardProps) {
       cursor="pointer"
       h="100%"
       minH="340px"
+      onClick={handleCardClick}
     >
       {/* Full-width image */}
       <Box position="relative" w="100%" h="180px">

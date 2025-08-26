@@ -1,5 +1,6 @@
 "use client";
 import React, { memo } from "react";
+import { useRouter } from "next/navigation";
 import {
   Box,
   Card,
@@ -52,9 +53,14 @@ const formatTokenName = (name: string) => {
 const ZoraBalanceCard = memo(function ZoraBalanceCard({
   balance,
 }: ZoraBalanceCardProps) {
+  const router = useRouter();
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const textPrimary = useColorModeValue("gray.900", "white");
   const textSecondary = useColorModeValue("gray.600", "gray.400");
+
+  const handleCardClick = () => {
+    router.push(`/coin/${balance.token.address}`);
+  };
 
   // Get image source with fallback
   const imageSource =
@@ -82,6 +88,7 @@ const ZoraBalanceCard = memo(function ZoraBalanceCard({
       cursor="pointer"
       h="100%"
       minH="320px"
+      onClick={handleCardClick}
     >
       {/* Full-width image */}
       <Box position="relative" w="100%" h="160px">
