@@ -65,8 +65,6 @@ export function PortfolioProvider({
   );
 
   const fetchAllPortfolios = useCallback(async () => {
-    // Production: Debug logging removed
-
     if (
       !address &&
       !farcasterAddress &&
@@ -128,32 +126,42 @@ export function PortfolioProvider({
 
     const combinedTokens = [
       // Tag ethereum portfolio tokens
-      ...(portfolio?.tokens?.map((token) => ({
-        ...token,
-        source: "ethereum" as const,
-        sourceAddress: address,
-      })) || []),
+      ...(portfolio?.tokens && Array.isArray(portfolio.tokens)
+        ? portfolio.tokens.map((token) => ({
+            ...token,
+            source: "ethereum" as const,
+            sourceAddress: address,
+          }))
+        : []),
       // Tag farcaster portfolio tokens
-      ...(farcasterPortfolio?.tokens?.map((token) => ({
-        ...token,
-        source: "farcaster" as const,
-        sourceAddress: farcasterAddress,
-      })) || []),
+      ...(farcasterPortfolio?.tokens && Array.isArray(farcasterPortfolio.tokens)
+        ? farcasterPortfolio.tokens.map((token) => ({
+            ...token,
+            source: "farcaster" as const,
+            sourceAddress: farcasterAddress,
+          }))
+        : []),
       // Tag verified portfolio tokens
       ...Object.entries(farcasterVerifiedPortfolios).flatMap(([addr, p]) =>
-        (p.tokens || []).map((token) => ({
-          ...token,
-          source: "verified" as const,
-          sourceAddress: addr,
-        }))
+        p.tokens && Array.isArray(p.tokens)
+          ? p.tokens.map((token) => ({
+              ...token,
+              source: "verified" as const,
+              sourceAddress: addr,
+            }))
+          : []
       ),
     ];
 
     const combinedNfts = [
-      ...(portfolio?.nfts || []),
-      ...(farcasterPortfolio?.nfts || []),
-      ...Object.values(farcasterVerifiedPortfolios).flatMap(
-        (p) => p.nfts || []
+      ...(portfolio?.nfts && Array.isArray(portfolio.nfts)
+        ? portfolio.nfts
+        : []),
+      ...(farcasterPortfolio?.nfts && Array.isArray(farcasterPortfolio.nfts)
+        ? farcasterPortfolio.nfts
+        : []),
+      ...Object.values(farcasterVerifiedPortfolios).flatMap((p) =>
+        p.nfts && Array.isArray(p.nfts) ? p.nfts : []
       ),
     ];
 

@@ -42,7 +42,7 @@ export default function EthereumAssetsSection() {
   } = usePortfolioContext();
 
   const [hideSmallBalances, setHideSmallBalances] = useState(true);
-  const minBalanceThreshold = 1; // Changed from 5 to 1 USD
+  const minBalanceThreshold = 1;
   const [logoUpdateTrigger, setLogoUpdateTrigger] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedToken, setSelectedToken] = useState<TokenDetail | null>(null);
