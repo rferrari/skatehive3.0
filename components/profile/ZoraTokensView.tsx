@@ -17,8 +17,7 @@ import {
 } from "@chakra-ui/react";
 import { FaCoins, FaWallet } from "react-icons/fa";
 import useZoraProfileTokens from "@/hooks/useZoraProfileTokens";
-import ZoraCoinCard from "./ZoraCoinCard";
-import ZoraBalanceCard from "./ZoraBalanceCard";
+import ZoraTokenCard from "./ZoraTokenCard";
 
 interface ZoraTokensViewProps {
   ethereumAddress?: string;
@@ -96,7 +95,11 @@ const ZoraTokensView: React.FC<ZoraTokensViewProps> = ({ ethereumAddress }) => {
                     gap={6}
                   >
                     {createdCoins.map((coin) => (
-                      <ZoraCoinCard key={coin.address} coin={coin} />
+                      <ZoraTokenCard
+                        key={coin.address}
+                        coin={coin}
+                        variant="created"
+                      />
                     ))}
                   </Grid>
                 ) : (
@@ -137,9 +140,10 @@ const ZoraTokensView: React.FC<ZoraTokensViewProps> = ({ ethereumAddress }) => {
                     gap={6}
                   >
                     {heldTokens.map((balance, index) => (
-                      <ZoraBalanceCard
+                      <ZoraTokenCard
                         key={`${balance.token?.address}-${index}`}
                         balance={balance}
+                        variant="held"
                       />
                     ))}
                   </Grid>
