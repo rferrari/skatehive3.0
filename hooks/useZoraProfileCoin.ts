@@ -27,11 +27,6 @@ export interface ZoraProfileData {
   coinData?: ZoraProfileCoinData;
 }
 
-// Helper function to format IPFS URLs
-function formatImageUrl(url: string | undefined): string | undefined {
-  if (!url) return undefined;
-  return convertIpfsUrl(url);
-}
 
 export function useZoraProfileCoin(walletAddress: string | undefined) {
   const [profileCoin, setProfileCoin] = useState<ZoraProfileCoinData | null>(null);
@@ -43,7 +38,6 @@ export function useZoraProfileCoin(walletAddress: string | undefined) {
     const fetchProfileCoin = async () => {
       
       if (!walletAddress) {
-        console.log("❌ useZoraProfileCoin: No wallet address provided");
         setProfileCoin(null);
         setProfileData(null);
         return;
@@ -53,7 +47,6 @@ export function useZoraProfileCoin(walletAddress: string | undefined) {
       setError(null);
 
       try {
-        console.log("📡 useZoraProfileCoin: Calling getProfile for address:", walletAddress);
         
         const response = await getProfile({
           identifier: walletAddress as Address,
@@ -105,7 +98,6 @@ export function useZoraProfileCoin(walletAddress: string | undefined) {
             coinData: profileCoinData
           }));
         } else {
-          console.log("❌ useZoraProfileCoin: No creator coin found for this profile");
           setProfileCoin(null);
         }
       } catch (err) {

@@ -58,9 +58,11 @@ const ZoraTokenCard = memo(function ZoraTokenCard({
   const textSecondary = useColorModeValue("gray.600", "gray.400");
 
   const tokenData = coin || balance?.token;
-  if (!tokenData) return null;
 
+  // All hooks must be called before any early returns
   const derivedValues = useMemo(() => {
+    if (!tokenData) return null;
+    
     const isHeldToken = variant === "held" || Boolean(balance);
     const hoverBorderColor = isHeldToken ? "secondary.400" : "primary.400";
     const badgeColorScheme = isHeldToken ? "secondary" : "primary";
@@ -77,17 +79,16 @@ const ZoraTokenCard = memo(function ZoraTokenCard({
       badgeColorScheme,
       imageSource,
     };
-  }, [variant, balance, tokenData.mediaContent]);
+  }, [variant, balance, tokenData]);
 
-  // Memoize click handler to prevent recreation
   const handleCardClick = useCallback(() => {
+    if (!tokenData) return;
     router.push(`/coin/${tokenData.address}`);
-  }, [router, tokenData.address]);
+  }, [router, tokenData]);
 
-  // Memoize percentage formatting
   const percentageData = useMemo(
-    () => formatPercentageValue(tokenData.marketCapDelta24h),
-    [tokenData.marketCapDelta24h]
+    () => tokenData ? formatPercentageValue(tokenData.marketCapDelta24h) : null,
+    [tokenData]
   );
 
   const formatPercentage = useCallback((data: typeof percentageData) => {
@@ -98,6 +99,9 @@ const ZoraTokenCard = memo(function ZoraTokenCard({
       </Text>
     );
   }, []);
+
+  // Early return after all hooks
+  if (!tokenData || !derivedValues) return null;
 
   const { isHeldToken, hoverBorderColor, badgeColorScheme, imageSource } =
     derivedValues;
