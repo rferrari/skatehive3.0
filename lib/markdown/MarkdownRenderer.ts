@@ -50,31 +50,25 @@ function getSanitizedHTML(html: string): string {
     const clean = purify.sanitize(html, {
         ALLOWED_TAGS: [
             'div', 'span', 'p', 'br', 'strong', 'em', 'u', 'strike', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-            'blockquote', 'ul', 'ol', 'li', 'a', 'img', 'video', 'source', 'iframe', 'mention', 'code', 'pre',
+            'blockquote', 'ul', 'ol', 'li', 'a', 'img', 'video', 'source', 'iframe', 'code', 'pre',
             'table', 'thead', 'tbody', 'tr', 'th', 'td', 'hr', 'sup', 'sub', 'small', 'mark', 'del', 'ins'
         ],
         ALLOWED_ATTR: [
-            'href', 'src', 'alt', 'title', 'width', 'height', 'style', 'class', 'id', 'data-username', 
-            'data-ipfs-hash', 'controls', 'preload', 'autoplay', 'playsinline', 'webkit-playsinline', 
+            'href', 'src', 'alt', 'title', 'width', 'height', 'style', 'class', 'id', 'data-ipfs-hash', 
+            'controls', 'preload', 'autoplay', 'playsinline', 'webkit-playsinline', 
             'muted', 'poster', 'type', 'frameborder', 'allow', 'allowfullscreen', 'loading', 'target',
             'rel'
         ],
         // More permissive URI regex that allows our trusted video platforms
         ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
-        ADD_TAGS: ['mention'],
-        ADD_ATTR: ['data-username', 'data-ipfs-hash', 'webkit-playsinline', 'playsinline'],
+        ADD_ATTR: ['data-ipfs-hash', 'webkit-playsinline', 'playsinline'],
         FORBID_TAGS: ['script', 'object', 'embed', 'applet', 'base', 'link'],
         FORBID_ATTR: ['onclick', 'onload', 'onerror', 'onmouseover', 'onfocus', 'onblur', 'onsubmit', 'onreset', 'onselect', 'onchange'],
         WHOLE_DOCUMENT: false,
         RETURN_DOM: false,
         RETURN_DOM_FRAGMENT: false,
         RETURN_TRUSTED_TYPE: false,
-        ALLOW_UNKNOWN_PROTOCOLS: false,
-        CUSTOM_ELEMENT_HANDLING: {
-            tagNameCheck: /^mention$/,
-            attributeNameCheck: /^data-username$/,
-            allowCustomizedBuiltInElements: false,
-        }
+        ALLOW_UNKNOWN_PROTOCOLS: false
     });
     
     // Remove the hook after sanitization to prevent memory leaks
@@ -108,8 +102,14 @@ export function processMediaContent(content: string): string {
             if (isLikelyVideoID(url)) {
                 return createSimpleVideoTag(hash);
             } else {
-                // Center the image with a styled div
-                return `<div style="display: flex; justify-content: center; align-items: center; margin: 1.5rem 0;"><img src='${url}' alt='IPFS Image' style='max-width: 100%; height: auto; box-shadow: 0 2px 16px rgba(0,0,0,0.12);'/></div>`;
+                // Check if it's a GIF to apply special styling
+                const isGif = ext && ext.toLowerCase() === '.gif';
+                if (isGif) {
+                    return `<div style="display: flex; justify-content: center; align-items: center; margin: 2rem 0;"><img src='${url}' alt='IPFS GIF' style='max-width: min(80%, 600px); min-width: min(300px, 90vw); height: auto; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);'/></div>`;
+                } else {
+                    // Regular image styling
+                    return `<div style="display: flex; justify-content: center; align-items: center; margin: 1.5rem 0;"><img src='${url}' alt='IPFS Image' style='max-width: 100%; height: auto; box-shadow: 0 2px 16px rgba(0,0,0,0.12);'/></div>`;
+                }
             }
         }
     );
@@ -159,6 +159,40 @@ export function processMediaContent(content: string): string {
         (_match, videoId) => `[[VIMEO:${videoId}]]`
     );
 
+    // Process external image URLs (including GIFs from Giphy, Tenor, etc.)
+    processedContent = processedContent.replace(
+        /!\[([^\]]*)\]\((https?:\/\/[^\s)]+\.(gif|jpg|jpeg|png|webp)(?:\?[^\s)]*)?)\)/gi,
+        (match, altText, url, ext) => {
+            const isGif = ext.toLowerCase() === 'gif' || 
+                         url.includes('giphy.com') || 
+                         url.includes('tenor.com') || 
+                         url.includes('.gif');
+            
+            if (isGif) {
+                return `<div style="display: flex; justify-content: center; align-items: center; margin: 2rem 0;"><img src='${url}' alt='${altText || 'GIF'}' style='max-width: min(80%, 600px); min-width: min(300px, 90vw); height: auto; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);'/></div>`;
+            } else {
+                return `<div style="display: flex; justify-content: center; align-items: center; margin: 1.5rem 0;"><img src='${url}' alt='${altText || 'Image'}' style='max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 16px rgba(0,0,0,0.12);'/></div>`;
+            }
+        }
+    );
+
+    // Process standalone image URLs (not in markdown format)
+    processedContent = processedContent.replace(
+        /^(https?:\/\/[^\s]+\.(gif|jpg|jpeg|png|webp)(?:\?[^\s]*)?)$/gmi,
+        (match, url, ext) => {
+            const isGif = ext.toLowerCase() === 'gif' || 
+                         url.includes('giphy.com') || 
+                         url.includes('tenor.com') || 
+                         url.includes('.gif');
+            
+            if (isGif) {
+                return `<div style="display: flex; justify-content: center; align-items: center; margin: 2rem 0;"><img src='${url}' alt='GIF' style='max-width: min(80%, 600px); min-width: min(300px, 90vw); height: auto; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);'/></div>`;
+            } else {
+                return `<div style="display: flex; justify-content: center; align-items: center; margin: 1.5rem 0;"><img src='${url}' alt='Image' style='max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 16px rgba(0,0,0,0.12);'/></div>`;
+            }
+        }
+    );
+
     // Cache the result
     processedContentCache.set(content, processedContent);
     return processedContent;
@@ -166,6 +200,12 @@ export function processMediaContent(content: string): string {
 
 export default function markdownRenderer(markdown: string): string {
     if (!markdown || markdown.trim() === "") return "";
+    
+    // Clear cache if we're in development to ensure changes are reflected
+    if (process.env.NODE_ENV === 'development') {
+        markdownCache.clear();
+        processedContentCache.clear();
+    }
     
     // Check cache first
     if (markdownCache.has(markdown)) {
@@ -175,6 +215,15 @@ export default function markdownRenderer(markdown: string): string {
     try {
         // Process media content before rendering markdown
         const processedMarkdown = processMediaContent(markdown);
+        
+        // Process mentions in the raw markdown before rendering
+        const markdownWithMentions = processedMarkdown.replace(
+            /@([a-z0-9\-.]+)(\s|$|[^a-z0-9\-.])/gi,
+            (match, username, trailing) => {
+                return `<a href="/@${username}" style="display: inline; color: var(--chakra-colors-primary, #3182ce); text-decoration: underline; font-weight: 500; white-space: nowrap;"><img src="https://images.ecency.com/webp/u/${username}/avatar/small" alt="@${username}" style="width: 16px; height: 16px; border-radius: 50%; object-fit: cover; vertical-align: text-bottom; margin-right: 4px; margin-bottom: 1px;" loading="lazy" />${username}</a>${trailing}`;
+            }
+        );
+        
         const renderer = new DefaultRenderer({
             baseUrl: "https://hive.blog/",
             breaks: true,
@@ -191,20 +240,14 @@ export default function markdownRenderer(markdown: string): string {
             addExternalCssClassToMatchingLinksFn: () => true,
             ipfsPrefix: "https://ipfs.skatehive.app",
         });
-        const html = renderer.render(processedMarkdown);
+        const html = renderer.render(markdownWithMentions);
         
         // Sanitize the HTML (only on client side)
         const clean = getSanitizedHTML(html);
         
-        // Replace user mention links with <mention> tags
-        const mentionLinkRegex = /<a [^>]*href="\/@([a-z0-9\-.]+)"[^>]*>@([a-z0-9\-.]+)<\/a>/gi;
-        const htmlWithMentions = clean.replace(mentionLinkRegex, (_match: string, username: string) => {
-            return `<mention data-username="${username}">@${username}</mention>`;
-        });
-        
         // Cache the result
-        markdownCache.set(markdown, htmlWithMentions);
-        return htmlWithMentions;
+        markdownCache.set(markdown, clean);
+        return clean;
     } catch (error) {
         console.warn('Content renderer error handled by SkateHive:', error);
         
@@ -253,8 +296,8 @@ function createSimpleVideoTag(videoID: string): string {
 }
 
 function createImageTag(imageID: string): string {
-    return `<div style="text-align: center; display: flex; justify-content: center; margin: 1rem 0;">
-        <img src="https://ipfs.skatehive.app/ipfs/${imageID}" alt="IPFS Image" style="max-width: 100%; height: auto;">
+    return `<div style="display: flex; justify-content: center; align-items: center; margin: 1.5rem 0;">
+        <img src="https://ipfs.skatehive.app/ipfs/${imageID}" alt="IPFS Image" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 16px rgba(0,0,0,0.12);">
     </div>`;
 }
 

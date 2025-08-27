@@ -16,16 +16,6 @@ const HiveMarkdown: React.FC<HiveMarkdownProps> = ({
   // Get sanitized HTML from the updated markdownRenderer
   let rawHtml = markdownRenderer(markdown);
 
-  // Replace <mention data-username="username">@username</mention> with inline HTML
-  const processMentions = (html: string) => {
-    return html.replace(
-      /<mention data-username="([a-zA-Z0-9._-]+)">@([a-zA-Z0-9._-]+)<\/mention>/g,
-      (_, username) => {
-        return `<a href="/@${username}" style="display: inline; text-decoration: underline; color: #3182ce; white-space: nowrap;"><img src="https://images.ecency.com/webp/u/${username}/avatar/small" alt="@${username}" style="width: 16px; height: 16px; border-radius: 50%; object-fit: cover; vertical-align: text-bottom; display: inline; margin-right: 4px; margin-bottom: 2px;" loading="lazy" />${username}</a>`;
-      }
-    );
-  };
-
   // Post-process YouTube tags in the HTML
   const processYouTubeEmbeds = (html: string) => {
     // Replace all [[YOUTUBE:VIDEOID]] with responsive iframes
@@ -47,9 +37,8 @@ const HiveMarkdown: React.FC<HiveMarkdownProps> = ({
     );
   };
 
-  // Process mentions and YouTube embeds
+  // Process YouTube embeds
   rawHtml = processYouTubeEmbeds(rawHtml);
-  rawHtml = processMentions(rawHtml);
 
   return (
     <SkateErrorBoundary>
