@@ -112,6 +112,12 @@ export const STATIC_PAGES: PageResult[] = [
     description: "Share content with the community",
     icon: FaShareAlt,
   },
+  {
+    title: "DAO",
+    path: "/dao",
+    description: "Decentralized Autonomous Organization management",
+    icon: FaUser,
+  }
 ];
 
 // Special commands that trigger modal actions

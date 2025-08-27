@@ -17,7 +17,7 @@ import {
 import { ExternalLinkIcon } from "@chakra-ui/icons";
 import { useEffect, useState } from "react";
 import { useReadContract } from "wagmi";
-import { SKATEHIVE_ETH_ADDRESS, DAO_ADDRESSES } from "@/lib/utils/constants";
+import { DAO_ADDRESSES, SKATEHIVE_HOT_ADDRESS } from "@/lib/utils/constants";
 import { AuctionHeader } from "@/components/auction/AuctionHeader";
 
 interface AdminAuctionPageProps {
@@ -164,7 +164,7 @@ export function AdminAuctionPage({
 
   const formatAddress = (address: string) => {
     if (!address) return "n/a";
-    if (address.toLowerCase() === SKATEHIVE_ETH_ADDRESS.toLowerCase()) {
+    if (address.toLowerCase() === SKATEHIVE_HOT_ADDRESS.toLowerCase()) {
       return "skatehive.eth";
     }
     return `${address.slice(0, 6)}...${address.slice(-4)}`;

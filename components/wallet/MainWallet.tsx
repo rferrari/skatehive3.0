@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useFarcasterSession } from "../../hooks/useFarcasterSession";
 import useHiveAccount from "@/hooks/useHiveAccount";
+import useMarketPrices from "@/hooks/useMarketPrices";
 import { useWalletActions } from "@/hooks/useWalletActions";
 import { useAccount } from "wagmi";
 import {
@@ -106,9 +107,7 @@ export default function MainWallet({ username }: MainWalletProps) {
     showUsernameField?: boolean;
   } | null>(null);
   const [hivePower, setHivePower] = useState<string | undefined>(undefined);
-  const [hivePrice, setHivePrice] = useState<number | null>(null);
-  const [hbdPrice, setHbdPrice] = useState<number | null>(null);
-  const [isPriceLoading, setIsPriceLoading] = useState(true);
+  const { hivePrice, hbdPrice, isPriceLoading } = useMarketPrices();
   const toast = useToast();
 
   // Set mounted state to prevent hydration mismatch
@@ -137,26 +136,6 @@ export default function MainWallet({ username }: MainWalletProps) {
     };
     fetchHivePower();
   }, [hiveAccount?.vesting_shares]);
-
-  useEffect(() => {
-    async function fetchPrices() {
-      setIsPriceLoading(true);
-      try {
-        const res = await fetch(
-          "https://api.coingecko.com/api/v3/simple/price?ids=hive,hive_dollar&vs_currencies=usd"
-        );
-        const data = await res.json();
-        setHivePrice(data.hive ? data.hive.usd : null);
-        setHbdPrice(data.hive_dollar ? data.hive_dollar.usd : null);
-      } catch (e) {
-        setHivePrice(null);
-        setHbdPrice(null);
-      } finally {
-        setIsPriceLoading(false);
-      }
-    }
-    fetchPrices();
-  }, []);
 
   const handleModalOpen = useCallback(
     (
