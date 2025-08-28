@@ -27,7 +27,7 @@ function getSanitizedHTML(html: string): string {
                     /^https:\/\/(www\.)?youtube\.com\/embed\/[a-zA-Z0-9_-]{11}(\?.*)?$/,
                     /^https:\/\/youtu\.be\/[a-zA-Z0-9_-]{11}(\?.*)?$/,
                     /^https:\/\/player\.vimeo\.com\/video\/[0-9]+(\?.*)?$/,
-                    /^https:\/\/3speak\.tv\/embed\?v=.+$/,
+                    /^https:\/\/3speak\.tv\/embed\?v=[^"'<>\s]+$/,
                     /^https:\/\/odysee\.com\/.+$/,
                     /^https:\/\/ipfs\.skatehive\.app\/ipfs\/.+$/,
                     /^https:\/\/gateway\.pinata\.cloud\/ipfs\/.+$/
@@ -57,7 +57,7 @@ function getSanitizedHTML(html: string): string {
             'href', 'src', 'alt', 'title', 'width', 'height', 'style', 'class', 'id', 'data-ipfs-hash', 
             'controls', 'preload', 'autoplay', 'playsinline', 'webkit-playsinline', 
             'muted', 'poster', 'type', 'frameborder', 'allow', 'allowfullscreen', 'loading', 'target',
-            'rel'
+            'rel', 'referrerpolicy', 'sandbox'
         ],
         // More permissive URI regex that allows our trusted video platforms
         ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
@@ -84,7 +84,7 @@ export function processMediaContent(content: string): string {
     }
 
     let processedContent = content;
-    // Handle 3Speak videos with better validation
+    // Handle 3Speak videos with better validation - use placeholder
     processedContent = processedContent.replace(
         /\[!\[.*?\]\(.*?\)\]\((https?:\/\/3speak\.tv\/watch\?v=([\w\-/]+))\)/g,
         (match, url, videoId) => {
@@ -92,7 +92,7 @@ export function processMediaContent(content: string): string {
             if (!videoId || typeof videoId !== 'string' || videoId.includes('[object') || videoId === '[object Object]') {
                 return match; // Return original match if invalid
             }
-            return create3SpeakEmbed(videoId);
+            return `[[3SPEAK:${videoId}]]`;
         }
     );
     // Replace markdown images with IPFS links, but only treat as video if the URL ends with a video extension
@@ -198,6 +198,25 @@ export function processMediaContent(content: string): string {
     return processedContent;
 }
 
+function expandEmbeds(html: string): string {
+    // 3Speak
+    html = html.replace(/\[\[3SPEAK:([^[\]\s]+)\]\]/g, (_m, id) => `
+        <div class="embed-frame">
+            <iframe
+                src="https://3speak.tv/embed?v=${id}&autoplay=0&muted=0&controls=1"
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"
+                allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowfullscreen
+                sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
+            ></iframe>
+        </div>
+    `);
+
+    // Add other placeholder expansions if needed
+    return html;
+}
+
 export default function markdownRenderer(markdown: string): string {
     if (!markdown || markdown.trim() === "") return "";
     
@@ -227,7 +246,7 @@ export default function markdownRenderer(markdown: string): string {
         const renderer = new DefaultRenderer({
             baseUrl: "https://hive.blog/",
             breaks: true,
-            skipSanitization: false,
+            skipSanitization: true,
             allowInsecureScriptTags: false,
             addNofollowToLinks: true,
             doNotShowImages: false,
@@ -242,8 +261,11 @@ export default function markdownRenderer(markdown: string): string {
         });
         const html = renderer.render(markdownWithMentions);
         
+        // Expand tokens into real embeds AFTER markdown render
+        const expanded = expandEmbeds(html);
+        
         // Sanitize the HTML (only on client side)
-        const clean = getSanitizedHTML(html);
+        const clean = getSanitizedHTML(expanded);
         
         // Cache the result
         markdownCache.set(markdown, clean);
@@ -295,32 +317,3 @@ function createSimpleVideoTag(videoID: string): string {
     </div>`;
 }
 
-function createImageTag(imageID: string): string {
-    return `<div style="display: flex; justify-content: center; align-items: center; margin: 1.5rem 0;">
-        <img src="https://ipfs.skatehive.app/ipfs/${imageID}" alt="IPFS Image" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 16px rgba(0,0,0,0.12);">
-    </div>`;
-}
-
-function create3SpeakEmbed(videoID: string): string {
-
-    // Ensure videoID is a string and not an object
-    const safeVideoID = typeof videoID === 'string' ? videoID : String(videoID);
-
-    // Additional validation to prevent [object Object] in URLs
-    if (safeVideoID.includes('[object') || safeVideoID === '[object Object]') {
-        return `<div>Invalid video ID: ${safeVideoID}</div>`;
-    }
-
-    // Generate the final embed URL
-    const embedUrl = `https://3speak.tv/embed?v=${safeVideoID}`;
-
-    return `<div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; margin: 1rem 0;">
-        <iframe
-            src="${embedUrl}"
-            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
-            frameborder="0"
-            allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-            allowfullscreen
-        ></iframe>
-    </div>`;
-}
