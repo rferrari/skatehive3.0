@@ -14,11 +14,20 @@ import {
   Divider,
   useTheme,
   Box,
+  Badge,
+  HStack,
+  Avatar,
 } from "@chakra-ui/react";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Discussion } from "@hiveio/dhive";
 import { transferWithKeychain } from "@/lib/hive/client-functions";
 import { KeychainSDK } from "keychain-sdk";
+
+interface WinnerInfo {
+  username: string;
+  place: number;
+  rewardAmount: number;
+}
 
 interface BountyRewarderProps {
   isOpen: boolean;
@@ -54,14 +63,132 @@ const BountyRewarder: React.FC<BountyRewarderProps> = ({
   const [showCompletionOverlay, setShowCompletionOverlay] = useState(false);
   const [currentStep, setCurrentStep] = useState<string>("");
 
-  const rewardPerWinner =
-    selectedWinners.length > 0
-      ? (rewardInfo.amount / selectedWinners.length).toFixed(3)
-      : "0";
+  // Smart weighted reward formula that adapts to number of winners with precise rounding
+  const calculateRewards = (winners: string[]): WinnerInfo[] => {
+    if (winners.length === 0) return [];
+    
+    const totalReward = rewardInfo.amount;
+    const winnersList: WinnerInfo[] = [];
+    
+    if (winners.length === 1) {
+      // Only 1 winner: gets 100%
+      winnersList.push({ 
+        username: winners[0], 
+        place: 1, 
+        rewardAmount: totalReward 
+      });
+    } else if (winners.length === 2) {
+      // 2 winners: 1st gets 70%, 2nd gets 30%
+      const firstPlace = Math.round(totalReward * 0.70 * 1000) / 1000; // Round to 3 decimals
+      const secondPlace = totalReward - firstPlace; // Ensure exact total
+      
+      winnersList.push({ 
+        username: winners[0], 
+        place: 1, 
+        rewardAmount: firstPlace 
+      });
+      winnersList.push({ 
+        username: winners[1], 
+        place: 2, 
+        rewardAmount: secondPlace 
+      });
+    } else if (winners.length === 3) {
+      // 3 winners: 1st gets 50%, 2nd gets 30%, 3rd gets 20%
+      const firstPlace = Math.round(totalReward * 0.50 * 1000) / 1000;
+      const secondPlace = Math.round(totalReward * 0.30 * 1000) / 1000;
+      const thirdPlace = totalReward - firstPlace - secondPlace; // Ensure exact total
+      
+      winnersList.push({ 
+        username: winners[0], 
+        place: 1, 
+        rewardAmount: firstPlace 
+      });
+      winnersList.push({ 
+        username: winners[1], 
+        place: 2, 
+        rewardAmount: secondPlace 
+      });
+      winnersList.push({ 
+        username: winners[2], 
+        place: 3, 
+        rewardAmount: thirdPlace 
+      });
+    } else {
+      // 4+ winners: 1st gets 40%, 2nd gets 25%, 3rd gets 20%, rest split remaining 15% equally
+      const topTierReward = totalReward * 0.85; // 40% + 25% + 20% = 85%
+      const lowerTierReward = totalReward * 0.15; // Remaining 15%
+      const lowerTierWinners = winners.length - 3; // Number of winners after 3rd place
+      const rewardPerLowerTier = lowerTierReward / lowerTierWinners;
+      
+      winners.forEach((username, index) => {
+        let rewardAmount: number;
+        let place: number;
+        
+        if (index === 0) {
+          // 1st place: 40%
+          rewardAmount = Math.round(totalReward * 0.40 * 1000) / 1000;
+          place = 1;
+        } else if (index === 1) {
+          // 2nd place: 25%
+          rewardAmount = Math.round(totalReward * 0.25 * 1000) / 1000;
+          place = 2;
+        } else if (index === 2) {
+          // 3rd place: 20%
+          rewardAmount = Math.round(totalReward * 0.20 * 1000) / 1000;
+          place = 3;
+        } else {
+          // 4th place and beyond: split the remaining 15% equally
+          rewardAmount = Math.round(rewardPerLowerTier * 1000) / 1000;
+          place = index + 1;
+        }
+        
+        winnersList.push({ username, place, rewardAmount });
+      });
+      
+      // Adjust the last lower-tier winner to ensure exact total
+      if (lowerTierWinners > 0) {
+        const totalDistributed = winnersList.reduce((sum, winner) => sum + winner.rewardAmount, 0);
+        const lastLowerTierIndex = winnersList.length - 1;
+        const adjustment = totalReward - totalDistributed;
+        
+        if (Math.abs(adjustment) > 0.001) {
+          winnersList[lastLowerTierIndex].rewardAmount = Math.round((winnersList[lastLowerTierIndex].rewardAmount + adjustment) * 1000) / 1000;
+        }
+      }
+    }
+    
+    return winnersList;
+  };
+
+  const winnerRewards = calculateRewards(selectedWinners);
+  const totalRewardAmount = winnerRewards.reduce((sum, winner) => sum + winner.rewardAmount, 0);
+
+  const getPlaceEmoji = (place: number) => {
+    switch (place) {
+      case 1: return "🥇";
+      case 2: return "🥈";
+      case 3: return "🥉";
+      default: return `${place}️⃣`;
+    }
+  };
+
+  const getPlaceBadgeColor = (place: number) => {
+    switch (place) {
+      case 1: return "gold";
+      case 2: return "silver";
+      case 3: return "bronze";
+      default: return "gray";
+    }
+  };
 
   const handleRewardBountyHunters = async () => {
     if (!user) {
       setRewardError("You must be logged in to reward bounty hunters.");
+      return;
+    }
+
+    if (selectedWinners.length === 0) {
+      setRewardError("No winners selected.");
       return;
     }
 
@@ -72,30 +199,34 @@ const BountyRewarder: React.FC<BountyRewarderProps> = ({
     try {
       setCurrentStep("Sending rewards...");
       
-      for (let i = 0; i < selectedWinners.length; i++) {
-        const winner = selectedWinners[i];
+      for (let i = 0; i < winnerRewards.length; i++) {
+        const winner = winnerRewards[i];
         try {
-          setCurrentStep(`Sending reward to @${winner}... (${i + 1}/${selectedWinners.length})`);
+          setCurrentStep(`Sending ${winner.place}${getOrdinalSuffix(winner.place)} place reward to @${winner.username}... (${i + 1}/${winnerRewards.length})`);
           
           const transferResult = await transferWithKeychain(
             String(user),
-            winner,
-            rewardPerWinner,
-            `Congrats @${winner}! You won ${rewardPerWinner} ${rewardInfo.currency} in the bounty: ${challengeName}`,
+            winner.username,
+            winner.rewardAmount.toFixed(3),
+            `🏆 ${winner.place}${getOrdinalSuffix(winner.place)} Place! @${winner.username} won ${winner.rewardAmount.toFixed(3)} ${rewardInfo.currency} in the bounty: ${challengeName}`,
             rewardInfo.currency
           );
         } catch (err) {
-          console.error(`Transfer error for ${winner}:`, err);
-          setRewardError(`Failed to send reward to @${winner}. Please try again.`);
+          console.error(`Transfer error for ${winner.username}:`, err);
+          setRewardError(`Failed to send reward to @${winner.username}. Please try again.`);
           setCurrentStep("");
           setIsRewarding(false);
-          return; // Exit early if any transfer fails
+          return;
         }
       }
+
       setCurrentStep("Announcing Winners... Confirm the keychain transaction to make a post in this bounty tagging the winners");
       
-      const winnersList = selectedWinners.map((w) => `@${w}`).join(", ");
-      const commentBody = `🏆 Bounty Winners! 🏆\n\nCongratulations to: ${winnersList}\n\nReward: ${rewardPerWinner} ${rewardInfo.currency}\n\nThank you for participating!`;
+      const winnersList = winnerRewards
+        .map((winner) => `${getPlaceEmoji(winner.place)} @${winner.username} (${winner.rewardAmount.toFixed(3)} ${rewardInfo.currency})`)
+        .join("\n");
+      
+      const commentBody = `🏆 Bounty Winners! 🏆\n\n${winnersList}\n\nTotal Reward: ${rewardInfo.amount} ${rewardInfo.currency}\n\nThank you for participating!`;
       const permlink = `bounty-winners-${Date.now()}`;
       
       // Validation: ensure all required fields are present
@@ -226,6 +357,15 @@ const BountyRewarder: React.FC<BountyRewarderProps> = ({
     }
   };
 
+  const getOrdinalSuffix = (num: number) => {
+    const j = num % 10;
+    const k = num % 100;
+    if (j === 1 && k !== 11) return "st";
+    if (j === 2 && k !== 12) return "nd";
+    if (j === 3 && k !== 13) return "rd";
+    return "th";
+  };
+
   const handleClose = () => {
     if (!isRewarding) {
       onClose();
@@ -247,69 +387,140 @@ const BountyRewarder: React.FC<BountyRewarderProps> = ({
           color="text"
         >
         <ModalHeader color="primary" fontWeight="bold">
-          Select Bounty Winners
+          🏆 Select Bounty Winners
         </ModalHeader>
         <ModalCloseButton color="text" />
         <ModalBody>
-          <Text mb={2} color="text">
-            Select the users who won this bounty:
-          </Text>
+          <VStack spacing={3} align="stretch" mb={4}>
+            {selectedWinners.length === 1 && (
+              <HStack spacing={4} justify="center">
+                <Badge colorScheme="gold" variant="solid">🥇 1st: 100%</Badge>
+              </HStack>
+            )}
+            {selectedWinners.length === 2 && (
+              <HStack spacing={4} justify="center">
+                <Badge colorScheme="gold" variant="solid">🥇 1st: 70%</Badge>
+                <Badge colorScheme="silver" variant="solid">🥈 2nd: 30%</Badge>
+              </HStack>
+            )}
+            {selectedWinners.length === 3 && (
+              <HStack spacing={4} justify="center">
+                <Badge colorScheme="gold" variant="solid">🥇 1st: 50%</Badge>
+                <Badge colorScheme="silver" variant="solid">🥈 2nd: 30%</Badge>
+                <Badge colorScheme="bronze" variant="solid">🥉 3rd: 20%</Badge>
+              </HStack>
+            )}
+            {selectedWinners.length >= 4 && (
+              <HStack spacing={4} justify="center" wrap="wrap">
+                <Badge colorScheme="gold" variant="solid">🥇 1st: 40%</Badge>
+                <Badge colorScheme="silver" variant="solid">🥈 2nd: 25%</Badge>
+                <Badge colorScheme="bronze" variant="solid">🥉 3rd: 20%</Badge>
+                <Badge colorScheme="gray" variant="solid">4th+: Split 15% equally</Badge>
+              </HStack>
+            )}
+          </VStack>
+
           <CheckboxGroup
             value={selectedWinners}
-            onChange={(val) => setSelectedWinners(val as string[])}
+            onChange={(val: string[]) => setSelectedWinners(val)}
           >
-            <VStack align="start">
-              {uniqueCommenters.map((username: string) => (
-                <Checkbox 
-                  key={username} 
-                  value={username}
-                  colorScheme="primary"
-                  sx={{
-                    '& .chakra-checkbox__control': {
-                      borderColor: 'primary',
-                      _checked: {
-                        bg: 'primary',
-                        borderColor: 'primary',
-                        '& .chakra-checkbox__icon': {
-                          color: 'background',
-                        },
-                      },
-                    },
-                    '& .chakra-checkbox__label': {
-                      color: 'text',
-                    },
-                  }}
+            <VStack align="start" spacing={2}>
+              {uniqueCommenters.map((username: string, index: number) => (
+                <Box
+                  key={username}
+                  w="100%"
+                  p={2}
+                  border="1px solid"
+                  borderColor="border"
+                  borderRadius="md"
+                  bg="background"
                 >
-                  @{username}
-                </Checkbox>
+                  <HStack spacing={3} align="center">
+                    <Avatar
+                      size="sm"
+                      name={username}
+                      src={`https://images.hive.blog/u/${username}/avatar`}
+                      bg="muted"
+                      border="1px solid"
+                      borderColor="border"
+                    />
+                    <Checkbox 
+                      value={username}
+                      colorScheme="primary"
+                      sx={{
+                        '& .chakra-checkbox__control': {
+                          borderColor: 'primary',
+                          _checked: {
+                            bg: 'primary',
+                            borderColor: 'primary',
+                            '& .chakra-checkbox__icon': {
+                              color: 'background',
+                            },
+                          },
+                        },
+                        '& .chakra-checkbox__label': {
+                          color: 'text',
+                          fontWeight: 'bold',
+                        },
+                      }}
+                    >
+                      @{username}
+                    </Checkbox>
+                  </HStack>
+                  
+                  {selectedWinners.includes(username) && (
+                    <Box mt={2} ml={6}>
+                      {(() => {
+                        const winner = winnerRewards.find(w => w.username === username);
+                        if (!winner) return null;
+                        return (
+                          <HStack spacing={2}>
+                            <Badge
+                              colorScheme={getPlaceBadgeColor(winner.place)}
+                              variant="solid"
+                              size="sm"
+                            >
+                              {getPlaceEmoji(winner.place)} {winner.place}{getOrdinalSuffix(winner.place)} Place
+                            </Badge>
+                            <Text fontSize="sm" color="accent" fontWeight="bold">
+                              {winner.rewardAmount.toFixed(3)} {rewardInfo.currency}
+                            </Text>
+                          </HStack>
+                        );
+                      })()}
+                    </Box>
+                  )}
+                </Box>
               ))}
             </VStack>
           </CheckboxGroup>
-          <Divider my={3} borderColor="border" />
-          <Text color="text">
-            Total Reward:{" "}
-            <b style={{ color: theme.colors.primary }}>
-              {rewardInfo.amount} {rewardInfo.currency}
-            </b>
-          </Text>
-          <Text color="text">
-            Each winner receives:{" "}
-            <b style={{ color: theme.colors.accent }}>
-              {rewardPerWinner} {rewardInfo.currency}
-            </b>
-          </Text>
+
+          <Divider my={4} borderColor="border" />
+          
+          {selectedWinners.length > 0 && (
+            <Box p={3} bg="background" borderRadius="md" border="1px solid" borderColor="border">
+              <Text color="text" fontSize="sm">
+                Total Distributed: <b style={{ color: theme.colors.accent }}>
+                  {totalRewardAmount.toFixed(3)} {rewardInfo.currency}
+                </b>
+              </Text>
+            </Box>
+          )}
+
           {rewardError && (
-            <Text color="error" mt={2}>
+            <Text color="error" mt={3}>
               {rewardError}
             </Text>
           )}
+          
           {currentStep && (
-            <Text color="primary" mt={2} fontWeight="bold">
+            <Text color="primary" mt={3} fontWeight="bold">
               {currentStep}
             </Text>
           )}
+          
           {rewardSuccess && (
-            <Text color="success" mt={2}>
+            <Text color="success" mt={3}>
               Bounty rewards sent and winners announced!
             </Text>
           )}
@@ -325,7 +536,7 @@ const BountyRewarder: React.FC<BountyRewarderProps> = ({
             isLoading={isRewarding}
             fontWeight="bold"
           >
-            Send Reward
+            Send Rewards
           </Button>
           <Button 
             variant="ghost" 
