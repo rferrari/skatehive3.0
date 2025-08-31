@@ -95,7 +95,7 @@ const InstagramModal: React.FC<InstagramModalProps> = ({
           <VStack spacing={4} align="stretch">
             <Box>
               <Text fontSize="sm" color="gray.600" mb={2}>
-                Paste an Instagram post, reel, or IGTV URL:
+                Paste an Instagram single video post URL:
               </Text>
               <Input
                 placeholder="https://www.instagram.com/p/ABC123..."
