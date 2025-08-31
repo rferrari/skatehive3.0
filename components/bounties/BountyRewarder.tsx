@@ -223,10 +223,10 @@ const BountyRewarder: React.FC<BountyRewarderProps> = ({
       setCurrentStep("Announcing Winners... Confirm the keychain transaction to make a post in this bounty tagging the winners");
       
       const winnersList = winnerRewards
-        .map((winner) => `${getPlaceEmoji(winner.place)} @${winner.username} (${winner.rewardAmount.toFixed(3)} ${rewardInfo.currency})`)
+        .map((winner) => `${getPlaceEmoji(winner.place)} @${winner.username} - ${winner.rewardAmount.toFixed(3)} ${rewardInfo.currency}`)
         .join("\n");
       
-      const commentBody = `🏆 Bounty Winners! 🏆\n\n${winnersList}\n\nTotal Reward: ${rewardInfo.amount} ${rewardInfo.currency}\n\nThank you for participating!`;
+      const commentBody = `🏆 Bounty Winners! 🏆\n\n${winnersList}\n\n💰 Total Distributed: ${totalRewardAmount.toFixed(3)} ${rewardInfo.currency}\n\nThank you for participating! 🎉`;
       const permlink = `bounty-winners-${Date.now()}`;
       
       // Validation: ensure all required fields are present
