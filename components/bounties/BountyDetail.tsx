@@ -10,6 +10,8 @@ import {
   useTheme,
   VStack,
   useDisclosure,
+  Tooltip,
+  Icon,
 } from "@chakra-ui/react";
 import React, { useMemo, useState, useEffect } from "react";
 import { Discussion } from "@hiveio/dhive";
@@ -387,9 +389,15 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
             {claimedUsers.length > 0 && (
               <Box mb={4}>
                 <Text fontWeight="bold" fontSize="lg" mb={2} color="text">
-                  Claimed By ({claimedUsers.length}):
+                  Claimed By{" "}
+                  <Tooltip label="People who want to attempt this bounty" placement="top">
+                    <Text as="span" color="accent" cursor="help">
+                      ({claimedUsers.length})
+                    </Text>
+                  </Tooltip>
+                  :
                 </Text>
-                <Flex wrap="wrap" gap={4}>
+                <Flex wrap="wrap" gap={3}>
                   {claimedUsers.map((vote) => (
                     <Flex
                       key={`${vote.voter}-${vote.time || ""}`}
@@ -400,14 +408,16 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
                       borderRadius="md"
                       border="1px solid"
                       borderColor="border"
+                      flex="0 0 calc(50% - 6px)"
+                      minW="0"
                     >
                       <Avatar
                         size="sm"
                         name={vote.voter}
                         src={`https://images.hive.blog/u/${vote.voter}/avatar/sm`}
                       />
-                      <Box>
-                        <Text>
+                      <Box minW="0" flex="1">
+                        <Text noOfLines={1}>
                           <Link
                             href={`/user/${vote.voter}`}
                             _hover={{ textDecoration: "underline" }}
@@ -416,8 +426,8 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
                           </Link>
                         </Text>
                         {vote.time && (
-                          <Text fontSize="xs" color="accent">
-                            Claimed: {new Date(vote.time).toLocaleString()}
+                          <Text fontSize="xs" color="accent" noOfLines={1}>
+                            {new Date(vote.time).toLocaleString()}
                           </Text>
                         )}
                       </Box>

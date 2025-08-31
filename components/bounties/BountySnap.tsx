@@ -18,6 +18,7 @@ import { LuArrowUpRight } from "react-icons/lu";
 import { useAioha } from "@aioha/react-ui";
 import { useState, useMemo } from "react";
 import { getPayoutValue } from "@/lib/hive/client-functions";
+import { useComments } from "@/hooks/useComments";
 import { EnhancedMarkdownRenderer } from "@/components/markdown/EnhancedMarkdownRenderer";
 import { getPostDate } from "@/lib/utils/GetPostDate";
 import useHiveAccount from "@/hooks/useHiveAccount";
@@ -145,6 +146,9 @@ const BountySnap = ({
   const { hiveAccount } = useHiveAccount(user || "");
   const theme = useTheme();
   
+  // Fetch comments to check for completion
+  const { comments } = useComments(discussion.author, discussion.permlink, false);
+  
   const {
     hivePower,
     isLoading: isHivePowerLoading,
@@ -167,6 +171,15 @@ const BountySnap = ({
   const [isHovered, setIsHovered] = useState(false);
 
   const effectiveDepth = discussion.depth || 0;
+
+  // Check if bounty has been rewarded by creator
+  const hasBountyBeenRewarded = useMemo(() => {
+    if (!comments || comments.length === 0) return false;
+    return comments.some((comment: any) => 
+      comment.author === discussion.author && 
+      comment.body.includes('🏆 Bounty Winners! 🏆')
+    );
+  }, [comments, discussion.author]);
 
   const { text, media } = useMemo(() => {
     // Replace labels for display
@@ -506,6 +519,12 @@ const BountySnap = ({
         {/* Centered status row */}
         <Flex align="center" justify="center" width="100%" mb={2}>
           <Box>{statusNote}</Box>
+          {/* Completion badge for rewarded bounties */}
+          {hasBountyBeenRewarded && (
+            <Tag bg="success" color="background" size="md" ml={2}>
+              🏆 Rewarded
+            </Tag>
+          )}
         </Flex>
         {/* Submission count display */}
         {submissionCount > 0 && (

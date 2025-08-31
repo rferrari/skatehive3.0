@@ -45,7 +45,7 @@ export default function BountyList({
   const [displayedBounties, setDisplayedBounties] = useState<Discussion[]>([]);
   const [visibleCount, setVisibleCount] = useState(10);
   const [filter, setFilter] = useState<
-    "active" | "claimed" | "my-claimed" | "my-bounties" | "all" | "completed"
+    "active" | "claimed" | "my-claimed" | "my-bounties" | "all" | "completed" | "rewarded"
   >("active");
   const [bountyGrinders, setBountyGrinders] = useState<string[]>([]);
   const [isLoadingGrinders, setIsLoadingGrinders] = useState(false);
@@ -56,6 +56,7 @@ export default function BountyList({
   const [bountySubmissionCounts, setBountySubmissionCounts] = useState<
     Record<string, number>
   >({});
+  const [rewardedBounties, setRewardedBounties] = useState<Set<string>>(new Set());
 
   // Claimed bounties logic
   const { user } = useAioha();
@@ -94,6 +95,8 @@ export default function BountyList({
     return null;
   }
 
+
+
   // Filter bounties based on status
   const filteredBounties = useMemo(() => {
     if (filter === "my-claimed" && user) {
@@ -125,8 +128,12 @@ export default function BountyList({
       if (!deadline) return false;
       const now = new Date();
       if (filter === "active") return isAfter(deadline, now);
-      if (filter === "completed") return !isAfter(deadline, now);
-      return true;
+          if (filter === "completed") return !isAfter(deadline, now);
+    if (filter === "rewarded") {
+      // Check if this bounty has been rewarded by checking the rewardedBounties set
+      return rewardedBounties.has(`${bounty.author}-${bounty.permlink}`);
+    }
+    return true;
     });
   }, [filter, displayedBounties, user]);
 
@@ -185,10 +192,11 @@ export default function BountyList({
     if (f === "my-bounties") return 3;
     if (f === "all") return 4;
     if (f === "completed") return 5;
+    if (f === "rewarded") return 6;
     return 0;
   };
   const indexToFilter = (idx: number) =>
-    ["active", "claimed", "my-claimed", "my-bounties", "all", "completed"][
+    ["active", "claimed", "my-claimed", "my-bounties", "all", "completed", "rewarded"][
       idx
     ] as typeof filter;
 
@@ -233,13 +241,14 @@ export default function BountyList({
   // Extract permlinks for dependency - use all displayed bounties, not just active ones
   const allBountyPermlinks = displayedBounties.map((b) => b.permlink).join(",");
 
-  // Fetch replies for all displayed bounties to get bounty grinders and submission counts
+  // Fetch replies for all displayed bounties to get bounty grinders, submission counts, and rewarded status
   useEffect(() => {
     let cancelled = false;
-    async function fetchGrinders() {
+    async function fetchBountyData() {
       setIsLoadingGrinders(true);
       const usernames = new Set<string>();
       const submissionCounts: Record<string, number> = {};
+      const rewardedSet = new Set<string>();
 
       await Promise.all(
         displayedBounties.map(async (bounty) => {
@@ -251,6 +260,17 @@ export default function BountyList({
 
             // Get bounty deadline
             const deadline = getDeadlineFromBody(bounty.body);
+
+            // Check if bounty has been rewarded by creator
+            if (replies && Array.isArray(replies)) {
+              const isRewarded = replies.some((reply: any) => 
+                reply.author === bounty.author && 
+                reply.body.includes('🏆 Bounty Winners! 🏆')
+              );
+              if (isRewarded) {
+                rewardedSet.add(`${bounty.author}-${bounty.permlink}`);
+              }
+            }
 
             // Count submissions (replies) that were made before the deadline
             let submissionCount = 0;
@@ -282,10 +302,11 @@ export default function BountyList({
       if (!cancelled) {
         setBountyGrinders(Array.from(usernames));
         setBountySubmissionCounts(submissionCounts);
+        setRewardedBounties(rewardedSet);
         setIsLoadingGrinders(false);
       }
     }
-    fetchGrinders();
+    fetchBountyData();
     return () => {
       cancelled = true;
     };
@@ -312,35 +333,6 @@ export default function BountyList({
     return (
       <Box textAlign="center" my={8} color="red.500">
         <Text>Error loading bounties: {error}</Text>
-      </Box>
-    );
-  }
-
-  if (displayedBounties.length === 0 && filter !== "claimed") {
-    return (
-      <Box textAlign="center" my={8}>
-        <Text>No bounties have been submitted yet.</Text>
-      </Box>
-    );
-  }
-
-  if (filter === "my-claimed" && user && filteredBounties.length === 0) {
-    return (
-      <Box textAlign="center" my={8}>
-        <Text>
-          You have not claimed any bounties yet. Go upvote a bounty to claim it!
-        </Text>
-      </Box>
-    );
-  }
-
-  if (filter === "my-bounties" && user && filteredBounties.length === 0) {
-    return (
-      <Box textAlign="center" my={8}>
-        <Text>
-          You have not created any bounties yet. Create your first bounty to get
-          started!
-        </Text>
       </Box>
     );
   }
@@ -468,237 +460,296 @@ export default function BountyList({
         alignItems={{ base: "center", md: "stretch" }}
       >
         <Tabs
-          variant="soft-rounded"
+          variant="enclosed"
           colorScheme="primary"
           index={filterToIndex(filter)}
           onChange={(idx) => setFilter(indexToFilter(idx))}
-          flex="1"
-          width={{ base: "100%", md: "auto" }}
+          size="sm"
+          isFitted={true}
+          width="100%"
           display="flex"
-          justifyContent={{ base: "center", md: "flex-start" }}
+          justifyContent="center"
         >
           <TabList
+            bg="transparent"
+            border="1px solid"
+            borderColor="gray.600"
+            borderRadius="md"
+            width="100%"
             sx={{
               overflowX: { base: "auto", md: "visible" },
               whiteSpace: { base: "nowrap", md: "normal" },
-              borderBottom: { base: "1px solid", md: "none" },
-              borderColor: { base: "gray.700", md: "none" },
-              boxShadow: { base: "0 2px 4px rgba(0,0,0,0.04)", md: "none" },
-              pb: { base: 2, md: 0 },
-              mb: { base: 0, md: 0 },
-              justifyContent: { base: "center", md: "flex-start" },
+              justifyContent: "center",
             }}
           >
             <Tab
-              borderWidth="2px"
-              borderColor="transparent"
-              minW={0}
-              fontSize={{ base: "lg", md: "sm" }}
-              px={{ base: 1, md: 2 }}
-              py={{ base: 1, md: 1 }}
-              m={{ base: 0, md: 1 }}
               _selected={{
                 color: "primary",
-                bg: "primary.900",
-                borderColor: "primary",
-                borderWidth: "2px",
+                bg: "muted",
               }}
+              _hover={{
+                bg: "muted.100",
+                transform: "translateY(-1px)",
+              }}
+              transition="all 0.2s"
               display="flex"
               alignItems="center"
               justifyContent="center"
+              gap={2}
+              px={{ base: 2, md: 4 }}
+              minW={{ base: "auto", md: "80px" }}
+              fontSize="sm"
+              border="none"
             >
-              <FaBolt style={{ marginRight: 0, marginBottom: 0 }} />
-              <Box display={{ base: "none", md: "inline" }} ml={1}>
+              <FaBolt size={14} />
+              <Box display={{ base: "none", md: "inline" }}>
                 Active
               </Box>
             </Tab>
             <Tab
-              borderWidth="2px"
-              borderColor="transparent"
-              minW={0}
-              fontSize={{ base: "lg", md: "sm" }}
-              px={{ base: 1, md: 2 }}
-              py={{ base: 1, md: 1 }}
-              m={{ base: 0, md: 1 }}
               _selected={{
                 color: "primary",
-                bg: "primary.900",
-                borderColor: "primary",
-                borderWidth: "2px",
+                bg: "muted",
               }}
+              _hover={{
+                bg: "muted.100",
+                transform: "translateY(-1px)",
+              }}
+              transition="all 0.2s"
               display="flex"
               alignItems="center"
               justifyContent="center"
+              gap={2}
+              px={{ base: 2, md: 4 }}
+              minW={{ base: "auto", md: "80px" }}
+              fontSize="sm"
+              border="none"
             >
-              <FaCheckCircle />
-              <Box display={{ base: "none", md: "inline" }} ml={1}>
+              <FaCheckCircle size={14} />
+              <Box display={{ base: "none", md: "inline" }}>
                 Claimed
               </Box>
             </Tab>
             <Tab
-              borderWidth="2px"
-              borderColor="transparent"
-              minW={0}
-              fontSize={{ base: "lg", md: "sm" }}
-              px={{ base: 1, md: 2 }}
-              py={{ base: 1, md: 1 }}
-              m={{ base: 0, md: 1 }}
               _selected={{
                 color: "primary",
-                bg: "primary.900",
-                borderColor: "primary",
-                borderWidth: "2px",
+                bg: "muted",
               }}
+              _hover={{
+                bg: "muted.100",
+                transform: "translateY(-1px)",
+              }}
+              transition="all 0.2s"
               display="flex"
               alignItems="center"
               justifyContent="center"
+              gap={2}
+              px={{ base: 2, md: 4 }}
+              minW={{ base: "auto", md: "80px" }}
+              fontSize="sm"
+              border="none"
             >
-              <FaUserCheck />
-              <Box display={{ base: "none", md: "inline" }} ml={1}>
+              <FaUserCheck size={14} />
+              <Box display={{ base: "none", md: "inline" }}>
                 My Claimed
               </Box>
             </Tab>
             <Tab
-              borderWidth="2px"
-              borderColor="transparent"
-              minW={0}
-              fontSize={{ base: "lg", md: "sm" }}
-              px={{ base: 1, md: 2 }}
-              py={{ base: 1, md: 1 }}
-              m={{ base: 0, md: 1 }}
               _selected={{
                 color: "primary",
-                bg: "primary.900",
-                borderColor: "primary",
-                borderWidth: "2px",
+                bg: "muted",
               }}
+              _hover={{
+                bg: "muted.100",
+                transform: "translateY(-1px)",
+              }}
+              transition="all 0.2s"
               display="flex"
               alignItems="center"
               justifyContent="center"
+              gap={2}
+              px={{ base: 2, md: 4 }}
+              minW={{ base: "auto", md: "80px" }}
+              fontSize="sm"
+              border="none"
             >
-              <FaUserEdit />
-              <Box display={{ base: "none", md: "inline" }} ml={1}>
+              <FaUserEdit size={14} />
+              <Box display={{ base: "none", md: "inline" }}>
                 My Bounties
               </Box>
             </Tab>
             <Tab
-              borderWidth="2px"
-              borderColor="transparent"
-              minW={0}
-              fontSize={{ base: "lg", md: "sm" }}
-              px={{ base: 1, md: 2 }}
-              py={{ base: 1, md: 1 }}
-              m={{ base: 0, md: 1 }}
               _selected={{
                 color: "primary",
-                bg: "primary.900",
-                borderColor: "primary",
-                borderWidth: "2px",
+                bg: "muted",
               }}
+              _hover={{
+                bg: "muted.100",
+                transform: "translateY(-1px)",
+              }}
+              transition="all 0.2s"
               display="flex"
               alignItems="center"
               justifyContent="center"
+              gap={2}
+              px={{ base: 2, md: 4 }}
+              minW={{ base: "auto", md: "80px" }}
+              fontSize="sm"
+              border="none"
             >
-              <FaList />
-              <Box display={{ base: "none", md: "inline" }} ml={1}>
+              <FaList size={14} />
+              <Box display={{ base: "none", md: "inline" }}>
                 All
               </Box>
             </Tab>
             <Tab
-              borderWidth="2px"
-              borderColor="transparent"
-              minW={0}
-              fontSize={{ base: "lg", md: "sm" }}
-              px={{ base: 1, md: 2 }}
-              py={{ base: 1, md: 1 }}
-              m={{ base: 0, md: 1 }}
               _selected={{
                 color: "primary",
-                bg: "primary.900",
-                borderColor: "primary",
-                borderWidth: "2px",
+                bg: "muted",
               }}
+              _hover={{
+                bg: "muted.100",
+                transform: "translateY(-1px)",
+              }}
+              transition="all 0.2s"
               display="flex"
               alignItems="center"
               justifyContent="center"
+              gap={2}
+              px={{ base: 2, md: 4 }}
+              minW={{ base: "auto", md: "80px" }}
+              fontSize="sm"
+              border="none"
             >
-              <FaFlagCheckered />
-              <Box display={{ base: "none", md: "inline" }} ml={1}>
+              <FaFlagCheckered size={14} />
+              <Box display={{ base: "none", md: "inline" }}>
                 Completed
+              </Box>
+            </Tab>
+            <Tab
+              _selected={{
+                color: "primary",
+                bg: "muted",
+              }}
+              _hover={{
+                bg: "muted.100",
+                transform: "translateY(-1px)",
+              }}
+              transition="all 0.2s"
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              gap={2}
+              px={{ base: 2, md: 4 }}
+              minW={{ base: "auto", md: "80px" }}
+              fontSize="sm"
+              border="none"
+            >
+              <FaCheckCircle size={14} />
+              <Box display={{ base: "none", md: "inline" }}>
+                Rewarded
               </Box>
             </Tab>
           </TabList>
         </Tabs>
-        <Box
-          textAlign="center"
-          width={{ base: "100%", md: "auto" }}
-          mt={{ base: 0, md: 0 }}
-          mb={{ base: 0, md: 0 }}
-          gap={0}
-          display="flex"
-          flexDirection="column"
-          alignItems="center"
-        >
-          <Select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as any)}
-            variant="outline"
-            display="inline-block"
-            width={{ base: "90%", md: "180px" }}
-            fontFamily="heading"
-            fontWeight="bold"
-            fontSize={{ base: "lg", md: "sm" }}
-            color="primary.900"
-            bg={{ base: "background", md: "muted" }}
-            borderColor={{ base: "primary.400", md: "gray.300" }}
-            borderWidth="2px"
-            borderRadius="lg"
-            boxShadow={{ base: "0 2px 8px rgba(0,0,0,0.10)", md: "none" }}
-            py={{ base: 0, md: 2 }}
-            px={3}
-            pr={8}
-            mb={{ base: 0, md: 0 }}
-            mt={{ base: 0, md: 0 }}
-            sx={{
-              "& > option": { color: "initial" },
-            }}
-          >
-            <option value="default">New</option>
-            <option value="rewards">Rewards</option>
-            <option value="hot">Popular</option>
-            <option value="ending">Time</option>
-          </Select>
-        </Box>
       </Flex>
-      <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing={6} my={8}>
-        {sortedBounties.slice(0, visibleCount).map((bounty) => (
-          <BountySnap
-            key={bounty.permlink}
-            discussion={bounty}
-            onOpen={() => {
-              const url = `/post/${bounty.author}/${bounty.permlink}`;
-              window.location.href = url;
-            }}
-            setReply={() => {}}
-            setConversation={() => {}}
-            showAuthor={true}
-            disableFooter={true}
-            submissionCount={
-              bountySubmissionCounts[`${bounty.author}-${bounty.permlink}`] || 0
-            }
-          />
-        ))}
-      </SimpleGrid>
-      {visibleCount < sortedBounties.length && (
-        <Box display="flex" justifyContent="center" my={4}>
-          <Button
-            onClick={handleLoadMore}
-            colorScheme="primary"
-            variant="outline"
-          >
-            Load More
-          </Button>
+      
+      {/* Sorting Dropdown - Moved below tabs */}
+      <Flex justify="center" mb={4}>
+        <Select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as any)}
+          variant="outline"
+          width={{ base: "120px", md: "150px" }}
+          fontFamily="heading"
+          fontWeight="bold"
+          fontSize="sm"
+          color="primary.900"
+          bg="muted"
+          borderColor="gray.300"
+          borderWidth="2px"
+          borderRadius="lg"
+          py={2}
+          px={3}
+          pr={8}
+          aria-label="Sort bounties"
+          sx={{
+            "& > option": { color: "initial" },
+          }}
+        >
+          <option value="default">New</option>
+          <option value="rewards">Reward</option>
+          <option value="hot">Hot</option>
+          <option value="ending">Ending</option>
+        </Select>
+      </Flex>
+      {/* Bounty Grid or Empty State */}
+      {filteredBounties.length === 0 ? (
+        // Show appropriate empty state message based on filter
+        <Box textAlign="center" my={8}>
+          {filter === "my-claimed" && user ? (
+            <Text>
+              You have not claimed any bounties yet. Go upvote a bounty to claim it!
+            </Text>
+          ) : filter === "my-bounties" && user ? (
+            <Text>
+              You have not created any bounties yet. Create your first bounty to get
+              started!
+            </Text>
+          ) : filter === "rewarded" ? (
+            <>
+              <Text fontSize="lg" fontWeight="bold" mb={4}>
+                🏆 No Rewarded Bounties Yet
+              </Text>
+              <Text color="gray.400">
+                There are no bounties that have been completed and rewarded yet.
+              </Text>
+            </>
+          ) : filter === "claimed" ? (
+            <Text>No bounties have been claimed yet.</Text>
+          ) : filter === "completed" ? (
+            <Text>No completed bounties yet.</Text>
+          ) : filter === "active" ? (
+            <Text>No active bounties available.</Text>
+          ) : displayedBounties.length === 0 ? (
+            <Text>No bounties have been submitted yet.</Text>
+          ) : (
+            <Text>No bounties match the current filter.</Text>
+          )}
         </Box>
+      ) : (
+        <>
+          <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing={6} my={8}>
+            {sortedBounties.slice(0, visibleCount).map((bounty) => (
+              <BountySnap
+                key={bounty.permlink}
+                discussion={bounty}
+                onOpen={() => {
+                  const url = `/post/${bounty.author}/${bounty.permlink}`;
+                  window.location.href = url;
+                }}
+                setReply={() => {}}
+                setConversation={() => {}}
+                showAuthor={true}
+                disableFooter={true}
+                submissionCount={
+                  bountySubmissionCounts[`${bounty.author}-${bounty.permlink}`] || 0
+                }
+              />
+            ))}
+          </SimpleGrid>
+          {visibleCount < sortedBounties.length && (
+            <Box display="flex" justifyContent="center" my={4}>
+              <Button
+                onClick={handleLoadMore}
+                colorScheme="primary"
+                variant="outline"
+              >
+                Load More
+              </Button>
+            </Box>
+          )}
+        </>
       )}
     </>
   );
