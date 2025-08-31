@@ -15,8 +15,10 @@ import { useAioha } from "@aioha/react-ui";
 import GiphySelector from "./GiphySelector";
 import VideoUploader, { VideoUploaderRef } from "./VideoUploader";
 import VideoTrimModal from "./VideoTrimModal";
+import InstagramModal from "./InstagramModal";
 import { IGif } from "@giphy/js-types";
 import { FaImage } from "react-icons/fa";
+import { FaInstagram } from "react-icons/fa";
 import { Discussion } from "@hiveio/dhive";
 import {
   getFileSignature,
@@ -31,6 +33,7 @@ import imageCompression from "browser-image-compression";
 import GifModal from "../compose/GifModal";
 import { GIFMakerRef as GIFMakerWithSelectorRef } from "./GIFMakerWithSelector";
 import useHivePower from "@/hooks/useHivePower";
+import { useInstagramHealth } from "@/hooks/useInstagramHealth";
 import { TbGif } from "react-icons/tb";
 
 interface SnapComposerProps {
@@ -79,6 +82,13 @@ export default function SnapComposer({
   const [gifUrl, setGifUrl] = useState<string | null>(null);
   const [gifSize, setGifSize] = useState<number | null>(null);
   const [gifCaption, setGifCaption] = useState<string>("skatehive-gif");
+
+  // Instagram modal state
+  const [isInstagramModalOpen, setInstagramModalOpen] = useState(false);
+
+  // Instagram server health check
+  const instagramHealth = useInstagramHealth(60000); // Check every minute
+
   const [gifUrls, setGifUrls] = useState<{ url: string; caption: string }[]>(
     []
   );
@@ -517,6 +527,27 @@ export default function SnapComposer({
     setVideoProcessingError(error);
   };
 
+  // Instagram handler
+  const handleInstagramMediaDownloaded = (
+    url: string,
+    filename: string,
+    isVideo: boolean
+  ) => {
+    if (isVideo) {
+      setVideoUrl(url);
+    } else {
+      // Add to compressed images array for images
+      setCompressedImages((prev) => [
+        ...prev,
+        {
+          url: url,
+          fileName: filename,
+          caption: filename.replace(/\.[^/.]+$/, ""), // Remove file extension for caption
+        },
+      ]);
+    }
+  };
+
   // GifModal handlers
   const handleGifUpload = (url: string | null, caption?: string) => {
     setIsProcessingGif(!!url);
@@ -724,6 +755,33 @@ export default function SnapComposer({
                 _active={{ borderColor: "accent" }}
                 onClick={() => setGifModalOpen(true)}
               />
+              {/* Instagram Button - Show if server is healthy or still loading */}
+              {(instagramHealth.healthy || instagramHealth.loading) && (
+                <IconButton
+                  id="snap-composer-instagram-btn"
+                  data-testid="snap-composer-instagram"
+                  aria-label="Import from Instagram"
+                  icon={
+                    <FaInstagram color="var(--chakra-colors-primary)" size={22} />
+                  }
+                  variant="ghost"
+                  isDisabled={isLoading}
+                  border="2px solid transparent"
+                  borderRadius="full"
+                  height="48px"
+                  width="48px"
+                  p={0}
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  _hover={{
+                    borderColor: "primary",
+                    boxShadow: "0 0 0 2px var(--chakra-colors-primary)",
+                  }}
+                  _active={{ borderColor: "accent" }}
+                  onClick={() => setInstagramModalOpen(true)}
+                />
+              )}
             </HStack>
             <Box display={buttonSize === "sm" ? "inline-block" : undefined}>
               <Button
@@ -999,6 +1057,13 @@ export default function SnapComposer({
           canBypass={canBypassLimit}
         />
       )}
+
+      {/* Instagram Modal */}
+      <InstagramModal
+        isOpen={isInstagramModalOpen}
+        onClose={() => setInstagramModalOpen(false)}
+        onMediaDownloaded={handleInstagramMediaDownloaded}
+      />
 
       {/* Matrix Overlay and login prompt if not logged in */}
       {!user && <></>}
