@@ -5,12 +5,8 @@
 
 // Video processing utilities
 export {
-  detectFFmpegSupport,
-  loadFFmpeg,
-  getFetchFile,
-  compressVideo,
-  convertToMp4,
-  compressVideoFallback,
+  processVideoOnServer,
+  type ProcessingResult,
 } from './videoProcessing';
 
 // Video upload utilities
@@ -41,3 +37,11 @@ export {
   getVideoFileInfo,
   type ValidationResult,
 } from './videoValidation';
+
+// Video upload core utilities
+export {
+  uploadToIPFS,
+  isMP4,
+  validateVideo,
+  type UploadResult as VideoUploadResult,
+} from './videoUpload';

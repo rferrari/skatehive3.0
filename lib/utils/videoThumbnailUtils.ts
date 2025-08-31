@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { getFetchFile, loadFFmpeg } from './videoUtils';
+import { fetchFile } from '@ffmpeg/util';
 
 export async function generateThumbnailWithCanvas(
   file: File
@@ -113,13 +113,11 @@ export async function generateThumbnailWithFFmpeg(
 ): Promise<string | null> {
   try {
     if (!ffmpegRef.current) {
-      await loadFFmpeg();
       ffmpegRef.current = new (await import("@ffmpeg/ffmpeg")).FFmpeg();
       await ffmpegRef.current.load();
     }
     
     const ffmpeg = ffmpegRef.current;
-    const fetchFile = getFetchFile();
 
     await ffmpeg.writeFile("input_thumb.mp4", await fetchFile(file));
 
