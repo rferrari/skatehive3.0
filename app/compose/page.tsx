@@ -1,7 +1,15 @@
 "use client";
 
 import React, { useRef, useState } from "react";
-import { Flex, Input, Button, Center, Spinner, Box } from "@chakra-ui/react";
+import {
+  Flex,
+  Input,
+  Button,
+  Center,
+  Spinner,
+  Box,
+  Text,
+} from "@chakra-ui/react";
 import ImageCompressor, {
   ImageCompressorRef,
 } from "@/lib/utils/ImageCompressor";
@@ -50,9 +58,13 @@ export default function Composer() {
     isSubmitting,
   } = useComposeForm();
 
-  // Debug log compose form state
-  React.useEffect(() => {
-  }, [beneficiaries, title, markdown, hashtags, isSubmitting]);
+  React.useEffect(() => {}, [
+    beneficiaries,
+    title,
+    markdown,
+    hashtags,
+    isSubmitting,
+  ]);
 
   // Refs
   const imageCompressorRef = useRef<ImageCompressorRef>(null);
@@ -71,20 +83,31 @@ export default function Composer() {
     setIsUploading: setIsImageUploading,
   } = useImageUpload(insertAtCursorWrapper);
 
-  const { isCompressingVideo, handleVideoUpload, createVideoTrigger } =
-    useVideoUpload(insertAtCursorWrapper);
+  const {
+    isCompressingVideo,
+    handleVideoUpload,
+    createVideoTrigger,
+    setIsCompressingVideo,
+  } = useVideoUpload(insertAtCursorWrapper);
+
+  // Video error state
+  const [videoError, setVideoError] = useState<string | null>(null);
 
   // Create trigger functions with refs
   const handleImageTrigger = createImageTrigger(imageCompressorRef);
   const handleVideoTrigger = createVideoTrigger(videoUploaderRef);
 
   // Video duration error handling
-  const [videoDurationError, setVideoDurationError] = useState<string | null>(null);
+  const [videoDurationError, setVideoDurationError] = useState<string | null>(
+    null
+  );
 
   const handleVideoDurationError = (duration: number) => {
     const minutes = Math.floor(duration / 60);
     const seconds = Math.floor(duration % 60);
-    setVideoDurationError(`Video is ${minutes}m ${seconds}s long. Long videos will be uploaded without compression to prevent crashes.`);
+    setVideoDurationError(
+      `Video is ${minutes}m ${seconds}s long. Long videos will be uploaded without compression to prevent crashes.`
+    );
     // Clear error after 5 seconds
     setTimeout(() => setVideoDurationError(null), 5000);
   };
@@ -120,8 +143,6 @@ export default function Composer() {
       setIsProcessingGif(false);
     }
   }, [isGifModalOpen, setGifUrl, setGifSize, setIsProcessingGif]);
-
-
 
   return (
     <Flex
@@ -177,8 +198,13 @@ export default function Composer() {
           <VideoUploader
             ref={videoUploaderRef}
             onUpload={handleVideoUpload}
-            isProcessing={isCompressingVideo}
-            onDurationError={handleVideoDurationError}
+            username={user?.user?.username}
+            onUploadStart={() => {
+              setVideoError(null);
+              setIsCompressingVideo(true);
+            }}
+            onUploadFinish={() => setIsCompressingVideo(false)}
+            onError={setVideoError}
           />
         </Box>
       </Flex>
@@ -186,6 +212,25 @@ export default function Composer() {
       {videoDurationError && (
         <Center bg="red.50" color="red.800" p={2} borderRadius="md" mb={2}>
           {videoDurationError}
+        </Center>
+      )}
+
+      {videoError && (
+        <Center bg="red.500" color="white" p={3} borderRadius="md" mb={2}>
+          <Flex direction="column" align="center" gap={2}>
+            <Text fontSize="sm">❌ {videoError}</Text>
+            <Button
+              size="xs"
+              colorScheme="red"
+              variant="outline"
+              color="white"
+              borderColor="white"
+              _hover={{ bg: "red.600" }}
+              onClick={() => setVideoError(null)}
+            >
+              Dismiss
+            </Button>
+          </Flex>
         </Center>
       )}
 

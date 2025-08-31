@@ -9,6 +9,7 @@ import {
   Wrap,
   Progress,
   Input,
+  Text,
 } from "@chakra-ui/react";
 import { useAioha } from "@aioha/react-ui";
 import GiphySelector from "./GiphySelector";
@@ -16,7 +17,6 @@ import VideoUploader, { VideoUploaderRef } from "./VideoUploader";
 import VideoTrimModal from "./VideoTrimModal";
 import { IGif } from "@giphy/js-types";
 import { FaImage } from "react-icons/fa";
-import { MdGif } from "react-icons/md";
 import { Discussion } from "@hiveio/dhive";
 import {
   getFileSignature,
@@ -59,6 +59,9 @@ export default function SnapComposer({
   const [isLoading, setIsLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number[]>([]);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [videoProcessingError, setVideoProcessingError] = useState<
+    string | null
+  >(null);
   const videoUploaderRef = useRef<VideoUploaderRef>(null);
   const imageCompressorRef = useRef<ImageCompressorRef>(null);
   const [compressedImages, setCompressedImages] = useState<
@@ -179,9 +182,8 @@ export default function SnapComposer({
   // Handle trim modal completion
   const handleTrimComplete = async (trimmedFile: File) => {
     if (videoUploaderRef.current) {
-      startUpload();
+      // Let VideoUploader handle its own upload state
       await videoUploaderRef.current.handleFile(trimmedFile);
-      finishUpload();
     }
     setPendingVideoFile(null);
   };
@@ -506,8 +508,14 @@ export default function SnapComposer({
   };
 
   // Video upload state integration
-  const handleVideoUploadStart = () => startUpload();
+  const handleVideoUploadStart = () => {
+    setVideoProcessingError(null); // Clear any previous errors
+    startUpload();
+  };
   const handleVideoUploadFinish = () => finishUpload();
+  const handleVideoError = (error: string) => {
+    setVideoProcessingError(error);
+  };
 
   // GifModal handlers
   const handleGifUpload = (url: string | null, caption?: string) => {
@@ -752,14 +760,62 @@ export default function SnapComposer({
                 {videoDurationError}
               </Box>
             )}
+            {isUploadingMedia && (
+              <Box
+                bg="primary"
+                color="background"
+                p={3}
+                mb={2}
+                borderRadius="md"
+                textAlign="center"
+                fontSize="sm"
+                fontWeight="bold"
+              >
+                🎬 Processing video... This may take 1-2 minutes for large files
+                <Progress
+                  size="sm"
+                  colorScheme="yellow"
+                  isIndeterminate
+                  mt={2}
+                  borderRadius="full"
+                />
+                <Text fontSize="xs" mt={1} opacity={0.8}>
+                  Please keep this tab open while processing
+                </Text>
+              </Box>
+            )}
+            {videoProcessingError && (
+              <Box
+                bg="red.500"
+                color="white"
+                p={3}
+                mb={2}
+                borderRadius="md"
+                textAlign="center"
+                fontSize="sm"
+              >
+                ❌ {videoProcessingError}
+                <Box
+                  as="button"
+                  mt={2}
+                  p={1}
+                  bg="red.600"
+                  borderRadius="sm"
+                  fontSize="xs"
+                  _hover={{ bg: "red.700" }}
+                  onClick={() => setVideoProcessingError(null)}
+                >
+                  Dismiss
+                </Box>
+              </Box>
+            )}
             <VideoUploader
               ref={videoUploaderRef}
               onUpload={setVideoUrl}
-              isProcessing={isLoading}
               username={user || undefined}
               onUploadStart={handleVideoUploadStart}
               onUploadFinish={handleVideoUploadFinish}
-              // Remove maxDurationSeconds and onDurationError since we handle trimming in modal
+              onError={handleVideoError}
             />
           </Box>
           <Wrap spacing={4}>

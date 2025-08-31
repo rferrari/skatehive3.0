@@ -108,6 +108,7 @@ export const useVideoUpload = (insertAtCursor: (content: string) => void) => {
         handleVideoUpload,
         createVideoTrigger,
         setUploadProgress,
+        setIsCompressingVideo,
     };
 };
 
