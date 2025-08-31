@@ -1,5 +1,59 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+const INSTAGRAM_SERVERS = [
+  'https://raspberrypi.tail83ea3e.ts.net',
+  'https://skate-insta.onrender.com'
+];
+
+async function tryDownloadFromServer(serverUrl: string, instagramUrl: string): Promise<any> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+  }, 120000); // 2 minutes timeout per server
+
+  try {
+    const response = await fetch(`${serverUrl}/download`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ url: instagramUrl }),
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Server ${serverUrl} failed: ${response.status} - ${errorText}`);
+    }
+
+    const result = await response.json();
+
+    if (result.status !== 'ok' || !result.cid) {
+      throw new Error(`Server ${serverUrl} failed: ${result.error || 'No media found'}`);
+    }
+
+    return {
+      success: true,
+      cid: result.cid,
+      url: result.pinata_gateway || `https://ipfs.skatehive.app/ipfs/${result.cid}`,
+      filename: result.filename,
+      bytes: result.bytes,
+      server: serverUrl
+    };
+
+  } catch (fetchError) {
+    clearTimeout(timeoutId);
+    
+    if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+      throw new Error(`Server ${serverUrl} timed out`);
+    }
+    
+    throw fetchError;
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { url } = await request.json();
@@ -20,61 +74,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create abort controller for timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
-      controller.abort();
-    }, 120000); // 2 minutes timeout (same as video processing)
+    let lastError = '';
 
-    try {
-      const response = await fetch('https://raspberrypi.tail83ea3e.ts.net/download', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ url }),
-        signal: controller.signal
-      });
+    // Try each server in order
+    for (const server of INSTAGRAM_SERVERS) {
+      try {
+        const result = await tryDownloadFromServer(server, url);
+        
+        // Success! Return the result
+        return NextResponse.json(result);
 
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        return NextResponse.json(
-          { error: `Download failed: ${response.status} - ${errorText}` },
-          { status: response.status }
-        );
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        lastError = errorMessage;
+        
+        // If this isn't the last server, continue to the next one
+        if (server !== INSTAGRAM_SERVERS[INSTAGRAM_SERVERS.length - 1]) {
+          continue;
+        }
       }
-
-      const result = await response.json();
-
-      if (result.status !== 'ok' || !result.cid) {
-        return NextResponse.json(
-          { error: result.error || 'Download failed - no media found' },
-          { status: 400 }
-        );
-      }
-
-      return NextResponse.json({
-        success: true,
-        cid: result.cid,
-        url: result.pinata_gateway || `https://ipfs.skatehive.app/ipfs/${result.cid}`,
-        filename: result.filename,
-        bytes: result.bytes
-      });
-
-    } catch (fetchError) {
-      clearTimeout(timeoutId);
-      
-      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
-        return NextResponse.json(
-          { error: 'Download request timed out' },
-          { status: 408 }
-        );
-      }
-      
-      throw fetchError;
     }
+
+    // All servers failed
+    return NextResponse.json(
+      { error: `All servers failed. Last error: ${lastError}` },
+      { status: 503 }
+    );
 
   } catch (error) {
     return NextResponse.json(
