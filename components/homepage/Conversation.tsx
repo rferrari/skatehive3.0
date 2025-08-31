@@ -394,7 +394,8 @@ const Conversation = ({
       } else {
         newSet.add(commentPermlink);
         // Fetch replies when expanding
-        fetchRepliesForComment(commentPermlink);
+        // Fetch replies when expanding
+        fetchRepliesForComment(commentPermlink).catch(console.error);
       }
       return newSet;
     });
@@ -450,9 +451,7 @@ const Conversation = ({
       >
         <VStack spacing={4}>
           <Spinner size="xl" color={primaryColor} />
-          <Text color={mobileTextColor}>
-            Loading conversation...
-          </Text>
+          <Text color={mobileTextColor}>Loading conversation...</Text>
         </VStack>
       </Box>
     );
@@ -523,7 +522,7 @@ const Conversation = ({
                 </Text>
                 {comment.author === discussion.author && (
                   <Box
-                    color="white"
+                    color="primary"
                     px={2}
                     py={0.5}
                     borderRadius="md"
@@ -694,7 +693,7 @@ const Conversation = ({
         pb="120px" // Space for emoji bar and input
         px={4}
         minH={0} // Important for flex child scrolling
-        css={{
+        sx={{
           touchAction: "auto",
           WebkitOverflowScrolling: "touch",
           "&::-webkit-scrollbar": {

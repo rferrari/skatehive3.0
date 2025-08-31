@@ -141,13 +141,15 @@ const LogoMatrix = () => {
           position="relative"
           zIndex={1}
           color={primary}
-          fontSize="40px"
+          fontSize={["20px", "28px", "40px", "40px"]}
           textAlign="center"
           fontFamily="'Joystix', monospace"
-          p={4}
+          p={[2, 3, 4]}
           borderRadius="md"
           opacity={messageVisible ? 1 : 0}
           transition="opacity 0.4s"
+          maxW={["90vw", "80vw", "50vw", "40vw"]}
+          mx="auto"
           _before={{
             content: `"${randomSentence}"`,
             position: "absolute",

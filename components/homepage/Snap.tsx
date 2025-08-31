@@ -7,7 +7,6 @@ import {
   Link,
   VStack,
   Tooltip,
-  useToast,
   IconButton,
   MenuButton,
   MenuItem,
@@ -149,9 +148,6 @@ const Snap = ({
   async function fetchRepliesForPermlink(author: string, permlink: string) {
     return fetchComments(author, permlink, false);
   }
-
-  // Deduplicate votes by voter (keep the last occurrence)
-  const uniqueVotes = deduplicateVotes(activeVotes);
 
   const authorPayout = parsePayout(discussion.total_payout_value);
   const curatorPayout = parsePayout(discussion.curator_payout_value);

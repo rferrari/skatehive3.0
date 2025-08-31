@@ -11,16 +11,16 @@ export default function useViewMode() {
         if (typeof window !== "undefined") {
             const params = new URLSearchParams(window.location.search);
             const viewParam = params.get("view") ?? '';
-            if (["grid", "list", "magazine", "videoparts", "snaps"].includes(viewParam)) {
-                return viewParam as "grid" | "list" | "magazine" | "videoparts" | "snaps";
+            if (["grid", "list", "magazine", "videoparts", "snaps", "tokens"].includes(viewParam)) {
+                return viewParam as "grid" | "list" | "magazine" | "videoparts" | "snaps" | "tokens";
             }
         }
         return "snaps";
     };
 
-    const [viewMode, setViewMode] = useState<"grid" | "list" | "magazine" | "videoparts" | "snaps">(getInitialViewMode);
+    const [viewMode, setViewMode] = useState<"grid" | "list" | "magazine" | "videoparts" | "snaps" | "tokens">(getInitialViewMode);
 
-    const handleViewModeChange = useCallback((mode: "grid" | "list" | "magazine" | "videoparts" | "snaps") => {
+    const handleViewModeChange = useCallback((mode: "grid" | "list" | "magazine" | "videoparts" | "snaps" | "tokens") => {
         setViewMode(mode);
         if (typeof window !== "undefined") {
             localStorage.setItem("profileViewMode", mode);

@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useFarcasterSession } from "../../hooks/useFarcasterSession";
 import useHiveAccount from "@/hooks/useHiveAccount";
+import useMarketPrices from "@/hooks/useMarketPrices";
 import { useWalletActions } from "@/hooks/useWalletActions";
 import { useAccount } from "wagmi";
 import {
@@ -106,11 +107,8 @@ export default function MainWallet({ username }: MainWalletProps) {
     showUsernameField?: boolean;
   } | null>(null);
   const [hivePower, setHivePower] = useState<string | undefined>(undefined);
-  const [hivePrice, setHivePrice] = useState<number | null>(null);
-  const [hbdPrice, setHbdPrice] = useState<number | null>(null);
-  const [isPriceLoading, setIsPriceLoading] = useState(true);
+  const { hivePrice, hbdPrice, isPriceLoading } = useMarketPrices();
   const toast = useToast();
-
 
   // Set mounted state to prevent hydration mismatch
   useEffect(() => {
@@ -138,26 +136,6 @@ export default function MainWallet({ username }: MainWalletProps) {
     };
     fetchHivePower();
   }, [hiveAccount?.vesting_shares]);
-
-  useEffect(() => {
-    async function fetchPrices() {
-      setIsPriceLoading(true);
-      try {
-        const res = await fetch(
-          "https://api.coingecko.com/api/v3/simple/price?ids=hive,hive_dollar&vs_currencies=usd"
-        );
-        const data = await res.json();
-        setHivePrice(data.hive ? data.hive.usd : null);
-        setHbdPrice(data.hive_dollar ? data.hive_dollar.usd : null);
-      } catch (e) {
-        setHivePrice(null);
-        setHbdPrice(null);
-      } finally {
-        setIsPriceLoading(false);
-      }
-    }
-    fetchPrices();
-  }, []);
 
   const handleModalOpen = useCallback(
     (
@@ -198,7 +176,6 @@ export default function MainWallet({ username }: MainWalletProps) {
           modalContent.title
         );
 
-
         if (result?.error) {
           toast({
             title: "Error",
@@ -217,7 +194,9 @@ export default function MainWallet({ username }: MainWalletProps) {
           toast({
             title: "Success!",
             description: (
-              <span style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <span
+                style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+              >
                 <strong>Tx:</strong> {txId}
                 <CopyIcon
                   cursor="pointer"
@@ -259,7 +238,6 @@ export default function MainWallet({ username }: MainWalletProps) {
           onClose(); // Close modal on success
         }
       }
-
     },
     [modalContent, handleConfirm, onClose]
   );
@@ -433,8 +411,8 @@ export default function MainWallet({ username }: MainWalletProps) {
             : isFarcasterConnected &&
               farcasterProfile &&
               "custody" in farcasterProfile
-              ? farcasterProfile?.custody
-              : undefined
+            ? farcasterProfile?.custody
+            : undefined
         }
         farcasterVerifiedAddresses={
           // Use enhanced data if available and valid, otherwise fallback to profile verifications
@@ -443,8 +421,8 @@ export default function MainWallet({ username }: MainWalletProps) {
             : isFarcasterConnected &&
               farcasterProfile &&
               "verifications" in farcasterProfile
-              ? farcasterProfile?.verifications
-              : undefined
+            ? farcasterProfile?.verifications
+            : undefined
         }
       >
         <Box
@@ -570,34 +548,12 @@ export default function MainWallet({ username }: MainWalletProps) {
                           isWalletView={true}
                         />
 
-                        <Box
-                          p={4}
-                          mt={2}
-                          mb={2}
-                          bg="transparent"
-                          borderRadius="md"
-                          border="1px solid"
-                          borderColor="gray.200"
-                        >
-                          <Text color="primary" mb={4}>
-                            Estimated Hive Account Value: <strong>{formatValue(totalHiveAssetsValue)}</strong><br />
-                            <small>USD value of all Hive tokens and Ivenstments in your wallet.</small>
-                          </Text>
-
-                          {hiveAccount?.savings_withdraw_requests &&
-                            hiveAccount.savings_withdraw_requests > 0 && (
-                              <Text color="orange.400" fontSize="sm" mt={1}>
-                                🚨 You have {hiveAccount.savings_withdraw_requests} savings withdrawal
-                                {hiveAccount.savings_withdraw_requests > 1 ? "s" : ""} in progress.
-                              </Text>
-                            )}
-                        </Box>
-
-
                         <ClaimRewards
                           reward_hbd_balance={hiveAccount?.reward_hbd_balance}
                           reward_hive_balance={hiveAccount?.reward_hive_balance}
-                          reward_vesting_balance={hiveAccount?.reward_vesting_balance}
+                          reward_vesting_balance={
+                            hiveAccount?.reward_vesting_balance
+                          }
                           reward_vesting_hive={hiveAccount?.reward_vesting_hive}
                         />
 
@@ -605,7 +561,6 @@ export default function MainWallet({ username }: MainWalletProps) {
                         <HiveTransactionHistory searchAccount={user} />
                       </>
                     ) : (
-
                       /* Show Connect Hive Section if not connected */
                       <MobileActionButtons
                         onSend={handleMobileSend}
@@ -622,7 +577,6 @@ export default function MainWallet({ username }: MainWalletProps) {
 
                     {/* NFT Section - Show if connected to Ethereum */}
                     {isMounted && isConnected && <NFTSection />}
-
                   </TabPanel>
 
                   {/* SkateBank Tab - Investment Options - Only show if connected to Hive */}
@@ -671,14 +625,14 @@ export default function MainWallet({ username }: MainWalletProps) {
                               lastInterestPayment={
                                 hbdInterestData.lastInterestPayment
                               }
-                              savings_withdraw_requests={(hiveAccount?.savings_withdraw_requests || 0)}
+                              savings_withdraw_requests={
+                                hiveAccount?.savings_withdraw_requests || 0
+                              }
                               onModalOpen={handleModalOpen}
                               onClaimInterest={handleClaimHbdInterest}
                             />
                           </Box>
-
                         </Box>
-
                       </VStack>
                     </TabPanel>
                   )}

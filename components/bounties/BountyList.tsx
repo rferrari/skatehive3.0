@@ -13,6 +13,7 @@ import {
   Select,
 } from "@chakra-ui/react";
 import { useComments } from "@/hooks/useComments";
+import useMarketPrices from "@/hooks/useMarketPrices";
 import { Discussion } from "@hiveio/dhive";
 import BountySnap from "./BountySnap";
 import { parse, isAfter } from "date-fns";
@@ -48,8 +49,7 @@ export default function BountyList({
   >("active");
   const [bountyGrinders, setBountyGrinders] = useState<string[]>([]);
   const [isLoadingGrinders, setIsLoadingGrinders] = useState(false);
-  const [hivePrice, setHivePrice] = useState<number | null>(null);
-  const [isPriceLoading, setIsPriceLoading] = useState(true);
+  const { hivePrice, isPriceLoading } = useMarketPrices();
   const [sortBy, setSortBy] = useState<
     "default" | "rewards" | "hot" | "ending"
   >("default");
@@ -101,8 +101,10 @@ export default function BountyList({
         // Check if the current user has voted on this bounty (claimed it) AND is not the author
         // Use case-insensitive comparison to handle potential case differences
         const isNotAuthor = bounty.author.toLowerCase() !== user.toLowerCase();
-        const hasVoted = bounty.active_votes?.some((vote) => vote.voter.toLowerCase() === user.toLowerCase());
-        
+        const hasVoted = bounty.active_votes?.some(
+          (vote) => vote.voter.toLowerCase() === user.toLowerCase()
+        );
+
         return isNotAuthor && hasVoted;
       });
     }
@@ -190,24 +192,6 @@ export default function BountyList({
       idx
     ] as typeof filter;
 
-  useEffect(() => {
-    async function fetchPrices() {
-      setIsPriceLoading(true);
-      try {
-        const res = await fetch(
-          "https://api.coingecko.com/api/v3/simple/price?ids=hive&vs_currencies=usd"
-        );
-        const data = await res.json();
-        setHivePrice(data.hive ? data.hive.usd : null);
-      } catch (e) {
-        setHivePrice(null);
-      } finally {
-        setIsPriceLoading(false);
-      }
-    }
-    fetchPrices();
-  }, []);
-
   // --- Stats Computation ---
   // Get all active bounties
   const activeBounties = useMemo(() => {
@@ -256,7 +240,7 @@ export default function BountyList({
       setIsLoadingGrinders(true);
       const usernames = new Set<string>();
       const submissionCounts: Record<string, number> = {};
-      
+
       await Promise.all(
         displayedBounties.map(async (bounty) => {
           try {
@@ -264,17 +248,17 @@ export default function BountyList({
               "get_content_replies",
               [bounty.author, bounty.permlink]
             );
-            
+
             // Get bounty deadline
             const deadline = getDeadlineFromBody(bounty.body);
-            
+
             // Count submissions (replies) that were made before the deadline
             let submissionCount = 0;
             if (replies && Array.isArray(replies)) {
               replies.forEach((reply: any) => {
                 if (reply.author) {
                   usernames.add(reply.author);
-                  
+
                   // Only count submissions made before the deadline
                   if (deadline && reply.created) {
                     const replyDate = new Date(reply.created);
@@ -285,9 +269,10 @@ export default function BountyList({
                 }
               });
             }
-            
+
             // Store submission count for this bounty
-            submissionCounts[`${bounty.author}-${bounty.permlink}`] = submissionCount;
+            submissionCounts[`${bounty.author}-${bounty.permlink}`] =
+              submissionCount;
           } catch (error) {
             // Set submission count to 0 on error
             submissionCounts[`${bounty.author}-${bounty.permlink}`] = 0;
@@ -339,11 +324,7 @@ export default function BountyList({
     );
   }
 
-  if (
-    filter === "my-claimed" &&
-    user &&
-    filteredBounties.length === 0
-  ) {
+  if (filter === "my-claimed" && user && filteredBounties.length === 0) {
     return (
       <Box textAlign="center" my={8}>
         <Text>
@@ -353,15 +334,12 @@ export default function BountyList({
     );
   }
 
-  if (
-    filter === "my-bounties" &&
-    user &&
-    filteredBounties.length === 0
-  ) {
+  if (filter === "my-bounties" && user && filteredBounties.length === 0) {
     return (
       <Box textAlign="center" my={8}>
         <Text>
-          You have not created any bounties yet. Create your first bounty to get started!
+          You have not created any bounties yet. Create your first bounty to get
+          started!
         </Text>
       </Box>
     );
@@ -705,7 +683,9 @@ export default function BountyList({
             setConversation={() => {}}
             showAuthor={true}
             disableFooter={true}
-            submissionCount={bountySubmissionCounts[`${bounty.author}-${bounty.permlink}`] || 0}
+            submissionCount={
+              bountySubmissionCounts[`${bounty.author}-${bounty.permlink}`] || 0
+            }
           />
         ))}
       </SimpleGrid>
@@ -722,4 +702,4 @@ export default function BountyList({
       )}
     </>
   );
-} 
+}

@@ -22,6 +22,7 @@ import ProfileHeader from "./ProfileHeader";
 import ViewModeSelector from "./ViewModeSelector";
 import MagazineModal from "../shared/MagazineModal";
 import SnapsGrid from "./SnapsGrid";
+import ZoraTokensView from "./ZoraTokensView";
 
 // Import custom hooks
 import useProfileData from "@/hooks/useProfileData";
@@ -52,6 +53,7 @@ const ContentViews = memo(function ContentViews({
   postProps,
   videoPartsProps,
   username,
+  ethereumAddress,
 }: {
   viewMode: string;
   postProps: {
@@ -67,6 +69,7 @@ const ContentViews = memo(function ContentViews({
     onProfileUpdate: (data: Partial<ProfileData>) => void;
   };
   username: string;
+  ethereumAddress?: string;
 }) {
   // Use conditional rendering with style display to avoid unmounting/remounting
   return (
@@ -77,6 +80,12 @@ const ContentViews = memo(function ContentViews({
 
       <Box display={viewMode === "snaps" ? "block" : "none"}>
         {viewMode === "snaps" && <MemoizedSnapsGrid username={username} />}
+      </Box>
+
+      <Box display={viewMode === "tokens" ? "block" : "none"}>
+        {viewMode === "tokens" && (
+          <ZoraTokensView ethereumAddress={ethereumAddress} />
+        )}
       </Box>
 
       <Box display={["grid", "list"].includes(viewMode) ? "block" : "none"}>
@@ -151,7 +160,9 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
 
   // Optimized view mode change handler with debouncing to prevent rapid switches
   const memoizedViewModeChange = useCallback(
-    (mode: "grid" | "list" | "magazine" | "videoparts" | "snaps") => {
+    (
+      mode: "grid" | "list" | "magazine" | "videoparts" | "snaps" | "tokens"
+    ) => {
       // Prevent rapid changes
       if (isTransitioning.current) return;
 
@@ -203,7 +214,7 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
 
   // Memoize chronologically sorted posts - only when needed for grid/list views
   const sortedPosts = useMemo(() => {
-    // Skip expensive sorting if we're in snaps or videoparts mode
+    // Skip expensive sorting if we're in snaps, videoparts or tokens mode
     if (!["grid", "list", "magazine"].includes(viewMode)) {
       return [];
     }
@@ -331,6 +342,7 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
               viewMode={viewMode}
               onViewModeChange={memoizedViewModeChange}
               isMobile={isMobile}
+              hasEthereumAddress={!!profileData.ethereum_address}
             />
 
             {/* Content Views - Optimized conditional rendering */}
@@ -339,6 +351,7 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
               postProps={postProps}
               videoPartsProps={videoPartsProps}
               username={username}
+              ethereumAddress={profileData.ethereum_address}
             />
           </Box>
         </Container>

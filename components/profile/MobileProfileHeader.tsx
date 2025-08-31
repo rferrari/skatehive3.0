@@ -16,6 +16,8 @@ import { ProfileData } from "./ProfilePage";
 import { useRouter } from "next/navigation";
 import { useAioha } from "@aioha/react-ui";
 import { checkFollow, changeFollow } from "@/lib/hive/client-functions";
+import ZoraProfileCoinDisplay from "./ZoraProfileCoinDisplay";
+import { ZoraProfileData } from "@/hooks/useZoraProfileCoin";
 
 interface MobileProfileHeaderProps {
   profileData: ProfileData;
@@ -27,6 +29,11 @@ interface MobileProfileHeaderProps {
   onFollowingChange: (following: boolean | null) => void;
   onLoadingChange: (loading: boolean) => void;
   onEditModalOpen: () => void;
+  showZoraProfile?: boolean;
+  onToggleProfile?: (show: boolean) => void;
+  cachedZoraData?: ZoraProfileData | null;
+  zoraLoading?: boolean;
+  zoraError?: string | null;
 }
 
 const MobileProfileHeader = memo(function MobileProfileHeader({
@@ -39,6 +46,11 @@ const MobileProfileHeader = memo(function MobileProfileHeader({
   onFollowingChange,
   onLoadingChange,
   onEditModalOpen,
+  showZoraProfile = false,
+  onToggleProfile,
+  cachedZoraData,
+  zoraLoading = false,
+  zoraError = null,
 }: MobileProfileHeaderProps) {
   const router = useRouter();
   const { aioha } = useAioha();
@@ -137,8 +149,7 @@ const MobileProfileHeader = memo(function MobileProfileHeader({
               onClick={onEditModalOpen}
             />
           )}
-        </Flex>
-
+        </Flex>{" "}
         {/* Profile Info Section */}
         <VStack align="flex-start" spacing={2} mb={4}>
           {/* Name and Username with Follow Button */}
@@ -230,8 +241,8 @@ const MobileProfileHeader = memo(function MobileProfileHeader({
             )}
           </Flex>
 
-          {/* Stats Row - Farcaster Style */}
-          <Flex gap={4} fontSize="sm">
+          {/* Stats Row - Farcaster Style with Zora Coin */}
+          <Flex gap={4} fontSize="sm" wrap="wrap">
             <Flex align="center" gap={1}>
               <Text fontWeight="bold" color="white">
                 {profileData.following}
@@ -252,9 +263,18 @@ const MobileProfileHeader = memo(function MobileProfileHeader({
                 <Text color="whiteAlpha.700">VP</Text>
               </Flex>
             )}
+            {/* Zora Profile Coin Display integrated into stats */}
+            <Box>
+              <ZoraProfileCoinDisplay
+                walletAddress={profileData.ethereum_address}
+                size="xs"
+                cachedProfileData={cachedZoraData}
+                cachedLoading={zoraLoading}
+                cachedError={zoraError}
+              />
+            </Box>
           </Flex>
         </VStack>
-
         {/* Action Buttons - Only for Owners */}
         {isOwner && (
           <Flex gap={2} justify="flex-end">

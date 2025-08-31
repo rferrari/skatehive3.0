@@ -2,7 +2,6 @@
 
 import { Box, Text, HStack, useToken, VStack } from "@chakra-ui/react";
 import { CustomHiveIcon } from "./CustomHiveIcon";
-import { useTheme } from "@/app/themeProvider";
 import { useRouter } from "next/navigation";
 
 interface MarketPricesProps {

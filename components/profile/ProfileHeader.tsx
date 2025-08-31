@@ -1,20 +1,9 @@
 "use client";
-import React, { memo } from "react";
-import {
-  Box,
-  Heading,
-  Text,
-  Flex,
-  Icon,
-  Avatar,
-  IconButton,
-  Link,
-  useToken,
-} from "@chakra-ui/react";
-import { FaGlobe, FaCog } from "react-icons/fa";
-import FollowButton from "./FollowButton";
-import PowerBars from "./PowerBars";
+import React, { memo, useState } from "react";
+import { Box, HStack, Image } from "@chakra-ui/react";
 import MobileProfileHeader from "./MobileProfileHeader";
+import HiveProfileHeader from "./HiveProfileHeader";
+import ZoraProfileHeader from "./ZoraProfileHeader";
 import { ProfileData } from "./ProfilePage";
 
 interface ProfileHeaderProps {
@@ -29,7 +18,7 @@ interface ProfileHeaderProps {
   onEditModalOpen: () => void;
 }
 
-const ProfileHeader = memo(function ProfileHeader({
+const ProfileHeader = function ProfileHeader({
   profileData,
   username,
   isOwner,
@@ -40,7 +29,7 @@ const ProfileHeader = memo(function ProfileHeader({
   onLoadingChange,
   onEditModalOpen,
 }: ProfileHeaderProps) {
-  const [background] = useToken("colors", ["background"]);
+  const [showZoraProfile, setShowZoraProfile] = useState(false);
 
   return (
     <Box position="relative" w="100%">
@@ -55,180 +44,122 @@ const ProfileHeader = memo(function ProfileHeader({
         onFollowingChange={onFollowingChange}
         onLoadingChange={onLoadingChange}
         onEditModalOpen={onEditModalOpen}
+        showZoraProfile={showZoraProfile}
+        onToggleProfile={setShowZoraProfile}
+        cachedZoraData={null}
+        zoraLoading={false}
+        zoraError={null}
       />
 
-      {/* Desktop Layout - Original Clean Version */}
-      <Box display={{ base: "none", md: "block" }}>
-        <Flex
-          direction="row"
-          align="flex-start"
-          justify="space-between"
-          w="100%"
-          maxW="container.md"
-          zIndex={2}
-          px={8}
-          gap={6}
-        >
-          {/* Desktop: Avatar and Power Bars */}
-          <Flex
-            direction="row"
-            align="flex-start"
-            gap={4}
-            flexShrink={0}
-            flexBasis="25%"
-            maxW="25%"
-            w="25%"
-          >
-            <Avatar
-              src={profileData.profileImage}
-              name={username}
-              borderRadius="md"
-              boxSize="100px"
-              cursor={isOwner ? "pointer" : "default"}
-              _hover={isOwner ? { opacity: 0.8 } : {}}
-              transition="opacity 0.2s"
-              onClick={isOwner ? onEditModalOpen : undefined}
-            />
-            {profileData.vp_percent && profileData.rc_percent && (
-              <PowerBars
-                vpPercent={profileData.vp_percent}
-                rcPercent={profileData.rc_percent}
-                height={100}
-                width={25}
+      {/* Desktop Layout */}
+      <Box display={{ base: "none", md: "block" }} position="relative">
+        <Box w="100%" maxW="container.xl" mx="auto" px={6} py={4}>
+          {/* Both Profile Layouts - visibility controlled by CSS */}
+
+          {/* Zora Profile Layout */}
+          {profileData.ethereum_address && (
+            <Box display={showZoraProfile ? "block" : "none"} w="100%">
+              <ZoraProfileHeader
+                profileData={profileData}
+                username={username}
               />
-            )}
-          </Flex>
+            </Box>
+          )}
 
-          {/* Profile Info */}
-          <Flex
-            direction="column"
-            align="flex-end"
-            justify="center"
-            flexBasis="75%"
-            maxW="75%"
-            w="75%"
-            gap={3}
-            flexShrink={1}
-            minWidth={0}
+          {/* Hive Profile Layout */}
+          <Box
+            display={
+              !showZoraProfile || !profileData.ethereum_address
+                ? "block"
+                : "none"
+            }
+            w="100%"
           >
-            {/* Name and Action Button Row */}
-            <Flex
-              direction="row"
-              align="center"
-              justify="flex-end"
-              w="100%"
-              gap={2}
-            >
-              {!isOwner && user && (
-                <Box mr={3}>
-                  <FollowButton
-                    user={user}
-                    username={username}
-                    isFollowing={isFollowing}
-                    isFollowLoading={isFollowLoading}
-                    onFollowingChange={onFollowingChange}
-                    onLoadingChange={onLoadingChange}
-                  />
-                </Box>
-              )}
-              <Heading
-                as="h2"
-                size="lg"
-                color="primary"
-                textAlign="right"
-                fontSize={{ md: "3xl", lg: "4xl" }}
-                fontWeight="bold"
-                lineHeight="1.2"
-              >
-                {profileData.name}
-              </Heading>
-              {isOwner && (
-                <Box ml={2}>
-                  <IconButton
-                    aria-label="Edit Profile"
-                    icon={<FaCog />}
-                    size="sm"
-                    variant="ghost"
-                    colorScheme="primary"
-                    onClick={onEditModalOpen}
-                  />
-                </Box>
-              )}
-            </Flex>
-            {/* About (Desktop Speech Bubble) */}
-            {profileData.about && (
-              <Box
-                position="relative"
-                ml={2}
-                color="text"
-                borderRadius="lg"
-                maxW="100%"
-                fontSize="0.625rem"
-                fontStyle="italic"
-                noOfLines={4}
-                whiteSpace="normal"
-                wordBreak="break-word"
-                _after={{
-                  content: '""',
-                  position: "absolute",
-                  left: "-16px",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  borderWidth: "8px",
-                  borderStyle: "solid",
-                  borderColor: "transparent",
-                  borderRightColor: "transparent",
-                }}
-                sx={{
-                  display: "-webkit-box",
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: "vertical",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "normal",
-                }}
-              >
-                {`"${profileData.about}"`}
-              </Box>
-            )}
-            {/* Stats Row */}
-            <Text
-              fontSize="sm"
-              color="text"
-              textAlign="right"
-              fontWeight="medium"
-            >
-              Following: {profileData.following} | Followers:{" "}
-              {profileData.followers}
-              {profileData.location && ` | ${profileData.location}`}
-            </Text>
+            <HiveProfileHeader
+              profileData={profileData}
+              username={username}
+              isOwner={isOwner}
+              user={user}
+              isFollowing={isFollowing}
+              isFollowLoading={isFollowLoading}
+              onFollowingChange={onFollowingChange}
+              onLoadingChange={onLoadingChange}
+              onEditModalOpen={onEditModalOpen}
+            />
+          </Box>
 
-            {/* Website Link */}
-            {profileData.website && (
-              <Flex alignItems="center" justifyContent="flex-end">
-                <Link
-                  href={
-                    profileData.website.startsWith("http")
-                      ? profileData.website
-                      : `https://${profileData.website}`
-                  }
-                  isExternal
-                  fontSize="sm"
-                  color="primary"
-                  display="flex"
-                  alignItems="center"
-                  _hover={{ textDecoration: "underline" }}
+          {/* Profile Type Toggle - Bottom Right Corner */}
+          {profileData.ethereum_address && (
+            <Box position="absolute" bottom={4} right={6} zIndex={10}>
+              <HStack spacing={2}>
+                {/* Hive Profile Logo */}
+                <Box
+                  cursor="pointer"
+                  onClick={() => setShowZoraProfile(false)}
+                  p={1.5}
+                  borderRadius="md"
+                  bg={!showZoraProfile ? "primary" : "whiteAlpha.200"}
+                  border="1px solid"
+                  borderColor={!showZoraProfile ? "primary" : "whiteAlpha.300"}
+                  transition="all 0.2s"
+                  _hover={{
+                    borderColor: "primary",
+                    transform: "scale(1.05)",
+                    bg: !showZoraProfile ? "primary" : "whiteAlpha.300",
+                  }}
+                  backdropFilter="blur(10px)"
                 >
-                  <Icon as={FaGlobe} w={3} h={3} mr={2} />
-                  {profileData.website}
-                </Link>
-              </Flex>
-            )}
-          </Flex>
-        </Flex>
+                  <Image
+                    src="/logos/hiveLogo.png"
+                    alt="Hive Profile"
+                    boxSize="20px"
+                    opacity={!showZoraProfile ? 1 : 0.7}
+                    transition="opacity 0.2s"
+                  />
+                </Box>
+
+                {/* Zora Profile Logo */}
+                <Box
+                  cursor="pointer"
+                  onClick={() => setShowZoraProfile(true)}
+                  p={1.5}
+                  borderRadius="md"
+                  bg={showZoraProfile ? "primary" : "whiteAlpha.200"}
+                  border="1px solid"
+                  borderColor={showZoraProfile ? "primary" : "whiteAlpha.300"}
+                  transition="all 0.2s"
+                  _hover={{
+                    borderColor: "primary",
+                    transform: "scale(1.05)",
+                    bg: showZoraProfile ? "primary" : "whiteAlpha.300",
+                  }}
+                  backdropFilter="blur(10px)"
+                >
+                  <Image
+                    src="/logos/Zorb.png"
+                    alt="Zora Profile"
+                    boxSize="20px"
+                    opacity={showZoraProfile ? 1 : 0.7}
+                    transition="opacity 0.2s"
+                  />
+                </Box>
+              </HStack>
+            </Box>
+          )}
+        </Box>
       </Box>
     </Box>
   );
-});
+};
 
-export default ProfileHeader;
+export default memo(ProfileHeader, (prevProps, nextProps) => {
+  return (
+    prevProps.username === nextProps.username &&
+    prevProps.profileData.ethereum_address ===
+      nextProps.profileData.ethereum_address &&
+    prevProps.isOwner === nextProps.isOwner &&
+    prevProps.user === nextProps.user &&
+    prevProps.isFollowing === nextProps.isFollowing &&
+    prevProps.isFollowLoading === nextProps.isFollowLoading
+  );
+});

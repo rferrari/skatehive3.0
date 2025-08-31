@@ -9,14 +9,17 @@ import {
   Wrap,
   Progress,
   Input,
+  Text,
+  Tooltip,
 } from "@chakra-ui/react";
 import { useAioha } from "@aioha/react-ui";
 import GiphySelector from "./GiphySelector";
 import VideoUploader, { VideoUploaderRef } from "./VideoUploader";
 import VideoTrimModal from "./VideoTrimModal";
+import InstagramModal from "./InstagramModal";
 import { IGif } from "@giphy/js-types";
 import { FaImage } from "react-icons/fa";
-import { MdGif } from "react-icons/md";
+import { FaInstagram } from "react-icons/fa";
 import { Discussion } from "@hiveio/dhive";
 import {
   getFileSignature,
@@ -31,6 +34,7 @@ import imageCompression from "browser-image-compression";
 
 import GIFMakerWithSelector, { GIFMakerRef as GIFMakerWithSelectorRef } from "./GIFMakerWithSelector";
 import useHivePower from "@/hooks/useHivePower";
+import { useInstagramHealth } from "@/hooks/useInstagramHealth";
 import { TbGif } from "react-icons/tb";
 import MatrixOverlay from "@/components/graphics/MatrixOverlay";
 
@@ -60,6 +64,9 @@ export default function SnapComposer({
   const [isLoading, setIsLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number[]>([]);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [videoProcessingError, setVideoProcessingError] = useState<
+    string | null
+  >(null);
   const videoUploaderRef = useRef<VideoUploaderRef>(null);
   const imageCompressorRef = useRef<ImageCompressorRef>(null);
   const [compressedImages, setCompressedImages] = useState<
@@ -74,6 +81,20 @@ export default function SnapComposer({
   const [isGifMakerOpen, setGifMakerOpen] = useState(false);
   const gifMakerWithSelectorRef = useRef<GIFMakerWithSelectorRef>(null);
   const [isProcessingGif, setIsProcessingGif] = useState(false);
+  const [isUploadingGif, setIsUploadingGif] = useState(false);
+  const [gifUrl, setGifUrl] = useState<string | null>(null);
+  const [gifSize, setGifSize] = useState<number | null>(null);
+  const [gifCaption, setGifCaption] = useState<string>("skatehive-gif");
+
+  // Instagram modal state
+  const [isInstagramModalOpen, setInstagramModalOpen] = useState(false);
+
+  // Instagram server health check
+  const instagramHealth = useInstagramHealth(120000); // Check every 2 minutes
+
+  const [gifUrls, setGifUrls] = useState<{ url: string; caption: string }[]>(
+    []
+  );
 
   // Drag and drop state
   const [isDragOver, setIsDragOver] = useState(false);
@@ -174,9 +195,8 @@ export default function SnapComposer({
   // Handle trim modal completion
   const handleTrimComplete = async (trimmedFile: File) => {
     if (videoUploaderRef.current) {
-      startUpload();
+      // Let VideoUploader handle its own upload state
       await videoUploaderRef.current.handleFile(trimmedFile);
-      finishUpload();
     }
     setPendingVideoFile(null);
   };
@@ -509,8 +529,35 @@ export default function SnapComposer({
   };
 
   // Video upload state integration
-  const handleVideoUploadStart = () => startUpload();
+  const handleVideoUploadStart = () => {
+    setVideoProcessingError(null); // Clear any previous errors
+    startUpload();
+  };
   const handleVideoUploadFinish = () => finishUpload();
+  const handleVideoError = (error: string) => {
+    setVideoProcessingError(error);
+  };
+
+  // Instagram handler
+  const handleInstagramMediaDownloaded = (
+    url: string,
+    filename: string,
+    isVideo: boolean
+  ) => {
+    if (isVideo) {
+      setVideoUrl(url);
+    } else {
+      // Add to compressed images array for images
+      setCompressedImages((prev) => [
+        ...prev,
+        {
+          url: url,
+          fileName: filename,
+          caption: filename.replace(/\.[^/.]+$/, ""), // Remove file extension for caption
+        },
+      ]);
+    }
+  };
 
 
 
@@ -844,6 +891,38 @@ export default function SnapComposer({
                   setGifMakerOpen(true);
                 }}
               />
+              {/* Instagram Button - Show if server is healthy or still loading */}
+              {(instagramHealth.healthy || instagramHealth.loading) && (
+                <Tooltip label="Import video from Instagram" placement="top">
+                  <IconButton
+                    id="snap-composer-instagram-btn"
+                    data-testid="snap-composer-instagram"
+                    aria-label="Import from Instagram"
+                    icon={
+                      <FaInstagram
+                        color="var(--chakra-colors-primary)"
+                        size={22}
+                      />
+                    }
+                    variant="ghost"
+                    isDisabled={isLoading}
+                    border="2px solid transparent"
+                    borderRadius="full"
+                    height="48px"
+                    width="48px"
+                    p={0}
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                    _hover={{
+                      borderColor: "primary",
+                      boxShadow: "0 0 0 2px var(--chakra-colors-primary)",
+                    }}
+                    _active={{ borderColor: "accent" }}
+                    onClick={() => setInstagramModalOpen(true)}
+                  />
+                </Tooltip>
+              )}
             </HStack>
             <Box display={buttonSize === "sm" ? "inline-block" : undefined}>
               <Button
@@ -880,15 +959,62 @@ export default function SnapComposer({
                 {videoDurationError}
               </Box>
             )}
+            {isUploadingMedia && (
+              <Box
+                bg="primary"
+                color="background"
+                p={3}
+                mb={2}
+                borderRadius="md"
+                textAlign="center"
+                fontSize="sm"
+                fontWeight="bold"
+              >
+                🎬 Processing video... This may take 1-2 minutes for large files
+                <Progress
+                  size="sm"
+                  colorScheme="yellow"
+                  isIndeterminate
+                  mt={2}
+                  borderRadius="full"
+                />
+                <Text fontSize="xs" mt={1} opacity={0.8}>
+                  Please keep this tab open while processing
+                </Text>
+              </Box>
+            )}
+            {videoProcessingError && (
+              <Box
+                bg="red.500"
+                color="white"
+                p={3}
+                mb={2}
+                borderRadius="md"
+                textAlign="center"
+                fontSize="sm"
+              >
+                ❌ {videoProcessingError}
+                <Box
+                  as="button"
+                  mt={2}
+                  p={1}
+                  bg="red.600"
+                  borderRadius="sm"
+                  fontSize="xs"
+                  _hover={{ bg: "red.700" }}
+                  onClick={() => setVideoProcessingError(null)}
+                >
+                  Dismiss
+                </Box>
+              </Box>
+            )}
             <VideoUploader
               ref={videoUploaderRef}
               onUpload={setVideoUrl}
-              isProcessing={isLoading}
               username={user || undefined}
               onUploadStart={handleVideoUploadStart}
               onUploadFinish={handleVideoUploadFinish}
-              hideCompletionMessage={true}
-              // Remove maxDurationSeconds and onDurationError since we handle trimming in modal
+              onError={handleVideoError}
             />
           </Box>
           {isGiphyModalOpen && (
@@ -929,6 +1055,13 @@ export default function SnapComposer({
           canBypass={canBypassLimit}
         />
       )}
+
+      {/* Instagram Modal */}
+      <InstagramModal
+        isOpen={isInstagramModalOpen}
+        onClose={() => setInstagramModalOpen(false)}
+        onMediaDownloaded={handleInstagramMediaDownloaded}
+      />
 
       {/* Matrix Overlay and login prompt if not logged in */}
       {!user && <></>}

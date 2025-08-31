@@ -25,6 +25,7 @@ export function getVideoDuration(file: File): Promise<number> {
 }
 
 export function isMobileDevice(): boolean {
+  if (typeof navigator === 'undefined') return false;
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
     navigator.userAgent
   );
@@ -116,7 +117,7 @@ export async function uploadWithProgress(
     // Set timeout for mobile networks
     xhr.timeout = isMobile ? 180000 : 120000; // 3 minutes for mobile, 2 for desktop
 
-    try {
+  try {
       let endpoint: string;
       if (PINATA_JWT) {
         endpoint = "https://api.pinata.cloud/pinning/pinFileToIPFS";
@@ -131,7 +132,13 @@ export async function uploadWithProgress(
         }
       }
 
-      xhr.send(formData);
+  // IMPORTANT: Do NOT set the "Content-Type" header manually here. When
+  // sending a FormData object, the browser (or XHR) will automatically set
+  // the Content-Type including the multipart boundary. Manually setting
+  // Content-Type to 'multipart/form-data' will omit the boundary and will
+  // cause servers to reject the request.
+  // See: https://developer.mozilla.org/en-US/docs/Web/API/FormData/Using_FormData_Objects
+  xhr.send(formData);
     } catch (error) {
       reject(error);
     }
@@ -220,7 +227,9 @@ export async function handleVideoUpload(
       };
     }
 
-    const formData = new FormData();
+  // Create FormData for upload. Do NOT set Content-Type manually when sending
+  // this FormData (fetch/XHR will set it correctly including the boundary).
+  const formData = new FormData();
     formData.append("file", file);
     if (username) formData.append("creator", username);
     if (thumbnailUrl) formData.append("thumbnailUrl", thumbnailUrl);
