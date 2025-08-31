@@ -55,7 +55,6 @@ export async function GET() {
     }
 
   } catch (error) {
-    console.error('Instagram server health check error:', error);
     return NextResponse.json({
       healthy: false,
       error: 'Health check failed',

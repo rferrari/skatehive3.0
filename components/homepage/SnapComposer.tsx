@@ -10,6 +10,7 @@ import {
   Progress,
   Input,
   Text,
+  Tooltip,
 } from "@chakra-ui/react";
 import { useAioha } from "@aioha/react-ui";
 import GiphySelector from "./GiphySelector";
@@ -87,7 +88,7 @@ export default function SnapComposer({
   const [isInstagramModalOpen, setInstagramModalOpen] = useState(false);
 
   // Instagram server health check
-  const instagramHealth = useInstagramHealth(60000); // Check every minute
+  const instagramHealth = useInstagramHealth(120000); // Check every 2 minutes
 
   const [gifUrls, setGifUrls] = useState<{ url: string; caption: string }[]>(
     []
@@ -757,30 +758,35 @@ export default function SnapComposer({
               />
               {/* Instagram Button - Show if server is healthy or still loading */}
               {(instagramHealth.healthy || instagramHealth.loading) && (
-                <IconButton
-                  id="snap-composer-instagram-btn"
-                  data-testid="snap-composer-instagram"
-                  aria-label="Import from Instagram"
-                  icon={
-                    <FaInstagram color="var(--chakra-colors-primary)" size={22} />
-                  }
-                  variant="ghost"
-                  isDisabled={isLoading}
-                  border="2px solid transparent"
-                  borderRadius="full"
-                  height="48px"
-                  width="48px"
-                  p={0}
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                  _hover={{
-                    borderColor: "primary",
-                    boxShadow: "0 0 0 2px var(--chakra-colors-primary)",
-                  }}
-                  _active={{ borderColor: "accent" }}
-                  onClick={() => setInstagramModalOpen(true)}
-                />
+                <Tooltip label="Import video from Instagram" placement="top">
+                  <IconButton
+                    id="snap-composer-instagram-btn"
+                    data-testid="snap-composer-instagram"
+                    aria-label="Import from Instagram"
+                    icon={
+                      <FaInstagram
+                        color="var(--chakra-colors-primary)"
+                        size={22}
+                      />
+                    }
+                    variant="ghost"
+                    isDisabled={isLoading}
+                    border="2px solid transparent"
+                    borderRadius="full"
+                    height="48px"
+                    width="48px"
+                    p={0}
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                    _hover={{
+                      borderColor: "primary",
+                      boxShadow: "0 0 0 2px var(--chakra-colors-primary)",
+                    }}
+                    _active={{ borderColor: "accent" }}
+                    onClick={() => setInstagramModalOpen(true)}
+                  />
+                </Tooltip>
               )}
             </HStack>
             <Box display={buttonSize === "sm" ? "inline-block" : undefined}>
