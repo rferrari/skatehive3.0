@@ -21,7 +21,9 @@ import {
 } from "@chakra-ui/react";
 import { useAioha } from "@aioha/react-ui";
 import { Discussion } from "@hiveio/dhive";
-import ImageCompressor, { ImageCompressorRef } from "@/lib/utils/ImageCompressor";
+import ImageCompressor, {
+  ImageCompressorRef,
+} from "@/lib/utils/ImageCompressor";
 import VideoUploader, {
   VideoUploaderRef,
 } from "@/components/homepage/VideoUploader";
@@ -35,13 +37,32 @@ import { CustomHiveIcon } from "@/components/wallet/CustomHiveIcon";
 
 // Inline HBD SVG as a React component
 const HbdIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg width="24" height="24" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 400 400"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
     <circle fill="#00960f" cx="200" cy="200" r="190" />
     <g transform="translate(90 105)">
-      <path fill="#fff" d="M157.13,107.34a.36.36,0,0,0-.3-.17H127.54a.35.35,0,0,0-.3.17l-47,81.35a.36.36,0,0,0,.31.53h29.28a.37.37,0,0,0,.31-.18l47-81.35A.36.36,0,0,0,157.13,107.34Z" />
-      <path fill="#fff" d="M128,83.39a.34.34,0,0,0,.3.18h29.29a.35.35,0,0,0,.3-.18.36.36,0,0,0,0-.35L110.14.34a.38.38,0,0,0-.31-.17H80.55a.38.38,0,0,0-.31.17.36.36,0,0,0,0,.35Z" />
-      <path fill="#fff" d="M218.21,94.52,163.94.34a.37.37,0,0,0-.31-.17h-29.2a.35.35,0,0,0-.3.17.32.32,0,0,0,0,.35l54.17,94-54.17,94a.32.32,0,0,0,0,.35.34.34,0,0,0,.3.18h29.2a.35.35,0,0,0,.31-.18l54.27-94.17A.36.36,0,0,0,218.21,94.52Z" />
-      <path fill="#fff" d="M110.62,94.69,55.34.17A.38.38,0,0,0,55,0h0a.36.36,0,0,0-.3.17L.05,94.7a.32.32,0,0,0,0,.35l55.28,94.52a.38.38,0,0,0,.31.17h0a.36.36,0,0,0,.3-.17L110.62,95A.32.32,0,0,0,110.62,94.69Z" />
+      <path
+        fill="#fff"
+        d="M157.13,107.34a.36.36,0,0,0-.3-.17H127.54a.35.35,0,0,0-.3.17l-47,81.35a.36.36,0,0,0,.31.53h29.28a.37.37,0,0,0,.31-.18l47-81.35A.36.36,0,0,0,157.13,107.34Z"
+      />
+      <path
+        fill="#fff"
+        d="M128,83.39a.34.34,0,0,0,.3.18h29.29a.35.35,0,0,0,.3-.18.36.36,0,0,0,0-.35L110.14.34a.38.38,0,0,0-.31-.17H80.55a.38.38,0,0,0-.31.17.36.36,0,0,0,0,.35Z"
+      />
+      <path
+        fill="#fff"
+        d="M218.21,94.52,163.94.34a.37.37,0,0,0-.31-.17h-29.2a.35.35,0,0,0-.3.17.32.32,0,0,0,0,.35l54.17,94-54.17,94a.32.32,0,0,0,0,.35.34.34,0,0,0,.3.18h29.2a.35.35,0,0,0,.31-.18l54.27-94.17A.36.36,0,0,0,218.21,94.52Z"
+      />
+      <path
+        fill="#fff"
+        d="M110.62,94.69,55.34.17A.38.38,0,0,0,55,0h0a.36.36,0,0,0-.3.17L.05,94.7a.32.32,0,0,0,0,.35l55.28,94.52a.38.38,0,0,0,.31.17h0a.36.36,0,0,0,.3-.17L110.62,95A.32.32,0,0,0,110.62,94.69Z"
+      />
     </g>
   </svg>
 );
@@ -118,7 +139,10 @@ export default function BountyComposer({
         .map((img) => {
           const caption = img.caption;
           // Only include caption if it's meaningful (not empty and not just "image")
-          const meaningfulCaption = caption && caption.trim() && caption.trim() !== "image" ? caption : "";
+          const meaningfulCaption =
+            caption && caption.trim() && caption.trim() !== "image"
+              ? caption
+              : "";
           return `![${meaningfulCaption}](${img.url})`;
         })
         .join("\n");
@@ -233,7 +257,7 @@ export default function BountyComposer({
         } catch (err) {
           alert(
             "Error compressing image: " +
-            (err instanceof Error ? err.message : err)
+              (err instanceof Error ? err.message : err)
           );
         }
       } else if (file.type.startsWith("video/")) {
@@ -303,8 +327,8 @@ export default function BountyComposer({
               borderWidth="1px"
               borderColor="muted"
               borderRadius="md"
-              _hover={{ borderColor: 'primary' }}
-              _focus={{ borderColor: 'primary', boxShadow: 'outline' }}
+              _hover={{ borderColor: "primary" }}
+              _focus={{ borderColor: "primary", boxShadow: "outline" }}
             />
             <HStack mt={2} spacing={2}>
               <Box fontSize="sm" color="muted" minW="60px">
@@ -346,7 +370,6 @@ export default function BountyComposer({
               <VideoUploader
                 ref={videoUploaderRef}
                 onUpload={handleVideoUpload}
-                isProcessing={isLoading}
                 username={user || undefined}
               />
             </HStack>
@@ -385,7 +408,13 @@ export default function BountyComposer({
             {/* Video Preview */}
             {videoUrl && (
               <Box mt={2}>
-                <Box as="video" src={videoUrl} controls maxW="100%" borderRadius="md" />
+                <Box
+                  as="video"
+                  src={videoUrl}
+                  controls
+                  maxW="100%"
+                  borderRadius="md"
+                />
               </Box>
             )}
           </FormControl>
@@ -414,27 +443,44 @@ export default function BountyComposer({
                 borderWidth="1px"
                 borderColor="muted"
                 borderRadius="md"
-                _hover={{ borderColor: 'primary' }}
-                _focus={{ borderColor: 'primary', boxShadow: 'outline' }}
+                _hover={{ borderColor: "primary" }}
+                _focus={{ borderColor: "primary", boxShadow: "outline" }}
                 isDisabled={isLoading}
                 px={2}
                 py={1}
                 fontWeight="normal"
               >
                 {rewardCurrency === "HBD" ? (
-                  <HbdIcon style={{ display: "inline", verticalAlign: "middle", marginRight: 6 }} />
+                  <HbdIcon
+                    style={{
+                      display: "inline",
+                      verticalAlign: "middle",
+                      marginRight: 6,
+                    }}
+                  />
                 ) : (
-                  <CustomHiveIcon style={{ display: "inline", verticalAlign: "middle", marginRight: 6 }} />
+                  <CustomHiveIcon
+                    style={{
+                      display: "inline",
+                      verticalAlign: "middle",
+                      marginRight: 6,
+                    }}
+                  />
                 )}
                 {rewardCurrency}
               </MenuButton>
-              <MenuList minW="120px" bg="background" color="text" borderColor="muted">
+              <MenuList
+                minW="120px"
+                bg="background"
+                color="text"
+                borderColor="muted"
+              >
                 <MenuItem
                   icon={<HbdIcon style={{ marginRight: 6 }} />}
                   onClick={() => setRewardCurrency("HBD")}
                   bg={rewardCurrency === "HBD" ? "muted" : "background"}
                   color="text"
-                  _hover={{ bg: 'muted', color: 'primary' }}
+                  _hover={{ bg: "muted", color: "primary" }}
                 >
                   HBD
                 </MenuItem>
@@ -443,7 +489,7 @@ export default function BountyComposer({
                   onClick={() => setRewardCurrency("HIVE")}
                   bg={rewardCurrency === "HIVE" ? "muted" : "background"}
                   color="text"
-                  _hover={{ bg: 'muted', color: 'primary' }}
+                  _hover={{ bg: "muted", color: "primary" }}
                 >
                   Hive
                 </MenuItem>
@@ -452,7 +498,9 @@ export default function BountyComposer({
           </HStack>
         </FormControl>
         <FormControl isRequired>
-          <FormLabel fontWeight="bold" textAlign="center" width="100%">Deadline</FormLabel>
+          <FormLabel fontWeight="bold" textAlign="center" width="100%">
+            Deadline
+          </FormLabel>
           <Flex justifyContent="center">
             <Input
               type="date"
@@ -463,13 +511,14 @@ export default function BountyComposer({
               bg="background"
               color="text"
               borderColor="muted"
-              _focus={{ borderColor: 'secondary', boxShadow: 'outline' }}
-              _hover={{ borderColor: 'secondary' }}
+              _focus={{ borderColor: "secondary", boxShadow: "outline" }}
+              _hover={{ borderColor: "secondary" }}
               // Note: Chakra UI does not provide a direct prop for the native calendar icon color.
               // To color the calendar icon, we use a CSS selector for ::-webkit-calendar-picker-indicator.
               sx={{
-                '::-webkit-calendar-picker-indicator': {
-                  filter: 'invert(38%) sepia(99%) saturate(747%) hue-rotate(80deg) brightness(90%)',
+                "::-webkit-calendar-picker-indicator": {
+                  filter:
+                    "invert(38%) sepia(99%) saturate(747%) hue-rotate(80deg) brightness(90%)",
                   // This filter will approximate the secondary color; adjust as needed for your palette.
                 },
               }}
@@ -498,4 +547,4 @@ export default function BountyComposer({
       </VStack>
     </Box>
   );
-} 
+}

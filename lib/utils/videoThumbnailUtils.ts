@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { loadFFmpeg, getFetchFile } from './videoProcessing';
+import { getFetchFile, loadFFmpeg } from './videoUtils';
 
 export async function generateThumbnailWithCanvas(
   file: File
