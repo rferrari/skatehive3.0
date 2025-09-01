@@ -163,7 +163,7 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({
           }}
           preload="metadata"
         >
-          Sorry, your browser doesn't support embedded videos.
+          Sorry, your browser doesnt support embedded videos.
         </video>
       </Box>
 
@@ -310,8 +310,8 @@ const Step2Description: React.FC<Step2Props> = ({
         <FormErrorMessage>{errors.description}</FormErrorMessage>
         <HStack justify="space-between" mt={1}>
           <Text fontSize="xs" color="primary">
-            This description will be displayed on the coin's page and help users
-            understand what your coin represents.
+            This description will be displayed on the coin&apos;s page and help
+            users understand what your coin represents.
           </Text>
           <Text fontSize="xs" color="muted">
             {formData.description.length}/300 characters
