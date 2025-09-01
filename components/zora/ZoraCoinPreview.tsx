@@ -16,7 +16,7 @@ import { useEffect, useState } from "react";
 import { getCoin } from "@zoralabs/coins-sdk";
 import { base } from "viem/chains";
 import type { Address } from "viem";
-import ZoraTradingModal from "./ZoraTradingModalClient";
+import ZoraTradingModal from "./ZoraTradingModal";
 import VideoRenderer from "../layout/VideoRenderer";
 import { convertIpfsUrl, getIpfsGatewayUrls } from "@/lib/utils/ipfsMetadata";
 import { CgArrowsExchange } from "react-icons/cg";

@@ -5,8 +5,6 @@ import {
   Modal,
   ModalOverlay,
   ModalContent,
-  ModalHeader,
-  ModalFooter,
   ModalBody,
   ModalCloseButton,
   Button,
@@ -14,10 +12,7 @@ import {
   HStack,
   Text,
   Input,
-  InputGroup,
-  InputRightElement,
   Select,
-  Box,
   Alert,
   AlertIcon,
   Spinner,
@@ -235,45 +230,49 @@ export default function ZoraTradingModal({
       }
 
       try {
-        console.log('🪙 Fetching balance for currency:', fromCurrency);
-        
+        console.log("🪙 Fetching balance for currency:", fromCurrency);
+
         // Check if this is a profile coin first
-        const profileCoin = profileCoins?.find(coin => 
-          coin.address.toLowerCase() === fromCurrency.address?.toLowerCase()
+        const profileCoin = profileCoins?.find(
+          (coin) =>
+            coin.address.toLowerCase() === fromCurrency.address?.toLowerCase()
         );
 
         if (profileCoin && profileCoin.formattedBalance) {
           // Use the balance from profile coins data
-          console.log('🎯 Found profile coin with balance:', profileCoin.formattedBalance);
-          
+          console.log(
+            "🎯 Found profile coin with balance:",
+            profileCoin.formattedBalance
+          );
+
           // Convert formatted balance back to raw (approximate)
           const decimals = fromCurrency.decimals || 18;
           const rawBalance = parseUnits(profileCoin.formattedBalance, decimals);
-          
+
           setFromBalance({
             raw: rawBalance,
             formatted: profileCoin.formattedBalance,
             symbol: fromCurrency.symbol,
             decimals: decimals,
           });
-          
-          console.log('✅ Using profile coin balance:', {
+
+          console.log("✅ Using profile coin balance:", {
             formatted: profileCoin.formattedBalance,
-            symbol: fromCurrency.symbol
+            symbol: fromCurrency.symbol,
           });
           return;
         }
-        
+
         // For non-profile coins (ETH, USDC), use the regular balance fetching
-        console.log('👛 Using external wallet balance for non-profile coin');
+        console.log("👛 Using external wallet balance for non-profile coin");
         const balance = await getFormattedBalance(
           fromCurrency.type,
           fromCurrency.address
         );
-        console.log('💰 Balance result:', balance);
+        console.log("💰 Balance result:", balance);
         setFromBalance(balance);
       } catch (error) {
-        console.error('Error fetching balance:', error);
+        console.error("Error fetching balance:", error);
         // Set a default balance to prevent UI errors
         setFromBalance({
           raw: BigInt(0),
@@ -285,7 +284,13 @@ export default function ZoraTradingModal({
     };
 
     fetchBalance();
-  }, [fromCurrency, isConnected, getFormattedBalance, profileCoins, isHydrated]);
+  }, [
+    fromCurrency,
+    isConnected,
+    getFormattedBalance,
+    profileCoins,
+    isHydrated,
+  ]);
 
   // Get trade quote when amount changes
   useEffect(() => {

@@ -1,12 +1,10 @@
-"use client";
-
-import React, { useState } from "react";
+import React from "react";
 import { Button, useDisclosure } from "@chakra-ui/react";
 import { FaExchangeAlt } from "react-icons/fa";
 import dynamic from "next/dynamic";
 
 // Dynamically import the trading modal to prevent SSR issues
-const ZoraTradingModal = dynamic(() => import("../markdown/ZoraTradingModal"), {
+const ZoraTradingModal = dynamic(() => import("../zora/ZoraTradingModal"), {
   ssr: false,
 });
 

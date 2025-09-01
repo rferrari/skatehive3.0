@@ -6,10 +6,31 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 import { FaTwitter, FaLink, FaThumbsDown } from "react-icons/fa";
-import React, { useMemo } from "react";
+import React, { useMemo, useCallback } from "react";
 import { useFarcasterContext } from "@/hooks/useFarcasterContext";
 import { useAioha } from "@aioha/react-ui";
 import { CoinCreationModal } from "@/components/shared/CoinCreationModal";
+
+// Regex patterns - defined outside component to prevent recreation on every render
+const IMAGE_REGEX = /!\[.*?\]\((.*?)\)/g;
+const VIDEO_FILE_REGEX =
+  /\[.*?\]\((.*?\.(mp4|webm|mov|avi|mkv|flv|wmv|m4v|ogv)(\?[^\s]*)?)\)/gi;
+const VIDEO_TAG_REGEX = /<video[^>]*src=["']([^"']+)["'][^>]*>/gi;
+const DIRECT_VIDEO_REGEX =
+  /https?:\/\/[^\s]+\.(mp4|webm|mov|avi|mkv|flv|wmv|m4v|ogv)(\?[^\s]*)?/gi;
+const IPFS_REGEX =
+  /https?:\/\/(?:ipfs\.skatehive\.app|gateway\.ipfs\.io|ipfs\.io\/ipfs)\/[^\s\)]+/gi;
+const MARKDOWN_MEDIA_REGEX = /!\[.*?\]\((https?:\/\/[^\)]+)\)/gi;
+const POTENTIAL_VIDEO_REGEX =
+  /https?:\/\/(?:(?:www\.)?(?:youtube\.com\/watch|youtu\.be\/|vimeo\.com\/|dailymotion\.com\/video\/)|[^\s]+\/[^\s]*(?:video|stream|media)[^\s]*)/gi;
+
+// Media detection patterns
+const MARKDOWN_IMAGE_PATTERN = /!\[.*?\]\([^\)]+\)/gi;
+const VIDEO_EXTENSION_PATTERN =
+  /\.(mp4|webm|mov|avi|mkv|flv|wmv|m4v|ogv)(\?[^\s]*)?/gi;
+const IPFS_URL_PATTERN =
+  /https?:\/\/(?:ipfs\.skatehive\.app|gateway\.ipfs\.io|ipfs\.io\/ipfs)\/[^\s]+/gi;
+const VIDEO_TAG_PATTERN = /<video[^>]*>[\s\S]*?<\/video>/gi;
 
 // Utility function to check if a URL might be a video by making a HEAD request
 const checkIfUrlIsVideo = async (url: string): Promise<boolean> => {
@@ -61,11 +82,13 @@ interface ShareMenuButtonsProps {
 }
 
 const ShareMenuButtons = ({ comment }: ShareMenuButtonsProps) => {
-  const { onCopy } = useClipboard(
-    `${typeof window !== "undefined" ? window.location.origin : ""}/post/${
-      comment.author
-    }/${comment.permlink}`
-  );
+  // Memoize the post link to prevent unnecessary re-computations
+  const postLink = useMemo(() => {
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    return `${origin}/post/${comment.author}/${comment.permlink}`;
+  }, [comment.author, comment.permlink]);
+
+  const { onCopy } = useClipboard(postLink);
   const toast = useToast();
   const { isInFrame, composeCast } = useFarcasterContext();
   const { aioha, user } = useAioha();
@@ -93,29 +116,27 @@ const ShareMenuButtons = ({ comment }: ShareMenuButtonsProps) => {
     const hasMetadataImages = (parsedMetadata.image?.length ?? 0) > 0;
     const hasVideoFlag = parsedMetadata.has_video === true;
 
+    if (!comment.body) {
+      return hasMetadataImages || hasVideoFlag;
+    }
+
     // Check for markdown image syntax in post body
-    const hasMarkdownImages = comment.body
-      ? /!\[.*?\]\([^\)]+\)/gi.test(comment.body)
-      : false;
+    const hasMarkdownImages = MARKDOWN_IMAGE_PATTERN.test(comment.body);
 
-    // Check for video file extensions in post body (mp4, webm, mov, etc.)
-    const hasMarkdownVideos = comment.body
-      ? /\.(mp4|webm|mov|avi|mkv|flv|wmv|m4v|ogv)(\?[^\s]*)?/gi.test(
-          comment.body
-        )
-      : false;
+    // Reset regex lastIndex to prevent issues with global regex
+    MARKDOWN_IMAGE_PATTERN.lastIndex = 0;
 
-    // Check for IPFS video URLs (common pattern: ipfs.skatehive.app or other IPFS gateways)
-    const hasIPFSVideos = comment.body
-      ? /https?:\/\/(?:ipfs\.skatehive\.app|gateway\.ipfs\.io|ipfs\.io\/ipfs)\/[^\s]+/gi.test(
-          comment.body
-        )
-      : false;
+    // Check for video file extensions in post body
+    const hasMarkdownVideos = VIDEO_EXTENSION_PATTERN.test(comment.body);
+    VIDEO_EXTENSION_PATTERN.lastIndex = 0;
+
+    // Check for IPFS video URLs
+    const hasIPFSVideos = IPFS_URL_PATTERN.test(comment.body);
+    IPFS_URL_PATTERN.lastIndex = 0;
 
     // Check for HTML5 video tags
-    const hasVideoTags = comment.body
-      ? /<video[^>]*>[\s\S]*?<\/video>/gi.test(comment.body)
-      : false;
+    const hasVideoTags = VIDEO_TAG_PATTERN.test(comment.body);
+    VIDEO_TAG_PATTERN.lastIndex = 0;
 
     return (
       hasMetadataImages ||
@@ -131,12 +152,12 @@ const ShareMenuButtons = ({ comment }: ShareMenuButtonsProps) => {
   const extractImageUrls = useMemo(() => {
     if (!comment.body) return [];
 
-    const imageRegex = /!\[.*?\]\((.*?)\)/g;
     const urls: string[] = [];
+    const imageRegex = new RegExp(IMAGE_REGEX.source, "g"); // Create new instance to avoid lastIndex issues
     let match;
 
     while ((match = imageRegex.exec(comment.body)) !== null) {
-      const url = match[1].trim();
+      const url = match[1]?.trim();
       if (url && !url.includes("[object") && !url.includes("undefined")) {
         urls.push(url);
       }
@@ -153,71 +174,49 @@ const ShareMenuButtons = ({ comment }: ShareMenuButtonsProps) => {
 
     const videoUrls: string[] = [];
 
-    // Extract from markdown links that point to video files
-    const videoFileRegex =
-      /\[.*?\]\((.*?\.(mp4|webm|mov|avi|mkv|flv|wmv|m4v|ogv)(\?[^\s]*)?)\)/gi;
-    let match;
-    while ((match = videoFileRegex.exec(comment.body)) !== null) {
-      const url = match[1].trim();
-      if (url && !url.includes("[object") && !url.includes("undefined")) {
-        videoUrls.push(url);
-      }
-    }
-
-    // Extract from HTML5 video tags
-    const videoTagRegex = /<video[^>]*src=["']([^"']+)["'][^>]*>/gi;
-    while ((match = videoTagRegex.exec(comment.body)) !== null) {
-      const url = match[1].trim();
-      if (url && !url.includes("[object") && !url.includes("undefined")) {
-        videoUrls.push(url);
-      }
-    }
-
-    // Extract from direct video URLs in text (with extensions)
-    const directVideoRegex =
-      /https?:\/\/[^\s]+\.(mp4|webm|mov|avi|mkv|flv|wmv|m4v|ogv)(\?[^\s]*)?/gi;
-    while ((match = directVideoRegex.exec(comment.body)) !== null) {
-      const url = match[0].trim();
-      if (url && !url.includes("[object") && !url.includes("undefined")) {
-        videoUrls.push(url);
-      }
-    }
-
-    // Extract IPFS URLs and other potential video URLs
-    const ipfsRegex =
-      /https?:\/\/(?:ipfs\.skatehive\.app|gateway\.ipfs\.io|ipfs\.io\/ipfs)\/[^\s\)]+/gi;
-    while ((match = ipfsRegex.exec(comment.body)) !== null) {
-      const url = match[0].trim();
-      if (url && !url.includes("[object") && !url.includes("undefined")) {
-        videoUrls.push(url);
-      }
-    }
-
-    // Extract from markdown image syntax that might actually be videos (common with IPFS)
-    const markdownMediaRegex = /!\[.*?\]\((https?:\/\/[^\)]+)\)/gi;
-    while ((match = markdownMediaRegex.exec(comment.body)) !== null) {
-      const url = match[1].trim();
-      if (url && !url.includes("[object") && !url.includes("undefined")) {
-        // Add IPFS URLs from markdown syntax too - these could be videos
-        if (
-          url.includes("ipfs.skatehive.app") ||
-          url.includes("gateway.ipfs.io") ||
-          url.includes("ipfs.io/ipfs")
-        ) {
+    // Helper function to safely extract URLs with a regex
+    const extractUrlsWithRegex = (regex: RegExp, groupIndex: number = 0) => {
+      const regexInstance = new RegExp(regex.source, regex.flags);
+      let match;
+      while ((match = regexInstance.exec(comment.body!)) !== null) {
+        const url = match[groupIndex]?.trim();
+        if (url && !url.includes("[object") && !url.includes("undefined")) {
           videoUrls.push(url);
         }
       }
-    }
+    };
+
+    // Extract from markdown links that point to video files
+    extractUrlsWithRegex(VIDEO_FILE_REGEX, 1);
+
+    // Extract from HTML5 video tags
+    extractUrlsWithRegex(VIDEO_TAG_REGEX, 1);
+
+    // Extract from direct video URLs in text (with extensions)
+    extractUrlsWithRegex(DIRECT_VIDEO_REGEX, 0);
+
+    // Extract IPFS URLs and other potential video URLs
+    extractUrlsWithRegex(IPFS_REGEX, 0);
+
+    // Extract from markdown image syntax that might actually be videos (common with IPFS)
+    extractUrlsWithRegex(MARKDOWN_MEDIA_REGEX, 1);
+
+    // Filter IPFS URLs from markdown that could be videos
+    const markdownUrls = [...videoUrls];
+    markdownUrls.forEach((url) => {
+      if (
+        url.includes("ipfs.skatehive.app") ||
+        url.includes("gateway.ipfs.io") ||
+        url.includes("ipfs.io/ipfs")
+      ) {
+        if (!videoUrls.includes(url)) {
+          videoUrls.push(url);
+        }
+      }
+    });
 
     // Extract any URL that might be a video based on common video hosting patterns
-    const potentialVideoUrls =
-      /https?:\/\/(?:(?:www\.)?(?:youtube\.com\/watch|youtu\.be\/|vimeo\.com\/|dailymotion\.com\/video\/)|[^\s]+\/[^\s]*(?:video|stream|media)[^\s]*)/gi;
-    while ((match = potentialVideoUrls.exec(comment.body)) !== null) {
-      const url = match[0].trim();
-      if (url && !url.includes("[object") && !url.includes("undefined")) {
-        videoUrls.push(url);
-      }
-    }
+    extractUrlsWithRegex(POTENTIAL_VIDEO_REGEX, 0);
 
     // Remove duplicates
     return [...new Set(videoUrls)];
@@ -232,11 +231,7 @@ const ShareMenuButtons = ({ comment }: ShareMenuButtonsProps) => {
     return null; // Prevent rendering with invalid data
   }
 
-  const postLink = `${
-    typeof window !== "undefined" ? window.location.origin : ""
-  }/post/${comment.author}/${comment.permlink}`;
-
-  const handleCoinCreation = () => {
+  const handleCoinCreation = useCallback(() => {
     if (!hasMedia) {
       toast({
         title: "Media required",
@@ -249,9 +244,9 @@ const ShareMenuButtons = ({ comment }: ShareMenuButtonsProps) => {
       return;
     }
     onCoinModalOpen();
-  };
+  }, [hasMedia, toast, onCoinModalOpen]);
 
-  const handleDownvote = async () => {
+  const handleDownvote = useCallback(async () => {
     if (!user) {
       toast({
         title: "Please log in",
@@ -289,83 +284,100 @@ const ShareMenuButtons = ({ comment }: ShareMenuButtonsProps) => {
         isClosable: true,
       });
     }
-  };
+  }, [user, aioha, comment.author, comment.permlink, toast]);
 
-  const handleShare = async (platform: string) => {
-    if (platform === "copy") {
-      onCopy();
-      toast({
-        title: "URL copied to clipboard!",
-        status: "success",
-        duration: 3000,
-        isClosable: true,
-      });
-      return;
-    }
-
-    // Handle Farcaster sharing with SDK when in frame context
-    if (platform === "farcaster" && isInFrame) {
-      try {
-        await composeCast(
-          `Check out this post from @${comment.author}!`,
-          [postLink] // URL as embed, not in text
-        );
+  const handleShare = useCallback(
+    async (platform: string) => {
+      if (platform === "copy") {
+        onCopy();
         toast({
-          title: "Cast created successfully!",
+          title: "URL copied to clipboard!",
           status: "success",
           duration: 3000,
           isClosable: true,
         });
         return;
-      } catch (error) {
-        console.error("Failed to create cast:", error);
-        toast({
-          title: "Failed to create cast",
-          description: "Falling back to web sharing",
-          status: "warning",
-          duration: 3000,
-          isClosable: true,
-        });
-        // Fall through to web sharing if SDK fails
       }
-    }
 
-    // Handle web sharing for other platforms or fallback
-    let shareUrl = "";
-    if (platform === "x") {
-      shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(
-        postLink
-      )}`;
-    } else if (platform === "farcaster") {
-      // For web fallback, include both text and URL
-      const castText = `Check out this post from @${comment.author}! ${postLink}`;
-      shareUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(
-        castText
-      )}`;
-    }
+      // Handle Farcaster sharing with SDK when in frame context
+      if (platform === "farcaster" && isInFrame) {
+        try {
+          await composeCast(
+            `Check out this post from @${comment.author}!`,
+            [postLink] // URL as embed, not in text
+          );
+          toast({
+            title: "Cast created successfully!",
+            status: "success",
+            duration: 3000,
+            isClosable: true,
+          });
+          return;
+        } catch (error) {
+          console.error("Failed to create cast:", error);
+          toast({
+            title: "Failed to create cast",
+            description: "Falling back to web sharing",
+            status: "warning",
+            duration: 3000,
+            isClosable: true,
+          });
+          // Fall through to web sharing if SDK fails
+        }
+      }
 
-    if (shareUrl) {
-      window.open(shareUrl, "_blank");
-    }
-  };
+      // Handle web sharing for other platforms or fallback
+      let shareUrl = "";
+      if (platform === "x") {
+        shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(
+          postLink
+        )}`;
+      } else if (platform === "farcaster") {
+        // For web fallback, include both text and URL
+        const castText = `Check out this post from @${comment.author}! ${postLink}`;
+        shareUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(
+          castText
+        )}`;
+      }
 
-  // Prepare post data for coin creation modal
-  const postData = {
-    title: comment.title || "",
-    body: comment.body || "",
-    author: comment.author,
-    permlink: comment.permlink,
-    parent_author: comment.parent_author || "",
-    parent_permlink: comment.parent_permlink || "",
-    json_metadata:
-      typeof comment.json_metadata === "string"
-        ? comment.json_metadata
-        : JSON.stringify(comment.json_metadata || {}),
-    images: [...(parsedMetadata.image || []), ...extractImageUrls].filter(
-      Boolean
-    ),
-    videos: extractVideoUrls,
-  };
+      if (shareUrl) {
+        window.open(shareUrl, "_blank");
+      }
+    },
+    [postLink, isInFrame, composeCast, toast, comment.author]
+  );
+
+  // Prepare post data for coin creation modal - memoized to prevent unnecessary re-renders
+  const postData = useMemo(
+    () => ({
+      title: comment.title || "",
+      body: comment.body || "",
+      author: comment.author,
+      permlink: comment.permlink,
+      parent_author: comment.parent_author || "",
+      parent_permlink: comment.parent_permlink || "",
+      json_metadata:
+        typeof comment.json_metadata === "string"
+          ? comment.json_metadata
+          : JSON.stringify(comment.json_metadata || {}),
+      images: [...(parsedMetadata.image || []), ...extractImageUrls].filter(
+        Boolean
+      ),
+      videos: extractVideoUrls,
+    }),
+    [
+      comment.title,
+      comment.body,
+      comment.author,
+      comment.permlink,
+      comment.parent_author,
+      comment.parent_permlink,
+      comment.json_metadata,
+      parsedMetadata.image,
+      extractImageUrls,
+      extractVideoUrls,
+    ]
+  );
 
   return (
     <>

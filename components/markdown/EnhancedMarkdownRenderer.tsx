@@ -5,7 +5,7 @@ import {
 } from "@/lib/markdown/MarkdownProcessor";
 import { VideoEmbed } from "./VideoEmbed";
 import InstagramEmbed from "./InstagramEmbed";
-import ZoraCoinPreview from "./ZoraCoinPreview";
+import ZoraCoinPreview from "../zora/ZoraCoinPreview";
 import HiveMarkdown from "@/components/shared/HiveMarkdown";
 
 interface EnhancedMarkdownRendererProps {
