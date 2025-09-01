@@ -204,16 +204,6 @@ export const useSnaps = () => {
           setHasMore(false); // No more items to fetch
         }
 
-        // Log fetched posts for debugging
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`📡 useSnaps: Fetched ${newSnaps.length} snaps on page ${currentPage}`);
-          newSnaps.forEach((snap, index) => {
-            const hasZoraContent = snap.body?.includes('zora') || snap.json_metadata?.includes('zora');
-            const downvoteCount = snap.active_votes ? snap.active_votes.filter(v => (v.weight || 0) < 0 || (v.percent || 0) < 0 || (v.rshares || 0) < 0).length : 0;
-            console.log(`  ${index + 1}. @${snap.author}/${snap.permlink} - hasZora: ${hasZoraContent}, downvotes: ${downvoteCount}, votes: ${snap.active_votes?.length || 0}`);
-          });
-        }
-
         // Avoid duplicates in the comments array
         setComments((prevPosts) => {
           const existingPermlinks = new Set(prevPosts.map((post) => post.permlink));

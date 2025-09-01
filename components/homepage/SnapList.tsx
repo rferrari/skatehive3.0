@@ -4,7 +4,6 @@ import {
   Box,
   Spinner,
   VStack,
-  Button,
   HStack,
   Text,
   SimpleGrid,
@@ -17,7 +16,7 @@ import {
   useDisclosure,
   Image,
 } from "@chakra-ui/react";
-import { FaCoins, FaGift, FaUser, FaGavel, FaHive } from "react-icons/fa";
+import { FaGift, FaHive } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import Snap from "./Snap";
 import SnapComposer from "./SnapComposer";
@@ -28,7 +27,6 @@ import LogoMatrix from "../graphics/LogoMatrix";
 import { countDownvotes } from "@/lib/utils/postUtils";
 import { useAioha } from "@aioha/react-ui";
 import { useAccount } from "wagmi";
-import { getPayoutValue } from "@/lib/hive/client-functions";
 import SidebarLogo from "../graphics/SidebarLogo";
 
 interface SnapListProps {
@@ -125,10 +123,7 @@ export default function SnapList({
       const downvoteCount = countDownvotes(discussion.active_votes);
       // Filter out posts with 2 or more downvotes (community disapproval)
       const shouldShow = downvoteCount < 2;
-      if (!shouldShow) {
-        console.log(`🚨 SnapList: Filtering out post by ${discussion.author} (${discussion.permlink}) - downvotes: ${downvoteCount}`);
-        console.log('Votes:', discussion.active_votes?.map(v => ({ voter: v.voter, weight: v.weight, percent: v.percent, rshares: v.rshares })));
-      }
+
       return shouldShow;
     })
     .sort((a: Discussion, b: Discussion) => {
@@ -136,20 +131,19 @@ export default function SnapList({
       // This ensures users see the latest content first, including new Zora posts
       const aDate = new Date(a.created).getTime();
       const bDate = new Date(b.created).getTime();
-      
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`� Sorting: ${a.author}/${a.permlink} (${a.created}) vs ${b.author}/${b.permlink} (${b.created})`);
-      }
-      
+
       return bDate - aDate; // Descending order (newest first)
     });
 
   // Debug: Log final order after filtering and sorting
-  if (process.env.NODE_ENV === 'development' && filteredAndSortedComments.length > 0) {
-    console.log(`📋 Final SnapList order (${filteredAndSortedComments.length} posts):`);
+  if (
+    process.env.NODE_ENV === "development" &&
+    filteredAndSortedComments.length > 0
+  ) {
     filteredAndSortedComments.slice(0, 10).forEach((comment, index) => {
-      const hasZora = comment.body?.includes('zora') || comment.json_metadata?.includes('zora');
-      console.log(`  ${index + 1}. @${comment.author}/${comment.permlink} - ${comment.created} - hasZora: ${hasZora}`);
+      const hasZora =
+        comment.body?.includes("zora") ||
+        comment.json_metadata?.includes("zora");
     });
   }
 
