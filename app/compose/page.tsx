@@ -57,12 +57,14 @@ export default function Composer() {
   } = useComposeForm();
 
   // Local state for compose page features
-  const [activeSettingsTab, setActiveSettingsTab] = useState<string | null>(null);
-  const [imagesInMarkdown] = useState<Array<{url: string, alt?: string}>>([]);
+  const [activeSettingsTab, setActiveSettingsTab] = useState<string | null>(
+    null
+  );
+  const [imagesInMarkdown] = useState<Array<{ url: string; alt?: string }>>([]);
 
   // Placeholder functions - TODO: Implement image caption functionality
   const updateImageCaption = (url: string, caption: string) => {
-    console.log('TODO: Update image caption', url, caption);
+    console.log("TODO: Update image caption", url, caption);
   };
 
   // Use the wrapped handleSubmit from useComposeForm
