@@ -9,6 +9,9 @@ import {
   Spinner,
   Box,
   Text,
+  HStack,
+  VStack,
+  Image,
 } from "@chakra-ui/react";
 import ImageCompressor, {
   ImageCompressorRef,
@@ -16,7 +19,6 @@ import ImageCompressor, {
 import VideoUploader, {
   VideoUploaderRef,
 } from "../../components/homepage/VideoUploader";
-
 
 import HashtagInput from "../../components/compose/HashtagInput";
 import BeneficiariesInput from "../../components/compose/BeneficiariesInput";
@@ -54,6 +56,18 @@ export default function Composer() {
     isSubmitting,
   } = useComposeForm();
 
+  // Local state for compose page features
+  const [activeSettingsTab, setActiveSettingsTab] = useState<string | null>(null);
+  const [imagesInMarkdown] = useState<Array<{url: string, alt?: string}>>([]);
+
+  // Placeholder functions - TODO: Implement image caption functionality
+  const updateImageCaption = (url: string, caption: string) => {
+    console.log('TODO: Update image caption', url, caption);
+  };
+
+  // Use the wrapped handleSubmit from useComposeForm
+  const handleSubmit = originalHandleSubmit;
+
   React.useEffect(() => {}, [
     beneficiaries,
     title,
@@ -67,7 +81,10 @@ export default function Composer() {
   const videoUploaderRef = useRef<VideoUploaderRef>(null);
 
   // Custom image upload handler that inserts inline with editable captions
-  const handleImageUploadWithCaption = async (url: string | null, fileName?: string) => {
+  const handleImageUploadWithCaption = async (
+    url: string | null,
+    fileName?: string
+  ) => {
     setIsImageUploading(true);
     if (url) {
       try {
@@ -77,7 +94,7 @@ export default function Composer() {
           blob,
           fileName || "compressed-image.jpg"
         );
-        
+
         // Insert into markdown at cursor position
         insertAtCursorWrapper(`\n![](${ipfsUrl})\n`);
       } catch (error) {
@@ -90,7 +107,7 @@ export default function Composer() {
     }
   };
 
-  // Upload hooks  
+  // Upload hooks
   const {
     isUploading: isImageUploading,
     isCompressingImage,
@@ -112,15 +129,17 @@ export default function Composer() {
   const handleGifUpload = async (gifBlob: Blob, fileName: string) => {
     try {
       // Ensure filename has .gif extension
-      const gifFileName = fileName.endsWith('.gif') ? fileName : `${fileName}.gif`;
-      
+      const gifFileName = fileName.endsWith(".gif")
+        ? fileName
+        : `${fileName}.gif`;
+
       // Create a File object from the blob with proper .gif extension
       const gifFile = new File([gifBlob], gifFileName, { type: "image/gif" });
-      
+
       // Upload to IPFS using the same method as images
       const { uploadToIpfs } = await import("@/lib/markdown/composeUtils");
       const ipfsUrl = await uploadToIpfs(gifFile, gifFileName);
-      
+
       // Insert into markdown at cursor position
       insertAtCursorWrapper(`\n![](${ipfsUrl})\n`);
     } catch (error) {
@@ -148,8 +167,6 @@ export default function Composer() {
     setTimeout(() => setVideoDurationError(null), 5000);
   };
 
-
-
   const { isUploading: isDropUploading, onDrop } = useFileDropUpload(
     insertAtCursorWrapper
   );
@@ -158,15 +175,16 @@ export default function Composer() {
   // Combined uploading state
   const isUploading = isImageUploading || isDropUploading;
 
-  // Handle GIF modal effects
-  React.useEffect(() => {
-    if (isGifModalOpen) {
-      gifMakerWithSelectorRef.current?.reset();
-      setGifUrl(null);
-      setGifSize(null);
-      setIsProcessingGif(false);
-    }
-  }, [isGifModalOpen, setGifUrl, setGifSize, setIsProcessingGif]);
+  // TODO: Implement GIF modal functionality
+  // Handle GIF modal effects - currently disabled until GIF modal is implemented
+  // React.useEffect(() => {
+  //   if (isGifModalOpen) {
+  //     gifMakerWithSelectorRef.current?.reset();
+  //     setGifUrl(null);
+  //     setGifSize(null);
+  //     setIsProcessingGif(false);
+  //   }
+  // }, [isGifModalOpen, setGifUrl, setGifSize, setIsProcessingGif]);
 
   return (
     <Flex
@@ -200,8 +218,6 @@ export default function Composer() {
           flex="1"
           minW={0}
         />
-
-
       </Flex>
 
       {isUploading && (
@@ -294,19 +310,30 @@ export default function Composer() {
           {imagesInMarkdown.length > 0 && (
             <Button
               size="sm"
-              onClick={() => setActiveSettingsTab(activeSettingsTab === 'captions' ? null : 'captions')}
+              onClick={() =>
+                setActiveSettingsTab(
+                  activeSettingsTab === "captions" ? null : "captions"
+                )
+              }
               border="1px solid"
-              borderColor={activeSettingsTab === 'captions' ? 'accent' : 'muted'}
-              borderBottomColor={activeSettingsTab === 'captions' ? 'background' : 'muted'}
+              borderColor={
+                activeSettingsTab === "captions" ? "accent" : "muted"
+              }
+              borderBottomColor={
+                activeSettingsTab === "captions" ? "background" : "muted"
+              }
               borderRadius="md"
               borderBottomRadius={0}
               borderRightRadius={0}
-              bg={activeSettingsTab === 'captions' ? 'background' : 'transparent'}
-              color={activeSettingsTab === 'captions' ? 'accent' : 'primary'}
+              bg={
+                activeSettingsTab === "captions" ? "background" : "transparent"
+              }
+              color={activeSettingsTab === "captions" ? "accent" : "primary"}
               fontWeight="semibold"
               _hover={{
-                bg: activeSettingsTab === 'captions' ? 'background' : 'muted',
-                borderColor: activeSettingsTab === 'captions' ? 'accent' : 'primary',
+                bg: activeSettingsTab === "captions" ? "background" : "muted",
+                borderColor:
+                  activeSettingsTab === "captions" ? "accent" : "primary",
               }}
             >
               <HStack spacing={2}>
@@ -317,43 +344,69 @@ export default function Composer() {
           )}
           <Button
             size="sm"
-            onClick={() => setActiveSettingsTab(activeSettingsTab === 'beneficiaries' ? null : 'beneficiaries')}
+            onClick={() =>
+              setActiveSettingsTab(
+                activeSettingsTab === "beneficiaries" ? null : "beneficiaries"
+              )
+            }
             border="1px solid"
-            borderColor={activeSettingsTab === 'beneficiaries' ? 'accent' : 'muted'}
-            borderBottomColor={activeSettingsTab === 'beneficiaries' ? 'background' : 'muted'}
+            borderColor={
+              activeSettingsTab === "beneficiaries" ? "accent" : "muted"
+            }
+            borderBottomColor={
+              activeSettingsTab === "beneficiaries" ? "background" : "muted"
+            }
             borderRadius="md"
             borderBottomRadius={0}
             borderRightRadius={imagesInMarkdown.length === 0 ? 0 : 0}
-            borderLeftRadius={imagesInMarkdown.length > 0 ? 0 : 'md'}
-            bg={activeSettingsTab === 'beneficiaries' ? 'background' : 'transparent'}
-            color={activeSettingsTab === 'beneficiaries' ? 'accent' : 'primary'}
+            borderLeftRadius={imagesInMarkdown.length > 0 ? 0 : "md"}
+            bg={
+              activeSettingsTab === "beneficiaries"
+                ? "background"
+                : "transparent"
+            }
+            color={activeSettingsTab === "beneficiaries" ? "accent" : "primary"}
             fontWeight="semibold"
-                          _hover={{
-                bg: activeSettingsTab === 'beneficiaries' ? 'background' : 'muted',
-                borderColor: activeSettingsTab === 'beneficiaries' ? 'accent' : 'primary',
-              }}
+            _hover={{
+              bg:
+                activeSettingsTab === "beneficiaries" ? "background" : "muted",
+              borderColor:
+                activeSettingsTab === "beneficiaries" ? "accent" : "primary",
+            }}
           >
             <HStack spacing={2}>
               <span>💰</span>
-              <Text>Beneficiaries {beneficiaries.length > 0 && `(${beneficiaries.length})`}</Text>
+              <Text>
+                Beneficiaries{" "}
+                {beneficiaries.length > 0 && `(${beneficiaries.length})`}
+              </Text>
             </HStack>
           </Button>
           <Button
             size="sm"
-            onClick={() => setActiveSettingsTab(activeSettingsTab === 'thumbnail' ? null : 'thumbnail')}
+            onClick={() =>
+              setActiveSettingsTab(
+                activeSettingsTab === "thumbnail" ? null : "thumbnail"
+              )
+            }
             border="1px solid"
-            borderColor={activeSettingsTab === 'thumbnail' ? 'accent' : 'muted'}
-            borderBottomColor={activeSettingsTab === 'thumbnail' ? 'background' : 'muted'}
+            borderColor={activeSettingsTab === "thumbnail" ? "accent" : "muted"}
+            borderBottomColor={
+              activeSettingsTab === "thumbnail" ? "background" : "muted"
+            }
             borderRadius="md"
             borderBottomRadius={0}
             borderLeftRadius={0}
-            bg={activeSettingsTab === 'thumbnail' ? 'background' : 'transparent'}
-            color={activeSettingsTab === 'thumbnail' ? 'accent' : 'primary'}
+            bg={
+              activeSettingsTab === "thumbnail" ? "background" : "transparent"
+            }
+            color={activeSettingsTab === "thumbnail" ? "accent" : "primary"}
             fontWeight="semibold"
-                          _hover={{
-                bg: activeSettingsTab === 'thumbnail' ? 'background' : 'muted',
-                borderColor: activeSettingsTab === 'thumbnail' ? 'accent' : 'primary',
-              }}
+            _hover={{
+              bg: activeSettingsTab === "thumbnail" ? "background" : "muted",
+              borderColor:
+                activeSettingsTab === "thumbnail" ? "accent" : "primary",
+            }}
           >
             <HStack spacing={2}>
               <span>🖼️</span>
@@ -363,12 +416,8 @@ export default function Composer() {
         </HStack>
 
         {/* Tab Content */}
-        {activeSettingsTab === 'captions' && imagesInMarkdown.length > 0 && (
-          <Box 
-            p={4}
-            bg="background"
-            alignSelf="flex-start"
-          >
+        {activeSettingsTab === "captions" && imagesInMarkdown.length > 0 && (
+          <Box p={4} bg="background" alignSelf="flex-start">
             <VStack spacing={4} align="stretch">
               {imagesInMarkdown.map((image, index) => (
                 <HStack key={`${image.url}-${index}`} spacing={4} align="start">
@@ -389,12 +438,17 @@ export default function Composer() {
                     <Input
                       placeholder="Enter caption for this image..."
                       value={image.alt}
-                      onChange={(e) => updateImageCaption(image.url, e.target.value)}
+                      onChange={(e) =>
+                        updateImageCaption(image.url, e.target.value)
+                      }
                       size="sm"
                       bg="background"
                       borderColor="muted"
                       _hover={{ borderColor: "primary" }}
-                      _focus={{ borderColor: "accent", boxShadow: "0 0 0 1px var(--chakra-colors-accent)" }}
+                      _focus={{
+                        borderColor: "accent",
+                        boxShadow: "0 0 0 1px var(--chakra-colors-accent)",
+                      }}
                     />
                     <Text fontSize="xs" color="muted" noOfLines={1}>
                       URL: {image.url}
@@ -406,12 +460,8 @@ export default function Composer() {
           </Box>
         )}
 
-        {activeSettingsTab === 'beneficiaries' && (
-          <Box 
-            p={4}
-            bg="background"
-            alignSelf="flex-start"
-          >
+        {activeSettingsTab === "beneficiaries" && (
+          <Box p={4} bg="background" alignSelf="flex-start">
             <BeneficiariesInput
               beneficiaries={beneficiaries}
               setBeneficiaries={(newBeneficiaries) => {
@@ -422,12 +472,8 @@ export default function Composer() {
           </Box>
         )}
 
-        {activeSettingsTab === 'thumbnail' && (
-          <Box 
-            p={4}
-            bg="background"
-            alignSelf="flex-start"
-          >
+        {activeSettingsTab === "thumbnail" && (
+          <Box p={4} bg="background" alignSelf="flex-start">
             <ThumbnailPicker
               show={true}
               markdown={markdown}

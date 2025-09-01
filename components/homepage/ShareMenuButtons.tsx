@@ -222,15 +222,6 @@ const ShareMenuButtons = ({ comment }: ShareMenuButtonsProps) => {
     return [...new Set(videoUrls)];
   }, [comment.body]);
 
-  // Validate permlink to prevent [object Object] URLs
-  if (typeof comment.permlink !== "string") {
-    console.error(
-      "🚨 ShareMenuButtons: Invalid permlink type:",
-      typeof comment.permlink
-    );
-    return null; // Prevent rendering with invalid data
-  }
-
   const handleCoinCreation = useCallback(() => {
     if (!hasMedia) {
       toast({
@@ -344,7 +335,7 @@ const ShareMenuButtons = ({ comment }: ShareMenuButtonsProps) => {
         window.open(shareUrl, "_blank");
       }
     },
-    [postLink, isInFrame, composeCast, toast, comment.author]
+    [postLink, isInFrame, composeCast, toast, comment.author, onCopy]
   );
 
   // Prepare post data for coin creation modal - memoized to prevent unnecessary re-renders
@@ -378,6 +369,15 @@ const ShareMenuButtons = ({ comment }: ShareMenuButtonsProps) => {
       extractVideoUrls,
     ]
   );
+
+  // Validate permlink to prevent [object Object] URLs
+  if (typeof comment.permlink !== "string") {
+    console.error(
+      "🚨 ShareMenuButtons: Invalid permlink type:",
+      typeof comment.permlink
+    );
+    return null; // Prevent rendering with invalid data
+  }
 
   return (
     <>
