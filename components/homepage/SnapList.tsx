@@ -126,15 +126,32 @@ export default function SnapList({
       // Filter out posts with 2 or more downvotes (community disapproval)
       const shouldShow = downvoteCount < 2;
       if (!shouldShow) {
+        console.log(`🚨 SnapList: Filtering out post by ${discussion.author} (${discussion.permlink}) - downvotes: ${downvoteCount}`);
+        console.log('Votes:', discussion.active_votes?.map(v => ({ voter: v.voter, weight: v.weight, percent: v.percent, rshares: v.rshares })));
       }
       return shouldShow;
     })
     .sort((a: Discussion, b: Discussion) => {
-      // Sort by payout value (highest first)
-      const aValue = parseFloat(getPayoutValue(a));
-      const bValue = parseFloat(getPayoutValue(b));
-      return bValue - aValue; // Descending order (highest value first)
+      // Sort by creation date (newest first) instead of payout value
+      // This ensures users see the latest content first, including new Zora posts
+      const aDate = new Date(a.created).getTime();
+      const bDate = new Date(b.created).getTime();
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`� Sorting: ${a.author}/${a.permlink} (${a.created}) vs ${b.author}/${b.permlink} (${b.created})`);
+      }
+      
+      return bDate - aDate; // Descending order (newest first)
     });
+
+  // Debug: Log final order after filtering and sorting
+  if (process.env.NODE_ENV === 'development' && filteredAndSortedComments.length > 0) {
+    console.log(`📋 Final SnapList order (${filteredAndSortedComments.length} posts):`);
+    filteredAndSortedComments.slice(0, 10).forEach((comment, index) => {
+      const hasZora = comment.body?.includes('zora') || comment.json_metadata?.includes('zora');
+      console.log(`  ${index + 1}. @${comment.author}/${comment.permlink} - ${comment.created} - hasZora: ${hasZora}`);
+    });
+  }
 
   // Conditionally render after all hooks have run
   if (!hasMounted) return null;

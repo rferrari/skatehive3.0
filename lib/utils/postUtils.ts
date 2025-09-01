@@ -49,7 +49,7 @@ export function deduplicateVotes(votes: any[]): any[] {
  */
 export function countDownvotes(activeVotes: any[]): number {
     if (!activeVotes || !Array.isArray(activeVotes)) return 0;
-    return activeVotes.filter(vote => {
+    const downvotes = activeVotes.filter(vote => {
         // Check for negative weight, percent, or rshares indicating a downvote
         const weight = vote.weight || 0;
         const percent = vote.percent || 0;
@@ -61,8 +61,17 @@ export function countDownvotes(activeVotes: any[]): number {
         // - negative values indicate downvotes
         const isDownvote = weight < 0 || percent < 0 || rshares < 0;
         
+        if (isDownvote && process.env.NODE_ENV === 'development') {
+            console.log(`📊 Downvote detected: voter=${vote.voter}, weight=${weight}, percent=${percent}, rshares=${rshares}`);
+        }
 
         return isDownvote;
-    }).length;
+    });
+    
+    if (downvotes.length > 0 && process.env.NODE_ENV === 'development') {
+        console.log(`📊 countDownvotes: Found ${downvotes.length} downvotes out of ${activeVotes.length} total votes`);
+    }
+    
+    return downvotes.length;
 }
 

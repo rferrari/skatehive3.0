@@ -119,7 +119,7 @@ export const useSnaps = () => {
       json_metadata: JSON.stringify(apiData.post_json_metadata || {}),
       author_reputation: parseFloat(apiData.reputation || 0),
       active_votes: apiData.votes?.map((vote: any) => ({
-        percent: 0,
+        percent: vote.percent || (vote.weight ? vote.weight / 100 : 0), // Use API percent or calculate from weight
         reputation: 0,
         rshares: vote.rshares,
         time: vote.timestamp,
@@ -202,6 +202,16 @@ export const useSnaps = () => {
         // console.dir(newSnaps)
         if (newSnaps.length < pageMinSize) {
           setHasMore(false); // No more items to fetch
+        }
+
+        // Log fetched posts for debugging
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`📡 useSnaps: Fetched ${newSnaps.length} snaps on page ${currentPage}`);
+          newSnaps.forEach((snap, index) => {
+            const hasZoraContent = snap.body?.includes('zora') || snap.json_metadata?.includes('zora');
+            const downvoteCount = snap.active_votes ? snap.active_votes.filter(v => (v.weight || 0) < 0 || (v.percent || 0) < 0 || (v.rshares || 0) < 0).length : 0;
+            console.log(`  ${index + 1}. @${snap.author}/${snap.permlink} - hasZora: ${hasZoraContent}, downvotes: ${downvoteCount}, votes: ${snap.active_votes?.length || 0}`);
+          });
         }
 
         // Avoid duplicates in the comments array
