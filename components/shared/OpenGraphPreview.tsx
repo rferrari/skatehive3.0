@@ -23,16 +23,21 @@ interface OpenGraphPreviewProps {
 }
 
 const OpenGraphPreview: React.FC<OpenGraphPreviewProps> = ({ url }) => {
-  // Skip OpenGraph preview for coin URLs since they're handled by ZoraCoinPreview
-  if (url.includes('skatehive.app/coin') || url.includes('zora.co/coin')) {
-    return null;
-  }
-
+  // All hooks must be called before any early returns
   const [ogData, setOgData] = useState<OpenGraphData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
+  // Skip OpenGraph preview for coin URLs since they're handled by ZoraCoinPreview
+  const shouldSkip = url.includes('skatehive.app/coin') || url.includes('zora.co/coin');
+
   useEffect(() => {
+    // Don't fetch if we should skip this URL
+    if (shouldSkip) {
+      setLoading(false);
+      return;
+    }
+
     const fetchOpenGraphData = async () => {
       try {
         setLoading(true);
@@ -72,7 +77,12 @@ const OpenGraphPreview: React.FC<OpenGraphPreviewProps> = ({ url }) => {
     };
 
     fetchOpenGraphData();
-  }, [url]);
+  }, [url, shouldSkip]);
+
+  // Early return after all hooks have been called
+  if (shouldSkip) {
+    return null;
+  }
 
   if (loading) {
     return (

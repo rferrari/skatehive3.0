@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useMemo, useCallback } from "react";
 import {
   Box,
   Textarea,
@@ -48,7 +48,7 @@ interface SnapComposerProps {
   buttonSize?: "sm" | "md" | "lg";
 }
 
-export default function SnapComposer({
+const SnapComposer = React.memo(function SnapComposer({
   pa,
   pp,
   onNewComment,
@@ -89,8 +89,13 @@ export default function SnapComposer({
   // Instagram modal state
   const [isInstagramModalOpen, setInstagramModalOpen] = useState(false);
 
-  // Instagram server health check
-  const instagramHealth = useInstagramHealth(120000); // Check every 2 minutes
+  // Instagram server health check - check once on mount, more frequently when modal is open
+  const instagramCheckInterval = useMemo(() => {
+    if (isInstagramModalOpen) return 120000; // 2 minutes when modal is open
+    return -1; // Check once on mount only when modal is closed
+  }, [isInstagramModalOpen]);
+  
+  const instagramHealth = useInstagramHealth(instagramCheckInterval);
 
   const [gifUrls, setGifUrls] = useState<{ url: string; caption: string }[]>(
     []
@@ -112,20 +117,20 @@ export default function SnapComposer({
 
   // Get user's Hive Power to determine if they can bypass the 15s limit
   const { hivePower } = useHivePower(user || "");
-  const canBypassLimit = hivePower !== null && hivePower >= 100;
+  const canBypassLimit = useMemo(() => hivePower !== null && hivePower >= 100, [hivePower]);
 
-  const buttonText = submitLabel || (post ? "Reply" : "Post");
+  const buttonText = useMemo(() => submitLabel || (post ? "Reply" : "Post"), [submitLabel, post]);
 
-  // Function to extract hashtags from text
-  function extractHashtags(text: string): string[] {
+  // Function to extract hashtags from text - memoized
+  const extractHashtags = useCallback((text: string): string[] => {
     const hashtagRegex = /#(\w+)/g;
     const matches = text.match(hashtagRegex) || [];
     return matches.map((hashtag) => hashtag.slice(1)); // Remove the '#' symbol
-  }
+  }, []);
 
-  // Helper functions to manage upload count
-  const startUpload = () => setUploadCount((c) => c + 1);
-  const finishUpload = () => setUploadCount((c) => Math.max(0, c - 1));
+  // Helper functions to manage upload count - memoized
+  const startUpload = useCallback(() => setUploadCount((c) => c + 1), []);
+  const finishUpload = useCallback(() => setUploadCount((c) => Math.max(0, c - 1)), []);
 
   // Helper function to get video duration
   const getVideoDuration = (file: File): Promise<number> => {
@@ -358,7 +363,7 @@ export default function SnapComposer({
     e.target.value = ""; // Reset input
   };
 
-  async function handleComment() {
+  const handleComment = useCallback(async () => {
     let commentBody = postBodyRef.current?.value || "";
 
     if (
@@ -404,8 +409,6 @@ export default function SnapComposer({
     if (videoUrl) {
       commentBody += `\n\n<iframe src="${videoUrl}" frameborder="0" allowfullscreen></iframe>`;
     }
-
-
 
     if (commentBody) {
       let snapsTags: string[] = [];
@@ -456,27 +459,38 @@ export default function SnapComposer({
         setUploadProgress([]);
       }
     }
-  }
+  }, [
+    compressedImages,
+    selectedGif,
+    videoUrl,
+    pa,
+    pp,
+    extractHashtags,
+    aioha,
+    user,
+    onNewComment,
+    onClose,
+  ]);
 
-  // Detect Ctrl+Enter and submit
-  function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
+  // Detect Ctrl+Enter and submit - memoized
+  const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.ctrlKey && event.key === "Enter") {
       handleComment();
     }
-  }
+  }, [handleComment]);
 
-  // Drag and drop handlers
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+  // Drag and drop handlers - memoized
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(true);
-  };
+  }, []);
 
-  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
-  };
+  }, []);
 
   // Video upload logic in handleDrop
   const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
@@ -528,18 +542,20 @@ export default function SnapComposer({
     finishUpload();
   };
 
-  // Video upload state integration
-  const handleVideoUploadStart = () => {
+  // Video upload state integration - memoized
+  const handleVideoUploadStart = useCallback(() => {
     setVideoProcessingError(null); // Clear any previous errors
     startUpload();
-  };
-  const handleVideoUploadFinish = () => finishUpload();
-  const handleVideoError = (error: string) => {
+  }, [startUpload]);
+  
+  const handleVideoUploadFinish = useCallback(() => finishUpload(), [finishUpload]);
+  
+  const handleVideoError = useCallback((error: string) => {
     setVideoProcessingError(error);
-  };
+  }, []);
 
-  // Instagram handler
-  const handleInstagramMediaDownloaded = (
+  // Instagram handler - memoized
+  const handleInstagramMediaDownloaded = useCallback((
     url: string,
     filename: string,
     isVideo: boolean
@@ -557,7 +573,7 @@ export default function SnapComposer({
         },
       ]);
     }
-  };
+  }, []);
 
 
 
@@ -1067,4 +1083,6 @@ export default function SnapComposer({
       {!user && <></>}
     </Box>
   );
-}
+});
+
+export default SnapComposer;

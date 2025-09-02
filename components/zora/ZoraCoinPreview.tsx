@@ -16,11 +16,16 @@ import { useEffect, useState } from "react";
 import { getCoin } from "@zoralabs/coins-sdk";
 import { base } from "viem/chains";
 import type { Address } from "viem";
-import ZoraTradingModal from "./ZoraTradingModal";
+import dynamic from "next/dynamic";
 import VideoRenderer from "../layout/VideoRenderer";
 import { convertIpfsUrl, getIpfsGatewayUrls } from "@/lib/utils/ipfsMetadata";
 import { CgArrowsExchange } from "react-icons/cg";
 import { FaChartLine } from "react-icons/fa";
+
+// Lazy load the trading modal to prevent unnecessary loading
+const ZoraTradingModal = dynamic(() => import("./ZoraTradingModal"), {
+  ssr: false,
+});
 
 // Debug utility that only logs in development mode
 const debug = (...args: any[]) => {
@@ -202,7 +207,13 @@ export default function ZoraCoinPreview({ address }: ZoraCoinPreviewProps) {
 
   if (loading) {
     return (
-      <Box border="1px" borderColor="gray.600" borderRadius="md" p={3} my={4}>
+      <Box 
+        border="1px" 
+        borderColor="gray.600" 
+        borderRadius="md" 
+        p={3} 
+        my={4}
+      >
         <Text fontSize="sm" color="gray.400">
           Loading coin data...
         </Text>
@@ -310,19 +321,21 @@ export default function ZoraCoinPreview({ address }: ZoraCoinPreviewProps) {
         </Stack>
       </Box>
 
-      {/* Trading Modal */}
-      <ZoraTradingModal
-        isOpen={isOpen}
-        onClose={onClose}
-        coinAddress={address}
-        coinData={{
-          name: token?.name,
-          symbol: token?.symbol,
-          image: token?.image,
-          marketCap: token?.marketCap,
-          uniqueHolders: token?.uniqueHolders,
-        }}
-      />
+      {/* Trading Modal - Only render when open */}
+      {isOpen && (
+        <ZoraTradingModal
+          isOpen={isOpen}
+          onClose={onClose}
+          coinAddress={address}
+          coinData={{
+            name: token?.name,
+            symbol: token?.symbol,
+            image: token?.image,
+            marketCap: token?.marketCap,
+            uniqueHolders: token?.uniqueHolders,
+          }}
+        />
+      )}
     </>
   );
 }

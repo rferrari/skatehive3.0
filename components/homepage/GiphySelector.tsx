@@ -14,7 +14,6 @@ const GiphySelector: React.FC<GiphySelectorProps> = ({ apiKey, onSelect }) => {
     const gf = useMemo(() => new GiphyFetch(apiKey), [apiKey]);
     const [searchTerm, setSearchTerm] = useState('skateboard funny');
     const [isLoading, setIsLoading] = useState(false);
-    const [key, setKey] = useState(0); // Add a key state to force re-render
     const [showGrid, setShowGrid] = useState(true); // Controls Giphy grid visibility
 
     const fetchGifs = useCallback(async (offset: number): Promise<GifsResult> => {
@@ -26,27 +25,25 @@ const GiphySelector: React.FC<GiphySelectorProps> = ({ apiKey, onSelect }) => {
         return result;
     }, [gf, searchTerm]);
 
-    const handleSearchTermChange = (value: string) => {
+    const handleSearchTermChange = useCallback((value: string) => {
         setSearchTerm(value);
         setShowGrid(true); // Show grid when user types
-    };
+    }, []);
 
-    const handleSearchIconClick = () => {
+    const handleSearchIconClick = useCallback(() => {
         setShowGrid((prev) => !prev); // Toggle grid visibility
-        if (!showGrid) {
-            fetchGifs(0); // If opening, fetch GIFs from the start
-            setKey(k => k + 1); // Increment the key to force re-render of the Grid component
-        }
-    };
+    }, []);
 
-    const handleGifClick = (gif: IGif, e: React.SyntheticEvent<HTMLElement>) => {
+    const handleGifClick = useCallback((gif: IGif, e: React.SyntheticEvent<HTMLElement>) => {
         onSelect(gif, e);
-    };
+    }, [onSelect]);
 
     useEffect(() => {
-        fetchGifs(0);
-        setKey(k => k + 1); // Increment the key to force re-render of the Grid component
-    }, [fetchGifs]);
+        // Only fetch gifs when component mounts, let the Grid component handle search updates
+        if (showGrid) {
+            fetchGifs(0);
+        }
+    }, [fetchGifs, showGrid]);
 
     return (
         <>
@@ -62,7 +59,6 @@ const GiphySelector: React.FC<GiphySelectorProps> = ({ apiKey, onSelect }) => {
                     onKeyPress={(e) => {
                         if (e.key === 'Enter') {
                             fetchGifs(0); // Allows pressing Enter to search
-                            setKey(k => k + 1); // Increment the key to force re-render of the Grid component
                             setShowGrid(true); // Show grid on Enter
                         }
                     }}
@@ -71,7 +67,6 @@ const GiphySelector: React.FC<GiphySelectorProps> = ({ apiKey, onSelect }) => {
             {showGrid && (
                 <Center mt={4}>
                     <Grid
-                        key={key} // Use the key prop to force re-rendering when the search term changes
                         width={450}
                         columns={3}
                         fetchGifs={fetchGifs} // Use the fetchGifs function to get GIFs based on the current search term

@@ -120,14 +120,14 @@ export default function ZoraTradingModal({
   const [availableCurrencies, setAvailableCurrencies] =
     useState<Currency[]>(BASE_CURRENCIES);
 
-  // Get profile coins for enhanced trading options
-  const { profileCoins } = useProfileCoins();
+  // Get profile coins for enhanced trading options - only when modal is open
+  const { profileCoins } = useProfileCoins(isOpen);
 
   // Build available currencies from base currencies + profile coins
   useEffect(() => {
     const currencies = [...BASE_CURRENCIES];
 
-    if (profileCoins && profileCoins.length > 0) {
+    if (isOpen && profileCoins && profileCoins.length > 0) {
       profileCoins.forEach((coin) => {
         // Don't add the current coin being traded
         if (coin.address.toLowerCase() !== coinAddress.toLowerCase()) {
@@ -144,7 +144,7 @@ export default function ZoraTradingModal({
     }
 
     setAvailableCurrencies(currencies);
-  }, [profileCoins, coinAddress]);
+  }, [profileCoins, coinAddress, isOpen]);
 
   const {
     executeTrade,
@@ -230,8 +230,6 @@ export default function ZoraTradingModal({
       }
 
       try {
-        console.log("🪙 Fetching balance for currency:", fromCurrency);
-
         // Check if this is a profile coin first
         const profileCoin = profileCoins?.find(
           (coin) =>
@@ -240,10 +238,6 @@ export default function ZoraTradingModal({
 
         if (profileCoin && profileCoin.formattedBalance) {
           // Use the balance from profile coins data
-          console.log(
-            "🎯 Found profile coin with balance:",
-            profileCoin.formattedBalance
-          );
 
           // Convert formatted balance back to raw (approximate)
           const decimals = fromCurrency.decimals || 18;
@@ -264,12 +258,10 @@ export default function ZoraTradingModal({
         }
 
         // For non-profile coins (ETH, USDC), use the regular balance fetching
-        console.log("👛 Using external wallet balance for non-profile coin");
         const balance = await getFormattedBalance(
           fromCurrency.type,
           fromCurrency.address
         );
-        console.log("💰 Balance result:", balance);
         setFromBalance(balance);
       } catch (error) {
         console.error("Error fetching balance:", error);

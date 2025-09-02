@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
 import { cleanUsername } from "@/lib/utils/cleanUsername";
+import { Image } from "@chakra-ui/react";
 
 export const runtime = "edge";
 
@@ -143,7 +144,7 @@ export async function GET(
         >
           {/* Background Layer */}
           {userData.coverImage ? (
-            <img
+            <Image
               src={userData.coverImage}
               style={{
                 position: "absolute",
@@ -230,7 +231,7 @@ export async function GET(
                     justifyContent: "center",
                   }}
                 >
-                  <img
+                  <Image
                     src={userData.profileImage}
                     style={{
                       width: `${AVATAR_SIZE - 10}px`,

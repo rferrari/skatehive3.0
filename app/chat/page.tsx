@@ -114,7 +114,7 @@ export default function ChatPage() {
     }
 
     fallbackTimeout = setTimeout(() => {
-      if (isMounted && isLoading) {
+      if (isMounted) {
         setIsLoading(false);
         setDebug((d) => [...d, "Widget load fallback timeout reached"]);
       }
