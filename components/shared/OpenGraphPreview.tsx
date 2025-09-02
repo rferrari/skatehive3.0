@@ -23,6 +23,11 @@ interface OpenGraphPreviewProps {
 }
 
 const OpenGraphPreview: React.FC<OpenGraphPreviewProps> = ({ url }) => {
+  // Skip OpenGraph preview for coin URLs since they're handled by ZoraCoinPreview
+  if (url.includes('skatehive.app/coin') || url.includes('zora.co/coin')) {
+    return null;
+  }
+
   const [ogData, setOgData] = useState<OpenGraphData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);

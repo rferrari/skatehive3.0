@@ -41,8 +41,7 @@ export const extractLastUrl = (content: string): string | null => {
       url.includes('youtu.be') ||
       // Skip 3speak URLs
       url.includes('3speak.tv') ||
-      // Skip Zora URLs
-      url.includes('zora.co/coin') ||
+
       // Skip Instagram URLs
       url.includes('instagram.com') ||
       // Skip Vimeo URLs
@@ -91,6 +90,11 @@ export const extractLastUrl = (content: string): string | null => {
 export const removeLastUrlFromContent = (content: string): string => {
   const lastUrl = extractLastUrl(content);
   if (!lastUrl) return content;
+  
+  // Don't remove Zora coin URLs as they should be rendered as previews
+  if (lastUrl.includes('zora.co/coin') || lastUrl.includes('skatehive.app/coin')) {
+    return content;
+  }
   
   const urlPosition = content.lastIndexOf(lastUrl);
   const afterUrl = content.substring(urlPosition + lastUrl.length).trim();
