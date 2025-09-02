@@ -14,17 +14,20 @@ import { FaTh, FaBars, FaPen, FaSort } from "react-icons/fa";
 import { FiBook } from "react-icons/fi";
 import { useRouter, usePathname } from "next/navigation";
 import { useAioha } from "@aioha/react-ui";
+import { QueryType, ViewMode } from "@/constants/blogConfig";
 
 interface TopBarProps {
-  viewMode: "grid" | "list" | "magazine";
-  setViewMode: (mode: "grid" | "list" | "magazine") => void;
-  setQuery: (query: string) => void;
+  viewMode: ViewMode;
+  setViewMode: (mode: ViewMode) => void;
+  setQuery: (query: QueryType) => void;
+  onQueryChange?: (query: QueryType) => void;
 }
 
 export default function TopBar({
   viewMode,
   setViewMode,
   setQuery,
+  onQueryChange,
 }: TopBarProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -39,6 +42,11 @@ export default function TopBar({
       transform: "translate(2px, 2px)",
       boxShadow: "2px 2px 3px var(--chakra-colors-primary-alpha)",
     },
+  };
+
+  const handleQueryChange = (query: QueryType) => {
+    setQuery(query);
+    onQueryChange?.(query);
   };
 
   return (
@@ -182,7 +190,7 @@ export default function TopBar({
               bg="background"
               color="primary"
               _hover={{ bg: "muted", color: "primary" }}
-              onClick={() => setQuery("created")}
+              onClick={() => handleQueryChange("created")}
             >
               Recent
             </MenuItem>
@@ -190,7 +198,7 @@ export default function TopBar({
               bg="background"
               color="primary"
               _hover={{ bg: "muted", color: "primary" }}
-              onClick={() => setQuery("trending")}
+              onClick={() => handleQueryChange("trending")}
             >
               Trending
             </MenuItem>
@@ -198,7 +206,7 @@ export default function TopBar({
               bg="background"
               color="primary"
               _hover={{ bg: "muted", color: "primary" }}
-              onClick={() => setQuery("highest_paid")}
+              onClick={() => handleQueryChange("highest_paid")}
             >
               Highest Paid
             </MenuItem>
@@ -206,7 +214,7 @@ export default function TopBar({
               bg="background"
               color="primary"
               _hover={{ bg: "muted", color: "primary" }}
-              onClick={() => setQuery("goat")}
+              onClick={() => handleQueryChange("goat")}
             >
               GOAT
             </MenuItem>

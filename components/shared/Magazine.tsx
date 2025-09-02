@@ -405,7 +405,7 @@ export default function Magazine(props: MagazineProps) {
               : "0 16px 0px 0";
             return (
               <Box
-                key={`${post.id}-${index}`}
+                key={`${post.author}/${post.permlink}`}
                 sx={{ ...pageStyles(theme), borderRadius: pageBorderRadius }}
                 position="relative"
                 width="100%"

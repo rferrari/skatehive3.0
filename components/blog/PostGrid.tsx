@@ -15,14 +15,18 @@ interface PostGridProps {
 }
 
 export default function PostGrid({ posts, columns, listView = false, hideAuthorInfo = false }: PostGridProps) {
-
     return (
         <SimpleGrid
             columns={{ base: 1, sm: columns, md: columns, lg: columns, xl: columns }}
             spacing={4}
         >
             {posts.map((post) => (
-                <PostCard key={post.permlink} post={post} listView={listView} hideAuthorInfo={hideAuthorInfo} />
+                <PostCard 
+                    key={`${post.author}/${post.permlink}`} 
+                    post={post} 
+                    listView={listView} 
+                    hideAuthorInfo={hideAuthorInfo} 
+                />
             ))}
         </SimpleGrid>
     );
