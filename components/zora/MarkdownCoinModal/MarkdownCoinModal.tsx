@@ -207,7 +207,7 @@ export function MarkdownCoinModal({
     if (shouldGeneratePreview && isOpen) {
       console.log("🎨 Generating preview for new modal open");
       setHasInitialized(true); // Mark as initialized to prevent multiple calls
-      
+
       // Extract images and generate preview in one go
       const images = extractMarkdownImages(post.body);
       console.log("Modal opened, extracting images from post:", post.title);
@@ -221,7 +221,7 @@ export function MarkdownCoinModal({
 
       generatePreview(images);
     }
-  }, [shouldGeneratePreview, post.body, post.title, generatePreview, isOpen]);  // Debug effect to monitor carouselImages state changes
+  }, [shouldGeneratePreview, post.body, post.title, generatePreview, isOpen]); // Debug effect to monitor carouselImages state changes
   useEffect(() => {
     console.log("📊 carouselImages state changed:", {
       length: carouselImages?.length || 0,

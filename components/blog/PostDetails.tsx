@@ -317,7 +317,7 @@ export default function PostDetails({
                   color="colorBackground"
                   isTruncated
                 >
-                  <Link href={`/user/${author}`} color="accent">
+                  <Link href={`/user/${author}`} color="primary">
                     {author}
                   </Link>
                 </Text>
