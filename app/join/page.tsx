@@ -11,12 +11,15 @@ import {
   VStack,
   Icon,
   Image,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription,
 } from "@chakra-ui/react";
 import { FaCheck, FaTimes, FaPiggyBank } from "react-icons/fa";
 import { MdPublic, MdOutlinePsychology } from "react-icons/md";
 import { validateAccountName, checkAccountExists } from "@/lib/invite/helpers";
 import { useTheme } from "@/app/themeProvider";
-import CommunityTotalPayout from "@/components/shared/CommunityTotalPayout";
 
 export default function JoinPage() {
   const [desiredUsername, setDesiredUsername] = useState("");
@@ -28,12 +31,14 @@ export default function JoinPage() {
   const [isCheckedOnce, setIsCheckedOnce] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const textColor = "text";
 
-  const handleCheck = async () => {
+  const handleCreateAccount = async () => {
     setError("");
-    setIsCheckedOnce(false);
+    setSuccess("");
     setAccountAvailable(null);
     setAccountInvalid(null);
 
@@ -45,21 +50,56 @@ export default function JoinPage() {
       setError("Please enter a username.");
       return;
     }
-    const isValidAccountName = validateAccountName(desiredUsername);
-    if (isValidAccountName !== null) {
-      setAccountInvalid(String(isValidAccountName));
-      setIsCheckedOnce(true);
-      setAccountAvailable(false);
-      return;
-    }
-    setAccountInvalid("");
+
     setLoading(true);
-    const isAvailable = await checkAccountExists(desiredUsername);
-    setIsCheckedOnce(true);
-    setAccountAvailable(isAvailable);
-    setLoading(false);
-    if (!isAvailable) {
-      setError("Account is not available. Please choose another username.");
+
+    try {
+      // First, validate the username format
+      const isValidAccountName = validateAccountName(desiredUsername);
+      if (isValidAccountName !== null) {
+        setAccountInvalid(String(isValidAccountName));
+        setAccountAvailable(false);
+        setLoading(false);
+        setError(`Invalid username: ${isValidAccountName}`);
+        return;
+      }
+
+      // Check if username is available
+      const isAvailable = await checkAccountExists(desiredUsername);
+      if (!isAvailable) {
+        setAccountAvailable(false);
+        setLoading(false);
+        setError("Username is not available. Please choose another username.");
+        return;
+      }
+
+      // Username is valid and available, submit the request
+      const response = await fetch('/api/join-requests-memory', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: desiredEmail,
+          username_1: desiredUsername,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setSuccess("Join request submitted successfully! We'll review it and get back to you soon. Please check your spam folder for account information.");
+        setAccountAvailable(true);
+        // Reset form
+        setDesiredUsername("");
+        setDesiredEmail("");
+      } else {
+        setError(data.error || 'Failed to submit join request');
+      }
+    } catch (error) {
+      setError('Network error. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -141,10 +181,29 @@ export default function JoinPage() {
               textAlign="center"
               textShadow="0 4px 24px rgba(0,0,0,0.95)"
             >
-              The decentralized skateboarding community. Connect, share, and
-              grow with skaters worldwide. Join us and claim your unique Hive
-              username!
+              Your Hive username is your blockchain wallet account! Choose carefully - 
+              this will be your permanent identity on the Hive network.
             </Text>
+            <Box mt={4} p={4} bg="rgba(0,0,0,0.3)" borderRadius="md">
+              <Text
+                fontSize="md"
+                color={textColor}
+                textAlign="left"
+                textShadow="0 4px 24px rgba(0,0,0,0.95)"
+                fontWeight="bold"
+                mb={2}
+              >
+                Hive Username Rules:
+              </Text>
+              <VStack align="start" spacing={1} fontSize="sm">
+                <Text>• 3-16 characters long</Text>
+                <Text>• Must start with a lowercase letter</Text>
+                <Text>• Can contain: a-z, 0-9, hyphens (-), periods (.)</Text>
+                <Text>• Must end with a letter or number</Text>
+                <Text>• No consecutive dots or hyphens</Text>
+                <Text>• Each segment (if using periods) must be 3+ characters</Text>
+              </VStack>
+            </Box>
           </Box>
         </Box>
         {/* Form Card */}
@@ -186,6 +245,7 @@ export default function JoinPage() {
                   placeholder="Desired Hive Username"
                   value={desiredUsername}
                   onChange={(e) => setDesiredUsername(e.target.value)}
+                  maxLength={16}
                   maxW="375px"
                   bg="background"
                   color="text"
@@ -215,62 +275,47 @@ export default function JoinPage() {
               </FormControl>
               <Button
                 colorScheme="primary"
-                onClick={handleCheck}
+                onClick={handleCreateAccount}
                 isLoading={loading}
                 isDisabled={!desiredUsername || !desiredEmail}
                 w="full"
                 fontWeight="bold"
+                fontSize={{ base: "sm", md: "md" }}
+                px={2}
+                whiteSpace="normal"
+                h="auto"
+                py={3}
+                lineHeight="1.2"
               >
-                Check if @{desiredUsername || "..."} is available!
+                {desiredUsername ? (
+                  <>
+                    Create Account<br />
+                    @{desiredUsername}
+                  </>
+                ) : (
+                  "Create Account"
+                )}
               </Button>
-              {isCheckedOnce && (
-                <Flex
-                  border="2px solid"
-                  borderColor="primary"
-                  borderRadius="5px"
-                  bg="background"
-                  p="10px"
-                  align="center"
-                  mb={2}
-                >
-                  {accountAvailable ? (
-                    <Icon as={FaCheck} color="success" />
-                  ) : (
-                    <Icon as={FaTimes} color="error" />
-                  )}
-                  <Text
-                    color={textColor}
-                    ml={2}
-                    textShadow="0 4px 24px rgba(0,0,0,0.95)"
-                  >
-                    {accountAvailable
-                      ? "Username is available!"
-                      : "Please choose another username! " +
-                        String(accountInvalid).replace(/'/g, "&apos;")}
-                  </Text>
-                </Flex>
-              )}
-              {accountAvailable && isCheckedOnce && (
-                <Button colorScheme="success" w="full" mt={2} fontWeight="bold">
-                  Submit
-                </Button>
+              {success && (
+                <Alert status="success" borderRadius="md">
+                  <AlertIcon />
+                  <Box>
+                    <AlertTitle>Success!</AlertTitle>
+                    <AlertDescription>{success}</AlertDescription>
+                  </Box>
+                </Alert>
               )}
               {error && (
-                <Text
-                  color={textColor}
-                  fontSize="sm"
-                  textAlign="center"
-                  textShadow="0 4px 24px rgba(0,0,0,0.95)"
-                >
-                  {error}
-                </Text>
+                <Alert status="error" borderRadius="md">
+                  <AlertIcon />
+                  <Box>
+                    <AlertTitle>Error!</AlertTitle>
+                    <AlertDescription>{error}</AlertDescription>
+                  </Box>
+                </Alert>
               )}
             </VStack>
           </Box>
-        </Box>
-        {/* Community Payout Banner */}
-        <Box mt={8} w="full">
-          <CommunityTotalPayout />
         </Box>
         {/* Features Section */}
         <Box mt={10} w="full" maxW="3xl">

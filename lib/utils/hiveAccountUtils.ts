@@ -60,7 +60,7 @@ export function validateHiveUsernameFormat(username: string): {
 
   const trimmed = username.trim().toLowerCase();
 
-  // Length validation
+  // Length validation (3-16 characters)
   if (trimmed.length < 3) {
     return { isValid: false, error: 'Username must be at least 3 characters' };
   }
@@ -68,17 +68,35 @@ export function validateHiveUsernameFormat(username: string): {
     return { isValid: false, error: 'Username must be at most 16 characters' };
   }
 
-  // Character validation
-  if (!/^[a-z][a-z0-9.-]*[a-z0-9]$/.test(trimmed)) {
+  // Start/End validation: must start with lowercase letter, end with letter or digit
+  if (!/^[a-z]/.test(trimmed)) {
+    return { isValid: false, error: 'Username must start with a lowercase letter' };
+  }
+  if (!/[a-z0-9]$/.test(trimmed)) {
+    return { isValid: false, error: 'Username must end with a lowercase letter or digit' };
+  }
+
+  // Allowed characters: only lowercase letters, digits, hyphens, and periods
+  if (!/^[a-z0-9.-]+$/.test(trimmed)) {
     return { 
       isValid: false, 
-      error: 'Username must start with a letter, end with a letter or number, and contain only lowercase letters, numbers, dots, and hyphens' 
+      error: 'Username can only contain lowercase letters, digits, hyphens (-), and periods (.)' 
     };
   }
 
-  // No consecutive dots or hyphens
+  // Hyphens and periods adjacency: cannot be adjacent to each other or to themselves
   if (/[.-]{2,}/.test(trimmed)) {
-    return { isValid: false, error: 'Username cannot have consecutive dots or hyphens' };
+    return { isValid: false, error: 'Hyphens and periods cannot be adjacent to each other or to themselves' };
+  }
+
+  // Segments validation: if username includes periods, each dot-separated segment must be at least 3 characters long
+  if (trimmed.includes('.')) {
+    const segments = trimmed.split('.');
+    for (const segment of segments) {
+      if (segment.length < 3) {
+        return { isValid: false, error: 'Each segment separated by periods must be at least 3 characters long' };
+      }
+    }
   }
 
   return { isValid: true, error: null };
