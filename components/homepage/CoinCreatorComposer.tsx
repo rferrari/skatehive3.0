@@ -10,13 +10,12 @@ import {
   Text,
   Input,
   FormControl,
-  FormLabel,
   IconButton,
   Progress,
   Image,
   Spinner,
 } from "@chakra-ui/react";
-import { FaImage, FaCoins, FaEthereum, FaVideo } from "react-icons/fa";
+import { FaEthereum } from "react-icons/fa";
 import { useAccount } from "wagmi";
 import { useCoinCreation } from "@/hooks/useCoinCreation";
 import { createSnapAsSkatedev } from "@/lib/hive/server-actions";
@@ -114,8 +113,7 @@ export default function CoinCreatorComposer({
         ffmpegRef.current = new FFmpeg();
 
         // Set up logging for FFmpeg
-        ffmpegRef.current.on("log", ({ message }) => {
-        });
+        ffmpegRef.current.on("log", ({ message }) => {});
         await ffmpegRef.current.load();
       }
 
@@ -168,8 +166,13 @@ export default function CoinCreatorComposer({
         throw new Error("Generated thumbnail data is empty");
       }
 
-      // Create blob from the data
-      const thumbnailBlob = new Blob([thumbnailData], { type: "image/jpeg" });
+      // Create blob from the data - ensure we have proper ArrayBuffer type
+      const uint8Array = thumbnailData as Uint8Array;
+      const arrayBuffer = uint8Array.buffer.slice(
+        uint8Array.byteOffset,
+        uint8Array.byteOffset + uint8Array.byteLength
+      ) as ArrayBuffer;
+      const thumbnailBlob = new Blob([arrayBuffer], { type: "image/jpeg" });
 
       // Create a File object from the blob
       const thumbnailFile = new File([thumbnailBlob], "video-thumbnail.jpg", {

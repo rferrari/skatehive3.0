@@ -21,6 +21,7 @@ import {
   IconButton,
   HStack,
   Textarea,
+  Tooltip,
 } from "@chakra-ui/react";
 import React, {
   useState,
@@ -43,6 +44,8 @@ import ThumbnailPicker from "@/components/compose/ThumbnailPicker";
 import { DEFAULT_VOTE_WEIGHT } from "@/lib/utils/constants";
 import useVoteWeight from "@/hooks/useVoteWeight";
 import UpvoteStoke from "@/components/graphics/UpvoteStoke";
+import { MarkdownCoinModal } from "@/components/shared/MarkdownCoinModal";
+import { canCreateCoin, analyzeContent } from "@/lib/utils/markdownCoinUtils";
 
 interface PostDetailsProps {
   post: Discussion;
@@ -71,27 +74,51 @@ export default function PostDetails({
   const toast = useToast();
 
   // UpvoteStoke state management
-  const [stokeInstances, setStokeInstances] = useState<Array<{
-    id: number;
-    value: number;
-    isVisible: boolean;
-  }>>([]);
-  
+  const [stokeInstances, setStokeInstances] = useState<
+    Array<{
+      id: number;
+      value: number;
+      isVisible: boolean;
+    }>
+  >([]);
+
   // Track previous payout value to detect changes
   const prevPayoutValueRef = useRef(payoutValue);
+
+  // Markdown coin modal state
+  const [isMarkdownCoinModalOpen, setIsMarkdownCoinModalOpen] = useState(false);
+
+  // Check if this post is eligible for coin creation
+  const coinEligibility = useMemo(() => {
+    const result = canCreateCoin(post, user);
+    console.log("🎯 PostDetails coinEligibility:", {
+      user,
+      postAuthor: post.author,
+      result,
+    });
+    return result;
+  }, [post, user]);
+
+  const contentAnalysis = useMemo(() => {
+    const result = analyzeContent(post.body);
+    console.log("📝 PostDetails contentAnalysis:", result);
+    return result;
+  }, [post.body]);
 
   // Helper function to trigger UpvoteStoke animation
   const triggerUpvoteStoke = useCallback((estimatedValue: number) => {
     const newInstance = {
       id: Date.now(),
       value: estimatedValue,
-      isVisible: true
+      isVisible: true,
     };
-    setStokeInstances(prev => [...prev, newInstance]);
-    
+    setStokeInstances((prev) => [...prev, newInstance]);
+
     // Remove the instance after animation completes
     setTimeout(() => {
-      setStokeInstances(prev => prev.filter(instance => instance.id !== newInstance.id));
+      setStokeInstances((prev) =>
+        prev.filter((instance) => instance.id !== newInstance.id)
+      );
     }, 4000); // Total animation duration from UpvoteStoke.tsx
   }, []);
 
@@ -99,13 +126,13 @@ export default function PostDetails({
   useEffect(() => {
     const currentPayout = payoutValue;
     const previousPayout = prevPayoutValueRef.current;
-    
+
     // Only trigger if the value increased (not on very first render)
     if (currentPayout > previousPayout) {
       const increase = currentPayout - previousPayout;
       triggerUpvoteStoke(increase);
     }
-    
+
     // Update the ref with current value
     prevPayoutValueRef.current = currentPayout;
   }, [payoutValue, triggerUpvoteStoke]);
@@ -318,11 +345,11 @@ export default function PostDetails({
                       </Text>
                     </span>
                     {/* UpvoteStoke animations for mobile */}
-                    {stokeInstances.map(instance => (
-                      <UpvoteStoke 
+                    {stokeInstances.map((instance) => (
+                      <UpvoteStoke
                         key={instance.id}
-                        estimatedValue={instance.value} 
-                        isVisible={instance.isVisible} 
+                        estimatedValue={instance.value}
+                        isVisible={instance.isVisible}
                       />
                     ))}
                   </Box>
@@ -390,6 +417,41 @@ export default function PostDetails({
                   h="auto"
                   p={1}
                 />
+              )}
+              {coinEligibility.canCreate && contentAnalysis.isLongform && (
+                <>
+                  {console.log("🔘 ZORA Button conditions:", {
+                    canCreate: coinEligibility.canCreate,
+                    isLongform: contentAnalysis.isLongform,
+                    shouldShow:
+                      coinEligibility.canCreate && contentAnalysis.isLongform,
+                  })}
+                  <Tooltip
+                    label={`Create Zora coin from this ${contentAnalysis.wordCount} word post`}
+                    placement="top"
+                  >
+                    <IconButton
+                      aria-label="Create Zora coin"
+                      icon={
+                        <Text fontSize="10px" fontWeight="bold">
+                          ZORA
+                        </Text>
+                      }
+                      size="sm"
+                      variant="ghost"
+                      color="primary"
+                      onClick={() => setIsMarkdownCoinModalOpen(true)}
+                      _hover={{ bg: "transparent", color: "accent" }}
+                      fontSize="10px"
+                      minW="auto"
+                      h="auto"
+                      p={1}
+                      borderRadius="2px"
+                      border="1px solid"
+                      borderColor="primary"
+                    />
+                  </Tooltip>
+                </>
               )}
               {voted ? (
                 <Icon
@@ -496,16 +558,21 @@ export default function PostDetails({
                     onMouseDown={openPayout}
                     onMouseUp={closePayout}
                   >
-                    <Text fontWeight="bold" color="primary" fontSize="xs" mt={1}>
+                    <Text
+                      fontWeight="bold"
+                      color="primary"
+                      fontSize="xs"
+                      mt={1}
+                    >
                       ${payoutValue.toFixed(2)}
                     </Text>
                   </span>
                   {/* UpvoteStoke animations for desktop */}
-                  {stokeInstances.map(instance => (
-                    <UpvoteStoke 
+                  {stokeInstances.map((instance) => (
+                    <UpvoteStoke
                       key={instance.id}
-                      estimatedValue={instance.value} 
-                      isVisible={instance.isVisible} 
+                      estimatedValue={instance.value}
+                      isVisible={instance.isVisible}
                     />
                   ))}
                 </Box>
@@ -571,6 +638,41 @@ export default function PostDetails({
                 h="auto"
                 p={1}
               />
+            )}
+            {coinEligibility.canCreate && contentAnalysis.isLongform && (
+              <>
+                {console.log("🔘 ZORA Button conditions (desktop):", {
+                  canCreate: coinEligibility.canCreate,
+                  isLongform: contentAnalysis.isLongform,
+                  shouldShow:
+                    coinEligibility.canCreate && contentAnalysis.isLongform,
+                })}
+                <Tooltip
+                  label={`Create Zora coin from this ${contentAnalysis.wordCount} word post`}
+                  placement="top"
+                >
+                  <IconButton
+                    aria-label="Create Zora coin"
+                    icon={
+                      <Text fontSize="9px" fontWeight="bold">
+                        ZORA
+                      </Text>
+                    }
+                    size="sm"
+                    variant="ghost"
+                    color="primary"
+                    onClick={() => setIsMarkdownCoinModalOpen(true)}
+                    _hover={{ bg: "transparent", color: "accent" }}
+                    fontSize="9px"
+                    minW="auto"
+                    h="auto"
+                    p={1}
+                    borderRadius="2px"
+                    border="1px solid"
+                    borderColor="primary"
+                  />
+                </Tooltip>
+              </>
             )}
             <IconButton
               aria-label={voted ? "Unvote" : "Vote"}
@@ -784,6 +886,12 @@ export default function PostDetails({
         )}
       </Box>
 
+      {/* Markdown Coin Modal */}
+      <MarkdownCoinModal
+        isOpen={isMarkdownCoinModalOpen}
+        onClose={() => setIsMarkdownCoinModalOpen(false)}
+        post={post}
+      />
     </Box>
   );
 }
