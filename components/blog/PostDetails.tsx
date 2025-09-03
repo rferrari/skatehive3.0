@@ -44,8 +44,9 @@ import ThumbnailPicker from "@/components/compose/ThumbnailPicker";
 import { DEFAULT_VOTE_WEIGHT } from "@/lib/utils/constants";
 import useVoteWeight from "@/hooks/useVoteWeight";
 import UpvoteStoke from "@/components/graphics/UpvoteStoke";
-import { MarkdownCoinModal } from "@/components/shared/MarkdownCoinModal";
+import { MarkdownCoinModal } from "@/components/zora/MarkdownCoinModal/MarkdownCoinModal";
 import { canCreateCoin, analyzeContent } from "@/lib/utils/markdownCoinUtils";
+import { ZoraButton } from "./ZoraButton";
 
 interface PostDetailsProps {
   post: Discussion;
@@ -90,19 +91,11 @@ export default function PostDetails({
 
   // Check if this post is eligible for coin creation
   const coinEligibility = useMemo(() => {
-    const result = canCreateCoin(post, user);
-    console.log("🎯 PostDetails coinEligibility:", {
-      user,
-      postAuthor: post.author,
-      result,
-    });
-    return result;
+    return canCreateCoin(post, user);
   }, [post, user]);
 
   const contentAnalysis = useMemo(() => {
-    const result = analyzeContent(post.body);
-    console.log("📝 PostDetails contentAnalysis:", result);
-    return result;
+    return analyzeContent(post.body);
   }, [post.body]);
 
   // Helper function to trigger UpvoteStoke animation
@@ -120,6 +113,16 @@ export default function PostDetails({
         prev.filter((instance) => instance.id !== newInstance.id)
       );
     }, 4000); // Total animation duration from UpvoteStoke.tsx
+  }, []);
+
+  // Memoized callback for opening markdown coin modal
+  const handleOpenMarkdownCoinModal = useCallback(() => {
+    setIsMarkdownCoinModalOpen(true);
+  }, []);
+
+  // Memoized callback for closing markdown coin modal
+  const handleCloseMarkdownCoinModal = useCallback(() => {
+    setIsMarkdownCoinModalOpen(false);
   }, []);
 
   // Watch for payoutValue changes and trigger animation
@@ -419,39 +422,12 @@ export default function PostDetails({
                 />
               )}
               {coinEligibility.canCreate && contentAnalysis.isLongform && (
-                <>
-                  {console.log("🔘 ZORA Button conditions:", {
-                    canCreate: coinEligibility.canCreate,
-                    isLongform: contentAnalysis.isLongform,
-                    shouldShow:
-                      coinEligibility.canCreate && contentAnalysis.isLongform,
-                  })}
-                  <Tooltip
-                    label={`Create Zora coin from this ${contentAnalysis.wordCount} word post`}
-                    placement="top"
-                  >
-                    <IconButton
-                      aria-label="Create Zora coin"
-                      icon={
-                        <Text fontSize="10px" fontWeight="bold">
-                          ZORA
-                        </Text>
-                      }
-                      size="sm"
-                      variant="ghost"
-                      color="primary"
-                      onClick={() => setIsMarkdownCoinModalOpen(true)}
-                      _hover={{ bg: "transparent", color: "accent" }}
-                      fontSize="10px"
-                      minW="auto"
-                      h="auto"
-                      p={1}
-                      borderRadius="2px"
-                      border="1px solid"
-                      borderColor="primary"
-                    />
-                  </Tooltip>
-                </>
+                <ZoraButton
+                  wordCount={contentAnalysis.wordCount}
+                  onClick={handleOpenMarkdownCoinModal}
+                  fontSize="10px"
+                  tooltipPlacement="top"
+                />
               )}
               {voted ? (
                 <Icon
@@ -640,39 +616,12 @@ export default function PostDetails({
               />
             )}
             {coinEligibility.canCreate && contentAnalysis.isLongform && (
-              <>
-                {console.log("🔘 ZORA Button conditions (desktop):", {
-                  canCreate: coinEligibility.canCreate,
-                  isLongform: contentAnalysis.isLongform,
-                  shouldShow:
-                    coinEligibility.canCreate && contentAnalysis.isLongform,
-                })}
-                <Tooltip
-                  label={`Create Zora coin from this ${contentAnalysis.wordCount} word post`}
-                  placement="top"
-                >
-                  <IconButton
-                    aria-label="Create Zora coin"
-                    icon={
-                      <Text fontSize="9px" fontWeight="bold">
-                        ZORA
-                      </Text>
-                    }
-                    size="sm"
-                    variant="ghost"
-                    color="primary"
-                    onClick={() => setIsMarkdownCoinModalOpen(true)}
-                    _hover={{ bg: "transparent", color: "accent" }}
-                    fontSize="9px"
-                    minW="auto"
-                    h="auto"
-                    p={1}
-                    borderRadius="2px"
-                    border="1px solid"
-                    borderColor="primary"
-                  />
-                </Tooltip>
-              </>
+              <ZoraButton
+                wordCount={contentAnalysis.wordCount}
+                onClick={handleOpenMarkdownCoinModal}
+                fontSize="9px"
+                tooltipPlacement="top"
+              />
             )}
             <IconButton
               aria-label={voted ? "Unvote" : "Vote"}
@@ -886,12 +835,14 @@ export default function PostDetails({
         )}
       </Box>
 
-      {/* Markdown Coin Modal */}
-      <MarkdownCoinModal
-        isOpen={isMarkdownCoinModalOpen}
-        onClose={() => setIsMarkdownCoinModalOpen(false)}
-        post={post}
-      />
+      {/* Markdown Coin Modal - Only render when needed */}
+      {isMarkdownCoinModalOpen && (
+        <MarkdownCoinModal
+          isOpen={isMarkdownCoinModalOpen}
+          onClose={handleCloseMarkdownCoinModal}
+          post={post}
+        />
+      )}
     </Box>
   );
 }

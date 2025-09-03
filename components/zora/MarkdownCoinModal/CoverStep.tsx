@@ -82,9 +82,6 @@ export function CoverStep({
                 maxW="250px"
                 maxH="375px"
                 borderRadius="md"
-                border="3px solid"
-                borderColor="accent"
-                boxShadow="0 0 30px rgba(0, 255, 136, 0.4)"
               />
               <Badge
                 position="absolute"
@@ -109,14 +106,17 @@ export function CoverStep({
           </VStack>
         )}
       </Box>
-      <Button
-        size="sm"
-        variant="ghost"
-        color="primary"
-        onClick={onRegeneratePreview}
-      >
-        🔄 Regenerate Card
-      </Button>
+      {/* Only show regenerate button when preview is successfully loaded */}
+      {previewImageUrl && !isGeneratingPreview && (
+        <Button
+          size="sm"
+          variant="ghost"
+          color="primary"
+          onClick={onRegeneratePreview}
+        >
+          🔄 Regenerate Card
+        </Button>
+      )}
       {/* Navigation */}
       <HStack justify="space-between" pt={4}>
         <Box />

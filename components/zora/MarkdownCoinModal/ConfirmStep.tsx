@@ -4,15 +4,10 @@ import {
   Text,
   VStack,
   HStack,
-  Image,
   Button,
   Badge,
   Alert,
   AlertIcon,
-  Stat,
-  StatLabel,
-  StatNumber,
-  StatHelpText,
   Input,
   Textarea,
   FormControl,
@@ -22,13 +17,7 @@ import {
 } from "@chakra-ui/react";
 import { CheckIcon } from "@chakra-ui/icons";
 
-interface CarouselImage {
-  uri: string;
-  mime: string;
-  type: string;
-  isIncluded: boolean;
-  isGenerated?: boolean;
-}
+import { CarouselImage } from "./CarouselStep";
 
 interface ConfirmStepProps {
   cardPreview: string;
@@ -101,10 +90,10 @@ export function ConfirmStep({
 
       await onCreate(
         {
-          name: coinName,
-          description: coinDescription,
+          name: coinName.trim(),
+          description: coinDescription.trim(),
         },
-        carouselImages
+        includedImages
       );
     } catch (error) {
       console.error("❌ CONFIRM STEP: Failed to create coin:", error);
@@ -132,29 +121,6 @@ export function ConfirmStep({
         </HStack>
       </Box>
 
-      {/* Card Preview */}
-
-      <Box
-        display="flex"
-        justifyContent="center"
-        p={4}
-        bg="muted"
-        borderRadius="md"
-        border="1px solid"
-        borderColor="primary"
-      >
-        <Image
-          src={cardPreview}
-          alt="Coin Card Preview"
-          maxW="300px"
-          maxH="400px"
-          objectFit="contain"
-          borderRadius="md"
-          border="2px solid"
-          borderColor="accent"
-        />
-      </Box>
-
       {/* Coin Configuration */}
       <Box
         p={4}
@@ -163,10 +129,6 @@ export function ConfirmStep({
         border="1px solid"
         borderColor="primary"
       >
-        <Text fontSize="md" fontWeight="bold" color="colorBackground" mb={4}>
-          Coin Configuration:
-        </Text>
-
         <VStack spacing={4} align="stretch">
           {/* Coin Name */}
           <FormControl>
@@ -206,7 +168,7 @@ export function ConfirmStep({
               border="1px solid"
               borderColor="primary"
               color="colorBackground"
-              minHeight="100px"
+              minHeight="300px"
               resize="vertical"
               _focus={{
                 borderColor: "accent",
@@ -218,57 +180,6 @@ export function ConfirmStep({
             </FormHelperText>
           </FormControl>
         </VStack>
-      </Box>
-
-      {/* Summary Stats */}
-      <Box
-        p={4}
-        bg="blue.900"
-        borderRadius="md"
-        border="1px solid"
-        borderColor="blue.500"
-      >
-        <Text fontSize="md" fontWeight="bold" color="blue.200" mb={3}>
-          Creation Summary:
-        </Text>
-
-        <HStack spacing={6} justify="space-around">
-          <Stat>
-            <StatLabel fontSize="xs" color="blue.300">
-              Images
-            </StatLabel>
-            <StatNumber fontSize="lg" color="blue.100">
-              {includedImages.length}
-            </StatNumber>
-            <StatHelpText fontSize="xs" color="blue.400">
-              in carousel
-            </StatHelpText>
-          </Stat>
-
-          <Stat>
-            <StatLabel fontSize="xs" color="blue.300">
-              Supply
-            </StatLabel>
-            <StatNumber fontSize="lg" color="blue.100">
-              Unlimited
-            </StatNumber>
-            <StatHelpText fontSize="xs" color="blue.400">
-              managed by Zora
-            </StatHelpText>
-          </Stat>
-
-          <Stat>
-            <StatLabel fontSize="xs" color="blue.300">
-              Network
-            </StatLabel>
-            <StatNumber fontSize="lg" color="blue.100">
-              Base
-            </StatNumber>
-            <StatHelpText fontSize="xs" color="blue.400">
-              blockchain
-            </StatHelpText>
-          </Stat>
-        </HStack>
       </Box>
 
       {/* Important Notice */}

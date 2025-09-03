@@ -18,17 +18,25 @@ import {
   DeleteIcon,
 } from "@chakra-ui/icons";
 
-interface CarouselImage {
+export interface CarouselImage {
   uri: string;
   mime: string;
-  type: string;
+  type?: string;
   isIncluded: boolean;
   isGenerated?: boolean;
 }
 
+interface CarouselPreviewItem {
+  uri: string;
+  mime: string;
+  type?: string;
+  isIncluded?: boolean;
+  isGenerated?: boolean;
+}
+
 interface CarouselStepProps {
-  carouselPreview: any[];
-  carouselImages: CarouselImage[];
+  carouselPreview?: CarouselPreviewItem[];
+  carouselImages?: CarouselImage[];
   onBack: () => void;
   onNext: () => void;
   onImagesChange: (images: CarouselImage[]) => void;
@@ -79,6 +87,12 @@ export function CarouselStep({
     }
   }, [initialCarouselImages, onImagesChange]);
 
+  // Keep index within bounds whenever the list length changes
+  useEffect(() => {
+    setCurrentIndex((idx) =>
+      Math.max(0, Math.min(idx, carouselImages.length - 1))
+    );
+  }, [carouselImages.length]);
   const handleToggleImage = (index: number) => {
     if (index === 0) return; // Can't exclude the generated card
 
@@ -113,13 +127,10 @@ export function CarouselStep({
   }
 
   const navigateCarousel = (direction: "prev" | "next") => {
-    if (direction === "prev" && currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
-    } else if (
-      direction === "next" &&
-      currentIndex < carouselImages.length - 1
-    ) {
-      setCurrentIndex(currentIndex + 1);
+    if (direction === "prev") {
+      setCurrentIndex((prev) => Math.max(0, prev - 1));
+    } else if (direction === "next") {
+      setCurrentIndex((prev) => Math.min(carouselImages.length - 1, prev + 1));
     }
   };
 

@@ -19,9 +19,9 @@ import {
 } from "@chakra-ui/react";
 import { Discussion } from "@hiveio/dhive";
 import { useMarkdownCoin } from "@/hooks/useMarkdownCoin";
-import { CoverStep } from "./MarkdownCoinModal/CoverStep";
-import { CarouselStep } from "./MarkdownCoinModal/CarouselStep";
-import { ConfirmStep } from "./MarkdownCoinModal/ConfirmStep";
+import { CoverStep } from "./CoverStep";
+import { CarouselStep, CarouselImage } from "./CarouselStep";
+import { ConfirmStep } from "./ConfirmStep";
 
 interface MarkdownCoinModalProps {
   isOpen: boolean;
@@ -30,14 +30,6 @@ interface MarkdownCoinModalProps {
 }
 
 type Step = "cover" | "carousel" | "confirm" | "success";
-
-interface CarouselImage {
-  uri: string;
-  mime: string;
-  type: string;
-  isIncluded: boolean;
-  isGenerated?: boolean;
-}
 
 // Helper function to extract thumbnail from post
 const extractThumbnailFromPost = (post: Discussion): string | null => {
@@ -74,25 +66,22 @@ const extractThumbnailFromPost = (post: Discussion): string | null => {
   }
 };
 
-// Clean content for card display (remove all HTML/markdown, plain text only)
+// Clean HTML and markdown syntax for card display (plain text only)
 const cleanContentForCard = (content: string): string => {
-  let cleaned = content;
-
   // Remove HTML tags
-  cleaned = cleaned.replace(/<[^>]*>/g, " ");
+  let cleaned = content.replace(/<[^>]*>/g, " ");
 
   // Remove markdown syntax
-  cleaned = cleaned.replace(/!\[.*?\]\([^)]+\)/g, ""); // Images
-  cleaned = cleaned.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1"); // Links -> text only
+  cleaned = cleaned.replace(/!\[.*?\]\([^)]*\)/g, ""); // Images
+  cleaned = cleaned.replace(/\[([^\]]*)\]\([^)]*\)/g, "$1"); // Links
+  cleaned = cleaned.replace(/\*\*([^*]*)\*\*/g, "$1"); // Bold
+  cleaned = cleaned.replace(/\*([^*]*)\*/g, "$1"); // Italic
   cleaned = cleaned.replace(/#{1,6}\s*/g, ""); // Headers
-  cleaned = cleaned.replace(/\*\*(.*?)\*\*/g, "$1"); // Bold
-  cleaned = cleaned.replace(/\*(.*?)\*/g, "$1"); // Italic
-  cleaned = cleaned.replace(/`([^`]+)`/g, "$1"); // Code
+  cleaned = cleaned.replace(/`([^`]*)`/g, "$1"); // Inline code
   cleaned = cleaned.replace(/```[\s\S]*?```/g, ""); // Code blocks
-  cleaned = cleaned.replace(/^\s*[-*+]\s+/gm, ""); // Lists
-  cleaned = cleaned.replace(/^\s*\d+\.\s+/gm, ""); // Numbered lists
-  cleaned = cleaned.replace(/^\s*>\s+/gm, ""); // Blockquotes
-  cleaned = cleaned.replace(/---+/g, ""); // Horizontal rules
+  cleaned = cleaned.replace(/>\s*/g, ""); // Blockquotes
+  cleaned = cleaned.replace(/[-*+]\s+/g, ""); // List markers
+  cleaned = cleaned.replace(/\d+\.\s+/g, ""); // Numbered lists
 
   // Clean up extra whitespace
   cleaned = cleaned.replace(/\s+/g, " ").trim();
@@ -100,99 +89,153 @@ const cleanContentForCard = (content: string): string => {
   return cleaned;
 };
 
-// Get video thumbnail from OpenGraph/oEmbed (placeholder function)
-const getVideoThumbnail = async (videoUrl: string): Promise<string | null> => {
-  try {
-    // For YouTube videos
-    if (videoUrl.includes("youtube.com") || videoUrl.includes("youtu.be")) {
-      const videoId = videoUrl.match(
-        /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/
-      )?.[1];
-      if (videoId) {
-        return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
-      }
-    }
-
-    // For Vimeo videos
-    if (videoUrl.includes("vimeo.com")) {
-      const videoId = videoUrl.match(/vimeo\.com\/(\d+)/)?.[1];
-      if (videoId) {
-        // Note: In production, you'd need to call Vimeo API for thumbnail
-        return `https://vumbnail.com/${videoId}.jpg`;
-      }
-    }
-
-    // For other videos, try to extract a generic thumbnail or return null
-    return null;
-  } catch (error) {
-    console.warn("Failed to get video thumbnail:", error);
-    return null;
-  }
-};
-
 // Convert HTML content to clean markdown for description
-const convertToMarkdownDescription = async (
-  content: string
-): Promise<string> => {
+const convertToMarkdown = (content: string): string => {
   let markdown = content;
 
-  // Convert iframe videos to markdown image buttons
-  const iframeRegex = /<iframe[^>]+src=["']([^"']+)["'][^>]*><\/iframe>/gi;
-  const iframes = [...markdown.matchAll(iframeRegex)];
+  // Convert iframe videos to image buttons with thumbnails
+  markdown = markdown.replace(
+    /<iframe[^>]*src=["']([^"']*)["'][^>]*><\/iframe>/gi,
+    (match, srcAttribute) => {
+      try {
+        // Parse the URL safely to validate it
+        const url = new URL(srcAttribute);
 
-  for (const iframe of iframes) {
-    const [fullMatch, src] = iframe;
-    const thumbnail = await getVideoThumbnail(src);
+        // Whitelist allowed hosts
+        const allowedHosts = [
+          "www.youtube.com",
+          "youtube.com",
+          "youtu.be",
+          "vimeo.com",
+          "player.vimeo.com",
+        ];
 
-    if (thumbnail) {
-      // Create a markdown image button that links to the video
-      const videoButton = `[![Video Thumbnail](${thumbnail})](${src})`;
-      markdown = markdown.replace(fullMatch, videoButton);
-    } else {
-      // Fallback: convert to simple link
-      markdown = markdown.replace(fullMatch, `[🎥 Watch Video](${src})`);
+        if (!allowedHosts.includes(url.hostname)) {
+          return ""; // Return empty string for non-whitelisted hosts
+        }
+
+        // Validate and extract video IDs based on platform
+        let videoId = "";
+        let thumbnailUrl = "";
+        let videoUrl = "";
+
+        if (
+          url.hostname.includes("youtube.com") &&
+          url.pathname.startsWith("/embed/")
+        ) {
+          // YouTube embed: /embed/VIDEO_ID
+          const pathParts = url.pathname.split("/");
+          if (pathParts.length >= 3) {
+            videoId = pathParts[2];
+          }
+        } else if (url.hostname === "youtu.be") {
+          // YouTube short: youtu.be/VIDEO_ID
+          videoId = url.pathname.slice(1); // Remove leading slash
+        } else if (url.hostname.includes("vimeo.com")) {
+          // Vimeo: player.vimeo.com/video/VIDEO_ID or vimeo.com/VIDEO_ID
+          const pathParts = url.pathname.split("/");
+          if (pathParts.length >= 2) {
+            videoId = pathParts[pathParts.length - 1]; // Get last part
+          }
+        }
+
+        // Validate video ID with strict pattern (alphanumeric, dashes, underscores only)
+        const validIdPattern = /^[a-zA-Z0-9_-]+$/;
+        if (!videoId || !validIdPattern.test(videoId) || videoId.length > 50) {
+          return ""; // Return empty string for invalid IDs
+        }
+
+        // Additional security: check for dangerous characters
+        const dangerousPatterns = [
+          /</,
+          />/,
+          /javascript:/i,
+          /data:/i,
+          /vbscript:/i,
+          /"/,
+          /'/,
+          /&/,
+          /;/,
+          /\(/,
+          /\)/,
+        ];
+
+        if (dangerousPatterns.some((pattern) => pattern.test(videoId))) {
+          return ""; // Return empty string if dangerous patterns found
+        }
+
+        // Build safe URLs based on validated platform and ID
+        if (
+          url.hostname.includes("youtube.com") ||
+          url.hostname === "youtu.be"
+        ) {
+          thumbnailUrl = `https://img.youtube.com/vi/${encodeURIComponent(
+            videoId
+          )}/maxresdefault.jpg`;
+          videoUrl = `https://www.youtube.com/watch?v=${encodeURIComponent(
+            videoId
+          )}`;
+        } else if (url.hostname.includes("vimeo.com")) {
+          // For Vimeo, use generic thumbnail since API requires auth
+          thumbnailUrl = "https://i.vimeocdn.com/video/default_300x169.jpg";
+          videoUrl = `https://vimeo.com/${encodeURIComponent(videoId)}`;
+        }
+
+        // Only return markdown if we have valid URLs
+        if (thumbnailUrl && videoUrl) {
+          return `[![🎥 Watch Video](${thumbnailUrl})](${videoUrl})`;
+        } else {
+          return ""; // Return empty string if URLs couldn't be constructed
+        }
+      } catch (error) {
+        // If URL parsing fails, return empty string
+        console.warn("Failed to parse iframe src URL:", error);
+        return "";
+      }
     }
-  }
+  );
 
-  // Convert other HTML to markdown
-  markdown = markdown.replace(/<strong>(.*?)<\/strong>/gi, "**$1**"); // Bold
-  markdown = markdown.replace(/<b>(.*?)<\/b>/gi, "**$1**"); // Bold
-  markdown = markdown.replace(/<em>(.*?)<\/em>/gi, "*$1*"); // Italic
-  markdown = markdown.replace(/<i>(.*?)<\/i>/gi, "*$1*"); // Italic
-  markdown = markdown.replace(/<u>(.*?)<\/u>/gi, "*$1*"); // Underline -> italic
-  markdown = markdown.replace(/<code>(.*?)<\/code>/gi, "`$1`"); // Code
-  markdown = markdown.replace(/<pre>(.*?)<\/pre>/gi, "```\n$1\n```"); // Code blocks
+  // Convert other HTML elements to markdown
+  markdown = markdown.replace(/<strong>(.*?)<\/strong>/gi, "**$1**");
+  markdown = markdown.replace(/<b>(.*?)<\/b>/gi, "**$1**");
+  markdown = markdown.replace(/<em>(.*?)<\/em>/gi, "*$1*");
+  markdown = markdown.replace(/<i>(.*?)<\/i>/gi, "*$1*");
+  markdown = markdown.replace(/<code>(.*?)<\/code>/gi, "`$1`");
+  markdown = markdown.replace(
+    /<h([1-6])>(.*?)<\/h[1-6]>/gi,
+    (match, level, text) => {
+      return "#".repeat(parseInt(level)) + " " + text + "\n\n";
+    }
+  );
 
   // Convert links
   markdown = markdown.replace(
-    /<a[^>]+href=["']([^"']+)["'][^>]*>(.*?)<\/a>/gi,
+    /<a[^>]*href=["']([^"']*)["'][^>]*>(.*?)<\/a>/gi,
     "[$2]($1)"
   );
 
-  // Convert headers
-  markdown = markdown.replace(/<h1[^>]*>(.*?)<\/h1>/gi, "# $1");
-  markdown = markdown.replace(/<h2[^>]*>(.*?)<\/h2>/gi, "## $1");
-  markdown = markdown.replace(/<h3[^>]*>(.*?)<\/h3>/gi, "### $1");
-  markdown = markdown.replace(/<h4[^>]*>(.*?)<\/h4>/gi, "#### $1");
-  markdown = markdown.replace(/<h5[^>]*>(.*?)<\/h5>/gi, "##### $1");
-  markdown = markdown.replace(/<h6[^>]*>(.*?)<\/h6>/gi, "###### $1");
-
-  // Convert lists
-  markdown = markdown.replace(/<ul[^>]*>(.*?)<\/ul>/gis, "$1");
-  markdown = markdown.replace(/<ol[^>]*>(.*?)<\/ol>/gis, "$1");
-  markdown = markdown.replace(/<li[^>]*>(.*?)<\/li>/gi, "- $1");
-
-  // Convert line breaks
-  markdown = markdown.replace(/<br\s*\/?>/gi, "\n");
-  markdown = markdown.replace(/<p[^>]*>(.*?)<\/p>/gi, "$1\n\n");
+  // Convert images
+  markdown = markdown.replace(
+    /<img[^>]*src=["']([^"']*)["'][^>]*alt=["']([^"']*)["'][^>]*>/gi,
+    "![$2]($1)"
+  );
+  markdown = markdown.replace(
+    /<img[^>]*alt=["']([^"']*)["'][^>]*src=["']([^"']*)["'][^>]*>/gi,
+    "![$1]($2)"
+  );
+  markdown = markdown.replace(
+    /<img[^>]*src=["']([^"']*)["'][^>]*>/gi,
+    "![]($1)"
+  );
 
   // Remove remaining HTML tags
   markdown = markdown.replace(/<[^>]*>/g, "");
 
-  // Clean up extra whitespace and newlines
-  markdown = markdown.replace(/\n{3,}/g, "\n\n").trim();
+  // Clean up extra whitespace and line breaks
+  markdown = markdown.replace(/\n\s*\n\s*\n/g, "\n\n");
+  markdown = markdown.replace(/^\s+|\s+$/gm, "");
 
-  return markdown;
+  return markdown.trim();
 };
 
 // Generate coin card matching the reference design exactly
@@ -203,9 +246,6 @@ const generateMarkdownCoinCard = async (
   avatarUrl: string,
   thumbnailUrl?: string
 ): Promise<File> => {
-  // Clean content for card display (remove all HTML/markdown)
-  const cleanedContent = cleanContentForCard(content);
-
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
 
@@ -217,25 +257,10 @@ const generateMarkdownCoinCard = async (
     ctx.fillStyle = "#000000";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Outer lime green border with glow
-    ctx.strokeStyle = "#00ff88";
-    ctx.lineWidth = 4;
-    ctx.shadowColor = "#00ff88";
-    ctx.shadowBlur = 20;
-    ctx.strokeRect(8, 8, canvas.width - 16, canvas.height - 16);
-    ctx.shadowBlur = 0;
-
-    // Header section - dark background with lime border
+    // Header section - dark background
     const headerHeight = 50;
     ctx.fillStyle = "#0a0a0a";
     ctx.fillRect(16, 16, canvas.width - 32, headerHeight);
-
-    ctx.strokeStyle = "#00ff88";
-    ctx.lineWidth = 2;
-    ctx.shadowColor = "#00ff88";
-    ctx.shadowBlur = 10;
-    ctx.strokeRect(16, 16, canvas.width - 32, headerHeight);
-    ctx.shadowBlur = 0;
 
     // Load and draw circular avatar
     try {
@@ -264,22 +289,6 @@ const generateMarkdownCoinCard = async (
       ctx.clip();
       ctx.drawImage(avatarImg, avatarX, avatarY, avatarSize, avatarSize);
       ctx.restore();
-
-      // Lime green border around avatar
-      ctx.strokeStyle = "#00ff88";
-      ctx.lineWidth = 2;
-      ctx.shadowColor = "#00ff88";
-      ctx.shadowBlur = 5;
-      ctx.beginPath();
-      ctx.arc(
-        avatarX + avatarSize / 2,
-        avatarY + avatarSize / 2,
-        avatarSize / 2 + 1,
-        0,
-        2 * Math.PI
-      );
-      ctx.stroke();
-      ctx.shadowBlur = 0;
     } catch (error) {
       console.warn("Failed to load avatar image:", error);
     }
@@ -319,19 +328,6 @@ const generateMarkdownCoinCard = async (
         const thumbnailWidth = canvas.width - 32;
         const thumbnailX = 16;
         const thumbnailY = contentY;
-
-        // Lime green border around thumbnail
-        ctx.strokeStyle = "#00ff88";
-        ctx.lineWidth = 2;
-        ctx.shadowColor = "#00ff88";
-        ctx.shadowBlur = 10;
-        ctx.strokeRect(
-          thumbnailX - 2,
-          thumbnailY - 2,
-          thumbnailWidth + 4,
-          thumbnailHeight + 4
-        );
-        ctx.shadowBlur = 0;
 
         ctx.drawImage(
           thumbnailImg,
@@ -389,7 +385,7 @@ const generateMarkdownCoinCard = async (
     ctx.fillStyle = "#cccccc";
     ctx.font = "12px 'Arial', sans-serif";
 
-    const contentWords = cleanedContent.slice(0, 500).split(" ");
+    const contentWords = content.slice(0, 500).split(" ");
     let contentLine = "";
     let contentY_text = contentStartY;
     const contentLineHeight = 16;
@@ -429,14 +425,6 @@ const generateMarkdownCoinCard = async (
     ctx.fillText("🛹 SKATEHIVE CREW 🛹", canvas.width / 2, footerY);
     ctx.shadowBlur = 0;
     ctx.textAlign = "left";
-
-    // Bottom border glow
-    ctx.strokeStyle = "#00ff88";
-    ctx.lineWidth = 2;
-    ctx.shadowColor = "#00ff88";
-    ctx.shadowBlur = 20;
-    ctx.strokeRect(16, canvas.height - 25, canvas.width - 32, 2);
-    ctx.shadowBlur = 0;
   }
 
   return new Promise((resolve) => {
@@ -457,68 +445,17 @@ const generateMarkdownCoinCard = async (
 
 // Extract images from markdown content
 const extractMarkdownImages = (content: string): string[] => {
-  console.log(
-    "Extracting images from content:",
-    content.substring(0, 500) + "..."
-  );
-
-  // Multiple regex patterns to catch different image formats
-  const patterns = [
-    /!\[.*?\]\((https?:\/\/[^\s)]+)\)/g, // Standard markdown ![](url)
-    /!\[[^\]]*\]\(([^)]+)\)/g, // More permissive markdown
-    /<img[^>]+src=["']([^"']+)["'][^>]*>/gi, // HTML img tags
-    /https?:\/\/[^\s<>"{}|\\^`\[\]]*\.(jpg|jpeg|png|gif|webp|bmp)/gi, // Direct image URLs
-    // Hive-specific image patterns
-    /https?:\/\/images\.hive\.blog\/[^\s)]+\.(jpg|jpeg|png|gif|webp)/gi,
-    /https?:\/\/files\.peakd\.com\/[^\s)]+\.(jpg|jpeg|png|gif|webp)/gi,
-    /https?:\/\/cdn\.steemitimages\.com\/[^\s)]+\.(jpg|jpeg|png|gif|webp)/gi,
-    /https?:\/\/ipfs\.io\/ipfs\/[^\s)]+/gi,
-    /https?:\/\/gateway\.pinata\.cloud\/ipfs\/[^\s)]+/gi,
-  ];
-
+  const imageRegex = /!\[.*?\]\((https?:\/\/[^\s)]+)\)/g;
   const images: string[] = [];
+  let match;
 
-  patterns.forEach((pattern, index) => {
-    let match;
-    const regex = new RegExp(pattern.source, pattern.flags);
-    while ((match = regex.exec(content)) !== null) {
-      const imageUrl = match[1] || match[0]; // For direct URLs, use match[0]
-      console.log(`Pattern ${index + 1} found image:`, imageUrl);
-      if (imageUrl && !images.includes(imageUrl)) {
-        images.push(imageUrl);
-      }
-    }
-  });
+  while ((match = imageRegex.exec(content)) !== null) {
+    images.push(match[1]);
+  }
 
-  // Remove duplicates
-  const uniqueImages = [...new Set(images)];
-
-  // Filter for valid image URLs and exclude avatars
-  const validImages = uniqueImages.filter((img) => {
-    // More permissive image file check - include IPFS and other formats
-    const isImageFile =
-      img.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i) ||
-      img.includes("ipfs") ||
-      img.includes("images.hive.blog") ||
-      img.includes("files.peakd.com") ||
-      img.includes("steemitimages.com");
-
-    const isNotAvatar =
-      !img.includes("avatar") &&
-      !img.includes("/u/") &&
-      !img.toLowerCase().includes("profile");
-
-    const isValidUrl = img.startsWith("http");
-
-    console.log(
-      `Checking image: ${img} - isImageFile: ${!!isImageFile}, isNotAvatar: ${isNotAvatar}, isValidUrl: ${isValidUrl}`
-    );
-
-    return isImageFile && isNotAvatar && isValidUrl;
-  });
-
-  console.log("Final extracted images:", validImages);
-  return validImages;
+  return images.filter(
+    (img) => img.match(/\.(jpg|jpeg|png|gif|webp)$/i) && !img.includes("avatar") // Filter out avatar images
+  );
 };
 
 export function MarkdownCoinModal({
@@ -526,11 +463,6 @@ export function MarkdownCoinModal({
   onClose,
   post,
 }: MarkdownCoinModalProps) {
-  console.log("🔄 MarkdownCoinModal render:", {
-    isOpen,
-    postTitle: post?.title,
-  });
-
   const { createMarkdownCoin, isCreating } = useMarkdownCoin();
   const [currentStep, setCurrentStep] = useState<Step>("cover");
   const [cardPreview, setCardPreview] = useState<string | null>(null);
@@ -542,70 +474,50 @@ export function MarkdownCoinModal({
   const [result, setResult] = useState<any>(null);
   const toast = useToast();
 
-  // Reset state when modal opens/closes
+  // Extract images from markdown when modal opens
   useEffect(() => {
-    console.log("🔄 useEffect triggered:", {
-      isOpen,
-      cardPreview,
-      postTitle: post?.title,
-    });
     if (isOpen) {
-      console.log("📂 Modal opening, resetting state");
       setCurrentStep("cover");
       setResult(null);
-      if (!cardPreview && !isGeneratingPreview) {
-        console.log("🎨 No cardPreview and not generating, generating preview");
-        // Extract images and generate preview in one go
-        const images = extractMarkdownImages(post.body);
-        console.log("Modal opened, extracting images from post:", post.title);
-        console.log("Extracted markdown images:", images);
-        setMarkdownImages(images);
-
-        // Convert content to markdown for description
-        convertToMarkdownDescription(post.body).then((markdownDesc) => {
-          setMarkdownDescription(markdownDesc);
-        });
-
-        generatePreview(images);
-      }
+      // Always generate preview when modal opens to ensure carousel is populated
+      console.log("🔄 Modal opened, generating preview...");
+      generatePreview();
     } else {
       // Clean up blob URLs
       if (cardPreview) {
         URL.revokeObjectURL(cardPreview);
         setCardPreview(null);
       }
+      // Reset carousel images when modal closes
+      setCarouselImages([]);
+      setCarouselPreview([]);
+      setMarkdownImages([]);
     }
-  }, [isOpen]);
+  }, [isOpen, cardPreview]);
 
-  // Debug effect to monitor carouselImages state changes
+  // Extract images from markdown when modal opens
   useEffect(() => {
-    console.log("📊 carouselImages state changed:", {
-      length: carouselImages?.length || 0,
-      images:
-        carouselImages?.map((img) => ({
-          uri: img.uri,
-          isIncluded: img.isIncluded,
-        })) || [],
-    });
-  }, [carouselImages]);
-
-  const generatePreview = async (providedImages?: string[]) => {
-    console.log("🎯 generatePreview called with:", providedImages);
-
-    // Prevent multiple simultaneous calls
-    if (isGeneratingPreview) {
-      console.log("⚠️ generatePreview already running, skipping");
-      return;
+    if (isOpen) {
+      const images = extractMarkdownImages(post.body);
+      console.log("🖼️ Extracted markdown images:", images);
+      setMarkdownImages(images);
     }
+  }, [isOpen, post.body]);
 
+  const generatePreview = async () => {
+    console.log("🎯 Starting generatePreview function");
     setIsGeneratingPreview(true);
     try {
       const avatarUrl = `https://images.hive.blog/u/${post.author}/avatar/sm`;
       const thumbnailUrl = extractThumbnailFromPost(post);
+
+      // Clean content for card display (remove HTML/markdown)
+      const cleanedContent = cleanContentForCard(post.body);
+
       const coinCardFile = await generateMarkdownCoinCard(
         post.title,
         post.author,
-        post.body,
+        cleanedContent,
         avatarUrl,
         thumbnailUrl || undefined
       );
@@ -625,14 +537,10 @@ export function MarkdownCoinModal({
         },
       ];
 
+      console.log("🎠 Building carousel with markdown images:", markdownImages);
+
       // Add markdown images to carousel preview
-      const imagesToUse = providedImages || markdownImages;
-      console.log(
-        "Adding markdown images to carousel. Found images:",
-        imagesToUse
-      );
-      imagesToUse.forEach((imageUrl, index) => {
-        console.log(`Adding image ${index + 1} to carousel:`, imageUrl);
+      markdownImages.forEach((imageUrl, index) => {
         carousel.push({
           uri: imageUrl,
           mime: "image/jpeg",
@@ -642,7 +550,7 @@ export function MarkdownCoinModal({
         });
       });
 
-      console.log("Final carousel content:", carousel);
+      console.log("🎠 Final carousel preview:", carousel);
       console.log(
         "🎯 Setting carouselImages state with",
         carousel.length,
@@ -654,18 +562,17 @@ export function MarkdownCoinModal({
       // Verify the state was set
       setTimeout(() => {
         console.log(
-          "🔍 Verifying carouselImages state after setTimeout:",
-          carouselImages?.length || 0,
-          "images"
-        );
-        console.log(
-          "🔍 Verifying carouselPreview state after setTimeout:",
-          carouselPreview?.length || 0,
+          "🔍 Verifying carouselImages state:",
+          carouselImages.length,
           "images"
         );
       }, 100);
+
+      // Generate markdown description
+      const markdown = convertToMarkdown(post.body);
+      setMarkdownDescription(markdown);
     } catch (error) {
-      console.error("❌ Failed to generate preview:", error);
+      console.error("Failed to generate preview:", error);
       toast({
         title: "Preview generation failed",
         description: "Unable to generate image preview",
@@ -683,31 +590,67 @@ export function MarkdownCoinModal({
       name: string;
       description: string;
     },
-    carouselImagesParam: CarouselImage[]
+    carouselImagesParam?: CarouselImage[]
   ) => {
-    console.log("🎯 handleCreateCoin called!");
-    console.log("- Current carouselImages state:", carouselImages);
-    console.log("- carouselImagesParam received:", carouselImagesParam);
+    console.log("🎯 handleCreateCoin called with:");
+    console.log("- metadata:", metadata);
+    console.log("- carouselImagesParam:", carouselImagesParam);
+    console.log(
+      "- carouselImagesParam length:",
+      carouselImagesParam?.length || 0
+    );
+
+    // Use the passed carousel images or fall back to state
+    const imagesToUse = carouselImagesParam || carouselImages;
+
+    // Filter to only included images and ensure type is defined
+    const includedImages = imagesToUse
+      .filter((img) => img.isIncluded)
+      .map((img) => ({
+        ...img,
+        type: img.type || "image", // Ensure type is defined
+      }));
+
+    console.log("🔍 DEBUGGING CAROUSEL IMAGES:");
+    console.log("- carouselImages state:", imagesToUse);
+    console.log("- carouselImages length:", imagesToUse.length);
+    console.log("- includedImages:", includedImages);
+    console.log("- includedImages length:", includedImages.length);
+
+    // Check if we have any included images
+    if (includedImages.length === 0) {
+      console.warn(
+        "⚠️ No included images found! This will cause metadata generation to fail."
+      );
+      console.log("Carousel images state:", imagesToUse);
+      console.log("Carousel images param:", carouselImagesParam);
+      throw new Error(
+        "No carousel images are included. Please select at least one image in the carousel step."
+      );
+    }
+
+    // Log the metadata format for comparison with Zora carousel example
+    console.log("=== COIN METADATA FORMAT ===");
+    console.log("Post title:", post.title);
+    console.log("Metadata name:", metadata.name);
+    console.log("Metadata description:", metadata.description);
+    console.log("Included carousel images:", includedImages);
+    console.log("Total carousel images in modal state:", imagesToUse);
+    console.log(
+      "Carousel images with isIncluded:",
+      imagesToUse.map((img) => ({ uri: img.uri, isIncluded: img.isIncluded }))
+    );
+    console.log(
+      "Carousel images structure:",
+      JSON.stringify(includedImages, null, 2)
+    );
+    console.log("============================");
 
     try {
-      // Use the passed carousel images
-      const imagesToUse = carouselImagesParam;
-
-      // Filter to only included images
-      const includedImages = imagesToUse.filter((img) => img.isIncluded);
-
-      console.log("🚀 MARKDOWN MODAL: Calling hook with:");
-      console.log("- imagesToUse:", imagesToUse);
-      console.log("- imagesToUse length:", imagesToUse?.length || 0);
+      console.log("🚀 CALLING HOOK WITH:");
       console.log("- includedImages:", includedImages);
       console.log("- includedImages length:", includedImages.length);
-      console.log(
-        "- isIncluded values:",
-        imagesToUse?.map((img) => ({
-          uri: img.uri,
-          isIncluded: img.isIncluded,
-        }))
-      );
+      console.log("- post:", post.title);
 
       const coinResult = await createMarkdownCoin(post, includedImages);
 
@@ -722,19 +665,8 @@ export function MarkdownCoinModal({
         isClosable: true,
       });
     } catch (error) {
-      console.error("❌ Failed to create coin:", error);
-      toast({
-        title: "Coin Creation Failed",
-        description:
-          error instanceof Error
-            ? error.message
-            : "An unexpected error occurred",
-        status: "error",
-        duration: 5000,
-        isClosable: true,
-      });
-      // Don't re-throw the error to prevent component crash
-      setCurrentStep("confirm"); // Stay on confirm step so user can retry
+      console.error("Failed to create coin:", error);
+      throw error; // Re-throw so ConfirmStep can handle it
     }
   };
 
@@ -789,11 +721,14 @@ export function MarkdownCoinModal({
               <Text fontSize="xl" fontWeight="bold">
                 {getStepTitle(currentStep)}
               </Text>
+              <Badge colorScheme="blue" fontSize="sm">
+                Step {getStepNumber(currentStep)} of 3
+              </Badge>
             </HStack>
             {currentStep !== "success" && (
               <Progress
                 value={(getStepNumber(currentStep) / 3) * 100}
-                colorScheme="green"
+                colorScheme="blue"
                 size="sm"
                 borderRadius="full"
               />
@@ -809,29 +744,8 @@ export function MarkdownCoinModal({
               postTitle={post.title}
               author={post.author}
               isGeneratingPreview={isGeneratingPreview}
-              onRegeneratePreview={() => generatePreview()}
-              onNext={() => {
-                if (
-                  cardPreview &&
-                  carouselImages.length > 0 &&
-                  !isGeneratingPreview
-                ) {
-                  setCurrentStep("carousel");
-                } else {
-                  console.warn("⚠️ Cannot proceed: preview not generated yet", {
-                    hasCardPreview: !!cardPreview,
-                    carouselImagesCount: carouselImages.length,
-                    isGeneratingPreview,
-                  });
-                  toast({
-                    title: "Please wait",
-                    description:
-                      "Preview is still generating. Please wait a moment.",
-                    status: "warning",
-                    duration: 3000,
-                  });
-                }
-              }}
+              onRegeneratePreview={generatePreview}
+              onNext={() => setCurrentStep("carousel")}
               wordCount={post.body.split(" ").length}
               readTime={Math.ceil(post.body.split(" ").length / 200)}
               symbol={`${post.author.toUpperCase().slice(0, 4)}COIN`}
@@ -844,19 +758,11 @@ export function MarkdownCoinModal({
               carouselImages={carouselImages}
               onBack={() => setCurrentStep("cover")}
               onNext={() => {
-                if (
-                  carouselImages &&
-                  carouselImages.length > 0 &&
-                  !isGeneratingPreview
-                ) {
+                if (carouselImages && carouselImages.length > 0) {
                   setCurrentStep("confirm");
                 } else {
                   console.warn(
-                    "⚠️ Cannot proceed to confirm step: carousel images not loaded",
-                    {
-                      carouselImagesCount: carouselImages.length,
-                      isGeneratingPreview,
-                    }
+                    "⚠️ Cannot proceed to confirm step: carousel images not loaded"
                   );
                   toast({
                     title: "Please wait",
@@ -902,7 +808,7 @@ export function MarkdownCoinModal({
                 <Text fontSize="2xl" fontWeight="bold" color="green.400">
                   Coin Created Successfully!
                 </Text>
-                <Text color="accent">
+                <Text color="muted">
                   Your Zora coin has been minted on the Base network.
                 </Text>
               </VStack>
@@ -920,10 +826,6 @@ export function MarkdownCoinModal({
                   </VStack>
                 </Alert>
               )}
-
-              <Button colorScheme="blue" size="lg" onClick={handleClose}>
-                Close
-              </Button>
             </VStack>
           )}
         </ModalBody>

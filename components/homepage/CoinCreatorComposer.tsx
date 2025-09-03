@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Box,
   Textarea,
@@ -49,6 +49,19 @@ export default function CoinCreatorComposer({
   const imageUploadRef = useRef<HTMLInputElement>(null);
   const videoUploadRef = useRef<HTMLInputElement>(null);
   const ffmpegRef = useRef<FFmpeg | null>(null);
+
+  // Cleanup FFmpeg instance on unmount
+  useEffect(() => {
+    return () => {
+      if (ffmpegRef.current) {
+        try {
+          ffmpegRef.current.terminate();
+        } finally {
+          ffmpegRef.current = null;
+        }
+      }
+    };
+  }, []);
 
   // Image upload handler
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -112,8 +125,13 @@ export default function CoinCreatorComposer({
       if (!ffmpegRef.current) {
         ffmpegRef.current = new FFmpeg();
 
-        // Set up logging for FFmpeg
-        ffmpegRef.current.on("log", ({ message }) => {});
+        // Set up logging for FFmpeg only in debug mode
+        // To enable: set NEXT_PUBLIC_DEBUG_FFMPEG=true in your .env.local file
+        if (process.env.NEXT_PUBLIC_DEBUG_FFMPEG === "true") {
+          ffmpegRef.current.on("log", ({ message }) => {
+            console.debug("[FFmpeg]", message);
+          });
+        }
         await ffmpegRef.current.load();
       }
 
