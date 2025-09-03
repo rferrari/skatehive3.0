@@ -280,7 +280,7 @@ export default function PostDetails({
       overflow="hidden"
       bg="muted"
       mb={3}
-      p={4}
+      p={2}
       w="100%"
       mt={{ base: "0px", md: "10px" }}
     >
@@ -317,8 +317,8 @@ export default function PostDetails({
                   color="colorBackground"
                   isTruncated
                 >
-                  <Link href={`/user/${author}`} color="colorBackground">
-                    @{author}
+                  <Link href={`/user/${author}`} color="accent">
+                    {author}
                   </Link>
                 </Text>
               </Box>
