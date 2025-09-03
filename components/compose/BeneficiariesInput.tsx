@@ -142,7 +142,9 @@ export default function BeneficiariesInput({
           typeof value === "string"
             ? parseFloat(value) || 0
             : (value as number);
-        const weightInBasisPoints = Math.round(percentage * 100);
+        // Ensure percentage is within valid range (0-100)
+        const clampedPercentage = Math.max(0, Math.min(100, percentage));
+        const weightInBasisPoints = Math.round(clampedPercentage * 100);
         newBeneficiaries[index][field] = weightInBasisPoints;
       } else if (field === "account") {
         newBeneficiaries[index][field] = value as string;
@@ -207,10 +209,16 @@ export default function BeneficiariesInput({
                 min="0.1"
                 max="100"
                 step="0.1"
-                value={(beneficiary.weight / 100).toFixed(1)}
-                onChange={(e) =>
-                  updateBeneficiary(index, "weight", e.target.value)
-                }
+                value={beneficiary.weight / 100}
+                onChange={(e) => {
+                  const inputValue = e.target.value;
+                  // Allow empty input for better UX
+                  if (inputValue === '') {
+                    updateBeneficiary(index, "weight", 0);
+                  } else {
+                    updateBeneficiary(index, "weight", inputValue);
+                  }
+                }}
                 size="sm"
                 isDisabled={isSubmitting}
               />
