@@ -119,7 +119,7 @@ export function CoverStep({
         ) : (
           <VStack spacing={4}>
             <Text color="muted" textAlign="center">
-              Click "Generate Preview" to create your coin card
+              Click &quot;Generate Preview&quot; to create your coin card
             </Text>
             <Button
               colorScheme="blue"

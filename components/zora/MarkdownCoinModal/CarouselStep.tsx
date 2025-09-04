@@ -374,7 +374,7 @@ export function CarouselStep({
               No additional images found
             </Text>
             <Text fontSize="xs">
-              Your post doesn't contain any markdown images. Only the generated
+              Your post doesn&apos;t contain any markdown images. Only the generated
               coin card will be used.
             </Text>
           </VStack>
