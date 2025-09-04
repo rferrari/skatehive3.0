@@ -33,7 +33,6 @@ interface ConfirmStepProps {
 }
 
 export function ConfirmStep({
-  cardPreview,
   title,
   carouselImages,
   markdownDescription,

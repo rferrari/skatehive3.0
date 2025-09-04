@@ -434,7 +434,7 @@ export default function PostDetails({
                   as={FaHeart}
                   onClick={handleHeartClick}
                   cursor="pointer"
-                  color={"red"}
+                  color={"primary"}
                   boxSize="14px"
                 />
               ) : (
@@ -442,7 +442,7 @@ export default function PostDetails({
                   as={FaRegHeart}
                   onClick={handleHeartClick}
                   cursor="pointer"
-                  color="primary"
+                  color="accent"
                   opacity={0.5}
                   boxSize="14px"
                 />
@@ -483,7 +483,19 @@ export default function PostDetails({
             </Text>
           </Box>
         </Box>
-
+        {/* Desktop Title Row */}
+        <Box w="100%" display={["none", "block"]}>
+          <Text
+            fontSize="lg"
+            fontWeight="bold"
+            color="colorBackground"
+            lineHeight="1.3"
+            noOfLines={2}
+          >
+            {title}
+          </Text>
+        </Box>
+        <Divider mt={2} mb={2} />
         {/* Desktop Layout - Two rows like mobile */}
         <Flex
           direction="row"
@@ -491,7 +503,7 @@ export default function PostDetails({
           w="100%"
           justifyContent="space-between"
           display={["none", "flex"]}
-          mb={2}
+          m={2}
         >
           <Flex direction="row" alignItems="center" flex="0 0 auto" minW="0">
             <Avatar
@@ -507,11 +519,11 @@ export default function PostDetails({
                 isTruncated
               >
                 <Link href={`/user/${author}`} color="colorBackground">
-                  @{author}
+                  {author}
                 </Link>
               </Text>
               <Text fontSize="sm" color="colorBackground">
-                - {postDate} ago
+                - {postDate}
               </Text>
             </HStack>
           </Flex>
@@ -628,7 +640,7 @@ export default function PostDetails({
               icon={voted ? <FaHeart /> : <FaRegHeart />}
               size="sm"
               variant="ghost"
-              color={voted ? "accent" : "muted"}
+              color={voted ? "accent" : "primary"}
               onClick={handleHeartClick}
               _hover={{ bg: "transparent", color: "accent" }}
               fontSize="14px"
@@ -646,7 +658,7 @@ export default function PostDetails({
                   minW="auto"
                   px={1}
                   _active={{ bg: "transparent" }}
-                  color={voted ? "accent" : "muted"}
+                  color={voted ? "accent" : "primary"}
                   _hover={{ textDecoration: "underline" }}
                   fontSize="xs"
                   h="auto"
@@ -661,18 +673,6 @@ export default function PostDetails({
           </Flex>
         </Flex>
 
-        {/* Desktop Title Row */}
-        <Box w="100%" display={["none", "block"]}>
-          <Text
-            fontSize="lg"
-            fontWeight="bold"
-            color="colorBackground"
-            lineHeight="1.3"
-            noOfLines={2}
-          >
-            {title}
-          </Text>
-        </Box>
         {showSlider ? (
           <Flex
             data-subcomponent="PostDetails/VoteControls"
