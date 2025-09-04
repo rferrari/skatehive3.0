@@ -19,7 +19,7 @@ import {
   Divider,
 } from "@chakra-ui/react";
 import { ChevronDownIcon } from "@chakra-ui/icons";
-import { useProfileCoins, ProfileCoin } from "@/hooks/useProfileCoins";
+import { useProfileCoins } from "@/hooks/useProfileCoins";
 import { Address } from "viem";
 
 // Helper function to truncate very long coin names
@@ -125,8 +125,15 @@ export const CoinSelector: React.FC<CoinSelectorProps> = ({
                 <HStack w="full" overflow="hidden">
                   <Avatar size="sm" name="ETH" flexShrink={0} />
                   <VStack align="start" spacing={0} flex={1} minW={0}>
-                    <Text fontWeight="bold" isTruncated maxW="100%">ETH</Text>
-                    <Text fontSize="sm" color="gray.400" isTruncated maxW="100%">
+                    <Text fontWeight="bold" isTruncated maxW="100%">
+                      ETH
+                    </Text>
+                    <Text
+                      fontSize="sm"
+                      color="gray.400"
+                      isTruncated
+                      maxW="100%"
+                    >
                       Ethereum
                     </Text>
                   </VStack>
@@ -200,17 +207,13 @@ export const CoinSelector: React.FC<CoinSelectorProps> = ({
                       flexShrink={0}
                     />
                     <VStack align="start" spacing={0} flex={1} minW={0}>
-                      <Text 
-                        fontWeight="bold" 
-                        isTruncated 
-                        maxW="100%"
-                      >
+                      <Text fontWeight="bold" isTruncated maxW="100%">
                         {coin.symbol}
                       </Text>
-                      <Text 
-                        fontSize="sm" 
-                        color="gray.400" 
-                        isTruncated 
+                      <Text
+                        fontSize="sm"
+                        color="gray.400"
+                        isTruncated
                         maxW="100%"
                         title={coin.name} // Show full name on hover
                       >
