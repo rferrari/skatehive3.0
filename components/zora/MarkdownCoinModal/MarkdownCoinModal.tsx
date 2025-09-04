@@ -36,7 +36,7 @@ interface MarkdownCoinModalProps {
   post: Discussion;
 }
 
-type Step = "cover" | "carousel" | "confirm" | "success";
+type Step = "carousel" | "cover" | "confirm" | "success";
 
 export function MarkdownCoinModal({
   isOpen,
@@ -55,7 +55,7 @@ export function MarkdownCoinModal({
   });
 
   const { createMarkdownCoin, isCreating } = useMarkdownCoin();
-  const [currentStep, setCurrentStep] = useState<Step>("cover");
+  const [currentStep, setCurrentStep] = useState<Step>("carousel");
   const [cardPreview, setCardPreview] = useState<string | null>(null);
   const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
   const [markdownImages, setMarkdownImages] = useState<string[]>([]);
@@ -65,12 +65,21 @@ export function MarkdownCoinModal({
   const [result, setResult] = useState<any>(null);
   const [hasInitialized, setHasInitialized] = useState(false);
   const [currentPostId, setCurrentPostId] = useState<string>("");
+  const [selectedThumbnail, setSelectedThumbnail] = useState<string | null>(
+    null
+  );
+  const [editableTitle, setEditableTitle] = useState<string>("");
+  const [editableDescription, setEditableDescription] = useState<string>("");
   const toast = useToast();
 
   // Memoize generatePreview function to prevent unnecessary re-creations
   const generatePreview = useCallback(
-    async (providedImages?: string[]) => {
-      console.log("🎯 generatePreview called with:", providedImages);
+    async (
+      thumbnailUrl?: string,
+      customTitle?: string,
+      customContent?: string
+    ) => {
+      console.log("🎯 generatePreview called with thumbnail:", thumbnailUrl);
 
       // Prevent multiple simultaneous calls
       if (isGeneratingPreview) {
@@ -81,13 +90,20 @@ export function MarkdownCoinModal({
       setIsGeneratingPreview(true);
       try {
         const avatarUrl = `https://images.hive.blog/u/${post.author}/avatar/sm`;
-        const thumbnailUrl = extractThumbnailFromPost(post);
+        // Use selected thumbnail or fall back to extracted thumbnail
+        const finalThumbnail =
+          thumbnailUrl || selectedThumbnail || extractThumbnailFromPost(post);
+
+        // Use custom title/content if provided, otherwise use editable state or post defaults
+        const titleToUse = customTitle || editableTitle || post.title;
+        const contentToUse = customContent || editableDescription || post.body;
+
         const coinCardFile = await generateMarkdownCoinCard(
-          post.title,
+          titleToUse,
           post.author,
-          post.body,
+          contentToUse,
           avatarUrl,
-          thumbnailUrl || undefined
+          finalThumbnail || undefined
         );
 
         // Clean up previous blob URL if it exists
@@ -98,7 +114,7 @@ export function MarkdownCoinModal({
         // Create blob URL for preview
         const previewUrl = URL.createObjectURL(coinCardFile);
         setCardPreview(previewUrl);
-        // Create carousel preview
+        // Create carousel preview - no need to add images here since we'll do it in carousel step
         const carousel = [
           {
             uri: previewUrl,
@@ -109,45 +125,8 @@ export function MarkdownCoinModal({
           },
         ];
 
-        // Add markdown images to carousel preview
-        const imagesToUse = providedImages || markdownImages;
-        console.log(
-          "Adding markdown images to carousel. Found images:",
-          imagesToUse
-        );
-        imagesToUse.forEach((imageUrl, index) => {
-          console.log(`Adding image ${index + 1} to carousel:`, imageUrl);
-          carousel.push({
-            uri: imageUrl,
-            mime: "image/jpeg",
-            type: `Markdown Image ${index + 1}`,
-            isIncluded: true,
-            isGenerated: false,
-          });
-        });
-
-        console.log("Final carousel content:", carousel);
-        console.log(
-          "🎯 Setting carouselImages state with",
-          carousel.length,
-          "images"
-        );
+        console.log("Card preview generated, updating carousel");
         setCarouselPreview(carousel);
-        setCarouselImages(carousel);
-
-        // Verify the state was set
-        setTimeout(() => {
-          console.log(
-            "🔍 Verifying carouselImages state after setTimeout:",
-            carouselImages?.length || 0,
-            "images"
-          );
-          console.log(
-            "🔍 Verifying carouselPreview state after setTimeout:",
-            carouselPreview?.length || 0,
-            "images"
-          );
-        }, 100);
       } catch (error) {
         console.error("❌ Failed to generate preview:", error);
         toast({
@@ -161,7 +140,16 @@ export function MarkdownCoinModal({
         setIsGeneratingPreview(false);
       }
     },
-    [post.author, post.title, post.body, toast]
+    [
+      post.author,
+      post.title,
+      post.body,
+      toast,
+      selectedThumbnail,
+      cardPreview,
+      editableTitle,
+      editableDescription,
+    ]
   ); // Removed state variables to prevent infinite loop
 
   // Memoize whether we should generate preview to prevent infinite loops
@@ -181,7 +169,7 @@ export function MarkdownCoinModal({
     });
     if (isOpen) {
       console.log("📂 Modal opening, resetting state");
-      setCurrentStep("cover");
+      setCurrentStep("carousel");
       setResult(null);
 
       // Reset if it's a new post
@@ -194,21 +182,24 @@ export function MarkdownCoinModal({
         setCarouselPreview([]);
         setCarouselImages([]);
         setMarkdownDescription("");
+        setSelectedThumbnail(null);
+        setEditableTitle("");
+        setEditableDescription("");
       }
     } else {
       // Reset state when modal closes (blob cleanup is handled by useEffect)
       setCardPreview(null);
       setHasInitialized(false);
     }
-  }, [isOpen, postId, currentPostId]); // Depend on postId to detect post changes
+  }, [isOpen, postId, currentPostId]);
 
-  // Separate effect for generating preview - only when modal is open
+  // Initialize carousel images when modal opens
   useEffect(() => {
-    if (shouldGeneratePreview && isOpen) {
-      console.log("🎨 Generating preview for new modal open");
-      setHasInitialized(true); // Mark as initialized to prevent multiple calls
+    if (isOpen && !hasInitialized) {
+      console.log("🎨 Initializing carousel for new modal open");
+      setHasInitialized(true);
 
-      // Extract images and generate preview in one go
+      // Extract images and set up initial carousel
       const images = extractMarkdownImages(post.body);
       console.log("Modal opened, extracting images from post:", post.title);
       console.log("Extracted markdown images:", images);
@@ -217,11 +208,36 @@ export function MarkdownCoinModal({
       // Convert content to markdown for description
       convertToMarkdownDescription(post.body).then((markdownDesc) => {
         setMarkdownDescription(markdownDesc);
+        setEditableDescription(markdownDesc);
       });
 
-      generatePreview(images);
+      // Initialize editable title
+      setEditableTitle(post.title || "");
+
+      // Set up initial carousel with markdown images
+      const initialCarousel = images.map((imageUrl: string, index: number) => ({
+        uri: imageUrl,
+        mime: "image/jpeg",
+        type: `Markdown Image ${index + 1}`,
+        isIncluded: true,
+        isGenerated: false,
+      }));
+
+      setCarouselImages(initialCarousel);
+      setCarouselPreview(initialCarousel);
+
+      // Set default thumbnail to first image if available
+      if (images.length > 0) {
+        setSelectedThumbnail(images[0]);
+      } else {
+        // Use post thumbnail if no images found
+        const postThumbnail = extractThumbnailFromPost(post);
+        if (postThumbnail) {
+          setSelectedThumbnail(postThumbnail);
+        }
+      }
     }
-  }, [shouldGeneratePreview, post.body, post.title, generatePreview, isOpen]); // Debug effect to monitor carouselImages state changes
+  }, [isOpen, hasInitialized, post.body, post.title, post]); // Debug effect to monitor carouselImages state changes
   useEffect(() => {
     console.log("📊 carouselImages state changed:", {
       length: carouselImages?.length || 0,
@@ -326,9 +342,9 @@ export function MarkdownCoinModal({
 
   const getStepNumber = (step: Step): number => {
     switch (step) {
-      case "cover":
-        return 1;
       case "carousel":
+        return 1;
+      case "cover":
         return 2;
       case "confirm":
         return 3;
@@ -341,10 +357,10 @@ export function MarkdownCoinModal({
 
   const getStepTitle = (step: Step): string => {
     switch (step) {
-      case "cover":
-        return "Cover Preview";
       case "carousel":
-        return "Carousel Images";
+        return "Choose Images & Thumbnail";
+      case "cover":
+        return "Card Preview";
       case "confirm":
         return "Review & Create";
       case "success":
@@ -383,82 +399,108 @@ export function MarkdownCoinModal({
         <ModalCloseButton color="primary" isDisabled={isCreating} />
 
         <ModalBody>
-          {currentStep === "cover" && (
-            <CoverStep
-              previewImageUrl={cardPreview}
-              postTitle={post.title}
-              author={post.author}
-              isGeneratingPreview={isGeneratingPreview}
-              onRegeneratePreview={() => generatePreview()}
-              onNext={() => {
-                if (
-                  cardPreview &&
-                  carouselImages.length > 0 &&
-                  !isGeneratingPreview
-                ) {
-                  setCurrentStep("carousel");
-                } else {
-                  console.warn("⚠️ Cannot proceed: preview not generated yet", {
-                    hasCardPreview: !!cardPreview,
-                    carouselImagesCount: carouselImages.length,
-                    isGeneratingPreview,
-                  });
-                  toast({
-                    title: "Please wait",
-                    description:
-                      "Preview is still generating. Please wait a moment.",
-                    status: "warning",
-                    duration: 3000,
-                  });
-                }
-              }}
-              wordCount={post.body.split(" ").length}
-              readTime={Math.ceil(post.body.split(" ").length / 200)}
-              symbol={`${post.author.toUpperCase().slice(0, 4)}COIN`}
-            />
-          )}
-
           {currentStep === "carousel" && (
             <CarouselStep
               carouselPreview={carouselPreview}
               carouselImages={carouselImages}
-              onBack={() => setCurrentStep("cover")}
+              onBack={() => {}} // No back button on first step
               onNext={() => {
-                if (
-                  carouselImages &&
-                  carouselImages.length > 0 &&
-                  !isGeneratingPreview
-                ) {
-                  setCurrentStep("confirm");
+                if (carouselImages && carouselImages.length > 0) {
+                  // Generate preview when moving to cover step
+                  if (!cardPreview) {
+                    generatePreview(selectedThumbnail || undefined);
+                  }
+                  setCurrentStep("cover");
                 } else {
-                  console.warn(
-                    "⚠️ Cannot proceed to confirm step: carousel images not loaded",
-                    {
-                      carouselImagesCount: carouselImages.length,
-                      isGeneratingPreview,
-                    }
-                  );
                   toast({
-                    title: "Please wait",
-                    description:
-                      "Carousel images are still loading. Please wait a moment.",
+                    title: "Please add images",
+                    description: "Select at least one image to continue.",
                     status: "warning",
                     duration: 3000,
                   });
                 }
               }}
               onImagesChange={setCarouselImages}
+              selectedThumbnail={selectedThumbnail}
+              onThumbnailSelect={setSelectedThumbnail}
+              showThumbnailSelection={true}
+            />
+          )}
+
+          {currentStep === "cover" && (
+            <CoverStep
+              previewImageUrl={cardPreview}
+              postTitle={editableTitle}
+              author={post.author}
+              isGeneratingPreview={isGeneratingPreview}
+              onRegeneratePreview={() =>
+                generatePreview(selectedThumbnail || undefined)
+              }
+              onTitleChange={(newTitle) => {
+                setEditableTitle(newTitle);
+                generatePreview(
+                  selectedThumbnail || undefined,
+                  newTitle,
+                  editableDescription
+                );
+              }}
+              onDescriptionChange={(newDescription) => {
+                setEditableDescription(newDescription);
+                generatePreview(
+                  selectedThumbnail || undefined,
+                  editableTitle,
+                  newDescription
+                );
+              }}
+              editableDescription={editableDescription}
+              onNext={() => {
+                if (cardPreview && !isGeneratingPreview) {
+                  // Add the generated card to the carousel images as the first item
+                  const cardItem = {
+                    uri: cardPreview,
+                    mime: "image/png",
+                    type: "Generated Card",
+                    isIncluded: true,
+                    isGenerated: true,
+                  };
+
+                  // Update carousel images to include the card as first item
+                  const updatedCarousel = [
+                    cardItem,
+                    ...carouselImages.filter((img) => !img.isGenerated),
+                  ];
+                  setCarouselImages(updatedCarousel);
+
+                  setCurrentStep("confirm");
+                } else {
+                  toast({
+                    title: "Please wait",
+                    description:
+                      "Card preview is still generating. Please wait a moment.",
+                    status: "warning",
+                    duration: 3000,
+                  });
+                }
+              }}
+              onBack={() => setCurrentStep("carousel")}
+              wordCount={post.body.split(" ").length}
+              readTime={Math.ceil(post.body.split(" ").length / 200)}
+              symbol={`${post.author.toUpperCase().slice(0, 4)}COIN`}
+              selectedThumbnail={selectedThumbnail}
+              onGeneratePreview={() =>
+                generatePreview(selectedThumbnail || undefined)
+              }
             />
           )}
 
           {currentStep === "confirm" && cardPreview && (
             <ConfirmStep
               cardPreview={cardPreview}
-              title={post.title}
+              title={editableTitle}
               carouselImages={carouselImages}
-              markdownDescription={markdownDescription}
+              markdownDescription={editableDescription}
               isCreating={isCreating}
-              onBack={() => setCurrentStep("carousel")}
+              onBack={() => setCurrentStep("cover")}
               onCreate={handleCreateCoin}
             />
           )}

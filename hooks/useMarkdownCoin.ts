@@ -195,301 +195,7 @@ const createCarouselContent = async (cardImageFile: File, markdownImages: string
   }
 };
 
-// Generate NFT card matching the reference design exactly
-const generateMarkdownNFTCard = async (
-  title: string, 
-  author: string, 
-  content: string,
-  avatarUrl: string,
-  thumbnailUrl?: string
-): Promise<File> => {
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-  
-  canvas.width = 400;
-  canvas.height = 600;
-  
-  if (ctx) {
-    // Black background
-    ctx.fillStyle = "#000000";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Outer lime green border with glow
-    ctx.strokeStyle = "#00ff88";
-    ctx.lineWidth = 4;
-    ctx.shadowColor = "#00ff88";
-    ctx.shadowBlur = 20;
-    ctx.strokeRect(8, 8, canvas.width - 16, canvas.height - 16);
-    ctx.shadowBlur = 0;
-
-    // Header section - dark background with lime border
-    const headerHeight = 50;
-    ctx.fillStyle = "#0a0a0a";
-    ctx.fillRect(16, 16, canvas.width - 32, headerHeight);
-    
-    ctx.strokeStyle = "#00ff88";
-    ctx.lineWidth = 2;
-    ctx.shadowColor = "#00ff88";
-    ctx.shadowBlur = 10;
-    ctx.strokeRect(16, 16, canvas.width - 32, headerHeight);
-    ctx.shadowBlur = 0;
-
-    // Load and draw circular avatar
-    try {
-      const avatarImg = document.createElement("img");
-      avatarImg.crossOrigin = "anonymous";
-
-      await new Promise((resolve, reject) => {
-        avatarImg.onload = resolve;
-        avatarImg.onerror = reject;
-        avatarImg.src = avatarUrl;
-      });
-
-      // Avatar circle
-      const avatarSize = 30;
-      const avatarX = 25;
-      const avatarY = 25;
-
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
-      ctx.clip();
-      ctx.drawImage(avatarImg, avatarX, avatarY, avatarSize, avatarSize);
-      ctx.restore();
-
-      // Avatar border
-      ctx.strokeStyle = "#00ff88";
-      ctx.lineWidth = 2;
-      ctx.shadowColor = "#00ff88";
-      ctx.shadowBlur = 8;
-      ctx.beginPath();
-      ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.shadowBlur = 0;
-    } catch (error) {
-      // Fallback avatar
-      const avatarSize = 30;
-      const avatarX = 25;
-      const avatarY = 25;
-
-      ctx.fillStyle = "#333";
-      ctx.beginPath();
-      ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = "#00ff88";
-      ctx.font = "bold 14px -apple-system, BlinkMacSystemFont, sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText(author[0].toUpperCase(), avatarX + avatarSize / 2, avatarY + avatarSize / 2 + 5);
-    }
-
-    // Username in header
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 14px -apple-system, BlinkMacSystemFont, sans-serif";
-    ctx.textAlign = "left";
-    ctx.shadowColor = "#00ff88";
-    ctx.shadowBlur = 3;
-    ctx.fillText(`@${author}`, 65, 45);
-    ctx.shadowBlur = 0;
-
-    // Read time circle (top right)
-    const wordCount = content.split(/\s+/).filter((w) => w.length > 0).length;
-    const readTime = Math.ceil(wordCount / 200);
-    
-    ctx.fillStyle = "#00ff88";
-    ctx.shadowColor = "#00ff88";
-    ctx.shadowBlur = 15;
-    ctx.beginPath();
-    ctx.arc(canvas.width - 35, 41, 18, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.shadowBlur = 0;
-    
-    ctx.fillStyle = "#000";
-    ctx.font = "bold 12px -apple-system, BlinkMacSystemFont, sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText(readTime.toString(), canvas.width - 35, 46);
-
-    // Main image section
-    const imageY = 82;
-    const imageHeight = 280;
-    const imageWidth = canvas.width - 32;
-    const imageX = 16;
-
-    // Image border
-    ctx.strokeStyle = "#00ff88";
-    ctx.lineWidth = 3;
-    ctx.shadowColor = "#00ff88";
-    ctx.shadowBlur = 15;
-    ctx.strokeRect(imageX, imageY, imageWidth, imageHeight);
-    ctx.shadowBlur = 0;
-
-    // Load and display the main image
-    if (thumbnailUrl) {
-      try {
-        const thumbnailImg = document.createElement('img');
-        thumbnailImg.crossOrigin = 'anonymous';
-        
-        await new Promise((resolve, reject) => {
-          thumbnailImg.onload = resolve;
-          thumbnailImg.onerror = reject;
-          thumbnailImg.src = thumbnailUrl;
-        });
-
-        // Fill the image area while maintaining aspect ratio
-        const aspectRatio = thumbnailImg.width / thumbnailImg.height;
-        let imgWidth = imageWidth;
-        let imgHeight = imgWidth / aspectRatio;
-        
-        if (imgHeight > imageHeight) {
-          imgHeight = imageHeight;
-          imgWidth = imgHeight * aspectRatio;
-        }
-        
-        const imgX = imageX + (imageWidth - imgWidth) / 2;
-        const imgY = imageY + (imageHeight - imgHeight) / 2;
-        
-        ctx.drawImage(thumbnailImg, imgX, imgY, imgWidth, imgHeight);
-        
-      } catch (error) {
-        // Fallback - black background with SKATEHIVE text
-        ctx.fillStyle = "#000000";
-        ctx.fillRect(imageX + 2, imageY + 2, imageWidth - 4, imageHeight - 4);
-        
-        ctx.fillStyle = "#00ff88";
-        ctx.font = "bold 36px -apple-system, BlinkMacSystemFont, sans-serif";
-        ctx.textAlign = "center";
-        ctx.shadowColor = "#00ff88";
-        ctx.shadowBlur = 20;
-        ctx.fillText("SKATEHIVE", canvas.width / 2, imageY + imageHeight / 2 - 10);
-        ctx.font = "bold 16px -apple-system, BlinkMacSystemFont, sans-serif";
-        ctx.fillText("LONGFORM POST", canvas.width / 2, imageY + imageHeight / 2 + 20);
-        ctx.shadowBlur = 0;
-      }
-    } else {
-      // No image - show SKATEHIVE branding
-      ctx.fillStyle = "#000000";
-      ctx.fillRect(imageX + 2, imageY + 2, imageWidth - 4, imageHeight - 4);
-      
-      ctx.fillStyle = "#00ff88";
-      ctx.font = "bold 36px -apple-system, BlinkMacSystemFont, sans-serif";
-      ctx.textAlign = "center";
-      ctx.shadowColor = "#00ff88";
-      ctx.shadowBlur = 20;
-      ctx.fillText("SKATEHIVE", canvas.width / 2, imageY + imageHeight / 2 - 10);
-      ctx.font = "bold 16px -apple-system, BlinkMacSystemFont, sans-serif";
-      ctx.fillText("LONGFORM POST", canvas.width / 2, imageY + imageHeight / 2 + 20);
-      ctx.shadowBlur = 0;
-    }
-
-    // Title section - black background
-    const titleY = 380;
-    const titleHeight = 60;
-    
-    ctx.fillStyle = "#000000";
-    ctx.fillRect(16, titleY, canvas.width - 32, titleHeight);
-    
-    // Title text
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 18px -apple-system, BlinkMacSystemFont, sans-serif";
-    ctx.textAlign = "center";
-    ctx.shadowColor = "#00ff88";
-    ctx.shadowBlur = 5;
-    
-    // Truncate title if needed
-    let displayTitle = title;
-    const maxTitleWidth = canvas.width - 60;
-    if (ctx.measureText(title).width > maxTitleWidth) {
-      while (ctx.measureText(displayTitle + "...").width > maxTitleWidth && displayTitle.length > 10) {
-        displayTitle = displayTitle.slice(0, -1);
-      }
-      displayTitle += "...";
-    }
-    
-    ctx.fillText(displayTitle, canvas.width / 2, titleY + 35);
-    ctx.shadowBlur = 0;
-
-    // Description section
-    const descY = 455;
-    const descHeight = 90;
-    
-    ctx.fillStyle = "#000000";
-    ctx.fillRect(16, descY, canvas.width - 32, descHeight);
-
-    // Description text
-    ctx.fillStyle = "#cccccc";
-    ctx.font = "11px -apple-system, BlinkMacSystemFont, sans-serif";
-    ctx.textAlign = "left";
-    
-    // Clean and prepare description
-    const sentences = content.replace(/[#*`_\[\]()]/g, '').split(/[.!?]+/).filter(s => s.trim());
-    let description = sentences.slice(0, 2).join('. ').substring(0, 120);
-    if (description.length >= 120) description += "...";
-    
-    // Wrap text
-    const maxDescWidth = canvas.width - 50;
-    const words = description.split(' ');
-    let line = '';
-    let y = descY + 18;
-    
-    for (let n = 0; n < words.length; n++) {
-      const testLine = line + words[n] + ' ';
-      const metrics = ctx.measureText(testLine);
-      
-      if (metrics.width > maxDescWidth && n > 0) {
-        ctx.fillText(line, 25, y);
-        line = words[n] + ' ';
-        y += 14;
-        if (y > descY + descHeight - 10) break;
-      } else {
-        line = testLine;
-      }
-    }
-    if (y <= descY + descHeight - 10) {
-      ctx.fillText(line, 25, y);
-    }
-
-    // Bottom stats bar
-    const bottomY = 560;
-    const bottomHeight = 25;
-    
-    ctx.fillStyle = "#000000";
-    ctx.fillRect(16, bottomY, canvas.width - 32, bottomHeight);
-    
-    // Bottom border
-    ctx.strokeStyle = "#00ff88";
-    ctx.lineWidth = 2;
-    ctx.shadowColor = "#00ff88";
-    ctx.shadowBlur = 8;
-    ctx.strokeRect(16, bottomY, canvas.width - 32, bottomHeight);
-    ctx.shadowBlur = 0;
-    
-    // Left side - word count
-    ctx.fillStyle = "#00ff88";
-    ctx.font = "bold 11px -apple-system, BlinkMacSystemFont, sans-serif";
-    ctx.textAlign = "left";
-    ctx.shadowColor = "#00ff88";
-    ctx.shadowBlur = 5;
-    ctx.fillText(`${wordCount} words`, 25, bottomY + 16);
-    ctx.shadowBlur = 0;
-    
-    // Right side - SKATEHIVE
-    ctx.textAlign = "right";
-    ctx.fillStyle = "#00ff88";
-    ctx.shadowColor = "#00ff88";
-    ctx.shadowBlur = 8;
-    ctx.fillText("SKATEHIVE", canvas.width - 25, bottomY + 16);
-    ctx.shadowBlur = 0;
-  }
-  
-  return new Promise((resolve) => {
-    canvas.toBlob((blob) => {
-      if (blob) {
-        const file = new File([blob], 'longform-nft-card.png', { type: 'image/png' });
-        resolve(file);
-      }
-    }, 'image/png', 0.95);
-  });
-};
+import { generateMarkdownCoinCard } from '@/lib/utils/markdownCoinUtils';
 
 export function useMarkdownCoin() {
   const [isCreating, setIsCreating] = useState(false);
@@ -565,14 +271,39 @@ export function useMarkdownCoin() {
       console.log('Using carousel images:', markdownImages);
       console.log('Selected carousel images received:', selectedCarouselImages);
       
-      // Generate NFT card image
-      const nftCardImage = await generateMarkdownNFTCard(
-        post.title,
-        post.author,
-        post.body,
-        avatarUrl,
-        thumbnailUrl || undefined
-      );
+      // Extract the generated card from carousel images instead of generating a new one
+      const generatedCardItem = selectedCarouselImages?.find(img => img.isGenerated);
+      let nftCardImage: File;
+      
+      if (generatedCardItem && generatedCardItem.uri.startsWith('blob:')) {
+        // Convert blob URL to File object
+        try {
+          const response = await fetch(generatedCardItem.uri);
+          const blob = await response.blob();
+          nftCardImage = new File([blob], 'generated-card.png', { type: 'image/png' });
+          console.log('✅ Using the beautiful generated card from modal preview');
+        } catch (error) {
+          console.warn('Failed to fetch generated card from blob URL, falling back to generating new card:', error);
+          // Fallback to generating new card
+          nftCardImage = await generateMarkdownCoinCard(
+            post.title,
+            post.author,
+            post.body,
+            avatarUrl,
+            thumbnailUrl || undefined
+          );
+        }
+      } else {
+        console.warn('No generated card found in carousel images, generating new card');
+        // Fallback to generating new card
+        nftCardImage = await generateMarkdownCoinCard(
+          post.title,
+          post.author,
+          post.body,
+          avatarUrl,
+          thumbnailUrl || undefined
+        );
+      }
 
       // Extract URLs from selected carousel images (only included ones, excluding generated cards)
       const carouselImageUrls = selectedCarouselImages

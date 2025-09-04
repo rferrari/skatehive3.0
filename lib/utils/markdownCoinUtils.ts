@@ -549,6 +549,26 @@ export async function generateMarkdownCoinCard(
           const thumbnailX = 16;
           const thumbnailY = contentY;
 
+          // Calculate aspect ratios for proper cropping
+          const canvasAspectRatio = thumbnailWidth / thumbnailHeight;
+          const imageAspectRatio = thumbnailImg.width / thumbnailImg.height;
+
+          let sourceX = 0;
+          let sourceY = 0;
+          let sourceWidth = thumbnailImg.width;
+          let sourceHeight = thumbnailImg.height;
+
+          // Crop from center to fit the canvas aspect ratio
+          if (imageAspectRatio > canvasAspectRatio) {
+            // Image is wider - crop sides
+            sourceWidth = thumbnailImg.height * canvasAspectRatio;
+            sourceX = (thumbnailImg.width - sourceWidth) / 2;
+          } else {
+            // Image is taller - crop top/bottom
+            sourceHeight = thumbnailImg.width / canvasAspectRatio;
+            sourceY = (thumbnailImg.height - sourceHeight) / 2;
+          }
+
           // Lime green border around thumbnail with rounded corners
           ctx.strokeStyle = "#00ff88";
           ctx.lineWidth = 2;
@@ -576,6 +596,10 @@ export async function generateMarkdownCoinCard(
           ctx.clip();
           ctx.drawImage(
             thumbnailImg,
+            sourceX,
+            sourceY,
+            sourceWidth,
+            sourceHeight,
             thumbnailX,
             thumbnailY,
             thumbnailWidth,

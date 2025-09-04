@@ -40,6 +40,9 @@ interface CarouselStepProps {
   onBack: () => void;
   onNext: () => void;
   onImagesChange: (images: CarouselImage[]) => void;
+  selectedThumbnail?: string | null;
+  onThumbnailSelect?: (thumbnail: string) => void;
+  showThumbnailSelection?: boolean;
 }
 
 export function CarouselStep({
@@ -48,6 +51,9 @@ export function CarouselStep({
   onBack,
   onNext,
   onImagesChange,
+  selectedThumbnail,
+  onThumbnailSelect,
+  showThumbnailSelection = false,
 }: CarouselStepProps) {
   const [carouselImages, setCarouselImages] = useState<CarouselImage[]>(
     initialCarouselImages || []
@@ -112,14 +118,14 @@ export function CarouselStep({
         <Box>
           <HStack justify="space-between" align="center" mb={2}>
             <Text fontSize="lg" fontWeight="bold" color="colorBackground">
-              Step 2: Carousel Images
+              Step 1: Choose Images & Thumbnail
             </Text>
             <Badge colorScheme="green" fontSize="xs">
-              2 of 3
+              1 of 3
             </Badge>
           </HStack>
           <Text fontSize="sm" color="muted">
-            Loading carousel images...
+            Loading images from your post...
           </Text>
         </Box>
       </VStack>
@@ -140,15 +146,29 @@ export function CarouselStep({
       <Box>
         <HStack justify="space-between" align="center" mb={2}>
           <Text fontSize="lg" fontWeight="bold" color="colorBackground">
-            Step 2: Carousel Images
+            Step 1: Choose Images & Thumbnail
           </Text>
           <Badge colorScheme="blue" fontSize="xs">
-            2 of 3
+            1 of 3
           </Badge>
         </HStack>
         <Text fontSize="sm" color="accent">
-          Select which images from your post to include in the Zora carousel.
+          Select which images from your post to include in the Zora carousel
+          {showThumbnailSelection
+            ? ", and choose a thumbnail for the coin card"
+            : ""}
+          .
         </Text>
+        {showThumbnailSelection && selectedThumbnail && (
+          <Text fontSize="xs" color="green.400" mt={1}>
+            Selected thumbnail:{" "}
+            {selectedThumbnail ===
+            carouselImages.find((img) => img.uri === selectedThumbnail)?.uri
+              ? carouselImages.find((img) => img.uri === selectedThumbnail)
+                  ?.type || "Image"
+              : "Post thumbnail"}
+          </Text>
+        )}
       </Box>
 
       {carouselImages.length > 1 ? (
@@ -242,7 +262,7 @@ export function CarouselStep({
             >
               All Images:
             </Text>
-            <SimpleGrid columns={5} spacing={3}>
+            <SimpleGrid columns={{ base: 3, md: 4, lg: 5 }} spacing={3}>
               {carouselImages.map((item, index) => (
                 <Box
                   key={index}
@@ -264,52 +284,93 @@ export function CarouselStep({
                     borderColor: index === currentIndex ? "accent" : "primary",
                     opacity: 1,
                   }}
+                  w="100%"
+                  h="0"
+                  paddingBottom="100%" // This creates a 1:1 aspect ratio
                 >
-                  <Image
-                    src={item.uri}
-                    alt={`Thumbnail ${index + 1}`}
-                    w="100%"
-                    h="60px"
-                    objectFit="cover"
-                  />
-
-                  {/* Badges */}
-                  <VStack position="absolute" top="1" left="1" spacing={1}>
-                    {item.isGenerated && (
-                      <Badge fontSize="xs" colorScheme="blue">
-                        Card
-                      </Badge>
-                    )}
-                    {!item.isIncluded && (
-                      <Badge fontSize="xs" colorScheme="red">
-                        ✕
-                      </Badge>
-                    )}
-                  </VStack>
-
-                  {/* Toggle button for non-generated images */}
-                  {!item.isGenerated && (
-                    <IconButton
-                      aria-label={
-                        item.isIncluded ? "Exclude image" : "Include image"
-                      }
-                      icon={<DeleteIcon />}
+                  <Box position="absolute" top="0" left="0" w="100%" h="100%">
+                    <Image
+                      src={item.uri}
+                      alt={`Thumbnail ${index + 1}`}
+                      w="100%"
+                      h="100%"
+                      objectFit="cover"
+                      objectPosition="center"
                       position="absolute"
-                      top="1"
-                      right="1"
-                      size="xs"
-                      colorScheme={item.isIncluded ? "red" : "green"}
-                      bg={item.isIncluded ? "red.600" : "green.600"}
-                      color="white"
-                      _hover={{
-                        bg: item.isIncluded ? "red.700" : "green.700",
-                      }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleToggleImage(index);
-                      }}
+                      top="0"
+                      left="0"
                     />
-                  )}
+
+                    {/* Badges */}
+                    <VStack position="absolute" top="1" left="1" spacing={1}>
+                      {item.isGenerated && (
+                        <Badge fontSize="xs" colorScheme="blue">
+                          Card
+                        </Badge>
+                      )}
+                      {!item.isIncluded && (
+                        <Badge fontSize="xs" colorScheme="red">
+                          ✕
+                        </Badge>
+                      )}
+                      {showThumbnailSelection &&
+                        selectedThumbnail === item.uri && (
+                          <Badge fontSize="xs" colorScheme="yellow">
+                            Thumb
+                          </Badge>
+                        )}
+                    </VStack>
+
+                    {/* Thumbnail selection button for thumbnail selection mode */}
+                    {showThumbnailSelection && onThumbnailSelect && (
+                      <Button
+                        size="xs"
+                        position="absolute"
+                        bottom="1"
+                        left="1"
+                        colorScheme={
+                          selectedThumbnail === item.uri ? "yellow" : "gray"
+                        }
+                        variant={
+                          selectedThumbnail === item.uri ? "solid" : "outline"
+                        }
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onThumbnailSelect(item.uri);
+                        }}
+                        fontSize="9px"
+                        px={1}
+                        py={0}
+                        h="18px"
+                      >
+                        {selectedThumbnail === item.uri ? "✓" : "Use"}
+                      </Button>
+                    )}
+
+                    {/* Toggle button for non-generated images */}
+                    {!item.isGenerated && (
+                      <IconButton
+                        aria-label={
+                          item.isIncluded ? "Exclude image" : "Include image"
+                        }
+                        icon={<DeleteIcon />}
+                        position="absolute"
+                        top="1"
+                        right="1"
+                        size="xs"
+                        colorScheme={item.isIncluded ? "red" : "green"}
+                        bg={item.isIncluded ? "red.600" : "green.600"}
+                        color="white"
+                        _hover={{
+                          bg: item.isIncluded ? "red.700" : "green.700",
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleImage(index);
+                        }}
+                      />
+                    )}
+                  </Box>
                 </Box>
               ))}
             </SimpleGrid>
@@ -332,11 +393,16 @@ export function CarouselStep({
 
       {/* Navigation */}
       <HStack justify="space-between" pt={4}>
-        <Button variant="ghost" leftIcon={<Text>←</Text>} onClick={onBack}>
-          Back to Cover
+        <Button
+          variant="ghost"
+          leftIcon={<Text>←</Text>}
+          onClick={onBack}
+          isDisabled
+        >
+          {/* No back button on first step */}
         </Button>
         <Button colorScheme="blue" onClick={onNext} rightIcon={<Text>→</Text>}>
-          Continue to Review
+          Generate Card Preview
         </Button>
       </HStack>
     </VStack>

@@ -8,6 +8,10 @@ import {
   Spinner,
   Button,
   Badge,
+  Input,
+  Textarea,
+  FormControl,
+  FormLabel,
 } from "@chakra-ui/react";
 
 interface CoverStepProps {
@@ -15,11 +19,17 @@ interface CoverStepProps {
   isGeneratingPreview: boolean;
   postTitle: string;
   author: string;
-  wordCount: number;
-  readTime: number;
-  symbol: string;
+  wordCount?: number;
+  readTime?: number;
+  symbol?: string;
   onRegeneratePreview: () => void;
   onNext: () => void;
+  onBack?: () => void;
+  selectedThumbnail?: string | null;
+  onGeneratePreview?: () => void;
+  onTitleChange?: (newTitle: string) => void;
+  onDescriptionChange?: (newDescription: string) => void;
+  editableDescription?: string;
 }
 
 export function CoverStep({
@@ -32,6 +42,12 @@ export function CoverStep({
   symbol,
   onRegeneratePreview,
   onNext,
+  onBack,
+  selectedThumbnail,
+  onGeneratePreview,
+  onTitleChange,
+  onDescriptionChange,
+  editableDescription,
 }: CoverStepProps) {
   return (
     <VStack spacing={6} align="stretch">
@@ -39,16 +55,21 @@ export function CoverStep({
       <Box>
         <HStack justify="space-between" align="center" mb={2}>
           <Text fontSize="lg" fontWeight="bold" color="colorBackground">
-            Step 1: Coin Cover Card
+            Step 2: Card Preview
           </Text>
           <Badge colorScheme="blue" fontSize="xs">
-            1 of 3
+            2 of 3
           </Badge>
         </HStack>
         <Text fontSize="sm" color="accent">
           This card will be the cover image for your coin and the first image in
           the carousel.
         </Text>
+        {selectedThumbnail && (
+          <Text fontSize="xs" color="green.400" mt={1}>
+            Using selected thumbnail for card generation
+          </Text>
+        )}
       </Box>
 
       {/* Card Preview */}
@@ -98,10 +119,13 @@ export function CoverStep({
         ) : (
           <VStack spacing={4}>
             <Text color="muted" textAlign="center">
-              Failed to generate preview
+              Click "Generate Preview" to create your coin card
             </Text>
-            <Button colorScheme="blue" onClick={onRegeneratePreview}>
-              🔄 Try Again
+            <Button
+              colorScheme="blue"
+              onClick={onGeneratePreview || onRegeneratePreview}
+            >
+              🎨 Generate Preview
             </Button>
           </VStack>
         )}
@@ -117,16 +141,84 @@ export function CoverStep({
           🔄 Regenerate Card
         </Button>
       )}
+
+      {/* Editable Title and Description */}
+      {onTitleChange && onDescriptionChange && (
+        <Box
+          p={4}
+          bg="muted"
+          borderRadius="md"
+          border="1px solid"
+          borderColor="primary"
+        >
+          <VStack spacing={4} align="stretch">
+            <Text fontSize="md" fontWeight="bold" color="colorBackground">
+              Customize Your Card
+            </Text>
+
+            {/* Title Input */}
+            <FormControl>
+              <FormLabel fontSize="sm" color="colorBackground">
+                Card Title
+              </FormLabel>
+              <Input
+                value={postTitle}
+                onChange={(e) => onTitleChange(e.target.value)}
+                placeholder="Enter card title..."
+                bg="blackAlpha.300"
+                border="1px solid"
+                borderColor="primary"
+                color="colorBackground"
+                _focus={{
+                  borderColor: "accent",
+                  boxShadow: "0 0 0 1px var(--chakra-colors-accent)",
+                }}
+              />
+            </FormControl>
+
+            {/* Description Input */}
+            <FormControl>
+              <FormLabel fontSize="sm" color="colorBackground">
+                Card Description
+              </FormLabel>
+              <Textarea
+                value={editableDescription || ""}
+                onChange={(e) =>
+                  onDescriptionChange && onDescriptionChange(e.target.value)
+                }
+                placeholder="Enter card description..."
+                bg="blackAlpha.300"
+                border="1px solid"
+                borderColor="primary"
+                color="colorBackground"
+                minHeight="100px"
+                resize="vertical"
+                _focus={{
+                  borderColor: "accent",
+                  boxShadow: "0 0 0 1px var(--chakra-colors-accent)",
+                }}
+              />
+            </FormControl>
+
+            <Text fontSize="xs" color="muted">
+              Changes will automatically update the card preview above
+            </Text>
+          </VStack>
+        </Box>
+      )}
+
       {/* Navigation */}
       <HStack justify="space-between" pt={4}>
-        <Box />
+        <Button variant="ghost" leftIcon={<Text>←</Text>} onClick={onBack}>
+          Back to Images
+        </Button>
         <Button
           colorScheme="blue"
           isDisabled={!previewImageUrl || isGeneratingPreview}
           onClick={onNext}
           rightIcon={<Text>→</Text>}
         >
-          Continue to Carousel
+          Continue to Review
         </Button>
       </HStack>
     </VStack>
