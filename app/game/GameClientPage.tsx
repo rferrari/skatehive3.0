@@ -3,11 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   Box,
-  Container,
-  Heading,
   Button,
-  Text,
-  Kbd,
   Modal,
   ModalOverlay,
   ModalContent,
@@ -17,17 +13,9 @@ import {
   VStack,
   HStack,
   Icon,
-  Divider,
   Circle,
 } from "@chakra-ui/react";
-import {
-  MdFullscreen,
-  MdClose,
-  MdVolumeUp,
-  MdSettings,
-  MdPower,
-  MdRefresh,
-} from "react-icons/md";
+import { MdFullscreen, MdRefresh } from "react-icons/md";
 
 export default function GameClientPage() {
   const [isModalFullscreen, setIsModalFullscreen] = useState(false);
@@ -168,7 +156,7 @@ export default function GameClientPage() {
                   <Box
                     key={gameKey}
                     as="iframe"
-                    src="https://html5-game-skatehive.vercel.app/QFShive/index.html"
+                    src="https://quest-for-stoken.vercel.app/"
                     w="1280px"
                     h="720px"
                     border="none"

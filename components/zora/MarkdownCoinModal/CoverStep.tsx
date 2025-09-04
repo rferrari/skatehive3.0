@@ -12,7 +12,86 @@ import {
   Textarea,
   FormControl,
   FormLabel,
+  Grid,
+  GridItem,
 } from "@chakra-ui/react";
+import { ColorOptions } from "@/lib/utils/markdownCoinUtils";
+
+// Predefined color themes
+const colorThemes: Array<{ name: string; colors: ColorOptions }> = [
+  {
+    name: "Skatehive Green",
+    colors: {
+      primary: "#00ff88",
+      secondary: "#00cc66",
+      gradient: {
+        start: "#2a2a2a",
+        middle: "#000000", 
+        end: "#1a1a1a"
+      },
+    },
+  },
+  {
+    name: "Electric Blue",
+    colors: {
+      primary: "#00bfff",
+      secondary: "#0099cc",
+      gradient: {
+        start: "#2a2a3a",
+        middle: "#000010",
+        end: "#1a1a2a"
+      },
+    },
+  },
+  {
+    name: "Purple Haze",
+    colors: {
+      primary: "#9d4edd",
+      secondary: "#7b2cbf",
+      gradient: {
+        start: "#3a2a3a",
+        middle: "#100010",
+        end: "#2a1a2a"
+      },
+    },
+  },
+  {
+    name: "Golden Sunset",
+    colors: {
+      primary: "#ffd700",
+      secondary: "#ffb347",
+      gradient: {
+        start: "#3a3a2a",
+        middle: "#101000",
+        end: "#2a2a1a"
+      },
+    },
+  },
+  {
+    name: "Fire Red",
+    colors: {
+      primary: "#ff4444",
+      secondary: "#cc3333",
+      gradient: {
+        start: "#3a2a2a",
+        middle: "#100000",
+        end: "#2a1a1a"
+      },
+    },
+  },
+  {
+    name: "Ocean Teal",
+    colors: {
+      primary: "#20b2aa",
+      secondary: "#17a2b8",
+      gradient: {
+        start: "#2a3a3a",
+        middle: "#001010",
+        end: "#1a2a2a"
+      },
+    },
+  },
+];
 
 interface CoverStepProps {
   previewImageUrl: string | null;
@@ -30,6 +109,8 @@ interface CoverStepProps {
   onTitleChange?: (newTitle: string) => void;
   onDescriptionChange?: (newDescription: string) => void;
   editableDescription?: string;
+  selectedColors?: ColorOptions;
+  onColorChange?: (colors: ColorOptions) => void;
 }
 
 export function CoverStep({
@@ -48,6 +129,8 @@ export function CoverStep({
   onTitleChange,
   onDescriptionChange,
   editableDescription,
+  selectedColors,
+  onColorChange,
 }: CoverStepProps) {
   return (
     <VStack spacing={6} align="stretch">
@@ -199,6 +282,73 @@ export function CoverStep({
                 }}
               />
             </FormControl>
+
+            {/* Color Theme Selection */}
+            {onColorChange && (
+              <FormControl>
+                <FormLabel fontSize="sm" color="colorBackground">
+                  Card Colors
+                </FormLabel>
+                <Grid templateColumns="repeat(3, 1fr)" gap={3}>
+                  {colorThemes.map((theme) => (
+                    <GridItem key={theme.name}>
+                      <Box
+                        as="button"
+                        p={3}
+                        bg="blackAlpha.300"
+                        border="2px solid"
+                        borderColor={
+                          selectedColors?.primary === theme.colors.primary
+                            ? theme.colors.primary
+                            : "transparent"
+                        }
+                        borderRadius="md"
+                        cursor="pointer"
+                        transition="all 0.2s"
+                        _hover={{
+                          borderColor: theme.colors.primary,
+                          bg: "blackAlpha.500",
+                        }}
+                        onClick={() => onColorChange(theme.colors)}
+                        w="100%"
+                      >
+                        <VStack spacing={2}>
+                          {/* Color Preview */}
+                          <HStack spacing={1} justify="center">
+                            <Box
+                              w={4}
+                              h={4}
+                              bg={theme.colors.primary}
+                              borderRadius="sm"
+                            />
+                            <Box
+                              w={4}
+                              h={4}
+                              bg={theme.colors.secondary}
+                              borderRadius="sm"
+                            />
+                            <Box
+                              w={4}
+                              h={4}
+                              bg={theme.colors.gradient.start}
+                              borderRadius="sm"
+                            />
+                          </HStack>
+                          <Text 
+                            fontSize="xs" 
+                            color="colorBackground" 
+                            fontWeight="medium"
+                            textAlign="center"
+                          >
+                            {theme.name}
+                          </Text>
+                        </VStack>
+                      </Box>
+                    </GridItem>
+                  ))}
+                </Grid>
+              </FormControl>
+            )}
 
             <Text fontSize="xs" color="muted">
               Changes will automatically update the card preview above

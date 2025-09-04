@@ -20,8 +20,10 @@ import {
 import { Discussion } from "@hiveio/dhive";
 import { useMarkdownCoin } from "@/hooks/useMarkdownCoin";
 import { CoverStep } from "./CoverStep";
+import { CustomizationStep } from "./CustomizationStep";
 import { CarouselStep, CarouselImage } from "./CarouselStep";
 import { ConfirmStep } from "./ConfirmStep";
+import { ColorOptions, generateMarkdownCoinCard } from "@/lib/utils/markdownCoinUtils";
 
 interface MarkdownCoinModalProps {
   isOpen: boolean;
@@ -29,7 +31,7 @@ interface MarkdownCoinModalProps {
   post: Discussion;
 }
 
-type Step = "cover" | "carousel" | "confirm" | "success";
+type Step = "cover" | "customization" | "carousel" | "confirm" | "success";
 
 // Helper function to extract thumbnail from post
 const extractThumbnailFromPost = (post: Discussion): string | null => {
@@ -238,211 +240,6 @@ const convertToMarkdown = (content: string): string => {
   return markdown.trim();
 };
 
-// Generate coin card matching the reference design exactly
-const generateMarkdownCoinCard = async (
-  title: string,
-  author: string,
-  content: string,
-  avatarUrl: string,
-  thumbnailUrl?: string
-): Promise<File> => {
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
-
-  canvas.width = 400;
-  canvas.height = 600;
-
-  if (ctx) {
-    // Black background
-    ctx.fillStyle = "#000000";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Header section - dark background
-    const headerHeight = 50;
-    ctx.fillStyle = "#0a0a0a";
-    ctx.fillRect(16, 16, canvas.width - 32, headerHeight);
-
-    // Load and draw circular avatar
-    try {
-      const avatarImg = document.createElement("img");
-      avatarImg.crossOrigin = "anonymous";
-
-      await new Promise((resolve, reject) => {
-        avatarImg.onload = resolve;
-        avatarImg.onerror = reject;
-        avatarImg.src = avatarUrl;
-      });
-
-      const avatarSize = 30;
-      const avatarX = 25;
-      const avatarY = 26;
-
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(
-        avatarX + avatarSize / 2,
-        avatarY + avatarSize / 2,
-        avatarSize / 2,
-        0,
-        2 * Math.PI
-      );
-      ctx.clip();
-      ctx.drawImage(avatarImg, avatarX, avatarY, avatarSize, avatarSize);
-      ctx.restore();
-    } catch (error) {
-      console.warn("Failed to load avatar image:", error);
-    }
-
-    // Author name with lime green glow
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 14px 'Arial', sans-serif";
-    ctx.shadowColor = "#00ff88";
-    ctx.shadowBlur = 8;
-    ctx.fillText(`@${author}`, 70, 45);
-    ctx.shadowBlur = 0;
-
-    // Skatehive badge
-    ctx.fillStyle = "#00ff88";
-    ctx.font = "bold 10px 'Arial', sans-serif";
-    ctx.fillText("SKATEHIVE", canvas.width - 85, 30);
-    ctx.fillText("COIN", canvas.width - 85, 45);
-
-    // Main content area
-    const contentY = 80;
-    const contentHeight = canvas.height - contentY - 80;
-
-    // Load and draw thumbnail if available
-    let thumbnailHeight = 0;
-    if (thumbnailUrl) {
-      try {
-        const thumbnailImg = document.createElement("img");
-        thumbnailImg.crossOrigin = "anonymous";
-
-        await new Promise((resolve, reject) => {
-          thumbnailImg.onload = resolve;
-          thumbnailImg.onerror = reject;
-          thumbnailImg.src = thumbnailUrl;
-        });
-
-        thumbnailHeight = 180;
-        const thumbnailWidth = canvas.width - 32;
-        const thumbnailX = 16;
-        const thumbnailY = contentY;
-
-        ctx.drawImage(
-          thumbnailImg,
-          thumbnailX,
-          thumbnailY,
-          thumbnailWidth,
-          thumbnailHeight
-        );
-      } catch (error) {
-        console.warn("Failed to load thumbnail image:", error);
-      }
-    }
-
-    // Title
-    const titleY = contentY + thumbnailHeight + 20;
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 16px 'Arial', sans-serif";
-    ctx.shadowColor = "#00ff88";
-    ctx.shadowBlur = 8;
-
-    const words = title.split(" ");
-    let line = "";
-    let y = titleY;
-    const lineHeight = 22;
-    const maxWidth = canvas.width - 32;
-    let titleLines = 0;
-
-    for (let n = 0; n < words.length; n++) {
-      const testLine = line + words[n] + " ";
-      const metrics = ctx.measureText(testLine);
-      const testWidth = metrics.width;
-
-      if (testWidth > maxWidth && n > 0) {
-        ctx.fillText(line, 16, y);
-        line = words[n] + " ";
-        y += lineHeight;
-        titleLines++;
-        if (titleLines >= 2) break;
-      } else {
-        line = testLine;
-      }
-    }
-
-    if (titleLines < 2) {
-      ctx.fillText(line, 16, y);
-      y += lineHeight;
-    }
-
-    ctx.shadowBlur = 0;
-
-    // Content preview
-    const contentStartY = y + 15;
-    const availableHeight = canvas.height - contentStartY - 50;
-
-    ctx.fillStyle = "#cccccc";
-    ctx.font = "12px 'Arial', sans-serif";
-
-    const contentWords = content.slice(0, 500).split(" ");
-    let contentLine = "";
-    let contentY_text = contentStartY;
-    const contentLineHeight = 16;
-    const maxContentLines = Math.floor(availableHeight / contentLineHeight);
-    let contentLines = 0;
-
-    for (
-      let n = 0;
-      n < contentWords.length && contentLines < maxContentLines;
-      n++
-    ) {
-      const testLine = contentLine + contentWords[n] + " ";
-      const metrics = ctx.measureText(testLine);
-      const testWidth = metrics.width;
-
-      if (testWidth > maxWidth && n > 0) {
-        ctx.fillText(contentLine, 16, contentY_text);
-        contentLine = contentWords[n] + " ";
-        contentY_text += contentLineHeight;
-        contentLines++;
-      } else {
-        contentLine = testLine;
-      }
-    }
-
-    if (contentLines < maxContentLines && contentLine.trim()) {
-      ctx.fillText(contentLine, 16, contentY_text);
-    }
-
-    // Glowing footer with skatehive branding
-    const footerY = canvas.height - 40;
-    ctx.fillStyle = "#00ff88";
-    ctx.font = "bold 12px 'Arial', sans-serif";
-    ctx.shadowColor = "#00ff88";
-    ctx.shadowBlur = 15;
-    ctx.textAlign = "center";
-    ctx.fillText("🛹 SKATEHIVE CREW 🛹", canvas.width / 2, footerY);
-    ctx.shadowBlur = 0;
-    ctx.textAlign = "left";
-  }
-
-  return new Promise((resolve) => {
-    canvas.toBlob(
-      (blob) => {
-        if (blob) {
-          const file = new File([blob], "coin-card.png", {
-            type: "image/png",
-          });
-          resolve(file);
-        }
-      },
-      "image/png",
-      0.95
-    );
-  });
-};
-
 // Extract images from markdown content
 const extractMarkdownImages = (content: string): string[] => {
   const imageRegex = /!\[.*?\]\((https?:\/\/[^\s)]+)\)/g;
@@ -472,9 +269,18 @@ export function MarkdownCoinModal({
   const [carouselImages, setCarouselImages] = useState<CarouselImage[]>([]);
   const [markdownDescription, setMarkdownDescription] = useState<string>("");
   const [result, setResult] = useState<any>(null);
+  const [selectedColors, setSelectedColors] = useState<ColorOptions>({
+    primary: "#00ff88",
+    secondary: "#00ff88",
+    gradient: {
+      start: "#2a2a2a",
+      middle: "#000000",
+      end: "#1a1a1a",
+    },
+  });
   const toast = useToast();
 
-  // Extract images from markdown when modal opens
+  // Extract images from markdown when modal opens and regenerate when colors change
   useEffect(() => {
     if (isOpen) {
       setCurrentStep("cover");
@@ -493,7 +299,7 @@ export function MarkdownCoinModal({
       setCarouselPreview([]);
       setMarkdownImages([]);
     }
-  }, [isOpen, cardPreview]);
+  }, [isOpen, selectedColors]); // Add selectedColors as dependency
 
   // Extract images from markdown when modal opens
   useEffect(() => {
@@ -519,7 +325,8 @@ export function MarkdownCoinModal({
         post.author,
         cleanedContent,
         avatarUrl,
-        thumbnailUrl || undefined
+        thumbnailUrl || undefined,
+        selectedColors
       );
 
       // Create blob URL for preview
@@ -671,12 +478,14 @@ export function MarkdownCoinModal({
     switch (step) {
       case "cover":
         return 1;
-      case "carousel":
+      case "customization":
         return 2;
-      case "confirm":
+      case "carousel":
         return 3;
-      case "success":
+      case "confirm":
         return 4;
+      case "success":
+        return 5;
       default:
         return 1;
     }
@@ -686,6 +495,8 @@ export function MarkdownCoinModal({
     switch (step) {
       case "cover":
         return "Cover Preview";
+      case "customization":
+        return "Color Customization";
       case "carousel":
         return "Carousel Images";
       case "confirm":
@@ -713,12 +524,12 @@ export function MarkdownCoinModal({
                 {getStepTitle(currentStep)}
               </Text>
               <Badge colorScheme="blue" fontSize="sm">
-                Step {getStepNumber(currentStep)} of 3
+                Step {getStepNumber(currentStep)} of 4
               </Badge>
             </HStack>
             {currentStep !== "success" && (
               <Progress
-                value={(getStepNumber(currentStep) / 3) * 100}
+                value={(getStepNumber(currentStep) / 4) * 100}
                 colorScheme="blue"
                 size="sm"
                 borderRadius="full"
@@ -736,10 +547,20 @@ export function MarkdownCoinModal({
               author={post.author}
               isGeneratingPreview={isGeneratingPreview}
               onRegeneratePreview={generatePreview}
-              onNext={() => setCurrentStep("carousel")}
+              onNext={() => setCurrentStep("customization")}
               wordCount={post.body.split(" ").length}
               readTime={Math.ceil(post.body.split(" ").length / 200)}
               symbol={`${post.author.toUpperCase().slice(0, 4)}COIN`}
+            />
+          )}
+
+          {currentStep === "customization" && (
+            <CustomizationStep
+              selectedColors={selectedColors}
+              onColorsChange={setSelectedColors}
+              onBack={() => setCurrentStep("cover")}
+              onNext={() => setCurrentStep("carousel")}
+              onPreviewUpdate={generatePreview}
             />
           )}
 
@@ -747,7 +568,7 @@ export function MarkdownCoinModal({
             <CarouselStep
               carouselPreview={carouselPreview}
               carouselImages={carouselImages}
-              onBack={() => setCurrentStep("cover")}
+              onBack={() => setCurrentStep("customization")}
               onNext={() => {
                 if (carouselImages && carouselImages.length > 0) {
                   setCurrentStep("confirm");

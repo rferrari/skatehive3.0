@@ -26,6 +26,7 @@ import {
   convertToMarkdownDescription,
   generateMarkdownCoinCard,
   extractMarkdownImages,
+  ColorOptions,
 } from "@/lib/utils/markdownCoinUtils";
 
 interface MarkdownCoinModalProps {
@@ -68,6 +69,15 @@ export function MarkdownCoinModal({
   );
   const [editableTitle, setEditableTitle] = useState<string>("");
   const [editableDescription, setEditableDescription] = useState<string>("");
+  const [selectedColors, setSelectedColors] = useState<ColorOptions>({
+    primary: "#00ff88",
+    secondary: "#00ff88",
+    gradient: {
+      start: "#2a2a2a",
+      middle: "#000000",
+      end: "#1a1a1a",
+    },
+  });
   const toast = useToast();
 
   // Memoize generatePreview function to prevent unnecessary re-creations
@@ -103,7 +113,8 @@ export function MarkdownCoinModal({
           post.author,
           contentToUse,
           avatarUrl,
-          finalThumbnail || undefined
+          finalThumbnail || undefined,
+          selectedColors
         );
 
         // Clean up previous blob URL if it exists
@@ -149,6 +160,7 @@ export function MarkdownCoinModal({
       cardPreview,
       editableTitle,
       editableDescription,
+      selectedColors,
     ]
   ); // Removed state variables to prevent infinite loop
 
@@ -185,6 +197,15 @@ export function MarkdownCoinModal({
         setSelectedThumbnail(null);
         setEditableTitle("");
         setEditableDescription("");
+        setSelectedColors({
+          primary: "#00ff88",
+          secondary: "#00ff88",
+          gradient: {
+            start: "#2a2a2a",
+            middle: "#000000",
+            end: "#1a1a1a",
+          },
+        });
       }
     } else {
       // Reset state when modal closes (blob cleanup is handled by useEffect)
@@ -268,6 +289,19 @@ export function MarkdownCoinModal({
       }
     };
   }, []);
+
+  // Auto-regenerate preview when colors change
+  useEffect(() => {
+    if (hasInitialized && post && editableTitle && editableDescription) {
+      console.log("🎨 Colors changed, regenerating preview...", selectedColors);
+      // Small delay to ensure state has updated
+      const timer = setTimeout(() => {
+        generatePreview();
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [selectedColors]);
 
   const handleCreateCoin = async (
     metadata: {
@@ -553,6 +587,11 @@ export function MarkdownCoinModal({
               onGeneratePreview={() =>
                 generatePreview(selectedThumbnail || undefined)
               }
+              selectedColors={selectedColors}
+              onColorChange={(newColors) => {
+                console.log("🎨 Color selection changed:", newColors);
+                setSelectedColors(newColors);
+              }}
             />
           )}
 

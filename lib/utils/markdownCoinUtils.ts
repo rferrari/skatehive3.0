@@ -252,6 +252,16 @@ export function extractMarkdownImages(content: string): string[] {
   return validImages;
 }
 
+export interface ColorOptions {
+  primary: string;
+  secondary: string;
+  gradient: {
+    start: string;
+    middle: string;
+    end: string;
+  };
+}
+
 /**
  * Generate coin card matching the reference design exactly
  */
@@ -260,11 +270,23 @@ export async function generateMarkdownCoinCard(
   author: string,
   content: string,
   avatarUrl: string,
-  thumbnailUrl?: string
+  thumbnailUrl?: string,
+  colorOptions?: ColorOptions
 ): Promise<File> {
   try {
     // Clean content for card display (remove all HTML/markdown)
     const cleanedContent = cleanContentForCard(content);
+
+    // Default to skatehive green if no colors provided
+    const colors = colorOptions || {
+      primary: "#00ff88",
+      secondary: "#00ff88",
+      gradient: {
+        start: "#2a2a2a",
+        middle: "#000000",
+        end: "#1a1a1a",
+      },
+    };
 
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
@@ -318,18 +340,18 @@ export async function generateMarkdownCoinCard(
 
       // Black background with subtle gradient for depth
       const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      gradient.addColorStop(0, "#2a2a2a"); // Lighter at top for depth
+      gradient.addColorStop(0, colors.gradient.start); // Lighter at top for depth
       gradient.addColorStop(0.2, "#1a1a1a"); // Darker 
-      gradient.addColorStop(0.5, "#000000"); // Pure black in middle
+      gradient.addColorStop(0.5, colors.gradient.middle); // Pure black in middle
       gradient.addColorStop(0.8, "#0a0a0a"); // Slightly lighter
-      gradient.addColorStop(1, "#1a1a1a"); // Subtle lift at bottom
+      gradient.addColorStop(1, colors.gradient.end); // Subtle lift at bottom
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // Outer lime green border with glow and rounded corners - increased margin
-      ctx.strokeStyle = "#00ff88";
+      ctx.strokeStyle = colors.primary;
       ctx.lineWidth = 4;
-      ctx.shadowColor = "#00ff88";
+      ctx.shadowColor = colors.primary;
       ctx.shadowBlur = 20;
       drawRoundedRect(12, 12, canvas.width - 24, canvas.height - 24, 8);
       ctx.stroke();
@@ -340,7 +362,7 @@ export async function generateMarkdownCoinCard(
       
       // Create subtle gradient for header
       const headerGradient = ctx.createLinearGradient(0, 22, 0, 22 + headerHeight);
-      headerGradient.addColorStop(0, "#1a1a1a"); // Slightly lighter at top
+      headerGradient.addColorStop(0, colors.gradient.start); // Slightly lighter at top
       headerGradient.addColorStop(0.5, "#0a0a0a"); // Darker in middle
       headerGradient.addColorStop(1, "#050505"); // Even darker at bottom
       
@@ -348,9 +370,9 @@ export async function generateMarkdownCoinCard(
       drawRoundedRect(22, 22, canvas.width - 44, headerHeight, 6);
       ctx.fill();
 
-      ctx.strokeStyle = "#00ff88";
+      ctx.strokeStyle = colors.primary;
       ctx.lineWidth = 2;
-      ctx.shadowColor = "#00ff88";
+      ctx.shadowColor = colors.primary;
       ctx.shadowBlur = 10;
       drawRoundedRect(22, 22, canvas.width - 44, headerHeight, 6);
       ctx.stroke();
@@ -412,9 +434,9 @@ export async function generateMarkdownCoinCard(
         ctx.restore();
 
         // Lime green border around avatar - adjust for larger size
-        ctx.strokeStyle = "#00ff88";
+        ctx.strokeStyle = colors.primary;
         ctx.lineWidth = 3; // Slightly thicker border for larger avatar
-        ctx.shadowColor = "#00ff88";
+        ctx.shadowColor = colors.primary;
         ctx.shadowBlur = 8; // Increased glow for larger avatar
         ctx.beginPath();
         ctx.arc(
@@ -449,7 +471,7 @@ export async function generateMarkdownCoinCard(
         );
         ctx.fill();
 
-        ctx.fillStyle = "#00ff88";
+        ctx.fillStyle = colors.primary;
         ctx.font = "bold 18px 'Arial', sans-serif"; // Larger font for larger avatar
         ctx.textAlign = "center";
         ctx.fillText(
@@ -469,7 +491,7 @@ export async function generateMarkdownCoinCard(
       // Author name with lime green glow - adjust position for larger header and centered avatar
       ctx.fillStyle = "#ffffff";
       ctx.font = "bold 16px 'Arial', sans-serif"; // Slightly larger font
-      ctx.shadowColor = "#00ff88";
+      ctx.shadowColor = colors.primary;
       ctx.shadowBlur = 8;
       ctx.fillText(`${author}`, 88, 62); // Adjusted for increased margins and centered vertically
       ctx.shadowBlur = 0;
@@ -517,14 +539,14 @@ export async function generateMarkdownCoinCard(
         
         // Draw the logo with rounded corners and glow effect
         ctx.save();
-        ctx.shadowColor = "#00ff88";
+        ctx.shadowColor = colors.primary;
         ctx.shadowBlur = 12; // Increased glow for larger logo
         ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize);
         ctx.restore();
       } catch (error) {
         console.warn("Logo loading failed, falling back to text:", error);
         // Fallback to text if logo fails to load - match logo area positioning
-        ctx.fillStyle = "#00ff88";
+        ctx.fillStyle = colors.primary;
         ctx.font = "bold 11px 'Arial', sans-serif";
         ctx.textAlign = "center";
         const textX = canvas.width - 56; // Adjusted for increased margin (31 + 50/2 = 56)
@@ -598,9 +620,9 @@ export async function generateMarkdownCoinCard(
           }
 
           // Lime green border around thumbnail with rounded corners - contained within bounds
-          ctx.strokeStyle = "#00ff88";
+          ctx.strokeStyle = colors.primary;
           ctx.lineWidth = 2;
-          ctx.shadowColor = "#00ff88";
+          ctx.shadowColor = colors.primary;
           ctx.shadowBlur = 10;
           drawRoundedRect(
             thumbnailX + 1, // Inset border to stay within bounds
@@ -644,7 +666,7 @@ export async function generateMarkdownCoinCard(
       const titleY = contentY + thumbnailHeight + 35;
       ctx.fillStyle = "#ffffff";
       ctx.font = "bold 16px 'Arial', sans-serif";
-      ctx.shadowColor = "#00ff88";
+      ctx.shadowColor = colors.primary;
       ctx.shadowBlur = 8;
       ctx.textAlign = "center";
 
@@ -689,9 +711,9 @@ export async function generateMarkdownCoinCard(
 
       // Draw rounded text box background with consistent styling
       ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
-      ctx.strokeStyle = "rgba(0, 255, 136, 0.5)"; // Slightly more visible
+      ctx.strokeStyle = `${colors.primary}80`; // 50% opacity
       ctx.lineWidth = 2; // Match other border widths
-      ctx.shadowColor = "#00ff88";
+      ctx.shadowColor = colors.primary;
       ctx.shadowBlur = 8; // Add subtle glow
       
       drawRoundedRect(contentBoxX, contentStartY, contentBoxWidth, contentBoxHeight, 8);
@@ -775,9 +797,9 @@ export async function generateMarkdownCoinCard(
       
       // Draw full-width footer background
       ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
-      ctx.strokeStyle = "#00ff88";
+      ctx.strokeStyle = colors.primary;
       ctx.lineWidth = 2;
-      ctx.shadowColor = "#00ff88";
+      ctx.shadowColor = colors.primary;
       ctx.shadowBlur = 8;
       
       drawRoundedRect(footerX, footerY - footerHeight / 2, footerWidth, footerHeight, 6);
@@ -792,9 +814,9 @@ export async function generateMarkdownCoinCard(
       
       // Draw word count circle background
       ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
-      ctx.strokeStyle = "#00ff88";
+      ctx.strokeStyle = colors.primary;
       ctx.lineWidth = 2;
-      ctx.shadowColor = "#00ff88";
+      ctx.shadowColor = colors.primary;
       ctx.shadowBlur = 10;
       
       ctx.beginPath();
@@ -804,19 +826,19 @@ export async function generateMarkdownCoinCard(
       ctx.shadowBlur = 0;
       
       // Word count number - larger font
-      ctx.fillStyle = "#00ff88";
+      ctx.fillStyle = colors.primary;
       ctx.font = "bold 12px 'Arial', sans-serif"; // Increased from 10px to 12px
       ctx.textAlign = "center";
-      ctx.shadowColor = "#00ff88";
+      ctx.shadowColor = colors.primary;
       ctx.shadowBlur = 6;
       ctx.fillText(wordCount.toString(), circleX, circleY + 4);
       ctx.shadowBlur = 0;
       
       // SKATEHIVE CREW text (left side of footer)
-      ctx.fillStyle = "#00ff88";
+      ctx.fillStyle = colors.primary;
       ctx.font = "bold 12px 'Arial', sans-serif"; // Increased font size
       ctx.textAlign = "left";
-      ctx.shadowColor = "#00ff88";
+      ctx.shadowColor = colors.primary;
       ctx.shadowBlur = 8;
       ctx.fillText("SKATEHIVE CREW", footerX + 12, footerY + 4); // Left-aligned with padding
       ctx.shadowBlur = 0;
