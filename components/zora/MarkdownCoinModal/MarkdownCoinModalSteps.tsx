@@ -559,15 +559,6 @@ export function MarkdownCoinModal({
       setCarouselPreview(carousel);
       setCarouselImages(carousel);
 
-      // Verify the state was set
-      setTimeout(() => {
-        console.log(
-          "🔍 Verifying carouselImages state:",
-          carouselImages.length,
-          "images"
-        );
-      }, 100);
-
       // Generate markdown description
       const markdown = convertToMarkdown(post.body);
       setMarkdownDescription(markdown);

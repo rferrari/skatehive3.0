@@ -279,6 +279,10 @@ export async function generateMarkdownCoinCard(
     canvas.width = 400;
     canvas.height = 600;
 
+    // Enable high-quality rendering
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+
     // Helper function for rounded rectangles
     const drawRoundedRect = (
       x: number,
@@ -312,30 +316,43 @@ export async function generateMarkdownCoinCard(
       drawRoundedRect(0, 0, canvas.width, canvas.height, 12);
       ctx.clip();
 
-      // Black background with rounded corners
-      ctx.fillStyle = "#000000";
+      // Black background with subtle gradient for depth
+      const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      gradient.addColorStop(0, "#2a2a2a"); // Lighter at top for depth
+      gradient.addColorStop(0.2, "#1a1a1a"); // Darker 
+      gradient.addColorStop(0.5, "#000000"); // Pure black in middle
+      gradient.addColorStop(0.8, "#0a0a0a"); // Slightly lighter
+      gradient.addColorStop(1, "#1a1a1a"); // Subtle lift at bottom
+      ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Outer lime green border with glow and rounded corners
+      // Outer lime green border with glow and rounded corners - increased margin
       ctx.strokeStyle = "#00ff88";
       ctx.lineWidth = 4;
       ctx.shadowColor = "#00ff88";
       ctx.shadowBlur = 20;
-      drawRoundedRect(8, 8, canvas.width - 16, canvas.height - 16, 8);
+      drawRoundedRect(12, 12, canvas.width - 24, canvas.height - 24, 8);
       ctx.stroke();
       ctx.shadowBlur = 0;
 
-      // Header section - dark background with lime border and rounded corners
-      const headerHeight = 50;
-      ctx.fillStyle = "#0a0a0a";
-      drawRoundedRect(16, 16, canvas.width - 32, headerHeight, 6);
+      // Header section - dark background with subtle gradient and lime border
+      const headerHeight = 70; // Increased from 50 to 70 to accommodate larger elements
+      
+      // Create subtle gradient for header
+      const headerGradient = ctx.createLinearGradient(0, 22, 0, 22 + headerHeight);
+      headerGradient.addColorStop(0, "#1a1a1a"); // Slightly lighter at top
+      headerGradient.addColorStop(0.5, "#0a0a0a"); // Darker in middle
+      headerGradient.addColorStop(1, "#050505"); // Even darker at bottom
+      
+      ctx.fillStyle = headerGradient;
+      drawRoundedRect(22, 22, canvas.width - 44, headerHeight, 6);
       ctx.fill();
 
       ctx.strokeStyle = "#00ff88";
       ctx.lineWidth = 2;
       ctx.shadowColor = "#00ff88";
       ctx.shadowBlur = 10;
-      drawRoundedRect(16, 16, canvas.width - 32, headerHeight, 6);
+      drawRoundedRect(22, 22, canvas.width - 44, headerHeight, 6);
       ctx.stroke();
       ctx.shadowBlur = 0;
     } catch (error) {
@@ -372,11 +389,15 @@ export async function generateMarkdownCoinCard(
         avatarImg.src = avatarUrl;
       });
 
-      const avatarSize = 30;
-      const avatarX = 25;
-      const avatarY = 26;
+      const avatarSize = 48; // Increased from 30 to 48 for better quality
+      const avatarX = 31; // Increased margin from 25 to 31
+      const avatarY = 33; // Adjusted to center in larger header (22 + (70-48)/2 = 33)
 
       try {
+        // Enable smoothing for better image quality
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        
         ctx.save();
         ctx.beginPath();
         ctx.arc(
@@ -390,16 +411,16 @@ export async function generateMarkdownCoinCard(
         ctx.drawImage(avatarImg, avatarX, avatarY, avatarSize, avatarSize);
         ctx.restore();
 
-        // Lime green border around avatar
+        // Lime green border around avatar - adjust for larger size
         ctx.strokeStyle = "#00ff88";
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 3; // Slightly thicker border for larger avatar
         ctx.shadowColor = "#00ff88";
-        ctx.shadowBlur = 5;
+        ctx.shadowBlur = 8; // Increased glow for larger avatar
         ctx.beginPath();
         ctx.arc(
           avatarX + avatarSize / 2,
           avatarY + avatarSize / 2,
-          avatarSize / 2 + 1,
+          avatarSize / 2 + 1.5, // Adjust border radius for thicker line
           0,
           2 * Math.PI
         );
@@ -411,11 +432,11 @@ export async function generateMarkdownCoinCard(
       }
     } catch (error) {
       console.warn("Avatar loading/drawing failed, rendering fallback:", error);
-      // Fallback avatar - simple circle with initial
+      // Fallback avatar - simple circle with initial - match new larger size
       try {
-        const avatarSize = 30;
-        const avatarX = 25;
-        const avatarY = 26;
+        const avatarSize = 48; // Match the new larger avatar size
+        const avatarX = 31; // Match increased margin
+        const avatarY = 33; // Match the adjusted Y position for centered avatar
 
         ctx.fillStyle = "#333";
         ctx.beginPath();
@@ -429,12 +450,12 @@ export async function generateMarkdownCoinCard(
         ctx.fill();
 
         ctx.fillStyle = "#00ff88";
-        ctx.font = "bold 14px 'Arial', sans-serif";
+        ctx.font = "bold 18px 'Arial', sans-serif"; // Larger font for larger avatar
         ctx.textAlign = "center";
         ctx.fillText(
           author[0]?.toUpperCase() || "?",
           avatarX + avatarSize / 2,
-          avatarY + avatarSize / 2 + 5
+          avatarY + avatarSize / 2 + 6 // Adjusted for larger size
         );
         ctx.textAlign = "left";
       } catch (fallbackError) {
@@ -445,12 +466,12 @@ export async function generateMarkdownCoinCard(
 
     // Rest of the drawing code with error handling
     try {
-      // Author name with lime green glow
+      // Author name with lime green glow - adjust position for larger header and centered avatar
       ctx.fillStyle = "#ffffff";
-      ctx.font = "bold 14px 'Arial', sans-serif";
+      ctx.font = "bold 16px 'Arial', sans-serif"; // Slightly larger font
       ctx.shadowColor = "#00ff88";
       ctx.shadowBlur = 8;
-      ctx.fillText(`${author}`, 70, 45);
+      ctx.fillText(`${author}`, 88, 62); // Adjusted for increased margins and centered vertically
       ctx.shadowBlur = 0;
 
       // Skatehive logo stamp
@@ -486,28 +507,35 @@ export async function generateMarkdownCoinCard(
           logoImg.src = "/logos/skatehive-logo-rounded.png";
         });
 
-        const logoSize = 40; // Reduced size for better proportions
-        const logoX = canvas.width - logoSize - 25; // Increased margin from right edge
-        const logoY = 20; // Increased margin from top
+        const logoSize = 50; // Reduced to fit properly in header
+        const logoX = canvas.width - logoSize - 31; // Increased margin from 25 to 31
+        const logoY = 32; // Centered in larger header (22 + (70-50)/2 = 32)
 
+        // Enable high-quality rendering for logo
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        
         // Draw the logo with rounded corners and glow effect
         ctx.save();
         ctx.shadowColor = "#00ff88";
-        ctx.shadowBlur = 10;
+        ctx.shadowBlur = 12; // Increased glow for larger logo
         ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize);
         ctx.restore();
       } catch (error) {
         console.warn("Logo loading failed, falling back to text:", error);
-        // Fallback to original text if logo fails to load
+        // Fallback to text if logo fails to load - match logo area positioning
         ctx.fillStyle = "#00ff88";
-        ctx.font = "bold 10px 'Arial', sans-serif";
-        ctx.fillText("SKATEHIVE", canvas.width - 95, 35); // Adjusted for better margin
-        ctx.fillText("COIN", canvas.width - 95, 50); // Adjusted for better margin
+        ctx.font = "bold 11px 'Arial', sans-serif";
+        ctx.textAlign = "center";
+        const textX = canvas.width - 56; // Adjusted for increased margin (31 + 50/2 = 56)
+        ctx.fillText("SKATEHIVE", textX, 51); // Adjusted for new header height
+        ctx.fillText("COIN", textX, 64);
+        ctx.textAlign = "left"; // Reset text alignment
       }
 
-      // Main content area
-      const contentY = 80;
-      const contentHeight = canvas.height - contentY - 80;
+      // Main content area - adjusted for larger header and increased margins
+      const contentY = 106; // Increased for larger header and margins (22 + 70 + 14 = 106)
+      const contentHeight = canvas.height - contentY - 92; // Increased bottom margin
 
       // Load and draw thumbnail if available
       let thumbnailHeight = 0;
@@ -545,8 +573,8 @@ export async function generateMarkdownCoinCard(
           });
 
           thumbnailHeight = 180;
-          const thumbnailWidth = canvas.width - 32;
-          const thumbnailX = 16;
+          const thumbnailWidth = canvas.width - 44; // Increased margin from 32 to 44
+          const thumbnailX = 22; // Increased margin from 16 to 22
           const thumbnailY = contentY;
 
           // Calculate aspect ratios for proper cropping
@@ -569,28 +597,28 @@ export async function generateMarkdownCoinCard(
             sourceY = (thumbnailImg.height - sourceHeight) / 2;
           }
 
-          // Lime green border around thumbnail with rounded corners
+          // Lime green border around thumbnail with rounded corners - contained within bounds
           ctx.strokeStyle = "#00ff88";
           ctx.lineWidth = 2;
           ctx.shadowColor = "#00ff88";
           ctx.shadowBlur = 10;
           drawRoundedRect(
-            thumbnailX - 2,
-            thumbnailY - 2,
-            thumbnailWidth + 4,
-            thumbnailHeight + 4,
+            thumbnailX + 1, // Inset border to stay within bounds
+            thumbnailY + 1, 
+            thumbnailWidth - 2, // Reduced width for inset border
+            thumbnailHeight - 2, // Reduced height for inset border
             8
           );
           ctx.stroke();
           ctx.shadowBlur = 0;
 
-          // Draw thumbnail with rounded corners using clipping
+          // Draw thumbnail with rounded corners using clipping - match border inset
           ctx.save();
           drawRoundedRect(
-            thumbnailX,
-            thumbnailY,
-            thumbnailWidth,
-            thumbnailHeight,
+            thumbnailX + 2, // Inset to leave space for border
+            thumbnailY + 2,
+            thumbnailWidth - 4, // Adjust for border space
+            thumbnailHeight - 4,
             6
           );
           ctx.clip();
@@ -600,10 +628,10 @@ export async function generateMarkdownCoinCard(
             sourceY,
             sourceWidth,
             sourceHeight,
-            thumbnailX,
-            thumbnailY,
-            thumbnailWidth,
-            thumbnailHeight
+            thumbnailX + 2, // Adjusted draw position
+            thumbnailY + 2,
+            thumbnailWidth - 4, // Adjusted draw size
+            thumbnailHeight - 4
           );
           ctx.restore();
         } catch (error) {
@@ -624,7 +652,7 @@ export async function generateMarkdownCoinCard(
       let line = "";
       let y = titleY;
       const lineHeight = 22;
-      const maxWidth = canvas.width - 32;
+      const maxWidth = canvas.width - 44; // Increased margin from 32 to 44
       let titleLines = 0;
 
       for (let n = 0; n < words.length; n++) {
@@ -653,20 +681,23 @@ export async function generateMarkdownCoinCard(
 
       // Content preview with text box
       const contentStartY = y + 15;
-      const availableHeight = canvas.height - contentStartY - 60;
+      const availableHeight = canvas.height - contentStartY - 72; // Increased bottom margin
       const contentBoxPadding = 12;
-      const contentBoxX = 16;
-      const contentBoxWidth = canvas.width - 32;
+      const contentBoxX = 22; // Increased margin from 16 to 22
+      const contentBoxWidth = canvas.width - 44; // Increased margin from 32 to 44
       const contentBoxHeight = Math.min(availableHeight, 120);
 
-      // Draw rounded text box background
+      // Draw rounded text box background with consistent styling
       ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
-      ctx.strokeStyle = "rgba(0, 255, 136, 0.3)";
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = "rgba(0, 255, 136, 0.5)"; // Slightly more visible
+      ctx.lineWidth = 2; // Match other border widths
+      ctx.shadowColor = "#00ff88";
+      ctx.shadowBlur = 8; // Add subtle glow
       
       drawRoundedRect(contentBoxX, contentStartY, contentBoxWidth, contentBoxHeight, 8);
       ctx.fill();
       ctx.stroke();
+      ctx.shadowBlur = 0; // Reset shadow
 
       // Content text inside the box
       ctx.fillStyle = "#cccccc";
@@ -699,20 +730,96 @@ export async function generateMarkdownCoinCard(
         }
       }
 
+      // Handle the last line and add ellipsis if content is truncated
       if (contentLines < maxContentLines && contentLine.trim()) {
-        ctx.fillText(contentLine, contentBoxX + contentBoxPadding, contentY_text);
+        // Check if content is truncated (either by character limit or if there are more words)
+        const totalProcessedChars = contentWords.slice(0, contentWords.findIndex(word => contentLine.includes(word)) + contentLine.trim().split(' ').length).join(' ').length;
+        const isContentTruncated = cleanedContent.length > 500 || totalProcessedChars < cleanedContent.length;
+        
+        if (isContentTruncated) {
+          // Add ellipsis to indicate more content
+          const lineWithEllipsis = contentLine.trim() + "...";
+          const ellipsisMetrics = ctx.measureText(lineWithEllipsis);
+          
+          // If the line with ellipsis fits, use it; otherwise truncate and add ellipsis
+          if (ellipsisMetrics.width <= maxContentWidth) {
+            ctx.fillText(lineWithEllipsis, contentBoxX + contentBoxPadding, contentY_text);
+          } else {
+            // Truncate the line to fit with ellipsis
+            const words = contentLine.trim().split(' ');
+            let truncatedLine = '';
+            for (let i = 0; i < words.length; i++) {
+              const testTruncated = truncatedLine + words[i] + ' ...';
+              if (ctx.measureText(testTruncated).width <= maxContentWidth) {
+                truncatedLine += words[i] + ' ';
+              } else {
+                break;
+              }
+            }
+            ctx.fillText(truncatedLine.trim() + '...', contentBoxX + contentBoxPadding, contentY_text);
+          }
+        } else {
+          // No truncation needed, draw as is
+          ctx.fillText(contentLine, contentBoxX + contentBoxPadding, contentY_text);
+        }
       }
 
-      // Glowing footer with skatehive branding
-      const footerY = canvas.height - 30; // Moved up slightly for better spacing
-      ctx.fillStyle = "#00ff88";
-      ctx.font = "bold 12px 'Arial', sans-serif";
+      // Enhanced footer design spanning full width with larger word count
+      const footerY = canvas.height - 42; // Increased bottom margin from 30 to 42
+      const footerHeight = 28; // Increased height for larger elements
+      const footerX = 22; // Start at margin
+      const footerWidth = canvas.width - 44; // Full width minus margins
+      
+      // Calculate word count from cleaned content
+      const wordCount = cleanedContent.trim() ? cleanedContent.trim().split(/\s+/).length : 0;
+      
+      // Draw full-width footer background
+      ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+      ctx.strokeStyle = "#00ff88";
+      ctx.lineWidth = 2;
       ctx.shadowColor = "#00ff88";
-      ctx.shadowBlur = 15;
-      ctx.textAlign = "center";
-      ctx.fillText("SKATEHIVE CREW", canvas.width / 2, footerY);
+      ctx.shadowBlur = 8;
+      
+      drawRoundedRect(footerX, footerY - footerHeight / 2, footerWidth, footerHeight, 6);
+      ctx.fill();
+      ctx.stroke();
       ctx.shadowBlur = 0;
+      
+      // Word count circle (bottom right) - larger size
+      const circleRadius = 16; // Increased from 12 to 16
+      const circleX = footerX + footerWidth - circleRadius - 8; // 8px padding from footer edge
+      const circleY = footerY; // Centered vertically in footer
+      
+      // Draw word count circle background
+      ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+      ctx.strokeStyle = "#00ff88";
+      ctx.lineWidth = 2;
+      ctx.shadowColor = "#00ff88";
+      ctx.shadowBlur = 10;
+      
+      ctx.beginPath();
+      ctx.arc(circleX, circleY, circleRadius, 0, 2 * Math.PI);
+      ctx.fill();
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      
+      // Word count number - larger font
+      ctx.fillStyle = "#00ff88";
+      ctx.font = "bold 12px 'Arial', sans-serif"; // Increased from 10px to 12px
+      ctx.textAlign = "center";
+      ctx.shadowColor = "#00ff88";
+      ctx.shadowBlur = 6;
+      ctx.fillText(wordCount.toString(), circleX, circleY + 4);
+      ctx.shadowBlur = 0;
+      
+      // SKATEHIVE CREW text (left side of footer)
+      ctx.fillStyle = "#00ff88";
+      ctx.font = "bold 12px 'Arial', sans-serif"; // Increased font size
       ctx.textAlign = "left";
+      ctx.shadowColor = "#00ff88";
+      ctx.shadowBlur = 8;
+      ctx.fillText("SKATEHIVE CREW", footerX + 12, footerY + 4); // Left-aligned with padding
+      ctx.shadowBlur = 0;
 
       // Restore the canvas context to remove clipping
       ctx.restore();

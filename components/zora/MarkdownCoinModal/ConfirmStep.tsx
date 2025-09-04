@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Box,
   Text,
@@ -18,6 +18,8 @@ import {
   AccordionButton,
   AccordionPanel,
   AccordionIcon,
+  Progress,
+  Spinner,
 } from "@chakra-ui/react";
 import { CheckIcon, InfoIcon } from "@chakra-ui/icons";
 
@@ -48,6 +50,51 @@ export function ConfirmStep({
   author,
 }: ConfirmStepProps) {
   const toast = useToast();
+
+  // Progress tracking for coin creation
+  const [currentProgress, setCurrentProgress] = useState<{
+    step: number;
+    message: string;
+    details: string;
+  } | null>(null);
+
+  const progressSteps = [
+    {
+      step: 1,
+      message: "🖼️ Uploading generated card to IPFS...",
+      details: "Storing your magazine cover image permanently on IPFS",
+    },
+    {
+      step: 2,
+      message: "📸 Uploading carousel images to IPFS...",
+      details: "Securing your selected images on the decentralized web",
+    },
+    {
+      step: 3,
+      message: "📋 Creating metadata structure...",
+      details: "Building the coin metadata with your content details",
+    },
+    {
+      step: 4,
+      message: "🌐 Uploading metadata to IPFS...",
+      details: "Storing coin metadata permanently on IPFS",
+    },
+    {
+      step: 5,
+      message: "🪙 Coining your magazine page...",
+      details: "Calling Zora Protocol to create your coin on Base network",
+    },
+    {
+      step: 6,
+      message: "✅ Preparing transaction...",
+      details: "Building transaction data - wallet popup may take 30-60 seconds to appear",
+    },
+    {
+      step: 7,
+      message: "🔐 Waiting for wallet confirmation...",
+      details: "Please confirm the transaction in your wallet when it appears",
+    },
+  ];
 
   const includedImages = carouselImages.filter((img) => img.isIncluded);
   const generatedCard = carouselImages.find((img) => img.isGenerated);
@@ -226,6 +273,36 @@ export function ConfirmStep({
         }))
       );
 
+      // Simulate progress steps during coin creation
+      const simulateProgress = async () => {
+        try {
+          // Steps 1-5: Normal progression with shorter delays
+          for (let i = 0; i < 5; i++) {
+            setCurrentProgress(progressSteps[i]);
+            await new Promise((resolve) =>
+              setTimeout(resolve, 800 + Math.random() * 700)
+            );
+          }
+          
+          // Step 6: Transaction preparation (this is where the delay usually happens)
+          setCurrentProgress(progressSteps[5]);
+          // Longer delay for this step since transaction building actually takes time
+          await new Promise((resolve) =>
+            setTimeout(resolve, 2000 + Math.random() * 3000)
+          );
+          
+          // Step 7: Wallet confirmation
+          setCurrentProgress(progressSteps[6]);
+        } catch (progressError) {
+          console.warn("Progress simulation interrupted:", progressError);
+          // Don't throw here, let the main onCreate handle errors
+        }
+      };
+
+      // Start progress simulation (don't await, let it run in parallel)
+      const progressPromise = simulateProgress();
+
+      // Call the actual coin creation function
       await onCreate(
         {
           name: title.trim(),
@@ -233,15 +310,19 @@ export function ConfirmStep({
         },
         includedImages
       );
+
+      // Wait for progress simulation to complete if it hasn't already
+      await progressPromise;
+
+      // Clear progress when done
+      setCurrentProgress(null);
     } catch (error) {
-      console.error("❌ CONFIRM STEP: Failed to create coin:", error);
-      toast({
-        title: "Creation Failed",
-        description: "There was an error creating your coin. Please try again.",
-        status: "error",
-        duration: 5000,
-        isClosable: true,
-      });
+      // Don't log the full error - just a summary
+      console.error("❌ ConfirmStep: Coin creation failed");
+      setCurrentProgress(null); // Clear progress on error
+
+      // Re-throw the error so the parent modal can handle it with professional error handling
+      throw error;
     }
   };
 
@@ -262,154 +343,71 @@ export function ConfirmStep({
         </Text>
       </Box>
 
-      {/* Coin Preview */}
-      <Box
-        p={4}
-        bg="muted"
-        borderRadius="md"
-        border="1px solid"
-        borderColor="primary"
-      >
-        <VStack spacing={4} align="stretch">
-          <Text fontSize="md" fontWeight="bold" color="colorBackground">
-            Coin Preview
-          </Text>
-
-          <SimpleGrid columns={[1, 2]} spacing={4}>
-            {/* Card Preview */}
-            <Box>
-              <Text fontSize="sm" color="accent" mb={2}>
-                Cover Card
-              </Text>
-              <Box
-                borderRadius="md"
-                overflow="hidden"
-                border="1px solid"
-                borderColor="primary"
-              >
-                <Image
-                  src={cardPreview}
-                  alt="Coin Card Preview"
-                  width="100%"
-                  height="250px"
-                  objectFit="cover"
-                />
-              </Box>
-            </Box>
-
-            {/* Metadata */}
-            <VStack align="stretch" spacing={3}>
-              <Box>
-                <Text fontSize="sm" color="accent" fontWeight="semibold">
-                  Title
+      {/* Progress Display */}
+      {currentProgress && (
+        <Box
+          p={4}
+          bg="blue.900"
+          borderRadius="md"
+          border="2px solid"
+          borderColor="blue.400"
+          position="relative"
+          overflow="hidden"
+        >
+          <VStack spacing={3} align="stretch">
+            <HStack justify="space-between" align="center">
+              <HStack spacing={3}>
+                <Spinner size="sm" color="blue.400" />
+                <Text fontSize="md" fontWeight="bold" color="white">
+                  {currentProgress.message}
                 </Text>
-                <Text
-                  fontSize="md"
-                  color="colorBackground"
-                  wordBreak="break-word"
-                >
-                  {title}
-                </Text>
-              </Box>
+              </HStack>
+              <Badge colorScheme="blue" fontSize="xs">
+                {currentProgress.step} of {progressSteps.length}
+              </Badge>
+            </HStack>
 
-              <Box>
-                <Text fontSize="sm" color="accent" fontWeight="semibold">
-                  Description
-                </Text>
-                <Text
-                  fontSize="sm"
-                  color="colorBackground"
-                  noOfLines={4}
-                  wordBreak="break-word"
-                >
-                  {markdownDescription}
-                </Text>
-              </Box>
-
-              {author && (
-                <Box>
-                  <Text fontSize="sm" color="accent" fontWeight="semibold">
-                    Author
-                  </Text>
-                  <Text fontSize="sm" color="colorBackground">
-                    @{author}
-                  </Text>
-                </Box>
-              )}
-            </VStack>
-          </SimpleGrid>
-        </VStack>
-      </Box>
-
-      {/* Carousel Images Preview */}
-      <Box
-        p={4}
-        bg="muted"
-        borderRadius="md"
-        border="1px solid"
-        borderColor="primary"
-      >
-        <VStack spacing={4} align="stretch">
-          <HStack justify="space-between" align="center">
-            <Text fontSize="md" fontWeight="bold" color="colorBackground">
-              Carousel Images
+            <Text fontSize="sm" color="blue.200">
+              {currentProgress.details}
             </Text>
-            <Badge colorScheme="blue" fontSize="xs">
-              {includedImages.length} image
-              {includedImages.length !== 1 ? "s" : ""}
-            </Badge>
-          </HStack>
 
-          <SimpleGrid columns={[2, 3, 4]} spacing={3}>
-            {includedImages.slice(0, 8).map((image, index) => (
-              <Box
-                key={index}
-                position="relative"
-                borderRadius="md"
-                overflow="hidden"
-                border="1px solid"
-                borderColor="primary"
-                bg="blackAlpha.300"
-              >
-                <Image
-                  src={image.uri}
-                  alt={`Carousel image ${index + 1}`}
-                  width="100%"
-                  height="80px"
-                  objectFit="cover"
-                />
-                {image.isGenerated && (
-                  <Badge
-                    position="absolute"
-                    top="2px"
-                    left="2px"
-                    colorScheme="green"
-                    fontSize="xs"
-                  >
-                    Card
-                  </Badge>
-                )}
-              </Box>
-            ))}
-            {includedImages.length > 8 && (
-              <Box
-                borderRadius="md"
-                border="1px solid"
-                borderColor="primary"
-                bg="blackAlpha.300"
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-                height="80px"
-              >
-                <Text fontSize="xs" color="accent">
-                  +{includedImages.length - 8} more
-                </Text>
-              </Box>
+            {/* Show helpful tip during transaction preparation */}
+            {currentProgress.step === 6 && (
+              <Alert status="info" bg="blue.800" borderRadius="md">
+                <AlertIcon color="blue.300" />
+                <VStack align="start" spacing={1}>
+                  <Text fontSize="xs" fontWeight="bold" color="blue.100">
+                    💡 Why does this take time?
+                  </Text>
+                  <Text fontSize="xs" color="blue.200">
+                    The app is generating your coin image, uploading to IPFS, and building the blockchain transaction. This process ensures your coin has high-quality metadata and images.
+                  </Text>
+                </VStack>
+              </Alert>
             )}
-          </SimpleGrid>
-        </VStack>
-      </Box>
+
+            <Progress
+              value={(currentProgress.step / progressSteps.length) * 100}
+              colorScheme="blue"
+              size="sm"
+              borderRadius="full"
+              bg="blue.800"
+            />
+          </VStack>
+
+          {/* Animated background effect */}
+          <Box
+            position="absolute"
+            top="0"
+            left="0"
+            right="0"
+            bottom="0"
+            bg="linear-gradient(90deg, transparent 0%, rgba(59, 130, 246, 0.1) 50%, transparent 100%)"
+            animation="shimmer 2s linear infinite"
+            zIndex="0"
+          />
+        </Box>
+      )}
 
       {/* Transaction Details */}
       <Box
@@ -505,7 +503,7 @@ export function ConfirmStep({
                     📄 Metadata JSON
                   </Text>
                   <Text fontSize="xs" color="accent">
-                    NFT metadata structure that will be uploaded to IPFS
+                    Coin metadata structure that will be uploaded to IPFS
                   </Text>
                 </Box>
                 <AccordionIcon color="primary" />
@@ -622,37 +620,8 @@ export function ConfirmStep({
               </AccordionPanel>
             </AccordionItem>
           </Accordion>
-
-          <Alert status="info" borderRadius="md" size="sm">
-            <AlertIcon />
-            <VStack align="start" spacing={1}>
-              <Text fontSize="xs" fontWeight="bold">
-                Real Implementation Data
-              </Text>
-              <Text fontSize="xs">
-                These JSON structures reflect the actual data that will be
-                created and sent to Zora Protocol. Values in [brackets] will be
-                populated with real IPFS hashes and contract addresses during
-                execution.
-              </Text>
-            </VStack>
-          </Alert>
         </VStack>
       </Box>
-
-      {/* Important Notice */}
-      <Alert status="info" borderRadius="md">
-        <AlertIcon />
-        <VStack align="start" spacing={1}>
-          <Text fontSize="sm" fontWeight="bold">
-            Ready to Create
-          </Text>
-          <Text fontSize="xs">
-            Your coin will be minted on the Base network. Make sure you have ETH
-            for gas fees. Once created, the coin cannot be modified.
-          </Text>
-        </VStack>
-      </Alert>
 
       {/* Navigation */}
       <HStack justify="space-between" pt={4}>
@@ -671,7 +640,11 @@ export function ConfirmStep({
           leftIcon={<CheckIcon />}
           onClick={handleCreateCoin}
           isLoading={isCreating}
-          loadingText="Creating Coin..."
+          loadingText={
+            currentProgress
+              ? currentProgress.message.replace(/🖼️|📸|📋|🌐|🪙|✅/g, "").trim()
+              : "Creating Coin..."
+          }
           _loading={{
             bg: "green.700",
             color: "white",

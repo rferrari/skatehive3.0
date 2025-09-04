@@ -23,8 +23,6 @@ import { CarouselStep, CarouselImage } from "./CarouselStep";
 import { ConfirmStep } from "./ConfirmStep";
 import {
   extractThumbnailFromPost,
-  cleanContentForCard,
-  getVideoThumbnail,
   convertToMarkdownDescription,
   generateMarkdownCoinCard,
   extractMarkdownImages,
@@ -89,7 +87,9 @@ export function MarkdownCoinModal({
 
       setIsGeneratingPreview(true);
       try {
-        const avatarUrl = `https://images.hive.blog/u/${post.author}/avatar/sm`;
+        // Use higher quality avatar for better card generation
+        // Try large first, fallback to medium if large doesn't exist
+        const avatarUrl = `https://images.hive.blog/u/${post.author}/avatar/large`;
         // Use selected thumbnail or fall back to extracted thumbnail
         const finalThumbnail =
           thumbnailUrl || selectedThumbnail || extractThumbnailFromPost(post);
@@ -317,15 +317,78 @@ export function MarkdownCoinModal({
         duration: 5000,
         isClosable: true,
       });
-    } catch (error) {
-      console.error("❌ Failed to create coin:", error);
+    } catch (error: any) {
+      // Don't log the full error to avoid console noise - just log a summary
+      console.error(
+        "❌ Coin creation failed - check error handling for details"
+      );
+
+      // Professional error handling for user-friendly messages
+      const errorMessage =
+        error?.message || error?.toString() || "Unknown error";
+      const errorCode = error?.code || error?.cause?.code;
+      const errorName =
+        error?.name || error?.cause?.name || error?.constructor?.name;
+      const errorDetails = error?.details || "";
+
+      let toastTitle = "Coin Creation Failed";
+      let toastDescription = "An unexpected error occurred";
+      let toastStatus: "error" | "info" = "error";
+
+      // User cancelled transaction
+      if (
+        errorCode === 4001 ||
+        errorName === "ContractFunctionExecutionError" ||
+        errorName === "UserRejectedRequestError" ||
+        errorMessage.toLowerCase().includes("user rejected") ||
+        errorMessage.toLowerCase().includes("user denied") ||
+        errorMessage
+          .toLowerCase()
+          .includes("user denied transaction signature") ||
+        errorMessage.toLowerCase().includes("rejected") ||
+        errorMessage.toLowerCase().includes("cancelled") ||
+        errorDetails.toLowerCase().includes("user denied") ||
+        errorDetails.toLowerCase().includes("user rejected")
+      ) {
+        toastTitle = "Transaction Cancelled";
+        toastDescription =
+          "You cancelled the transaction in your wallet. No charges applied!";
+        toastStatus = "info";
+      }
+      // Insufficient funds
+      else if (
+        errorMessage.toLowerCase().includes("insufficient funds") ||
+        errorMessage.toLowerCase().includes("insufficient balance") ||
+        errorMessage.toLowerCase().includes("insufficient gas") ||
+        errorDetails.toLowerCase().includes("insufficient funds") ||
+        errorCode === -32000 ||
+        errorCode === -32003
+      ) {
+        toastTitle = "Insufficient Funds";
+        toastDescription =
+          "You don't have enough ETH to cover the gas fees. Please add more ETH to your wallet.";
+      }
+      // Network issues
+      else if (
+        errorMessage.toLowerCase().includes("network") ||
+        errorMessage.toLowerCase().includes("rpc") ||
+        errorMessage.toLowerCase().includes("connection")
+      ) {
+        toastTitle = "Network Error";
+        toastDescription =
+          "Connection issue. Please check your internet and try again.";
+      }
+      // Keep it generic and user-friendly for other errors
+      else {
+        toastTitle = "Coin Creation Failed";
+        toastDescription =
+          "Something went wrong while creating your coin. Please try again.";
+      }
+
       toast({
-        title: "Coin Creation Failed",
-        description:
-          error instanceof Error
-            ? error.message
-            : "An unexpected error occurred",
-        status: "error",
+        title: toastTitle,
+        description: toastDescription,
+        status: toastStatus,
         duration: 5000,
         isClosable: true,
       });

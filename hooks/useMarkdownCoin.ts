@@ -215,6 +215,16 @@ export function useMarkdownCoin() {
     console.log("- post.title:", post.title);
     console.log("- selectedCarouselImages:", selectedCarouselImages);
     console.log("- selectedCarouselImages length:", selectedCarouselImages?.length || 0);
+    
+    const overallStartTime = Date.now();
+    console.log('⏱️ Starting coin creation process...');
+    
+    // Timing variables
+    let imageStartTime = 0, imageEndTime = 0;
+    let ipfsStartTime = 0, ipfsEndTime = 0;
+    let metadataUploadStartTime = 0, metadataUploadEndTime = 0;
+    let transactionStartTime = 0, transactionEndTime = 0;
+    
     if (!address || !walletClient || !publicClient) {
       throw new Error("Wallet not connected");
     }
@@ -275,9 +285,13 @@ export function useMarkdownCoin() {
       const generatedCardItem = selectedCarouselImages?.find(img => img.isGenerated);
       let nftCardImage: File;
       
+      console.log('🖼️ Image generation phase starting...');
+      imageStartTime = Date.now();
+      
       if (generatedCardItem && generatedCardItem.uri.startsWith('blob:')) {
         // Convert blob URL to File object
         try {
+          console.log('📁 Converting existing blob to file...');
           const response = await fetch(generatedCardItem.uri);
           const blob = await response.blob();
           nftCardImage = new File([blob], 'generated-card.png', { type: 'image/png' });
@@ -285,6 +299,7 @@ export function useMarkdownCoin() {
         } catch (error) {
           console.warn('Failed to fetch generated card from blob URL, falling back to generating new card:', error);
           // Fallback to generating new card
+          console.log('🎨 Generating new card (fallback)...');
           nftCardImage = await generateMarkdownCoinCard(
             post.title,
             post.author,
@@ -296,6 +311,7 @@ export function useMarkdownCoin() {
       } else {
         console.warn('No generated card found in carousel images, generating new card');
         // Fallback to generating new card
+        console.log('🎨 Generating new card (no existing card found)...');
         nftCardImage = await generateMarkdownCoinCard(
           post.title,
           post.author,
@@ -304,6 +320,9 @@ export function useMarkdownCoin() {
           thumbnailUrl || undefined
         );
       }
+      
+      imageEndTime = Date.now();
+      console.log(`✅ Image generation completed in ${imageEndTime - imageStartTime}ms`);
 
       // Extract URLs from selected carousel images (only included ones, excluding generated cards)
       const carouselImageUrls = selectedCarouselImages
@@ -374,6 +393,9 @@ export function useMarkdownCoin() {
 
       // Always use carousel format (even with just the generated card)
       // Upload the carousel JSON to IPFS first
+      console.log('🌐 Starting IPFS uploads...');
+      ipfsStartTime = Date.now();
+      
       const carouselIpfsUrl = await uploadToIpfs(
         new Blob([JSON.stringify(carouselContent, null, 2)], { type: 'application/json' }), 
         'carousel.json'
@@ -385,6 +407,9 @@ export function useMarkdownCoin() {
       
       // Clean the carousel IPFS URL to remove query parameters
       const cleanCarouselIpfsUrl = carouselIpfsUrl.split('?')[0];
+      
+      ipfsEndTime = Date.now();
+      console.log(`✅ IPFS uploads completed in ${ipfsEndTime - ipfsStartTime}ms`);
 
       console.log("=== METADATA BUILDER DEBUG ===");
       console.log("- nftCardImage type:", typeof nftCardImage);
@@ -462,11 +487,15 @@ export function useMarkdownCoin() {
         console.log("✅ Manual metadata created:", JSON.stringify(manualMetadata, null, 2));
         
         // Upload the metadata to IPFS
+        console.log('📤 Uploading final metadata to IPFS...');
+        metadataUploadStartTime = Date.now();
+        
         const metadataBlob = new Blob([JSON.stringify(manualMetadata, null, 2)], { type: 'application/json' });
         const metadataIpfsUrl = await uploadToIpfs(metadataBlob, 'metadata.json');
         cleanMetadataUrl = metadataIpfsUrl.split('?')[0];
         
-        console.log("✅ Metadata uploaded to IPFS:", cleanMetadataUrl);
+        metadataUploadEndTime = Date.now();
+        console.log(`✅ Metadata uploaded to IPFS in ${metadataUploadEndTime - metadataUploadStartTime}ms:`, cleanMetadataUrl);
         
         // Set the metadata object for use outside the try block
         metadataObject = manualMetadata;
@@ -490,6 +519,9 @@ export function useMarkdownCoin() {
       console.log("=====================================");
 
       // Create the coin
+      console.log('🪙 Creating coin on Zora Protocol...');
+      transactionStartTime = Date.now();
+      
       const coinParams = {
         ...createMetadataParameters,
         payoutRecipient: address,
@@ -500,12 +532,19 @@ export function useMarkdownCoin() {
       const result = await createCoin(coinParams, walletClient, publicClient, {
         gasMultiplier: 120, // Add 20% buffer to gas
       });
+      
+      transactionEndTime = Date.now();
+      console.log(`✅ Coin creation transaction completed in ${transactionEndTime - transactionStartTime}ms`);
 
       if (!result?.address) {
         throw new Error("Failed to get coin address from creation result");
       }
 
       const coinAddress = result.address;
+
+      const overallEndTime = Date.now();
+      const totalTime = overallEndTime - overallStartTime;
+      console.log(`🎉 COIN CREATION COMPLETED! Total time: ${totalTime}ms (${(totalTime/1000).toFixed(2)}s)`);
 
       toast({
         title: "Markdown Coin Created!",
@@ -529,6 +568,13 @@ export function useMarkdownCoin() {
           symbol,
           markdownImages: markdownImages.length,
           hasCarousel: markdownImages.length > 0,
+          timing: {
+            total: totalTime,
+            image: `${imageEndTime - imageStartTime}ms`,
+            ipfs: `${ipfsEndTime - ipfsStartTime}ms`,
+            metadata: `${metadataUploadEndTime - metadataUploadStartTime}ms`,
+            transaction: `${transactionEndTime - transactionStartTime}ms`,
+          },
           originalPost: {
             title: post.title,
             author: post.author,
@@ -538,11 +584,64 @@ export function useMarkdownCoin() {
         }
       };
 
-    } catch (error) {
-      console.error("Error creating markdown coin:", error);
+    } catch (error: any) {
+      // Don't log the full error to avoid console noise
+      console.error("❌ useMarkdownCoin: Creation failed");
+      
+      // Professional error handling - check for user cancellation
+      const errorMessage = error?.message || error?.toString() || "Unknown error";
+      const errorCode = error?.code || error?.cause?.code;
+      const errorName = error?.name || error?.cause?.name || error?.constructor?.name;
+      const errorDetails = error?.details || "";
+      
+      let toastTitle = "Failed to create coin";
+      let toastDescription = "Unknown error occurred";
+      
+      // User cancelled transaction - ContractFunctionExecutionError detection
+      if (
+        errorCode === 4001 || 
+        errorName === "ContractFunctionExecutionError" ||
+        errorMessage.toLowerCase().includes("user rejected") ||
+        errorMessage.toLowerCase().includes("user denied") ||
+        errorMessage.toLowerCase().includes("user denied transaction signature") ||
+        errorMessage.toLowerCase().includes("rejected") ||
+        errorMessage.toLowerCase().includes("cancelled") ||
+        errorDetails.toLowerCase().includes("user denied") ||
+        errorDetails.toLowerCase().includes("user rejected")
+      ) {
+        toastTitle = "Transaction Cancelled";
+        toastDescription = "You cancelled the transaction in your wallet";
+      }
+      // Insufficient funds or gas
+      else if (
+        errorMessage.toLowerCase().includes("insufficient funds") ||
+        errorMessage.toLowerCase().includes("insufficient balance") ||
+        errorMessage.toLowerCase().includes("insufficient gas") ||
+        errorMessage.toLowerCase().includes("out of gas") ||
+        errorDetails.toLowerCase().includes("insufficient funds") ||
+        errorCode === -32000 ||
+        errorCode === -32003
+      ) {
+        toastTitle = "Insufficient Funds";
+        toastDescription = "You don't have enough ETH to cover the gas fees";
+      }
+      // Network issues
+      else if (
+        errorMessage.toLowerCase().includes("network") ||
+        errorMessage.toLowerCase().includes("rpc")
+      ) {
+        toastTitle = "Network Error";
+        toastDescription = "Connection issue. Please check your internet and try again";
+      }
+      // Generic error - keep it short
+      else {
+        toastTitle = "Transaction Failed";
+        toastDescription = "Something went wrong. Please try again";
+      }
+      
       toast({
-        title: "Failed to create coin",
-        description: error instanceof Error ? error.message : "Unknown error occurred",
+        title: toastTitle,
+        description: toastDescription,
         status: "error",
         duration: 5000,
         isClosable: true,
