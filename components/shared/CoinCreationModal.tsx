@@ -219,9 +219,6 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({
         {/* Thumbnail Preview */}
         {thumbnailUrl && (
           <Box textAlign="center">
-            <Text fontSize="sm" color="primary" mb={2}>
-              Selected Thumbnail:
-            </Text>
             <Image
               src={thumbnailUrl}
               alt="Selected thumbnail"

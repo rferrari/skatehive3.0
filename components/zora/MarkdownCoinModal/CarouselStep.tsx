@@ -159,16 +159,6 @@ export function CarouselStep({
             : ""}
           .
         </Text>
-        {showThumbnailSelection && selectedThumbnail && (
-          <Text fontSize="xs" color="green.400" mt={1}>
-            Selected thumbnail:{" "}
-            {selectedThumbnail ===
-            carouselImages.find((img) => img.uri === selectedThumbnail)?.uri
-              ? carouselImages.find((img) => img.uri === selectedThumbnail)
-                  ?.type || "Image"
-              : "Post thumbnail"}
-          </Text>
-        )}
       </Box>
 
       {carouselImages.length > 1 ? (

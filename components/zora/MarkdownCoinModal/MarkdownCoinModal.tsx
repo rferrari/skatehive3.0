@@ -502,6 +502,7 @@ export function MarkdownCoinModal({
               isCreating={isCreating}
               onBack={() => setCurrentStep("cover")}
               onCreate={handleCreateCoin}
+              author={post.author}
             />
           )}
 
