@@ -314,26 +314,33 @@ export function CarouselStep({
                     {/* Thumbnail selection button for thumbnail selection mode */}
                     {showThumbnailSelection && onThumbnailSelect && (
                       <Button
-                        size="xs"
+                        size="sm"
                         position="absolute"
-                        bottom="1"
-                        left="1"
+                        bottom="2"
+                        left="2"
+                        right="2"
                         colorScheme={
-                          selectedThumbnail === item.uri ? "yellow" : "gray"
+                          selectedThumbnail === item.uri ? "green" : "blue"
                         }
-                        variant={
-                          selectedThumbnail === item.uri ? "solid" : "outline"
-                        }
+                        variant="solid"
                         onClick={(e) => {
                           e.stopPropagation();
                           onThumbnailSelect(item.uri);
                         }}
-                        fontSize="9px"
-                        px={1}
-                        py={0}
-                        h="18px"
+                        fontSize="11px"
+                        fontWeight="bold"
+                        px={2}
+                        py={1}
+                        h="24px"
+                        borderRadius="md"
+                        boxShadow="0 2px 4px rgba(0,0,0,0.3)"
+                        _hover={{
+                          transform: "scale(1.05)",
+                          boxShadow: "0 4px 8px rgba(0,0,0,0.4)",
+                        }}
+                        transition="all 0.2s"
                       >
-                        {selectedThumbnail === item.uri ? "✓" : "Use"}
+                        {selectedThumbnail === item.uri ? "✓ SELECTED" : "USE"}
                       </Button>
                     )}
 

@@ -303,6 +303,19 @@ export function MarkdownCoinModal({
     }
   }, [selectedColors]);
 
+  // Auto-regenerate preview when thumbnail selection changes
+  useEffect(() => {
+    if (hasInitialized && post && editableTitle && editableDescription && cardPreview) {
+      console.log("🖼️ Thumbnail changed, regenerating preview...", selectedThumbnail);
+      // Small delay to ensure state has updated
+      const timer = setTimeout(() => {
+        generatePreview();
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [selectedThumbnail]);
+
   const handleCreateCoin = async (
     metadata: {
       name: string;
