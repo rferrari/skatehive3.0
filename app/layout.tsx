@@ -125,12 +125,12 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${vt323.variable}`}
-      data-theme="skate"
-      style={{ colorScheme: "dark" }}
+      translate="no"
+      className={`notranslate ${vt323.variable}`}
       suppressHydrationWarning
     >
       <head>
+        <meta name="google" content="notranslate" />
         {/* Preconnect to IPFS gateway for faster video loading */}
         <link rel="preconnect" href="https://ipfs.skatehive.app" />
       </head>

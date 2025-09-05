@@ -9,6 +9,12 @@ declare module 'exifr' {
   export function gps(file: File): Promise<{ latitude?: number; longitude?: number } | undefined>;
 }
 
+declare module 'react' {
+  interface HTMLAttributes<T> {
+    translate?: 'yes' | 'no';
+  }
+}
+
 interface HTMLMediaElement {
   captureStream(frameRate?: number): MediaStream;
 }

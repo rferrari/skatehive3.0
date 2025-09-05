@@ -64,6 +64,7 @@ export default function HomePageClient() {
           scrollbarWidth: "none",
         }}
         id="scrollableDiv"
+        className="notranslate"
       >
         {/* Always show SnapList */}
         <SnapList
