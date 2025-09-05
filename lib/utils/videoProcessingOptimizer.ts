@@ -266,7 +266,7 @@ export function optimizeUploadParams(
   const isMobile = deviceCapabilities.isAndroid || deviceCapabilities.isIOS;
   
   return {
-    chunkSize: isMobile ? 5 * 1024 * 1024 : 10 * 1024 * 1024, // 5MB mobile, 10MB desktop
+    chunkSize: isMobile ? 10 * 1024 * 1024 : 10 * 1024 * 1024, // 10MB mobile, 10MB desktop
     timeout: isMobile ? 180000 : 120000, // 3min mobile, 2min desktop
     retries: fileSizeMB > 20 ? 5 : 3, // More retries for large files
     endpoint: isMobile ? "/api/pinata-mobile" : "/api/pinata",

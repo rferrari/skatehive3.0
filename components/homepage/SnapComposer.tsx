@@ -32,7 +32,9 @@ import ImageCompressor from "@/lib/utils/ImageCompressor";
 import { ImageCompressorRef } from "@/lib/utils/ImageCompressor";
 import imageCompression from "browser-image-compression";
 
-import GIFMakerWithSelector, { GIFMakerRef as GIFMakerWithSelectorRef } from "./GIFMakerWithSelector";
+import GIFMakerWithSelector, {
+  GIFMakerRef as GIFMakerWithSelectorRef,
+} from "./GIFMakerWithSelector";
 import useHivePower from "@/hooks/useHivePower";
 import { useInstagramHealth } from "@/hooks/useInstagramHealth";
 import { TbGif } from "react-icons/tb";
@@ -81,10 +83,6 @@ const SnapComposer = React.memo(function SnapComposer({
   const [isGifMakerOpen, setGifMakerOpen] = useState(false);
   const gifMakerWithSelectorRef = useRef<GIFMakerWithSelectorRef>(null);
   const [isProcessingGif, setIsProcessingGif] = useState(false);
-  const [isUploadingGif, setIsUploadingGif] = useState(false);
-  const [gifUrl, setGifUrl] = useState<string | null>(null);
-  const [gifSize, setGifSize] = useState<number | null>(null);
-  const [gifCaption, setGifCaption] = useState<string>("skatehive-gif");
 
   // Instagram modal state
   const [isInstagramModalOpen, setInstagramModalOpen] = useState(false);
@@ -94,12 +92,8 @@ const SnapComposer = React.memo(function SnapComposer({
     if (isInstagramModalOpen) return 120000; // 2 minutes when modal is open
     return -1; // Check once on mount only when modal is closed
   }, [isInstagramModalOpen]);
-  
-  const instagramHealth = useInstagramHealth(instagramCheckInterval);
 
-  const [gifUrls, setGifUrls] = useState<{ url: string; caption: string }[]>(
-    []
-  );
+  const instagramHealth = useInstagramHealth(instagramCheckInterval);
 
   // Drag and drop state
   const [isDragOver, setIsDragOver] = useState(false);
@@ -117,9 +111,15 @@ const SnapComposer = React.memo(function SnapComposer({
 
   // Get user's Hive Power to determine if they can bypass the 15s limit
   const { hivePower } = useHivePower(user || "");
-  const canBypassLimit = useMemo(() => hivePower !== null && hivePower >= 100, [hivePower]);
+  const canBypassLimit = useMemo(
+    () => hivePower !== null && hivePower >= 100,
+    [hivePower]
+  );
 
-  const buttonText = useMemo(() => submitLabel || (post ? "Reply" : "Post"), [submitLabel, post]);
+  const buttonText = useMemo(
+    () => submitLabel || (post ? "Reply" : "Post"),
+    [submitLabel, post]
+  );
 
   // Function to extract hashtags from text - memoized
   const extractHashtags = useCallback((text: string): string[] => {
@@ -130,7 +130,10 @@ const SnapComposer = React.memo(function SnapComposer({
 
   // Helper functions to manage upload count - memoized
   const startUpload = useCallback(() => setUploadCount((c) => c + 1), []);
-  const finishUpload = useCallback(() => setUploadCount((c) => Math.max(0, c - 1)), []);
+  const finishUpload = useCallback(
+    () => setUploadCount((c) => Math.max(0, c - 1)),
+    []
+  );
 
   // Helper function to get video duration
   const getVideoDuration = (file: File): Promise<number> => {
@@ -257,9 +260,9 @@ const SnapComposer = React.memo(function SnapComposer({
       alert("Only GIF and WEBP files are allowed.");
       return;
     }
-    // Check file size (limit to 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      alert("GIF or WEBP file size must be 5MB or less.");
+    // Check file size (limit to 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      alert("GIF or WEBP file size must be 10MB or less.");
       return;
     }
     startUpload();
@@ -473,11 +476,14 @@ const SnapComposer = React.memo(function SnapComposer({
   ]);
 
   // Detect Ctrl+Enter and submit - memoized
-  const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.ctrlKey && event.key === "Enter") {
-      handleComment();
-    }
-  }, [handleComment]);
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (event.ctrlKey && event.key === "Enter") {
+        handleComment();
+      }
+    },
+    [handleComment]
+  );
 
   // Drag and drop handlers - memoized
   const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
@@ -547,35 +553,35 @@ const SnapComposer = React.memo(function SnapComposer({
     setVideoProcessingError(null); // Clear any previous errors
     startUpload();
   }, [startUpload]);
-  
-  const handleVideoUploadFinish = useCallback(() => finishUpload(), [finishUpload]);
-  
+
+  const handleVideoUploadFinish = useCallback(
+    () => finishUpload(),
+    [finishUpload]
+  );
+
   const handleVideoError = useCallback((error: string) => {
     setVideoProcessingError(error);
   }, []);
 
   // Instagram handler - memoized
-  const handleInstagramMediaDownloaded = useCallback((
-    url: string,
-    filename: string,
-    isVideo: boolean
-  ) => {
-    if (isVideo) {
-      setVideoUrl(url);
-    } else {
-      // Add to compressed images array for images
-      setCompressedImages((prev) => [
-        ...prev,
-        {
-          url: url,
-          fileName: filename,
-          caption: filename.replace(/\.[^/.]+$/, ""), // Remove file extension for caption
-        },
-      ]);
-    }
-  }, []);
-
-
+  const handleInstagramMediaDownloaded = useCallback(
+    (url: string, filename: string, isVideo: boolean) => {
+      if (isVideo) {
+        setVideoUrl(url);
+      } else {
+        // Add to compressed images array for images
+        setCompressedImages((prev) => [
+          ...prev,
+          {
+            url: url,
+            fileName: filename,
+            caption: filename.replace(/\.[^/.]+$/, ""), // Remove file extension for caption
+          },
+        ]);
+      }
+    },
+    []
+  );
 
   // Only render the composer if user is logged in
   if (!user) return null;
@@ -598,7 +604,7 @@ const SnapComposer = React.memo(function SnapComposer({
           <MatrixOverlay />
         </Box>
       )}
-      
+
       {/* Snap Composer UI, blurred and unclickable if not logged in */}
       <Box
         position="relative"
@@ -655,7 +661,7 @@ const SnapComposer = React.memo(function SnapComposer({
             onKeyDown={handleKeyDown} // Attach the keydown handler
             _focusVisible={{ border: "tb1" }}
           />
-          
+
           {/* Media Preview Section - Videos first, then images/GIFs */}
           {(compressedImages.length > 0 || selectedGif || videoUrl) && (
             <Wrap spacing={4} mb={3}>
@@ -704,7 +710,7 @@ const SnapComposer = React.memo(function SnapComposer({
                   />
                 </Box>
               )}
-              
+
               {/* Then images and GIFs */}
               {compressedImages.map((img, index) => (
                 <Box key={index} position="relative" maxW="200px">
@@ -776,8 +782,6 @@ const SnapComposer = React.memo(function SnapComposer({
                   />
                 </Box>
               )}
-
-
             </Wrap>
           )}
 

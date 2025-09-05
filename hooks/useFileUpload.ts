@@ -149,8 +149,8 @@ export const useGifUpload = () => {
             return;
         }
         
-        if (file.size > 5 * 1024 * 1024) {
-            alert("GIF or WEBP file size must be 5MB or less.");
+        if (file.size > 10 * 1024 * 1024) {
+            alert("GIF or WEBP file size must be 10MB or less.");
             return;
         }
         
