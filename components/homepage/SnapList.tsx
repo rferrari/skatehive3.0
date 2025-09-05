@@ -24,7 +24,7 @@ import CoinCreatorComposer from "./CoinCreatorComposer";
 import { AirdropModal } from "../airdrop/AirdropModal";
 import { Discussion } from "@hiveio/dhive"; // Add this import for consistency
 import LogoMatrix from "../graphics/LogoMatrix";
-import { countDownvotes } from "@/lib/utils/postUtils";
+import { countDownvotes, deduplicateVotes, filterQualityContent } from "@/lib/utils/postUtils";
 import { useAioha } from "@aioha/react-ui";
 import { useAccount } from "wagmi";
 import SidebarLogo from "../graphics/SidebarLogo";
@@ -118,14 +118,7 @@ export default function SnapList({
     }
   };
 
-  const filteredAndSortedComments = [...displayedComments]
-    .filter((discussion: Discussion) => {
-      const downvoteCount = countDownvotes(discussion.active_votes);
-      // Filter out posts with 2 or more downvotes (community disapproval)
-      const shouldShow = downvoteCount < 2;
-
-      return shouldShow;
-    })
+  const filteredAndSortedComments = filterQualityContent([...displayedComments])
     .sort((a: Discussion, b: Discussion) => {
       // Sort by creation date (newest first) instead of payout value
       // This ensures users see the latest content first, including new Zora posts

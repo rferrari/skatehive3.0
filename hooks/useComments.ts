@@ -2,6 +2,7 @@
 import HiveClient from "@/lib/hive/hiveclient"
 import { useCallback, useEffect, useState } from "react"
 import { Discussion } from "@hiveio/dhive"
+import { filterQualityContent } from '@/lib/utils/postUtils'
 
 
 export interface ListCommentsParams {
@@ -22,17 +23,22 @@ async function fetchComments(
             permlink,
         ])) as Discussion[];
 
+        // Apply quality filtering to all comments
+        const filteredComments = filterQualityContent(comments);
+
         if (recursive) {
             const fetchReplies = async (discussion: Discussion): Promise<Discussion> => {
                 if (discussion.children && discussion.children > 0) {
-                    discussion.replies = await fetchComments(discussion.author, discussion.permlink, true) as any;
+                    const replies = await fetchComments(discussion.author, discussion.permlink, true);
+                    // Apply filtering to nested replies as well
+                    discussion.replies = filterQualityContent(replies) as any;
                 }
                 return discussion;
             };
-            const commentsWithReplies = await Promise.all(comments.map(fetchReplies));
+            const commentsWithReplies = await Promise.all(filteredComments.map(fetchReplies));
             return commentsWithReplies;
         } else {
-            return comments;
+            return filteredComments;
         }
     } catch (error) {
         console.error("Failed to fetch comments:", error);

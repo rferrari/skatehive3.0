@@ -408,12 +408,11 @@ const Conversation = ({
       if (!comment) return;
 
       try {
-        // Import fetchComments dynamically to avoid circular dependencies
-        const { fetchComments } = await import("@/lib/hive/fetchComments");
-        const replies = await fetchComments(
+        // Import fetchFilteredReplies dynamically to avoid circular dependencies
+        const { fetchFilteredReplies } = await import("@/lib/utils/snapUtils");
+        const replies = await fetchFilteredReplies(
           comment.author,
-          comment.permlink,
-          false
+          comment.permlink
         );
 
         // Store the replies in the comment object for rendering

@@ -70,9 +70,35 @@ export async function loginWithKeychain(username: string) {
 }
 
 export function getReputation(rep: number) {
+  // Handle edge case where reputation is 0 to avoid -Infinity
+  if (rep === 0) {
+    return 25; // Default starting reputation on Hive
+  }
+  
   let out = ((Math.log10(Math.abs(rep)) - 9) * 9) + 25;
   out = Math.round(out);
   return out;
+}
+
+/**
+ * Get account reputations using Hive API (alternative to manual calculation)
+ * This could be used as an alternative to getReputation for more accurate results
+ */
+export async function getAccountReputations(accounts: string[]) {
+  try {
+    const reputations = await HiveClient.call('reputation_api', 'get_account_reputations', {
+      accounts: accounts,
+      limit: accounts.length
+    });
+    return reputations;
+  } catch (error) {
+    console.error('Error fetching account reputations:', error);
+    // Fallback to manual calculation
+    return accounts.map(account => ({
+      account: account,
+      reputation: 25 // Default reputation
+    }));
+  }
 }
 
 export async function transferWithKeychain(username: string, destination: string, amount: string, memo: string, currency: string) {

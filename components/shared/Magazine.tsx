@@ -21,6 +21,7 @@ import {
 import HTMLFlipBook from "react-pageflip";
 import { Discussion } from "@hiveio/dhive";
 import { getPayoutValue, findPosts } from "@/lib/hive/client-functions";
+import { filterQualityContent } from "@/lib/utils/postUtils";
 const EnhancedMarkdownRenderer = lazy(() =>
   import("@/components/markdown/EnhancedMarkdownRenderer").then((module) => ({
     default: module.EnhancedMarkdownRenderer,
@@ -209,11 +210,16 @@ export default function Magazine(props: MagazineProps) {
   // Memoize filtered and sorted posts for performance - limit initial render
   const filteredPosts = useMemo(() => {
     if (!posts || !isInitialized) return [];
-    // Limit to first 10 posts initially for better performance
-    const sortedPosts = posts.sort(
+    
+    // First apply quality filters (reputation and downvote filtering)
+    const qualityFilteredPosts = filterQualityContent(posts);
+    
+    // Then sort by payout value
+    const sortedPosts = qualityFilteredPosts.sort(
       (a, b) =>
         Number(getPayoutValue(b as any)) - Number(getPayoutValue(a as any))
     );
+    
     // For initial load, limit to 10 posts to reduce render time
     return sortedPosts.slice(0, 10);
   }, [posts, isInitialized]);

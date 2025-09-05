@@ -75,3 +75,45 @@ export function countDownvotes(activeVotes: any[]): number {
     return downvotes.length;
 }
 
+/**
+ * Filter discussions/posts based on reputation and downvote criteria
+ * Filters out:
+ * - Posts from accounts with reputation less than 0
+ * - Posts with 2 or more downvotes
+ */
+export function filterQualityContent(discussions: any[]): any[] {
+    // Import getReputation from client-functions to avoid duplication
+    const { getReputation } = require('@/lib/hive/client-functions');
+    
+    return discussions.filter((discussion: any) => {
+        // Deduplicate votes first to ensure accurate counting
+        const deduplicatedVotes = deduplicateVotes(discussion.active_votes || []);
+        const downvoteCount = countDownvotes(deduplicatedVotes);
+        
+        // Get author reputation and convert to readable format
+        // getReputation now handles the 0 reputation edge case properly
+        const rawReputation = discussion.author_reputation || 0;
+        const authorReputation = getReputation(rawReputation);
+        
+        // Filter conditions:
+        // 1. Filter out posts with 2 or more downvotes (community disapproval)
+        // 2. Filter out posts from accounts with reputation less than 0
+        const hasAcceptableDownvotes = downvoteCount < 2;
+        const hasAcceptableReputation = authorReputation >= 0;
+        
+        const shouldShow = hasAcceptableDownvotes && hasAcceptableReputation;
+
+        // Debug: Log posts that are being filtered out
+        if (!shouldShow && process.env.NODE_ENV === "development") {
+            console.log(`🚫 Filtering out post ${discussion.permlink}:`);
+            console.log(`   - Author: ${discussion.author}`);
+            console.log(`   - Reputation: ${authorReputation} (raw: ${rawReputation})`);
+            console.log(`   - Downvotes: ${downvoteCount}`);
+            console.log(`   - Acceptable downvotes: ${hasAcceptableDownvotes}`);
+            console.log(`   - Acceptable reputation: ${hasAcceptableReputation}`);
+        }
+
+        return shouldShow;
+    });
+}
+

@@ -25,8 +25,7 @@ import { UpvoteButton } from "@/components/shared";
 import EditPostModal from "./EditPostModal";
 import ShareMenuButtons from "./ShareMenuButtons";
 import useHivePower from "@/hooks/useHivePower";
-import { fetchComments } from "@/lib/hive/fetchComments";
-import { separateContent } from "@/lib/utils/snapUtils";
+import { separateContent, fetchFilteredReplies } from "@/lib/utils/snapUtils";
 import { SlPencil } from "react-icons/sl";
 import { usePostEdit } from "@/hooks/usePostEdit";
 import {
@@ -131,7 +130,7 @@ const Snap = ({
     if (!inlineComposerStates[permlink]) {
       setInlineRepliesLoading((prev) => ({ ...prev, [permlink]: true }));
       try {
-        const replies = await fetchRepliesForPermlink(
+        const replies = await fetchFilteredReplies(
           discussion.author,
           permlink
         );
@@ -142,11 +141,6 @@ const Snap = ({
         setInlineRepliesLoading((prev) => ({ ...prev, [permlink]: false }));
       }
     }
-  }
-
-  // Helper to fetch replies for a given author/permlink
-  async function fetchRepliesForPermlink(author: string, permlink: string) {
-    return fetchComments(author, permlink, false);
   }
 
   const authorPayout = parsePayout(discussion.total_payout_value);
