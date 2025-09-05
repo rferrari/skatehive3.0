@@ -94,8 +94,8 @@
     "@types/jsdom": "^21.1.7",
     "@types/node": "^22.15.29",
     "@types/nodemailer": "^6.4.17",
-    "@types/react": "^19.1.6",
-    "@types/react-dom": "^19.1.5",
+    "@types/react": "^18.3.24",
+    "@types/react-dom": "^18.3.7",
     "@types/react-select-country-list": "^2.2.3",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.27.0",
@@ -116,8 +116,8 @@
       }
     },
     "overrides": {
-      "@types/react": "^19.1.6",
-      "@types/react-dom": "^19.1.5",
+      "@types/react": "^18.3.24",
+      "@types/react-dom": "^18.3.7",
       "@farcaster/frame-sdk": "npm:@farcaster/miniapp-sdk@^0.1.7",
       "@farcaster/frame-wagmi-connector": "npm:@farcaster/miniapp-wagmi-connector@^1.0.0",
       "cuer": "0.0.2"
