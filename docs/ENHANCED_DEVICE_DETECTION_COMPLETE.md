@@ -7,11 +7,13 @@ I have successfully implemented the enhanced device detection logic you provided
 ### 🔧 **Key Improvements Made**
 
 1. **Enhanced Device Type Detection**
+
    - `desktop` - for laptops and PCs
-   - `mobile` - for smartphones  
+   - `mobile` - for smartphones
    - `tablet` - specifically for tablets (iPad)
 
 2. **Precise Operating System Detection**
+
    - `macOS` - for Mac computers
    - `Windows` - for Windows PCs
    - `Linux` - for Linux systems
@@ -28,38 +30,40 @@ I have successfully implemented the enhanced device detection logic you provided
 
 When you upload a video from your MacBook, the dashboard will now show:
 
-| Your Device | Device Info | Dashboard Display |
-|-------------|-------------|------------------|
-| MacBook + Chrome | `desktop/macOS/Chrome` | 💻 Mac |
-| MacBook + Safari | `desktop/macOS/Safari` | 💻 Mac |
-| iPhone + Safari | `mobile/iOS/Safari` | 📱 iPhone |
-| Android + Chrome | `mobile/Android/Chrome` | 📱 Android |
+| Your Device      | Device Info             | Dashboard Display |
+| ---------------- | ----------------------- | ----------------- |
+| MacBook + Chrome | `desktop/macOS/Chrome`  | 💻 Mac            |
+| MacBook + Safari | `desktop/macOS/Safari`  | 💻 Mac            |
+| iPhone + Safari  | `mobile/iOS/Safari`     | 📱 iPhone         |
+| Android + Chrome | `mobile/Android/Chrome` | 📱 Android        |
 
 ### 🎯 **What Changed in the Code**
 
 #### 1. **Enhanced Detection Function**
+
 ```typescript
 // NEW: Advanced device detection
 function getDetailedDeviceInfo() {
   const ua = navigator.userAgent;
   const platform = navigator.platform;
-  
+
   // Enhanced device type detection
-  let deviceType = 'desktop';
+  let deviceType = "desktop";
   if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua)) {
-    deviceType = 'mobile';
-    if (/iPad/i.test(ua)) deviceType = 'tablet';
+    deviceType = "mobile";
+    if (/iPad/i.test(ua)) deviceType = "tablet";
   }
-  
+
   // Enhanced OS detection
-  let os = 'unknown';
-  if (/Mac/i.test(platform)) os = 'macOS';
-  else if (/Win/i.test(platform)) os = 'Windows';
+  let os = "unknown";
+  if (/Mac/i.test(platform)) os = "macOS";
+  else if (/Win/i.test(platform)) os = "Windows";
   // ... more precise detection
 }
 ```
 
 #### 2. **Files Updated**
+
 - ✅ `services/videoApiService.ts` - Core service enhanced detection
 - ✅ `components/homepage/VideoUploader.tsx` - UI component with improved detection
 - ✅ `lib/utils/videoUpload.ts` - IPFS upload with enhanced device data
@@ -68,6 +72,7 @@ function getDetailedDeviceInfo() {
 #### 3. **Data Quality Improvement**
 
 **BEFORE (old detection):**
+
 ```javascript
 {
   platform: "web",
@@ -77,10 +82,11 @@ function getDetailedDeviceInfo() {
 ```
 
 **AFTER (enhanced detection):**
+
 ```javascript
 {
   platform: "desktop",
-  deviceInfo: "desktop/macOS/Chrome", 
+  deviceInfo: "desktop/macOS/Chrome",
   browserInfo: "Chrome on macOS"
 }
 ```
@@ -88,16 +94,18 @@ function getDetailedDeviceInfo() {
 ### 🧪 **Testing Instructions**
 
 1. **Test from your MacBook:**
+
    ```bash
    # Open browser console and check logs during video upload
    # Should see: "desktop/macOS/Chrome" or "desktop/macOS/Safari"
    ```
 
 2. **Expected console output:**
+
    ```
    📤 IPFS upload started: {
      fileName: "video.mp4",
-     creator: "your_username", 
+     creator: "your_username",
      platform: "desktop",
      deviceInfo: "desktop/macOS/Chrome"
    }
@@ -120,6 +128,7 @@ function getDetailedDeviceInfo() {
 ### 🚀 **Ready for Production**
 
 The enhanced device detection is now:
+
 - ✅ **Implemented** in all video upload paths
 - ✅ **Tested** for compilation errors
 - ✅ **Documented** with examples and test cases
