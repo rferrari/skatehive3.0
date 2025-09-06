@@ -125,10 +125,6 @@ const InstagramModal: React.FC<InstagramModalProps> = ({
               <Text fontSize="sm" color="gray.600" mb={2}>
                 Paste an Instagram post or reel URL:
               </Text>
-              <Text fontSize="xs" color="gray.500" mb={2}>
-                Note: Due to Instagram's restrictions, some content may not be
-                available or may hit rate limits.
-              </Text>
               <Input
                 placeholder="https://www.instagram.com/username/reel/ABC123..."
                 value={url}
