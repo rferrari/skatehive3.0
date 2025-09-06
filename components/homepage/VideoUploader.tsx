@@ -6,6 +6,7 @@ import React, {
   forwardRef,
   useState,
 } from "react";
+
 import {
   isMP4,
   validateVideo,
@@ -20,7 +21,7 @@ import { useHiveUser } from "@/contexts/UserContext";
 import useHivePower from "@/hooks/useHivePower";
 
 export interface VideoUploaderProps {
-  onUpload: (url: string | null) => void;
+  onUpload: (result: { url?: string; skateHiveUrl?: string; hash?: string } | null) => void;
   username?: string;
   onUploadStart?: () => void;
   onUploadFinish?: () => void;
@@ -87,6 +88,11 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
       };
     };
 
+    // Generate correlation ID for request tracking
+    const generateCorrelationId = (): string => {
+      return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    };
+
     const processFile = async (file: File) => {
       if (isProcessing) return;
 
@@ -102,6 +108,8 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
 
         // 2. Prepare enhanced options with device and user information
         const deviceData = getDetailedDeviceInfo();
+        const correlationId = generateCorrelationId();
+        
         const enhancedOptions: EnhancedUploadOptions = {
           userHP: hivePower || 0,
           platform: deviceData.platform,
@@ -109,14 +117,27 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
           deviceInfo: deviceData.deviceInfo,
           browserInfo: deviceData.browserInfo,
           connectionType: deviceData.connectionType,
+          sessionId: correlationId,
         };
+
+        console.log('📤 Enhanced video upload started:', {
+          creator: username,
+          platform: deviceData.platform,
+          deviceInfo: deviceData.deviceInfo,
+          correlationId,
+          fileSize: `${(file.size / 1024 / 1024).toFixed(2)}MB`,
+        });
 
         // 3. Check if MP4 - direct upload with enhanced options
         if (isMP4(file)) {
           const result = await uploadToIPFS(file, username, enhancedOptions);
 
           if (result.success && result.url) {
-            onUpload(result.url);
+            onUpload({
+              url: result.url,
+              skateHiveUrl: result.skateHiveUrl,
+              hash: result.hash
+            });
           } else {
             throw new Error(result.error || "Upload failed");
           }
@@ -131,6 +152,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
           deviceInfo: enhancedOptions.deviceInfo,
           browserInfo: enhancedOptions.browserInfo,
           connectionType: enhancedOptions.connectionType,
+          sessionId: correlationId,
         };
 
         const result = await processVideoOnServer(
@@ -140,7 +162,11 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         );
 
         if (result.success && result.url) {
-          onUpload(result.url);
+          onUpload({
+            url: result.url,
+            skateHiveUrl: result.skateHiveUrl,
+            hash: result.hash
+          });
         } else {
           throw new Error(result.error || "Server processing failed");
         }

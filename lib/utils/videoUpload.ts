@@ -5,6 +5,8 @@
 export interface UploadResult {
   success: boolean;
   url?: string;
+  skateHiveUrl?: string;  // Iframe-friendly URL using Skatehive IPFS gateway
+  hash?: string;          // IPFS hash for reference
   error?: string;
 }
 
@@ -48,6 +50,7 @@ export interface EnhancedUploadOptions {
   browserInfo?: string;
   viewport?: string;
   connectionType?: string;
+  sessionId?: string;        // Correlation ID for tracking
 }
 
 /**
@@ -138,6 +141,10 @@ export async function uploadToIPFS(
     if (deviceData.connectionType !== 'unknown') {
       formData.append('connectionType', deviceData.connectionType);
     }
+    
+    if (enhancedOptions?.sessionId) {
+      formData.append('correlationId', enhancedOptions.sessionId);
+    }
 
     const response = await fetch('/api/pinata', {
       method: 'POST',
@@ -161,9 +168,19 @@ export async function uploadToIPFS(
       deviceInfo: deviceData.deviceInfo
     });
 
+    const ipfsUrl = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`;
+    
+    console.log('📺 Video URLs generated:', {
+      ipfs: ipfsUrl,
+      skateHiveUrl: `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`,
+      hash: result.IpfsHash
+    });
+
     return {
       success: true,
-      url: `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`
+      url: ipfsUrl,
+      skateHiveUrl: `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`,
+      hash: result.IpfsHash
     };
 
   } catch (error) {

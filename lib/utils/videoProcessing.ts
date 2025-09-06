@@ -5,6 +5,8 @@
 export interface ProcessingResult {
   success: boolean;
   url?: string;
+  skateHiveUrl?: string;  // Iframe-friendly URL using Skatehive IPFS gateway
+  hash?: string;          // IPFS hash for reference
   error?: string;
 }
 
@@ -18,6 +20,7 @@ export interface EnhancedProcessingOptions {
   browserInfo?: string;
   viewport?: string;
   connectionType?: string;
+  sessionId?: string;        // Correlation ID for tracking
 }
 
 /**
@@ -103,6 +106,9 @@ async function tryServer(
     if (enhancedOptions?.connectionType) {
       formData.append('connectionType', enhancedOptions.connectionType);
     }
+    if (enhancedOptions?.sessionId) {
+      formData.append('correlationId', enhancedOptions.sessionId);
+    }
 
     // Create abort controller for manual timeout
     const controller = new AbortController();
@@ -138,15 +144,23 @@ async function tryServer(
 
       const finalUrl = result.gatewayUrl || result.ipfsUrl || `https://ipfs.skatehive.app/ipfs/${result.cid}`;
       
+      // Extract IPFS hash for Skatehive URL generation
+      const ipfsHashMatch = finalUrl.match(/\/ipfs\/([^/?]+)/);
+      const hash = ipfsHashMatch ? ipfsHashMatch[1] : result.cid;
+      
       console.log(`✅ ${serverName} processing successful:`, {
         creator: username,
         platform: enhancedOptions?.platform || 'web',
-        url: finalUrl
+        url: finalUrl,
+        skateHiveUrl: `https://ipfs.skatehive.app/ipfs/${hash}`,
+        hash
       });
 
       return {
         success: true,
-        url: finalUrl
+        url: finalUrl,
+        skateHiveUrl: `https://ipfs.skatehive.app/ipfs/${hash}`,
+        hash
       };
     } catch (error) {
       clearTimeout(timeoutId); // Clean up timeout in case of error

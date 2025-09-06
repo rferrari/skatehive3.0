@@ -69,14 +69,24 @@ export const useVideoUpload = (insertAtCursor: (content: string) => void) => {
     const [uploadProgress, setUploadProgress] = useState(0);
     const [processingMethod, setProcessingMethod] = useState<'api' | 'native' | null>(null);
 
-    const handleVideoUpload = (url: string | null, method?: 'api' | 'native') => {
+    const handleVideoUpload = (result: { url?: string; skateHiveUrl?: string; hash?: string } | null, method?: 'api' | 'native') => {
         setIsCompressingVideo(false);
         setUploadProgress(100);
         setProcessingMethod(method || null);
         
-        if (url) {
+        if (result && result.url) {
+            // Use Skatehive IPFS URL for iframe embedding (no X-Frame-Options issues)
+            const embedUrl = result.skateHiveUrl || result.url;
+            
+            console.log('🎬 Creating video iframe with Skatehive gateway:', {
+                originalUrl: result.url,
+                skateHiveUrl: result.skateHiveUrl,
+                embedUrl,
+                hash: result.hash
+            });
+            
             insertAtCursor(
-                `\n<iframe src="${url}" frameborder="0" allowfullscreen></iframe>\n`
+                `\n<iframe src="${embedUrl}" frameborder="0" allowfullscreen></iframe>\n`
             );
         }
         
