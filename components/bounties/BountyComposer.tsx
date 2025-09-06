@@ -280,9 +280,9 @@ export default function BountyComposer({
   };
 
   // Handler for video upload
-  const handleVideoUpload = (url: string | null) => {
-    if (url) {
-      setVideoUrl(url);
+  const handleVideoUpload = (result: { url?: string; hash?: string } | null) => {
+    if (result?.url) {
+      setVideoUrl(result.url);
     }
   };
 
