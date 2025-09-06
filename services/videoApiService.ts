@@ -1,7 +1,6 @@
 interface VideoUploadResult {
   cid: string;
   gatewayUrl: string;
-  skateHiveUrl: string;  // Iframe-friendly URL using Skatehive gateway
 }
 
 interface VideoUploadOptions {
@@ -13,7 +12,6 @@ interface VideoUploadOptions {
   userHP?: number;            // User's Hive Power
   viewport?: string;          // Screen resolution
   connectionType?: string;    // Network connection info
-  sessionId?: string;         // Session correlation ID
 }
 
 interface VideoConversionResponse {
@@ -36,9 +34,6 @@ class VideoApiService {
   private readonly primaryApiUrl = 'https://raspberrypi.tail83ea3e.ts.net';
   private readonly fallbackApiUrl = 'https://skatehive-transcoder.onrender.com';
   
-  // Skatehive IPFS Gateway (no X-Frame-Options restrictions)
-  private readonly skateHiveGateway = 'https://ipfs.skatehive.app/ipfs/';
-  
   // Conversion timeout (5 minutes)
   private readonly CONVERSION_TIMEOUT = 300000;
   
@@ -51,13 +46,6 @@ class VideoApiService {
    */
   private generateCorrelationId(): string {
     return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  }
-
-  /**
-   * Create Skatehive IPFS gateway URL from CID
-   */
-  private createSkateHiveUrl(cid: string): string {
-    return `${this.skateHiveGateway}${cid}`;
   }
 
   /**
@@ -140,10 +128,6 @@ class VideoApiService {
     if (options.thumbnailUrl) {
       formData.append('thumbnailUrl', options.thumbnailUrl);
     }
-    
-    if (options.sessionId) {
-      formData.append('sessionId', options.sessionId);
-    }
 
     return formData;
   }
@@ -201,7 +185,6 @@ class VideoApiService {
       return {
         cid: result.cid,
         gatewayUrl: result.gatewayUrl,
-        skateHiveUrl: this.createSkateHiveUrl(result.cid),
       };
     } catch (error) {
       console.error('Failed to upload video to worker:', {
@@ -316,7 +299,6 @@ class VideoApiService {
         return {
           cid: result.cid,
           gatewayUrl: result.gatewayUrl,
-          skateHiveUrl: this.createSkateHiveUrl(result.cid),
         };
       } catch (error) {
         console.warn(`${api.name} direct upload error:`, {
@@ -386,7 +368,6 @@ class VideoApiService {
       return {
         cid: result.cid,
         gatewayUrl: result.gatewayUrl,
-        skateHiveUrl: this.createSkateHiveUrl(result.cid),
       };
     } catch (error) {
       console.error('Failed to upload video via proxy:', {
@@ -395,46 +376,6 @@ class VideoApiService {
       });
       throw new Error(`Proxy upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-  }
-
-  /**
-   * Create video iframe markup for Hive post
-   * @param gatewayUrl - Gateway URL returned from upload (or use skateHiveUrl directly)
-   * @param skateHiveUrl - Optional Skatehive IPFS URL (preferred for iframe embedding)
-   * @param title - Optional title for the video
-   * @returns HTML iframe string
-   */
-  createVideoIframe(gatewayUrl: string, skateHiveUrl?: string, title?: string): string {
-    // Use skateHiveUrl if provided, otherwise extract hash from gatewayUrl
-    let iframeSrc: string;
-    
-    if (skateHiveUrl) {
-      iframeSrc = skateHiveUrl;
-      console.log('🎬 Creating iframe with provided Skatehive URL:', skateHiveUrl);
-    } else {
-      // Fallback: extract IPFS hash from gateway URL
-      const ipfsHashMatch = gatewayUrl.match(/\/ipfs\/([^/?]+)/);
-      
-      if (ipfsHashMatch) {
-        const hash = ipfsHashMatch[1];
-        iframeSrc = `${this.skateHiveGateway}${hash}`;
-        
-        console.log('🎬 Creating iframe with extracted hash:', {
-          original: gatewayUrl,
-          skateHiveUrl: iframeSrc,
-          hash
-        });
-      } else {
-        console.warn('⚠️ Could not extract IPFS hash from gateway URL:', gatewayUrl);
-        iframeSrc = gatewayUrl; // Fallback to original URL
-      }
-    }
-    
-    return `<iframe src="${iframeSrc}" width="100%" height="400" frameborder="0" allowfullscreen title="${title || 'Video'}"></iframe>`;
-    
-    // Fallback to original URL if no IPFS hash found
-    console.warn('⚠️ Could not extract IPFS hash from URL, using original:', gatewayUrl);
-    return `<iframe src="${gatewayUrl}" width="100%" height="400" frameborder="0" allowfullscreen title="${title || 'Video'}"></iframe>`;
   }
 
   /**

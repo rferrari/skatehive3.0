@@ -5,8 +5,7 @@
 export interface UploadResult {
   success: boolean;
   url?: string;
-  skateHiveUrl?: string;  // Iframe-friendly URL using Skatehive IPFS gateway
-  hash?: string;          // IPFS hash for reference
+  hash?: string;
   error?: string;
 }
 
@@ -50,7 +49,6 @@ export interface EnhancedUploadOptions {
   browserInfo?: string;
   viewport?: string;
   connectionType?: string;
-  sessionId?: string;        // Correlation ID for tracking
 }
 
 /**
@@ -115,14 +113,7 @@ export async function uploadToIPFS(
       connectionType: enhancedOptions.connectionType || 'unknown'
     } : getDetailedDeviceInfo();
 
-    console.log('📤 IPFS upload started:', {
-      fileName: file.name,
-      fileSize: `${(file.size / 1024 / 1024).toFixed(2)}MB`,
-      creator: username,
-      platform: deviceData.platform,
-      deviceInfo: deviceData.deviceInfo,
-      userHP: enhancedOptions?.userHP || 0
-    });
+    console.log('📤 IPFS upload started:', file.name);
 
     const formData = new FormData();
     formData.append('file', file);
@@ -142,9 +133,9 @@ export async function uploadToIPFS(
       formData.append('connectionType', deviceData.connectionType);
     }
     
-    if (enhancedOptions?.sessionId) {
-      formData.append('correlationId', enhancedOptions.sessionId);
-    }
+    // Generate correlation ID for tracking if not provided
+    const correlationId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    formData.append('correlationId', correlationId);
 
     const response = await fetch('/api/pinata', {
       method: 'POST',
@@ -161,25 +152,13 @@ export async function uploadToIPFS(
       throw new Error('No IPFS hash returned');
     }
 
-    console.log('✅ IPFS upload successful:', {
-      creator: username,
-      ipfsHash: result.IpfsHash,
-      platform: deviceData.platform,
-      deviceInfo: deviceData.deviceInfo
-    });
+    console.log('✅ IPFS upload successful');
 
     const ipfsUrl = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`;
-    
-    console.log('📺 Video URLs generated:', {
-      ipfs: ipfsUrl,
-      skateHiveUrl: `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`,
-      hash: result.IpfsHash
-    });
 
     return {
       success: true,
       url: ipfsUrl,
-      skateHiveUrl: `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`,
       hash: result.IpfsHash
     };
 

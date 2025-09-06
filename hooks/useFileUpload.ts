@@ -69,32 +69,24 @@ export const useVideoUpload = (insertAtCursor: (content: string) => void) => {
     const [uploadProgress, setUploadProgress] = useState(0);
     const [processingMethod, setProcessingMethod] = useState<'api' | 'native' | null>(null);
 
-    const handleVideoUpload = (result: { url?: string; skateHiveUrl?: string; hash?: string } | null, method?: 'api' | 'native') => {
+    const handleVideoUpload = (result: { url?: string; hash?: string } | null, method?: 'api' | 'native') => {
         setIsCompressingVideo(false);
         setUploadProgress(100);
         setProcessingMethod(method || null);
         
         if (result && result.url) {
-            // Use Skatehive IPFS URL for iframe embedding (no X-Frame-Options issues)
-            const embedUrl = result.skateHiveUrl || result.url;
-            
-            console.log('🎬 Creating video iframe with Skatehive gateway:', {
-                originalUrl: result.url,
-                skateHiveUrl: result.skateHiveUrl,
-                embedUrl,
-                hash: result.hash
+            console.log('🎬 Video upload successful:', {
+                url: result.url,
+                hash: result.hash,
+                method: method
             });
             
             insertAtCursor(
-                `\n<iframe src="${embedUrl}" frameborder="0" allowfullscreen></iframe>\n`
+                `\n<iframe src="${result.url}" width="100%" height="400" frameborder="0" allowfullscreen></iframe>\n`
             );
+        } else {
+            console.log('❌ Video upload failed or missing URL');
         }
-        
-        // Reset progress after a delay
-        setTimeout(() => {
-            setUploadProgress(0);
-            setProcessingMethod(null);
-        }, 2000);
     };
 
     const createVideoTrigger = (videoUploaderRef: React.RefObject<any>) => () => {

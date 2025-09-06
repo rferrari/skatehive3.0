@@ -1030,7 +1030,7 @@ const SnapComposer = React.memo(function SnapComposer({
             )}
             <VideoUploader
               ref={videoUploaderRef}
-              onUpload={setVideoUrl}
+              onUpload={(result) => setVideoUrl(result?.url || null)}
               username={user || undefined}
               onUploadStart={handleVideoUploadStart}
               onUploadFinish={handleVideoUploadFinish}

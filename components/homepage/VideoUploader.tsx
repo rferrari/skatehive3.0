@@ -21,7 +21,7 @@ import { useHiveUser } from "@/contexts/UserContext";
 import useHivePower from "@/hooks/useHivePower";
 
 export interface VideoUploaderProps {
-  onUpload: (result: { url?: string; skateHiveUrl?: string; hash?: string } | null) => void;
+  onUpload: (result: { url?: string; hash?: string } | null) => void;
   username?: string;
   onUploadStart?: () => void;
   onUploadFinish?: () => void;
@@ -109,7 +109,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         // 2. Prepare enhanced options with device and user information
         const deviceData = getDetailedDeviceInfo();
         const correlationId = generateCorrelationId();
-        
+
         const enhancedOptions: EnhancedUploadOptions = {
           userHP: hivePower || 0,
           platform: deviceData.platform,
@@ -117,16 +117,9 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
           deviceInfo: deviceData.deviceInfo,
           browserInfo: deviceData.browserInfo,
           connectionType: deviceData.connectionType,
-          sessionId: correlationId,
         };
 
-        console.log('📤 Enhanced video upload started:', {
-          creator: username,
-          platform: deviceData.platform,
-          deviceInfo: deviceData.deviceInfo,
-          correlationId,
-          fileSize: `${(file.size / 1024 / 1024).toFixed(2)}MB`,
-        });
+        console.log("📤 Video upload started:", file.name);
 
         // 3. Check if MP4 - direct upload with enhanced options
         if (isMP4(file)) {
@@ -135,8 +128,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
           if (result.success && result.url) {
             onUpload({
               url: result.url,
-              skateHiveUrl: result.skateHiveUrl,
-              hash: result.hash
+              hash: result.hash,
             });
           } else {
             throw new Error(result.error || "Upload failed");
@@ -152,7 +144,6 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
           deviceInfo: enhancedOptions.deviceInfo,
           browserInfo: enhancedOptions.browserInfo,
           connectionType: enhancedOptions.connectionType,
-          sessionId: correlationId,
         };
 
         const result = await processVideoOnServer(
@@ -164,8 +155,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         if (result.success && result.url) {
           onUpload({
             url: result.url,
-            skateHiveUrl: result.skateHiveUrl,
-            hash: result.hash
+            hash: result.hash,
           });
         } else {
           throw new Error(result.error || "Server processing failed");

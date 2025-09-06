@@ -5,8 +5,7 @@
 export interface ProcessingResult {
   success: boolean;
   url?: string;
-  skateHiveUrl?: string;  // Iframe-friendly URL using Skatehive IPFS gateway
-  hash?: string;          // IPFS hash for reference
+  hash?: string;
   error?: string;
 }
 
@@ -20,7 +19,6 @@ export interface EnhancedProcessingOptions {
   browserInfo?: string;
   viewport?: string;
   connectionType?: string;
-  sessionId?: string;        // Correlation ID for tracking
 }
 
 /**
@@ -32,13 +30,7 @@ export async function processVideoOnServer(
   enhancedOptions?: EnhancedProcessingOptions
 ): Promise<ProcessingResult> {
   
-  console.log('🔄 Server processing started:', {
-    fileName: file.name,
-    fileSize: `${(file.size / 1024 / 1024).toFixed(2)}MB`,
-    creator: username,
-    platform: enhancedOptions?.platform || 'web',
-    userHP: enhancedOptions?.userHP || 0
-  });
+  console.log('🔄 Server processing started:', file.name);
   
   // Try Raspberry Pi (primary) server first
   const primaryResult = await tryServer(
@@ -77,11 +69,7 @@ async function tryServer(
 ): Promise<ProcessingResult> {
   
   try {
-    console.log(`🔄 Trying ${serverName}...`, {
-      serverUrl,
-      creator: username,
-      platform: enhancedOptions?.platform || 'web'
-    });
+    console.log(`🔄 Trying ${serverName}...`);
 
     const formData = new FormData();
     formData.append('video', file);
@@ -106,9 +94,10 @@ async function tryServer(
     if (enhancedOptions?.connectionType) {
       formData.append('connectionType', enhancedOptions.connectionType);
     }
-    if (enhancedOptions?.sessionId) {
-      formData.append('correlationId', enhancedOptions.sessionId);
-    }
+    
+    // Generate correlation ID for tracking
+    const correlationId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    formData.append('correlationId', correlationId);
 
     // Create abort controller for manual timeout
     const controller = new AbortController();
@@ -142,24 +131,15 @@ async function tryServer(
         throw new Error(result.error || `${serverName} processing failed - no valid URL returned`);
       }
 
-      const finalUrl = result.gatewayUrl || result.ipfsUrl || `https://ipfs.skatehive.app/ipfs/${result.cid}`;
+      // Use Skatehive IPFS gateway for iframe embedding to avoid X-Frame-Options issues
+      const hash = result.cid;
+      const skateHiveUrl = `https://ipfs.skatehive.app/ipfs/${hash}`;
       
-      // Extract IPFS hash for Skatehive URL generation
-      const ipfsHashMatch = finalUrl.match(/\/ipfs\/([^/?]+)/);
-      const hash = ipfsHashMatch ? ipfsHashMatch[1] : result.cid;
-      
-      console.log(`✅ ${serverName} processing successful:`, {
-        creator: username,
-        platform: enhancedOptions?.platform || 'web',
-        url: finalUrl,
-        skateHiveUrl: `https://ipfs.skatehive.app/ipfs/${hash}`,
-        hash
-      });
+      console.log(`✅ ${serverName} processing successful`);
 
       return {
         success: true,
-        url: finalUrl,
-        skateHiveUrl: `https://ipfs.skatehive.app/ipfs/${hash}`,
+        url: skateHiveUrl,
         hash
       };
     } catch (error) {

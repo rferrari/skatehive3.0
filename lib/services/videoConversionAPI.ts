@@ -57,11 +57,19 @@ async function uploadToPrimaryAPI(
 
     const result = await response.json();
     
+    console.log("🔍 Primary API Response Debug:");
+    console.log("Full result:", JSON.stringify(result, null, 2));
+    console.log("result.url:", result.url, typeof result.url);
+    console.log("result.ipfsUrl:", result.ipfsUrl, typeof result.ipfsUrl);
+    console.log("result.videoUrl:", result.videoUrl, typeof result.videoUrl);
+    
     // Assuming the API returns a JSON with a URL field
     if (result.url || result.ipfsUrl || result.videoUrl) {
       const videoUrl = result.url || result.ipfsUrl || result.videoUrl;
       
       console.log("✅ Primary API upload successful!");
+      console.log("Selected videoUrl:", videoUrl, typeof videoUrl);
+      
       return {
         success: true,
         url: videoUrl,
