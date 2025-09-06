@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate Instagram URL format
-    const instagramRegex = /^https?:\/\/(www\.)?(instagram\.com|instagr\.am)\/(p|reel|tv)\/[A-Za-z0-9_-]+\/?(\?.*)?$/;
+    const instagramRegex = /^https?:\/\/(www\.)?(instagram\.com|instagr\.am)\/(p\/[A-Za-z0-9_-]+|[A-Za-z0-9_.]+\/(reel|tv)\/[A-Za-z0-9_-]+)\/?(\?.*)?$/;
     if (!instagramRegex.test(url)) {
       return NextResponse.json(
         { error: 'Invalid Instagram URL format' },
@@ -95,9 +95,19 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // All servers failed
+    // All servers failed - provide specific error messages for common Instagram issues
+    let finalErrorMessage = `All servers failed. Last error: ${lastError}`;
+    
+    if (lastError.includes('rate-limit') || lastError.includes('login required')) {
+      finalErrorMessage = 'Instagram rate limit reached or authentication required. Please try again later.';
+    } else if (lastError.includes('not available') || lastError.includes('Requested content is not available')) {
+      finalErrorMessage = 'This Instagram content is not available. It may be private, deleted, or restricted.';
+    } else if (lastError.includes('timed out')) {
+      finalErrorMessage = 'Instagram download servers are currently slow or unavailable. Please try again later.';
+    }
+
     return NextResponse.json(
-      { error: `All servers failed. Last error: ${lastError}` },
+      { error: finalErrorMessage },
       { status: 503 }
     );
 

@@ -65,10 +65,38 @@ const InstagramModal: React.FC<InstagramModalProps> = ({
         onClose();
         setUrl("");
       } else {
-        setError(result.error || "Failed to download media");
+        // Provide more specific error messages for common Instagram issues
+        let errorMessage = result.error || "Failed to download media";
+
+        if (
+          errorMessage.includes("rate-limit") ||
+          errorMessage.includes("login required")
+        ) {
+          errorMessage =
+            "Instagram rate limit reached or authentication required. Please try again later or use a different post.";
+        } else if (errorMessage.includes("not available")) {
+          errorMessage =
+            "This Instagram content is not available. It may be private, deleted, or restricted.";
+        } else if (errorMessage.includes("All servers failed")) {
+          errorMessage =
+            "Instagram download servers are currently unavailable. Please try again later.";
+        }
+
+        setError(errorMessage);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Download failed");
+      let errorMessage = err instanceof Error ? err.message : "Download failed";
+
+      // Handle client-side errors
+      if (
+        errorMessage.includes("rate-limit") ||
+        errorMessage.includes("login required")
+      ) {
+        errorMessage =
+          "Instagram rate limit reached or authentication required. Please try again later.";
+      }
+
+      setError(errorMessage);
     } finally {
       setIsDownloading(false);
     }
@@ -95,10 +123,14 @@ const InstagramModal: React.FC<InstagramModalProps> = ({
           <VStack spacing={4} align="stretch">
             <Box>
               <Text fontSize="sm" color="gray.600" mb={2}>
-                Paste an Instagram single video post URL:
+                Paste an Instagram post or reel URL:
+              </Text>
+              <Text fontSize="xs" color="gray.500" mb={2}>
+                Note: Due to Instagram's restrictions, some content may not be
+                available or may hit rate limits.
               </Text>
               <Input
-                placeholder="https://www.instagram.com/p/ABC123..."
+                placeholder="https://www.instagram.com/username/reel/ABC123..."
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 isDisabled={isDownloading}
