@@ -1,15 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const INSTAGRAM_SERVERS = [
-  'https://raspberrypi.tail83ea3e.ts.net',
-  'https://skate-insta.onrender.com'
-];
+// Environment-aware Instagram server configuration
+const getInstagramServers = () => {
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  
+  return [
+    isDevelopment 
+      ? 'http://localhost:8000'                     // Local Docker service
+      : 'http://raspberrypi.tail83ea3e.ts.net:8000', // Production Tailscale
+    'https://skate-insta.onrender.com'              // Always as backup
+  ];
+};
+
+const INSTAGRAM_SERVERS = getInstagramServers();
 
 async function checkServerHealth(serverUrl: string): Promise<{ healthy: boolean; status?: number; error?: string }> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => {
     controller.abort();
-  }, 5000); // 5 seconds timeout per server
+  }, 2000); // 2 seconds timeout per server
 
   try {
     // Try health endpoint first

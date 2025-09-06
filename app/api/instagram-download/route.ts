@@ -1,9 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const INSTAGRAM_SERVERS = [
-  'https://raspberrypi.tail83ea3e.ts.net',
-  'https://skate-insta.onrender.com'
-];
+// Environment-aware Instagram server configuration
+const getInstagramServers = () => {
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  
+  return [
+    isDevelopment 
+      ? 'http://localhost:8000'                     // Local Docker service
+      : 'http://raspberrypi.tail83ea3e.ts.net:8000', // Production Tailscale
+    'https://skate-insta.onrender.com'              // Always as backup
+  ];
+};
+
+const INSTAGRAM_SERVERS = getInstagramServers();
 
 async function tryDownloadFromServer(serverUrl: string, instagramUrl: string): Promise<any> {
   const controller = new AbortController();
@@ -75,6 +84,7 @@ export async function POST(request: NextRequest) {
     }
 
     let lastError = '';
+    let allErrors: string[] = [];
 
     // Try each server in order
     for (const server of INSTAGRAM_SERVERS) {
@@ -86,6 +96,8 @@ export async function POST(request: NextRequest) {
 
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const serverError = `${server}: ${errorMessage}`;
+        allErrors.push(serverError);
         lastError = errorMessage;
         
         // If this isn't the last server, continue to the next one
@@ -96,7 +108,7 @@ export async function POST(request: NextRequest) {
     }
 
     // All servers failed - provide specific error messages for common Instagram issues
-    let finalErrorMessage = `All servers failed. Last error: ${lastError}`;
+    let finalErrorMessage = `All servers failed. Errors: ${allErrors.join(' | ')}`;
     
     if (lastError.includes('rate-limit') || lastError.includes('login required')) {
       finalErrorMessage = 'Instagram rate limit reached or authentication required. Please try again later.';
