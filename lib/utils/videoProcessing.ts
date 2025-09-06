@@ -9,31 +9,54 @@ export interface ProcessingResult {
 }
 
 /**
+ * Enhanced processing options interface
+ */
+export interface EnhancedProcessingOptions {
+  userHP?: number;
+  platform?: string;
+  deviceInfo?: string;
+  browserInfo?: string;
+  viewport?: string;
+  connectionType?: string;
+}
+
+/**
  * Process non-MP4 video on server
  */
 export async function processVideoOnServer(
   file: File, 
-  username: string = 'anonymous'
+  username: string = 'anonymous',
+  enhancedOptions?: EnhancedProcessingOptions
 ): Promise<ProcessingResult> {
   
-  // Try primary server first
+  console.log('🔄 Server processing started:', {
+    fileName: file.name,
+    fileSize: `${(file.size / 1024 / 1024).toFixed(2)}MB`,
+    creator: username,
+    platform: enhancedOptions?.platform || 'web',
+    userHP: enhancedOptions?.userHP || 0
+  });
+  
+  // Try Raspberry Pi (primary) server first
   const primaryResult = await tryServer(
-    'https://146-235-239-243.sslip.io/transcode',
+    'https://raspberrypi.tail83ea3e.ts.net/transcode',
     file,
     username,
-    'Primary Server'
+    'Raspberry Pi (Primary)',
+    enhancedOptions
   );
   
   if (primaryResult.success) {
     return primaryResult;
   }
   
-  // Try fallback server
+  // Try Render (fallback) server
   const fallbackResult = await tryServer(
-    'https://raspberrypi.tail83ea3e.ts.net/transcode',
+    'https://skatehive-transcoder.onrender.com/transcode',
     file,
     username,
-    'Fallback Server'
+    'Render (Fallback)',
+    enhancedOptions
   );
   
   return fallbackResult;
@@ -46,13 +69,40 @@ async function tryServer(
   serverUrl: string,
   file: File,
   username: string,
-  serverName: string
+  serverName: string,
+  enhancedOptions?: EnhancedProcessingOptions
 ): Promise<ProcessingResult> {
   
   try {
+    console.log(`🔄 Trying ${serverName}...`, {
+      serverUrl,
+      creator: username,
+      platform: enhancedOptions?.platform || 'web'
+    });
+
     const formData = new FormData();
     formData.append('video', file);
     formData.append('creator', username);
+
+    // Add enhanced tracking information if provided
+    if (enhancedOptions?.platform) {
+      formData.append('platform', enhancedOptions.platform);
+    }
+    if (enhancedOptions?.userHP !== undefined) {
+      formData.append('userHP', enhancedOptions.userHP.toString());
+    }
+    if (enhancedOptions?.deviceInfo) {
+      formData.append('deviceInfo', enhancedOptions.deviceInfo);
+    }
+    if (enhancedOptions?.browserInfo) {
+      formData.append('browserInfo', enhancedOptions.browserInfo);
+    }
+    if (enhancedOptions?.viewport) {
+      formData.append('viewport', enhancedOptions.viewport);
+    }
+    if (enhancedOptions?.connectionType) {
+      formData.append('connectionType', enhancedOptions.connectionType);
+    }
 
     // Create abort controller for manual timeout
     const controller = new AbortController();
@@ -71,6 +121,11 @@ async function tryServer(
 
       if (!response.ok) {
         const errorText = await response.text();
+        console.warn(`${serverName} failed:`, {
+          status: response.status,
+          error: errorText,
+          creator: username
+        });
         throw new Error(`${serverName} responded with ${response.status}: ${errorText}`);
       }
 
@@ -81,9 +136,17 @@ async function tryServer(
         throw new Error(result.error || `${serverName} processing failed - no valid URL returned`);
       }
 
+      const finalUrl = result.gatewayUrl || result.ipfsUrl || `https://ipfs.skatehive.app/ipfs/${result.cid}`;
+      
+      console.log(`✅ ${serverName} processing successful:`, {
+        creator: username,
+        platform: enhancedOptions?.platform || 'web',
+        url: finalUrl
+      });
+
       return {
         success: true,
-        url: result.gatewayUrl || result.ipfsUrl || `https://ipfs.skatehive.app/ipfs/${result.cid}`
+        url: finalUrl
       };
     } catch (error) {
       clearTimeout(timeoutId); // Clean up timeout in case of error

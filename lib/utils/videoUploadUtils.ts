@@ -212,10 +212,25 @@ export async function handleVideoUpload(
   username?: string,
   thumbnailUrl?: string,
   onProgress?: (progress: number) => void,
-  userHP: number = 0
+  userHP: number = 0,
+  enhancedOptions?: {
+    platform?: string;
+    deviceInfo?: string;
+    browserInfo?: string;
+    viewport?: string;
+    connectionType?: string;
+  }
 ): Promise<UploadResult> {
   try {
     const limits = getFileSizeLimits(userHP);
+    
+    console.log('📤 Video upload started:', {
+      fileName: file.name,
+      fileSize: `${(file.size / 1024 / 1024).toFixed(2)}MB`,
+      creator: username,
+      platform: enhancedOptions?.platform || 'web',
+      userHP
+    });
     
     if (file.size > limits.maxSize) {
       const sizeMB = Math.round((file.size / 1024 / 1024) * 100) / 100;
@@ -233,6 +248,26 @@ export async function handleVideoUpload(
     formData.append("file", file);
     if (username) formData.append("creator", username);
     if (thumbnailUrl) formData.append("thumbnailUrl", thumbnailUrl);
+
+    // Add enhanced tracking information if provided
+    if (enhancedOptions?.platform) {
+      formData.append("platform", enhancedOptions.platform);
+    }
+    if (userHP > 0) {
+      formData.append("userHP", userHP.toString());
+    }
+    if (enhancedOptions?.deviceInfo) {
+      formData.append("deviceInfo", enhancedOptions.deviceInfo);
+    }
+    if (enhancedOptions?.browserInfo) {
+      formData.append("browserInfo", enhancedOptions.browserInfo);
+    }
+    if (enhancedOptions?.viewport) {
+      formData.append("viewport", enhancedOptions.viewport);
+    }
+    if (enhancedOptions?.connectionType) {
+      formData.append("connectionType", enhancedOptions.connectionType);
+    }
 
     let responseText: string;
 
@@ -255,12 +290,22 @@ export async function handleVideoUpload(
       };
     }
 
+    console.log('✅ Video upload successful:', {
+      creator: username,
+      platform: enhancedOptions?.platform || 'web',
+      ipfsHash: result.IpfsHash
+    });
+
     return {
       success: true,
       url: `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`,
       IpfsHash: result.IpfsHash
     };
   } catch (error) {
+    console.error('❌ Video upload failed:', {
+      creator: username,
+      error: error instanceof Error ? error.message : String(error)
+    });
     return {
       success: false,
       error: error instanceof Error ? error.message : String(error)

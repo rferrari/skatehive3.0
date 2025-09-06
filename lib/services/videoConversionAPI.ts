@@ -22,8 +22,8 @@ export interface VideoConversionOptions {
 // Primary API configuration
 const PRIMARY_API_ENDPOINT = "https://raspberrypi.tail83ea3e.ts.net/transcode";
 
-// Fallback API configuration (placeholder for now)
-const FALLBACK_API_ENDPOINT = "https://backup-api.skatehive.app/transcode"; // TODO: Replace with actual fallback
+// Fallback API configuration
+const FALLBACK_API_ENDPOINT = "https://skatehive-transcoder.onrender.com/transcode";
 
 /**
  * Attempts to upload and convert video using the primary API

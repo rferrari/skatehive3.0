@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Support both endpoint-based and full URL proxying
-    const apiUrl = targetUrl || `https://video-worker-e7s1.onrender.com${endpoint}`;
+    const apiUrl = targetUrl || `https://skatehive-transcoder.onrender.com${endpoint}`;
     
     console.log(`🔗 Proxying request to: ${apiUrl}`);
     
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     
     // Support both endpoint-based and full URL proxying
-    const apiUrl = targetUrl || `https://video-worker-e7s1.onrender.com${endpoint}`;
+    const apiUrl = targetUrl || `https://skatehive-transcoder.onrender.com${endpoint}`;
     
     console.log(`🔗 Proxying POST request to: ${apiUrl}`);
     

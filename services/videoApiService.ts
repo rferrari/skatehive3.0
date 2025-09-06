@@ -6,6 +6,13 @@ interface VideoUploadResult {
 interface VideoUploadOptions {
   creator: string;
   thumbnailUrl?: string;
+  platform?: string;           // 'web' | 'mobile' | 'desktop'
+  deviceInfo?: string;         // Device fingerprint
+  browserInfo?: string;        // Browser details
+  userHP?: number;            // User's Hive Power
+  viewport?: string;          // Screen resolution
+  connectionType?: string;    // Network connection info
+  sessionId?: string;         // Session correlation ID
 }
 
 interface VideoConversionResponse {
@@ -26,7 +33,7 @@ interface VideoConversionRequest {
 
 class VideoApiService {
   private readonly primaryApiUrl = 'https://raspberrypi.tail83ea3e.ts.net';
-  private readonly fallbackApiUrl = 'https://video-worker-e7s1.onrender.com';
+  private readonly fallbackApiUrl = 'https://skatehive-transcoder.onrender.com';
   
   // Conversion timeout (5 minutes)
   private readonly CONVERSION_TIMEOUT = 300000;
@@ -34,6 +41,101 @@ class VideoApiService {
   // Request retry configuration
   private readonly MAX_RETRIES = 2;
   private readonly RETRY_DELAY = 1000;
+
+  /**
+   * Generate a correlation ID for tracking requests
+   */
+  private generateCorrelationId(): string {
+    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  /**
+   * Detect device and browser information for logging (Enhanced version)
+   */
+  private getDeviceInfo(): {
+    platform: string;
+    deviceInfo: string;
+    browserInfo: string;
+    viewport: string;
+    connectionType: string;
+  } {
+    const ua = navigator.userAgent;
+    const platform = navigator.platform;
+    
+    // Enhanced device type detection
+    let deviceType = 'desktop';
+    if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua)) {
+      deviceType = 'mobile';
+      if (/iPad/i.test(ua)) deviceType = 'tablet';
+    }
+    
+    // Enhanced OS detection
+    let os = 'unknown';
+    if (/Mac/i.test(platform)) os = 'macOS';
+    else if (/Win/i.test(platform)) os = 'Windows';
+    else if (/Linux/i.test(platform)) os = 'Linux';
+    else if (/iPhone|iPad|iPod/i.test(ua)) os = 'iOS';
+    else if (/Android/i.test(ua)) os = 'Android';
+    
+    // Enhanced browser detection
+    let browser = 'unknown';
+    if (/Chrome/i.test(ua) && !/Edge|Edg/i.test(ua)) browser = 'Chrome';
+    else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) browser = 'Safari';
+    else if (/Firefox/i.test(ua)) browser = 'Firefox';
+    else if (/Edge|Edg/i.test(ua)) browser = 'Edge';
+    
+    return {
+      platform: deviceType,
+      deviceInfo: `${deviceType}/${os}/${browser}`,
+      browserInfo: `${browser} on ${os}`,
+      viewport: `${window.screen.width}x${window.screen.height}`,
+      connectionType: (navigator as any).connection?.effectiveType || 'unknown'
+    };
+  }
+
+  /**
+   * Enhanced FormData construction with device and user information
+   */
+  private buildEnhancedFormData(
+    video: File,
+    options: VideoUploadOptions,
+    correlationId: string
+  ): FormData {
+    const deviceInfo = this.getDeviceInfo();
+    const formData = new FormData();
+    
+    // Core video data
+    formData.append('video', video);
+    formData.append('creator', options.creator);
+    
+    // Enhanced tracking information
+    formData.append('platform', options.platform || deviceInfo.platform);
+    formData.append('deviceInfo', options.deviceInfo || deviceInfo.deviceInfo);
+    formData.append('browserInfo', options.browserInfo || deviceInfo.browserInfo);
+    formData.append('viewport', options.viewport || deviceInfo.viewport);
+    formData.append('correlationId', correlationId);
+    
+    // User context
+    if (options.userHP !== undefined) {
+      formData.append('userHP', options.userHP.toString());
+    }
+    
+    // Connection info
+    if (deviceInfo.connectionType !== 'unknown') {
+      formData.append('connectionType', options.connectionType || deviceInfo.connectionType);
+    }
+    
+    // Optional fields
+    if (options.thumbnailUrl) {
+      formData.append('thumbnailUrl', options.thumbnailUrl);
+    }
+    
+    if (options.sessionId) {
+      formData.append('sessionId', options.sessionId);
+    }
+
+    return formData;
+  }
 
   /**
    * Upload video to the transcoding API (simplified approach like mobile app)
@@ -46,28 +148,18 @@ class VideoApiService {
     options: VideoUploadOptions
   ): Promise<VideoUploadResult> {
     const WORKER_API_URL = `${this.fallbackApiUrl}/transcode`;
+    const correlationId = this.generateCorrelationId();
 
     try {
-      console.log('🎬 Starting video upload to worker...');
+      console.log('🎬 Starting video upload to worker...', {
+        correlationId,
+        creator: options.creator,
+        fileSize: `${(video.size / 1024 / 1024).toFixed(2)}MB`,
+        fileName: video.name
+      });
       
-  // Create FormData for the upload
-  // IMPORTANT: Do NOT manually set the "Content-Type" header when sending
-  // FormData. The browser/XHR will set the correct multipart boundary. If you
-  // set Content-Type yourself (for example to 'multipart/form-data') the
-  // boundary is omitted and the server will reject the request.
-  // Reference: MDN - Using FormData objects
-  const formData = new FormData();
-      formData.append('video', video);
-      
-      // Add creator info if provided
-      if (options.creator) {
-        formData.append('creator', options.creator);
-      }
-      
-      // Add thumbnail URL if provided
-      if (options.thumbnailUrl) {
-        formData.append('thumbnailUrl', options.thumbnailUrl);
-      }
+      // Create enhanced FormData with device and user information
+      const formData = this.buildEnhancedFormData(video, options, correlationId);
 
       const uploadResponse = await fetch(WORKER_API_URL, {
         method: 'POST',
@@ -76,7 +168,11 @@ class VideoApiService {
 
       if (!uploadResponse.ok) {
         const errorText = await uploadResponse.text();
-        console.error('Video worker upload failed:', uploadResponse.status, errorText);
+        console.error('Video worker upload failed:', {
+          correlationId,
+          status: uploadResponse.status,
+          error: errorText
+        });
         throw new Error(`Video upload failed: ${uploadResponse.status} - ${errorText}`);
       }
 
@@ -86,13 +182,20 @@ class VideoApiService {
         throw new Error('Invalid response from video upload service');
       }
 
-      console.log('✅ Video upload successful:', result);
+      console.log('✅ Video upload successful:', {
+        correlationId,
+        cid: result.cid,
+        creator: options.creator
+      });
       return {
         cid: result.cid,
         gatewayUrl: result.gatewayUrl,
       };
     } catch (error) {
-      console.error('Failed to upload video to worker:', error);
+      console.error('Failed to upload video to worker:', {
+        correlationId,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
       throw new Error(`Video upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -107,15 +210,27 @@ class VideoApiService {
     video: File,
     options: VideoUploadOptions
   ): Promise<VideoUploadResult> {
-    console.log('🎬 Starting video upload process...');
-    console.log('📁 File info:', {
-      name: video.name,
-      size: `${(video.size / 1024 / 1024).toFixed(2)}MB`,
-      type: video.type
+    const deviceInfo = this.getDeviceInfo();
+    
+    console.log('🎬 Starting video upload process...', {
+      fileName: video.name,
+      fileSize: `${(video.size / 1024 / 1024).toFixed(2)}MB`,
+      fileType: video.type,
+      creator: options.creator,
+      platform: options.platform || deviceInfo.platform,
+      browserInfo: deviceInfo.browserInfo,
+      viewport: deviceInfo.viewport
     });
     
     console.log('🚀 Using direct API calls (no proxy needed)');
-    return this.uploadVideoDirectly(video, options);
+    return this.uploadVideoDirectly(video, {
+      ...options,
+      platform: options.platform || deviceInfo.platform,
+      deviceInfo: options.deviceInfo || deviceInfo.deviceInfo,
+      browserInfo: options.browserInfo || deviceInfo.browserInfo,
+      viewport: options.viewport || deviceInfo.viewport,
+      connectionType: options.connectionType || deviceInfo.connectionType
+    });
   }
 
   /**
@@ -128,34 +243,31 @@ class VideoApiService {
     video: File,
     options: VideoUploadOptions
   ): Promise<VideoUploadResult> {
+    const correlationId = this.generateCorrelationId();
+    
     // Try Raspberry Pi first, then fallback to Render API
     const apiUrls = [
       { name: 'Raspberry Pi', url: `${this.primaryApiUrl}/transcode` },
       { name: 'Render', url: `${this.fallbackApiUrl}/transcode` }
     ];
 
+    console.log('� Video upload started', {
+      correlationId,
+      creator: options.creator,
+      platform: options.platform || 'auto-detected',
+      fileSize: `${(video.size / 1024 / 1024).toFixed(2)}MB`,
+      fileName: video.name
+    });
+
     for (const api of apiUrls) {
       try {
-        console.log(`🔄 Uploading video directly to ${api.name} API...`);
+        console.log(`🔄 Uploading video directly to ${api.name} API...`, {
+          correlationId,
+          apiUrl: api.url
+        });
         
-  // Create FormData for the upload
-  // IMPORTANT: Do NOT manually set the "Content-Type" header when sending
-  // FormData. The browser/XHR will set the correct multipart boundary. If you
-  // set Content-Type yourself (for example to 'multipart/form-data') the
-  // boundary is omitted and the server will reject the request.
-  // Reference: MDN - Using FormData objects
-  const formData = new FormData();
-        formData.append('video', video);
-        
-        // Add creator info if provided
-        if (options.creator) {
-          formData.append('creator', options.creator);
-        }
-        
-        // Add thumbnail URL if provided
-        if (options.thumbnailUrl) {
-          formData.append('thumbnailUrl', options.thumbnailUrl);
-        }
+        // Create enhanced FormData with device and user information
+        const formData = this.buildEnhancedFormData(video, options, correlationId);
 
         const uploadResponse = await fetch(api.url, {
           method: 'POST',
@@ -166,29 +278,44 @@ class VideoApiService {
 
         if (!uploadResponse.ok) {
           const errorText = await uploadResponse.text();
-          console.warn(`${api.name} direct upload failed:`, uploadResponse.status, errorText);
+          console.warn(`${api.name} direct upload failed:`, {
+            correlationId,
+            status: uploadResponse.status,
+            error: errorText
+          });
           continue; // Try next API
         }
 
         const result = await uploadResponse.json();
 
         if (!result.cid || !result.gatewayUrl) {
-          console.warn(`${api.name} returned invalid response:`, result);
+          console.warn(`${api.name} returned invalid response:`, {
+            correlationId,
+            result
+          });
           continue; // Try next API
         }
 
-        console.log(`✅ ${api.name} direct video upload successful:`, result);
+        console.log(`✅ ${api.name} direct video upload successful:`, {
+          correlationId,
+          cid: result.cid,
+          creator: options.creator
+        });
         return {
           cid: result.cid,
           gatewayUrl: result.gatewayUrl,
         };
       } catch (error) {
-        console.warn(`${api.name} direct upload error:`, error);
+        console.warn(`${api.name} direct upload error:`, {
+          correlationId,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
         continue; // Try next API
       }
     }
 
     // If we get here, all APIs failed
+    console.error('All video upload APIs failed:', { correlationId });
     throw new Error('All video upload APIs failed. Please try again later.');
   }
 
@@ -202,30 +329,20 @@ class VideoApiService {
     video: File,
     options: VideoUploadOptions
   ): Promise<VideoUploadResult> {
+    const correlationId = this.generateCorrelationId();
+    
     // Try Render API via proxy (Raspberry Pi doesn't work via proxy)
     const proxyUrl = '/api/video-proxy?url=' + encodeURIComponent(`${this.fallbackApiUrl}/transcode`);
 
     try {
-      console.log('🔄 Uploading video via proxy to Render API...');
+      console.log('🔄 Uploading video via proxy to Render API...', {
+        correlationId,
+        creator: options.creator,
+        fileSize: `${(video.size / 1024 / 1024).toFixed(2)}MB`
+      });
       
-  // Create FormData for the upload
-  // IMPORTANT: Do NOT manually set the "Content-Type" header when sending
-  // FormData. The browser/XHR will set the correct multipart boundary. If you
-  // set Content-Type yourself (for example to 'multipart/form-data') the
-  // boundary is omitted and the server will reject the request.
-  // Reference: MDN - Using FormData objects
-  const formData = new FormData();
-      formData.append('video', video);
-      
-      // Add creator info if provided
-      if (options.creator) {
-        formData.append('creator', options.creator);
-      }
-      
-      // Add thumbnail URL if provided
-      if (options.thumbnailUrl) {
-        formData.append('thumbnailUrl', options.thumbnailUrl);
-      }
+      // Create enhanced FormData with device and user information
+      const formData = this.buildEnhancedFormData(video, options, correlationId);
 
       const uploadResponse = await fetch(proxyUrl, {
         method: 'POST',
@@ -234,7 +351,11 @@ class VideoApiService {
 
       if (!uploadResponse.ok) {
         const errorText = await uploadResponse.text();
-        console.error('Proxy video upload failed:', uploadResponse.status, errorText);
+        console.error('Proxy video upload failed:', {
+          correlationId,
+          status: uploadResponse.status,
+          error: errorText
+        });
         throw new Error(`Proxy upload failed: ${uploadResponse.status} - ${errorText}`);
       }
 
@@ -244,13 +365,20 @@ class VideoApiService {
         throw new Error('Invalid response from proxy upload service');
       }
 
-      console.log('✅ Proxy video upload successful:', result);
+      console.log('✅ Proxy video upload successful:', {
+        correlationId,
+        cid: result.cid,
+        creator: options.creator
+      });
       return {
         cid: result.cid,
         gatewayUrl: result.gatewayUrl,
       };
     } catch (error) {
-      console.error('Failed to upload video via proxy:', error);
+      console.error('Failed to upload video via proxy:', {
+        correlationId,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
       throw new Error(`Proxy upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -298,9 +426,16 @@ class VideoApiService {
   // Legacy method for backward compatibility
   async convertVideo(request: VideoConversionRequest): Promise<VideoConversionResponse> {
     try {
+      const deviceInfo = this.getDeviceInfo();
+      
       const result = await this.uploadVideo(request.video, {
         creator: request.creator,
         thumbnailUrl: request.thumbnailUrl,
+        platform: deviceInfo.platform,
+        deviceInfo: deviceInfo.deviceInfo,
+        browserInfo: deviceInfo.browserInfo,
+        viewport: deviceInfo.viewport,
+        connectionType: deviceInfo.connectionType
       });
 
       return {

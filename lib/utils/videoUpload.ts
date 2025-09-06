@@ -39,13 +39,105 @@ export function validateVideo(file: File): { valid: boolean; error?: string } {
 }
 
 /**
+ * Enhanced upload options interface
+ */
+export interface EnhancedUploadOptions {
+  userHP?: number;
+  platform?: string;
+  deviceInfo?: string;
+  browserInfo?: string;
+  viewport?: string;
+  connectionType?: string;
+}
+
+/**
+ * Get detailed device information for better logging
+ */
+export function getDetailedDeviceInfo(): {
+  platform: string;
+  deviceInfo: string;
+  browserInfo: string;
+  viewport: string;
+  connectionType: string;
+} {
+  const ua = navigator.userAgent;
+  const platform = navigator.platform;
+  
+  // Detect device type
+  let deviceType = 'desktop';
+  if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua)) {
+    deviceType = 'mobile';
+    if (/iPad/i.test(ua)) deviceType = 'tablet';
+  }
+  
+  // Detect OS
+  let os = 'unknown';
+  if (/Mac/i.test(platform)) os = 'macOS';
+  else if (/Win/i.test(platform)) os = 'Windows';
+  else if (/Linux/i.test(platform)) os = 'Linux';
+  else if (/iPhone|iPad|iPod/i.test(ua)) os = 'iOS';
+  else if (/Android/i.test(ua)) os = 'Android';
+  
+  // Detect browser
+  let browser = 'unknown';
+  if (/Chrome/i.test(ua) && !/Edge|Edg/i.test(ua)) browser = 'Chrome';
+  else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) browser = 'Safari';
+  else if (/Firefox/i.test(ua)) browser = 'Firefox';
+  else if (/Edge|Edg/i.test(ua)) browser = 'Edge';
+  
+  return {
+    platform: deviceType,
+    deviceInfo: `${deviceType}/${os}/${browser}`,
+    browserInfo: `${browser} on ${os}`,
+    viewport: `${window.screen.width}x${window.screen.height}`,
+    connectionType: (navigator as any).connection?.effectiveType || 'unknown'
+  };
+}
+
+/**
  * Upload video directly to IPFS (for MP4 files)
  */
-export async function uploadToIPFS(file: File, username: string = 'anonymous'): Promise<UploadResult> {
+export async function uploadToIPFS(
+  file: File, 
+  username: string = 'anonymous',
+  enhancedOptions?: EnhancedUploadOptions
+): Promise<UploadResult> {
   try {
+    // Auto-detect device info if not provided
+    const deviceData = enhancedOptions ? {
+      platform: enhancedOptions.platform || 'web',
+      deviceInfo: enhancedOptions.deviceInfo || 'unknown',
+      browserInfo: enhancedOptions.browserInfo || 'unknown',
+      viewport: enhancedOptions.viewport || `${window.screen.width}x${window.screen.height}`,
+      connectionType: enhancedOptions.connectionType || 'unknown'
+    } : getDetailedDeviceInfo();
+
+    console.log('📤 IPFS upload started:', {
+      fileName: file.name,
+      fileSize: `${(file.size / 1024 / 1024).toFixed(2)}MB`,
+      creator: username,
+      platform: deviceData.platform,
+      deviceInfo: deviceData.deviceInfo,
+      userHP: enhancedOptions?.userHP || 0
+    });
+
     const formData = new FormData();
     formData.append('file', file);
     formData.append('creator', username);
+
+    // Add enhanced tracking information
+    formData.append('platform', deviceData.platform);
+    formData.append('deviceInfo', deviceData.deviceInfo);
+    formData.append('browserInfo', deviceData.browserInfo);
+    formData.append('viewport', deviceData.viewport);
+    
+    if (enhancedOptions?.userHP !== undefined) {
+      formData.append('userHP', enhancedOptions.userHP.toString());
+    }
+    
+    if (deviceData.connectionType !== 'unknown') {
+      formData.append('connectionType', deviceData.connectionType);
+    }
 
     const response = await fetch('/api/pinata', {
       method: 'POST',
@@ -62,12 +154,24 @@ export async function uploadToIPFS(file: File, username: string = 'anonymous'): 
       throw new Error('No IPFS hash returned');
     }
 
+    console.log('✅ IPFS upload successful:', {
+      creator: username,
+      ipfsHash: result.IpfsHash,
+      platform: deviceData.platform,
+      deviceInfo: deviceData.deviceInfo
+    });
+
     return {
       success: true,
       url: `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`
     };
 
   } catch (error) {
+    console.error('❌ IPFS upload failed:', {
+      creator: username,
+      deviceInfo: enhancedOptions ? (enhancedOptions.deviceInfo || getDetailedDeviceInfo().deviceInfo) : getDetailedDeviceInfo().deviceInfo,
+      error: error instanceof Error ? error.message : 'Upload failed'
+    });
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Upload failed'
