@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { Box, VStack, Container, Spinner, Button } from "@chakra-ui/react";
+import { Box } from "@chakra-ui/react";
 import DAOAssets from "@/components/dao/DAOAssets";
 
 export const metadata: Metadata = {

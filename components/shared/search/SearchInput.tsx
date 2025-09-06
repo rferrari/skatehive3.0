@@ -13,7 +13,7 @@ import { FaSearch } from "react-icons/fa";
 interface SearchInputProps {
   query: string;
   onQueryChange: (query: string) => void;
-  inputRef: React.RefObject<HTMLInputElement | null>;
+  inputRef: React.RefObject<HTMLInputElement>;
 }
 
 export default function SearchInput({

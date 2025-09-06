@@ -85,7 +85,7 @@ interface VideoPreviewProps {
   thumbnailUrl?: string;
   thumbnailFile?: File;
   onThumbnailCapture: () => void;
-  videoRef: React.RefObject<HTMLVideoElement | null>;
+  videoRef: React.RefObject<HTMLVideoElement>;
   onVideoLoad: () => void;
   onThumbnailUpload?: (file: File) => void;
   onThumbnailClear?: () => void;
@@ -346,7 +346,7 @@ export function CoinCreationModal({
 }: CoinCreationModalProps) {
   const { createCoinFromPost, isCreating } = useCoinCreation();
   const toast = useToast();
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   // Step management
   const [currentStep, setCurrentStep] = useState(0);

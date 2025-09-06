@@ -3,7 +3,7 @@
 import { Flex, Box } from "@chakra-ui/react";
 import SnapList from "@/components/homepage/SnapList";
 import RightSidebar from "@/components/layout/RightSideBar";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Discussion } from "@hiveio/dhive";
 import Conversation from "@/components/homepage/Conversation";
 import SnapReplyModal from "@/components/homepage/SnapReplyModal";
@@ -64,7 +64,6 @@ export default function HomePageClient() {
           scrollbarWidth: "none",
         }}
         id="scrollableDiv"
-        className="notranslate"
       >
         {/* Always show SnapList */}
         <SnapList

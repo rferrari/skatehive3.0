@@ -123,14 +123,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html
-      lang="en"
-      translate="no"
-      className={`notranslate ${vt323.variable}`}
-      suppressHydrationWarning
-    >
+    <html lang="en" translate="no" suppressHydrationWarning>
       <head>
-        <meta name="google" content="notranslate" />
         {/* Preconnect to IPFS gateway for faster video loading */}
         <link rel="preconnect" href="https://ipfs.skatehive.app" />
       </head>

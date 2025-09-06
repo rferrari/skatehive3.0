@@ -238,7 +238,8 @@ const VideoRenderer = ({ src, skipThumbnailLoad, ...props }: RendererProps) => {
   // Combined ref callback to handle both video ref and intersection observer
   const setRefs = useCallback(
     (node: HTMLVideoElement | null) => {
-      videoRef.current = node;
+      // Use type assertion to bypass the readonly check since we know what we're doing
+      (videoRef as React.MutableRefObject<HTMLVideoElement | null>).current = node;
       setVideoRef(node);
     },
     [setVideoRef]

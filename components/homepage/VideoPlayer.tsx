@@ -3,7 +3,7 @@ import { Box, Button } from "@chakra-ui/react";
 import { FaPlay, FaPause } from "react-icons/fa";
 
 interface VideoPlayerProps {
-  videoRef: React.RefObject<HTMLVideoElement | null>;
+  videoRef: React.RefObject<HTMLVideoElement>;
   videoUrl: string;
   isPlaying: boolean;
   onLoadedMetadata: () => void;
