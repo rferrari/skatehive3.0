@@ -123,7 +123,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" translate="no" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <head>
         {/* Preconnect to IPFS gateway for faster video loading */}
         <link rel="preconnect" href="https://ipfs.skatehive.app" />

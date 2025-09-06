@@ -217,7 +217,7 @@ const BASE_SLIDER_STYLE = {
 };
 
 const VideoRenderer = ({ src, skipThumbnailLoad, ...props }: RendererProps) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoRef = React.useRef<HTMLVideoElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isHorizontal, setIsHorizontal] = useState(false);
   const [volume, setVolume] = useState(0); // Always start muted for autoplay
@@ -239,7 +239,8 @@ const VideoRenderer = ({ src, skipThumbnailLoad, ...props }: RendererProps) => {
   const setRefs = useCallback(
     (node: HTMLVideoElement | null) => {
       // Use type assertion to bypass the readonly check since we know what we're doing
-      (videoRef as React.MutableRefObject<HTMLVideoElement | null>).current = node;
+      videoRef.current = node;
+      setVideoRef(node);
       setVideoRef(node);
     },
     [setVideoRef]
