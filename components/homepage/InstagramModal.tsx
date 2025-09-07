@@ -166,7 +166,6 @@ const InstagramModal: React.FC<InstagramModalProps> = ({
             onClick={handleDownload}
             isLoading={isDownloading}
             loadingText="Downloading..."
-            isDisabled={!isValidUrl}
           >
             Import Media
           </Button>
