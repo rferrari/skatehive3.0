@@ -42,14 +42,7 @@ const InstagramModal: React.FC<InstagramModalProps> = ({
 
   const handleDownload = async () => {
     if (!url.trim()) {
-      setError("Please enter an Instagram URL");
-      return;
-    }
-
-    if (!isValidInstagramUrl(url)) {
-      setError(
-        "Please enter a valid Instagram post URL (posts, reels, or IGTV)"
-      );
+      setError("Please enter an Single video Instagram URL");
       return;
     }
 
