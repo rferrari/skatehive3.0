@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import {
   Box,
   Button,
@@ -62,6 +62,11 @@ const UpvoteButton = ({
   } = useVoteWeightContext();
   const [sliderValue, setSliderValue] = useState(userVoteWeight);
   const [isVoting, setIsVoting] = useState(false);
+  const [lastVoteTime, setLastVoteTime] = useState(0);
+
+  // Refs for immediate concurrency/debounce checks (non-atomic state guard)
+  const isVotingRef = useRef(false);
+  const lastVoteTimeRef = useRef(0);
 
   // Update slider value when user's vote weight changes from context
   useEffect(() => {
@@ -90,7 +95,33 @@ const handleVote = useCallback(
         return;
       }
 
+      // Use refs for immediate atomic concurrency/debounce checks
+      const now = Date.now();
+      
+      // Prevent multiple concurrent votes using ref (immediate check)
+      if (isVotingRef.current) {
+        return;
+      }
+
+      // Prevent rapid successive votes using ref (debounce of 1 second)
+      if (now - lastVoteTimeRef.current < 1000) {
+        toast({
+          title: "Please wait",
+          description: "Wait a moment before voting again.",
+          status: "info",
+          duration: 2000,
+          isClosable: true,
+        });
+        return;
+      }
+
+      // Set refs immediately for atomic protection
+      isVotingRef.current = true;
+      lastVoteTimeRef.current = now;
+
+      // Update state for UI (can be async)
       setIsVoting(true);
+      setLastVoteTime(now);
 
       try {
         const vote = await aioha.vote(
@@ -103,16 +134,16 @@ const handleVote = useCallback(
           // On Hive, voting again overwrites the previous vote, so we always set voted to true
           setVoted(true);
           
-          // Update active votes - replace or add the user's vote
-          const existingVoteIndex = activeVotes.findIndex(vote => vote.voter === user);
+          // Update active votes - prevent race conditions by using current activeVotes
+          const currentVotes = [...activeVotes];
+          const existingVoteIndex = currentVotes.findIndex((vote: any) => vote.voter === user);
           if (existingVoteIndex >= 0) {
             // Update existing vote
-            const updatedVotes = [...activeVotes];
-            updatedVotes[existingVoteIndex] = { voter: user, weight: votePercentage * 100 };
-            setActiveVotes(updatedVotes);
+            currentVotes[existingVoteIndex] = { voter: user, weight: votePercentage * 100 };
+            setActiveVotes(currentVotes);
           } else {
             // Add new vote
-            setActiveVotes([...activeVotes, { voter: user, weight: votePercentage * 100 }]);
+            setActiveVotes([...currentVotes, { voter: user, weight: votePercentage * 100 }]);
           }
 
           // Estimate the value and call onVoteSuccess if provided
@@ -147,6 +178,10 @@ const handleVote = useCallback(
           isClosable: true,
         });
       } finally {
+        // Reset refs immediately for atomic protection
+        isVotingRef.current = false;
+        
+        // Update state for UI (can be async)
         setIsVoting(false);
         if (variant === "withSlider" && setShowSlider) {
           setShowSlider(false);
@@ -159,15 +194,13 @@ const handleVote = useCallback(
       discussion.author,
       discussion.permlink,
       sliderValue,
-      setVoted,
-      setActiveVotes,
       activeVotes,
       estimateVoteValue,
       onVoteSuccess,
-      toast,
       variant,
       setShowSlider,
       isHivePowerLoading,
+      onUpvoteStoke,
     ]
   );
 

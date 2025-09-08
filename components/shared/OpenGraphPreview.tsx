@@ -29,7 +29,8 @@ const OpenGraphPreview: React.FC<OpenGraphPreviewProps> = ({ url }) => {
   const [error, setError] = useState(false);
 
   // Skip OpenGraph preview for coin URLs since they're handled by ZoraCoinPreview
-  const shouldSkip = url.includes('skatehive.app/coin') || url.includes('zora.co/coin');
+  const shouldSkip =
+    url.includes("skatehive.app/coin") || url.includes("zora.co/coin");
 
   useEffect(() => {
     // Don't fetch if we should skip this URL
@@ -119,38 +120,58 @@ const OpenGraphPreview: React.FC<OpenGraphPreviewProps> = ({ url }) => {
           borderColor="gray.200"
           borderRadius="md"
           overflow="hidden"
+          width="400px"
+          minW="400px"
           maxW="400px"
+          height="280px"
           cursor="pointer"
           bg="background"
           transition="all 0.2s"
+          display="flex"
+          flexDirection="column"
           _hover={{
             borderColor: "primary",
             transform: "translateY(-2px)",
             boxShadow: "md",
           }}
         >
-          {ogData.image && (
+          <Box
+            width="100%"
+            height="200px"
+            minH="200px"
+            maxH="200px"
+            overflow="hidden"
+            flex="0 0 200px"
+          >
             <Image
-              src={ogData.image}
+              src={ogData.image || "/opengraph-image.png"}
               alt={ogData.title || "Preview"}
               width="100%"
-              height="200px"
+              height="100%"
               objectFit="cover"
               fallback={
                 <Box
                   width="100%"
                   height="200px"
-                  bg="background"
+                  bg="gray.100"
                   display="flex"
                   alignItems="center"
                   justifyContent="center"
+                  backgroundImage="linear-gradient(45deg, #f0f0f0 25%, transparent 25%), linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f0f0f0 75%), linear-gradient(-45deg, transparent 75%, #f0f0f0 75%)"
+                  backgroundSize="20px 20px"
+                  backgroundPosition="0 0, 0 10px, 10px -10px, -10px 0px"
                 >
-                  <ExternalLinkIcon color="primary" boxSize={8} />
+                  <VStack spacing={2}>
+                    <ExternalLinkIcon color="gray.400" boxSize={6} />
+                    <Text fontSize="xs" color="gray.500" textAlign="center">
+                      No image available
+                    </Text>
+                  </VStack>
                 </Box>
               }
             />
-          )}
-          <Box p={3}>
+          </Box>
+          <Box p={3} flex="1">
             <VStack align="start" spacing={1}>
               {ogData.title && (
                 <Text

@@ -176,7 +176,7 @@ const VideoControls = React.memo(
               }
             `}</style>
 
-            {hoverTime !== null && videoDuration && (
+            {hoverTime !== null && videoDuration && !isNaN(hoverTime) && isFinite(hoverTime) && (
               <Box
                 position="absolute"
                 top="-25px"
@@ -348,11 +348,13 @@ const VideoRenderer = ({ src, skipThumbnailLoad, ...props }: RendererProps) => {
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-      if (videoRef.current) {
+      if (videoRef.current && !isNaN(videoRef.current.duration) && isFinite(videoRef.current.duration)) {
         const rect = e.currentTarget.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const newHoverTime = (x / rect.width) * videoRef.current.duration;
-        setHoverTime(newHoverTime);
+        if (!isNaN(newHoverTime) && isFinite(newHoverTime)) {
+          setHoverTime(newHoverTime);
+        }
       }
     },
     []
