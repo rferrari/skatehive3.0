@@ -6,22 +6,22 @@ const getInstagramServers = () => {
   const isVercel = process.env.VERCEL === '1';
   
   if (isDevelopment) {
-    // Local development - try localhost first, then Raspberry Pi, then fallback
+    // Local development - try localhost first, then public Pi, then fallback
     return [
       'http://localhost:8000',
-      'http://raspberrypi.tail83ea3e.ts.net:8000',
+      'https://raspberrypi.tail83ea3e.ts.net',
       'https://skate-insta.onrender.com'
     ];
   } else if (isVercel) {
-    // Vercel production - try Raspberry Pi first (best cookies), then Render fallback
+    // Vercel production - use public HTTPS Pi service first, then Render fallback
     return [
-      'http://raspberrypi.tail83ea3e.ts.net:8000',
+      'https://raspberrypi.tail83ea3e.ts.net',
       'https://skate-insta.onrender.com'
     ];
   } else {
-    // Other production - prioritize Raspberry Pi
+    // Other production - prioritize public Pi service
     return [
-      'http://raspberrypi.tail83ea3e.ts.net:8000',
+      'https://raspberrypi.tail83ea3e.ts.net',
       'https://skate-insta.onrender.com'
     ];
   }
