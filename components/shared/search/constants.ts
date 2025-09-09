@@ -95,12 +95,6 @@ export const STATIC_PAGES: PageResult[] = [
     icon: FaEnvelope,
   },
   {
-    title: "Join Community",
-    path: "/join",
-    description: "Join the Skatehive community",
-    icon: FaUser,
-  },
-  {
     title: "Create Post",
     path: "/compose",
     description: "Write a new post or article",
