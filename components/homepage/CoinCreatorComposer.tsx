@@ -19,10 +19,6 @@ import { FaEthereum } from "react-icons/fa";
 import { useAccount } from "wagmi";
 import { useCoinCreation } from "@/hooks/useCoinCreation";
 import { createSnapAsSkatedev } from "@/lib/hive/server-actions";
-import { getFileSignature, uploadImage } from "@/lib/hive/client-functions";
-import imageCompression from "browser-image-compression";
-import { FFmpeg } from "@ffmpeg/ffmpeg";
-import { fetchFile } from "@ffmpeg/util";
 
 interface CoinCreatorComposerProps {
   onClose?: () => void;
@@ -39,252 +35,50 @@ export default function CoinCreatorComposer({
   const [description, setDescription] = useState("");
   const [symbol, setSymbol] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [images, setImages] = useState<{ url: string; fileName: string }[]>([]);
-  const [uploadProgress, setUploadProgress] = useState<number[]>([]);
-  const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [videoThumbnail, setVideoThumbnail] = useState<File | null>(null);
-  const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false);
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [mediaType, setMediaType] = useState<"image" | "video" | null>(null);
 
   // Refs
-  const imageUploadRef = useRef<HTMLInputElement>(null);
-  const videoUploadRef = useRef<HTMLInputElement>(null);
-  const ffmpegRef = useRef<FFmpeg | null>(null);
+  const mediaUploadRef = useRef<HTMLInputElement>(null);
 
-  // Cleanup FFmpeg instance on unmount
-  useEffect(() => {
-    return () => {
-      if (ffmpegRef.current) {
-        try {
-          ffmpegRef.current.terminate();
-        } finally {
-          ffmpegRef.current = null;
-        }
-      }
-    };
-  }, []);
-
-  // Image upload handler
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
-
-    setIsLoading(true);
-
-    for (const [index, file] of files.entries()) {
-      if (!file.type.startsWith("image/")) {
-        alert("Please select only image files.");
-        continue;
-      }
-
-      try {
-        // Compress image
-        const options = {
-          maxSizeMB: 2,
-          maxWidthOrHeight: 1920,
-          useWebWorker: true,
-        };
-        const compressedFile = await imageCompression(file, options);
-
-        // Upload to IPFS/storage
-        const signature = await getFileSignature(compressedFile);
-        const uploadUrl = await uploadImage(
-          compressedFile,
-          signature,
-          index,
-          setUploadProgress
-        );
-
-        if (uploadUrl) {
-          setImages((prev) => [
-            ...prev,
-            { url: uploadUrl, fileName: compressedFile.name },
-          ]);
-        }
-      } catch (error) {
-        console.error("Error uploading image:", error);
-        alert("Failed to upload image. Please try again.");
-      }
-    }
-
-    setIsLoading(false);
-    setUploadProgress([]);
-    e.target.value = ""; // Reset input
-  };
-
-  // Remove image
-  const removeImage = (index: number) => {
-    setImages((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  // Generate thumbnail from video
-  const generateVideoThumbnail = async (file: File): Promise<File | null> => {
-    try {
-      setIsGeneratingThumbnail(true);
-
-      // Initialize FFmpeg with proper error handling
-      if (!ffmpegRef.current) {
-        ffmpegRef.current = new FFmpeg();
-
-        // Set up logging for FFmpeg only in debug mode
-        // To enable: set NEXT_PUBLIC_DEBUG_FFMPEG=true in your .env.local file
-        if (process.env.NEXT_PUBLIC_DEBUG_FFMPEG === "true") {
-          ffmpegRef.current.on("log", ({ message }) => {
-            console.debug("[FFmpeg]", message);
-          });
-        }
-        await ffmpegRef.current.load();
-      }
-
-      const ffmpeg = ffmpegRef.current;
-
-      // Check if FFmpeg is loaded properly
-      if (!ffmpeg.loaded) {
-        console.error("FFmpeg is not loaded properly");
-        throw new Error("FFmpeg failed to load");
-      }
-
-      // Generate unique file names to avoid conflicts
-      const inputFileName = `input_${Date.now()}.mp4`;
-      const outputFileName = `thumbnail_${Date.now()}.jpg`;
-      const fileData = await fetchFile(file);
-      await ffmpeg.writeFile(inputFileName, fileData);
-      // Verify the file exists in FFmpeg's FS
-      const files = await ffmpeg.listDir("/");
-
-      if (!files.some((f) => f.name === inputFileName)) {
-        throw new Error(`Input file ${inputFileName} not found in FFmpeg FS`);
-      }
-      // Generate thumbnail with more conservative settings
-      await ffmpeg.exec([
-        "-i",
-        inputFileName,
-        "-ss",
-        "1", // Use 1 second instead of 2 to avoid seeking past video length
-        "-frames:v",
-        "1",
-        "-vf",
-        "scale=512:512:force_original_aspect_ratio=decrease,pad=512:512:(ow-iw)/2:(oh-ih)/2:black",
-        "-f",
-        "image2", // Use image2 format explicitly
-        "-q:v",
-        "5", // Use slightly lower quality to avoid issues
-        "-y", // Overwrite output file
-        outputFileName,
-      ]);
-      const outputFiles = await ffmpeg.listDir("/");
-
-      if (!outputFiles.some((f) => f.name === outputFileName)) {
-        throw new Error(
-          `Thumbnail file ${outputFileName} not found after generation`
-        );
-      }
-      const thumbnailData = await ffmpeg.readFile(outputFileName);
-
-      if (!thumbnailData || thumbnailData.length === 0) {
-        throw new Error("Generated thumbnail data is empty");
-      }
-
-      // Create blob from the data - ensure we have proper ArrayBuffer type
-      const uint8Array = thumbnailData as Uint8Array;
-      const arrayBuffer = uint8Array.buffer.slice(
-        uint8Array.byteOffset,
-        uint8Array.byteOffset + uint8Array.byteLength
-      ) as ArrayBuffer;
-      const thumbnailBlob = new Blob([arrayBuffer], { type: "image/jpeg" });
-
-      // Create a File object from the blob
-      const thumbnailFile = new File([thumbnailBlob], "video-thumbnail.jpg", {
-        type: "image/jpeg",
-      });
-
-      // Clean up FFmpeg files
-      try {
-        await ffmpeg.deleteFile(inputFileName);
-        await ffmpeg.deleteFile(outputFileName);
-      } catch (cleanupError) {
-        console.warn("Failed to clean up thumbnail files:", cleanupError);
-        // Don't throw here as the main operation succeeded
-      }
-
-      return thumbnailFile;
-    } catch (error) {
-      console.error("Thumbnail generation failed:", error);
-      console.error("Detailed error information:", {
-        name: error instanceof Error ? error.name : "Unknown",
-        message: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-        ffmpegLoaded: ffmpegRef.current?.loaded,
-        videoFile: {
-          name: file.name,
-          type: file.type,
-          size: file.size,
-        },
-      });
-
-      // Try to clean up any partial files on error
-      if (ffmpegRef.current?.loaded) {
-        try {
-          const files = await ffmpegRef.current.listDir("/");
-          for (const fileInfo of files) {
-            if (
-              fileInfo.name.includes("input_") ||
-              fileInfo.name.includes("thumbnail_")
-            ) {
-              await ffmpegRef.current.deleteFile(fileInfo.name);
-            }
-          }
-        } catch (cleanupError) {
-          console.warn("Error during cleanup:", cleanupError);
-        }
-      }
-
-      return null;
-    } finally {
-      setIsGeneratingThumbnail(false);
-    }
-  };
-
-  // Video upload handler
-  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle media upload
+  const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check MIME type first - accept any video format
-    if (!file.type.startsWith("video/")) {
-      alert("Please select a video file.");
+    // Check if it's an image or video
+    const isImage = file.type.startsWith("image/");
+    const isVideo = file.type.startsWith("video/");
+
+    if (!isImage && !isVideo) {
+      alert("Please select an image or video file.");
       return;
     }
 
-    // Check file size (limit to 100MB)
-    const maxSize = 100 * 1024 * 1024; // 100MB
+    // For videos, specifically check for MP4
+    if (isVideo && file.type !== "video/mp4") {
+      alert("Please select an MP4 video file.");
+      return;
+    }
+
+    // Check file size (limit to 100MB for videos, 10MB for images)
+    const maxSize = isVideo ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
     if (file.size > maxSize) {
-      alert("Video file must be smaller than 100MB.");
+      alert(`File must be smaller than ${isVideo ? "100MB" : "10MB"}.`);
       return;
     }
 
-    // Store the video file
-    setVideoFile(file);
-
-    // Generate thumbnail for the Zora SDK
-    const thumbnail = await generateVideoThumbnail(file);
-    if (thumbnail) {
-      setVideoThumbnail(thumbnail);
-    } else {
-      console.warn(
-        "Failed to generate video thumbnail - coin will be created without image"
-      );
-      alert(
-        "Warning: Could not generate thumbnail from video. The coin will be created without an image."
-      );
-    }
+    // Store the media file
+    setMediaFile(file);
+    setMediaType(isVideo ? "video" : "image");
 
     e.target.value = ""; // Reset input
   };
 
-  // Remove video
-  const removeVideo = () => {
-    setVideoFile(null);
-    setVideoThumbnail(null);
+  // Remove media
+  const removeMedia = () => {
+    setMediaFile(null);
+    setMediaType(null);
   };
 
   // Handle coin creation
@@ -309,33 +103,31 @@ export default function CoinCreatorComposer({
     setIsLoading(true);
 
     try {
-      // Prepare coin data for Zora SDK - pass files directly to Zora uploader
+      // Prepare coin data for Zora SDK - pass media file directly
       const coinData = {
         name: title,
         symbol: symbol.toUpperCase(),
         description: description,
-        // Pass video or image file directly to Zora SDK
-        ...(videoFile && { mediaFile: videoFile }),
-        ...(images.length > 0 && !videoFile && { mediaUrl: images[0].url }),
+        // Pass media file directly to Zora SDK
+        ...(mediaFile && { mediaFile: mediaFile }),
         postTitle: title,
         postBody: "", // We'll set this later
         postJsonMetadata: JSON.stringify({
           app: "Skatehive App 3.0",
           tags: ["coin-creation", "ethereum", "snaps", symbol.toLowerCase()],
-          images: images.map((img) => img.url),
           creator_ethereum_address: address,
-          ...(videoFile && {
-            has_video: true,
-            video_file_name: videoFile.name,
-            video_file_size: videoFile.size,
-            video_file_type: videoFile.type,
+          ...(mediaFile && {
+            media_type: mediaType,
+            media_file_name: mediaFile.name,
+            media_file_size: mediaFile.size,
+            media_file_type: mediaFile.type,
           }),
         }),
         postParentAuthor: "",
         postParentPermlink: "",
       };
 
-      // Create the coin using Zora's native video support
+      // Create the coin using Zora's native media support
       const coinResult = await createCoin(coinData);
 
       if (!coinResult?.address) {
@@ -346,11 +138,17 @@ export default function CoinCreatorComposer({
       const zoraUrl = `https://zora.co/coin/base:${coinResult.address}`;
 
       // Now create the snap comment with the coin URL
+      const mediaDescription = mediaFile
+        ? mediaType === "video"
+          ? `🎥 **Video coin with ${mediaFile.type} media**`
+          : `🖼️ **Image coin**`
+        : "";
+
       const snapBody = `🪙 **New Coin Created: ${title} (${symbol.toUpperCase()})**
 
 ${description}
 
-${videoFile ? `🎥 **Video coin with ${videoFile.type} media**\n\n` : ""}---
+${mediaDescription ? `${mediaDescription}\n\n` : ""}---
 
 ${zoraUrl}
 `;
@@ -358,7 +156,7 @@ ${zoraUrl}
       const snapResult = await createSnapAsSkatedev({
         body: snapBody,
         tags: ["coin-creation", "ethereum", "zora", symbol.toLowerCase()],
-        images: images.map((img) => img.url),
+        images: [], // No need for separate image URLs anymore
         ethereumAddress: address,
         coinAddress: coinResult.address,
         coinUrl: zoraUrl,
@@ -376,9 +174,8 @@ ${zoraUrl}
       setTitle("");
       setDescription("");
       setSymbol("");
-      setImages([]);
-      setVideoFile(null);
-      setVideoThumbnail(null);
+      setMediaFile(null);
+      setMediaType(null);
 
       if (onClose) onClose();
     } catch (error) {
@@ -413,15 +210,15 @@ ${zoraUrl}
       <HStack justify="flex-end" align="center">
         <HStack spacing={2}>
           <FaEthereum color="#627eea" />
-          <Text fontSize="sm" color={"muted"}>
+          <Text fontSize="sm" color={"primary"}>
             {address?.slice(0, 6)}...{address?.slice(-4)}
           </Text>
         </HStack>
       </HStack>
 
-      {/* Media Upload Section - Zora Style */}
+      {/* Media Upload Section */}
       <VStack spacing={4}>
-        {!videoFile && images.length === 0 ? (
+        {!mediaFile ? (
           <Box
             border="2px dashed"
             borderColor="gray.300"
@@ -438,22 +235,13 @@ ${zoraUrl}
               bg: "background.100",
               _dark: { bg: "background.700" },
             }}
-            onClick={() => imageUploadRef.current?.click()}
+            onClick={() => mediaUploadRef.current?.click()}
           >
             <Input
               type="file"
-              ref={imageUploadRef}
-              onChange={handleImageUpload}
-              accept="image/*"
-              multiple
-              style={{ display: "none" }}
-              disabled={isLoading || isCreating}
-            />
-            <Input
-              type="file"
-              ref={videoUploadRef}
-              onChange={handleVideoUpload}
-              accept="video/*"
+              ref={mediaUploadRef}
+              onChange={handleMediaUpload}
+              accept="image/*,video/mp4"
               style={{ display: "none" }}
               disabled={isLoading || isCreating}
             />
@@ -473,7 +261,10 @@ ${zoraUrl}
               </Box>
               <VStack spacing={2}>
                 <Text fontSize="lg" fontWeight="semibold">
-                  Upload photos and videos
+                  Upload image or video
+                </Text>
+                <Text fontSize="sm" color="gray.500">
+                  Supports images (JPG, PNG, GIF) and MP4 videos
                 </Text>
               </VStack>
               <Button
@@ -491,113 +282,76 @@ ${zoraUrl}
               >
                 Browse files
               </Button>
-              <Text fontSize="xs" color="gray.400">
-                or{" "}
-                <Button
-                  variant="link"
-                  size="xs"
-                  color="background.500"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    videoUploadRef.current?.click();
-                  }}
-                >
-                  upload video
-                </Button>
-              </Text>
             </VStack>
           </Box>
         ) : (
           <VStack spacing={3} align="stretch">
             {/* Show uploaded media */}
-            {images.length > 0 && (
-              <VStack spacing={2}>
-                <HStack spacing={2} flexWrap="wrap" justify="center">
-                  {images.map((image, index) => (
-                    <Box key={index} position="relative">
-                      <Image
-                        src={image.url}
-                        alt={`Upload ${index + 1}`}
-                        maxW="200px"
-                        maxH="200px"
-                        objectFit="cover"
-                        borderRadius="md"
-                        border="1px solid"
-                        borderColor="gray.200"
-                        _dark={{ borderColor: "gray.600" }}
-                      />
-                      <IconButton
-                        aria-label="Remove image"
-                        icon={<Text fontSize="xs">×</Text>}
-                        size="xs"
-                        position="absolute"
-                        top="-1"
-                        right="-1"
-                        colorScheme="red"
-                        borderRadius="full"
-                        onClick={() => removeImage(index)}
-                      />
-                    </Box>
-                  ))}
-                </HStack>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => imageUploadRef.current?.click()}
-                  disabled={isLoading || isCreating}
-                >
-                  Add more images
-                </Button>
-              </VStack>
-            )}
+            <Box position="relative" textAlign="center">
+              <HStack justify="space-between" align="center" mb={3}>
+                <Text fontSize="sm" color="green.500">
+                  ✓ {mediaType === "video" ? "Video" : "Image"} selected:{" "}
+                  {mediaFile.name}
+                </Text>
+                <IconButton
+                  aria-label="Remove media"
+                  icon={
+                    <Text color={"red.500"} fontSize="xs">
+                      ×
+                    </Text>
+                  }
+                  size="xs"
+                  colorScheme="red"
+                  borderRadius="full"
+                  onClick={removeMedia}
+                />
+              </HStack>
 
-            {videoFile && (
-              <VStack spacing={3}>
-                <Box position="relative" textAlign="center">
-                  <Text fontSize="sm" color="green.500" mb={2}>
-                    ✓ Video selected: {videoFile.name}
-                  </Text>
-                  {isGeneratingThumbnail && (
-                    <HStack spacing={2} justify="center">
-                      <Spinner size="sm" />
-                      <Text fontSize="sm">Generating preview...</Text>
-                    </HStack>
-                  )}
-                  {videoThumbnail && (
-                    <Image
-                      src={URL.createObjectURL(videoThumbnail)}
-                      alt="Video preview"
-                      maxW="200px"
-                      maxH="200px"
-                      objectFit="cover"
-                      borderRadius="md"
-                      border="2px solid"
-                      borderColor="green.300"
-                      mx="auto"
-                    />
-                  )}
-                  <IconButton
-                    aria-label="Remove video"
-                    icon={<Text fontSize="xs">×</Text>}
-                    size="xs"
-                    position="absolute"
-                    top="-1"
-                    right="calc(50% - 100px)"
-                    colorScheme="red"
-                    borderRadius="full"
-                    onClick={removeVideo}
+              {mediaType === "image" && (
+                <Image
+                  src={URL.createObjectURL(mediaFile)}
+                  alt="Selected image"
+                  maxW="300px"
+                  maxH="300px"
+                  objectFit="cover"
+                  borderRadius="md"
+                  border="2px solid"
+                  borderColor="green.300"
+                  mx="auto"
+                />
+              )}
+
+              {mediaType === "video" && (
+                <Box>
+                  <video
+                    src={URL.createObjectURL(mediaFile)}
+                    controls
+                    style={{
+                      width: "100%",
+                      maxWidth: "400px",
+                      height: "auto",
+                      borderRadius: "8px",
+                      border: "2px solid",
+                      borderColor: "var(--chakra-colors-green-300)",
+                      margin: "0 auto",
+                      display: "block",
+                    }}
                   />
+                  <Text fontSize="xs" color="gray.500" mt={2}>
+                    MP4 Video • {(mediaFile.size / 1024 / 1024).toFixed(1)}MB
+                  </Text>
                 </Box>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => videoUploadRef.current?.click()}
-                  disabled={isLoading || isCreating}
-                >
-                  Replace video
-                </Button>
-              </VStack>
-            )}
+              )}
+            </Box>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => mediaUploadRef.current?.click()}
+              disabled={isLoading || isCreating}
+            >
+              Replace {mediaType}
+            </Button>
           </VStack>
         )}
       </VStack>
@@ -650,25 +404,6 @@ ${zoraUrl}
         </FormControl>
       </VStack>
 
-      {/* Upload Progress */}
-      {uploadProgress.some((p) => p > 0) && (
-        <VStack spacing={1}>
-          <Text fontSize="sm">Uploading images...</Text>
-          {uploadProgress.map(
-            (progress, index) =>
-              progress > 0 && (
-                <Progress
-                  key={index}
-                  value={progress}
-                  size="sm"
-                  width="100%"
-                  colorScheme="background"
-                />
-              )
-          )}
-        </VStack>
-      )}
-
       {/* Create Button - Zora Style */}
       <Button
         w="full"
@@ -696,7 +431,9 @@ ${zoraUrl}
       <Text fontSize="xs" color={"gray.500"} textAlign="center">
         Your coin will be created on Zora and posted as a snap to Skatehive
         automatically.
-        {videoFile && " Video will be uploaded to IPFS."}
+        {mediaFile &&
+          mediaType === "video" &&
+          " Video will be uploaded directly to Zora."}
       </Text>
     </VStack>
   );
