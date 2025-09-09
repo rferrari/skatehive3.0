@@ -16,9 +16,12 @@ export interface InstagramDownloadResult {
  */
 export async function downloadInstagramMedia(instagramUrl: string): Promise<InstagramDownloadResult> {
   try {
+    // Normalize the URL to use /p/ format
+    const normalizedUrl = normalizeInstagramUrl(instagramUrl);
+    
     // Validate Instagram URL format - supports both posts and reels with usernames
     const instagramRegex = /^https?:\/\/(www\.)?(instagram\.com|instagr\.am)\/(p\/[A-Za-z0-9_-]+|[A-Za-z0-9_.]+\/(reel|tv)\/[A-Za-z0-9_-]+)\/?(\?.*)?$/;
-    if (!instagramRegex.test(instagramUrl)) {
+    if (!instagramRegex.test(normalizedUrl)) {
       throw new Error('Invalid Instagram URL format');
     }
 
@@ -27,7 +30,7 @@ export async function downloadInstagramMedia(instagramUrl: string): Promise<Inst
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ url: instagramUrl }),
+      body: JSON.stringify({ url: normalizedUrl }),
     });
 
     if (!response.ok) {
@@ -45,6 +48,14 @@ export async function downloadInstagramMedia(instagramUrl: string): Promise<Inst
   } catch (error) {
     throw error instanceof Error ? error : new Error('Unknown error occurred');
   }
+}
+
+/**
+ * Normalize Instagram URL to use /p/ format instead of /reel/
+ */
+export function normalizeInstagramUrl(url: string): string {
+  // Replace /reel/ with /p/ in the URL
+  return url.replace('/reel/', '/p/');
 }
 
 /**

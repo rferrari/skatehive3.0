@@ -23,6 +23,7 @@ import {
   downloadInstagramMedia,
   isValidInstagramUrl,
   isVideoFile,
+  normalizeInstagramUrl,
 } from "@/lib/utils/instagramDownload";
 
 interface InstagramModalProps {
@@ -39,6 +40,16 @@ const InstagramModal: React.FC<InstagramModalProps> = ({
   const [url, setUrl] = useState("");
   const [isDownloading, setIsDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const handleUrlChange = (inputUrl: string) => {
+    // Set the original URL first
+    setUrl(inputUrl);
+    
+    // Clear any previous errors when user types
+    if (error) {
+      setError(null);
+    }
+  };
 
   const handleDownload = async () => {
     if (!url.trim()) {
@@ -104,6 +115,7 @@ const InstagramModal: React.FC<InstagramModalProps> = ({
   };
 
   const isValidUrl = url.trim() && isValidInstagramUrl(url);
+  const isDevelopment = process.env.NODE_ENV === 'development';
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} size="md">
@@ -116,16 +128,33 @@ const InstagramModal: React.FC<InstagramModalProps> = ({
           <VStack spacing={4} align="stretch">
             <Box>
               <Text fontSize="sm" color="gray.600" mb={2}>
-                Paste an Instagram post or reel URL:
+                Paste an Instagram post or reel URL (URLs will be automatically normalized):
               </Text>
               <Input
-                placeholder="https://www.instagram.com/username/reel/ABC123..."
+                placeholder="https://www.instagram.com/p/ABC123... or /reel/ABC123..."
                 value={url}
-                onChange={(e) => setUrl(e.target.value)}
+                onChange={(e) => handleUrlChange(e.target.value)}
                 isDisabled={isDownloading}
                 focusBorderColor="primary"
               />
             </Box>
+
+            {isDevelopment && url && (
+              <Box bg="gray.50" p={3} borderRadius="md" border="1px solid" borderColor="gray.200">
+                <Text fontSize="xs" fontWeight="bold" color="gray.600" mb={1}>
+                  Original URL:
+                </Text>
+                <Text fontSize="xs" color="gray.800" fontFamily="mono" wordBreak="break-all" mb={2}>
+                  {url}
+                </Text>
+                <Text fontSize="xs" fontWeight="bold" color="gray.600" mb={1}>
+                  Normalized URL (will be used):
+                </Text>
+                <Text fontSize="xs" color="green.600" fontFamily="mono" wordBreak="break-all">
+                  {normalizeInstagramUrl(url)}
+                </Text>
+              </Box>
+            )}
 
             {error && (
               <Alert status="error" borderRadius="md">
