@@ -5,9 +5,10 @@ const getInstagramServers = () => {
   const isDevelopment = process.env.NODE_ENV === 'development';
   
   return [
-    isDevelopment 
-      ? 'http://localhost:8000'                     // Local Docker service
-      : 'http://raspberrypi.tail83ea3e.ts.net:8000', // Production Tailscale
+    // Always use Tailscale URL first (it works reliably with cookies)
+    'http://raspberrypi.tail83ea3e.ts.net:8000',
+    // Keep localhost as option for when Docker service is running locally
+    ...(isDevelopment ? ['http://localhost:8000'] : []),
     'https://skate-insta.onrender.com'              // Always as backup
   ];
 };
