@@ -3,14 +3,28 @@ import { NextRequest, NextResponse } from 'next/server';
 // Environment-aware Instagram server configuration
 const getInstagramServers = () => {
   const isDevelopment = process.env.NODE_ENV === 'development';
+  const isVercel = process.env.VERCEL === '1';
   
-  return [
-    // Always use Tailscale URL first (it works reliably with cookies)
-    'http://raspberrypi.tail83ea3e.ts.net:8000',
-    // Keep localhost as option for when Docker service is running locally
-    ...(isDevelopment ? ['http://localhost:8000'] : []),
-    'https://skate-insta.onrender.com'              // Always as backup
-  ];
+  if (isDevelopment) {
+    // Local development - try localhost first, then Raspberry Pi, then fallback
+    return [
+      'http://localhost:8000',
+      'http://raspberrypi.tail83ea3e.ts.net:8000',
+      'https://skate-insta.onrender.com'
+    ];
+  } else if (isVercel) {
+    // Vercel production - try Raspberry Pi first (best cookies), then Render fallback
+    return [
+      'http://raspberrypi.tail83ea3e.ts.net:8000',
+      'https://skate-insta.onrender.com'
+    ];
+  } else {
+    // Other production - prioritize Raspberry Pi
+    return [
+      'http://raspberrypi.tail83ea3e.ts.net:8000',
+      'https://skate-insta.onrender.com'
+    ];
+  }
 };
 
 const INSTAGRAM_SERVERS = getInstagramServers();
