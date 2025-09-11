@@ -308,7 +308,7 @@ export function MarkdownCoinModal({
       console.log("🖼️ Extracted markdown images:", images);
       setMarkdownImages(images);
     }
-  }, [isOpen, post.body]);
+  }, [isOpen, post.body, cardPreview]);
 
   const generatePreview = async () => {
     console.log("🎯 Starting generatePreview function");

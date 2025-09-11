@@ -145,6 +145,7 @@ export async function GET(
           {/* Background Layer */}
           {userData.coverImage ? (
             <Image
+              alt=" Cover Image"
               src={userData.coverImage}
               style={{
                 position: "absolute",
@@ -232,6 +233,7 @@ export async function GET(
                   }}
                 >
                   <Image
+                    alt="Avatar"
                     src={userData.profileImage}
                     style={{
                       width: `${AVATAR_SIZE - 10}px`,

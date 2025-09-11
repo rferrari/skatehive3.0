@@ -22,6 +22,14 @@ export interface CoinData {
       };
     };
   };
+  // New fields for different coin types
+  coinType?: "media" | "markdown" | "carousel";
+  contractMetadata?: any;
+  markdownIpfs?: string;
+  carouselMedia?: Array<{
+    uri: string;
+    mime: string;
+  }>;
 }
 
 export interface UserBalance {

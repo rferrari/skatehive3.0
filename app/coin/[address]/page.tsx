@@ -3,12 +3,91 @@ import { notFound } from "next/navigation";
 import { Address, isAddress } from "viem";
 import { getCoin } from "@zoralabs/coins-sdk";
 import { base } from "viem/chains";
+import { createPublicClient, http } from "viem";
 import ZoraCoinPageClient from "./ZoraCoinPageClient";
 
 interface PageProps {
   params: {
     address: string;
   };
+}
+
+// Contract ABI for contractURI function
+const ERC20_ABI = [
+  {
+    name: "contractURI",
+    type: "function",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ type: "string" }],
+  },
+] as const;
+
+// Helper function to fetch and parse contract metadata
+async function fetchContractMetadata(address: string) {
+  try {
+    const client = createPublicClient({
+      chain: base,
+      transport: http(),
+    });
+
+    // Read contract URI
+    const contractURI = await client.readContract({
+      address: address as `0x${string}`,
+      abi: ERC20_ABI,
+      functionName: "contractURI",
+    });
+
+    if (!contractURI) {
+      return null;
+    }
+
+    // Handle IPFS URLs
+    let metadataUrl = contractURI;
+    if (contractURI.startsWith("ipfs://")) {
+      metadataUrl = `https://ipfs.io/ipfs/${contractURI.slice(7)}`;
+    }
+
+    // Fetch metadata
+    const response = await fetch(metadataUrl);
+    if (!response.ok) {
+      return null;
+    }
+
+    const metadata = await response.json();
+    return metadata;
+  } catch (error) {
+    console.error("Error fetching contract metadata:", error);
+    return null;
+  }
+}
+
+// Helper function to determine coin type based on metadata
+function determineCoinType(metadata: any): "media" | "markdown" | "carousel" {
+  if (!metadata) {
+    return "media"; // Default to media coin
+  }
+
+  // Check if it's a markdown coin
+  if (
+    metadata.properties?.content_type === "longform-post" &&
+    metadata.properties?.skatehive_post === "true" &&
+    metadata.properties?.markdown_ipfs
+  ) {
+    return "markdown";
+  }
+
+  // Check if it's a carousel coin (but not markdown)
+  if (
+    metadata.content?.type === "CAROUSEL" &&
+    metadata.content?.carousel?.media &&
+    !metadata.properties?.markdown_ipfs
+  ) {
+    return "carousel";
+  }
+
+  // Default to media coin
+  return "media";
 }
 
 // Server-side metadata generation
@@ -160,7 +239,33 @@ export default async function CoinPage({ params }: PageProps) {
     if (!coin) {
       notFound();
     }
-    console.log(coin);
+
+    // Try to fetch token metadata from tokenUri first, fallback to contract if needed
+    let contractMetadata = null;
+    if (coin.tokenUri) {
+      try {
+        let metadataUrl = coin.tokenUri;
+        if (coin.tokenUri.startsWith("ipfs://")) {
+          metadataUrl = coin.tokenUri.replace("ipfs://", "https://ipfs.skatehive.app/ipfs/");
+        }
+        
+        const response = await fetch(metadataUrl);
+        if (response.ok) {
+          contractMetadata = await response.json();
+        }
+      } catch (error) {
+        console.log("Failed to fetch from tokenUri, trying contract call...");
+        // Fallback to contract call
+        contractMetadata = await fetchContractMetadata(address);
+      }
+    }
+    
+    const coinType = determineCoinType(contractMetadata);
+
+    console.log("Coin:", coin);
+    console.log("Contract metadata:", contractMetadata);
+    console.log("Determined coin type:", coinType);
+
     // Prepare data for client component
     coinData = {
       address,
@@ -173,10 +278,20 @@ export default async function CoinPage({ params }: PageProps) {
         (coin.mediaContent?.mimeType?.startsWith("image/")
           ? coin.mediaContent.originalUri
           : undefined),
-      videoUrl: coin.mediaContent?.mimeType?.startsWith("video/")
-        ? coin.mediaContent.originalUri
-        : undefined,
-      hasVideo: coin.mediaContent?.mimeType?.startsWith("video/") || false,
+      videoUrl: 
+        // First check for animation_url in contract metadata
+        contractMetadata?.animation_url ? 
+          (contractMetadata.animation_url.startsWith("ipfs://") 
+            ? contractMetadata.animation_url.replace("ipfs://", "https://ipfs.skatehive.app/ipfs/")
+            : contractMetadata.animation_url)
+        // Then check mediaContent for videos
+        : coin.mediaContent?.mimeType?.startsWith("video/")
+          ? coin.mediaContent.originalUri
+          : undefined,
+      hasVideo: 
+        // Has video if animation_url exists or if mediaContent is video
+        Boolean(contractMetadata?.animation_url) || 
+        Boolean(coin.mediaContent?.mimeType?.startsWith("video/")),
       marketCap: coin.marketCap,
       totalSupply: coin.totalSupply,
       uniqueHolders: coin.uniqueHolders,
@@ -197,6 +312,11 @@ export default async function CoinPage({ params }: PageProps) {
               : undefined,
           }
         : undefined,
+      // Add new fields for different coin types
+      coinType,
+      contractMetadata,
+      markdownIpfs: contractMetadata?.properties?.markdown_ipfs,
+      carouselMedia: contractMetadata?.content?.carousel?.media,
     };
   } catch (err) {
     if (process.env.NODE_ENV === "development") {

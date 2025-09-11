@@ -161,6 +161,8 @@ export function MarkdownCoinModal({
       editableTitle,
       editableDescription,
       selectedColors,
+      isGeneratingPreview,
+      post,
     ]
   ); // Removed state variables to prevent infinite loop
 
@@ -258,7 +260,7 @@ export function MarkdownCoinModal({
         }
       }
     }
-  }, [isOpen, hasInitialized, post.body, post.title, post]); // Debug effect to monitor carouselImages state changes
+  }, [isOpen, hasInitialized, post.body, post.title, post, cardPreview]); // Debug effect to monitor carouselImages state changes
   useEffect(() => {
     console.log("📊 carouselImages state changed:", {
       length: carouselImages?.length || 0,
@@ -288,7 +290,7 @@ export function MarkdownCoinModal({
         URL.revokeObjectURL(cardPreview);
       }
     };
-  }, []);
+  }, [cardPreview]);
 
   // Auto-regenerate preview when colors change
   useEffect(() => {
@@ -301,7 +303,7 @@ export function MarkdownCoinModal({
       
       return () => clearTimeout(timer);
     }
-  }, [selectedColors]);
+  }, [selectedColors, hasInitialized, post, editableTitle, editableDescription, generatePreview]);
 
   // Auto-regenerate preview when thumbnail selection changes
   useEffect(() => {
@@ -314,7 +316,7 @@ export function MarkdownCoinModal({
       
       return () => clearTimeout(timer);
     }
-  }, [selectedThumbnail]);
+  }, [selectedThumbnail, hasInitialized, post, editableTitle, editableDescription, cardPreview, generatePreview]);
 
   const handleCreateCoin = async (
     metadata: {

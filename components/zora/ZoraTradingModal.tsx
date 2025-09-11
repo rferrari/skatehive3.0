@@ -219,7 +219,7 @@ export default function ZoraTradingModal({
         setToCurrency(availableCurrencies[0]); // Default to ETH
       }
     }
-  }, [tradeType, coinAddress, coinData]);
+  }, [tradeType, coinAddress, coinData, availableCurrencies, fromCurrency.address, fromCurrency.type, toCurrency.address, toCurrency.type]);
 
   // Fetch balance when fromCurrency changes
   useEffect(() => {

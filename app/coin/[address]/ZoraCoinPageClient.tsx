@@ -15,7 +15,7 @@ import {
 import { useAccount } from "wagmi";
 import { Address } from "viem";
 
-import { MediaRenderer } from "@/components/coin/MediaRenderer";
+import { ContentRenderer } from "@/components/coin/ContentRenderer";
 import { CoinHeader } from "@/components/coin/CoinHeader";
 import { CoinStats } from "@/components/coin/CoinStats";
 import { TradeInterface, SelectedCoin } from "@/components/coin/TradeInterface";
@@ -93,6 +93,15 @@ const ZoraCoinPageClient = React.memo<ZoraCoinPageClientProps>(
 
     return (
       <Box minH="100vh" bg="background" color="white">
+        {/* Mobile Header - Show on mobile only */}
+        <Box display={{ base: "block", lg: "none" }}>
+          <CoinHeader
+            coinData={coinData}
+            isCreator={isCreator}
+            onEditMetadata={() => setIsEditModalOpen(true)}
+          />
+        </Box>
+
         <Grid
           templateColumns={{
             base: "1fr",
@@ -107,31 +116,12 @@ const ZoraCoinPageClient = React.memo<ZoraCoinPageClientProps>(
           {/* Left Side - Media Content */}
           <GridItem
             bg="background"
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
             p={{ base: 1, md: 4 }}
             order={{ base: 1, lg: 0 }}
             minH={{ base: "60vh", lg: "100vh" }}
+            overflowY="auto"
           >
-            <Box
-              maxW={{ base: "100%", lg: "800px" }}
-              maxH={{ base: "60vh", lg: "600px" }}
-              w="100%"
-              h={{ base: "auto", lg: "100%" }}
-              aspectRatio={{ base: "auto", lg: "unset" }}
-              display="flex"
-              alignItems="center"
-              justifyContent="center"
-            >
-              <MediaRenderer
-                videoUrl={coinData.videoUrl}
-                imageUrl={coinData.image}
-                hasVideo={coinData.hasVideo}
-                altText={coinData.name || "Coin"}
-                blurDataURL={coinData.blurDataURL}
-              />
-            </Box>
+            <ContentRenderer coinData={coinData} />
           </GridItem>
 
           {/* Right Side - Trading Interface */}
@@ -145,12 +135,14 @@ const ZoraCoinPageClient = React.memo<ZoraCoinPageClientProps>(
             overflowY={{ base: "visible", lg: "auto" }}
           >
             <VStack h={{ base: "auto", lg: "100%" }} spacing={0}>
-              {/* Header */}
-              <CoinHeader
-                coinData={coinData}
-                isCreator={isCreator}
-                onEditMetadata={() => setIsEditModalOpen(true)}
-              />
+              {/* Desktop Header - Show on desktop only */}
+              <Box display={{ base: "none", lg: "block" }} w="100%">
+                <CoinHeader
+                  coinData={coinData}
+                  isCreator={isCreator}
+                  onEditMetadata={() => setIsEditModalOpen(true)}
+                />
+              </Box>
 
               {/* Stats */}
               <CoinStats coinData={coinData} />

@@ -23,6 +23,31 @@ interface CoinHeaderProps {
   onEditMetadata: () => void;
 }
 
+/**
+ * Utility function to trim description for markdown coins
+ * Removes content after "Original post:" link to avoid duplication
+ */
+function trimDescriptionForMarkdownCoin(description: string, coinType?: string): string {
+  if (coinType !== "markdown" || !description) {
+    return description;
+  }
+
+  // Find the "Original post:" link and trim everything after it
+  const originalPostIndex = description.indexOf("Original post:");
+  if (originalPostIndex === -1) {
+    return description;
+  }
+
+  // Find the end of the line containing "Original post:"
+  const endOfLineIndex = description.indexOf("\n", originalPostIndex);
+  if (endOfLineIndex === -1) {
+    // If there's no newline after, just return up to the original post line
+    return description.substring(0, originalPostIndex).trim();
+  }
+
+  return description.substring(0, endOfLineIndex).trim();
+}
+
 export const CoinHeader: React.FC<CoinHeaderProps> = ({
   coinData,
   isCreator,
@@ -138,7 +163,12 @@ export const CoinHeader: React.FC<CoinHeaderProps> = ({
           }}
         >
           <EnhancedMarkdownRenderer
-            content={coinData.description || `${coinData.name} creator coin`}
+            content={
+              trimDescriptionForMarkdownCoin(
+                coinData.description || `${coinData.name} creator coin`,
+                coinData.coinType
+              )
+            }
             className="text-sm text-gray-400"
           />
         </Box>
