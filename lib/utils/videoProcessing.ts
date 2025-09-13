@@ -25,13 +25,13 @@ export interface EnhancedProcessingOptions {
  * Process non-MP4 video on server
  */
 export async function processVideoOnServer(
-  file: File, 
+  file: File,
   username: string = 'anonymous',
   enhancedOptions?: EnhancedProcessingOptions
 ): Promise<ProcessingResult> {
-  
+
   console.log('🔄 Server processing started:', file.name);
-  
+
   // Try Raspberry Pi (primary) server first
   const primaryResult = await tryServer(
     'https://raspberrypi.tail83ea3e.ts.net/transcode/transcode',
@@ -40,11 +40,11 @@ export async function processVideoOnServer(
     'Raspberry Pi (Primary)',
     enhancedOptions
   );
-  
+
   if (primaryResult.success) {
     return primaryResult;
   }
-  
+
   // Try Render (fallback) server
   const fallbackResult = await tryServer(
     'https://skatehive-transcoder.onrender.com/transcode',
@@ -53,7 +53,7 @@ export async function processVideoOnServer(
     'Render (Fallback)',
     enhancedOptions
   );
-  
+
   return fallbackResult;
 }
 
@@ -67,7 +67,7 @@ async function tryServer(
   serverName: string,
   enhancedOptions?: EnhancedProcessingOptions
 ): Promise<ProcessingResult> {
-  
+
   try {
     console.log(`🔄 Trying ${serverName}...`);
 
@@ -94,7 +94,7 @@ async function tryServer(
     if (enhancedOptions?.connectionType) {
       formData.append('connectionType', enhancedOptions.connectionType);
     }
-    
+
     // Generate correlation ID for tracking
     const correlationId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     formData.append('correlationId', correlationId);
@@ -134,7 +134,7 @@ async function tryServer(
       // Use Skatehive IPFS gateway for iframe embedding to avoid X-Frame-Options issues
       const hash = result.cid;
       const skateHiveUrl = `https://ipfs.skatehive.app/ipfs/${hash}`;
-      
+
       console.log(`✅ ${serverName} processing successful`);
 
       return {
@@ -144,11 +144,11 @@ async function tryServer(
       };
     } catch (error) {
       clearTimeout(timeoutId); // Clean up timeout in case of error
-      
+
       if (error instanceof Error && error.name === 'AbortError') {
         throw new Error(`${serverName} request timed out`);
       }
-      
+
       throw error; // Re-throw other errors
     }
   } catch (error) {

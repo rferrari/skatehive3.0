@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 const getInstagramServers = () => {
   const isDevelopment = process.env.NODE_ENV === 'development';
   const isVercel = process.env.VERCEL === '1';
-  
+
   if (isDevelopment) {
     // Local development - try localhost first, then public Pi, then fallback
     return [
@@ -70,11 +70,11 @@ async function tryDownloadFromServer(serverUrl: string, instagramUrl: string): P
 
   } catch (fetchError) {
     clearTimeout(timeoutId);
-    
+
     if (fetchError instanceof Error && fetchError.name === 'AbortError') {
       throw new Error(`Server ${serverUrl} timed out`);
     }
-    
+
     throw fetchError;
   }
 }
@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
     for (const server of INSTAGRAM_SERVERS) {
       try {
         const result = await tryDownloadFromServer(server, url);
-        
+
         // Success! Return the result
         return NextResponse.json(result);
 
@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
         const serverError = `${server}: ${errorMessage}`;
         allErrors.push(serverError);
         lastError = errorMessage;
-        
+
         // If this isn't the last server, continue to the next one
         if (server !== INSTAGRAM_SERVERS[INSTAGRAM_SERVERS.length - 1]) {
           continue;
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
 
     // All servers failed - provide specific error messages for common Instagram issues
     let finalErrorMessage = `All servers failed. Errors: ${allErrors.join(' | ')}`;
-    
+
     if (lastError.includes('rate-limit') || lastError.includes('login required')) {
       finalErrorMessage = 'Instagram rate limit reached or authentication required. Please try again later.';
     } else if (lastError.includes('not available') || lastError.includes('Requested content is not available')) {

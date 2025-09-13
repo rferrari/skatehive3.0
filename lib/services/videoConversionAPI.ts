@@ -29,19 +29,19 @@ const FALLBACK_API_ENDPOINT = "https://skatehive-transcoder.onrender.com/transco
  * Attempts to upload and convert video using the primary API
  */
 async function uploadToPrimaryAPI(
-  file: File, 
+  file: File,
   options: VideoConversionOptions
 ): Promise<VideoConversionResult> {
   try {
     console.log("🚀 Attempting upload to primary API...");
-    
+
     const formData = new FormData();
     formData.append("video", file);
-    
+
     if (options.creator) {
       formData.append("creator", options.creator);
     }
-    
+
     if (options.thumbnailUrl) {
       formData.append("thumbnailUrl", options.thumbnailUrl);
     }
@@ -56,20 +56,20 @@ async function uploadToPrimaryAPI(
     }
 
     const result = await response.json();
-    
+
     console.log("🔍 Primary API Response Debug:");
     console.log("Full result:", JSON.stringify(result, null, 2));
     console.log("result.url:", result.url, typeof result.url);
     console.log("result.ipfsUrl:", result.ipfsUrl, typeof result.ipfsUrl);
     console.log("result.videoUrl:", result.videoUrl, typeof result.videoUrl);
-    
+
     // Assuming the API returns a JSON with a URL field
     if (result.url || result.ipfsUrl || result.videoUrl) {
       const videoUrl = result.url || result.ipfsUrl || result.videoUrl;
-      
+
       console.log("✅ Primary API upload successful!");
       console.log("Selected videoUrl:", videoUrl, typeof videoUrl);
-      
+
       return {
         success: true,
         url: videoUrl,
@@ -94,16 +94,16 @@ async function uploadToPrimaryAPI(
  * Attempts to upload and convert video using the fallback API
  */
 async function uploadToFallbackAPI(
-  file: File, 
+  file: File,
   options: VideoConversionOptions
 ): Promise<VideoConversionResult> {
   try {
     console.log("🔄 Attempting upload to fallback API...");
-    
+
     // TODO: Replace this placeholder with actual fallback API implementation
     // For now, we'll simulate a fallback API response
     console.warn("⚠️ Fallback API is not yet implemented - returning failure");
-    
+
     return {
       success: false,
       error: "Fallback API not yet implemented",
@@ -169,7 +169,7 @@ export async function uploadVideoWithAPIFallback(
   options: VideoConversionOptions = {}
 ): Promise<VideoConversionResult> {
   const { maxRetries = 1 } = options;
-  
+
   console.log("🎬 Starting video upload with API fallback chain...", {
     fileName: file.name,
     fileSize: `${(file.size / 1024 / 1024).toFixed(2)}MB`,
@@ -184,7 +184,7 @@ export async function uploadVideoWithAPIFallback(
   }
 
   console.log("⚠️ Primary API failed, trying fallback API...");
-  
+
   // Try fallback API
   result = await uploadToFallbackAPI(file, options);
   if (result.success) {
@@ -192,7 +192,7 @@ export async function uploadVideoWithAPIFallback(
   }
 
   console.log("⚠️ Both APIs failed, will fallback to native processing");
-  
+
   // Return failure - the calling code will handle native fallback
   return {
     success: false,
