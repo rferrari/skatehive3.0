@@ -217,8 +217,8 @@ class VideoApiService {
       viewport: deviceInfo.viewport
     });
 
-    console.log('🚀 Using direct API calls (no proxy needed)');
-    return this.uploadVideoDirectly(video, {
+    console.log('� Using proxy to avoid CORS issues');
+    return this.uploadVideoWithProxy(video, {
       ...options,
       platform: options.platform || deviceInfo.platform,
       deviceInfo: options.deviceInfo || deviceInfo.deviceInfo,

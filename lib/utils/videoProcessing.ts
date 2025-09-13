@@ -22,7 +22,7 @@ export interface EnhancedProcessingOptions {
 }
 
 /**
- * Process non-MP4 video on server
+ * Process non-MP4 video on server using proxy to avoid CORS issues
  */
 export async function processVideoOnServer(
   file: File,
@@ -32,29 +32,18 @@ export async function processVideoOnServer(
 
   console.log('🔄 Server processing started:', file.name);
 
-  // Try Raspberry Pi (primary) server first
-  const primaryResult = await tryServer(
-    'https://raspberrypi.tail83ea3e.ts.net/video/transcode',
+  // Use proxy route to avoid CORS issues
+  const proxyUrl = '/api/video-proxy?url=' + encodeURIComponent('https://skatehive-transcoder.onrender.com/transcode');
+  
+  const result = await tryServer(
+    proxyUrl,
     file,
     username,
-    'Raspberry Pi (Primary)',
+    'Render (via Proxy)',
     enhancedOptions
   );
 
-  if (primaryResult.success) {
-    return primaryResult;
-  }
-
-  // Try Render (fallback) server
-  const fallbackResult = await tryServer(
-    'https://skatehive-transcoder.onrender.com/transcode',
-    file,
-    username,
-    'Render (Fallback)',
-    enhancedOptions
-  );
-
-  return fallbackResult;
+  return result;
 }
 
 /**
