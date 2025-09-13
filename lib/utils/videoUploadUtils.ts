@@ -135,7 +135,7 @@ export async function uploadWithProgress(
     // Set timeout for mobile networks (increased for larger files)
     xhr.timeout = isMobile ? 600000 : 480000; // 10 minutes for mobile, 8 for desktop
 
-  try {
+    try {
       let endpoint: string;
       if (PINATA_JWT) {
         endpoint = "https://api.pinata.cloud/pinning/pinFileToIPFS";
@@ -164,7 +164,7 @@ export async function uploadWithProgress(
       reject(error);
     }
   });
-}export async function uploadWithChunks(
+} export async function uploadWithChunks(
   file: File,
   creator?: string,
   thumbnailUrl?: string

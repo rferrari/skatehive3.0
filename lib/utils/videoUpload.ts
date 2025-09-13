@@ -46,8 +46,8 @@ export function validateVideo(file: File): { valid: boolean; error?: string } {
   if (file.size > slowProcessingSize) {
     console.warn(`⚠️ Large video file (${(file.size / 1024 / 1024).toFixed(1)}MB) - processing may take 2-3 minutes`);
     // Log warning for large files
-    clientErrorLogger.logWarning('large_file_warning', 
-      `Large video file may process slowly: ${(file.size / 1024 / 1024).toFixed(1)}MB`, 
+    clientErrorLogger.logWarning('large_file_warning',
+      `Large video file may process slowly: ${(file.size / 1024 / 1024).toFixed(1)}MB`,
       {
         fileName: file.name,
         fileSize: file.size,
