@@ -34,7 +34,7 @@ export async function processVideoOnServer(
 
   // Use proxy route to avoid CORS issues
   const proxyUrl = '/api/video-proxy?url=' + encodeURIComponent('https://skatehive-transcoder.onrender.com/transcode');
-  
+
   const result = await tryServer(
     proxyUrl,
     file,
