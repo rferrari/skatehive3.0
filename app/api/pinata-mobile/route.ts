@@ -34,10 +34,10 @@ export async function POST(request: Request) {
         const fileSizeMB = Math.round(file.size / 1024 / 1024 * 100) / 100;
         
         // Mobile file size check before processing
-        if (file.size > 45 * 1024 * 1024) { // 45MB limit for mobile
+        if (file.size > 135 * 1024 * 1024) { // 135MB limit for mobile
             console.error('📱 Mobile file too large:', fileSizeMB, 'MB');
             return NextResponse.json({ 
-                error: `File too large for mobile upload. Size: ${fileSizeMB}MB, Maximum: 45MB` 
+                error: `File too large for mobile upload. Size: ${fileSizeMB}MB, Maximum: 135MB` 
             }, { status: 413 });
         }
 
@@ -75,9 +75,9 @@ export async function POST(request: Request) {
 
         console.log('📱 Sending mobile upload to Pinata...');
 
-        // Use fetch with longer timeout for mobile
+        // Use fetch with longer timeout for mobile (increased for larger files)
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 180000); // 3 minutes for mobile
+        const timeoutId = setTimeout(() => controller.abort(), 600000); // 10 minutes for mobile
 
         const uploadResponse = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
             method: 'POST',

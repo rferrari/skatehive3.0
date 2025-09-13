@@ -2,7 +2,7 @@
 const nextConfig = {
     experimental: {
         serverActions: {
-            bodySizeLimit: '10mb', // Increase the body size limit
+            bodySizeLimit: '200mb', // Increase the body size limit for large video uploads
         },
     },
     webpack: (config, { isServer, dev }) => {

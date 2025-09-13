@@ -70,9 +70,9 @@ export function getFileSizeLimits(userHP: number = 0) {
   // Standard users get conservative limits
   return {
     ...baseLimits,
-    maxSizeForMobile: 45 * 1024 * 1024, // 45MB
-    maxSizeForDesktop: 50 * 1024 * 1024, // 50MB
-    maxSize: isMobile ? 45 * 1024 * 1024 : 50 * 1024 * 1024,
+    maxSizeForMobile: 135 * 1024 * 1024, // 135MB
+    maxSizeForDesktop: 150 * 1024 * 1024, // 150MB
+    maxSize: isMobile ? 135 * 1024 * 1024 : 150 * 1024 * 1024,
   };
 }
 
@@ -114,8 +114,8 @@ export async function uploadWithProgress(
       reject(new Error("Upload aborted"));
     });
 
-    // Set timeout for mobile networks
-    xhr.timeout = isMobile ? 180000 : 120000; // 3 minutes for mobile, 2 for desktop
+    // Set timeout for mobile networks (increased for larger files)
+    xhr.timeout = isMobile ? 600000 : 480000; // 10 minutes for mobile, 8 for desktop
 
   try {
       let endpoint: string;

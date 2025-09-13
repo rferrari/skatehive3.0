@@ -227,7 +227,7 @@ export function validateVideoFile(file: File, config: ProcessingConfig): {
   }
   
   // Size validation based on user HP
-  const maxSize = config.userHP >= 100 ? 100 : 50; // MB
+  const maxSize = config.userHP >= 100 ? 200 : 150; // MB
   if (fileSizeMB > maxSize) {
     errors.push(`File too large (${fileSizeMB.toFixed(1)}MB). Maximum: ${maxSize}MB`);
   }
@@ -267,7 +267,7 @@ export function optimizeUploadParams(
   
   return {
     chunkSize: isMobile ? 10 * 1024 * 1024 : 10 * 1024 * 1024, // 10MB mobile, 10MB desktop
-    timeout: isMobile ? 180000 : 120000, // 3min mobile, 2min desktop
+    timeout: isMobile ? 600000 : 480000, // 10min mobile, 8min desktop (increased for larger files)
     retries: fileSizeMB > 20 ? 5 : 3, // More retries for large files
     endpoint: isMobile ? "/api/pinata-mobile" : "/api/pinata",
   };

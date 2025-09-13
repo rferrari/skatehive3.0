@@ -35,8 +35,8 @@ class VideoApiService {
   private readonly primaryApiUrl = 'https://raspberrypi.tail83ea3e.ts.net/video';
   private readonly fallbackApiUrl = 'https://skatehive-transcoder.onrender.com';
 
-  // Conversion timeout (5 minutes)
-  private readonly CONVERSION_TIMEOUT = 300000;
+  // Conversion timeout (15 minutes for larger files)
+  private readonly CONVERSION_TIMEOUT = 900000;
 
   // Request retry configuration
   private readonly MAX_RETRIES = 2;
