@@ -49,11 +49,23 @@ async function fetchContractMetadata(address: string) {
     }
 
     // Fetch metadata
-    const response = await fetch(metadataUrl);
+    const response = await fetch(metadataUrl, {
+      signal: AbortSignal.timeout(10000), // 10 second timeout
+      headers: {
+        Accept: "application/json",
+      },
+    });
     if (!response.ok) {
       return null;
     }
 
+    // Check content length to prevent large responses
+    const contentLength = response.headers.get("content-length");
+    if (contentLength && parseInt(contentLength) > 5 * 1024 * 1024) {
+      // 5MB limit
+      console.error("Metadata response too large:", contentLength);
+      return null;
+    }
     const metadata = await response.json();
     return metadata;
   } catch (error) {
@@ -246,9 +258,12 @@ export default async function CoinPage({ params }: PageProps) {
       try {
         let metadataUrl = coin.tokenUri;
         if (coin.tokenUri.startsWith("ipfs://")) {
-          metadataUrl = coin.tokenUri.replace("ipfs://", "https://ipfs.skatehive.app/ipfs/");
+          metadataUrl = coin.tokenUri.replace(
+            "ipfs://",
+            "https://ipfs.skatehive.app/ipfs/"
+          );
         }
-        
+
         const response = await fetch(metadataUrl);
         if (response.ok) {
           contractMetadata = await response.json();
@@ -259,7 +274,7 @@ export default async function CoinPage({ params }: PageProps) {
         contractMetadata = await fetchContractMetadata(address);
       }
     }
-    
+
     const coinType = determineCoinType(contractMetadata);
 
     console.log("Coin:", coin);
@@ -278,19 +293,22 @@ export default async function CoinPage({ params }: PageProps) {
         (coin.mediaContent?.mimeType?.startsWith("image/")
           ? coin.mediaContent.originalUri
           : undefined),
-      videoUrl: 
+      videoUrl:
         // First check for animation_url in contract metadata
-        contractMetadata?.animation_url ? 
-          (contractMetadata.animation_url.startsWith("ipfs://") 
-            ? contractMetadata.animation_url.replace("ipfs://", "https://ipfs.skatehive.app/ipfs/")
-            : contractMetadata.animation_url)
-        // Then check mediaContent for videos
-        : coin.mediaContent?.mimeType?.startsWith("video/")
+        contractMetadata?.animation_url
+          ? contractMetadata.animation_url.startsWith("ipfs://")
+            ? contractMetadata.animation_url.replace(
+                "ipfs://",
+                "https://ipfs.skatehive.app/ipfs/"
+              )
+            : contractMetadata.animation_url
+          : // Then check mediaContent for videos
+          coin.mediaContent?.mimeType?.startsWith("video/")
           ? coin.mediaContent.originalUri
           : undefined,
-      hasVideo: 
+      hasVideo:
         // Has video if animation_url exists or if mediaContent is video
-        Boolean(contractMetadata?.animation_url) || 
+        Boolean(contractMetadata?.animation_url) ||
         Boolean(coin.mediaContent?.mimeType?.startsWith("video/")),
       marketCap: coin.marketCap,
       totalSupply: coin.totalSupply,
