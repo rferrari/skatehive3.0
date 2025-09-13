@@ -33,10 +33,10 @@ interface VideoConversionRequest {
 class VideoApiService {
   private readonly primaryApiUrl = 'https://raspberrypi.tail83ea3e.ts.net/transcode';
   private readonly fallbackApiUrl = 'https://skatehive-transcoder.onrender.com';
-  
+
   // Conversion timeout (5 minutes)
   private readonly CONVERSION_TIMEOUT = 300000;
-  
+
   // Request retry configuration
   private readonly MAX_RETRIES = 2;
   private readonly RETRY_DELAY = 1000;
@@ -60,14 +60,14 @@ class VideoApiService {
   } {
     const ua = navigator.userAgent;
     const platform = navigator.platform;
-    
+
     // Enhanced device type detection
     let deviceType = 'desktop';
     if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua)) {
       deviceType = 'mobile';
       if (/iPad/i.test(ua)) deviceType = 'tablet';
     }
-    
+
     // Enhanced OS detection
     let os = 'unknown';
     if (/Mac/i.test(platform)) os = 'macOS';
@@ -75,14 +75,14 @@ class VideoApiService {
     else if (/Linux/i.test(platform)) os = 'Linux';
     else if (/iPhone|iPad|iPod/i.test(ua)) os = 'iOS';
     else if (/Android/i.test(ua)) os = 'Android';
-    
+
     // Enhanced browser detection
     let browser = 'unknown';
     if (/Chrome/i.test(ua) && !/Edge|Edg/i.test(ua)) browser = 'Chrome';
     else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) browser = 'Safari';
     else if (/Firefox/i.test(ua)) browser = 'Firefox';
     else if (/Edge|Edg/i.test(ua)) browser = 'Edge';
-    
+
     return {
       platform: deviceType,
       deviceInfo: `${deviceType}/${os}/${browser}`,
@@ -102,28 +102,28 @@ class VideoApiService {
   ): FormData {
     const deviceInfo = this.getDeviceInfo();
     const formData = new FormData();
-    
+
     // Core video data
     formData.append('video', video);
     formData.append('creator', options.creator);
-    
+
     // Enhanced tracking information
     formData.append('platform', options.platform || deviceInfo.platform);
     formData.append('deviceInfo', options.deviceInfo || deviceInfo.deviceInfo);
     formData.append('browserInfo', options.browserInfo || deviceInfo.browserInfo);
     formData.append('viewport', options.viewport || deviceInfo.viewport);
     formData.append('correlationId', correlationId);
-    
+
     // User context
     if (options.userHP !== undefined) {
       formData.append('userHP', options.userHP.toString());
     }
-    
+
     // Connection info
     if (deviceInfo.connectionType !== 'unknown') {
       formData.append('connectionType', options.connectionType || deviceInfo.connectionType);
     }
-    
+
     // Optional fields
     if (options.thumbnailUrl) {
       formData.append('thumbnailUrl', options.thumbnailUrl);
@@ -152,7 +152,7 @@ class VideoApiService {
         fileSize: `${(video.size / 1024 / 1024).toFixed(2)}MB`,
         fileName: video.name
       });
-      
+
       // Create enhanced FormData with device and user information
       const formData = this.buildEnhancedFormData(video, options, correlationId);
 
@@ -206,7 +206,7 @@ class VideoApiService {
     options: VideoUploadOptions
   ): Promise<VideoUploadResult> {
     const deviceInfo = this.getDeviceInfo();
-    
+
     console.log('🎬 Starting video upload process...', {
       fileName: video.name,
       fileSize: `${(video.size / 1024 / 1024).toFixed(2)}MB`,
@@ -216,7 +216,7 @@ class VideoApiService {
       browserInfo: deviceInfo.browserInfo,
       viewport: deviceInfo.viewport
     });
-    
+
     console.log('🚀 Using direct API calls (no proxy needed)');
     return this.uploadVideoDirectly(video, {
       ...options,
@@ -239,7 +239,7 @@ class VideoApiService {
     options: VideoUploadOptions
   ): Promise<VideoUploadResult> {
     const correlationId = this.generateCorrelationId();
-    
+
     // Try Raspberry Pi first, then fallback to Render API
     const apiUrls = [
       { name: 'Raspberry Pi', url: `${this.primaryApiUrl}/transcode` },
@@ -260,7 +260,7 @@ class VideoApiService {
           correlationId,
           apiUrl: api.url
         });
-        
+
         // Create enhanced FormData with device and user information
         const formData = this.buildEnhancedFormData(video, options, correlationId);
 
@@ -325,7 +325,7 @@ class VideoApiService {
     options: VideoUploadOptions
   ): Promise<VideoUploadResult> {
     const correlationId = this.generateCorrelationId();
-    
+
     // Try Render API via proxy (Raspberry Pi doesn't work via proxy)
     const proxyUrl = '/api/video-proxy?url=' + encodeURIComponent(`${this.fallbackApiUrl}/transcode`);
 
@@ -335,7 +335,7 @@ class VideoApiService {
         creator: options.creator,
         fileSize: `${(video.size / 1024 / 1024).toFixed(2)}MB`
       });
-      
+
       // Create enhanced FormData with device and user information
       const formData = this.buildEnhancedFormData(video, options, correlationId);
 
@@ -385,19 +385,19 @@ class VideoApiService {
   async getApiStatus(): Promise<{
     primaryAPI: boolean;
     primaryURL: string;
-    fallbackAPI: boolean; 
+    fallbackAPI: boolean;
     fallbackURL: string;
     checkDuration: string;
     timestamp: string;
   }> {
     const startTime = Date.now();
-    
+
     console.log('📊 Simplified API status check - assuming services are available...');
-    
+
     // Simplified approach: assume APIs are available
     // Real availability will be tested during actual upload attempts
     const duration = Date.now() - startTime;
-    
+
     return {
       primaryAPI: true,  // Assume available, will fail gracefully if not
       primaryURL: this.primaryApiUrl,
@@ -412,7 +412,7 @@ class VideoApiService {
   async convertVideo(request: VideoConversionRequest): Promise<VideoConversionResponse> {
     try {
       const deviceInfo = this.getDeviceInfo();
-      
+
       const result = await this.uploadVideo(request.video, {
         creator: request.creator,
         thumbnailUrl: request.thumbnailUrl,
