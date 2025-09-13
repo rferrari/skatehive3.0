@@ -3,9 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 // Environment-aware Instagram server configuration
 const getInstagramServers = () => {
   const isDevelopment = process.env.NODE_ENV === 'development';
-  
+
   return [
-    isDevelopment 
+    isDevelopment
       ? 'http://localhost:8000'                     // Local Docker service
       : 'http://macmini.tail83ea3e.ts.net:6666',    // Mac Mini M4 (primary)
     'http://raspberrypi.tail83ea3e.ts.net:8000',    // Raspberry Pi (secondary)
@@ -54,11 +54,11 @@ async function checkServerHealth(serverUrl: string): Promise<{ healthy: boolean;
 
   } catch (fetchError) {
     clearTimeout(timeoutId);
-    
+
     if (fetchError instanceof Error && fetchError.name === 'AbortError') {
       return { healthy: false, error: 'Server timeout' };
     }
-    
+
     return { healthy: false, error: 'Server unreachable' };
   }
 }

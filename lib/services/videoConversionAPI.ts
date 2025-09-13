@@ -127,7 +127,7 @@ async function uploadToSecondaryAPI(
 
     if (result.url || result.ipfsUrl || result.videoUrl) {
       const videoUrl = result.url || result.ipfsUrl || result.videoUrl;
-      
+
       console.log("✅ Secondary API upload successful!");
       return {
         success: true,
@@ -161,11 +161,11 @@ async function uploadToFallbackAPI(
 
     const formData = new FormData();
     formData.append("video", file);
-    
+
     if (options.creator) {
       formData.append("creator", options.creator);
     }
-    
+
     if (options.thumbnailUrl) {
       formData.append("thumbnailUrl", options.thumbnailUrl);
     }
@@ -180,10 +180,10 @@ async function uploadToFallbackAPI(
     }
 
     const result = await response.json();
-    
+
     if (result.url || result.ipfsUrl || result.videoUrl) {
       const videoUrl = result.url || result.ipfsUrl || result.videoUrl;
-      
+
       console.log("✅ Fallback API upload successful!");
       return {
         success: true,
