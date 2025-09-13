@@ -31,7 +31,7 @@ interface VideoConversionRequest {
 }
 
 class VideoApiService {
-  private readonly macMiniApiUrl = 'https://minivlad.tail9656d3.ts.net';
+  private readonly macMiniApiUrl = 'https://minivlad.tail9656d3.ts.net/video';
   private readonly primaryApiUrl = 'https://raspberrypi.tail83ea3e.ts.net/video';
   private readonly fallbackApiUrl = 'https://skatehive-transcoder.onrender.com';
 
