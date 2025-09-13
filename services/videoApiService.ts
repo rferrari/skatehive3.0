@@ -31,6 +31,7 @@ interface VideoConversionRequest {
 }
 
 class VideoApiService {
+  private readonly macMiniApiUrl = 'https://macmini.tail83ea3e.ts.net:8081';
   private readonly primaryApiUrl = 'https://raspberrypi.tail83ea3e.ts.net/video';
   private readonly fallbackApiUrl = 'https://skatehive-transcoder.onrender.com';
 
@@ -240,8 +241,9 @@ class VideoApiService {
   ): Promise<VideoUploadResult> {
     const correlationId = this.generateCorrelationId();
 
-    // Try Raspberry Pi first, then fallback to Render API
+    // Try Mac Mini M4 first, then Raspberry Pi, then Render API
     const apiUrls = [
+      { name: 'Mac Mini M4', url: `${this.macMiniApiUrl}/transcode` },
       { name: 'Raspberry Pi', url: `${this.primaryApiUrl}/transcode` },
       { name: 'Render', url: `${this.fallbackApiUrl}/transcode` }
     ];

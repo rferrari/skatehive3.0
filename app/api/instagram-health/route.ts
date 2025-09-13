@@ -7,8 +7,9 @@ const getInstagramServers = () => {
   return [
     isDevelopment 
       ? 'http://localhost:8000'                     // Local Docker service
-      : 'http://raspberrypi.tail83ea3e.ts.net:8000', // Production Tailscale
-    'https://skate-insta.onrender.com'              // Always as backup
+      : 'http://macmini.tail83ea3e.ts.net:6666',    // Mac Mini M4 (primary)
+    'http://raspberrypi.tail83ea3e.ts.net:8000',    // Raspberry Pi (secondary)
+    'https://skate-insta.onrender.com'              // Render (fallback)
   ];
 };
 
