@@ -2,6 +2,8 @@
  * Video upload utilities and file handling
  */
 
+import { clientErrorLogger, logUploadError, logSizeRestrictionError, logApiError } from './clientErrorLogger';
+
 const PINATA_JWT = process.env.NEXT_PUBLIC_PINATA_JWT;
 
 export function getVideoDuration(file: File): Promise<number> {
@@ -78,7 +80,8 @@ export function getFileSizeLimits(userHP: number = 0) {
 
 export async function uploadWithProgress(
   formData: FormData,
-  onProgress: (progress: number) => void
+  onProgress: (progress: number) => void,
+  file?: File // Add file parameter for error logging
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     const isMobile = isMobileDevice();
@@ -95,28 +98,44 @@ export async function uploadWithProgress(
       if (xhr.status >= 200 && xhr.status < 300) {
         resolve(xhr.responseText);
       } else {
-        reject(new Error(`Upload failed: ${xhr.status} - ${xhr.responseText}`));
+        const errorMsg = `Upload failed: ${xhr.status} - ${xhr.responseText}`;
+        logUploadError(errorMsg, file?.name, file?.size, {
+          statusCode: xhr.status,
+          responseText: xhr.responseText
+        });
+        reject(new Error(errorMsg));
       }
     });
 
     xhr.addEventListener("error", () => {
       const errorMessage = `Network error: ${xhr.statusText || "Unknown error"
         } (Status: ${xhr.status}, State: ${xhr.readyState})`;
+      logUploadError(errorMessage, file?.name, file?.size, {
+        statusCode: xhr.status,
+        statusText: xhr.statusText,
+        readyState: xhr.readyState
+      });
       reject(new Error(errorMessage));
     });
 
     xhr.addEventListener("timeout", () => {
-      reject(new Error("Upload timeout"));
+      const timeoutError = "Upload timeout";
+      logUploadError(timeoutError, file?.name, file?.size, {
+        timeout: xhr.timeout,
+        timeoutMs: xhr.timeout
+      });
+      reject(new Error(timeoutError));
     });
 
     xhr.addEventListener("abort", () => {
+      logUploadError("Upload aborted", file?.name, file?.size);
       reject(new Error("Upload aborted"));
     });
 
     // Set timeout for mobile networks (increased for larger files)
     xhr.timeout = isMobile ? 600000 : 480000; // 10 minutes for mobile, 8 for desktop
 
-    try {
+  try {
       let endpoint: string;
       if (PINATA_JWT) {
         endpoint = "https://api.pinata.cloud/pinning/pinFileToIPFS";
@@ -139,12 +158,13 @@ export async function uploadWithProgress(
       // See: https://developer.mozilla.org/en-US/docs/Web/API/FormData/Using_FormData_Objects
       xhr.send(formData);
     } catch (error) {
+      logUploadError("Upload setup failed", file?.name, file?.size, {
+        error: error instanceof Error ? error.message : String(error)
+      });
       reject(error);
     }
   });
-}
-
-export async function uploadWithChunks(
+}export async function uploadWithChunks(
   file: File,
   creator?: string,
   thumbnailUrl?: string

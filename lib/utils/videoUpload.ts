@@ -1,5 +1,8 @@
+import { clientErrorLogger, logSizeRestrictionError } from './clientErrorLogger';
+
 /**
- * Clean video upload utilities - Step 1
+ * Video upload utilities
+ * For handling client-side video uploads and validation
  */
 
 export interface UploadResult {
@@ -21,12 +24,20 @@ export function isMP4(file: File): boolean {
  */
 export function validateVideo(file: File): { valid: boolean; error?: string } {
   if (!file.type.startsWith('video/')) {
+    // Log file type error
+    clientErrorLogger.logError('file_validation', 'Invalid file type - not a video', {
+      fileName: file.name,
+      fileType: file.type,
+      fileSize: file.size
+    });
     return { valid: false, error: 'File must be a video' };
   }
 
   // Basic size check (150MB limit for now)
   const maxSize = 150 * 1024 * 1024;
   if (file.size > maxSize) {
+    // Log size restriction error
+    logSizeRestrictionError(file.name, file.size, maxSize, 'desktop');
     return { valid: false, error: 'File too large (max 150MB)' };
   }
 
@@ -34,6 +45,15 @@ export function validateVideo(file: File): { valid: boolean; error?: string } {
   const slowProcessingSize = 20 * 1024 * 1024; // 20MB
   if (file.size > slowProcessingSize) {
     console.warn(`⚠️ Large video file (${(file.size / 1024 / 1024).toFixed(1)}MB) - processing may take 2-3 minutes`);
+    // Log warning for large files
+    clientErrorLogger.logWarning('large_file_warning', 
+      `Large video file may process slowly: ${(file.size / 1024 / 1024).toFixed(1)}MB`, 
+      {
+        fileName: file.name,
+        fileSize: file.size,
+        fileSizeMB: parseFloat((file.size / 1024 / 1024).toFixed(1))
+      }
+    );
   }
 
   return { valid: true };
