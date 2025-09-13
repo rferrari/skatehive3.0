@@ -15,14 +15,14 @@ const getInstagramServers = () => {
   } else if (isVercel) {
     // Vercel production - prioritize Mac Mini M4, then Pi, then Render fallback
     return [
-      'https://macmini.tail83ea3e.ts.net:6666/download',         // Mac Mini M4 (primary)
+      'https://minivlad.tail9656d3.ts.net/download',         // Mac Mini M4 (primary)
       'https://raspberrypi.tail83ea3e.ts.net/instagram/download',  // Raspberry Pi (secondary)
       'https://skate-insta.onrender.com/download'               // Render (fallback)
     ];
   } else {
     // Other production - prioritize Mac Mini M4, then Pi, then Render
     return [
-      'https://macmini.tail83ea3e.ts.net:6666/download',         // Mac Mini M4 (primary)
+      'https://minivlad.tail9656d3.ts.net/download',         // Mac Mini M4 (primary)
       'https://raspberrypi.tail83ea3e.ts.net/instagram/download',  // Raspberry Pi (secondary)
       'https://skate-insta.onrender.com/download'               // Render (fallback)
     ];

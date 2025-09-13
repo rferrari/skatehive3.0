@@ -20,7 +20,7 @@ export interface VideoConversionOptions {
 }
 
 // Primary API configuration - Mac Mini M4 (fastest)
-const PRIMARY_API_ENDPOINT = "https://macmini.tail83ea3e.ts.net:8081/transcode";
+const PRIMARY_API_ENDPOINT = "https://minivlad.tail9656d3.ts.net/transcode";
 
 // Secondary API configuration - Raspberry Pi (reliable)
 const SECONDARY_API_ENDPOINT = "https://raspberrypi.tail83ea3e.ts.net/video/transcode";
