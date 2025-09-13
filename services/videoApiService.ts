@@ -197,7 +197,7 @@ class VideoApiService {
   }
 
   /**
-   * Upload video using direct API calls only
+   * Upload video using size-based routing strategy
    * @param video - Video file to upload
    * @param options - Upload options including creator
    * @returns Promise with CID and gateway URL
@@ -218,8 +218,9 @@ class VideoApiService {
       viewport: deviceInfo.viewport
     });
 
-    console.log('� Using proxy to avoid CORS issues');
-    return this.uploadVideoWithProxy(video, {
+    // Always use direct upload to avoid Vercel proxy size limits
+    console.log('🎬 Using direct upload (no proxy size limits)');
+    return this.uploadVideoDirectly(video, {
       ...options,
       platform: options.platform || deviceInfo.platform,
       deviceInfo: options.deviceInfo || deviceInfo.deviceInfo,

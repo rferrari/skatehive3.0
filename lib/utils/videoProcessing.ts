@@ -22,7 +22,7 @@ export interface EnhancedProcessingOptions {
 }
 
 /**
- * Process non-MP4 video on server using proxy to avoid CORS issues
+ * Process non-MP4 video on server - try Raspberry Pi first, fallback to proxy for smaller files
  */
 export async function processVideoOnServer(
   file: File,
@@ -32,18 +32,43 @@ export async function processVideoOnServer(
 
   console.log('🔄 Server processing started:', file.name);
 
-  // Use proxy route to avoid CORS issues
-  const proxyUrl = '/api/video-proxy?url=' + encodeURIComponent('https://skatehive-transcoder.onrender.com/transcode');
-
-  const result = await tryServer(
-    proxyUrl,
+  // Try Raspberry Pi first (should work with CORS via Tailscale Funnel)
+  const primaryResult = await tryServer(
+    'https://raspberrypi.tail83ea3e.ts.net/video/transcode',
     file,
     username,
-    'Render (via Proxy)',
+    'Raspberry Pi (Primary)',
     enhancedOptions
   );
 
-  return result;
+  if (primaryResult.success) {
+    return primaryResult;
+  }
+
+  // If Raspberry Pi fails and file is small enough, try Render via proxy
+  const fileSizeMB = file.size / (1024 * 1024);
+  if (fileSizeMB <= 4) { // Only use proxy for files 4MB or smaller
+    console.log(`🔄 Primary failed, trying Render via proxy (file size: ${fileSizeMB.toFixed(1)}MB)`);
+
+    const proxyUrl = '/api/video-proxy?url=' + encodeURIComponent('https://skatehive-transcoder.onrender.com/transcode');
+
+    const proxyResult = await tryServer(
+      proxyUrl,
+      file,
+      username,
+      'Render (via Proxy)',
+      enhancedOptions
+    );
+
+    if (proxyResult.success) {
+      return proxyResult;
+    }
+  } else {
+    console.log(`⚠️ File too large for proxy (${fileSizeMB.toFixed(1)}MB), skipping proxy fallback`);
+  }
+
+  // Return the primary result (which contains the error)
+  return primaryResult;
 }
 
 /**
