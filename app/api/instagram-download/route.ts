@@ -8,21 +8,21 @@ const getInstagramServers = () => {
   if (isDevelopment) {
     // Local development - try localhost first, then public Pi, then fallback
     return [
-      'http://localhost:8000',
-      'https://raspberrypi.tail83ea3e.ts.net',
-      'https://skate-insta.onrender.com'
+      'http://localhost:6666/download',
+      'https://raspberrypi.tail83ea3e.ts.net/download/download',
+      'https://skate-insta.onrender.com/download'
     ];
   } else if (isVercel) {
     // Vercel production - use public HTTPS Pi service first, then Render fallback
     return [
-      'https://raspberrypi.tail83ea3e.ts.net',
-      'https://skate-insta.onrender.com'
+      'https://raspberrypi.tail83ea3e.ts.net/download/download',
+      'https://skate-insta.onrender.com/download'
     ];
   } else {
     // Other production - prioritize public Pi service
     return [
-      'https://raspberrypi.tail83ea3e.ts.net',
-      'https://skate-insta.onrender.com'
+      'https://raspberrypi.tail83ea3e.ts.net/download/download',
+      'https://skate-insta.onrender.com/download'
     ];
   }
 };
@@ -36,7 +36,8 @@ async function tryDownloadFromServer(serverUrl: string, instagramUrl: string): P
   }, 120000); // 2 minutes timeout per server
 
   try {
-    const response = await fetch(`${serverUrl}/download`, {
+    // Use the serverUrl as-is since it now includes the full path
+    const response = await fetch(serverUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
