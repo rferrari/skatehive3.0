@@ -32,20 +32,37 @@ export async function processVideoOnServer(
 
   console.log('🔄 Server processing started:', file.name);
 
-  // Try Raspberry Pi first (should work with CORS via Tailscale Funnel)
+  // Try Mac Mini M4 first (fastest processing with M4 chip)
+  console.log('🍎 Attempting Mac Mini M4 (PRIMARY) - https://minivlad.tail9656d3.ts.net/video/transcode');
   const primaryResult = await tryServer(
-    'https://raspberrypi.tail83ea3e.ts.net/video/transcode',
+    'https://minivlad.tail9656d3.ts.net/video/transcode',
     file,
     username,
-    'Raspberry Pi (Primary)',
+    'Mac Mini M4 (Primary)',
     enhancedOptions
   );
 
   if (primaryResult.success) {
+    console.log('✅ Mac Mini M4 succeeded - no need to try other servers');
     return primaryResult;
   }
 
-  // If Raspberry Pi fails and file is small enough, try Render via proxy
+  // If Mac Mini fails, try Raspberry Pi as secondary
+  console.log('🫐 Mac Mini failed, trying Raspberry Pi (SECONDARY) - https://raspberrypi.tail83ea3e.ts.net/video/transcode');
+  const secondaryResult = await tryServer(
+    'https://raspberrypi.tail83ea3e.ts.net/video/transcode',
+    file,
+    username,
+    'Raspberry Pi (Secondary)',
+    enhancedOptions
+  );
+
+  if (secondaryResult.success) {
+    console.log('✅ Raspberry Pi succeeded');
+    return secondaryResult;
+  }
+
+  // If both fail and file is small enough, try Render via proxy
   const fileSizeMB = file.size / (1024 * 1024);
   if (fileSizeMB <= 4) { // Only use proxy for files 4MB or smaller
     console.log(`🔄 Primary failed, trying Render via proxy (file size: ${fileSizeMB.toFixed(1)}MB)`);
@@ -67,8 +84,8 @@ export async function processVideoOnServer(
     console.log(`⚠️ File too large for proxy (${fileSizeMB.toFixed(1)}MB), skipping proxy fallback`);
   }
 
-  // Return the primary result (which contains the error)
-  return primaryResult;
+  // Return the most informative error (try secondary result first, then primary)
+  return secondaryResult.error ? secondaryResult : primaryResult;
 }
 
 /**
