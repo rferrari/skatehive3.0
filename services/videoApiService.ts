@@ -31,7 +31,7 @@ interface VideoConversionRequest {
 }
 
 class VideoApiService {
-  private readonly primaryApiUrl = 'https://raspberrypi.tail83ea3e.ts.net/transcode';
+  private readonly primaryApiUrl = 'https://raspberrypi.tail83ea3e.ts.net/video';
   private readonly fallbackApiUrl = 'https://skatehive-transcoder.onrender.com';
 
   // Conversion timeout (5 minutes)

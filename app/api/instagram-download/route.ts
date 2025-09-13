@@ -9,19 +9,19 @@ const getInstagramServers = () => {
     // Local development - try localhost first, then public Pi, then fallback
     return [
       'http://localhost:6666/download',
-      'https://raspberrypi.tail83ea3e.ts.net/download/download',
+      'https://raspberrypi.tail83ea3e.ts.net/instagram/download',
       'https://skate-insta.onrender.com/download'
     ];
   } else if (isVercel) {
     // Vercel production - use public HTTPS Pi service first, then Render fallback
     return [
-      'https://raspberrypi.tail83ea3e.ts.net/download/download',
+      'https://raspberrypi.tail83ea3e.ts.net/instagram/download',
       'https://skate-insta.onrender.com/download'
     ];
   } else {
     // Other production - prioritize public Pi service
     return [
-      'https://raspberrypi.tail83ea3e.ts.net/download/download',
+      'https://raspberrypi.tail83ea3e.ts.net/instagram/download',
       'https://skate-insta.onrender.com/download'
     ];
   }

@@ -20,7 +20,7 @@ export interface VideoConversionOptions {
 }
 
 // Primary API configuration
-const PRIMARY_API_ENDPOINT = "https://raspberrypi.tail83ea3e.ts.net/transcode/transcode";
+const PRIMARY_API_ENDPOINT = "https://raspberrypi.tail83ea3e.ts.net/video/transcode";
 
 // Fallback API configuration
 const FALLBACK_API_ENDPOINT = "https://skatehive-transcoder.onrender.com/transcode";

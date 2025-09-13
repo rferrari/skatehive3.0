@@ -34,7 +34,7 @@ export async function processVideoOnServer(
 
   // Try Raspberry Pi (primary) server first
   const primaryResult = await tryServer(
-    'https://raspberrypi.tail83ea3e.ts.net/transcode/transcode',
+    'https://raspberrypi.tail83ea3e.ts.net/video/transcode',
     file,
     username,
     'Raspberry Pi (Primary)',
