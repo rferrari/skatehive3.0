@@ -42,10 +42,10 @@ export function determineProcessingStrategy(
   const fileSizeMB = file.size / (1024 * 1024);
   const isLargeFile = fileSizeMB > 50;
   const isMediumFile = fileSizeMB > 12;
-  
+
   // Check if APIs are available
   const hasAPIs = apiAvailability.primaryAPI || apiAvailability.fallbackAPI;
-  
+
   console.log("🔍 Analyzing processing strategy:", {
     fileName: file.name,
     fileSizeMB: fileSizeMB.toFixed(2),
@@ -128,35 +128,35 @@ export function estimateProcessingTime(
   deviceCapabilities: DeviceCapabilities
 ): number {
   const fileSizeMB = file.size / (1024 * 1024);
-  
+
   if (decision.method === 'api') {
     // API processing is usually faster but depends on network
     return Math.max(10, fileSizeMB * 2); // 2 seconds per MB minimum 10s
   }
-  
+
   if (decision.method === 'skip') {
     return 1; // Almost instant
   }
-  
+
   // Native processing estimates
   let baseTime = fileSizeMB * 3; // 3 seconds per MB base
-  
+
   if (decision.shouldCompress) {
     baseTime *= 1.5; // Compression adds time
   }
-  
+
   if (decision.shouldResize) {
     baseTime *= 1.3; // Resizing adds time
   }
-  
+
   if (deviceCapabilities.isOldAndroid) {
     baseTime *= 2; // Old Android is slower
   }
-  
+
   if (decision.useIOSOptimized) {
     baseTime *= 0.8; // iOS optimization is faster
   }
-  
+
   return Math.max(5, Math.round(baseTime)); // Minimum 5 seconds
 }
 
@@ -174,36 +174,36 @@ export function getProcessingStatusMessage(
     if (progress < 90) return "📤 API uploading result...";
     return "✅ API processing complete!";
   }
-  
+
   if (decision.method === 'skip') {
     return "⚡ No processing needed - uploading directly...";
   }
-  
+
   // Native processing messages
   if (decision.useIOSOptimized) {
     if (progress < 30) return "📱 iPhone video detected - optimizing...";
     if (progress < 70) return "🎬 Making iPhone video awesome...";
     return "✨ iPhone optimization complete!";
   }
-  
+
   if (deviceCapabilities.isAndroid) {
     if (progress < 30) return "🤖 Processing Android video...";
     if (progress < 70) return "🔧 Android video optimization...";
     return "✅ Android processing complete!";
   }
-  
+
   if (decision.shouldCompress && decision.shouldResize) {
     if (progress < 30) return "🔄 Compressing and resizing video...";
     if (progress < 70) return "⚙️ Advanced video optimization...";
     return "🎯 Compression complete!";
   }
-  
+
   if (decision.shouldCompress) {
     if (progress < 30) return "🗜️ Compressing video...";
     if (progress < 70) return "📱 Video compression in progress...";
     return "✅ Compression complete!";
   }
-  
+
   if (progress < 30) return "🎬 Processing video...";
   if (progress < 70) return "⚙️ Video optimization...";
   return "✅ Processing complete!";
@@ -220,28 +220,28 @@ export function validateVideoFile(file: File, config: ProcessingConfig): {
   const errors: string[] = [];
   const warnings: string[] = [];
   const fileSizeMB = file.size / (1024 * 1024);
-  
+
   // File type validation
   if (!file.type.startsWith('video/')) {
     errors.push("File is not a video");
   }
-  
+
   // Size validation based on user HP
   const maxSize = config.userHP >= 100 ? 200 : 150; // MB
   if (fileSizeMB > maxSize) {
     errors.push(`File too large (${fileSizeMB.toFixed(1)}MB). Maximum: ${maxSize}MB`);
   }
-  
+
   // Warnings for large files
   if (fileSizeMB > 30) {
     warnings.push("Large files may take longer to process");
   }
-  
+
   // Warnings for specific formats
   if (file.name.toLowerCase().endsWith('.mov')) {
     warnings.push(".MOV files will be converted to MP4 for better compatibility");
   }
-  
+
   return {
     valid: errors.length === 0,
     errors,
@@ -264,7 +264,7 @@ export function optimizeUploadParams(
 } {
   const fileSizeMB = file.size / (1024 * 1024);
   const isMobile = deviceCapabilities.isAndroid || deviceCapabilities.isIOS;
-  
+
   return {
     chunkSize: isMobile ? 10 * 1024 * 1024 : 10 * 1024 * 1024, // 10MB mobile, 10MB desktop
     timeout: isMobile ? 600000 : 480000, // 10min mobile, 8min desktop (increased for larger files)
@@ -291,29 +291,29 @@ export function logProcessingAnalytics(
     fileSize: file.size,
     fileSizeMB: (file.size / (1024 * 1024)).toFixed(2),
     fileType: file.type,
-    
+
     // Processing info
     processingMethod: decision.method,
     processingReason: decision.reason,
     shouldCompress: decision.shouldCompress,
     shouldResize: decision.shouldResize,
     useIOSOptimized: decision.useIOSOptimized,
-    
+
     // Device info
     deviceCapabilities,
-    
+
     // Performance info
     processingTimeMs: endTime - startTime,
     processingTimeSeconds: ((endTime - startTime) / 1000).toFixed(2),
     success,
     error,
-    
+
     // Timestamp
     timestamp: new Date().toISOString(),
   };
-  
+
   console.log("📊 Video Processing Analytics:", analytics);
-  
+
   // In production, you might want to send this to an analytics service
   if (process.env.NODE_ENV === 'production') {
     // Example: sendAnalytics('video_processing', analytics);

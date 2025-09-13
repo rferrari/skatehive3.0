@@ -49,14 +49,14 @@ export function isAlreadyProcessed(file: File): boolean {
 export function getFileSizeLimits(userHP: number = 0) {
   const isMobile = isMobileDevice();
   const hasHighHP = userHP >= 100; // FILE_SIZE_LIMITS.MIN_HP_FOR_LARGE_FILES
-  
+
   // Base limits for processing (not upload limits)
   const baseLimits = {
     chunkedUploadThreshold: 20 * 1024 * 1024, // 20MB
     largeFileThreshold: 30 * 1024 * 1024, // 30MB
     compressionThreshold: 12 * 1024 * 1024, // 12MB
   };
-  
+
   if (hasHighHP) {
     // High HP users get higher processing limits
     return {
@@ -66,7 +66,7 @@ export function getFileSizeLimits(userHP: number = 0) {
       maxSize: 2 * 1024 * 1024 * 1024, // 2GB
     };
   }
-  
+
   // Standard users get conservative limits
   return {
     ...baseLimits,
@@ -100,9 +100,8 @@ export async function uploadWithProgress(
     });
 
     xhr.addEventListener("error", () => {
-      const errorMessage = `Network error: ${
-        xhr.statusText || "Unknown error"
-      } (Status: ${xhr.status}, State: ${xhr.readyState})`;
+      const errorMessage = `Network error: ${xhr.statusText || "Unknown error"
+        } (Status: ${xhr.status}, State: ${xhr.readyState})`;
       reject(new Error(errorMessage));
     });
 
@@ -117,7 +116,7 @@ export async function uploadWithProgress(
     // Set timeout for mobile networks (increased for larger files)
     xhr.timeout = isMobile ? 600000 : 480000; // 10 minutes for mobile, 8 for desktop
 
-  try {
+    try {
       let endpoint: string;
       if (PINATA_JWT) {
         endpoint = "https://api.pinata.cloud/pinning/pinFileToIPFS";
@@ -132,13 +131,13 @@ export async function uploadWithProgress(
         }
       }
 
-  // IMPORTANT: Do NOT set the "Content-Type" header manually here. When
-  // sending a FormData object, the browser (or XHR) will automatically set
-  // the Content-Type including the multipart boundary. Manually setting
-  // Content-Type to 'multipart/form-data' will omit the boundary and will
-  // cause servers to reject the request.
-  // See: https://developer.mozilla.org/en-US/docs/Web/API/FormData/Using_FormData_Objects
-  xhr.send(formData);
+      // IMPORTANT: Do NOT set the "Content-Type" header manually here. When
+      // sending a FormData object, the browser (or XHR) will automatically set
+      // the Content-Type including the multipart boundary. Manually setting
+      // Content-Type to 'multipart/form-data' will omit the boundary and will
+      // cause servers to reject the request.
+      // See: https://developer.mozilla.org/en-US/docs/Web/API/FormData/Using_FormData_Objects
+      xhr.send(formData);
     } catch (error) {
       reject(error);
     }
@@ -156,7 +155,7 @@ export async function uploadWithChunks(
   if (totalChunks === 1) {
     // File is small enough for single chunk
     const reader = new FileReader();
-    
+
     return new Promise((resolve, reject) => {
       reader.onload = async () => {
         try {
@@ -223,7 +222,7 @@ export async function handleVideoUpload(
 ): Promise<UploadResult> {
   try {
     const limits = getFileSizeLimits(userHP);
-    
+
     console.log('📤 Video upload started:', {
       fileName: file.name,
       fileSize: `${(file.size / 1024 / 1024).toFixed(2)}MB`,
@@ -231,20 +230,20 @@ export async function handleVideoUpload(
       platform: enhancedOptions?.platform || 'web',
       userHP
     });
-    
+
     if (file.size > limits.maxSize) {
       const sizeMB = Math.round((file.size / 1024 / 1024) * 100) / 100;
       const maxSizeMB = Math.round(limits.maxSize / 1024 / 1024);
-      
+
       return {
         success: false,
         error: `File too large (${sizeMB}MB). Maximum: ${maxSizeMB}MB`
       };
     }
 
-  // Create FormData for upload. Do NOT set Content-Type manually when sending
-  // this FormData (fetch/XHR will set it correctly including the boundary).
-  const formData = new FormData();
+    // Create FormData for upload. Do NOT set Content-Type manually when sending
+    // this FormData (fetch/XHR will set it correctly including the boundary).
+    const formData = new FormData();
     formData.append("file", file);
     if (username) formData.append("creator", username);
     if (thumbnailUrl) formData.append("thumbnailUrl", thumbnailUrl);
@@ -275,14 +274,14 @@ export async function handleVideoUpload(
       try {
         responseText = await uploadWithChunks(file, username, thumbnailUrl);
       } catch (chunkError) {
-        responseText = await uploadWithProgress(formData, onProgress || (() => {}));
+        responseText = await uploadWithProgress(formData, onProgress || (() => { }));
       }
     } else {
-      responseText = await uploadWithProgress(formData, onProgress || (() => {}));
+      responseText = await uploadWithProgress(formData, onProgress || (() => { }));
     }
 
     const result = JSON.parse(responseText);
-    
+
     if (!result || !result.IpfsHash) {
       return {
         success: false,

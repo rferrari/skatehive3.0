@@ -23,19 +23,19 @@ export function validateVideo(file: File): { valid: boolean; error?: string } {
   if (!file.type.startsWith('video/')) {
     return { valid: false, error: 'File must be a video' };
   }
-  
+
   // Basic size check (150MB limit for now)
   const maxSize = 150 * 1024 * 1024;
   if (file.size > maxSize) {
     return { valid: false, error: 'File too large (max 150MB)' };
   }
-  
+
   // Warn about large files that may process slowly
   const slowProcessingSize = 20 * 1024 * 1024; // 20MB
   if (file.size > slowProcessingSize) {
     console.warn(`⚠️ Large video file (${(file.size / 1024 / 1024).toFixed(1)}MB) - processing may take 2-3 minutes`);
   }
-  
+
   return { valid: true };
 }
 
@@ -63,14 +63,14 @@ export function getDetailedDeviceInfo(): {
 } {
   const ua = navigator.userAgent;
   const platform = navigator.platform;
-  
+
   // Detect device type
   let deviceType = 'desktop';
   if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua)) {
     deviceType = 'mobile';
     if (/iPad/i.test(ua)) deviceType = 'tablet';
   }
-  
+
   // Detect OS
   let os = 'unknown';
   if (/Mac/i.test(platform)) os = 'macOS';
@@ -78,14 +78,14 @@ export function getDetailedDeviceInfo(): {
   else if (/Linux/i.test(platform)) os = 'Linux';
   else if (/iPhone|iPad|iPod/i.test(ua)) os = 'iOS';
   else if (/Android/i.test(ua)) os = 'Android';
-  
+
   // Detect browser
   let browser = 'unknown';
   if (/Chrome/i.test(ua) && !/Edge|Edg/i.test(ua)) browser = 'Chrome';
   else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) browser = 'Safari';
   else if (/Firefox/i.test(ua)) browser = 'Firefox';
   else if (/Edge|Edg/i.test(ua)) browser = 'Edge';
-  
+
   return {
     platform: deviceType,
     deviceInfo: `${deviceType}/${os}/${browser}`,
@@ -99,7 +99,7 @@ export function getDetailedDeviceInfo(): {
  * Upload video directly to IPFS (for MP4 files)
  */
 export async function uploadToIPFS(
-  file: File, 
+  file: File,
   username: string = 'anonymous',
   enhancedOptions?: EnhancedUploadOptions
 ): Promise<UploadResult> {
@@ -124,15 +124,15 @@ export async function uploadToIPFS(
     formData.append('deviceInfo', deviceData.deviceInfo);
     formData.append('browserInfo', deviceData.browserInfo);
     formData.append('viewport', deviceData.viewport);
-    
+
     if (enhancedOptions?.userHP !== undefined) {
       formData.append('userHP', enhancedOptions.userHP.toString());
     }
-    
+
     if (deviceData.connectionType !== 'unknown') {
       formData.append('connectionType', deviceData.connectionType);
     }
-    
+
     // Generate correlation ID for tracking if not provided
     const correlationId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     formData.append('correlationId', correlationId);
@@ -147,7 +147,7 @@ export async function uploadToIPFS(
     }
 
     const result = await response.json();
-    
+
     if (!result.IpfsHash) {
       throw new Error('No IPFS hash returned');
     }

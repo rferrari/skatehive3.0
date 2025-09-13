@@ -7,7 +7,7 @@ export async function POST(request: Request) {
     // Mobile-specific logging
     const userAgent = request.headers.get('user-agent') || 'unknown';
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
-    
+
     console.log('📱 Mobile Pinata API request:', {
         userAgent: userAgent.substring(0, 50),
         isMobile,
@@ -32,12 +32,12 @@ export async function POST(request: Request) {
         }
 
         const fileSizeMB = Math.round(file.size / 1024 / 1024 * 100) / 100;
-        
+
         // Mobile file size check before processing
         if (file.size > 135 * 1024 * 1024) { // 135MB limit for mobile
             console.error('📱 Mobile file too large:', fileSizeMB, 'MB');
-            return NextResponse.json({ 
-                error: `File too large for mobile upload. Size: ${fileSizeMB}MB, Maximum: 135MB` 
+            return NextResponse.json({
+                error: `File too large for mobile upload. Size: ${fileSizeMB}MB, Maximum: 135MB`
             }, { status: 413 });
         }
 
@@ -101,9 +101,9 @@ export async function POST(request: Request) {
                 errorText,
                 fileSize: file.size
             });
-            
+
             // Return more specific error for mobile
-            return NextResponse.json({ 
+            return NextResponse.json({
                 error: `Mobile upload failed: ${uploadResponse.status} - ${errorText}`,
                 status: uploadResponse.status
             }, { status: uploadResponse.status });
@@ -125,7 +125,7 @@ export async function POST(request: Request) {
             console.error('📱 Mobile upload timeout');
             return NextResponse.json({ error: 'Mobile upload timeout' }, { status: 408 });
         }
-        
+
         console.error('📱 Mobile upload error:', {
             error: error instanceof Error ? error.message : error,
             stack: error instanceof Error ? error.stack : undefined,
