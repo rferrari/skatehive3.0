@@ -156,7 +156,7 @@ export async function generateMetadata({
     const decodedAuthor = decodeURIComponent(author);
     const post = await getData(decodedAuthor, permlink);
     const cleanedAuthor = cleanUsername(post.author);
-    const title = post.title || "Untitled Post";
+    const title = post.title || "Skatehive Snap";
 
     // Clean the post body of markdown and HTML syntax before creating description
     const cleanedBody = cleanTextForDescription(post.body || "");

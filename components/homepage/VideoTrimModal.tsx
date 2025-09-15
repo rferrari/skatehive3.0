@@ -30,7 +30,6 @@ import {
   Center,
 } from "@chakra-ui/react";
 import { getFileSignature, uploadImage } from "@/lib/hive/client-functions";
-import { formatTime } from "@/lib/utils/timeUtils";
 
 // Lazy load heavy components
 const VideoPlayer = lazy(() => import("./VideoPlayer"));
@@ -435,11 +434,6 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = memo(
       setIsDragging(false);
     }, []);
 
-    const handleDragStart = useCallback(() => {
-      setIsPreviewingSlider(true);
-      setIsDragging(true);
-    }, []);
-
     // Optimized video trimming with better memory management
     const createTrimmedVideo = useCallback(
       async (file: File, start: number, end: number): Promise<Blob> => {
@@ -454,9 +448,6 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = memo(
 
           video.onloadedmetadata = () => {
             const duration = end - start;
-            console.log(
-              `📊 Video duration: ${video.duration}s, trim duration: ${duration}s`
-            );
 
             if (duration <= 0 || start >= video.duration) {
               URL.revokeObjectURL(videoUrl);
@@ -498,11 +489,6 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = memo(
             mediaRecorder.onstop = () => {
               const blob = new Blob(chunks, { type: "video/webm" });
               URL.revokeObjectURL(videoUrl);
-              console.log(
-                `✅ Trimmed video created: ${(blob.size / 1024 / 1024).toFixed(
-                  2
-                )} MB`
-              );
               resolve(blob);
             };
 
