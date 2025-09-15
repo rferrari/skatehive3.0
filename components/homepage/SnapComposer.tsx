@@ -26,6 +26,8 @@ import {
   getLastSnapsContainer,
   uploadImage,
 } from "@/lib/hive/client-functions";
+import { extractIPFSHash } from "@/lib/utils/ipfsMetadata";
+import { generateThumbnailWithCanvas, uploadThumbnail } from "@/lib/utils/videoThumbnailUtils";
 import { FaVideo } from "react-icons/fa6";
 import { FaTimes } from "react-icons/fa";
 import ImageCompressor from "@/lib/utils/ImageCompressor";
@@ -379,6 +381,71 @@ const SnapComposer = React.memo(function SnapComposer({
       .toLowerCase();
 
     let validUrls: string[] = compressedImages.map((img) => img.url);
+    
+    // Add video thumbnail to images if we have a video
+    if (videoUrl) {
+      try {
+        console.log("🎥 Video URL:", videoUrl);
+        const hash = extractIPFSHash(videoUrl);
+        console.log("🔗 Extracted IPFS hash:", hash);
+        if (hash) {
+          console.log("📡 Fetching metadata from:", `/api/pinata/metadata/${hash}`);
+          const response = await fetch(`/api/pinata/metadata/${hash}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            signal: AbortSignal.timeout(10000), // 10 second timeout
+          });
+
+          console.log("📝 Response status:", response.status, response.ok);
+          if (response.ok) {
+            const metadata = await response.json();
+            console.log("📊 Metadata:", metadata);
+            const thumbnailUrl = metadata?.keyvalues?.thumbnailUrl;
+            console.log("🖼️ Thumbnail URL:", thumbnailUrl);
+            if (thumbnailUrl) {
+              validUrls.push(thumbnailUrl);
+              console.log("✅ Added thumbnail to validUrls:", thumbnailUrl);
+            } else {
+              console.warn("⚠️ No thumbnail URL found in metadata, generating thumbnail on-demand");
+              // Generate thumbnail using existing utility function
+              try {
+                // Create a File object from the video URL to use with generateThumbnailWithCanvas
+                const videoResponse = await fetch(videoUrl);
+                const videoBlob = await videoResponse.blob();
+                const videoFile = new File([videoBlob], 'video.mp4', { type: 'video/mp4' });
+                
+                const thumbnailUrl = await generateThumbnailWithCanvas(videoFile);
+                if (thumbnailUrl) {
+                  // Convert blob URL to actual blob and upload
+                  const thumbnailBlob = await fetch(thumbnailUrl).then(res => res.blob());
+                  const uploadedThumbnailUrl = await uploadThumbnail(thumbnailBlob, user || undefined);
+                  
+                  if (uploadedThumbnailUrl) {
+                    validUrls.push(uploadedThumbnailUrl);
+                    console.log("🎨 Generated and uploaded thumbnail:", uploadedThumbnailUrl);
+                  }
+                  
+                  // Clean up blob URL
+                  URL.revokeObjectURL(thumbnailUrl);
+                }
+              } catch (err) {
+                console.warn("Failed to generate thumbnail on-demand:", err);
+              }
+            }
+          } else {
+            console.warn("❌ Failed to fetch metadata, response not ok");
+          }
+        } else {
+          console.warn("⚠️ Could not extract IPFS hash from video URL");
+        }
+      } catch (error) {
+        console.warn("Failed to fetch video thumbnail for metadata:", error);
+        // Continue posting even if thumbnail fetch fails
+      }
+    }
+
     if (validUrls.length > 0) {
       const imageMarkup = compressedImages
         .map((img) => {
@@ -418,13 +485,31 @@ const SnapComposer = React.memo(function SnapComposer({
         const hashtags = extractHashtags(commentBody);
         snapsTags = [...new Set([...snapsTags, ...hashtags])]; // Add hashtags without duplicates
 
+        // Prepare metadata with proper thumbnail handling for video-only posts
+        const hasRegularImages = compressedImages.length > 0;
+        const hasVideoThumbnails = validUrls.length > compressedImages.length; // validUrls includes video thumbnails
+        
+        // Build metadata object
+        const metadata: any = { 
+          app: "Skatehive App 3.0", 
+          tags: snapsTags, 
+          images: validUrls 
+        };
+
+        // For video-only posts (no regular images), add video thumbnails to thumbnail field for better Farcaster frame support
+        if (!hasRegularImages && hasVideoThumbnails) {
+          const videoThumbnails = validUrls.slice(compressedImages.length); // Get only the video thumbnails
+          metadata.thumbnail = videoThumbnails;
+          console.log("🎬 Video-only post detected, added thumbnails to metadata.thumbnail:", videoThumbnails);
+        }
+
         const commentResponse = await aioha.comment(
           pa,
           pp,
           permlink,
           "",
           commentBody,
-          { app: "Skatehive App 3.0", tags: snapsTags, images: validUrls }
+          metadata
         );
         if (commentResponse.success) {
           postBodyRef.current!.value = "";

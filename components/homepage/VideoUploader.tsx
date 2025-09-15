@@ -17,6 +17,7 @@ import {
   processVideoOnServer,
   EnhancedProcessingOptions,
 } from "@/lib/utils/videoProcessing";
+import { handleVideoUpload } from "@/lib/utils/videoUploadUtils";
 import { useHiveUser } from "@/contexts/UserContext";
 import useHivePower from "@/hooks/useHivePower";
 
@@ -120,44 +121,33 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
 
         console.log("📤 Video upload started:", file.name);
 
-        // 3. Check if MP4 - direct upload with enhanced options
-        if (isMP4(file)) {
-          const result = await uploadToIPFS(file, username, enhancedOptions);
+        // 3. Check if file already has a thumbnail from VideoTrimModal
+        const existingThumbnail = (file as any).thumbnailUrl;
+        console.log("🖼️ Existing thumbnail:", existingThumbnail);
 
-          if (result.success && result.url) {
-            onUpload({
-              url: result.url,
-              hash: result.hash,
-            });
-          } else {
-            throw new Error(result.error || "Upload failed");
+        // 4. Use handleVideoUpload for all video uploads (supports both MP4 and non-MP4)
+        const result = await handleVideoUpload(
+          file, 
+          username, 
+          existingThumbnail,
+          undefined, // onProgress callback
+          hivePower || 0,
+          {
+            platform: deviceData.platform,
+            deviceInfo: deviceData.deviceInfo,
+            browserInfo: deviceData.browserInfo,
+            viewport: deviceData.viewport,
+            connectionType: deviceData.connectionType,
           }
-          return;
-        }
-
-        // 4. Non-MP4 - process on server with enhanced options
-        const processingOptions: EnhancedProcessingOptions = {
-          userHP: enhancedOptions.userHP,
-          platform: enhancedOptions.platform,
-          viewport: enhancedOptions.viewport,
-          deviceInfo: enhancedOptions.deviceInfo,
-          browserInfo: enhancedOptions.browserInfo,
-          connectionType: enhancedOptions.connectionType,
-        };
-
-        const result = await processVideoOnServer(
-          file,
-          username,
-          processingOptions
         );
 
         if (result.success && result.url) {
           onUpload({
             url: result.url,
-            hash: result.hash,
+            hash: result.IpfsHash,
           });
         } else {
-          throw new Error(result.error || "Server processing failed");
+          throw new Error(result.error || "Upload failed");
         }
       } catch (error) {
         // Provide user-friendly error messages
