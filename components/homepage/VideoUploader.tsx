@@ -127,8 +127,8 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
 
         // 4. Use handleVideoUpload for all video uploads (supports both MP4 and non-MP4)
         const result = await handleVideoUpload(
-          file, 
-          username, 
+          file,
+          username,
           existingThumbnail,
           undefined, // onProgress callback
           hivePower || 0,
