@@ -108,7 +108,6 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
 
         // 2. Prepare enhanced options with device and user information
         const deviceData = getDetailedDeviceInfo();
-        const correlationId = generateCorrelationId();
 
         const enhancedOptions: EnhancedUploadOptions = {
           userHP: hivePower || 0,

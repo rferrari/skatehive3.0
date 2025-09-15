@@ -77,7 +77,6 @@ const SnapComposer = React.memo(function SnapComposer({
 
   const imageUploadInputRef = useRef<HTMLInputElement>(null);
   const videoUploadInputRef = useRef<HTMLInputElement>(null);
-  const gifVideoInputRef = useRef<HTMLInputElement>(null);
 
   // GIF maker state and refs (direct integration)
   const [isGifMakerOpen, setGifMakerOpen] = useState(false);
@@ -161,16 +160,6 @@ const SnapComposer = React.memo(function SnapComposer({
       }
 
       const duration = await getVideoDuration(file);
-
-      console.log("🎬 Video file duration check:", {
-        fileName: file.name,
-        duration: duration,
-        durationFormatted: `${duration.toFixed(1)}s`,
-        canBypassLimit,
-        hivePower,
-        user,
-        shouldOpenTrimModal: duration > 15 || canBypassLimit,
-      });
 
       // Always open trim modal for video editing options
       // Users with >100HP can choose to use original or trim
