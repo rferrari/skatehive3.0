@@ -125,29 +125,82 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         const existingThumbnail = (file as any).thumbnailUrl;
         console.log("🖼️ Existing thumbnail:", existingThumbnail);
 
-        // 4. Use handleVideoUpload for all video uploads (supports both MP4 and non-MP4)
-        const result = await handleVideoUpload(
+        // 4. Handle MP4 files - direct upload with enhanced options
+        if (isMP4(file)) {
+          console.log("📹 MP4 file detected - direct upload");
+
+          // For MP4 files, use direct IPFS upload with thumbnail support
+          let result;
+          if (existingThumbnail) {
+            // Use handleVideoUpload if we have a thumbnail to preserve
+            result = await handleVideoUpload(
+              file,
+              username,
+              existingThumbnail,
+              undefined, // onProgress callback
+              hivePower || 0,
+              {
+                platform: deviceData.platform,
+                deviceInfo: deviceData.deviceInfo,
+                browserInfo: deviceData.browserInfo,
+                viewport: deviceData.viewport,
+                connectionType: deviceData.connectionType,
+              }
+            );
+
+            if (result.success && result.url) {
+              onUpload({
+                url: result.url,
+                hash: result.IpfsHash,
+              });
+            } else {
+              throw new Error(result.error || "Upload failed");
+            }
+          } else {
+            // Use original uploadToIPFS for MP4 files without thumbnails
+            const uploadResult = await uploadToIPFS(
+              file,
+              username,
+              enhancedOptions
+            );
+
+            if (uploadResult.success && uploadResult.url) {
+              onUpload({
+                url: uploadResult.url,
+                hash: uploadResult.hash,
+              });
+            } else {
+              throw new Error(uploadResult.error || "Upload failed");
+            }
+          }
+          return;
+        }
+
+        // 5. Non-MP4 files - process on server with enhanced options
+        console.log("🔄 Non-MP4 file detected - server transcoding required");
+        const processingOptions: EnhancedProcessingOptions = {
+          userHP: enhancedOptions.userHP,
+          platform: enhancedOptions.platform,
+          viewport: enhancedOptions.viewport,
+          deviceInfo: enhancedOptions.deviceInfo,
+          browserInfo: enhancedOptions.browserInfo,
+          connectionType: enhancedOptions.connectionType,
+        };
+
+        // For non-MP4 files, use server processing
+        const result = await processVideoOnServer(
           file,
           username,
-          existingThumbnail,
-          undefined, // onProgress callback
-          hivePower || 0,
-          {
-            platform: deviceData.platform,
-            deviceInfo: deviceData.deviceInfo,
-            browserInfo: deviceData.browserInfo,
-            viewport: deviceData.viewport,
-            connectionType: deviceData.connectionType,
-          }
+          processingOptions
         );
 
         if (result.success && result.url) {
           onUpload({
             url: result.url,
-            hash: result.IpfsHash,
+            hash: result.hash,
           });
         } else {
-          throw new Error(result.error || "Upload failed");
+          throw new Error(result.error || "Server processing failed");
         }
       } catch (error) {
         // Provide user-friendly error messages
