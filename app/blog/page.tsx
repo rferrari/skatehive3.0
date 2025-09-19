@@ -1,5 +1,11 @@
 "use client";
-import { Box, Alert, AlertIcon, AlertTitle, AlertDescription } from "@chakra-ui/react";
+import {
+  Box,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription,
+} from "@chakra-ui/react";
 import { useState, useRef, useEffect, useCallback, Suspense } from "react";
 import { Discussion } from "@hiveio/dhive";
 import { findPosts, getPayoutValue } from "@/lib/hive/client-functions";
@@ -10,13 +16,19 @@ import JoinSkatehiveBanner from "@/components/blog/JoinSkatehiveBanner";
 import PostGrid from "@/components/blog/PostGrid";
 import MagazineModal from "@/components/shared/MagazineModal";
 import ErrorBoundary from "@/components/shared/ErrorBoundary";
-import { BLOG_CONFIG, VALID_QUERIES, VALID_VIEW_MODES, type QueryType, type ViewMode } from "@/constants/blogConfig";
+import {
+  BLOG_CONFIG,
+  VALID_QUERIES,
+  VALID_VIEW_MODES,
+  type QueryType,
+  type ViewMode,
+} from "@/constants/blogConfig";
 
 function BlogContent() {
   const searchParams = useSearchParams();
   const initialView = searchParams?.get("view");
   const initialQuery = searchParams?.get("query");
-  
+
   const [viewMode, setViewMode] = useState<ViewMode>(
     VALID_VIEW_MODES.includes(initialView as ViewMode)
       ? (initialView as ViewMode)
@@ -38,7 +50,9 @@ function BlogContent() {
   // Validate required environment variables
   useEffect(() => {
     if (!tag) {
-      setError("NEXT_PUBLIC_HIVE_SEARCH_TAG environment variable is not configured");
+      setError(
+        "NEXT_PUBLIC_HIVE_SEARCH_TAG environment variable is not configured"
+      );
     }
   }, [tag]);
 
@@ -56,11 +70,11 @@ function BlogContent() {
       setError("Cannot fetch posts: missing search tag configuration");
       return;
     }
-    
+
     setIsGoatLoading(true);
     setAllPosts([]);
     setError(null);
-    
+
     params.current = [
       {
         tag: tag,
@@ -72,7 +86,7 @@ function BlogContent() {
     let allFetchedPosts: Discussion[] = [];
     let keepFetching = true;
     let batchCount = 0;
-    
+
     try {
       while (keepFetching && batchCount < BLOG_CONFIG.MAX_GOAT_BATCHES) {
         const posts = await findPosts("created", params.current);
@@ -122,10 +136,10 @@ function BlogContent() {
       setError("Cannot fetch posts: missing search tag configuration");
       return;
     }
-    
+
     isFetching.current = true;
     setError(null);
-    
+
     try {
       const posts = await findPosts(
         query === "highest_paid" ? "created" : query,
@@ -209,8 +223,8 @@ function BlogContent() {
   // Magazine props (same as /magazine/page.tsx)
   const communityTag =
     process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || "hive-173115";
-  const magazineTag = [{ tag: communityTag, limit: 30 }];
-  const magazineQuery = "trending"; // Use trending for blog magazine view
+  const magazineTag = [{ tag: communityTag, limit: 40 }];
+  const magazineQuery = "created"; // Use trending for blog magazine view
 
   return (
     <>

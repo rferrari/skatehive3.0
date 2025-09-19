@@ -44,7 +44,7 @@ export default function SkateHiveMagazineModal({
 
   const communityTag =
     process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || "hive-173115";
-  const magazineTag = [{ tag: communityTag, limit: 30 }];
+  const magazineTag = [{ tag: communityTag, limit: 40 }];
   const magazineQuery = "trending";
 
   return (
@@ -77,11 +77,11 @@ export default function SkateHiveMagazineModal({
                 textAlign="center"
                 lineHeight="tall"
               >
-                The Skatehive App is more than just a platform; it&apos;s a digital
-                skateboard magazine where skaters contribute to the pages of its
-                Infinity Mag. Each post, trick clip, or story shared becomes
-                part of a living, evolving publication created entirely by
-                skaters, for skaters.
+                The Skatehive App is more than just a platform; it&apos;s a
+                digital skateboard magazine where skaters contribute to the
+                pages of its Infinity Mag. Each post, trick clip, or story
+                shared becomes part of a living, evolving publication created
+                entirely by skaters, for skaters.
               </Text>
 
               <VStack spacing={4} align="stretch">

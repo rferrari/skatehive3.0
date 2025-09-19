@@ -10,7 +10,7 @@ export default function useProfilePosts(username: string) {
         username,
         "",
         new Date().toISOString().split(".")[0],
-        12,
+        30,
     ]);
 
     const fetchPosts = useCallback(async () => {
@@ -24,7 +24,7 @@ export default function useProfilePosts(username: string) {
                     username,
                     newPosts[newPosts.length - 1].permlink,
                     newPosts[newPosts.length - 1].created,
-                    12,
+                    30,
                 ];
             }
             setIsLoading(false);
@@ -39,7 +39,7 @@ export default function useProfilePosts(username: string) {
     useEffect(() => {
         setPosts([]);
         setIsLoading(true);
-        params.current = [username, "", new Date().toISOString().split(".")[0], 12];
+        params.current = [username, "", new Date().toISOString().split(".")[0], 30];
         fetchPosts();
     }, [username, fetchPosts]);
 

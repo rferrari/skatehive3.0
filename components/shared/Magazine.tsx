@@ -207,21 +207,21 @@ export default function Magazine(props: MagazineProps) {
     }
   }, [isInitialized]);
 
-  // Memoize filtered and sorted posts for performance - limit initial render
+  // Memoize filtered and sorted posts for performance
   const filteredPosts = useMemo(() => {
     if (!posts || !isInitialized) return [];
-    
+
     // First apply quality filters (reputation and downvote filtering)
     const qualityFilteredPosts = filterQualityContent(posts);
-    
+
     // Then sort by payout value
     const sortedPosts = qualityFilteredPosts.sort(
       (a, b) =>
         Number(getPayoutValue(b as any)) - Number(getPayoutValue(a as any))
     );
-    
-    // For initial load, limit to 10 posts to reduce render time
-    return sortedPosts.slice(0, 10);
+
+    // Return all posts - limit should be controlled by the tag.limit parameter
+    return sortedPosts;
   }, [posts, isInitialized]);
 
   const playSound = () => {
