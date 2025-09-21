@@ -24,7 +24,11 @@ import CoinCreatorComposer from "./CoinCreatorComposer";
 import { AirdropModal } from "../airdrop/AirdropModal";
 import { Discussion } from "@hiveio/dhive"; // Add this import for consistency
 import LogoMatrix from "../graphics/LogoMatrix";
-import { countDownvotes, deduplicateVotes, filterQualityContent } from "@/lib/utils/postUtils";
+import {
+  countDownvotes,
+  deduplicateVotes,
+  filterAutoComments,
+} from "@/lib/utils/postUtils";
 import { useAioha } from "@aioha/react-ui";
 import { useAccount } from "wagmi";
 import SidebarLogo from "../graphics/SidebarLogo";
@@ -118,15 +122,16 @@ export default function SnapList({
     }
   };
 
-  const filteredAndSortedComments = filterQualityContent([...displayedComments])
-    .sort((a: Discussion, b: Discussion) => {
-      // Sort by creation date (newest first) instead of payout value
-      // This ensures users see the latest content first, including new Zora posts
-      const aDate = new Date(a.created).getTime();
-      const bDate = new Date(b.created).getTime();
+  const filteredAndSortedComments = filterAutoComments([
+    ...displayedComments,
+  ]).sort((a: Discussion, b: Discussion) => {
+    // Sort by creation date (newest first) instead of payout value
+    // This ensures users see the latest content first, including new Zora posts
+    const aDate = new Date(a.created).getTime();
+    const bDate = new Date(b.created).getTime();
 
-      return bDate - aDate; // Descending order (newest first)
-    });
+    return bDate - aDate; // Descending order (newest first)
+  });
 
   // Debug: Log final order after filtering and sorting
   if (

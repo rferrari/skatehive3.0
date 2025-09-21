@@ -76,12 +76,13 @@ export function countDownvotes(activeVotes: any[]): number {
 }
 
 /**
- * Filter discussions/posts based on reputation and downvote criteria
+ * Filter discussions/posts based on reputation, downvote criteria, and specific authors
  * Filters out:
  * - Posts from accounts with reputation less than 0
  * - Posts with 2 or more downvotes
+ * - Posts from hiveBuzz account
  */
-export function filterQualityContent(discussions: any[]): any[] {
+export function filterAutoComments(discussions: any[]): any[] {
     // Import getReputation from client-functions to avoid duplication
     const { getReputation } = require('@/lib/hive/client-functions');
     
@@ -98,10 +99,12 @@ export function filterQualityContent(discussions: any[]): any[] {
         // Filter conditions:
         // 1. Filter out posts with 2 or more downvotes (community disapproval)
         // 2. Filter out posts from accounts with reputation less than 0
+        // 3. Filter out hiveBuzz comments
         const hasAcceptableDownvotes = downvoteCount < 2;
         const hasAcceptableReputation = authorReputation >= 0;
+        const isNotHiveBuzz = discussion.author.toLowerCase() !== 'hivebuzz';
         
-        const shouldShow = hasAcceptableDownvotes && hasAcceptableReputation;
+        const shouldShow = hasAcceptableDownvotes && hasAcceptableReputation && isNotHiveBuzz;
 
         // Debug: Log posts that are being filtered out
         if (!shouldShow && process.env.NODE_ENV === "development") {
@@ -111,6 +114,7 @@ export function filterQualityContent(discussions: any[]): any[] {
             console.log(`   - Downvotes: ${downvoteCount}`);
             console.log(`   - Acceptable downvotes: ${hasAcceptableDownvotes}`);
             console.log(`   - Acceptable reputation: ${hasAcceptableReputation}`);
+            console.log(`   - Is not hiveBuzz: ${isNotHiveBuzz}`);
         }
 
         return shouldShow;

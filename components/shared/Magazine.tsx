@@ -21,7 +21,7 @@ import {
 import HTMLFlipBook from "react-pageflip";
 import { Discussion } from "@hiveio/dhive";
 import { getPayoutValue, findPosts } from "@/lib/hive/client-functions";
-import { filterQualityContent } from "@/lib/utils/postUtils";
+import { filterAutoComments } from "@/lib/utils/postUtils";
 const EnhancedMarkdownRenderer = lazy(() =>
   import("@/components/markdown/EnhancedMarkdownRenderer").then((module) => ({
     default: module.EnhancedMarkdownRenderer,
@@ -212,7 +212,7 @@ export default function Magazine(props: MagazineProps) {
     if (!posts || !isInitialized) return [];
 
     // First apply quality filters (reputation and downvote filtering)
-    const qualityFilteredPosts = filterQualityContent(posts);
+    const qualityFilteredPosts = filterAutoComments(posts);
 
     // Then sort by payout value
     const sortedPosts = qualityFilteredPosts.sort(

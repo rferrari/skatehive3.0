@@ -1,6 +1,6 @@
 import { Discussion } from "@hiveio/dhive";
 import { fetchComments } from "@/lib/hive/fetchComments";
-import { filterQualityContent } from "./postUtils";
+import { filterAutoComments } from "./postUtils";
 
 export interface MediaItem {
   type: "image" | "video" | "iframe";
@@ -15,7 +15,7 @@ export async function fetchFilteredReplies(author: string, permlink: string): Pr
     try {
         const replies = await fetchComments(author, permlink, false);
         // Apply quality filtering to replies
-        return filterQualityContent(replies);
+        return filterAutoComments(replies);
     } catch (error) {
         console.error("Failed to fetch filtered replies:", error);
         return [];

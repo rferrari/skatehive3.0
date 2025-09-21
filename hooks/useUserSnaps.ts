@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Discussion } from '@hiveio/dhive';
 import HiveClient from '@/lib/hive/hiveclient';
 import { validateHiveUsernameFormat } from '@/lib/utils/hiveAccountUtils';
-import { filterQualityContent } from '@/lib/utils/postUtils';
+import { filterAutoComments } from '@/lib/utils/postUtils';
 
 // Debug utility - disabled for production
 const debug = (...args: any[]) => {
@@ -27,7 +27,7 @@ export default function useUserSnaps(username: string) {
     // Filter snaps to only include those with images or videos and good quality content
     const filterMediaSnaps = (snaps: Discussion[]): Discussion[] => {
         // First apply quality filters (reputation and downvote filtering)
-        const qualityFilteredSnaps = filterQualityContent(snaps);
+        const qualityFilteredSnaps = filterAutoComments(snaps);
         
         // Then filter for media content
         return qualityFilteredSnaps.filter(snap => {
