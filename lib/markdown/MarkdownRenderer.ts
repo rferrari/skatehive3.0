@@ -4,6 +4,10 @@ import DOMPurify from "dompurify";
 // Create a cache for processed markdown
 const markdownCache = new Map<string, string>();
 const processedContentCache = new Map<string, string>();
+const mentionValidationCache = new Map<string, boolean>();
+
+// Import Hive account validation
+const { checkHiveAccountExists } = require('@/lib/utils/hiveAccountUtils');
 
 // Simple function to get DOMPurify instance, only sanitize on client side
 function getSanitizedHTML(html: string): string {
@@ -217,13 +221,74 @@ function expandEmbeds(html: string): string {
     return html;
 }
 
-export default function markdownRenderer(markdown: string): string {
+/**
+ * Process mentions with validation - check if users exist on Hive
+ */
+async function processMentionsWithValidation(content: string): Promise<string> {
+    // Find all @mentions in the content
+    const mentionRegex = /@([a-z0-9\-.]+)(\s|$|[^a-z0-9\-.])/gi;
+    const mentions = [];
+    let match;
+
+    // Extract all mentions
+    while ((match = mentionRegex.exec(content)) !== null) {
+        const username = match[1].toLowerCase();
+        if (username.length >= 3 && username.length <= 16) {
+            mentions.push(username);
+        }
+    }
+
+    // Validate mentions in parallel (but limit concurrency to avoid overwhelming the API)
+    const validationPromises = mentions.map(async (username) => {
+        // Check cache first
+        if (mentionValidationCache.has(username)) {
+            return { username, exists: mentionValidationCache.get(username) };
+        }
+
+        try {
+            const exists = await checkHiveAccountExists(username);
+            mentionValidationCache.set(username, exists);
+            return { username, exists };
+        } catch (error) {
+            console.warn(`Failed to validate user @${username}:`, error);
+            mentionValidationCache.set(username, false);
+            return { username, exists: false };
+        }
+    });
+
+    // Resolve all validations
+    const validationResults = await Promise.all(validationPromises);
+    const validUsers = new Set(
+        validationResults
+            .filter(result => result.exists)
+            .map(result => result.username)
+    );
+
+    // Process mentions based on validation results
+    return content.replace(
+        /@([a-z0-9\-.]+)(\s|$|[^a-z0-9\-.])/gi,
+        (match, username, trailing) => {
+            const cleanUsername = username.toLowerCase();
+            
+            // Only create mention link if user exists
+            if (validUsers.has(cleanUsername)) {
+                return `<a href="/@${cleanUsername}" style="display: inline; color: var(--chakra-colors-primary, #3182ce); text-decoration: underline; font-weight: 500; white-space: nowrap;"><img src="https://images.ecency.com/webp/u/${cleanUsername}/avatar/small" alt="@${cleanUsername}" style="width: 16px; height: 16px; border-radius: 50%; object-fit: cover; vertical-align: text-bottom; margin-right: 4px; margin-bottom: 1px;" loading="lazy" />${cleanUsername}</a>${trailing}`;
+            } else {
+                // Return plain text for non-existent users
+                return `@${username}${trailing}`;
+            }
+        }
+    );
+}
+
+export default async function markdownRenderer(markdown: string): Promise<string> {
     if (!markdown || markdown.trim() === "") return "";
     
     // Clear cache if we're in development to ensure changes are reflected
     if (process.env.NODE_ENV === 'development') {
         markdownCache.clear();
         processedContentCache.clear();
+        mentionValidationCache.clear();
     }
     
     // Check cache first
@@ -235,13 +300,8 @@ export default function markdownRenderer(markdown: string): string {
         // Process media content before rendering markdown
         const processedMarkdown = processMediaContent(markdown);
         
-        // Process mentions in the raw markdown before rendering
-        const markdownWithMentions = processedMarkdown.replace(
-            /@([a-z0-9\-.]+)(\s|$|[^a-z0-9\-.])/gi,
-            (match, username, trailing) => {
-                return `<a href="/@${username}" style="display: inline; color: var(--chakra-colors-primary, #3182ce); text-decoration: underline; font-weight: 500; white-space: nowrap;"><img src="https://images.ecency.com/webp/u/${username}/avatar/small" alt="@${username}" style="width: 16px; height: 16px; border-radius: 50%; object-fit: cover; vertical-align: text-bottom; margin-right: 4px; margin-bottom: 1px;" loading="lazy" />${username}</a>${trailing}`;
-            }
-        );
+        // Process mentions with validation before rendering
+        const markdownWithValidatedMentions = await processMentionsWithValidation(processedMarkdown);
         
         const renderer = new DefaultRenderer({
             baseUrl: "https://hive.blog/",
@@ -259,7 +319,7 @@ export default function markdownRenderer(markdown: string): string {
             addExternalCssClassToMatchingLinksFn: () => true,
             ipfsPrefix: "https://ipfs.skatehive.app",
         });
-        const html = renderer.render(markdownWithMentions);
+        const html = renderer.render(markdownWithValidatedMentions);
         
         // Expand tokens into real embeds AFTER markdown render
         const expanded = expandEmbeds(html);
