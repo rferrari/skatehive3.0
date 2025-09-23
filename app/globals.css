@@ -50,19 +50,6 @@ body::-webkit-scrollbar {
 
 /* Prevent mobile zoom on input focus */
 @media screen and (max-width: 768px) {
-  input[type="text"],
-  input[type="email"], 
-  input[type="password"],
-  input[type="number"],
-  input[type="search"],
-  input[type="url"],
-  textarea,
-  select {
-    font-size: 16px !important;
-    min-height: 44px !important;
-    -webkit-text-size-adjust: 100% !important;
-  }
-  
   /* Specific fix for AIOHA modal inputs */
   #aioha-modal input[type="text"],
   #aioha-modal input[type="email"],
@@ -543,48 +530,6 @@ div[class*="aioha"],
   display: none !important;
   width: 0 !important;
   height: 0 !important;
-}
-
-/* Ultimate mobile input zoom prevention - catch all third-party inputs */
-@media screen and (max-width: 768px) {
-  * input,
-  * input[type="text"],
-  * input[type="email"],
-  * input[type="password"],
-  * input[type="number"],
-  * input[type="search"],
-  * input[type="url"],
-  * textarea,
-  * select,
-  [class*="input"],
-  [class*="Input"],
-  [id*="input"],
-  [id*="Input"],
-  input[placeholder*="Enter"],
-  input[placeholder*="enter"],
-  input[placeholder*="Username"],
-  input[placeholder*="username"] {
-    font-size: 16px !important;
-    min-height: 44px !important;
-    -webkit-text-size-adjust: 100% !important;
-    -webkit-appearance: none !important;
-    appearance: none !important;
-    zoom: 1 !important;
-    transform: translateZ(0) !important;
-  }
-  
-  /* Force prevent zoom on any modal or dialog inputs */
-  [role="dialog"] input,
-  [role="modal"] input,
-  .modal input,
-  .Modal input {
-    font-size: 16px !important;
-    min-height: 44px !important;
-    -webkit-text-size-adjust: 100% !important;
-    -webkit-appearance: none !important;
-    appearance: none !important;
-    zoom: 1 !important;
-  }
 }
 
 /* Shimmer animation for progress indicators */

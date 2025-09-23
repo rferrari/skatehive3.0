@@ -24,7 +24,6 @@ import {
   FaChevronLeft,
   FaChevronRight,
   FaDownload,
-  FaReply,
   FaComments,
   FaShare,
 } from "react-icons/fa";
@@ -464,26 +463,6 @@ const SnapModal = ({
                   opacity={currentSnapIndex >= snaps.length - 1 ? 0.2 : 0.4}
                 />
               </>
-            )}
-
-            {/* Snap Counter */}
-            {snaps.length > 1 && currentSnapIndex >= 0 && (
-              <Box
-                position="absolute"
-                top={{ base: 2, md: 4 }}
-                left="50%"
-                transform="translateX(-50%)"
-                bg="background"
-                color="primary"
-                px={3}
-                py={1}
-                borderRadius="full"
-                fontSize="sm"
-                zIndex={10}
-                opacity={0.4}
-              >
-                Snap {Math.max(1, currentSnapIndex + 1)} / {snaps.length}
-              </Box>
             )}
           </Box>
 

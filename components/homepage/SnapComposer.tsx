@@ -729,7 +729,6 @@ const SnapComposer = React.memo(function SnapComposer({
             display="flex"
             alignItems="center"
             justifyContent="center"
-            bg="rgba(0,0,0,0.08)"
             borderRadius="base"
             pointerEvents="none"
           >
@@ -752,6 +751,7 @@ const SnapComposer = React.memo(function SnapComposer({
             bg="background"
             borderRadius={"base"}
             mb={3}
+            minH={"200px"}
             ref={postBodyRef}
             _placeholder={{ color: "text" }}
             isDisabled={isLoading}
