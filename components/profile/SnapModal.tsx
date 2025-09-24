@@ -548,7 +548,18 @@ const SnapModal = ({
                   _hover={{ bg: "gray.700" }}
                 />
               </Flex>
-
+              {/* Comment Composer */}
+              <Box>
+                <SnapComposer
+                  pa={currentSnap.author}
+                  pp={currentSnap.permlink}
+                  onNewComment={handleNewComment}
+                  post={false}
+                  onClose={() => {}}
+                  submitLabel="Reply"
+                  buttonSize="sm"
+                />
+              </Box>
               <Box
                 h="calc(100% - 50px)"
                 overflowY="auto"
@@ -624,19 +635,6 @@ const SnapModal = ({
 
             {/* Divider */}
             <Divider my={4} />
-
-            {/* Comment Composer */}
-            <Box>
-              <SnapComposer
-                pa={currentSnap.author}
-                pp={currentSnap.permlink}
-                onNewComment={handleNewComment}
-                post={false}
-                onClose={() => {}}
-                submitLabel="Reply"
-                buttonSize="sm"
-              />
-            </Box>
           </Box>
         </ModalBody>
       </ModalContent>
