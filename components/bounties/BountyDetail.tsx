@@ -393,7 +393,7 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
                   >
                     {isActive ? "Active Bounty" : "Closed Bounty"}
                   </Text>
-                  
+
                   {/* Reward Badge */}
                   <Badge
                     colorScheme={isActive ? "green" : "gray"}
@@ -406,7 +406,7 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
                   >
                     Reward: {reward}
                   </Badge>
-                  
+
                   {!isActive && (
                     <Text
                       fontSize="sm"
