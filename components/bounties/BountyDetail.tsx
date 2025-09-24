@@ -6,6 +6,7 @@ import {
   Button,
   Link,
   Divider,
+  Badge,
   useTheme,
   useDisclosure,
   Tooltip,
@@ -368,9 +369,13 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
 
                 {/* Right Section: Bounty Status */}
                 <Box
-                  textAlign={{ base: "center", md: "right" }}
+                  textAlign="center"
                   flex={{ base: "1", md: "0 0 auto" }}
                   minW={0}
+                  display="flex"
+                  flexDirection="column"
+                  alignItems="center"
+                  justifyContent="center"
                 >
                   <Text
                     fontSize={{ base: "xl", md: "2xl", lg: "3xl" }}
@@ -384,15 +389,30 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
                     textShadow="0 2px 8px rgba(0,0,0,0.25)"
                     lineHeight="1.1"
                     opacity={isActive ? 1 : 0.7}
+                    mb={3}
                   >
                     {isActive ? "Active Bounty" : "Closed Bounty"}
                   </Text>
+                  
+                  {/* Reward Badge */}
+                  <Badge
+                    colorScheme={isActive ? "green" : "gray"}
+                    variant="solid"
+                    fontSize={{ base: "md", md: "lg" }}
+                    px={4}
+                    py={2}
+                    borderRadius="full"
+                    boxShadow="0 4px 12px rgba(0,0,0,0.15)"
+                  >
+                    Reward: {reward}
+                  </Badge>
+                  
                   {!isActive && (
                     <Text
                       fontSize="sm"
                       color={theme.colors.background}
                       opacity={0.6}
-                      mt={1}
+                      mt={2}
                     >
                       No longer accepting submissions
                     </Text>
