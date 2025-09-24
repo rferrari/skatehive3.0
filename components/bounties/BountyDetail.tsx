@@ -6,12 +6,9 @@ import {
   Button,
   Link,
   Divider,
-  Tag,
   useTheme,
-  VStack,
   useDisclosure,
   Tooltip,
-  Icon,
 } from "@chakra-ui/react";
 import React, { useMemo, useState, useEffect } from "react";
 import { Discussion } from "@hiveio/dhive";
@@ -25,7 +22,6 @@ import MatrixOverlay from "@/components/graphics/MatrixOverlay";
 import { useAioha } from "@aioha/react-ui";
 import useHivePower from "@/hooks/useHivePower";
 import BountyRewarder from "./BountyRewarder";
-import { DEFAULT_VOTE_WEIGHT } from "@/lib/utils/constants";
 import useVoteWeight from "@/hooks/useVoteWeight";
 
 interface BountyDetailProps {
@@ -50,7 +46,11 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
   const { author, created, body, title: postTitle } = post;
   const postDate = getPostDate(created);
   const theme = useTheme();
-  const { comments, isLoading, addComment } = useComments(post.author, post.permlink, true);
+  const { comments, isLoading, addComment } = useComments(
+    post.author,
+    post.permlink,
+    true
+  );
   const [newComment, setNewComment] = useState<Discussion | null>(null);
 
   // Voting state
@@ -64,12 +64,6 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
       (item) => item.voter.toLowerCase() === user?.toLowerCase()
     )
   );
-  const {
-    hivePower,
-    isLoading: isHivePowerLoading,
-    error: hivePowerError,
-    estimateVoteValue,
-  } = useHivePower(user);
 
   // Update slider value when user's vote weight changes
   useEffect(() => {
@@ -122,7 +116,6 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
     return match && match[1] ? parseFloat(match[1]) : 0;
   }, [body]);
 
-
   // Parse reward amount and currency from body
   const rewardInfo = useMemo(() => {
     // Match e.g. "Reward: 10 HIVE" or "Reward: 5.5 HBD"
@@ -152,8 +145,6 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
     }
     setShowSlider(false);
   }
-
-
 
   // Handler for claiming the bounty
   async function handleClaimBounty() {
@@ -280,7 +271,7 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
             overflow="hidden"
             bg="muted"
             mb={3}
-            p={4}
+            p={2}
             w="100%"
             mt={{ base: "0px", md: "10px" }}
             boxShadow={theme.shadows.md}
@@ -291,73 +282,121 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
               boxShadow={theme.shadows.md}
               bg={
                 theme.colors.primary
-                  ? `linear-gradient(to bottom, ${theme.colors.primary}, ${theme.colors.secondary})`
+                  ? `linear-gradient(to bottom, ${theme.colors.primary}, ${theme.colors.accent})`
                   : undefined
               }
-              p={4}
+              p={2}
               mb={4}
+              borderRadius="lg"
             >
               {/* Challenge Name at the top */}
               <Text
-                fontSize="xl"
+                fontSize={{ base: "xl", md: "2xl" }}
                 fontWeight="bold"
                 color={theme.colors.background}
-                mb={2}
+                mb={4}
+                textAlign="center"
               >
                 {challengeName}
               </Text>
+
               <Flex
-                direction={["column", "row"]}
-                alignItems={["flex-start", "center"]}
+                direction={{ base: "column", md: "row" }}
+                alignItems="center"
+                justify="space-between"
                 w="100%"
+                gap={4}
               >
-                <Avatar
-                  size="sm"
-                  name={author}
-                  src={`https://images.hive.blog/u/${author}/avatar/sm`}
-                />
-                <Box ml={[0, 3]} mt={[2, 0]} whiteSpace="nowrap">
-                  <Text
-                    fontWeight="medium"
-                    fontSize="sm"
-                    mb={-2}
-                    color={theme.colors.background}
-                  >
-                    <Link
-                      href={`/user/${author}`}
+                {/* Left Section: Avatar and User Info */}
+                <Flex
+                  alignItems="center"
+                  gap={4}
+                  minW={0}
+                  flex={{ base: "1", md: "0 0 auto" }}
+                >
+                  <Avatar
+                    size={{ base: "md", md: "lg" }}
+                    name={author}
+                    src={`https://images.hive.blog/u/${author}/avatar/sm`}
+                    border="3px solid"
+                    borderColor={theme.colors.background}
+                    boxShadow="0 4px 12px rgba(0,0,0,0.15)"
+                  />
+                  <Box minW={0} flex="1">
+                    <Text
+                      fontWeight="bold"
+                      fontSize={{ base: "md", md: "lg" }}
                       color={theme.colors.background}
+                      mb={1}
+                      isTruncated
                     >
-                      @{author}
-                    </Link>
-                  </Text>
-                  <Text fontSize="sm" color={theme.colors.background}>
-                    {postDate}
-                  </Text>
-                </Box>
+                      <Link
+                        href={`/user/${author}`}
+                        color={theme.colors.background}
+                        _hover={{ textDecoration: "underline" }}
+                      >
+                        @{author}
+                      </Link>
+                    </Text>
+                    <Text
+                      fontSize="sm"
+                      color={theme.colors.background}
+                      opacity={0.8}
+                    >
+                      {postDate}
+                    </Text>
+                  </Box>
+                </Flex>
+
+                {/* Divider for desktop */}
                 <Divider
                   orientation="vertical"
-                  h="34px"
-                  borderColor="color"
-                  mx={4}
-                  display={["none", "block"]}
+                  h="60px"
+                  borderColor={theme.colors.background}
+                  opacity={0.3}
+                  display={{ base: "none", md: "block" }}
                 />
+
+                {/* Divider for mobile */}
+                <Divider
+                  orientation="horizontal"
+                  borderColor={theme.colors.background}
+                  opacity={0.3}
+                  display={{ base: "block", md: "none" }}
+                  w="100%"
+                />
+
+                {/* Right Section: Bounty Status */}
                 <Box
-                  flexGrow={1}
-                  ml={[0, 4]}
-                  mt={[2, 0]}
-                  textAlign="start"
-                  minWidth={0}
+                  textAlign={{ base: "center", md: "right" }}
+                  flex={{ base: "1", md: "0 0 auto" }}
+                  minW={0}
                 >
                   <Text
-                    fontSize={{ base: "2xl", md: "3xl", lg: "4xl" }}
+                    fontSize={{ base: "xl", md: "2xl", lg: "3xl" }}
                     fontWeight="extrabold"
-                    color={isActive ? theme.colors.primary : theme.colors.error}
+                    color={
+                      isActive
+                        ? theme.colors.background
+                        : theme.colors.background
+                    }
                     letterSpacing="tight"
                     textShadow="0 2px 8px rgba(0,0,0,0.25)"
                     lineHeight="1.1"
+                    opacity={isActive ? 1 : 0.7}
                   >
                     {isActive ? "Active Bounty" : "Closed Bounty"}
                   </Text>
+                  {!isActive && (
+                    <Text
+                      fontSize="sm"
+                      color={theme.colors.background}
+                      opacity={0.6}
+                      mt={1}
+                    >
+                      No longer accepting submissions
+                    </Text>
+                  )}
                 </Box>
               </Flex>
             </Flex>
@@ -390,7 +429,10 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
               <Box mb={4}>
                 <Text fontWeight="bold" fontSize="lg" mb={2} color="text">
                   Claimed By{" "}
-                  <Tooltip label="People who want to attempt this bounty" placement="top">
+                  <Tooltip
+                    label="People who want to attempt this bounty"
+                    placement="top"
+                  >
                     <Text as="span" color="accent" cursor="help">
                       ({claimedUsers.length})
                     </Text>
@@ -531,4 +573,4 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
   );
 };
 
-export default BountyDetail; 
+export default BountyDetail;
