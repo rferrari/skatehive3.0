@@ -24,6 +24,8 @@ import limeTheme from "@/themes/lime";
 import macTheme from "@/themes/mac";
 import blackWhiteTheme from "@/themes/blackwhite";
 import whiteBlackTheme from "@/themes/whiteblack";
+import gruvboxTheme from "@/themes/gruvbox";
+import nidTheme from "@/themes/nidTheme";
 
 // Available themes map
 export const themeMap = {
@@ -43,6 +45,8 @@ export const themeMap = {
   mac: macTheme,
   blackwhite: blackWhiteTheme,
   whiteblack: whiteBlackTheme,
+  gruvbox: gruvboxTheme,
+  nid: nidTheme,
 };
 
 export type ThemeName = keyof typeof themeMap;
