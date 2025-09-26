@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Environment-aware Instagram server configuration
+// Instagram server configuration - only public servers that users can access
 const getInstagramServers = () => {
   const isDevelopment = process.env.NODE_ENV === 'development';
 
   return [
-    isDevelopment
-      ? 'http://localhost:8000'                     // Local Docker service
-      : 'https://minivlad.tail9656d3.ts.net',    // Mac Mini M4 (primary)
-    'http://raspberrypi.tail83ea3e.ts.net:8000',    // Raspberry Pi (secondary)
-    'https://skate-insta.onrender.com'              // Render (fallback)
+    'https://minivlad.tail9656d3.ts.net',        // Mac Mini M4 (primary)
+    'https://raspberrypi.tail83ea3e.ts.net',     // Raspberry Pi (secondary)
+    'https://skate-insta.onrender.com'           // Render (fallback)
   ];
 };
 
@@ -19,17 +17,29 @@ async function checkServerHealth(serverUrl: string): Promise<{ healthy: boolean;
   const controller = new AbortController();
   const timeoutId = setTimeout(() => {
     controller.abort();
-  }, 2000); // 2 seconds timeout per server
+  }, 10000); // 10 seconds timeout per server
 
   try {
-    // Try health endpoint first
-    let response = await fetch(`${serverUrl}/health`, {
+    console.log(`🏥 Checking health for: ${serverUrl}/instagram/healthz`);
+    
+    // Try Instagram-specific health endpoint first
+    let response = await fetch(`${serverUrl}/instagram/healthz`, {
       method: 'GET',
       signal: controller.signal
     });
 
-    // If health endpoint doesn't exist, try root endpoint
+    // If Instagram health endpoint doesn't exist, try generic healthz
     if (!response.ok && response.status === 404) {
+      console.log(`🔄 Trying generic healthz for: ${serverUrl}`);
+      response = await fetch(`${serverUrl}/healthz`, {
+        method: 'GET',
+        signal: controller.signal
+      });
+    }
+
+    // If still no luck, try root endpoint
+    if (!response.ok && response.status === 404) {
+      console.log(`🔄 Trying root endpoint for: ${serverUrl}`);
       response = await fetch(serverUrl, {
         method: 'GET',
         signal: controller.signal
@@ -38,27 +48,36 @@ async function checkServerHealth(serverUrl: string): Promise<{ healthy: boolean;
 
     clearTimeout(timeoutId);
 
+    console.log(`📊 Response for ${serverUrl}: status=${response.status}, ok=${response.ok}`);
+
     if (response.ok) {
       try {
         const data = await response.json();
+        console.log(`📋 Response data for ${serverUrl}:`, data);
         // Check if the response indicates the server is ok
         const isHealthy = data.status === 'ok' || response.status === 200;
         return { healthy: isHealthy, status: response.status };
       } catch {
         // If JSON parsing fails but response is ok, consider it healthy
+        console.log(`✅ JSON parse failed but response OK for ${serverUrl}`);
         return { healthy: true, status: response.status };
       }
     } else {
+      console.log(`❌ Server error for ${serverUrl}: ${response.status}`);
       return { healthy: false, status: response.status, error: 'Server returned error status' };
     }
 
   } catch (fetchError) {
     clearTimeout(timeoutId);
 
+    console.error(`💥 Fetch error for ${serverUrl}:`, fetchError);
+
     if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+      console.log(`⏰ Timeout for ${serverUrl}`);
       return { healthy: false, error: 'Server timeout' };
     }
 
+    console.log(`🔌 Connection failed for ${serverUrl}`);
     return { healthy: false, error: 'Server unreachable' };
   }
 }
