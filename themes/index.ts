@@ -10,3 +10,5 @@ export { default as hackerRedTheme } from './hackerRed';
 export { default as hackerPlusTheme } from './hackerPlus';
 export { default as limeTheme } from './lime';
 export { default as macTheme } from './mac';
+export { default as gruvboxNoggTheme } from './gruvbox-nogg';
+export { default as gruvboxNidTheme } from './gruvbox-nid';
