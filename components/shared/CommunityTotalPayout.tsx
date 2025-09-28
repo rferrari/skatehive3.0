@@ -172,7 +172,7 @@ function CommunityTotalPayout() {
                 fontWeight={fontWeightBold}
                 fontFamily={bodyFont}
               >
-                Magazine Total Payout
+                Magazine Total Rewards
               </Text>
             </Center>
           </Flex>
