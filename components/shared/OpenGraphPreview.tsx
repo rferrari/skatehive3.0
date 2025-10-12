@@ -186,7 +186,7 @@ const OpenGraphPreview: React.FC<OpenGraphPreviewProps> = ({ url }) => {
               {ogData.description && (
                 <Text
                   fontSize="xs"
-                  color="gray.600"
+                  color="primary"
                   noOfLines={2}
                   lineHeight="1.3"
                 >
@@ -194,7 +194,7 @@ const OpenGraphPreview: React.FC<OpenGraphPreviewProps> = ({ url }) => {
                 </Text>
               )}
               <HStack spacing={1} align="center">
-                <ExternalLinkIcon color="gray.400" boxSize={3} />
+                <ExternalLinkIcon color="accent" boxSize={3} />
                 <Text fontSize="xs" color="gray.500">
                   {ogData.siteName || new URL(url).hostname.replace("www.", "")}
                 </Text>
