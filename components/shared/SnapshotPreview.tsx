@@ -17,7 +17,7 @@ import {
   Tooltip,
   Divider,
 } from "@chakra-ui/react";
-import { ExternalLinkIcon, CheckIcon } from "@chakra-ui/icons";
+import { ExternalLinkIcon, CheckIcon, ViewIcon } from "@chakra-ui/icons";
 import { useAccount } from "wagmi";
 import {
   useSnapshotProposal,
@@ -28,6 +28,7 @@ import {
   getUserVotingPower,
 } from "@/lib/utils/snapshotUtils";
 import { useSnapshotVoting } from "@/hooks/useSnapshotVoting";
+import { SnapshotProposalModal } from "./SnapshotProposalModal";
 import {
   SNAPSHOT_CONFIG,
   isBasicVotingProposal,
@@ -119,6 +120,7 @@ const SnapshotPreview: React.FC<SnapshotPreviewProps> = ({ url }) => {
   const [userVotingPower, setUserVotingPower] = useState(0);
   const [votingPower, setVotingPower] = useState(0);
   const [hasCheckedVote, setHasCheckedVote] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const toast = useToast();
 
   console.log("🗳️ [SnapshotPreview] Hook results:", {
@@ -358,7 +360,24 @@ const SnapshotPreview: React.FC<SnapshotPreviewProps> = ({ url }) => {
                     {status.toUpperCase()}
                   </Badge>
                 </VStack>
-                <ExternalLinkIcon color="gray.500" />
+                <HStack spacing={2}>
+                  <Tooltip label="Preview proposal details" hasArrow>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setIsModalOpen(true);
+                      }}
+                      p={1}
+                      minW="auto"
+                    >
+                      <ViewIcon color="gray.500" />
+                    </Button>
+                  </Tooltip>
+                  <ExternalLinkIcon color="gray.500" />
+                </HStack>
               </HStack>
 
               <Text
@@ -434,9 +453,22 @@ const SnapshotPreview: React.FC<SnapshotPreviewProps> = ({ url }) => {
                 )}
               </HStack>
             </VStack>
-            <Link href={url} isExternal>
-              <ExternalLinkIcon color="gray.500" />
-            </Link>
+            <HStack spacing={2}>
+              <Tooltip label="Preview proposal details" hasArrow>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setIsModalOpen(true)}
+                  p={1}
+                  minW="auto"
+                >
+                  <ViewIcon color="gray.500" />
+                </Button>
+              </Tooltip>
+              <Link href={url} isExternal>
+                <ExternalLinkIcon color="gray.500" />
+              </Link>
+            </HStack>
           </HStack>
 
           {/* Title */}
@@ -546,6 +578,15 @@ const SnapshotPreview: React.FC<SnapshotPreviewProps> = ({ url }) => {
           )}
         </VStack>
       </Box>
+      
+      {/* Proposal Details Modal */}
+      {proposal && (
+        <SnapshotProposalModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          proposal={proposal}
+        />
+      )}
     </Box>
   );
 };
