@@ -28,9 +28,13 @@ const OpenGraphPreview: React.FC<OpenGraphPreviewProps> = ({ url }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  // Skip OpenGraph preview for coin URLs since they're handled by ZoraCoinPreview
+  // Skip OpenGraph preview for coin URLs and Snapshot URLs since they're handled by specific components
   const shouldSkip =
-    url.includes("skatehive.app/coin") || url.includes("zora.co/coin");
+    url.includes("skatehive.app/coin") ||
+    url.includes("zora.co/coin") ||
+    url.includes("snapshot.org") ||
+    url.includes("snapshot.box") ||
+    url.includes("demo.snapshot.org");
 
   useEffect(() => {
     // Don't fetch if we should skip this URL

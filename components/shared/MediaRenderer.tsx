@@ -3,8 +3,13 @@ import { EnhancedMarkdownRenderer } from "@/components/markdown/EnhancedMarkdown
 import VideoRenderer from "@/components/layout/VideoRenderer";
 import MediaCarousel from "@/components/shared/MediaCarousel";
 import OpenGraphPreview from "@/components/shared/OpenGraphPreview";
+import SnapshotPreview from "@/components/shared/SnapshotPreview";
 import { parseMediaContent, extractLastUrl } from "@/lib/utils/snapUtils";
-import { isMeaningfulCaption, extractImageCaption } from "@/lib/utils/captionUtils";
+import {
+  isMeaningfulCaption,
+  extractImageCaption,
+} from "@/lib/utils/captionUtils";
+import { isSnapshotUrl } from "@/lib/utils/snapshotUtils";
 
 interface MediaRendererProps {
   mediaContent: string;
@@ -79,8 +84,16 @@ const MediaRenderer = ({ mediaContent, fullContent }: MediaRendererProps) => {
           return null;
         })()}
 
-      {/* Render OpenGraph preview for the last URL */}
-      {lastUrl && <OpenGraphPreview url={lastUrl} />}
+      {/* Render appropriate preview for the last URL */}
+      {lastUrl && (
+        <>
+          {isSnapshotUrl(lastUrl) ? (
+            <SnapshotPreview url={lastUrl} />
+          ) : (
+            <OpenGraphPreview url={lastUrl} />
+          )}
+        </>
+      )}
     </>
   );
 };

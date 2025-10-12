@@ -59,7 +59,6 @@ export const extractLastUrl = (content: string): string | null => {
       url.includes('youtu.be') ||
       // Skip 3speak URLs
       url.includes('3speak.tv') ||
-
       // Skip Instagram URLs
       url.includes('instagram.com') ||
       // Skip Vimeo URLs
