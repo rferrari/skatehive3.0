@@ -578,7 +578,7 @@ const SnapshotPreview: React.FC<SnapshotPreviewProps> = ({ url }) => {
           )}
         </VStack>
       </Box>
-      
+
       {/* Proposal Details Modal */}
       {proposal && (
         <SnapshotProposalModal
