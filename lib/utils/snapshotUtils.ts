@@ -314,6 +314,7 @@ export const useSnapshotProposal = (url: string) => {
       const proposalId = extractSnapshotProposalId(url);
       
       if (!proposalId) {
+        setProposal(null);
         setError('Invalid Snapshot URL');
         return;
       }
@@ -323,9 +324,11 @@ export const useSnapshotProposal = (url: string) => {
       if (proposalData) {
         setProposal(proposalData);
       } else {
+        setProposal(null);
         setError('Proposal not found');
       }
     } catch (err) {
+      setProposal(null);
       setError(err instanceof Error ? err.message : 'Failed to fetch proposal');
     } finally {
       setLoading(false);
@@ -339,6 +342,7 @@ export const useSnapshotProposal = (url: string) => {
       if (isSnapshotUrl(url)) {
         await fetchProposal();
       } else {
+        setProposal(null);
         setLoading(false);
       }
     };

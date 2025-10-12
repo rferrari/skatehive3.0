@@ -129,6 +129,13 @@ const SnapshotPreview: React.FC<SnapshotPreviewProps> = ({ url }) => {
     userAddress,
   });
 
+  // Reset state when proposal or user changes
+  React.useEffect(() => {
+    setHasCheckedVote(false);
+    setUserVote(null);
+    setVotingPower(0);
+  }, [proposal?.id, userAddress]);
+
   // Check if user has already voted
   const checkExistingVote = useCallback(async () => {
     console.log("🗳️ [SnapshotPreview] Checking existing vote:", {
@@ -161,14 +168,7 @@ const SnapshotPreview: React.FC<SnapshotPreviewProps> = ({ url }) => {
       );
       console.log("🗳️ [SnapshotPreview] User voting power:", vp);
 
-      // For demo purposes, set a mock voting power if none returned
-      const mockVotingPower = vp > 0 ? vp : 100;
-      console.log(
-        "🗳️ [SnapshotPreview] Setting voting power to:",
-        mockVotingPower
-      );
-
-      setVotingPower(mockVotingPower);
+      setVotingPower(vp);
       setHasCheckedVote(true);
     } catch (error) {
       console.error(
@@ -176,13 +176,13 @@ const SnapshotPreview: React.FC<SnapshotPreviewProps> = ({ url }) => {
         error
       );
     }
-  }, [proposal, userAddress, hasCheckedVote]);
+  }, [proposal?.id, userAddress, hasCheckedVote]);
 
   React.useEffect(() => {
-    if (proposal && userAddress) {
+    if (proposal && userAddress && !hasCheckedVote) {
       checkExistingVote();
     }
-  }, [proposal, userAddress, checkExistingVote]);
+  }, [proposal?.id, userAddress, hasCheckedVote, checkExistingVote]);
 
   const handleVote = async (choiceIndex: number) => {
     console.log("🗳️ [SnapshotPreview] Attempting to vote:", {

@@ -42,9 +42,9 @@ export const VOTE_ERRORS = {
  * Parse error messages from Snapshot API responses
  */
 export function parseSnapshotError(error: any): string {
-  const errorMessage = error?.message || error?.toString() || '';
+  const errorMessage = (error?.message || error?.toString() || '').toLowerCase();
   
-  if (errorMessage.includes('User rejected') || errorMessage.includes('rejected')) {
+  if (errorMessage.includes('rejected')) {
     return VOTE_ERRORS.USER_REJECTED;
   } else if (errorMessage.includes('insufficient')) {
     return VOTE_ERRORS.INSUFFICIENT_POWER;
@@ -54,10 +54,12 @@ export function parseSnapshotError(error: any): string {
     return VOTE_ERRORS.VOTING_ENDED;
   } else if (errorMessage.includes('not started')) {
     return VOTE_ERRORS.VOTING_NOT_STARTED;
+  } else if (errorMessage.includes('invalid') && errorMessage.includes('proposal')) {
+    return VOTE_ERRORS.INVALID_PROPOSAL;
   } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
     return VOTE_ERRORS.NETWORK_ERROR;
-  } else if (errorMessage) {
-    return errorMessage;
+  } else if (error?.message || error?.toString()) {
+    return error?.message || error?.toString();
   }
   
   return VOTE_ERRORS.UNKNOWN_ERROR;

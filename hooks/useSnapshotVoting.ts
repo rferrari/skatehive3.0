@@ -3,6 +3,20 @@ import { useAccount, useWalletClient } from 'wagmi';
 import { useToast } from '@chakra-ui/react';
 import { castSnapshotVote, validateVoteEligibility, VoteResult } from '@/lib/services/snapshotVoting';
 
+// Utility to add timeout protection to promises
+const withTimeout = <T>(promise: Promise<T>, timeoutMs: number, operation: string): Promise<T> => {
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    const timeoutId = setTimeout(() => {
+      reject(new Error(`${operation} timed out after ${timeoutMs / 1000}s`));
+    }, timeoutMs);
+    
+    // Clean up timeout if main promise resolves first
+    promise.finally(() => clearTimeout(timeoutId));
+  });
+
+  return Promise.race([promise, timeoutPromise]);
+};
+
 export interface UseSnapshotVotingReturn {
   vote: (spaceId: string, proposalId: string, choice: number, reason?: string) => Promise<VoteResult>;
   isVoting: boolean;
@@ -55,7 +69,11 @@ export const useSnapshotVoting = () => {
     try {
       // First validate if user can vote
       console.log('🗳️ [useSnapshotVoting] Validating vote eligibility');
-      const eligibility = await validateVoteEligibility(spaceId, proposalId, address);
+      const eligibility = await withTimeout(
+        validateVoteEligibility(spaceId, proposalId, address),
+        8000, // 8 second timeout for eligibility check
+        'Vote eligibility validation'
+      );
       
       if (!eligibility.canVote) {
         throw new Error(eligibility.reason || 'Cannot vote on this proposal');
@@ -64,11 +82,10 @@ export const useSnapshotVoting = () => {
       console.log('🗳️ [useSnapshotVoting] User is eligible to vote, proceeding');
 
       // Cast the vote using Snapshot.js client
-      const result = await castSnapshotVote(
-        spaceId,
-        proposalId,
-        choice,
-        reason
+      const result = await withTimeout(
+        castSnapshotVote(spaceId, proposalId, choice, reason),
+        15000, // 15 second timeout for vote casting
+        'Vote casting'
       );
 
       console.log('🗳️ [useSnapshotVoting] Vote result:', result);
