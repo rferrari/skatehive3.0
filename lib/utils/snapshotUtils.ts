@@ -31,8 +31,6 @@ export interface SnapshotVote {
 
 // Extract proposal ID from Snapshot URLs
 export const extractSnapshotProposalId = (url: string): string | null => {
-  console.log('🗳️ [SnapshotUtils] Extracting proposal ID from URL:', url);
-  
   try {
     // Handle different Snapshot URL formats:
     // https://snapshot.org/#/space.eth/proposal/0x123...
@@ -40,64 +38,40 @@ export const extractSnapshotProposalId = (url: string): string | null => {
     // https://snapshot.box/#/space.eth/proposal/0x123...
     
     const urlObj = new URL(url);
-    console.log('🗳️ [SnapshotUtils] Parsed URL object:', {
-      hostname: urlObj.hostname,
-      hash: urlObj.hash,
-      pathname: urlObj.pathname
-    });
     
     // Check if it's a Snapshot domain
     if (!urlObj.hostname.includes('snapshot')) {
-      console.log('🗳️ [SnapshotUtils] Not a Snapshot domain');
       return null;
     }
     
     // Extract from hash fragment or path
     const fragment = urlObj.hash || urlObj.pathname;
-    console.log('🗳️ [SnapshotUtils] Fragment to parse:', fragment);
     
     // Look for proposal ID pattern
     const proposalMatch = fragment.match(/\/proposal\/([a-zA-Z0-9]+)/);
-    console.log('🗳️ [SnapshotUtils] Proposal match result:', proposalMatch);
     
     if (proposalMatch && proposalMatch[1]) {
-      const proposalId = proposalMatch[1];
-      console.log('🗳️ [SnapshotUtils] Successfully extracted proposal ID:', proposalId);
-      return proposalId;
+      return proposalMatch[1];
     }
     
-    console.log('🗳️ [SnapshotUtils] No proposal ID found in URL');
     return null;
   } catch (error) {
-    console.error('🗳️ [SnapshotUtils] Error extracting Snapshot proposal ID:', error);
     return null;
   }
 };
 
 // Check if URL is a Snapshot proposal URL
 export const isSnapshotUrl = (url: string): boolean => {
-  console.log('🗳️ [SnapshotUtils] Checking if URL is Snapshot:', url);
-  
   try {
     const urlObj = new URL(url);
-    const isSnapshot = urlObj.hostname.includes('snapshot') && url.includes('/proposal/');
-    console.log('🗳️ [SnapshotUtils] Snapshot URL check result:', {
-      hostname: urlObj.hostname,
-      includesSnapshot: urlObj.hostname.includes('snapshot'),
-      includesProposal: url.includes('/proposal/'),
-      result: isSnapshot
-    });
-    return isSnapshot;
+    return urlObj.hostname.includes('snapshot') && url.includes('/proposal/');
   } catch (error) {
-    console.log('🗳️ [SnapshotUtils] Error parsing URL:', error);
     return false;
   }
 };
 
 // Fetch proposal data from Snapshot GraphQL API
 export const fetchSnapshotProposal = async (proposalId: string): Promise<SnapshotProposal | null> => {
-  console.log('🗳️ [SnapshotUtils] Fetching proposal data for ID:', proposalId);
-  
   try {
     const query = `
       query Proposal($id: String!) {
@@ -122,8 +96,6 @@ export const fetchSnapshotProposal = async (proposalId: string): Promise<Snapsho
         }
       }
     `;
-
-    console.log('🗳️ [SnapshotUtils] Making GraphQL request to Snapshot API');
     
     const response = await fetch('https://hub.snapshot.org/graphql', {
       method: 'POST',
@@ -136,26 +108,20 @@ export const fetchSnapshotProposal = async (proposalId: string): Promise<Snapsho
       }),
     });
 
-    console.log('🗳️ [SnapshotUtils] API response status:', response.status);
-
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     const data = await response.json();
-    console.log('🗳️ [SnapshotUtils] API response data:', data);
     
     if (data.errors) {
-      console.error('🗳️ [SnapshotUtils] GraphQL errors:', data.errors);
+      console.error('GraphQL errors:', data.errors);
       return null;
     }
 
-    const proposal = data.data?.proposal || null;
-    console.log('🗳️ [SnapshotUtils] Extracted proposal:', proposal);
-    
-    return proposal;
+    return data.data?.proposal || null;
   } catch (error) {
-    console.error('🗳️ [SnapshotUtils] Error fetching Snapshot proposal:', error);
+    console.error('Error fetching Snapshot proposal:', error);
     return null;
   }
 };
@@ -355,7 +321,6 @@ export const useSnapshotProposal = (url: string) => {
   }, [url, fetchProposal]);
 
   const refresh = useCallback(() => {
-    console.log('🗳️ [useSnapshotProposal] Refreshing proposal data');
     setRefreshKey(prev => prev + 1);
   }, []);
 
