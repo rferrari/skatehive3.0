@@ -36,6 +36,20 @@ export const useSnapshotVoting = () => {
     choice: number, 
     reason?: string
   ): Promise<VoteResult> => {
+
+
+    if (choice < 1) {
+      const result: VoteResult = {
+        success: false,
+        error: 'Invalid choice value'
+      };
+      setLastVoteResult(result);
+      return result;
+    }
+
+    if (!address) {
+      // ...
+    }
     console.log('🗳️ [useSnapshotVoting] Starting vote process:', {
       spaceId,
       proposalId,

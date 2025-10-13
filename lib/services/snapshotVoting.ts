@@ -8,7 +8,6 @@ export interface VotePayload {
   proposal: string;
   type: string;
   choice: number;
-  privacy: string;
   app: string;
   reason?: string;
 }
@@ -43,7 +42,12 @@ export async function castSnapshotVote(
 
     // Create Web3Provider directly from window.ethereum (exactly like the docs)
     const web3 = new Web3Provider(window.ethereum);
+    await window.ethereum.request({ method: 'eth_requestAccounts' });
     const [account] = await web3.listAccounts();
+
+    if (!account) {
+      throw new Error('No account connected');
+    }
 
     console.log('🗳️ [SnapshotService] Connected account:', account);
 

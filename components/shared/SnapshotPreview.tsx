@@ -131,7 +131,6 @@ const VoteButton: React.FC<VoteButtonProps> = ({
 };
 
 const SnapshotPreview: React.FC<SnapshotPreviewProps> = ({ url }) => {
-  console.log("🗳️ [SnapshotPreview] Rendering component for URL:", url);
 
   const { proposal, loading, error, refresh } = useSnapshotProposal(url);
   const { address: userAddress, isConnected } = useAccount();
@@ -143,7 +142,6 @@ const SnapshotPreview: React.FC<SnapshotPreviewProps> = ({ url }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const toast = useToast();
 
-  console.log("🗳️ [SnapshotPreview] Hook results:", {
     proposal: proposal?.id,
     loading,
     error,
@@ -160,7 +158,6 @@ const SnapshotPreview: React.FC<SnapshotPreviewProps> = ({ url }) => {
 
   // Check if user has already voted
   const checkExistingVote = useCallback(async () => {
-    console.log("🗳️ [SnapshotPreview] Checking existing vote:", {
       proposal: proposal?.id,
       userAddress,
       hasCheckedVote,
@@ -174,9 +171,7 @@ const SnapshotPreview: React.FC<SnapshotPreviewProps> = ({ url }) => {
     }
 
     try {
-      console.log("🗳️ [SnapshotPreview] Fetching user vote from API");
       const vote = await checkUserVote(proposal.id, userAddress);
-      console.log("🗳️ [SnapshotPreview] User vote result:", vote);
 
       if (vote) {
         setUserVote(vote.choice);
@@ -187,7 +182,6 @@ const SnapshotPreview: React.FC<SnapshotPreviewProps> = ({ url }) => {
         proposal.space.id,
         proposal.id
       );
-      console.log("🗳️ [SnapshotPreview] User voting power:", vp);
 
       setVotingPower(vp);
       setHasCheckedVote(true);
@@ -206,7 +200,6 @@ const SnapshotPreview: React.FC<SnapshotPreviewProps> = ({ url }) => {
   }, [proposal?.id, userAddress, hasCheckedVote, checkExistingVote]);
 
   const handleVote = async (choiceIndex: number) => {
-    console.log("🗳️ [SnapshotPreview] Attempting to vote:", {
       proposalId: proposal?.id,
       choiceIndex: choiceIndex,
       choiceText: proposal?.choices[choiceIndex],
@@ -221,7 +214,6 @@ const SnapshotPreview: React.FC<SnapshotPreviewProps> = ({ url }) => {
       return;
     }
 
-    console.log("🗳️ [SnapshotPreview] Starting production vote process");
 
     try {
       // Use the production voting hook
@@ -232,7 +224,6 @@ const SnapshotPreview: React.FC<SnapshotPreviewProps> = ({ url }) => {
         `Vote cast from Skatehive feed`
       );
 
-      console.log("🗳️ [SnapshotPreview] Vote result:", result);
 
       if (result.success) {
         // Update local state to reflect the vote
@@ -258,12 +249,10 @@ const SnapshotPreview: React.FC<SnapshotPreviewProps> = ({ url }) => {
 
   // Early return after hooks
   if (!isSnapshotUrl(url)) {
-    console.log("🗳️ [SnapshotPreview] Not a Snapshot URL, returning null");
     return null;
   }
 
   if (loading) {
-    console.log("🗳️ [SnapshotPreview] Rendering loading state");
     return (
       <Box display="flex" justifyContent="center" mt={2} mb={2}>
         <Box
@@ -299,7 +288,6 @@ const SnapshotPreview: React.FC<SnapshotPreviewProps> = ({ url }) => {
   }
 
   if (error || !proposal) {
-    console.log("🗳️ [SnapshotPreview] Error or no proposal found:", {
       error,
       proposal,
     });
@@ -314,7 +302,6 @@ const SnapshotPreview: React.FC<SnapshotPreviewProps> = ({ url }) => {
   // Use the improved basic voting detection
   const isBasicVoting = isBasicVotingProposal(proposal.choices);
 
-  console.log("🗳️ [SnapshotPreview] Rendering proposal:", {
     proposalId: proposal.id,
     title: proposal.title,
     status,
@@ -517,7 +504,6 @@ const SnapshotPreview: React.FC<SnapshotPreviewProps> = ({ url }) => {
           {/* Voting Options */}
           {(() => {
             const showVoting = canVote || userVote;
-            console.log("🗳️ [SnapshotPreview] Voting section visibility:", {
               canVote,
               userVote,
               showVoting,
