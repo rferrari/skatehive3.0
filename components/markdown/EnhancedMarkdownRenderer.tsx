@@ -115,7 +115,10 @@ function cleanMarkdownPart(part: string): string {
     .replace(/^https?:\/\/(?:www\.)?skatehive\.app\/coin\/.*$/gm, "")
     .replace(/^https?:\/\/(?:www\.)?snapshot\.(?:org|box)\/.*$/gm, "")
     .replace(/^https?:\/\/(?:www\.)?demo\.snapshot\.org\/.*$/gm, "")
-    .replace(/^(ODYSEE|VIDEO|YOUTUBE|VIMEO|INSTAGRAM|ZORACOIN|SNAPSHOT)\s*$/gm, "")
+    .replace(
+      /^(ODYSEE|VIDEO|YOUTUBE|VIMEO|INSTAGRAM|ZORACOIN|SNAPSHOT)\s*$/gm,
+      ""
+    )
     .replace(/^[a-zA-Z0-9_-]{11}$/gm, "") // YouTube video IDs
     .replace(/^[0-9]{8,}$/gm, "") // Vimeo video IDs
     .replace(/^(Qm[1-9A-HJ-NP-Za-km-z]{44,}|bafy[0-9a-z]{50,})$/gm, "") // IPFS CIDs
