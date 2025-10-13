@@ -145,12 +145,7 @@ const MediaCarousel: React.FC<MediaCarouselProps> = ({ mediaItems }) => {
                 alignItems="center"
                 spacing={0}
               >
-                {renderMediaItem(
-                  item,
-                  true,
-                  containerHeight,
-                  index === currentSlide
-                )}
+                {renderMediaItem(item, true, containerHeight)}
               </VStack>
             </SwiperSlide>
           ))}
