@@ -4,7 +4,10 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
 import { EnhancedMarkdownRenderer } from "@/components/markdown/EnhancedMarkdownRenderer";
 import VideoRenderer from "../layout/VideoRenderer";
-import { isMeaningfulCaption, extractImageCaption } from "@/lib/utils/captionUtils";
+import {
+  isMeaningfulCaption,
+  extractImageCaption,
+} from "@/lib/utils/captionUtils";
 
 // Import Swiper styles
 import "swiper/css";
@@ -31,13 +34,15 @@ const MediaCarousel: React.FC<MediaCarouselProps> = ({ mediaItems }) => {
     // Function to calculate the tallest media item maintaining aspect ratio
     const calculateMaxHeight = () => {
       const containerWidth = isMobile ? window.innerWidth - 32 : 600; // Account for padding
-      
+
       const heights = mediaRefs.current
-        .filter((ref): ref is HTMLImageElement | HTMLVideoElement => ref !== null)
-        .map(ref => {
+        .filter(
+          (ref): ref is HTMLImageElement | HTMLVideoElement => ref !== null
+        )
+        .map((ref) => {
           let naturalWidth = 0;
           let naturalHeight = 0;
-          
+
           if (ref instanceof HTMLImageElement) {
             naturalWidth = ref.naturalWidth || ref.width;
             naturalHeight = ref.naturalHeight || ref.height;
@@ -45,22 +50,22 @@ const MediaCarousel: React.FC<MediaCarouselProps> = ({ mediaItems }) => {
             naturalWidth = ref.videoWidth || ref.clientWidth;
             naturalHeight = ref.videoHeight || ref.clientHeight;
           }
-          
+
           if (naturalWidth === 0 || naturalHeight === 0) return 0;
-          
+
           // Calculate height when scaled to fit container width
           const aspectRatio = naturalHeight / naturalWidth;
           const scaledHeight = containerWidth * aspectRatio;
-          
+
           return scaledHeight;
         })
-        .filter(h => h > 0);
+        .filter((h) => h > 0);
 
       if (heights.length > 0) {
         const maxHeight = Math.max(...heights);
         // Cap at reasonable limits based on viewport
-        const cappedHeight = isMobile 
-          ? Math.min(maxHeight, 600) 
+        const cappedHeight = isMobile
+          ? Math.min(maxHeight, 600)
           : Math.min(maxHeight, 700);
         setContainerHeight(cappedHeight);
       }
@@ -83,7 +88,7 @@ const MediaCarousel: React.FC<MediaCarouselProps> = ({ mediaItems }) => {
         }
       } else if (item.type === "video" && item.src) {
         return new Promise((resolve) => {
-          const video = document.createElement('video');
+          const video = document.createElement("video");
           video.onloadedmetadata = () => {
             mediaRefs.current[index] = video;
             resolve(video);
@@ -133,14 +138,19 @@ const MediaCarousel: React.FC<MediaCarouselProps> = ({ mediaItems }) => {
         >
           {mediaItems.map((item, index) => (
             <SwiperSlide key={index}>
-              <VStack 
-                width="100%" 
+              <VStack
+                width="100%"
                 height="100%"
                 justifyContent="center"
                 alignItems="center"
                 spacing={0}
               >
-                {renderMediaItem(item, true, containerHeight, index === currentSlide)}
+                {renderMediaItem(
+                  item,
+                  true,
+                  containerHeight,
+                  index === currentSlide
+                )}
               </VStack>
             </SwiperSlide>
           ))}
@@ -150,17 +160,22 @@ const MediaCarousel: React.FC<MediaCarouselProps> = ({ mediaItems }) => {
   );
 };
 
-function renderMediaItem(item: MediaItem, isCarouselMode: boolean = false, containerHeight?: number) {
-  const caption = item.type === "image" ? extractImageCaption(item.content) : null;
+function renderMediaItem(
+  item: MediaItem,
+  isCarouselMode: boolean = false,
+  containerHeight?: number
+) {
+  const caption =
+    item.type === "image" ? extractImageCaption(item.content) : null;
+  const showCaption = caption && isMeaningfulCaption(caption);
 
-  const captionElement = caption && isMeaningfulCaption(caption) ? (
+  const captionElement = showCaption ? (
     <Text
       fontSize="xs"
       fontStyle="italic"
       textAlign="center"
       color="secondary"
       mt={2}
-      mb={2}
       px={2}
     >
       {caption}
@@ -170,38 +185,40 @@ function renderMediaItem(item: MediaItem, isCarouselMode: boolean = false, conta
   switch (item.type) {
     case "image":
       return (
-        <Box 
-          width="100%" 
-          height={isCarouselMode ? "100%" : "auto"}
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-          bg={isCarouselMode ? "rgba(0,0,0,0.05)" : "transparent"}
-          borderRadius="md"
-        >
+        <>
           <Box
-            sx={{
-              img: {
-                maxWidth: "100%",
-                maxHeight: isCarouselMode ? `${containerHeight}px` : "500px",
-                width: "auto",
-                height: "auto",
-                objectFit: "contain",
-                borderRadius: "md",
-                display: "block",
-              },
-            }}
+            width="100%"
+            flex={isCarouselMode ? "1" : "none"}
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            bg={isCarouselMode ? "rgba(0,0,0,0.05)" : "transparent"}
+            borderRadius="md"
           >
-            <EnhancedMarkdownRenderer content={item.content} />
+            <Box
+              sx={{
+                img: {
+                  maxWidth: "100%",
+                  maxHeight: isCarouselMode ? `${containerHeight}px` : "500px",
+                  width: "auto",
+                  height: "auto",
+                  objectFit: "contain",
+                  borderRadius: "md",
+                  display: "block",
+                },
+              }}
+            >
+              <EnhancedMarkdownRenderer content={item.content} />
+            </Box>
           </Box>
-          {!isCarouselMode && captionElement}
-        </Box>
+          {captionElement}
+        </>
       );
-      
+
     case "video":
       return item.src ? (
-        <Box 
-          width="100%" 
+        <Box
+          width="100%"
           height={isCarouselMode ? "100%" : "auto"}
           display="flex"
           alignItems="center"
@@ -229,10 +246,10 @@ function renderMediaItem(item: MediaItem, isCarouselMode: boolean = false, conta
           )}
         </Box>
       ) : null;
-      
+
     case "iframe":
       return (
-        <Box 
+        <Box
           width="100%"
           height={isCarouselMode ? "100%" : "auto"}
           display="flex"
@@ -256,7 +273,7 @@ function renderMediaItem(item: MediaItem, isCarouselMode: boolean = false, conta
           />
         </Box>
       );
-      
+
     default:
       return null;
   }
