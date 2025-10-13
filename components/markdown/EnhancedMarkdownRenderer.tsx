@@ -6,6 +6,7 @@ import {
 import { VideoEmbed } from "./VideoEmbed";
 import InstagramEmbed from "./InstagramEmbed";
 import ZoraCoinPreview from "../zora/ZoraCoinPreview";
+import SnapshotPreview from "../shared/SnapshotPreview";
 import HiveMarkdown from "@/components/shared/HiveMarkdown";
 
 interface EnhancedMarkdownRendererProps {
@@ -31,9 +32,9 @@ export function EnhancedMarkdownRenderer({
 function renderContentWithVideos(
   processed: ProcessedMarkdown
 ): React.ReactNode[] {
-  // Split on supported video, social media, and Zora coin placeholders
+  // Split on supported video, social media, Zora coin, and Snapshot placeholders
   const parts = processed.contentWithPlaceholders.split(
-    /(\[\[(VIDEO|ODYSEE|YOUTUBE|VIMEO|INSTAGRAM|ZORACOIN):([^\]]+)\]\])/g
+    /(\[\[(VIDEO|ODYSEE|YOUTUBE|VIMEO|INSTAGRAM|ZORACOIN|SNAPSHOT):([^\]]+)\]\])/g
   );
 
   return parts
@@ -65,6 +66,13 @@ function renderContentWithVideos(
       if (zoraCoinMatch) {
         const address = zoraCoinMatch[1];
         return <ZoraCoinPreview key={`zora-${idx}`} address={address} />;
+      }
+
+      // Handle Snapshot proposal placeholders
+      const snapshotMatch = part.match(/^\[\[SNAPSHOT:([^\]]+)\]\]$/);
+      if (snapshotMatch) {
+        const url = snapshotMatch[1];
+        return <SnapshotPreview key={`snapshot-${idx}`} url={url} />;
       }
 
       // Skip empty parts or parts that are just whitespace
@@ -105,7 +113,9 @@ function cleanMarkdownPart(part: string): string {
     .replace(/^https?:\/\/(?:www\.)?(?:vimeo\.com\/).*$/gm, "")
     .replace(/^https?:\/\/(?:www\.)?zora\.co\/coin\/.*$/gm, "")
     .replace(/^https?:\/\/(?:www\.)?skatehive\.app\/coin\/.*$/gm, "")
-    .replace(/^(ODYSEE|VIDEO|YOUTUBE|VIMEO|INSTAGRAM|ZORACOIN)\s*$/gm, "")
+    .replace(/^https?:\/\/(?:www\.)?snapshot\.(?:org|box)\/.*$/gm, "")
+    .replace(/^https?:\/\/(?:www\.)?demo\.snapshot\.org\/.*$/gm, "")
+    .replace(/^(ODYSEE|VIDEO|YOUTUBE|VIMEO|INSTAGRAM|ZORACOIN|SNAPSHOT)\s*$/gm, "")
     .replace(/^[a-zA-Z0-9_-]{11}$/gm, "") // YouTube video IDs
     .replace(/^[0-9]{8,}$/gm, "") // Vimeo video IDs
     .replace(/^(Qm[1-9A-HJ-NP-Za-km-z]{44,}|bafy[0-9a-z]{50,})$/gm, "") // IPFS CIDs

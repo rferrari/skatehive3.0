@@ -1,5 +1,6 @@
 import { processMediaContent } from "@/lib/markdown/MarkdownRenderer";
 import { extractZoraCoinLinks } from "@/lib/utils/extractImageUrls";
+import { isSnapshotUrl } from "@/lib/utils/snapshotUtils";
 
 export interface ProcessedMarkdown {
   originalContent: string;
@@ -10,7 +11,7 @@ export interface ProcessedMarkdown {
 }
 
 export interface VideoPlaceholder {
-  type: 'VIDEO' | 'ODYSEE' | 'YOUTUBE' | 'VIMEO' | 'ZORACOIN';
+  type: 'VIDEO' | 'ODYSEE' | 'YOUTUBE' | 'VIMEO' | 'ZORACOIN' | 'SNAPSHOT';
   id: string;
   placeholder: string;
 }
@@ -31,8 +32,11 @@ export class MarkdownProcessor {
     // Step 2: Convert Zora coin links to placeholders  
     const contentWithZoraPlaceholders = this.convertZoraCoinLinksToPlaceholders(processedContent);
 
-    // Step 3: Extract video placeholders and convert to our format
-    const contentWithPlaceholders = this.convertToVideoPlaceholders(contentWithZoraPlaceholders);
+    // Step 3: Convert Snapshot links to placeholders
+    const contentWithSnapshotPlaceholders = this.convertSnapshotLinksToPlaceholders(contentWithZoraPlaceholders);
+
+    // Step 4: Extract video placeholders and convert to our format
+    const contentWithPlaceholders = this.convertToVideoPlaceholders(contentWithSnapshotPlaceholders);
 
     // Step 4: Detect Instagram embeds
     const hasInstagramEmbeds = processedContent.includes("<!--INSTAGRAM_EMBED_SCRIPT-->");
@@ -74,6 +78,19 @@ export class MarkdownProcessor {
     return processedContent;
   }
 
+  private static convertSnapshotLinksToPlaceholders(content: string): string {
+    // Match standalone Snapshot URLs (on their own line)
+    const snapshotUrlRegex = /^(https?:\/\/(?:www\.)?(snapshot\.(?:org|box)|demo\.snapshot\.org)\/.+)$/gm;
+    
+    return content.replace(snapshotUrlRegex, (match, url) => {
+      // Only convert if it's a valid Snapshot URL
+      if (isSnapshotUrl(url)) {
+        return `[[SNAPSHOT:${url}]]`;
+      }
+      return match;
+    });
+  }
+
   private static convertToVideoPlaceholders(content: string): string {
     return content.replace(
       /<div class="video-embed" data-ipfs-hash="([^"]+)">[\s\S]*?<\/div>/g,
@@ -83,12 +100,12 @@ export class MarkdownProcessor {
 
   private static extractVideoPlaceholders(content: string): VideoPlaceholder[] {
     const placeholders: VideoPlaceholder[] = [];
-    const regex = /\[\[(VIDEO|ODYSEE|YOUTUBE|VIMEO|ZORACOIN):([^\]]+)\]\]/g;
+    const regex = /\[\[(VIDEO|ODYSEE|YOUTUBE|VIMEO|ZORACOIN|SNAPSHOT):([^\]]+)\]\]/g;
     let match;
 
     while ((match = regex.exec(content)) !== null) {
       placeholders.push({
-        type: match[1] as 'VIDEO' | 'ODYSEE' | 'YOUTUBE' | 'VIMEO' | 'ZORACOIN',
+        type: match[1] as 'VIDEO' | 'ODYSEE' | 'YOUTUBE' | 'VIMEO' | 'ZORACOIN' | 'SNAPSHOT',
         id: match[2],
         placeholder: match[0],
       });
