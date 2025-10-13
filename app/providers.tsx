@@ -1,5 +1,7 @@
 "use client";
 
+// Import suppressWarnings first to patch console.error before any components render
+import "@/lib/suppressWarnings";
 import "@rainbow-me/rainbowkit/styles.css";
 import { CSSReset } from "@chakra-ui/react";
 import { Aioha } from "@aioha/aioha";
@@ -15,7 +17,7 @@ import { VoteWeightProvider } from "@/contexts/VoteWeightContext";
 import { AuthKitProvider } from "@farcaster/auth-kit";
 import "@farcaster/auth-kit/styles.css";
 import { dynamicRainbowTheme } from "@/lib/themes/rainbowkitTheme";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 const aioha = new Aioha();
 
@@ -52,30 +54,6 @@ const farcasterAuthConfig = {
 };
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  // Suppress RainbowKit errorCorrection prop warning in development
-  useEffect(() => {
-    if (process.env.NODE_ENV !== "development") return;
-
-    const originalConsoleError = console.error;
-    console.error = (...args: any[]) => {
-      const errorMessage = args[0];
-      if (
-        typeof errorMessage === "string" &&
-        errorMessage.includes(
-          "React does not recognize the `errorCorrection` prop on a DOM element"
-        )
-      ) {
-        return; // Suppress this specific RainbowKit warning
-      }
-      originalConsoleError.apply(console, args);
-    };
-
-    // Cleanup: restore original console.error
-    return () => {
-      console.error = originalConsoleError;
-    };
-  }, []);
-
   // Create QueryClient inside the component to avoid SSR issues
   const [queryClient] = useState(
     () =>

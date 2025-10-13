@@ -1,8 +1,11 @@
 import { DefaultRenderer } from "@hiveio/content-renderer";
 import DOMPurify from "dompurify";
 import { LRUCache } from "@/lib/utils/LRUCache";
+import { getCacheKey } from "@/lib/utils/hashUtils";
 
 // LRU caches with bounded memory usage
+// Cache keys are deterministic hashes instead of full markdown strings for memory efficiency
+// Uses browser-safe FNV-1a hash algorithm that works in both Node.js and browser
 // Markdown cache: 1000 entries, 1 hour TTL
 const markdownCache = new LRUCache<string, string>(1000, 60 * 60 * 1000);
 // Processed content cache: 500 entries, 30 min TTL
@@ -86,9 +89,13 @@ function getSanitizedHTML(html: string): string {
 }
 
 export function processMediaContent(content: string): string {
+    // Generate hash-based cache key for memory efficiency
+    const cacheKey = getCacheKey(content);
+    
     // Check cache first
-    if (processedContentCache.has(content)) {
-        return processedContentCache.get(content)!;
+    const cached = processedContentCache.get(cacheKey);
+    if (cached) {
+        return cached;
     }
 
     let processedContent = content;
@@ -201,8 +208,8 @@ export function processMediaContent(content: string): string {
         }
     );
 
-    // Cache the result
-    processedContentCache.set(content, processedContent);
+    // Cache the result using hash key
+    processedContentCache.set(cacheKey, processedContent);
     return processedContent;
 }
 
@@ -295,9 +302,13 @@ export default async function markdownRenderer(markdown: string): Promise<string
         mentionValidationCache.clear();
     }
     
+    // Generate hash-based cache key for memory efficiency
+    const cacheKey = getCacheKey(markdown);
+    
     // Check cache first
-    if (markdownCache.has(markdown)) {
-        return markdownCache.get(markdown)!;
+    const cached = markdownCache.get(cacheKey);
+    if (cached) {
+        return cached;
     }
     
     try {
@@ -331,8 +342,8 @@ export default async function markdownRenderer(markdown: string): Promise<string
         // Sanitize the HTML (only on client side)
         const clean = getSanitizedHTML(expanded);
         
-        // Cache the result
-        markdownCache.set(markdown, clean);
+        // Cache the result using hash key
+        markdownCache.set(cacheKey, clean);
         return clean;
     } catch (error) {
         console.warn('Content renderer error handled by SkateHive:', error);
@@ -352,8 +363,8 @@ export default async function markdownRenderer(markdown: string): Promise<string
             </div>
         `;
         
-        // Cache the error result to avoid repeated processing
-        markdownCache.set(markdown, errorMessage);
+        // Cache the error result to avoid repeated processing (using hash key)
+        markdownCache.set(cacheKey, errorMessage);
         return errorMessage;
     }
 }

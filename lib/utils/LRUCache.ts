@@ -9,6 +9,12 @@ export class LRUCache<K, V> {
   private timestamps?: Map<K, number>;
 
   constructor(maxSize: number = 1000, ttl?: number) {
+    if (maxSize < 1) {
+      throw new Error('maxSize must be at least 1');
+    }
+    if (ttl !== undefined && ttl < 0) {
+      throw new Error('ttl must be non-negative');
+    }
     this.cache = new Map();
     this.maxSize = maxSize;
     this.ttl = ttl;
@@ -47,12 +53,11 @@ export class LRUCache<K, V> {
       this.cache.delete(key);
     } else if (this.cache.size >= this.maxSize) {
       // Evict least recently used (first item in Map)
+      // Safe to assert non-undefined: Map is guaranteed non-empty when size >= maxSize
       const firstKey = this.cache.keys().next().value as K;
-      if (firstKey !== undefined) {
-        this.cache.delete(firstKey);
-        if (this.timestamps) {
-          this.timestamps.delete(firstKey);
-        }
+      this.cache.delete(firstKey);
+      if (this.timestamps) {
+        this.timestamps.delete(firstKey);
       }
     }
 

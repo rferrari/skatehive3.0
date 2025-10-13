@@ -2,6 +2,7 @@ import { processMediaContent } from "@/lib/markdown/MarkdownRenderer";
 import { extractZoraCoinLinks } from "@/lib/utils/extractImageUrls";
 import { isSnapshotUrl } from "@/lib/utils/snapshotUtils";
 import { LRUCache } from "@/lib/utils/LRUCache";
+import { getCacheKey } from "@/lib/utils/hashUtils";
 
 export interface ProcessedMarkdown {
   originalContent: string;
@@ -18,6 +19,8 @@ export interface VideoPlaceholder {
 }
 
 // LRU cache for processed markdown (max 500 entries, 30 min TTL)
+// Cache keys are deterministic hashes instead of full markdown strings for memory efficiency
+// Uses browser-safe FNV-1a hash algorithm that works in both Node.js and browser
 const markdownProcessingCache = new LRUCache<string, ProcessedMarkdown>(
   500,
   30 * 60 * 1000 // 30 minutes in milliseconds
@@ -25,9 +28,13 @@ const markdownProcessingCache = new LRUCache<string, ProcessedMarkdown>(
 
 export class MarkdownProcessor {
   static process(content: string): ProcessedMarkdown {
+    // Generate hash-based cache key for memory efficiency
+    const cacheKey = getCacheKey(content);
+    
     // Check cache first
-    if (markdownProcessingCache.has(content)) {
-      return markdownProcessingCache.get(content)!;
+    const cached = markdownProcessingCache.get(cacheKey);
+    if (cached) {
+      return cached;
     }
 
     // Step 1: Process media content (from existing MarkdownRenderer)
@@ -56,8 +63,8 @@ export class MarkdownProcessor {
       videoPlaceholders,
     };
 
-    // Cache the result
-    markdownProcessingCache.set(content, result);
+    // Cache the result using hash key
+    markdownProcessingCache.set(cacheKey, result);
     return result;
   }
 
