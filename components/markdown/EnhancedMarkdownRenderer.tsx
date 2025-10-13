@@ -113,8 +113,14 @@ function cleanMarkdownPart(part: string): string {
     .replace(/^https?:\/\/(?:www\.)?(?:vimeo\.com\/).*$/gm, "")
     .replace(/^https?:\/\/(?:www\.)?zora\.co\/coin\/.*$/gm, "")
     .replace(/^https?:\/\/(?:www\.)?skatehive\.app\/coin\/.*$/gm, "")
-    .replace(/^https?:\/\/(?:www\.)?snapshot\.(?:org|box)\/.*$/gm, "")
-    .replace(/^https?:\/\/(?:www\.)?demo\.snapshot\.org\/.*$/gm, "")
+    .replace(
+      /^https?:\/\/(?:www\.)?snapshot\.(?:org|box)\/.*\/proposal\/.*$/gm,
+      ""
+    )
+    .replace(
+      /^https?:\/\/(?:www\.)?demo\.snapshot\.org\/.*\/proposal\/.*$/gm,
+      ""
+    )
     .replace(
       /^(ODYSEE|VIDEO|YOUTUBE|VIMEO|INSTAGRAM|ZORACOIN|SNAPSHOT)\s*$/gm,
       ""
