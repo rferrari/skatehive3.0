@@ -17,23 +17,6 @@ import "@farcaster/auth-kit/styles.css";
 import { dynamicRainbowTheme } from "@/lib/themes/rainbowkitTheme";
 import { useState, useEffect } from "react";
 
-// Suppress RainbowKit errorCorrection prop warning in development
-if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
-  const originalConsoleError = console.error;
-  console.error = (...args: any[]) => {
-    const errorMessage = args[0];
-    if (
-      typeof errorMessage === "string" &&
-      errorMessage.includes(
-        "React does not recognize the `errorCorrection` prop on a DOM element"
-      )
-    ) {
-      return; // Suppress this specific RainbowKit warning
-    }
-    originalConsoleError.apply(console, args);
-  };
-}
-
 const aioha = new Aioha();
 
 if (typeof window !== "undefined") {
@@ -69,6 +52,30 @@ const farcasterAuthConfig = {
 };
 
 export function Providers({ children }: { children: React.ReactNode }) {
+  // Suppress RainbowKit errorCorrection prop warning in development
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "development") return;
+
+    const originalConsoleError = console.error;
+    console.error = (...args: any[]) => {
+      const errorMessage = args[0];
+      if (
+        typeof errorMessage === "string" &&
+        errorMessage.includes(
+          "React does not recognize the `errorCorrection` prop on a DOM element"
+        )
+      ) {
+        return; // Suppress this specific RainbowKit warning
+      }
+      originalConsoleError.apply(console, args);
+    };
+
+    // Cleanup: restore original console.error
+    return () => {
+      console.error = originalConsoleError;
+    };
+  }, []);
+
   // Create QueryClient inside the component to avoid SSR issues
   const [queryClient] = useState(
     () =>

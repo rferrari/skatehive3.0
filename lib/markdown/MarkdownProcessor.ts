@@ -1,6 +1,7 @@
 import { processMediaContent } from "@/lib/markdown/MarkdownRenderer";
 import { extractZoraCoinLinks } from "@/lib/utils/extractImageUrls";
 import { isSnapshotUrl } from "@/lib/utils/snapshotUtils";
+import { LRUCache } from "@/lib/utils/LRUCache";
 
 export interface ProcessedMarkdown {
   originalContent: string;
@@ -16,8 +17,11 @@ export interface VideoPlaceholder {
   placeholder: string;
 }
 
-// Cache for processed markdown
-const markdownProcessingCache = new Map<string, ProcessedMarkdown>();
+// LRU cache for processed markdown (max 500 entries, 30 min TTL)
+const markdownProcessingCache = new LRUCache<string, ProcessedMarkdown>(
+  500,
+  30 * 60 * 1000 // 30 minutes in milliseconds
+);
 
 export class MarkdownProcessor {
   static process(content: string): ProcessedMarkdown {

@@ -1,10 +1,14 @@
 import { DefaultRenderer } from "@hiveio/content-renderer";
 import DOMPurify from "dompurify";
+import { LRUCache } from "@/lib/utils/LRUCache";
 
-// Create a cache for processed markdown
-const markdownCache = new Map<string, string>();
-const processedContentCache = new Map<string, string>();
-const mentionValidationCache = new Map<string, boolean>();
+// LRU caches with bounded memory usage
+// Markdown cache: 1000 entries, 1 hour TTL
+const markdownCache = new LRUCache<string, string>(1000, 60 * 60 * 1000);
+// Processed content cache: 500 entries, 30 min TTL
+const processedContentCache = new LRUCache<string, string>(500, 30 * 60 * 1000);
+// Mention validation cache: 1000 entries, 1 hour TTL (usernames are stable)
+const mentionValidationCache = new LRUCache<string, boolean>(1000, 60 * 60 * 1000);
 
 // Import Hive account validation
 const { checkHiveAccountExists } = require('@/lib/utils/hiveAccountUtils');
