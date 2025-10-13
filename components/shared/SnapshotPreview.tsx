@@ -7,7 +7,6 @@ import {
   HStack,
   Text,
   Button,
-  Image,
   Badge,
   Progress,
   Skeleton,
@@ -23,17 +22,12 @@ import {
   useSnapshotProposal,
   getProposalStatus,
   isSnapshotUrl,
-  SnapshotProposal,
   checkUserVote,
   getUserVotingPower,
 } from "@/lib/utils/snapshotUtils";
 import { useSnapshotVoting } from "@/hooks/useSnapshotVoting";
 import { SnapshotProposalModal } from "./SnapshotProposalModal";
-import {
-  SNAPSHOT_CONFIG,
-  isBasicVotingProposal,
-  getVoteButtonConfig,
-} from "@/lib/config/snapshot";
+import { SNAPSHOT_CONFIG, isBasicVotingProposal } from "@/lib/config/snapshot";
 
 interface SnapshotPreviewProps {
   url: string;
@@ -65,11 +59,8 @@ const VoteButton: React.FC<VoteButtonProps> = ({
   return (
     <Button
       width="100%"
-      variant={isSelected ? "solid" : "outline"}
-      colorScheme={isSelected ? "green" : "blue"}
       size="sm"
       onClick={() => onVote(index)}
-      disabled={!canVote || isVoting}
       position="relative"
       overflow="hidden"
       justifyContent="flex-start"
@@ -77,6 +68,22 @@ const VoteButton: React.FC<VoteButtonProps> = ({
       py={2}
       height="auto"
       minH="40px"
+      bg={isSelected ? "primary" : "background"}
+      color={isSelected ? "background" : "primary"}
+      border="1px solid"
+      borderColor="primary"
+      role="group"
+      _hover={{
+        bg: "primary",
+        color: "background",
+        transform: "translateY(-1px)",
+        boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
+      }}
+      _active={{
+        transform: "translateY(0px)",
+      }}
+      transition="all 0.2s ease"
+      isDisabled={!canVote || isVoting}
     >
       {/* Background progress bar */}
       <Box
@@ -85,23 +92,36 @@ const VoteButton: React.FC<VoteButtonProps> = ({
         left={0}
         height="100%"
         width={`${percentage}%`}
-        bg={isSelected ? "green.200" : "blue.100"}
-        opacity={0.3}
+        bg={isSelected ? "background" : "primary"}
+        opacity={0.2}
         transition="width 0.3s ease"
       />
 
       <HStack justify="space-between" width="100%" position="relative">
         <HStack spacing={2}>
           {isSelected && <CheckIcon boxSize={3} />}
-          <Text fontSize="sm" fontWeight="medium">
+          <Text
+            fontSize="sm"
+            fontWeight="medium"
+            _groupHover={{ color: "background" }}
+          >
             {choice}
           </Text>
         </HStack>
         <VStack spacing={0} align="flex-end">
-          <Text fontSize="xs" color="gray.600">
+          <Text
+            fontSize="xs"
+            color="inherit"
+            _groupHover={{ color: "background" }}
+          >
             {percentage.toFixed(1)}%
           </Text>
-          <Text fontSize="xs" color="gray.500">
+          <Text
+            fontSize="xs"
+            color="inherit"
+            opacity={0.8}
+            _groupHover={{ color: "background", opacity: 0.8 }}
+          >
             {score.toLocaleString()} votes
           </Text>
         </VStack>
@@ -162,7 +182,6 @@ const SnapshotPreview: React.FC<SnapshotPreviewProps> = ({ url }) => {
         setUserVote(vote.choice);
       }
 
-      console.log("🗳️ [SnapshotPreview] Fetching user voting power");
       const vp = await getUserVotingPower(
         userAddress,
         proposal.space.id,
@@ -345,7 +364,7 @@ const SnapshotPreview: React.FC<SnapshotPreviewProps> = ({ url }) => {
                 />
                 <VStack align="start" spacing={0} flex={1}>
                   <Text fontSize="sm" fontWeight="semibold" color="primary">
-                    {proposal.space.name}
+                    {proposal.space.name} Proposal
                   </Text>
                   <Badge
                     colorScheme={
@@ -398,8 +417,6 @@ const SnapshotPreview: React.FC<SnapshotPreviewProps> = ({ url }) => {
       </Box>
     );
   }
-
-  console.log("🗳️ [SnapshotPreview] Rendering full interactive component");
 
   return (
     <Box display="flex" justifyContent="center" mt={2} mb={2}>
@@ -516,7 +533,7 @@ const SnapshotPreview: React.FC<SnapshotPreviewProps> = ({ url }) => {
               <Text
                 fontSize="xs"
                 fontWeight="semibold"
-                color="gray.700"
+                color="primary"
                 textAlign="center"
               >
                 {canVote
@@ -560,7 +577,7 @@ const SnapshotPreview: React.FC<SnapshotPreviewProps> = ({ url }) => {
                   justify="space-between"
                   px={3}
                   py={2}
-                  bg="gray.50"
+                  bg="muted"
                   borderRadius="md"
                 >
                   <Text fontSize="sm">{choice}</Text>
