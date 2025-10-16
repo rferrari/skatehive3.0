@@ -1,46 +1,8 @@
 /**
  * Universal hashing utility that works in both Node.js and browser environments
  * 
- * Browser: Uses Web Crypto API (crypto.subtle)
- * Node.js: Uses native crypto module
- * 
  * For cache keys, we need a fast, deterministic hash function.
- * SHA-256 via crypto.subtle is well-supported in modern browsers.
  */
-
-/**
- * Generate a SHA-256 hash of the input string
- * Works in both browser and Node.js environments
- * 
- * @param input - The string to hash
- * @returns A promise that resolves to a hex-encoded hash string
- */
-export async function sha256Hash(input: string): Promise<string> {
-  // Browser environment - use Web Crypto API
-  if (typeof window !== 'undefined' && window.crypto?.subtle) {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(input);
-    const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    return hashHex;
-  }
-  
-  // Node.js environment - use native crypto
-  if (typeof require !== 'undefined') {
-    try {
-      const crypto = require('crypto');
-      return crypto.createHash('sha256').update(input, 'utf8').digest('hex');
-    } catch (e) {
-      // Fall back to simple hash if crypto is not available
-      console.warn('Native crypto not available, falling back to simple hash');
-      return simpleHash(input);
-    }
-  }
-  
-  // Fallback for edge cases
-  return simpleHash(input);
-}
 
 /**
  * Synchronous hash function for cache keys
