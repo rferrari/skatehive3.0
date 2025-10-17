@@ -32,60 +32,53 @@ export async function processVideoOnServer(
 
   console.log('🔄 Server processing started:', file.name);
 
-  // Try Mac Mini M4 first (fastest processing with M4 chip)
-  console.log('🍎 Attempting Mac Mini M4 (PRIMARY) - https://minivlad.tail9656d3.ts.net/video/transcode');
+  // Try Oracle first (highest priority)
+  console.log('🔮 Attempting Oracle (PRIMARY) - https://146-235-239-243.sslip.io/transcode');
   const primaryResult = await tryServer(
-    'https://minivlad.tail9656d3.ts.net/video/transcode',
+    'https://146-235-239-243.sslip.io/transcode',
     file,
     username,
-    'Mac Mini M4 (Primary)',
+    'Oracle (Primary)',
     enhancedOptions
   );
 
   if (primaryResult.success) {
-    console.log('✅ Mac Mini M4 succeeded - no need to try other servers');
+    console.log('✅ Oracle succeeded - no need to try other servers');
     return primaryResult;
   }
 
-  // If Mac Mini fails, try Raspberry Pi as secondary
-  console.log('🫐 Mac Mini failed, trying Raspberry Pi (SECONDARY) - https://raspberrypi.tail83ea3e.ts.net/video/transcode');
+  // If Oracle fails, try Mac Mini M4 as secondary
+  console.log('🍎 Oracle failed, trying Mac Mini M4 (SECONDARY) - https://minivlad.tail9656d3.ts.net/video/transcode');
   const secondaryResult = await tryServer(
-    'https://raspberrypi.tail83ea3e.ts.net/video/transcode',
+    'https://minivlad.tail9656d3.ts.net/video/transcode',
     file,
     username,
-    'Raspberry Pi (Secondary)',
+    'Mac Mini M4 (Secondary)',
     enhancedOptions
   );
 
   if (secondaryResult.success) {
-    console.log('✅ Raspberry Pi succeeded');
+    console.log('✅ Mac Mini M4 succeeded');
     return secondaryResult;
   }
 
-  // If both fail and file is small enough, try Render via proxy
-  const fileSizeMB = file.size / (1024 * 1024);
-  if (fileSizeMB <= 4) { // Only use proxy for files 4MB or smaller
-    console.log(`🔄 Primary failed, trying Render via proxy (file size: ${fileSizeMB.toFixed(1)}MB)`);
+  // If both fail, try Raspberry Pi as tertiary
+  console.log('🫐 Mac Mini failed, trying Raspberry Pi (TERTIARY) - https://raspberrypi.tail83ea3e.ts.net/video/transcode');
+  const tertiaryResult = await tryServer(
+    'https://raspberrypi.tail83ea3e.ts.net/video/transcode',
+    file,
+    username,
+    'Raspberry Pi (Tertiary)',
+    enhancedOptions
+  );
 
-    const proxyUrl = '/api/video-proxy?url=' + encodeURIComponent('https://146-235-239-243.sslip.io/transcode');
-
-    const proxyResult = await tryServer(
-      proxyUrl,
-      file,
-      username,
-      'Render (via Proxy)',
-      enhancedOptions
-    );
-
-    if (proxyResult.success) {
-      return proxyResult;
-    }
-  } else {
-    console.log(`⚠️ File too large for proxy (${fileSizeMB.toFixed(1)}MB), skipping proxy fallback`);
+  if (tertiaryResult.success) {
+    console.log('✅ Raspberry Pi succeeded');
+    return tertiaryResult;
   }
 
-  // Return the most informative error (try secondary result first, then primary)
-  return secondaryResult.error ? secondaryResult : primaryResult;
+  // Return the most informative error (try tertiary result first, then secondary, then primary)
+  return tertiaryResult.error ? tertiaryResult : (secondaryResult.error ? secondaryResult : primaryResult);
 }
 
 /**

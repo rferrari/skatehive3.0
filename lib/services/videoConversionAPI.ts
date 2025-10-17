@@ -19,24 +19,24 @@ export interface VideoConversionOptions {
   maxRetries?: number;
 }
 
-// Primary API configuration - Mac Mini M4 (fastest)
-const PRIMARY_API_ENDPOINT = "https://minivlad.tail9656d3.ts.net/video/transcode";
+// Primary API configuration - Oracle (highest priority)
+const PRIMARY_API_ENDPOINT = "https://146-235-239-243.sslip.io/transcode";
 
-// Secondary API configuration - Raspberry Pi (reliable)
-const SECONDARY_API_ENDPOINT = "https://raspberrypi.tail83ea3e.ts.net/video/transcode";
+// Secondary API configuration - Mac Mini M4 (fast processing)
+const SECONDARY_API_ENDPOINT = "https://minivlad.tail9656d3.ts.net/video/transcode";
 
-// Fallback API configuration - Render (cloud backup)
-const FALLBACK_API_ENDPOINT = "https://146-235-239-243.sslip.io/transcode";
+// Fallback API configuration - Raspberry Pi (reliable backup)
+const FALLBACK_API_ENDPOINT = "https://raspberrypi.tail83ea3e.ts.net/video/transcode";
 
 /**
- * Attempts to upload and convert video using the primary API
+ * Attempts to upload and convert video using the primary API (Oracle)
  */
 async function uploadToPrimaryAPI(
   file: File,
   options: VideoConversionOptions
 ): Promise<VideoConversionResult> {
   try {
-    console.log("🚀 Attempting upload to primary API...");
+    console.log("� Attempting upload to Oracle API (primary)...");
 
     const formData = new FormData();
     formData.append("video", file);
@@ -55,12 +55,12 @@ async function uploadToPrimaryAPI(
     });
 
     if (!response.ok) {
-      throw new Error(`Primary API failed: ${response.status} - ${response.statusText}`);
+      throw new Error(`Oracle API failed: ${response.status} - ${response.statusText}`);
     }
 
     const result = await response.json();
 
-    console.log("🔍 Primary API Response Debug:");
+    console.log("🔍 Oracle API Response Debug:");
     console.log("Full result:", JSON.stringify(result, null, 2));
     console.log("result.url:", result.url, typeof result.url);
     console.log("result.ipfsUrl:", result.ipfsUrl, typeof result.ipfsUrl);
@@ -70,7 +70,7 @@ async function uploadToPrimaryAPI(
     if (result.url || result.ipfsUrl || result.videoUrl) {
       const videoUrl = result.url || result.ipfsUrl || result.videoUrl;
 
-      console.log("✅ Primary API upload successful!");
+      console.log("✅ Oracle API upload successful!");
       console.log("Selected videoUrl:", videoUrl, typeof videoUrl);
 
       return {
@@ -81,10 +81,10 @@ async function uploadToPrimaryAPI(
         fileSize: result.fileSize || file.size,
       };
     } else {
-      throw new Error("Primary API returned invalid response - no URL found");
+      throw new Error("Oracle API returned invalid response - no URL found");
     }
   } catch (error) {
-    console.error("❌ Primary API failed:", error);
+    console.error("❌ Oracle API failed:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : String(error),
@@ -94,14 +94,14 @@ async function uploadToPrimaryAPI(
 }
 
 /**
- * Attempts to upload and convert video using the secondary API (Raspberry Pi)
+ * Attempts to upload and convert video using the secondary API (Mac Mini M4)
  */
 async function uploadToSecondaryAPI(
   file: File,
   options: VideoConversionOptions
 ): Promise<VideoConversionResult> {
   try {
-    console.log("🔄 Attempting upload to secondary API (Raspberry Pi)...");
+    console.log("🍎 Attempting upload to secondary API (Mac Mini M4)...");
 
     const formData = new FormData();
     formData.append("video", file);
@@ -120,7 +120,7 @@ async function uploadToSecondaryAPI(
     });
 
     if (!response.ok) {
-      throw new Error(`Secondary API failed: ${response.status} - ${response.statusText}`);
+      throw new Error(`Mac Mini M4 API failed: ${response.status} - ${response.statusText}`);
     }
 
     const result = await response.json();
@@ -128,7 +128,7 @@ async function uploadToSecondaryAPI(
     if (result.url || result.ipfsUrl || result.videoUrl) {
       const videoUrl = result.url || result.ipfsUrl || result.videoUrl;
 
-      console.log("✅ Secondary API upload successful!");
+      console.log("✅ Mac Mini M4 API upload successful!");
       return {
         success: true,
         url: videoUrl,
@@ -137,10 +137,10 @@ async function uploadToSecondaryAPI(
         fileSize: result.fileSize || file.size,
       };
     } else {
-      throw new Error("Secondary API returned invalid response - no URL found");
+      throw new Error("Mac Mini M4 API returned invalid response - no URL found");
     }
   } catch (error) {
-    console.error("❌ Secondary API failed:", error);
+    console.error("❌ Mac Mini M4 API failed:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : String(error),
@@ -150,14 +150,14 @@ async function uploadToSecondaryAPI(
 }
 
 /**
- * Attempts to upload and convert video using the fallback API
+ * Attempts to upload and convert video using the fallback API (Raspberry Pi)
  */
 async function uploadToFallbackAPI(
   file: File,
   options: VideoConversionOptions
 ): Promise<VideoConversionResult> {
   try {
-    console.log("🔄 Attempting upload to fallback API (Render)...");
+    console.log("🫐 Attempting upload to fallback API (Raspberry Pi)...");
 
     const formData = new FormData();
     formData.append("video", file);
@@ -176,7 +176,7 @@ async function uploadToFallbackAPI(
     });
 
     if (!response.ok) {
-      throw new Error(`Fallback API failed: ${response.status} - ${response.statusText}`);
+      throw new Error(`Raspberry Pi API failed: ${response.status} - ${response.statusText}`);
     }
 
     const result = await response.json();
@@ -184,7 +184,7 @@ async function uploadToFallbackAPI(
     if (result.url || result.ipfsUrl || result.videoUrl) {
       const videoUrl = result.url || result.ipfsUrl || result.videoUrl;
 
-      console.log("✅ Fallback API upload successful!");
+      console.log("✅ Raspberry Pi API upload successful!");
       return {
         success: true,
         url: videoUrl,
@@ -193,10 +193,10 @@ async function uploadToFallbackAPI(
         fileSize: result.fileSize || file.size,
       };
     } else {
-      throw new Error("Fallback API returned invalid response - no URL found");
+      throw new Error("Raspberry Pi API returned invalid response - no URL found");
     }
   } catch (error) {
-    console.error("❌ Fallback API failed:", error);
+    console.error("❌ Raspberry Pi API failed:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : String(error),
@@ -207,7 +207,7 @@ async function uploadToFallbackAPI(
 
 /**
  * Main function to upload video with API fallback chain
- * Tries: Mac Mini M4 -> Raspberry Pi -> Render -> Native processing
+ * Tries: Oracle -> Mac Mini M4 -> Raspberry Pi -> Native processing
  */
 export async function uploadVideoWithAPIFallback(
   file: File,
@@ -220,31 +220,31 @@ export async function uploadVideoWithAPIFallback(
     fileSize: `${(file.size / 1024 / 1024).toFixed(2)}MB`,
     creator: options.creator,
     hasThumbnail: !!options.thumbnailUrl,
-    chain: "Mac Mini M4 → Raspberry Pi → Render → Native"
+    chain: "Oracle → Mac Mini M4 → Raspberry Pi → Native"
   });
 
-  // Try primary API first (Mac Mini M4)
+  // Try primary API first (Oracle)
   let result = await uploadToPrimaryAPI(file, options);
+  if (result.success) {
+    console.log("✅ Oracle upload successful!");
+    return result;
+  }
+
+  console.log("⚠️ Oracle failed, trying Mac Mini M4...");
+
+  // Try secondary API (Mac Mini M4)
+  result = await uploadToSecondaryAPI(file, options);
   if (result.success) {
     console.log("✅ Mac Mini M4 upload successful!");
     return result;
   }
 
-  console.log("⚠️ Mac Mini M4 failed, trying Raspberry Pi...");
+  console.log("⚠️ Mac Mini M4 failed, trying Raspberry Pi fallback...");
 
-  // Try secondary API (Raspberry Pi)
-  result = await uploadToSecondaryAPI(file, options);
-  if (result.success) {
-    console.log("✅ Raspberry Pi upload successful!");
-    return result;
-  }
-
-  console.log("⚠️ Raspberry Pi failed, trying Render fallback...");
-
-  // Try fallback API (Render)
+  // Try fallback API (Raspberry Pi)
   result = await uploadToFallbackAPI(file, options);
   if (result.success) {
-    console.log("✅ Render API upload successful!");
+    console.log("✅ Raspberry Pi API upload successful!");
     return result;
   }
 
@@ -253,7 +253,7 @@ export async function uploadVideoWithAPIFallback(
   // Return failure - the calling code will handle native fallback
   return {
     success: false,
-    error: "All APIs failed (Mac Mini M4, Raspberry Pi, Render) - falling back to native processing",
+    error: "All APIs failed (Oracle, Mac Mini M4, Raspberry Pi) - falling back to native processing",
     method: 'native',
   };
 }

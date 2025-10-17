@@ -31,9 +31,9 @@ interface VideoConversionRequest {
 }
 
 class VideoApiService {
+  private readonly oracleApiUrl = 'https://146-235-239-243.sslip.io';
   private readonly macMiniApiUrl = 'https://minivlad.tail9656d3.ts.net/video';
-  private readonly primaryApiUrl = 'https://raspberrypi.tail83ea3e.ts.net/video';
-  private readonly fallbackApiUrl = 'https://skatehive-transcoder.onrender.com';
+  private readonly raspberryPiApiUrl = 'https://raspberrypi.tail83ea3e.ts.net/video';
 
   // Conversion timeout (15 minutes for larger files)
   private readonly CONVERSION_TIMEOUT = 900000;
@@ -143,7 +143,7 @@ class VideoApiService {
     video: File,
     options: VideoUploadOptions
   ): Promise<VideoUploadResult> {
-    const WORKER_API_URL = `${this.fallbackApiUrl}/transcode`;
+    const WORKER_API_URL = `${this.oracleApiUrl}/transcode`;
     const correlationId = this.generateCorrelationId();
 
     try {
@@ -242,11 +242,11 @@ class VideoApiService {
   ): Promise<VideoUploadResult> {
     const correlationId = this.generateCorrelationId();
 
-    // Try Mac Mini M4 first, then Raspberry Pi, then Render API
+    // Try Oracle first, then Mac Mini M4, then Raspberry Pi API
     const apiUrls = [
+      { name: 'Oracle', url: `${this.oracleApiUrl}/transcode` },
       { name: 'Mac Mini M4', url: `${this.macMiniApiUrl}/transcode` },
-      { name: 'Raspberry Pi', url: `${this.primaryApiUrl}/transcode` },
-      { name: 'Render', url: `${this.fallbackApiUrl}/transcode` }
+      { name: 'Raspberry Pi', url: `${this.raspberryPiApiUrl}/transcode` }
     ];
 
     console.log('� Video upload started', {
@@ -329,8 +329,8 @@ class VideoApiService {
   ): Promise<VideoUploadResult> {
     const correlationId = this.generateCorrelationId();
 
-    // Try Render API via proxy (Raspberry Pi doesn't work via proxy)
-    const proxyUrl = '/api/video-proxy?url=' + encodeURIComponent(`${this.fallbackApiUrl}/transcode`);
+    // Try Oracle API via proxy (Raspberry Pi doesn't work via proxy)
+    const proxyUrl = '/api/video-proxy?url=' + encodeURIComponent(`${this.oracleApiUrl}/transcode`);
 
     try {
       console.log('🔄 Uploading video via proxy to Render API...', {
@@ -403,9 +403,9 @@ class VideoApiService {
 
     return {
       primaryAPI: true,  // Assume available, will fail gracefully if not
-      primaryURL: this.primaryApiUrl,
+      primaryURL: this.oracleApiUrl,
       fallbackAPI: true, // Assume available, will fail gracefully if not
-      fallbackURL: this.fallbackApiUrl,
+      fallbackURL: this.raspberryPiApiUrl,
       checkDuration: `${duration}ms`,
       timestamp: new Date().toISOString()
     };
