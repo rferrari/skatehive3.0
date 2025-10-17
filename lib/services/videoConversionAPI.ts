@@ -26,7 +26,7 @@ const PRIMARY_API_ENDPOINT = "https://minivlad.tail9656d3.ts.net/video/transcode
 const SECONDARY_API_ENDPOINT = "https://raspberrypi.tail83ea3e.ts.net/video/transcode";
 
 // Fallback API configuration - Render (cloud backup)
-const FALLBACK_API_ENDPOINT = "https://skatehive-transcoder.onrender.com/transcode";
+const FALLBACK_API_ENDPOINT = "https://146-235-239-243.sslip.io/transcode";
 
 /**
  * Attempts to upload and convert video using the primary API

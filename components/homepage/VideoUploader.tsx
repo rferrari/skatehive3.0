@@ -89,11 +89,6 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
       };
     };
 
-    // Generate correlation ID for request tracking
-    const generateCorrelationId = (): string => {
-      return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    };
-
     const processFile = async (file: File) => {
       if (isProcessing) return;
 

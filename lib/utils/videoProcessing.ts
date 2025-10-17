@@ -67,7 +67,7 @@ export async function processVideoOnServer(
   if (fileSizeMB <= 4) { // Only use proxy for files 4MB or smaller
     console.log(`🔄 Primary failed, trying Render via proxy (file size: ${fileSizeMB.toFixed(1)}MB)`);
 
-    const proxyUrl = '/api/video-proxy?url=' + encodeURIComponent('https://skatehive-transcoder.onrender.com/transcode');
+    const proxyUrl = '/api/video-proxy?url=' + encodeURIComponent('https://146-235-239-243.sslip.io/transcode');
 
     const proxyResult = await tryServer(
       proxyUrl,
