@@ -468,8 +468,31 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = memo(
               return;
             }
 
-            canvas.width = Math.min(video.videoWidth, 1920); // Limit resolution for performance
-            canvas.height = Math.min(video.videoHeight, 1080);
+            // Preserve original aspect ratio while limiting max resolution
+            const originalWidth = video.videoWidth;
+            const originalHeight = video.videoHeight;
+            const aspectRatio = originalWidth / originalHeight;
+            
+            // Calculate dimensions maintaining aspect ratio
+            let canvasWidth = originalWidth;
+            let canvasHeight = originalHeight;
+            
+            // Scale down if video is too large, maintaining aspect ratio
+            const maxWidth = 1920;
+            const maxHeight = 1080;
+            
+            if (canvasWidth > maxWidth) {
+              canvasWidth = maxWidth;
+              canvasHeight = Math.round(maxWidth / aspectRatio);
+            }
+            
+            if (canvasHeight > maxHeight) {
+              canvasHeight = maxHeight;
+              canvasWidth = Math.round(maxHeight * aspectRatio);
+            }
+            
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
 
             // Create MediaRecorder with optimized settings
             const stream = canvas.captureStream(30);
