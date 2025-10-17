@@ -472,25 +472,25 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = memo(
             const originalWidth = video.videoWidth;
             const originalHeight = video.videoHeight;
             const aspectRatio = originalWidth / originalHeight;
-            
+
             // Calculate dimensions maintaining aspect ratio
             let canvasWidth = originalWidth;
             let canvasHeight = originalHeight;
-            
+
             // Scale down if video is too large, maintaining aspect ratio
             const maxWidth = 1920;
             const maxHeight = 1080;
-            
+
             if (canvasWidth > maxWidth) {
               canvasWidth = maxWidth;
               canvasHeight = Math.round(maxWidth / aspectRatio);
             }
-            
+
             if (canvasHeight > maxHeight) {
               canvasHeight = maxHeight;
               canvasWidth = Math.round(maxHeight * aspectRatio);
             }
-            
+
             canvas.width = canvasWidth;
             canvas.height = canvasHeight;
 
