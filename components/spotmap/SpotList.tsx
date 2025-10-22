@@ -138,7 +138,7 @@ export default function SpotList({
 
   return (
     <>
-      <Box my={8}>
+      <Box my={8} className="spot-list">
         <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
           {displayedSpots.map((spot) => (
             <Snap

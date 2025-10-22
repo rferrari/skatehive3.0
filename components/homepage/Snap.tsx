@@ -209,15 +209,15 @@ const Snap = ({
           </Menu>
         </HStack>
         <Box>
+          <Box>
+            <MediaRenderer mediaContent={media} fullContent={discussion.body} />
+          </Box>
           <Box
             sx={{
               p: { marginBottom: "1rem", lineHeight: "1.6", marginLeft: "4" },
             }}
           >
             <EnhancedMarkdownRenderer content={text} />
-          </Box>
-          <Box>
-            <MediaRenderer mediaContent={media} fullContent={discussion.body} />
           </Box>
         </Box>
 

@@ -216,3 +216,22 @@
   border: 0;
   display: block;
 }
+
+/* Spot list specific styles - remove border radius for content images only */
+.spot-list .markdown-body img:not([src*="avatar"]):not([alt*="@"]) {
+  border-radius: 0 !important;
+}
+
+/* Target all content images in spot list - more specific selectors */
+.spot-list img:not([src*="avatar"]):not([src*="/avatar"]):not([alt*="@"]) {
+  border-radius: 0 !important;
+}
+
+/* Target Chakra UI Box components in spot list */
+.spot-list div[class*="chakra-box"] {
+  border-radius: 0 !important;
+}
+
+.spot-list div[class*="chakra-box"] img {
+  border-radius: 0 !important;
+}
