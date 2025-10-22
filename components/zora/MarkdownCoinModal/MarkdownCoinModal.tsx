@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   Modal,
   ModalOverlay,
@@ -47,11 +47,7 @@ export function MarkdownCoinModal({
     return `${post.author}-${post.permlink}`;
   }, [post.author, post.permlink]);
 
-  console.log("🔄 MarkdownCoinModal render:", {
-    isOpen,
-    postTitle: post?.title,
-    postId,
-  });
+
 
   const { createMarkdownCoin, isCreating } = useMarkdownCoin();
   const [currentStep, setCurrentStep] = useState<Step>("carousel");
@@ -69,7 +65,8 @@ export function MarkdownCoinModal({
   );
   const [editableTitle, setEditableTitle] = useState<string>("");
   const [editableDescription, setEditableDescription] = useState<string>("");
-  const [selectedColors, setSelectedColors] = useState<ColorOptions>({
+  // Memoize the default colors to prevent recreation
+  const defaultColors = useMemo(() => ({
     primary: "#00ff88",
     secondary: "#00ff88",
     gradient: {
@@ -77,8 +74,13 @@ export function MarkdownCoinModal({
       middle: "#000000",
       end: "#1a1a1a",
     },
-  });
+  }), []);
+
+  const [selectedColors, setSelectedColors] = useState<ColorOptions>(defaultColors);
   const toast = useToast();
+  
+  // Use refs to prevent multiple initialization calls
+  const initializationInProgress = useRef(false);
 
   // Memoize generatePreview function to prevent unnecessary re-creations
   const generatePreview = useCallback(
@@ -87,11 +89,8 @@ export function MarkdownCoinModal({
       customTitle?: string,
       customContent?: string
     ) => {
-      console.log("🎯 generatePreview called with thumbnail:", thumbnailUrl);
-
-      // Prevent multiple simultaneous calls
-      if (isGeneratingPreview) {
-        console.log("⚠️ generatePreview already running, skipping");
+      // Prevent multiple simultaneous calls or calls during initialization
+      if (isGeneratingPreview || initializationInProgress.current) {
         return;
       }
 
@@ -136,10 +135,9 @@ export function MarkdownCoinModal({
           },
         ];
 
-        console.log("Card preview generated, updating carousel");
-        setCarouselPreview(carousel);
+        // Card preview generated successfully
       } catch (error) {
-        console.error("❌ Failed to generate preview:", error);
+        console.error("Failed to generate preview:", error);
         toast({
           title: "Preview generation failed",
           description: "Unable to generate image preview",
@@ -153,170 +151,141 @@ export function MarkdownCoinModal({
     },
     [
       post.author,
-      post.title,
-      post.body,
-      toast,
+      isGeneratingPreview,
       selectedThumbnail,
-      cardPreview,
       editableTitle,
       editableDescription,
       selectedColors,
-      isGeneratingPreview,
-      post,
+      cardPreview,
     ]
-  ); // Removed state variables to prevent infinite loop
-
-  // Memoize whether we should generate preview to prevent infinite loops
-  const shouldGeneratePreview = useMemo(() => {
-    const isNewPost = currentPostId !== postId;
-    return isOpen && (!hasInitialized || isNewPost) && !isGeneratingPreview;
-  }, [isOpen, hasInitialized, isGeneratingPreview, currentPostId, postId]);
+  );
 
   // Reset state when modal opens/closes or when post changes
   useEffect(() => {
-    console.log("🔄 useEffect triggered:", {
-      isOpen,
-      cardPreview: !!cardPreview,
-      postTitle: post?.title,
-      postId,
-      currentPostId,
-    });
-    if (isOpen) {
-      console.log("📂 Modal opening, resetting state");
+    if (isOpen && currentPostId !== postId) {
+      // Reset for new post
+      initializationInProgress.current = false;
+      setCurrentPostId(postId);
+      setHasInitialized(false);
       setCurrentStep("carousel");
       setResult(null);
-
-      // Reset if it's a new post
-      if (currentPostId !== postId) {
-        console.log("🆕 New post detected, resetting state");
-        setHasInitialized(false);
-        setCurrentPostId(postId);
-        setCardPreview(null);
-        setMarkdownImages([]);
-        setCarouselPreview([]);
-        setCarouselImages([]);
-        setMarkdownDescription("");
-        setSelectedThumbnail(null);
-        setEditableTitle("");
-        setEditableDescription("");
-        setSelectedColors({
-          primary: "#00ff88",
-          secondary: "#00ff88",
-          gradient: {
-            start: "#2a2a2a",
-            middle: "#000000",
-            end: "#1a1a1a",
-          },
-        });
-      }
-    } else {
-      // Reset state when modal closes (blob cleanup is handled by useEffect)
       setCardPreview(null);
+      setMarkdownImages([]);
+      setCarouselPreview([]);
+      setCarouselImages([]);
+      setMarkdownDescription("");
+      setSelectedThumbnail(null);
+      setEditableTitle("");
+      setEditableDescription("");
+      setSelectedColors(defaultColors);
+    } else if (!isOpen) {
+      // Reset when modal closes
+      initializationInProgress.current = false;
       setHasInitialized(false);
+      setCardPreview(null);
     }
   }, [isOpen, postId, currentPostId]);
 
   // Initialize carousel images when modal opens
   useEffect(() => {
-    if (isOpen && !hasInitialized) {
-      console.log("🎨 Initializing carousel for new modal open");
+    if (isOpen && !hasInitialized && !initializationInProgress.current) {
+      initializationInProgress.current = true;
       setHasInitialized(true);
 
-      // Extract images and set up initial carousel
-      const images = extractMarkdownImages(post.body);
-      console.log("Modal opened, extracting images from post:", post.title);
-      console.log("Extracted markdown images:", images);
-      setMarkdownImages(images);
+      const initializeAsync = async () => {
+        try {
+          // Extract images and set up initial carousel
+          const images = extractMarkdownImages(post.body);
+          setMarkdownImages(images);
 
-      // Convert content to markdown for description
-      convertToMarkdownDescription(post.body).then((markdownDesc) => {
-        setMarkdownDescription(markdownDesc);
-        setEditableDescription(markdownDesc);
-      });
+          // Convert content to markdown for description
+          const markdownDesc = await convertToMarkdownDescription(post.body);
+          setMarkdownDescription(markdownDesc);
+          setEditableDescription(markdownDesc);
 
-      // Initialize editable title
-      setEditableTitle(post.title || "");
+          // Initialize editable title
+          setEditableTitle(post.title || "");
 
-      // Set up initial carousel with markdown images
-      const initialCarousel = images.map((imageUrl: string, index: number) => ({
-        uri: imageUrl,
-        mime: "image/jpeg",
-        type: `Markdown Image ${index + 1}`,
-        isIncluded: true,
-        isGenerated: false,
-      }));
+          // Set up initial carousel with markdown images
+          const initialCarousel = images.map((imageUrl: string, index: number) => ({
+            uri: imageUrl,
+            mime: "image/jpeg",
+            type: `Markdown Image ${index + 1}`,
+            isIncluded: true,
+            isGenerated: false,
+          }));
 
-      setCarouselImages(initialCarousel);
-      setCarouselPreview(initialCarousel);
+          setCarouselImages(initialCarousel);
+          setCarouselPreview(initialCarousel);
 
-      // Set default thumbnail to first image if available
-      if (images.length > 0) {
-        setSelectedThumbnail(images[0]);
-      } else {
-        // Use post thumbnail if no images found
-        const postThumbnail = extractThumbnailFromPost(post);
-        if (postThumbnail) {
-          setSelectedThumbnail(postThumbnail);
+          // Set default thumbnail to first image if available
+          if (images.length > 0) {
+            setSelectedThumbnail(images[0]);
+          } else {
+            // Use post thumbnail if no images found
+            const postThumbnail = extractThumbnailFromPost(post);
+            if (postThumbnail) {
+              setSelectedThumbnail(postThumbnail);
+            }
+          }
+        } finally {
+          initializationInProgress.current = false;
         }
-      }
+      };
+
+      initializeAsync();
     }
-  }, [isOpen, hasInitialized, post.body, post.title, post, cardPreview]); // Debug effect to monitor carouselImages state changes
-  useEffect(() => {
-    console.log("📊 carouselImages state changed:", {
-      length: carouselImages?.length || 0,
-      images:
-        carouselImages?.map((img) => ({
-          uri: img.uri,
-          isIncluded: img.isIncluded,
-        })) || [],
-    });
-  }, [carouselImages]);
+  }, [isOpen, hasInitialized, post.body, post.title]);
 
-  // Cleanup blob URLs when cardPreview changes or component unmounts
-  useEffect(() => {
-    // Cleanup function that runs when cardPreview changes or component unmounts
-    return () => {
-      if (cardPreview) {
-        URL.revokeObjectURL(cardPreview);
-      }
-    };
-  }, [cardPreview]);
 
-  // Cleanup all blob URLs on component unmount
+
+  // Cleanup blob URLs and timeouts on component unmount
   useEffect(() => {
     return () => {
       // Cleanup cardPreview if it exists
       if (cardPreview) {
         URL.revokeObjectURL(cardPreview);
       }
+      
+      // Cleanup any pending timeouts
+      if (titleTimeoutRef.current) {
+        clearTimeout(titleTimeoutRef.current);
+      }
+      if (descriptionTimeoutRef.current) {
+        clearTimeout(descriptionTimeoutRef.current);
+      }
     };
   }, [cardPreview]);
 
-  // Auto-regenerate preview when colors change
+  // Auto-regenerate preview when colors change (with proper safeguards)
+  const colorsStringRef = useRef<string>("");
+  
   useEffect(() => {
-    if (hasInitialized && post && editableTitle && editableDescription) {
-      console.log("🎨 Colors changed, regenerating preview...", selectedColors);
-      // Small delay to ensure state has updated
-      const timer = setTimeout(() => {
-        generatePreview();
-      }, 100);
+    const currentColorsString = JSON.stringify(selectedColors);
+    
+    // Only regenerate if:
+    // 1. Modal is initialized
+    // 2. Colors actually changed (not just initial render)
+    // 3. Not currently generating
+    // 4. Not during initialization
+    if (hasInitialized && 
+        colorsStringRef.current !== "" && // Not the first render
+        colorsStringRef.current !== currentColorsString && 
+        !isGeneratingPreview && 
+        !initializationInProgress.current) {
       
+      // Debounce the regeneration
+      const timer = setTimeout(() => {
+        generatePreview(selectedThumbnail || undefined);
+      }, 300);
+      
+      colorsStringRef.current = currentColorsString;
       return () => clearTimeout(timer);
     }
-  }, [selectedColors, hasInitialized, post, editableTitle, editableDescription, generatePreview]);
-
-  // Auto-regenerate preview when thumbnail selection changes
-  useEffect(() => {
-    if (hasInitialized && post && editableTitle && editableDescription && cardPreview) {
-      console.log("🖼️ Thumbnail changed, regenerating preview...", selectedThumbnail);
-      // Small delay to ensure state has updated
-      const timer = setTimeout(() => {
-        generatePreview();
-      }, 100);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [selectedThumbnail, hasInitialized, post, editableTitle, editableDescription, cardPreview, generatePreview]);
+    
+    // Always update the ref for comparison
+    colorsStringRef.current = currentColorsString;
+  }, [selectedColors, hasInitialized, isGeneratingPreview, generatePreview, selectedThumbnail]);
 
   const handleCreateCoin = async (
     metadata: {
@@ -325,10 +294,6 @@ export function MarkdownCoinModal({
     },
     carouselImagesParam: CarouselImage[]
   ) => {
-    console.log("🎯 handleCreateCoin called!");
-    console.log("- Current carouselImages state:", carouselImages);
-    console.log("- carouselImagesParam received:", carouselImagesParam);
-
     try {
       // Use the passed carousel images
       const imagesToUse = carouselImagesParam;
@@ -340,19 +305,6 @@ export function MarkdownCoinModal({
           ...img,
           type: img.type || "image", // Ensure type is defined
         }));
-
-      console.log("🚀 MARKDOWN MODAL: Calling hook with:");
-      console.log("- imagesToUse:", imagesToUse);
-      console.log("- imagesToUse length:", imagesToUse?.length || 0);
-      console.log("- includedImages:", includedImages);
-      console.log("- includedImages length:", includedImages.length);
-      console.log(
-        "- isIncluded values:",
-        imagesToUse?.map((img) => ({
-          uri: img.uri,
-          isIncluded: img.isIncluded,
-        }))
-      );
 
       const coinResult = await createMarkdownCoin(post, includedImages);
 
@@ -367,10 +319,6 @@ export function MarkdownCoinModal({
         isClosable: true,
       });
     } catch (error: any) {
-      // Don't log the full error to avoid console noise - just log a summary
-      console.error(
-        "❌ Coin creation failed - check error handling for details"
-      );
 
       // Professional error handling for user-friendly messages
       const errorMessage =
@@ -446,11 +394,50 @@ export function MarkdownCoinModal({
     }
   };
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     if (!isCreating) {
       onClose();
     }
-  };
+  }, [isCreating, onClose]);
+
+  // Refs for debouncing title/description changes
+  const titleTimeoutRef = useRef<NodeJS.Timeout>();
+  const descriptionTimeoutRef = useRef<NodeJS.Timeout>();
+
+  // Memoize handlers to prevent unnecessary re-renders
+  const handleTitleChange = useCallback((newTitle: string) => {
+    setEditableTitle(newTitle);
+    
+    // Debounce preview regeneration (wait for user to finish typing)
+    if (titleTimeoutRef.current) {
+      clearTimeout(titleTimeoutRef.current);
+    }
+    
+    titleTimeoutRef.current = setTimeout(() => {
+      if (hasInitialized && !isGeneratingPreview && !initializationInProgress.current) {
+        generatePreview(selectedThumbnail || undefined, newTitle, editableDescription);
+      }
+    }, 1000); // 1 second delay
+  }, [hasInitialized, isGeneratingPreview, generatePreview, selectedThumbnail, editableDescription]);
+
+  const handleDescriptionChange = useCallback((newDescription: string) => {
+    setEditableDescription(newDescription);
+    
+    // Debounce preview regeneration (wait for user to finish typing)
+    if (descriptionTimeoutRef.current) {
+      clearTimeout(descriptionTimeoutRef.current);
+    }
+    
+    descriptionTimeoutRef.current = setTimeout(() => {
+      if (hasInitialized && !isGeneratingPreview && !initializationInProgress.current) {
+        generatePreview(selectedThumbnail || undefined, editableTitle, newDescription);
+      }
+    }, 1000); // 1 second delay
+  }, [hasInitialized, isGeneratingPreview, generatePreview, selectedThumbnail, editableTitle]);
+
+  const handleRegeneratePreview = useCallback(() => {
+    generatePreview(selectedThumbnail || undefined);
+  }, [generatePreview, selectedThumbnail]);
 
   const getStepNumber = (step: Step): number => {
     switch (step) {
@@ -545,25 +532,9 @@ export function MarkdownCoinModal({
               postTitle={editableTitle}
               author={post.author}
               isGeneratingPreview={isGeneratingPreview}
-              onRegeneratePreview={() =>
-                generatePreview(selectedThumbnail || undefined)
-              }
-              onTitleChange={(newTitle) => {
-                setEditableTitle(newTitle);
-                generatePreview(
-                  selectedThumbnail || undefined,
-                  newTitle,
-                  editableDescription
-                );
-              }}
-              onDescriptionChange={(newDescription) => {
-                setEditableDescription(newDescription);
-                generatePreview(
-                  selectedThumbnail || undefined,
-                  editableTitle,
-                  newDescription
-                );
-              }}
+              onRegeneratePreview={handleRegeneratePreview}
+              onTitleChange={handleTitleChange}
+              onDescriptionChange={handleDescriptionChange}
               editableDescription={editableDescription}
               onNext={() => {
                 if (cardPreview && !isGeneratingPreview) {
@@ -603,10 +574,7 @@ export function MarkdownCoinModal({
                 generatePreview(selectedThumbnail || undefined)
               }
               selectedColors={selectedColors}
-              onColorChange={(newColors) => {
-                console.log("🎨 Color selection changed:", newColors);
-                setSelectedColors(newColors);
-              }}
+              onColorChange={setSelectedColors}
             />
           )}
 

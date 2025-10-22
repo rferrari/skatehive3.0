@@ -894,11 +894,13 @@ export function CoinCreationModal({
     const hasImages = postData.images.length > 0;
     const hasVideos = postData.videos && postData.videos.length > 0;
 
-    if (hasImages && !hasVideos) {
+    // If we have images, show them (regardless of videos)
+    if (hasImages) {
       return <ImagePreview images={postData.images} />;
     }
 
-    if (hasVideos && !hasImages) {
+    // If we have videos but no images, show video preview
+    if (hasVideos) {
       return (
         <VideoPreview
           videos={postData.videos!}

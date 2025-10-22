@@ -4,7 +4,6 @@ import React, { useState, useCallback, useMemo, useEffect } from "react";
 import {
   Box,
   Image,
-  VStack,
   HStack,
   IconButton,
   Text,
@@ -30,7 +29,9 @@ interface CarouselCoinRendererProps {
 export const CarouselCoinRenderer = React.memo<CarouselCoinRendererProps>(
   ({ carouselMedia, altText }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
-    const [loadingStates, setLoadingStates] = useState<Record<number, boolean>>({});
+    const [loadingStates, setLoadingStates] = useState<Record<number, boolean>>(
+      {}
+    );
 
     // Handle IPFS URLs
     const getMediaUrl = useCallback((uri: string) => {
@@ -60,16 +61,20 @@ export const CarouselCoinRenderer = React.memo<CarouselCoinRendererProps>(
     }, []);
 
     const handleImageLoad = useCallback((index: number) => {
-      setLoadingStates(prev => ({ ...prev, [index]: false }));
+      setLoadingStates((prev) => ({ ...prev, [index]: false }));
     }, []);
 
     const handleImageLoadStart = useCallback((index: number) => {
-      setLoadingStates(prev => ({ ...prev, [index]: true }));
+      setLoadingStates((prev) => ({ ...prev, [index]: true }));
     }, []);
 
     // Reset index when carousel media changes to prevent out of bounds
     useEffect(() => {
-      if (carouselMedia && carouselMedia.length > 0 && currentIndex >= carouselMedia.length) {
+      if (
+        carouselMedia &&
+        carouselMedia.length > 0 &&
+        currentIndex >= carouselMedia.length
+      ) {
         setCurrentIndex(0);
       }
     }, [carouselMedia?.length, currentIndex]);
@@ -211,13 +216,7 @@ export const CarouselCoinRenderer = React.memo<CarouselCoinRendererProps>(
 
         {/* Thumbnail Navigation */}
         {carouselMedia.length > 1 && (
-          <HStack
-            spacing={2}
-            mt={4}
-            justify="center"
-            overflowX="auto"
-            pb={2}
-          >
+          <HStack spacing={2} mt={4} justify="center" overflowX="auto" pb={2}>
             {carouselMedia.map((media, index) => (
               <Box
                 key={index}
@@ -252,9 +251,7 @@ export const CarouselCoinRenderer = React.memo<CarouselCoinRendererProps>(
                     w="60px"
                     h="60px"
                     objectFit="cover"
-                    fallback={
-                      <Box w="60px" h="60px" bg="gray.200" />
-                    }
+                    fallback={<Box w="60px" h="60px" bg="gray.200" />}
                   />
                 )}
               </Box>

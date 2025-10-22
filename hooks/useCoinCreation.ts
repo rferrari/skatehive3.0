@@ -93,11 +93,13 @@ export function useCoinCreation() {
 
     const apiKey = process.env.NEXT_PUBLIC_ZORA_API_KEY;
     if (!apiKey) {
-      throw new Error('Zora API key not configured');
+      throw new Error('Zora API key not configured. Please check environment variables.');
     }
 
     // Set the API key globally for the Zora SDK
     setApiKey(apiKey);
+
+    console.log('🔑 Zora API key configured, starting coin creation...');
 
     setIsCreating(true);
     try {
@@ -108,6 +110,13 @@ export function useCoinCreation() {
         } catch (switchError: any) {
           throw new Error(`Failed to switch to Base network. Please switch manually. Error: ${switchError.message}`);
         }
+      }
+
+      // Quick network connectivity check
+      try {
+        await publicClient.getBlockNumber();
+      } catch (networkError) {
+        throw new Error('Network connectivity issue. Please check your internet connection and RPC provider status.');
       }
 
       // Create metadata using Zora's metadata builder
@@ -194,9 +203,50 @@ export function useCoinCreation() {
         currency: DeployCurrency.ZORA, // Use ZORA as the trading currency
       };
 
-      const result = await createCoin(coinParams, walletClient, publicClient, {
-        gasMultiplier: 120, // Add 20% buffer to gas
+      console.log('🪙 Creating coin with params:', {
+        name: coinData.name,
+        symbol: coinData.symbol,
+        payoutRecipient: address,
+        platformReferrer: SKATEHIVE_PLATFORM_REFERRER,
+        currency: DeployCurrency.ZORA,
+        chainId,
       });
+
+      // Add retry logic for network issues
+      let result;
+      let retries = 0;
+      const maxRetries = 3;
+      
+      while (retries < maxRetries) {
+        try {
+          result = await createCoin(coinParams, walletClient, publicClient, {
+            gasMultiplier: 120, // Add 20% buffer to gas
+          });
+          break; // Success, exit retry loop
+        } catch (retryError: any) {
+          retries++;
+          console.log(`🔄 Retry attempt ${retries}/${maxRetries} for coin creation`);
+          
+          if (retries >= maxRetries) {
+            throw retryError; // Re-throw on final retry
+          }
+          
+          // Only retry on network errors, not on user rejection or insufficient funds
+          if (retryError.message?.includes('User rejected') || 
+              retryError.message?.includes('insufficient funds')) {
+            throw retryError;
+          }
+          
+          // Wait before retrying (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, 1000 * retries));
+        }
+      }
+
+      if (!result) {
+        throw new Error('Failed to create coin after retries');
+      }
+
+      console.log('✅ Coin creation successful:', result);
 
       // Check if the coin creator is the same as the post author OR if this was posted server-side
       const isPostAuthor = user && coinData.postAuthor && user.toLowerCase() === coinData.postAuthor.toLowerCase();
@@ -305,11 +355,28 @@ export function useCoinCreation() {
     } catch (error: any) {
       console.error('Failed to create coin:', error);
       
+      // Provide more specific error messages based on error type
+      let errorMessage = 'An error occurred while creating the coin';
+      
+      if (error.message?.includes('Failed to fetch') || error.message?.includes('Network connectivity issue')) {
+        errorMessage = 'Network error: Unable to connect to the blockchain. This may be due to RPC provider outages (AWS/Infura issues). Please try again in a few minutes or check your wallet\'s RPC settings.';
+      } else if (error.message?.includes('User rejected')) {
+        errorMessage = 'Transaction was cancelled by user';
+      } else if (error.message?.includes('insufficient funds')) {
+        errorMessage = 'Insufficient funds to create the coin. Make sure you have enough ETH on Base network.';
+      } else if (error.message?.includes('reverted')) {
+        errorMessage = 'Transaction reverted. This could be due to network congestion, contract issues, or RPC provider problems. Please try again.';
+      } else if (error.message?.includes('execution reverted')) {
+        errorMessage = 'Contract execution failed. This may be due to network issues or invalid parameters. Please try again.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: 'Failed to create coin',
-        description: error.message || 'An error occurred while creating the coin',
+        description: errorMessage,
         status: 'error',
-        duration: 5000,
+        duration: 8000,
         isClosable: true,
       });
       
