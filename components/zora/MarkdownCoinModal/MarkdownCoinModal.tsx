@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
 import {
   Modal,
   ModalOverlay,
@@ -47,8 +53,6 @@ export function MarkdownCoinModal({
     return `${post.author}-${post.permlink}`;
   }, [post.author, post.permlink]);
 
-
-
   const { createMarkdownCoin, isCreating } = useMarkdownCoin();
   const [currentStep, setCurrentStep] = useState<Step>("carousel");
   const [cardPreview, setCardPreview] = useState<string | null>(null);
@@ -66,19 +70,23 @@ export function MarkdownCoinModal({
   const [editableTitle, setEditableTitle] = useState<string>("");
   const [editableDescription, setEditableDescription] = useState<string>("");
   // Memoize the default colors to prevent recreation
-  const defaultColors = useMemo(() => ({
-    primary: "#00ff88",
-    secondary: "#00ff88",
-    gradient: {
-      start: "#2a2a2a",
-      middle: "#000000",
-      end: "#1a1a1a",
-    },
-  }), []);
+  const defaultColors = useMemo(
+    () => ({
+      primary: "#00ff88",
+      secondary: "#00ff88",
+      gradient: {
+        start: "#2a2a2a",
+        middle: "#000000",
+        end: "#1a1a1a",
+      },
+    }),
+    []
+  );
 
-  const [selectedColors, setSelectedColors] = useState<ColorOptions>(defaultColors);
+  const [selectedColors, setSelectedColors] =
+    useState<ColorOptions>(defaultColors);
   const toast = useToast();
-  
+
   // Use refs to prevent multiple initialization calls
   const initializationInProgress = useRef(false);
 
@@ -207,13 +215,15 @@ export function MarkdownCoinModal({
           setEditableTitle(post.title || "");
 
           // Set up initial carousel with markdown images
-          const initialCarousel = images.map((imageUrl: string, index: number) => ({
-            uri: imageUrl,
-            mime: "image/jpeg",
-            type: `Markdown Image ${index + 1}`,
-            isIncluded: true,
-            isGenerated: false,
-          }));
+          const initialCarousel = images.map(
+            (imageUrl: string, index: number) => ({
+              uri: imageUrl,
+              mime: "image/jpeg",
+              type: `Markdown Image ${index + 1}`,
+              isIncluded: true,
+              isGenerated: false,
+            })
+          );
 
           setCarouselImages(initialCarousel);
           setCarouselPreview(initialCarousel);
@@ -237,8 +247,6 @@ export function MarkdownCoinModal({
     }
   }, [isOpen, hasInitialized, post.body, post.title]);
 
-
-
   // Cleanup blob URLs and timeouts on component unmount
   useEffect(() => {
     return () => {
@@ -246,7 +254,7 @@ export function MarkdownCoinModal({
       if (cardPreview) {
         URL.revokeObjectURL(cardPreview);
       }
-      
+
       // Cleanup any pending timeouts
       if (titleTimeoutRef.current) {
         clearTimeout(titleTimeoutRef.current);
@@ -259,33 +267,40 @@ export function MarkdownCoinModal({
 
   // Auto-regenerate preview when colors change (with proper safeguards)
   const colorsStringRef = useRef<string>("");
-  
+
   useEffect(() => {
     const currentColorsString = JSON.stringify(selectedColors);
-    
+
     // Only regenerate if:
     // 1. Modal is initialized
     // 2. Colors actually changed (not just initial render)
     // 3. Not currently generating
     // 4. Not during initialization
-    if (hasInitialized && 
-        colorsStringRef.current !== "" && // Not the first render
-        colorsStringRef.current !== currentColorsString && 
-        !isGeneratingPreview && 
-        !initializationInProgress.current) {
-      
+    if (
+      hasInitialized &&
+      colorsStringRef.current !== "" && // Not the first render
+      colorsStringRef.current !== currentColorsString &&
+      !isGeneratingPreview &&
+      !initializationInProgress.current
+    ) {
       // Debounce the regeneration
       const timer = setTimeout(() => {
         generatePreview(selectedThumbnail || undefined);
       }, 300);
-      
+
       colorsStringRef.current = currentColorsString;
       return () => clearTimeout(timer);
     }
-    
+
     // Always update the ref for comparison
     colorsStringRef.current = currentColorsString;
-  }, [selectedColors, hasInitialized, isGeneratingPreview, generatePreview, selectedThumbnail]);
+  }, [
+    selectedColors,
+    hasInitialized,
+    isGeneratingPreview,
+    generatePreview,
+    selectedThumbnail,
+  ]);
 
   const handleCreateCoin = async (
     metadata: {
@@ -319,7 +334,6 @@ export function MarkdownCoinModal({
         isClosable: true,
       });
     } catch (error: any) {
-
       // Professional error handling for user-friendly messages
       const errorMessage =
         error?.message || error?.toString() || "Unknown error";
@@ -405,35 +419,69 @@ export function MarkdownCoinModal({
   const descriptionTimeoutRef = useRef<NodeJS.Timeout>();
 
   // Memoize handlers to prevent unnecessary re-renders
-  const handleTitleChange = useCallback((newTitle: string) => {
-    setEditableTitle(newTitle);
-    
-    // Debounce preview regeneration (wait for user to finish typing)
-    if (titleTimeoutRef.current) {
-      clearTimeout(titleTimeoutRef.current);
-    }
-    
-    titleTimeoutRef.current = setTimeout(() => {
-      if (hasInitialized && !isGeneratingPreview && !initializationInProgress.current) {
-        generatePreview(selectedThumbnail || undefined, newTitle, editableDescription);
-      }
-    }, 1000); // 1 second delay
-  }, [hasInitialized, isGeneratingPreview, generatePreview, selectedThumbnail, editableDescription]);
+  const handleTitleChange = useCallback(
+    (newTitle: string) => {
+      setEditableTitle(newTitle);
 
-  const handleDescriptionChange = useCallback((newDescription: string) => {
-    setEditableDescription(newDescription);
-    
-    // Debounce preview regeneration (wait for user to finish typing)
-    if (descriptionTimeoutRef.current) {
-      clearTimeout(descriptionTimeoutRef.current);
-    }
-    
-    descriptionTimeoutRef.current = setTimeout(() => {
-      if (hasInitialized && !isGeneratingPreview && !initializationInProgress.current) {
-        generatePreview(selectedThumbnail || undefined, editableTitle, newDescription);
+      // Debounce preview regeneration (wait for user to finish typing)
+      if (titleTimeoutRef.current) {
+        clearTimeout(titleTimeoutRef.current);
       }
-    }, 1000); // 1 second delay
-  }, [hasInitialized, isGeneratingPreview, generatePreview, selectedThumbnail, editableTitle]);
+
+      titleTimeoutRef.current = setTimeout(() => {
+        if (
+          hasInitialized &&
+          !isGeneratingPreview &&
+          !initializationInProgress.current
+        ) {
+          generatePreview(
+            selectedThumbnail || undefined,
+            newTitle,
+            editableDescription
+          );
+        }
+      }, 1000); // 1 second delay
+    },
+    [
+      hasInitialized,
+      isGeneratingPreview,
+      generatePreview,
+      selectedThumbnail,
+      editableDescription,
+    ]
+  );
+
+  const handleDescriptionChange = useCallback(
+    (newDescription: string) => {
+      setEditableDescription(newDescription);
+
+      // Debounce preview regeneration (wait for user to finish typing)
+      if (descriptionTimeoutRef.current) {
+        clearTimeout(descriptionTimeoutRef.current);
+      }
+
+      descriptionTimeoutRef.current = setTimeout(() => {
+        if (
+          hasInitialized &&
+          !isGeneratingPreview &&
+          !initializationInProgress.current
+        ) {
+          generatePreview(
+            selectedThumbnail || undefined,
+            editableTitle,
+            newDescription
+          );
+        }
+      }, 1000); // 1 second delay
+    },
+    [
+      hasInitialized,
+      isGeneratingPreview,
+      generatePreview,
+      selectedThumbnail,
+      editableTitle,
+    ]
+  );
 
   const handleRegeneratePreview = useCallback(() => {
     generatePreview(selectedThumbnail || undefined);
