@@ -121,6 +121,7 @@ function cleanMarkdownPart(part: string): string {
       /^https?:\/\/(?:www\.)?demo\.snapshot\.org\/.*\/proposal\/.*$/gm,
       ""
     )
+    .replace(/^https?:\/\/(?:www\.)?worldmappin\.com\/.*$/gm, "")
     .replace(
       /^(ODYSEE|VIDEO|YOUTUBE|VIMEO|INSTAGRAM|ZORACOIN|SNAPSHOT)\s*$/gm,
       ""

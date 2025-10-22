@@ -208,6 +208,9 @@ export function processMediaContent(content: string): string {
         }
     );
 
+    // Remove WorldMapPin URLs to prevent mention processing within them
+    processedContent = processedContent.replace(/^https?:\/\/(?:www\.)?worldmappin\.com\/.*$/gm, "");
+
     // Cache the result using hash key
     processedContentCache.set(cacheKey, processedContent);
     return processedContent;
@@ -275,11 +278,24 @@ async function processMentionsWithValidation(content: string): Promise<string> {
             .map(result => result.username)
     );
 
-    // Process mentions based on validation results
+    // Process mentions based on validation results, but skip mentions within URLs
     return content.replace(
         /@([a-z0-9\-.]+)(\s|$|[^a-z0-9\-.])/gi,
-        (match, username, trailing) => {
+        (match, username, trailing, offset) => {
             const cleanUsername = username.toLowerCase();
+            
+            // Check if this mention is part of a URL by looking at the context
+            const beforeMatch = content.substring(Math.max(0, offset - 50), offset);
+            const afterMatch = content.substring(offset, Math.min(content.length, offset + match.length + 50));
+            
+            // Skip mentions that are part of URLs (worldmappin, zora, skatehive, etc.)
+            if (beforeMatch.match(/https?:\/\/[^\s]*$/) || 
+                beforeMatch.includes('worldmappin.com') ||
+                beforeMatch.includes('zora.co') ||
+                beforeMatch.includes('skatehive.app') ||
+                afterMatch.match(/^[^\s]*\.(com|org|co|app|io)/)) {
+                return match; // Return original mention without processing
+            }
             
             // Only create mention link if user exists
             if (validUsers.has(cleanUsername)) {
