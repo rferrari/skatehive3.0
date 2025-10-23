@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import {
   Box,
   VStack,
+  HStack,
   Text,
   Spinner,
   Button,
@@ -12,8 +13,116 @@ import {
 } from "@chakra-ui/react";
 import { Discussion } from "@hiveio/dhive";
 import Snap from "@/components/homepage/Snap";
-import Conversation from "@/components/homepage/Conversation";
+import SnapComposer from "@/components/homepage/SnapComposer";
 import LoadingComponent from "@/components/homepage/loadingComponent";
+import { useComments } from "@/hooks/useComments";
+import { useAioha } from "@aioha/react-ui";
+
+interface SpotCommentsModalProps {
+  discussion: Discussion;
+  onClose: () => void;
+}
+
+const SpotCommentsModal = ({ discussion, onClose }: SpotCommentsModalProps) => {
+  const { user } = useAioha();
+  const [optimisticComments, setOptimisticComments] = useState<Discussion[]>([]);
+
+  // Fetch comments for this spot
+  const {
+    comments,
+    isLoading: commentsLoading,
+    error: commentsError,
+  } = useComments(discussion.author, discussion.permlink, false);
+
+  const handleNewComment = (newComment: Partial<Discussion>) => {
+    setOptimisticComments((prev) => [newComment as Discussion, ...prev]);
+  };
+
+  const handleCommentAdded = () => {
+    // This will be called when a comment is added to update the count
+  };
+
+  return (
+    <VStack spacing={4} align="stretch" p={4} maxH="80vh" overflow="hidden">
+      {/* Header */}
+      <HStack justify="space-between" align="center">
+        <Text fontSize="lg" fontWeight="bold">
+          Comments
+        </Text>
+        <Button size="sm" variant="ghost" onClick={onClose}>
+          Close
+        </Button>
+      </HStack>
+
+      {/* Comment Composer - only show if user is logged in */}
+      {user && (
+        <Box>
+          <SnapComposer
+            pa={discussion.author}
+            pp={discussion.permlink}
+            onNewComment={handleNewComment}
+            post={false}
+            onClose={() => {}}
+            submitLabel="Comment"
+            buttonSize="sm"
+          />
+        </Box>
+      )}
+
+      {/* Comments List */}
+      <Box flex="1" overflowY="auto" maxH="60vh">
+        <VStack spacing={3} align="stretch">
+          {commentsLoading ? (
+            <Text color="muted" textAlign="center" py={8}>
+              Loading comments...
+            </Text>
+          ) : commentsError ? (
+            <Text color="red.400" textAlign="center" py={8}>
+              Error loading comments: {commentsError}
+            </Text>
+          ) : optimisticComments.length === 0 && comments.length === 0 ? (
+            <Text color="muted" textAlign="center" py={8}>
+              No comments yet. Be the first to comment!
+            </Text>
+          ) : (
+            <>
+              {/* Show optimistic comments first (newest) */}
+              {optimisticComments.map((comment, index) => (
+                <Box
+                  key={`optimistic-${index}`}
+                  p={2}
+                  borderRadius="md"
+                  bg="muted"
+                  opacity={0.8}
+                  borderLeft="3px solid"
+                  borderColor="primary"
+                >
+                  <Snap
+                    discussion={comment}
+                    onOpen={() => {}}
+                    setReply={() => {}}
+                    onCommentAdded={handleCommentAdded}
+                  />
+                </Box>
+              ))}
+              {/* Show real comments using Snap component */}
+              {comments.map((comment, index) => (
+                <Box key={comment.permlink || index} p={2} borderRadius="md" bg="muted">
+                  <Snap
+                    discussion={comment}
+                    onOpen={() => {}}
+                    setReply={() => {}}
+                    onCommentAdded={handleCommentAdded}
+                  />
+                </Box>
+              ))}
+            </>
+          )}
+        </VStack>
+      </Box>
+    </VStack>
+  );
+};
 
 interface SpotListProps {
   newSpot?: Discussion | null;
@@ -34,16 +143,8 @@ export default function SpotList({
   const [conversation, setConversation] = useState<Discussion | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Debug: Track displayedSpots changes (client-side only)
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-    }
-  }, [displayedSpots]);
-
   // Update displayed spots when spots or newSpot changes
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-    }
     
     let baseSpots = [...spots];
     if (newSpot) {
@@ -51,8 +152,6 @@ export default function SpotList({
       const exists = baseSpots.some((c) => c.permlink === newSpot.permlink);
       if (!exists) {
         baseSpots = [newSpot, ...baseSpots];
-        if (typeof window !== 'undefined') {
-        }
       }
     }
     // Sort by created date, newest first, handling invalid dates
@@ -61,26 +160,12 @@ export default function SpotList({
       const dateB = b.created === "just now" ? new Date() : new Date(b.created);
       return dateB.getTime() - dateA.getTime();
     });
-    if (typeof window !== 'undefined') {
-    }
     setDisplayedSpots(baseSpots);
   }, [spots, newSpot]);
 
   const handleLoadMore = useCallback(() => {
-    if (typeof window !== 'undefined') {
-      console.log(`handleLoadMore called: hasMore=${hasMore}, onLoadMore=${!!onLoadMore}, isLoading=${isLoading}`);
-    }
-    
     if (onLoadMore && hasMore && !isLoading) {
-      // If we have a loadMore function and there's more data to fetch, use it
-      if (typeof window !== 'undefined') {
-        console.log('Calling onLoadMore to fetch more data from API');
-      }
       onLoadMore();
-    } else {
-      if (typeof window !== 'undefined') {
-        console.log('Cannot load more: conditions not met');
-      }
     }
   }, [onLoadMore, hasMore, isLoading]);
 
@@ -174,14 +259,7 @@ export default function SpotList({
       <Modal isOpen={isModalOpen} onClose={handleCloseModal} size="2xl">
         <ModalOverlay />
         <ModalContent bg="background" color="text">
-          {conversation && (
-            <Conversation
-              discussion={conversation}
-              setConversation={() => setIsModalOpen(false)}
-              onOpen={() => {}}
-              setReply={() => {}}
-            />
-          )}
+          {conversation && <SpotCommentsModal discussion={conversation} onClose={handleCloseModal} />}
         </ModalContent>
       </Modal>
     </>
