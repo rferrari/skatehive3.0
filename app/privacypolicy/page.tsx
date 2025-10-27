@@ -47,10 +47,10 @@ export default function PrivacyPolicyPage() {
             <Alert status="info" bg="secondary" color="white" rounded="md">
               <AlertIcon color="white" />
               <Text fontWeight="medium">
-                <strong>TL;DR:</strong> SkatHive doesn&apos;t collect, store, or sell
-                your personal data. Everything is stored on the decentralized
-                Hive blockchain, giving you full control and ownership of your
-                content.
+                <strong>TL;DR:</strong> SkatHive doesn&apos;t collect, store, or
+                sell your personal data. Everything is stored on the
+                decentralized Hive blockchain, giving you full control and
+                ownership of your content.
               </Text>
             </Alert>
 
@@ -63,15 +63,15 @@ export default function PrivacyPolicyPage() {
               </Heading>
               <VStack spacing={4} align="stretch">
                 <Text>
-                  SkatHive (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;) is committed to protecting
-                  your privacy. This Privacy Policy explains how we handle
-                  information when you use our mobile application (the &quot;App&quot;) to
-                  interact with the Hive blockchain and connect with the
-                  skateboarding community.
+                  SkatHive (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;)
+                  is committed to protecting your privacy. This Privacy Policy
+                  explains how we handle information when you use our mobile
+                  application (the &quot;App&quot;) to interact with the Hive
+                  blockchain and connect with the skateboarding community.
                 </Text>
                 <Text>
-                  Our fundamental principle is simple: we don&apos;t collect, store,
-                  or control your personal data. SkatHive is built on the
+                  Our fundamental principle is simple: we don&apos;t collect,
+                  store, or control your personal data. SkatHive is built on the
                   decentralized Hive blockchain, which means your data belongs
                   to you and is stored on a distributed network, not on our
                   servers.
@@ -207,8 +207,8 @@ export default function PrivacyPolicyPage() {
                 7. Camera and Media Access
               </Heading>
               <Text mb={4}>
-                The app requests permission to access your device&apos;s camera and
-                photo library solely to:
+                The app requests permission to access your device&apos;s camera
+                and photo library solely to:
               </Text>
               <UnorderedList spacing={2} pl={4} mb={4}>
                 <ListItem>
@@ -229,9 +229,9 @@ export default function PrivacyPolicyPage() {
                 8. Data Security
               </Heading>
               <Text mb={4}>
-                Since we don&apos;t collect or store your personal data, there&apos;s no
-                centralized database that could be compromised. Your security
-                depends on:
+                Since we don&apos;t collect or store your personal data,
+                there&apos;s no centralized database that could be compromised.
+                Your security depends on:
               </Text>
               <UnorderedList spacing={2} pl={4}>
                 <ListItem>
@@ -247,7 +247,7 @@ export default function PrivacyPolicyPage() {
             {/* Section 9 */}
             <Box>
               <Heading as="h2" size="lg" color="primary" mb={4}>
-                9. Children's Privacy
+                9. Children&apos;s Privacy
               </Heading>
               <Text>
                 SkatHive is not intended for children under 13. We do not
@@ -265,7 +265,8 @@ export default function PrivacyPolicyPage() {
               <Text>
                 We may update this Privacy Policy from time to time. We will
                 notify users of any material changes by posting the new Privacy
-                Policy on this page and updating the &quot;Last updated&quot; date.
+                Policy on this page and updating the &quot;Last updated&quot;
+                date.
               </Text>
             </Box>
 
@@ -275,9 +276,9 @@ export default function PrivacyPolicyPage() {
                 11. Your Rights
               </Heading>
               <Text mb={4}>
-                Because we don&apos;t collect your personal data, traditional data
-                protection rights (like deletion requests) don&apos;t apply to us.
-                However, you have complete control over:
+                Because we don&apos;t collect your personal data, traditional
+                data protection rights (like deletion requests) don&apos;t apply
+                to us. However, you have complete control over:
               </Text>
               <UnorderedList spacing={2} pl={4}>
                 <ListItem>Your Hive account and its content</ListItem>
