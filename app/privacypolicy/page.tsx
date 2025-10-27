@@ -47,7 +47,7 @@ export default function PrivacyPolicyPage() {
             <Alert status="info" bg="secondary" color="white" rounded="md">
               <AlertIcon color="white" />
               <Text fontWeight="medium">
-                <strong>TL;DR:</strong> SkatHive doesn't collect, store, or sell
+                <strong>TL;DR:</strong> SkatHive doesn&apos;t collect, store, or sell
                 your personal data. Everything is stored on the decentralized
                 Hive blockchain, giving you full control and ownership of your
                 content.
@@ -63,14 +63,14 @@ export default function PrivacyPolicyPage() {
               </Heading>
               <VStack spacing={4} align="stretch">
                 <Text>
-                  SkatHive ("we," "our," or "us") is committed to protecting
+                  SkatHive (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;) is committed to protecting
                   your privacy. This Privacy Policy explains how we handle
-                  information when you use our mobile application (the "App") to
+                  information when you use our mobile application (the &quot;App&quot;) to
                   interact with the Hive blockchain and connect with the
                   skateboarding community.
                 </Text>
                 <Text>
-                  Our fundamental principle is simple: we don't collect, store,
+                  Our fundamental principle is simple: we don&apos;t collect, store,
                   or control your personal data. SkatHive is built on the
                   decentralized Hive blockchain, which means your data belongs
                   to you and is stored on a distributed network, not on our
@@ -207,7 +207,7 @@ export default function PrivacyPolicyPage() {
                 7. Camera and Media Access
               </Heading>
               <Text mb={4}>
-                The app requests permission to access your device's camera and
+                The app requests permission to access your device&apos;s camera and
                 photo library solely to:
               </Text>
               <UnorderedList spacing={2} pl={4} mb={4}>
@@ -229,7 +229,7 @@ export default function PrivacyPolicyPage() {
                 8. Data Security
               </Heading>
               <Text mb={4}>
-                Since we don't collect or store your personal data, there's no
+                Since we don&apos;t collect or store your personal data, there&apos;s no
                 centralized database that could be compromised. Your security
                 depends on:
               </Text>
@@ -265,7 +265,7 @@ export default function PrivacyPolicyPage() {
               <Text>
                 We may update this Privacy Policy from time to time. We will
                 notify users of any material changes by posting the new Privacy
-                Policy on this page and updating the "Last updated" date.
+                Policy on this page and updating the &quot;Last updated&quot; date.
               </Text>
             </Box>
 
@@ -275,8 +275,8 @@ export default function PrivacyPolicyPage() {
                 11. Your Rights
               </Heading>
               <Text mb={4}>
-                Because we don't collect your personal data, traditional data
-                protection rights (like deletion requests) don't apply to us.
+                Because we don&apos;t collect your personal data, traditional data
+                protection rights (like deletion requests) don&apos;t apply to us.
                 However, you have complete control over:
               </Text>
               <UnorderedList spacing={2} pl={4}>
