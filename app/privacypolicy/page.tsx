@@ -22,7 +22,7 @@ export default function PrivacyPolicyPage() {
   return (
     <Box bg="background" minH="100vh" py={12}>
       <Container maxW="4xl">
-        <Box bg="white" shadow="lg" rounded="lg" overflow="hidden">
+        <Box bg="background" shadow="lg" rounded="lg" overflow="hidden">
           <VStack spacing={6} p={8} align="stretch">
             {/* Header */}
             <Box>
@@ -295,7 +295,6 @@ export default function PrivacyPolicyPage() {
                 12. Contact Us
               </Heading>
               <Box
-                bg="gray.50"
                 p={6}
                 rounded="md"
                 borderLeft="4px solid"
