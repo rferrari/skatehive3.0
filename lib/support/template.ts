@@ -1,3 +1,19 @@
+/**
+ * Escapes HTML characters to prevent XSS attacks
+ * @param text - The text to escape
+ * @returns The escaped text safe for HTML insertion
+ */
+function escapeHtml(text: string): string {
+  const map: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  };
+  return text.replace(/[&<>"']/g, (char) => map[char]);
+}
+
 export default function getSupportTemplate(
   userEmail: string,
   message: string,
@@ -6,6 +22,11 @@ export default function getSupportTemplate(
 ): string {
   const currentTime = timestamp || new Date().toISOString();
   const formattedTime = new Date(currentTime).toLocaleString();
+  
+  // Escape user inputs to prevent XSS
+  const safeEmail = escapeHtml(userEmail);
+  const safeMessage = escapeHtml(message);
+  const safeUserAgent = userAgent ? escapeHtml(userAgent) : undefined;
   
   return `
     <div style="font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; max-width: 700px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
@@ -22,16 +43,16 @@ export default function getSupportTemplate(
           <table style="width: 100%; border-collapse: collapse;">
             <tr>
               <td style="padding: 8px 0; font-weight: bold; color: #555; width: 120px;">From:</td>
-              <td style="padding: 8px 0; color: #333;">${userEmail}</td>
+              <td style="padding: 8px 0; color: #333;">${safeEmail}</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; font-weight: bold; color: #555;">Submitted:</td>
               <td style="padding: 8px 0; color: #333;">${formattedTime}</td>
             </tr>
-            ${userAgent ? `
+            ${safeUserAgent ? `
             <tr>
               <td style="padding: 8px 0; font-weight: bold; color: #555;">Device:</td>
-              <td style="padding: 8px 0; color: #333; font-size: 12px;">${userAgent}</td>
+              <td style="padding: 8px 0; color: #333; font-size: 12px;">${safeUserAgent}</td>
             </tr>
             ` : ''}
           </table>
@@ -43,7 +64,7 @@ export default function getSupportTemplate(
             Message
           </h3>
           <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid #e9ecef;">
-            <p style="margin: 0; color: #333; line-height: 1.6; white-space: pre-wrap;">${message}</p>
+            <p style="margin: 0; color: #333; line-height: 1.6; white-space: pre-wrap;">${safeMessage}</p>
           </div>
         </div>
 
@@ -53,7 +74,7 @@ export default function getSupportTemplate(
           <ul style="margin: 0; padding-left: 20px; color: #333; line-height: 1.6;">
             <li>Review the user's message and categorize the issue</li>
             <li>Respond within 24-48 hours during business days</li>
-            <li>Use "Reply" to respond directly to: <strong>${userEmail}</strong></li>
+            <li>Use "Reply" to respond directly to: <strong>${safeEmail}</strong></li>
             <li>Update internal support tracking system if applicable</li>
           </ul>
         </div>

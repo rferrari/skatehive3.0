@@ -172,7 +172,7 @@ export default function SupportPage() {
             Message Sent Successfully!
           </Heading>
           <Text color="gray.600" fontSize="lg">
-            Thank you for contacting SkateHive Support. We've received your
+            Thank you for contacting SkateHive Support. We&apos;ve received your
             message and will respond within 24-48 hours.
           </Text>
           <Text fontSize="sm" color="gray.500">
@@ -201,8 +201,8 @@ export default function SupportPage() {
               SkateHive Support
             </Heading>
             <Text fontSize="lg" color="gray.600" maxW="2xl" mx="auto">
-              Need help? We're here to assist you with any questions or issues
-              you may have with the SkateHive app.
+              Need help? We&apos;re here to assist you with any questions or
+              issues you may have with the SkateHive app.
             </Text>
           </Box>
 
@@ -289,7 +289,7 @@ export default function SupportPage() {
                         </Text>
                       )}
                       <Text fontSize="xs" color="gray.500" mt={1}>
-                        We'll use this to respond to your message
+                        We&apos;ll use this to respond to your message
                       </Text>
                     </FormControl>
 

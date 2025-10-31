@@ -25,24 +25,17 @@ export default async function supportMailer(request: SupportRequest): Promise<bo
     service: 'gmail',  // This automatically sets host, port, and security settings for Gmail
     auth: {
       user: process.env.EMAIL_USER,  // Your Gmail address
-      pass: process.env.EMAIL_PASS,  // App password or your Gmail password if "less secure apps" is enabled
+      pass: process.env.EMAIL_PASS,  // Gmail App Password (generate from Google Account settings)
     },
   });
 
   try {
-    // Verify transporter configuration first
-    console.log('Verifying email transporter...');
-    await transporter.verify();
-    console.log('Email transporter verified successfully');
-
     // Get HTML template and convert to plain text
     const html = getSupportTemplate(email, message, userAgent, timestamp);
     const text = htmlToText(html, {
       preserveNewlines: true,
       wordwrap: 130,
     });
-
-    console.log('Sending support email to:', process.env.EMAIL_RECOVERYACC || process.env.EMAIL_USER);
 
     // Send to support team
     const info = await transporter.sendMail({
@@ -77,13 +70,43 @@ export default async function supportMailer(request: SupportRequest): Promise<bo
     }
 
     return true;
-  } catch (error) {
-    console.error('Support mailer error:', error);
+  } catch (error: any) {
+    console.error('Support mailer error:', {
+      message: error.message,
+      code: error.code,
+      command: error.command,
+      stack: error.stack
+    });
+    
+    // Provide more specific error information
+    if (error.code === 'ESOCKET' && error.command === 'CONN') {
+      console.error('Email connection error - possibly SSL/TLS issue or network connectivity');
+    } else if (error.code === 'EAUTH') {
+      console.error('Email authentication error - check EMAIL_USER and EMAIL_PASS');
+    }
+    
     return false;
   }
 }
 
+/**
+ * Escapes HTML characters to prevent XSS attacks
+ * @param text - The text to escape
+ * @returns The escaped text safe for HTML insertion
+ */
+function escapeHtml(text: string): string {
+  const map: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  };
+  return text.replace(/[&<>"']/g, (char) => map[char]);
+}
+
 function getConfirmationTemplate(userEmail: string): string {
+  const safeEmail = escapeHtml(userEmail);
   return `
     <div style="font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
       <div style="background: linear-gradient(135deg, #4CAF50, #2E7D32); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
@@ -99,8 +122,8 @@ function getConfirmationTemplate(userEmail: string): string {
         </p>
         <div style="background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0;">
           <p style="margin: 0; color: #666; font-size: 14px;">
-            <strong>Your email:</strong> ${userEmail}<br>
-            <strong>Request ID:</strong> ${Date.now()}-${Math.random().toString(36).substr(2, 9)}
+            <strong>Your email:</strong> ${safeEmail}<br>
+            <strong>Request ID:</strong> ${Date.now()}-${Math.random().toString(36).slice(2, 11)}
           </p>
         </div>
         <p style="color: #666; line-height: 1.6;">
@@ -112,7 +135,7 @@ function getConfirmationTemplate(userEmail: string): string {
           </a>
         </div>
         <div style="border-top: 1px solid #eee; padding-top: 20px; text-align: center; color: #999; font-size: 12px;">
-          <p>© 2024 SkateHive. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} SkateHive. All rights reserved.</p>
         </div>
       </div>
     </div>
