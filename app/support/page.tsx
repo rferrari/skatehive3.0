@@ -276,7 +276,7 @@ export default function SupportPage() {
                           handleInputChange("email", e.target.value)
                         }
                         size="lg"
-                        bg={useColorModeValue("white", "gray.700")}
+                        bg={"background"}
                         borderColor={errors.email ? "red.300" : "gray.300"}
                         _focus={{
                           borderColor: "primary",
@@ -302,7 +302,7 @@ export default function SupportPage() {
                           handleInputChange("subject", e.target.value)
                         }
                         size="lg"
-                        bg={useColorModeValue("white", "gray.700")}
+                        bg={"background"}
                         _focus={{
                           borderColor: "primary",
                           boxShadow: "0 0 0 1px var(--chakra-colors-primary)",
@@ -322,7 +322,7 @@ export default function SupportPage() {
                         }
                         rows={6}
                         resize="vertical"
-                        bg={useColorModeValue("white", "gray.700")}
+                        bg={"background"}
                         borderColor={errors.message ? "red.300" : "gray.300"}
                         _focus={{
                           borderColor: "primary",
