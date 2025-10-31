@@ -14,7 +14,13 @@
     "test:lru": "tsx lib/utils/__tests__/LRUCache.test.ts",
     "test:hash": "tsx lib/utils/__tests__/hashUtils.test.ts",
     "approve-builds": "pnpm config set strict-peer-dependencies false && pnpm install",
-    "build:fast": "NODE_ENV=production next build --experimental-build-mode=compile"
+    "build:fast": "NODE_ENV=production next build --experimental-build-mode=compile",
+    "db:inspect": "node scripts/database/inspect-schema.js",
+    "db:fix-auth": "node scripts/database/fix-auth-ott-schema.js",
+    "db:migrate": "bash scripts/database/migrate-database.sh",
+    "vip:generate": "node scripts/vip-management/generate-vip.js",
+    "scripts": "node scripts/index.js",
+    "scripts:help": "echo 'Available scripts: db:inspect, db:fix-auth, db:migrate, vip:generate, scripts'"
   },
   "dependencies": {
     "@aioha/aioha": "^1.6.0",
@@ -40,6 +46,7 @@
     "@rainbow-me/rainbowkit": "^2.2.8",
     "@rive-app/react-canvas": "^4.21.4",
     "@snapshot-labs/snapshot.js": "^0.14.14",
+    "@supabase/supabase-js": "^2.78.0",
     "@tanstack/react-query": "^5.79.2",
     "@types/pg": "^8.15.4",
     "@types/qrcode": "^1.5.5",
@@ -51,6 +58,7 @@
     "@wagmi/cli": "^2.3.1",
     "@wagmi/core": "^2.17.2",
     "@zoralabs/coins-sdk": "^0.2.9",
+    "argon2": "^0.44.0",
     "browser-image-compression": "^2.0.2",
     "buffer": "^6.0.3",
     "crypto-browserify": "^3.12.1",
@@ -65,6 +73,7 @@
     "gsap": "^3.13.0",
     "html-to-image": "^1.11.13",
     "html-to-text": "^9.0.5",
+    "jose": "^6.1.0",
     "jsdom": "^26.1.0",
     "keychain-sdk": "^0.9.4",
     "lottie-react": "^2.4.1",
@@ -90,6 +99,7 @@
     "swiper": "^11.2.8",
     "url": "^0.11.4",
     "util": "^0.12.5",
+    "uuid": "^13.0.0",
     "viem": "2.x",
     "wagmi": "^2.16.0"
   },
