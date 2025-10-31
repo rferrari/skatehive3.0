@@ -841,7 +841,7 @@ SkateHive Team 🛹
               Creating your Hive account...
             </Text>
             <Text color="text" textAlign="center" fontSize="sm">
-              This may take a few moments. Please don't close this window.
+              This may take a few moments. Please don&apos;t close this window.
             </Text>
             {statusMsg && (
               <Text color="accent" textAlign="center" fontSize="sm">
