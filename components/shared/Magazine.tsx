@@ -145,9 +145,9 @@ export interface MagazineProps {
   // Custom magazine cover for user profiles
   zineCover?: string;
   // User profile data for personalized magazine
-  username?: string;
+  hiveUsername?: string;
   userProfileImage?: string;
-  userName?: string;
+  displayName?: string;
   userLocation?: string;
 }
 
@@ -401,7 +401,7 @@ export default function Magazine(props: MagazineProps) {
               pointerEvents="none"
             >
               {/* Horizontal username at top left */}
-              {props.username && (
+              {(props.displayName || props.hiveUsername) && (
                 <Text
                   position="absolute"
                   top="20px"
@@ -417,7 +417,7 @@ export default function Magazine(props: MagazineProps) {
                     letterSpacing: "2px",
                   }}
                 >
-                  {props.userName || props.username}
+                  {props.displayName || props.hiveUsername}
                 </Text>
               )}
 
@@ -439,8 +439,26 @@ export default function Magazine(props: MagazineProps) {
                   transform: "translateY(-50%)",
                 }}
               >
-                {props.username ? "ZINE" : "SKATEHIVE"}
+                {props.hiveUsername ? "ZINE" : "SKATEHIVE"}
               </Text>
+
+              {/* Profile picture in bottom left corner */}
+              {props.hiveUsername && (
+                <Image
+                  src={
+                    props.userProfileImage ||
+                    `https://images.hive.blog/u/${props.hiveUsername}/avatar/small`
+                  }
+                  alt={props.hiveUsername}
+                  position="absolute"
+                  bottom="20px"
+                  left="20px"
+                  boxSize="80px"
+                  borderRadius="full"
+                  border={`4px solid ${theme.colors.primary}`}
+                  boxShadow="0 4px 32px #000, 0 8px 48px #000"
+                />
+              )}
             </Box>
           </Box>
           {filteredPosts.map((post: Discussion, index) => {

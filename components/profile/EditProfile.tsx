@@ -62,7 +62,6 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
     });
     const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
     const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
-    const [zineCoverFile, setZineCoverFile] = useState<File | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isEditingEthAddress, setIsEditingEthAddress] = useState(false);
@@ -104,7 +103,6 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
         });
         setProfileImageFile(null);
         setCoverImageFile(null);
-        setZineCoverFile(null);
         setError(null);
       }
     }, [isOpen, profileData]);
@@ -251,8 +249,9 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
             zineCover: ipfsUrl,
           }));
 
-          // Clear the file since we already have the URL
-          setZineCoverFile(null);
+          // Close the cropper modal
+          setIsCropperOpen(false);
+          setTempImageForCrop(null);
 
           toast({
             title: "Magazine cover uploaded",
@@ -276,7 +275,6 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
     const handleZineCoverUrlChange = useCallback(
       (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData((prev) => ({ ...prev, zineCover: e.target.value }));
-        setZineCoverFile(null);
       },
       []
     );
@@ -491,7 +489,6 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
       formData,
       profileImageFile,
       coverImageFile,
-      zineCoverFile,
       profileData.ethereum_address,
       profileData.video_parts,
       onProfileUpdate,
@@ -814,7 +811,7 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
                       Upload
                     </Button>
                     <Input
-                      value={zineCoverFile ? "" : formData.zineCover}
+                      value={formData.zineCover}
                       onChange={handleZineCoverUrlChange}
                       placeholder="Paste image URL here"
                       size="sm"

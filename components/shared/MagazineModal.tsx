@@ -14,7 +14,7 @@ interface MagazineModalProps {
   isOpen: boolean;
   onClose: () => void;
   // For username-based magazine (profile view) - can provide posts directly
-  username?: string;
+  hiveUsername?: string;
   posts?: Discussion[];
   isLoading?: boolean;
   // For tag-based magazine (blog view)
@@ -24,7 +24,7 @@ interface MagazineModalProps {
   zineCover?: string;
   // User profile data
   userProfileImage?: string;
-  userName?: string;
+  displayName?: string;
   userLocation?: string;
 }
 
@@ -40,22 +40,24 @@ interface MagazineModalProps {
 const MagazineModal = React.memo(function MagazineModal({
   isOpen,
   onClose,
-  username,
+  hiveUsername,
   posts,
   isLoading,
   magazineTag,
   magazineQuery = "created",
   zineCover,
   userProfileImage,
-  userName,
+  displayName,
   userLocation,
 }: MagazineModalProps) {
   const [currentQuery, setCurrentQuery] = React.useState(magazineQuery);
 
   // Memoize the tag calculation to prevent unnecessary re-renders
   const tag = useMemo(() => {
-    return username ? [{ tag: username, limit: 20 }] : magazineTag || []; // Bridge API max limit is 20
-  }, [username, magazineTag]);
+    return hiveUsername
+      ? [{ tag: hiveUsername, limit: 20 }]
+      : magazineTag || []; // Bridge API max limit is 20
+  }, [hiveUsername, magazineTag]);
 
   // If posts are provided (profile view), use them directly
   // Otherwise, let Magazine component fetch posts using tag/query (blog view)
@@ -67,9 +69,9 @@ const MagazineModal = React.memo(function MagazineModal({
         isLoading,
         error: null,
         zineCover,
-        username,
+        hiveUsername,
         userProfileImage,
-        userName,
+        displayName,
         userLocation,
       };
     }
@@ -83,9 +85,9 @@ const MagazineModal = React.memo(function MagazineModal({
     tag,
     currentQuery,
     zineCover,
-    username,
+    hiveUsername,
     userProfileImage,
-    userName,
+    displayName,
     userLocation,
   ]);
 

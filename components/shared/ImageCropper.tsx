@@ -81,7 +81,7 @@ export default function ImageCropper({
   onClose,
   imageSrc,
   onCropComplete,
-  aspectRatio = 1000 / 1300, // Default to flipbook cover dimensions
+  aspectRatio = 1000 / 1300, // Default to magazine cover dimensions
   title = "Crop Magazine Cover",
 }: ImageCropperProps) {
   const toast = useToast();
@@ -123,7 +123,10 @@ export default function ImageCropper({
       console.error("Error cropping image:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "An error occurred while processing the image.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "An error occurred while processing the image.",
         status: "error",
         duration: 5000,
       });

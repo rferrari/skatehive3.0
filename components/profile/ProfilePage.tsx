@@ -300,11 +300,11 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
         <MagazineModal
           isOpen={viewMode === "magazine"}
           onClose={throttledCloseMagazine}
-          username={username}
+          hiveUsername={username}
           posts={sortedPosts} // Use pre-sorted posts
           zineCover={profileData.zineCover}
           userProfileImage={profileData.profileImage}
-          userName={profileData.name}
+          displayName={profileData.name}
           userLocation={profileData.location}
         />
       )}
