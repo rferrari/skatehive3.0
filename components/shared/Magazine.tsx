@@ -55,7 +55,11 @@ function useMagazinePosts(
 
     // Validate that tag has valid structure
     const hasValidTag = tag.every(
-      (t) => t && typeof t.tag === "string" && t.tag.length > 0 && typeof t.limit === "number"
+      (t) =>
+        t &&
+        typeof t.tag === "string" &&
+        t.tag.length > 0 &&
+        typeof t.limit === "number"
     );
 
     if (!hasValidTag) {
@@ -182,13 +186,13 @@ export default function Magazine(props: MagazineProps) {
   const flipBookRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
-  
+
   // Destructure query switching props
   const { onQueryChange, allowQuerySwitch } = props;
-  
+
   // Available query types for Bridge API
-  const availableQueries = ['created', 'trending', 'hot', 'promoted', 'payout'];
-  const [currentQuery, setCurrentQuery] = useState(props.query || 'created');
+  const availableQueries = ["created", "trending", "hot", "promoted", "payout"];
+  const [currentQuery, setCurrentQuery] = useState(props.query || "created");
 
   // Update current query when props change
   useEffect(() => {
@@ -205,10 +209,7 @@ export default function Magazine(props: MagazineProps) {
     props.tag.every((t) => t && typeof t.tag === "string" && t.tag.length > 0)
   );
 
-  const magazinePosts = useMagazinePosts(
-    currentQuery || "",
-    props.tag || []
-  );
+  const magazinePosts = useMagazinePosts(currentQuery || "", props.tag || []);
 
   const isLoading = shouldFetchPosts
     ? magazinePosts.isLoading
