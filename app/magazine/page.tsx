@@ -7,7 +7,7 @@ export default function MagazinePage() {
   // Show posts from the community, 30 at a time
   const communityTag =
     process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || "hive-173115";
-  const tag = [{ tag: communityTag, limit: 40 }];
+  const tag = [{ tag: communityTag, limit: 20 }]; // Bridge API max limit is 20
   const query = "created"; // or 'trending', 'hot', etc.
 
   return (

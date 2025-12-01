@@ -28,8 +28,8 @@ interface MagazineModalProps {
  * Usage:
  * - For profile magazine: <MagazineModal username="skater123" posts={posts} isLoading={isLoading} />
  *   (Uses pre-fetched user posts from useProfilePosts hook)
- * - For blog magazine: <MagazineModal magazineTag={[{tag: "skatehive", limit: 30}]} magazineQuery="trending" />
- *   (Fetches trending posts from the community)
+ * - For blog magazine: <MagazineModal magazineTag={[{tag: "skatehive", limit: 20}]} magazineQuery="trending" />
+ *   (Fetches trending posts from the community, Bridge API max limit is 20)
  */
 const MagazineModal = React.memo(function MagazineModal({
   isOpen,
@@ -40,9 +40,11 @@ const MagazineModal = React.memo(function MagazineModal({
   magazineTag,
   magazineQuery = "created",
 }: MagazineModalProps) {
+  const [currentQuery, setCurrentQuery] = React.useState(magazineQuery);
+
   // Memoize the tag calculation to prevent unnecessary re-renders
   const tag = useMemo(() => {
-    return username ? [{ tag: username, limit: 30 }] : magazineTag || [];
+    return username ? [{ tag: username, limit: 20 }] : magazineTag || []; // Bridge API max limit is 20
   }, [username, magazineTag]);
 
   // If posts are provided (profile view), use them directly
@@ -58,9 +60,9 @@ const MagazineModal = React.memo(function MagazineModal({
     }
     return {
       tag,
-      query: magazineQuery,
+      query: currentQuery,
     };
-  }, [posts, isLoading, tag, magazineQuery]);
+  }, [posts, isLoading, tag, currentQuery]);
 
   if (!isOpen) return null; // Don't render anything when closed
 
@@ -70,8 +72,10 @@ const MagazineModal = React.memo(function MagazineModal({
       onClose={onClose}
       size="full"
       motionPreset="none"
-      trapFocus={false}
+      trapFocus={true}
       blockScrollOnMount={false}
+      returnFocusOnClose={false}
+      closeOnOverlayClick={true}
     >
       <ModalOverlay bg="blackAlpha.800" />
       <ModalContent

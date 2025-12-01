@@ -520,9 +520,60 @@ export async function getCommunityInfo(username: string) {
 }
 
 export async function findPosts(query: string, params: any[]) {
-  const by = 'get_discussions_by_' + query;
-  const posts = await HiveClient.database.call(by, params);
-  return posts
+  // Handle author-specific queries separately
+  if (query === 'author_before_date') {
+    // params format: [author, start_permlink, before_date, limit]
+    const [author, start_permlink, before_date, limit] = params;
+    
+    try {
+      const posts = await HiveClient.call('bridge', 'get_account_posts', {
+        sort: 'posts',
+        account: author,
+        start_author: start_permlink ? author : undefined,
+        start_permlink: start_permlink || undefined,
+        limit: Math.min(limit || 20, 20), // Bridge API max limit is 20
+        observer: ''
+      });
+      return posts;
+    } catch (error) {
+      console.error('Error fetching author posts with Bridge API:', error);
+      throw error;
+    }
+  }
+  
+  // Map old query types to new Bridge API sort types
+  const sortMapping: Record<string, string> = {
+    'created': 'created',
+    'trending': 'trending',
+    'hot': 'hot',
+    'promoted': 'promoted',
+    'payout': 'payout',
+  };
+
+  const sort = sortMapping[query] || 'created';
+  
+  // Extract tag and limit from params
+  const tag = params[0]?.tag || '';
+  const requestedLimit = params[0]?.limit || 20;
+  
+  // Bridge API has a maximum limit of 20 per request
+  // If more posts are needed, we'll need to make multiple requests
+  const MAX_LIMIT = 20;
+  const limit = Math.min(requestedLimit, MAX_LIMIT);
+  
+  try {
+    // Use the modern Bridge API
+    const posts = await HiveClient.call('bridge', 'get_ranked_posts', {
+      sort: sort,
+      tag: tag,
+      limit: limit,
+      observer: ''
+    });
+    return posts;
+  } catch (error) {
+    console.error('Error fetching posts with Bridge API:', error);
+    throw error;
+  }
 }
 
 export async function getLastSnapsContainer() {

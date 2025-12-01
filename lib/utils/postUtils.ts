@@ -92,9 +92,19 @@ export function filterAutoComments(discussions: any[]): any[] {
         const downvoteCount = countDownvotes(deduplicatedVotes);
         
         // Get author reputation and convert to readable format
-        // getReputation now handles the 0 reputation edge case properly
         const rawReputation = discussion.author_reputation || 0;
-        const authorReputation = getReputation(rawReputation);
+        
+        // Bridge API returns reputation already calculated (e.g., 67.94)
+        // Old condenser API returns raw large numbers (e.g., 288278181484)
+        // If the value is already between -100 and 100, it's already calculated
+        let authorReputation: number;
+        if (rawReputation > -100 && rawReputation < 100) {
+            // Already calculated reputation from Bridge API
+            authorReputation = rawReputation;
+        } else {
+            // Raw reputation that needs calculation
+            authorReputation = getReputation(rawReputation);
+        }
         
         // Filter conditions:
         // 1. Filter out posts with 2 or more downvotes (community disapproval)
@@ -105,17 +115,6 @@ export function filterAutoComments(discussions: any[]): any[] {
         const isNotHiveBuzz = discussion.author.toLowerCase() !== 'hivebuzz';
         
         const shouldShow = hasAcceptableDownvotes && hasAcceptableReputation && isNotHiveBuzz;
-
-        // Debug: Log posts that are being filtered out
-        if (!shouldShow && process.env.NODE_ENV === "development") {
-            console.log(`🚫 Filtering out post ${discussion.permlink}:`);
-            console.log(`   - Author: ${discussion.author}`);
-            console.log(`   - Reputation: ${authorReputation} (raw: ${rawReputation})`);
-            console.log(`   - Downvotes: ${downvoteCount}`);
-            console.log(`   - Acceptable downvotes: ${hasAcceptableDownvotes}`);
-            console.log(`   - Acceptable reputation: ${hasAcceptableReputation}`);
-            console.log(`   - Is not hiveBuzz: ${isNotHiveBuzz}`);
-        }
 
         return shouldShow;
     });

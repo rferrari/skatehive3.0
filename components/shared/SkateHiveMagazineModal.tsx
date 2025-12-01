@@ -44,7 +44,7 @@ export default function SkateHiveMagazineModal({
 
   const communityTag =
     process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || "hive-173115";
-  const magazineTag = [{ tag: communityTag, limit: 40 }];
+  const magazineTag = [{ tag: communityTag, limit: 20 }]; // Bridge API max limit is 20
   const magazineQuery = "trending";
 
   return (

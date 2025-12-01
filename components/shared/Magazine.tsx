@@ -17,6 +17,8 @@ import {
   Badge,
   Divider,
   Image,
+  Button,
+  HStack,
 } from "@chakra-ui/react";
 import HTMLFlipBook from "react-pageflip";
 import { Discussion } from "@hiveio/dhive";
@@ -47,6 +49,19 @@ function useMagazinePosts(
     // Don't fetch if tag is empty or query is not provided
     if (!query || !tag || tag.length === 0) {
       setIsLoading(false);
+      setError(null);
+      return;
+    }
+
+    // Validate that tag has valid structure
+    const hasValidTag = tag.every(
+      (t) => t && typeof t.tag === "string" && t.tag.length > 0 && typeof t.limit === "number"
+    );
+
+    if (!hasValidTag) {
+      console.error("Magazine error: Invalid parameters", { query, tag });
+      setError("Invalid parameters");
+      setIsLoading(false);
       return;
     }
 
@@ -57,11 +72,12 @@ function useMagazinePosts(
     findPosts(query, tag)
       .then((data) => {
         if (isMounted) {
-          // Normalize data to always be an array
+          // Bridge API returns an array directly
           let postsArray = [];
           if (Array.isArray(data)) {
             postsArray = data;
           } else if (data && typeof data === "object") {
+            // Fallback for unexpected response format
             postsArray = [data];
           }
           setPosts(postsArray);
@@ -70,6 +86,7 @@ function useMagazinePosts(
       })
       .catch((err) => {
         if (isMounted) {
+          console.error("Magazine error:", err.message || err);
           setError(err.message || "Error fetching posts");
           setIsLoading(false);
         }
@@ -155,6 +172,9 @@ export interface MagazineProps {
   // For community magazine, still accept tag/query
   tag?: { tag: string; limit: number }[];
   query?: string;
+  // Allow external control of query
+  onQueryChange?: (query: string) => void;
+  allowQuerySwitch?: boolean;
 }
 
 export default function Magazine(props: MagazineProps) {
@@ -162,13 +182,38 @@ export default function Magazine(props: MagazineProps) {
   const flipBookRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  
+  // Destructure query switching props
+  const { onQueryChange, allowQuerySwitch } = props;
+  
+  // Available query types for Bridge API
+  const availableQueries = ['created', 'trending', 'hot', 'promoted', 'payout'];
+  const [currentQuery, setCurrentQuery] = useState(props.query || 'created');
 
-  // Only use the hook to fetch posts if tag and query are provided
-  const shouldFetchPosts = !!(props.tag && props.query);
+  // Update current query when props change
+  useEffect(() => {
+    if (props.query && props.query !== currentQuery) {
+      setCurrentQuery(props.query);
+    }
+  }, [props.query]);
+
+  // Only use the hook to fetch posts if tag and query are provided and valid
+  const shouldFetchPosts = !!(
+    props.tag &&
+    currentQuery &&
+    props.tag.length > 0 &&
+    props.tag.every((t) => t && typeof t.tag === "string" && t.tag.length > 0)
+  );
+
   const magazinePosts = useMagazinePosts(
-    props.query || "created",
+    currentQuery || "",
     props.tag || []
   );
+
+  const isLoading = shouldFetchPosts
+    ? magazinePosts.isLoading
+    : props.isLoading || false;
+  const error = shouldFetchPosts ? magazinePosts.error : props.error || null;
 
   const posts = useMemo(() => {
     const finalPosts = shouldFetchPosts
@@ -176,11 +221,6 @@ export default function Magazine(props: MagazineProps) {
       : props.posts || [];
     return finalPosts;
   }, [magazinePosts.posts, props.posts, shouldFetchPosts]);
-
-  const isLoading = shouldFetchPosts
-    ? magazinePosts.isLoading
-    : props.isLoading || false;
-  const error = shouldFetchPosts ? magazinePosts.error : props.error || null;
 
   // Optimize initialization for better performance
   useEffect(() => {
@@ -236,6 +276,7 @@ export default function Magazine(props: MagazineProps) {
   }
 
   if (error) {
+    console.log("Magazine error:", error);
     return (
       <Flex justify="center" align="center" w="100%" h="100%" p={5}>
         <Text color={"white"}>Error loading posts</Text>

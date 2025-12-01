@@ -1,6 +1,5 @@
 "use client";
-const SKATEHIVE_TAG =
-  process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || "hive-173115";
+
 import {
   Box,
   Center,
@@ -13,6 +12,9 @@ import {
 } from "@chakra-ui/react";
 import { useEffect, useMemo, useState } from "react";
 import SkateHiveMagazineModal from "./SkateHiveMagazineModal";
+
+const SKATEHIVE_TAG =
+  process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || "hive-173115";
 
 function CommunityTotalPayout() {
   const [totalHBDPayout, setTotalHBDPayout] = useState<number>(0);

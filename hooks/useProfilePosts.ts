@@ -10,7 +10,7 @@ export default function useProfilePosts(username: string) {
         username,
         "",
         new Date().toISOString().split(".")[0],
-        30,
+        20, // Bridge API max limit
     ]);
 
     const fetchPosts = useCallback(async () => {
@@ -24,7 +24,7 @@ export default function useProfilePosts(username: string) {
                     username,
                     newPosts[newPosts.length - 1].permlink,
                     newPosts[newPosts.length - 1].created,
-                    30,
+                    20, // Bridge API max limit
                 ];
             }
             setIsLoading(false);
@@ -39,7 +39,7 @@ export default function useProfilePosts(username: string) {
     useEffect(() => {
         setPosts([]);
         setIsLoading(true);
-        params.current = [username, "", new Date().toISOString().split(".")[0], 30];
+        params.current = [username, "", new Date().toISOString().split(".")[0], 20];
         fetchPosts();
     }, [username, fetchPosts]);
 

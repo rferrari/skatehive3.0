@@ -1,6 +1,7 @@
 // Blog page configuration constants
 export const BLOG_CONFIG = {
   POSTS_PER_PAGE: 12,
+  BRIDGE_API_MAX_LIMIT: 20, // Hive Bridge API maximum limit per request
   GOAT_BATCH_SIZE: 100,
   MAX_GOAT_BATCHES: 10,
   BATCH_DELAY_MS: 300,
