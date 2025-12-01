@@ -20,6 +20,12 @@ interface MagazineModalProps {
   // For tag-based magazine (blog view)
   magazineTag?: { tag: string; limit: number }[];
   magazineQuery?: string;
+  // Custom magazine cover for user profiles
+  zineCover?: string;
+  // User profile data
+  userProfileImage?: string;
+  userName?: string;
+  userLocation?: string;
 }
 
 /**
@@ -39,6 +45,10 @@ const MagazineModal = React.memo(function MagazineModal({
   isLoading,
   magazineTag,
   magazineQuery = "created",
+  zineCover,
+  userProfileImage,
+  userName,
+  userLocation,
 }: MagazineModalProps) {
   const [currentQuery, setCurrentQuery] = React.useState(magazineQuery);
 
@@ -56,13 +66,28 @@ const MagazineModal = React.memo(function MagazineModal({
         posts,
         isLoading,
         error: null,
+        zineCover,
+        username,
+        userProfileImage,
+        userName,
+        userLocation,
       };
     }
     return {
       tag,
       query: currentQuery,
     };
-  }, [posts, isLoading, tag, currentQuery]);
+  }, [
+    posts,
+    isLoading,
+    tag,
+    currentQuery,
+    zineCover,
+    username,
+    userProfileImage,
+    userName,
+    userLocation,
+  ]);
 
   if (!isOpen) return null; // Don't render anything when closed
 

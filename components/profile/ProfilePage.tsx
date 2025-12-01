@@ -302,6 +302,10 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
           onClose={throttledCloseMagazine}
           username={username}
           posts={sortedPosts} // Use pre-sorted posts
+          zineCover={profileData.zineCover}
+          userProfileImage={profileData.profileImage}
+          userName={profileData.name}
+          userLocation={profileData.location}
         />
       )}
       <Center>

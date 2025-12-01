@@ -1,13 +1,5 @@
 "use client";
-import {
-  useState,
-  useRef,
-  useMemo,
-  useEffect,
-  lazy,
-  Suspense,
-  useCallback,
-} from "react";
+import { useState, useRef, useMemo, useEffect, lazy, Suspense } from "react";
 import {
   Box,
   Flex,
@@ -17,8 +9,6 @@ import {
   Badge,
   Divider,
   Image,
-  Button,
-  HStack,
 } from "@chakra-ui/react";
 import HTMLFlipBook from "react-pageflip";
 import { Discussion } from "@hiveio/dhive";
@@ -127,35 +117,8 @@ const pageStyles = (theme: any) => ({
   border: `1px solid ${theme.colors.border || "#e0e7ef"}`,
 });
 
-const flipbookStyles = {
-  width: "100%",
-  maxWidth: "900px",
-  height: "100vh",
-  margin: "0 auto",
-  transition: "none",
-};
-
-const retroFont = {
-  fontFamily: `'Joystix', 'VT323', 'Fira Mono', 'monospace'`,
-  letterSpacing: "0.5px",
-};
-const neonGreen = "#39FF14";
-const blackShadow =
-  "0 4px 32px #000, 0 8px 48px #000, 0 0 8px #000, 0 0 2px #000";
 const retroBoxShadow = (theme: any) =>
   `0 0 0 2px ${theme.colors.text}, 0 0 8px ${theme.colors.primary}`;
-
-const coverStyles = (theme: any) => ({
-  ...pageStyles(theme),
-  borderRadius: "0px 16px 0px 0px",
-  background: "transparent",
-  color: theme.colors.primary,
-  backgroundSize: "cover",
-  textAlign: "center",
-  boxShadow: retroBoxShadow(theme),
-  fontFamily: `'Joystix', 'VT323', 'Fira Mono', 'monospace'`,
-  letterSpacing: "0.5px",
-});
 
 const backCoverStyles = (theme: any) => ({
   ...pageStyles(theme),
@@ -179,6 +142,13 @@ export interface MagazineProps {
   // Allow external control of query
   onQueryChange?: (query: string) => void;
   allowQuerySwitch?: boolean;
+  // Custom magazine cover for user profiles
+  zineCover?: string;
+  // User profile data for personalized magazine
+  username?: string;
+  userProfileImage?: string;
+  userName?: string;
+  userLocation?: string;
 }
 
 export default function Magazine(props: MagazineProps) {
@@ -187,11 +157,7 @@ export default function Magazine(props: MagazineProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Destructure query switching props
-  const { onQueryChange, allowQuerySwitch } = props;
-
   // Available query types for Bridge API
-  const availableQueries = ["created", "trending", "hot", "promoted", "payout"];
   const [currentQuery, setCurrentQuery] = useState(props.query || "created");
 
   // Update current query when props change
@@ -376,75 +342,106 @@ export default function Magazine(props: MagazineProps) {
           onUpdate={() => {}}
         >
           <Box
-            sx={coverStyles(theme)}
             width="100%"
             height="100%"
             position="relative"
             overflow="hidden"
+            borderRadius="0px 16px 0px 0px"
+            boxShadow={retroBoxShadow(theme)}
           >
-            {/* Matrix effect as background */}
+            {/* Cover image - full bleed */}
+            <Image
+              src={props.zineCover || "/images/covers/nogenta_cover.png"}
+              alt="SkateHive Cover"
+              position="absolute"
+              top={0}
+              left={0}
+              width="100%"
+              height="100%"
+              objectFit="cover"
+              loading="lazy"
+              zIndex={0}
+            />
+
+            {/* 3D shadow effect on right edge */}
+            <Box
+              position="absolute"
+              top={0}
+              right={0}
+              width="40px"
+              height="100%"
+              zIndex={1}
+              background="linear-gradient(to left, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.2) 50%, transparent 100%)"
+              pointerEvents="none"
+            />
+
+            {/* Matrix effect as overlay (optional) */}
+            {!props.zineCover && (
+              <Box
+                position="absolute"
+                top={0}
+                left={0}
+                width="100%"
+                height="100%"
+                zIndex={1}
+                pointerEvents="none"
+              >
+                <MatrixOverlay coverMode />
+              </Box>
+            )}
+
+            {/* Magazine cover text layout - Skateboarder magazine style */}
             <Box
               position="absolute"
               top={0}
               left={0}
               width="100%"
               height="100%"
-              zIndex={0}
+              zIndex={2}
               pointerEvents="none"
             >
-              <MatrixOverlay coverMode />
-            </Box>
-            <Flex
-              direction="column"
-              alignItems="center"
-              justifyContent="center"
-              width="100%"
-              height="100%"
-              position="relative"
-              zIndex={1}
-            >
-              {/* Text content above image, overlapping bottom of image */}
-              <Box zIndex={2} position="relative" mb={-16} textAlign="center">
-                <Heading
-                  size="2xl"
-                  fontWeight="extrabold"
-                  letterSpacing="tight"
-                  mb={2}
-                  style={{
-                    fontFamily: `'Joystix', 'VT323', 'Fira Mono', 'monospace'`,
-                    textShadow:
-                      "0 4px 32px #000, 0 8px 48px #000, 0 0 8px #000, 0 0 2px #000",
-                    color: theme.colors.primary,
-                  }}
-                >
-                  SkateHive Magazine
-                </Heading>
+              {/* Horizontal username at top left */}
+              {props.username && (
                 <Text
-                  fontSize="xl"
+                  position="absolute"
+                  top="20px"
+                  left="20px"
+                  fontSize="2xl"
+                  fontWeight="bold"
                   color={theme.colors.primary}
-                  mb={4}
+                  textTransform="uppercase"
                   style={{
                     fontFamily: `'Joystix', 'VT323', 'Fira Mono', 'monospace'`,
                     textShadow:
                       "0 4px 32px #000, 0 8px 48px #000, 0 0 8px #000, 0 0 2px #000",
+                    letterSpacing: "2px",
                   }}
                 >
-                  The Community Skateboarding Zine
+                  {props.userName || props.username}
                 </Text>
-              </Box>
-              {/* Cover image */}
-              <Image
-                src="/images/covers/nogenta_cover.png"
-                alt="SkateHive Cover"
-                maxHeight="500px"
-                maxWidth="100%"
-                width="auto"
-                loading="lazy"
-                borderRadius="lg"
-                boxShadow="xl"
-                zIndex={1}
-              />
-            </Flex>
+              )}
+
+              {/* Vertical "ZINE" text on left side */}
+              <Text
+                position="absolute"
+                left="20px"
+                top="50%"
+                fontSize="6xl"
+                fontWeight="black"
+                color={theme.colors.primary}
+                textTransform="uppercase"
+                style={{
+                  fontFamily: `'Joystix', 'VT323', 'Fira Mono', 'monospace'`,
+                  textShadow:
+                    "0 4px 32px #000, 0 8px 48px #000, 0 0 8px #000, 0 0 2px #000",
+                  letterSpacing: "8px",
+                  writingMode: "vertical-rl",
+                  transform: "translateY(-50%)",
+                }}
+              >
+                {props.username ? "ZINE" : "SKATEHIVE"}
+              </Text>
+            </Box>
           </Box>
           {filteredPosts.map((post: Discussion, index) => {
             const isLeftPage = index % 2 === 0;

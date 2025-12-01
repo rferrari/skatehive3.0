@@ -207,6 +207,9 @@ importers:
       react-dropzone:
         specifier: ^14.3.8
         version: 14.3.8(react@18.3.1)
+      react-easy-crop:
+        specifier: ^5.5.6
+        version: 5.5.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-hook-form:
         specifier: ^7.60.0
         version: 7.62.0(react@18.3.1)
@@ -4083,8 +4086,8 @@ packages:
   hive-keychain-commons@1.9.7:
     resolution: {integrity: sha512-/Rw1yX4UZts32chptEMaEGjLsS3lIeb4wnLwZRJhoTufzN4bV7HvekWLRCk8ZCb+leOOAdZi5DZcq7of4+tO9Q==}
 
-  hive-tx@https://codeload.github.com/hive-keychain/hive-tx-js/tar.gz/d54c25900408a0d8cb32a4710a5f92623585f3e5:
-    resolution: {tarball: https://codeload.github.com/hive-keychain/hive-tx-js/tar.gz/d54c25900408a0d8cb32a4710a5f92623585f3e5}
+  hive-tx@https://codeload.github.com/hive-keychain/hive-tx-js/tar.gz/75c4dd222780a56e93761c8ef6d3fa5e2df6ea63:
+    resolution: {tarball: https://codeload.github.com/hive-keychain/hive-tx-js/tar.gz/75c4dd222780a56e93761c8ef6d3fa5e2df6ea63}
     version: 4.3.1
 
   hmac-drbg@1.0.1:
@@ -4938,6 +4941,9 @@ packages:
     resolution: {integrity: sha512-bdok/XvKII3nUpklnV6P2hxtMNrCboOjAcyBuQnWEhO665FwrSNRxU+AqpsyvO6LgGYPspN+lu5CLtw4jPRKNA==}
     engines: {node: '>=0.10.0'}
 
+  normalize-wheel@1.0.1:
+    resolution: {integrity: sha512-1OnlAPZ3zgrk8B91HyRj+eVv+kS5u+Z0SCsak6Xil/kmgEia50ga7zfkumayonZrImffAxPU/5WcyGhzetHNPA==}
+
   nth-check@2.1.1:
     resolution: {integrity: sha512-lqjrjmaOoAnWfMmBPL+XNnynZh2+swxiX3WUE0s4yEHI6m+AwrK2UZOimIRl3X/4QctVqS8AiZjFqyOGrMXb/w==}
 
@@ -5414,6 +5420,12 @@ packages:
     engines: {node: '>= 10.13'}
     peerDependencies:
       react: '>= 16.8 || 18.0.0'
+
+  react-easy-crop@5.5.6:
+    resolution: {integrity: sha512-Jw3/ozs8uXj3NpL511Suc4AHY+mLRO23rUgipXvNYKqezcFSYHxe4QXibBymkOoY6oOtLVMPO2HNPRHYvMPyTw==}
+    peerDependencies:
+      react: '>=16.4.0'
+      react-dom: '>=16.4.0'
 
   react-fast-compare@3.2.2:
     resolution: {integrity: sha512-nsO+KSNgo1SbJqJEYRE9ERzo7YtYbou/OqjSQKxV7jcKox7+usiUVZOAC+XnDOABXggQTno0Y1CpVnuWEc1boQ==}
@@ -12523,7 +12535,7 @@ snapshots:
       '@hiveio/dhive': 1.3.2
       bs58: 4.0.1
       crypto-js: 4.2.0
-      hive-tx: https://codeload.github.com/hive-keychain/hive-tx-js/tar.gz/d54c25900408a0d8cb32a4710a5f92623585f3e5
+      hive-tx: https://codeload.github.com/hive-keychain/hive-tx-js/tar.gz/75c4dd222780a56e93761c8ef6d3fa5e2df6ea63
       jsbi: 4.3.2
       moment: 2.30.1
       secp256k1: 5.0.1
@@ -12532,7 +12544,7 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  hive-tx@https://codeload.github.com/hive-keychain/hive-tx-js/tar.gz/d54c25900408a0d8cb32a4710a5f92623585f3e5:
+  hive-tx@https://codeload.github.com/hive-keychain/hive-tx-js/tar.gz/75c4dd222780a56e93761c8ef6d3fa5e2df6ea63:
     dependencies:
       bs58: 5.0.0
       bytebuffer: 5.0.1
@@ -13570,6 +13582,8 @@ snapshots:
 
   normalize-range@0.1.2: {}
 
+  normalize-wheel@1.0.1: {}
+
   nth-check@2.1.1:
     dependencies:
       boolbase: 1.0.0
@@ -14116,6 +14130,13 @@ snapshots:
       file-selector: 2.1.2
       prop-types: 15.8.1
       react: 18.3.1
+
+  react-easy-crop@5.5.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+    dependencies:
+      normalize-wheel: 1.0.1
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+      tslib: 2.8.1
 
   react-fast-compare@3.2.2: {}
 

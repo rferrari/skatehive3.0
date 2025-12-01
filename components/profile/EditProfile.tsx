@@ -4,7 +4,6 @@ import {
   ModalOverlay,
   ModalContent,
   ModalHeader,
-  ModalCloseButton,
   ModalBody,
   ModalFooter,
   Button,
@@ -31,10 +30,14 @@ import { Operation } from "@hiveio/dhive";
 import { migrateLegacyMetadata } from "@/lib/utils/metadataMigration";
 import MergeAccountModal from "./MergeAccountModal";
 import fetchAccount from "@/lib/hive/fetchAccount";
-import { mergeAccounts, generateMergePreview } from "@/lib/services/mergeAccounts";
+import {
+  mergeAccounts,
+  generateMergePreview,
+} from "@/lib/services/mergeAccounts";
 import { ProfileDiff } from "@/lib/utils/profileDiff";
 
 import { uploadToIpfs } from "@/lib/markdown/composeUtils";
+import ImageCropper from "../shared/ImageCropper";
 interface EditProfileProps {
   isOpen: boolean;
   onClose: () => void;
@@ -46,7 +49,7 @@ interface EditProfileProps {
 const EditProfile: React.FC<EditProfileProps> = React.memo(
   (props: EditProfileProps) => {
     const { isOpen, onClose, profileData, onProfileUpdate, username } = props;
-    
+
     const [formData, setFormData] = useState({
       name: "",
       about: "",
@@ -67,14 +70,18 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
     const [profileDiff, setProfileDiff] = useState<ProfileDiff | undefined>();
     const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
     const [isMerging, setIsMerging] = useState(false);
-    
+    const [isCropperOpen, setIsCropperOpen] = useState(false);
+    const [tempImageForCrop, setTempImageForCrop] = useState<string | null>(
+      null
+    );
+
     // Always call hooks at the top level
     const account = useAccount();
-    
+
     // Safely extract values with fallbacks
     const address = account?.address;
     const isConnected = account?.isConnected || false;
-    
+
     const { user } = useAioha();
     const { isAuthenticated: isFarcasterConnected, profile: farcasterProfile } =
       useFarcasterSession();
@@ -105,15 +112,22 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
     useEffect(() => {
       if (isOpen && (isConnected || isFarcasterConnected)) {
         // Check if user already has an Ethereum wallet in their metadata
-        const hasExistingEthWallet = profileData.ethereum_address && profileData.ethereum_address.trim() !== "";
-        
+        const hasExistingEthWallet =
+          profileData.ethereum_address &&
+          profileData.ethereum_address.trim() !== "";
+
         // Only show merge modal if user doesn't already have an Ethereum wallet
         if (!hasExistingEthWallet) {
           setShowMergeModal(true);
           generatePreview();
         }
       }
-    }, [isOpen, isConnected, isFarcasterConnected, profileData.ethereum_address]);
+    }, [
+      isOpen,
+      isConnected,
+      isFarcasterConnected,
+      profileData.ethereum_address,
+    ]);
 
     const generatePreview = async () => {
       if (!user || user !== username) return;
@@ -213,14 +227,50 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
       (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-          setZineCoverFile(file);
-          setFormData((prev) => ({
-            ...prev,
-            zineCover: URL.createObjectURL(file),
-          }));
+          // Open cropper with the selected image
+          const reader = new FileReader();
+          reader.onload = () => {
+            setTempImageForCrop(reader.result as string);
+            setIsCropperOpen(true);
+          };
+          reader.readAsDataURL(file);
         }
       },
       []
+    );
+
+    const handleCropComplete = useCallback(
+      async (croppedFile: File) => {
+        try {
+          // Upload to IPFS immediately
+          const ipfsUrl = await uploadToIpfs(croppedFile, croppedFile.name);
+
+          // Update form data with the IPFS URL
+          setFormData((prev) => ({
+            ...prev,
+            zineCover: ipfsUrl,
+          }));
+
+          // Clear the file since we already have the URL
+          setZineCoverFile(null);
+
+          toast({
+            title: "Magazine cover uploaded",
+            description: "Your custom cover has been uploaded successfully.",
+            status: "success",
+            duration: 3000,
+          });
+        } catch (error) {
+          console.error("Failed to upload magazine cover:", error);
+          toast({
+            title: "Upload failed",
+            description: "Failed to upload magazine cover. Please try again.",
+            status: "error",
+            duration: 3000,
+          });
+        }
+      },
+      [toast]
     );
 
     const handleZineCoverUrlChange = useCallback(
@@ -251,7 +301,11 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
     }, []);
 
     const handleMergeAccounts = useCallback(async () => {
-      if (!user || user !== username || (!isConnected && !isFarcasterConnected)) {
+      if (
+        !user ||
+        user !== username ||
+        (!isConnected && !isFarcasterConnected)
+      ) {
         setShowMergeModal(false);
         return;
       }
@@ -280,7 +334,7 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
         const updatedData: Partial<ProfileData> = {};
         if (address) updatedData.ethereum_address = address;
         onProfileUpdate(updatedData);
-        
+
         toast({
           title: "Wallet Linked",
           status: "success",
@@ -333,17 +387,17 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
 
         // Upload images if files are selected
         if (profileImageFile) {
-          const url = await uploadToIpfs(profileImageFile, profileImageFile.name);
+          const url = await uploadToIpfs(
+            profileImageFile,
+            profileImageFile.name
+          );
           if (url) finalProfileImage = url;
         }
         if (coverImageFile) {
           const url = await uploadToIpfs(coverImageFile, coverImageFile.name);
           if (url) finalCoverImage = url;
         }
-        if (zineCoverFile) {
-          const url = await uploadToIpfs(zineCoverFile, zineCoverFile.name);
-          if (url) finalZineCover = url;
-        }
+        // zineCover is already uploaded to IPFS in handleCropComplete
 
         // Use Keychain SDK for the update
         const keychain = new KeychainSDK(window);
@@ -365,12 +419,16 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
         const migrated = migrateLegacyMetadata(currentMetadata);
         migrated.extensions = migrated.extensions || {};
         migrated.extensions.wallets = migrated.extensions.wallets || {};
-        migrated.extensions.wallets.primary_wallet = profileData.ethereum_address || "";
+        migrated.extensions.wallets.primary_wallet =
+          profileData.ethereum_address || "";
         migrated.extensions.video_parts = profileData.video_parts || [];
         migrated.extensions.settings = migrated.extensions.settings || {};
-        migrated.extensions.settings.appSettings = migrated.extensions.settings.appSettings || {};
-        migrated.extensions.settings.appSettings.zineCover = finalZineCover || "";
-        migrated.extensions.settings.appSettings.svs_profile = formData.svs_profile || "";
+        migrated.extensions.settings.appSettings =
+          migrated.extensions.settings.appSettings || {};
+        migrated.extensions.settings.appSettings.zineCover =
+          finalZineCover || "";
+        migrated.extensions.settings.appSettings.svs_profile =
+          formData.svs_profile || "";
 
         const extMetadata = migrated;
 
@@ -460,12 +518,12 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
 
               {/* Use RainbowKit ConnectButton */}
               <Box>
-                <ConnectButton 
+                <ConnectButton
                   showBalance={false}
                   chainStatus="none"
                   accountStatus={{
                     smallScreen: "avatar",
-                    largeScreen: "full"
+                    largeScreen: "full",
                   }}
                 />
               </Box>
@@ -616,8 +674,6 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
               </Box>
             )}
           </Box>
-
-
         </ModalHeader>
       ),
       [formData.coverImage, formData.profileImage]
@@ -625,174 +681,189 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
 
     return (
       <>
-      <Modal isOpen={isOpen} onClose={onClose} size="lg">
-        <ModalOverlay blur={"lg"} />
-        <ModalContent bg={"background"}>
-          {ModalHeaderContent}
+        <Modal isOpen={isOpen} onClose={onClose} size="lg">
+          <ModalOverlay blur={"lg"} />
+          <ModalContent bg={"background"}>
+            {ModalHeaderContent}
 
-          <ModalBody mt="40px">
-            <VStack spacing={4} align="stretch">
-              {error && (
-                <Box color="red.400" mb={2} w="100%">
-                  {error}
-                </Box>
-              )}
-              <Button
-                colorScheme="green"
-                onClick={handleSave}
-                w="100%"
-                isLoading={isSaving}
-                loadingText="Saving..."
-              >
-                Save Changes
-              </Button>
-              <FormControl>
-                <FormLabel>Profile Picture</FormLabel>
-                <Flex gap={2}>
-                  <Button
-                    size="sm"
-                    onClick={() =>
-                      document.getElementById("profilePictureInput")?.click()
-                    }
-                  >
-                    Upload
-                  </Button>
-                  <Input
-                    value={profileImageFile ? "" : formData.profileImage}
-                    onChange={handleProfileImageUrlChange}
-                    placeholder="Paste image URL here"
-                    size="sm"
-                    flex={1}
+            <ModalBody mt="40px">
+              <VStack spacing={4} align="stretch">
+                {error && (
+                  <Box color="red.400" mb={2} w="100%">
+                    {error}
+                  </Box>
+                )}
+                <Button
+                  colorScheme="green"
+                  onClick={handleSave}
+                  w="100%"
+                  isLoading={isSaving}
+                  loadingText="Saving..."
+                >
+                  Save Changes
+                </Button>
+                <FormControl>
+                  <FormLabel>Profile Picture</FormLabel>
+                  <Flex gap={2}>
+                    <Button
+                      size="sm"
+                      onClick={() =>
+                        document.getElementById("profilePictureInput")?.click()
+                      }
+                    >
+                      Upload
+                    </Button>
+                    <Input
+                      value={profileImageFile ? "" : formData.profileImage}
+                      onChange={handleProfileImageUrlChange}
+                      placeholder="Paste image URL here"
+                      size="sm"
+                      flex={1}
+                    />
+                    <Input
+                      id="profilePictureInput"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleProfileImageChange}
+                      display="none"
+                    />
+                  </Flex>
+                </FormControl>
+
+                <FormControl>
+                  <FormLabel>Profile Background</FormLabel>
+                  <Flex gap={2}>
+                    <Button
+                      size="sm"
+                      onClick={() =>
+                        document.getElementById("backgroundImageInput")?.click()
+                      }
+                    >
+                      Upload
+                    </Button>
+                    <Input
+                      value={coverImageFile ? "" : formData.coverImage}
+                      onChange={handleCoverImageUrlChange}
+                      placeholder="Paste image URL here"
+                      size="sm"
+                      flex={1}
+                    />
+                    <Input
+                      id="backgroundImageInput"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleCoverImageChange}
+                      display="none"
+                    />
+                  </Flex>
+                </FormControl>
+
+                {EthereumWalletSection}
+
+                <FormControl>
+                  <Flex gap={2} align="center">
+                    <FormLabel mb={0} minWidth="80px">
+                      Location
+                    </FormLabel>
+                    <Select
+                      value={formData.location}
+                      onChange={handleFormChange("location")}
+                      placeholder="Select your country"
+                      flex={1}
+                    >
+                      {countryOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.value} - {option.label}
+                        </option>
+                      ))}
+                    </Select>
+                  </Flex>
+                </FormControl>
+
+                <FormControl>
+                  <Flex gap={2} align="center">
+                    <FormLabel mb={0} minWidth="80px">
+                      Website
+                    </FormLabel>
+                    <Input
+                      value={formData.website}
+                      onChange={handleFormChange("website")}
+                      flex={1}
+                    />
+                  </Flex>
+                </FormControl>
+
+                <FormControl>
+                  <FormLabel>Words to live by? (optional)</FormLabel>
+                  <Textarea
+                    value={formData.about}
+                    onChange={handleFormChange("about")}
                   />
+                </FormControl>
+
+                <FormControl>
+                  <FormLabel>Mag Cover (optional)</FormLabel>
+                  <Flex gap={2}>
+                    <Button
+                      size="sm"
+                      colorScheme="green"
+                      onClick={() =>
+                        document.getElementById("zineCoverInput")?.click()
+                      }
+                    >
+                      Upload
+                    </Button>
+                    <Input
+                      value={zineCoverFile ? "" : formData.zineCover}
+                      onChange={handleZineCoverUrlChange}
+                      placeholder="Paste image URL here"
+                      size="sm"
+                      flex={1}
+                    />
+                    <Input
+                      id="zineCoverInput"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleZineCoverChange}
+                      display="none"
+                    />
+                  </Flex>
+                </FormControl>
+
+                <FormControl>
+                  <FormLabel>SVS Profile (optional)</FormLabel>
                   <Input
-                    id="profilePictureInput"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleProfileImageChange}
-                    display="none"
+                    value={formData.svs_profile}
+                    onChange={handleFormChange("svs_profile")}
+                    placeholder="Enter your SVS profile information"
                   />
-                </Flex>
-              </FormControl>
-
-              <FormControl>
-                <FormLabel>Profile Background</FormLabel>
-                <Flex gap={2}>
-                  <Button
-                    size="sm"
-                    onClick={() =>
-                      document.getElementById("backgroundImageInput")?.click()
-                    }
-                  >
-                    Upload
-                  </Button>
-                  <Input
-                    value={coverImageFile ? "" : formData.coverImage}
-                    onChange={handleCoverImageUrlChange}
-                    placeholder="Paste image URL here"
-                    size="sm"
-                    flex={1}
-                  />
-                  <Input
-                    id="backgroundImageInput"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleCoverImageChange}
-                    display="none"
-                  />
-                </Flex>
-              </FormControl>
-
-              {EthereumWalletSection}
-
-              <FormControl>
-                <Flex gap={2} align="center">
-                  <FormLabel mb={0} minWidth="80px">Location</FormLabel>
-                  <Select
-                    value={formData.location}
-                    onChange={handleFormChange("location")}
-                    placeholder="Select your country"
-                    flex={1}
-                  >
-                    {countryOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.value} - {option.label}
-                      </option>
-                    ))}
-                  </Select>
-                </Flex>
-              </FormControl>
-
-              <FormControl>
-                <Flex gap={2} align="center">
-                  <FormLabel mb={0} minWidth="80px">Website</FormLabel>
-                  <Input
-                    value={formData.website}
-                    onChange={handleFormChange("website")}
-                    flex={1}
-                  />
-                </Flex>
-              </FormControl>
-
-              <FormControl>
-                <FormLabel>Words to live by? (optional)</FormLabel>
-                <Textarea
-                  value={formData.about}
-                  onChange={handleFormChange("about")}
-                />
-              </FormControl>
-
-              <FormControl>
-                <FormLabel>Mag Cover (optional)</FormLabel>
-                <Flex gap={2}>
-                  <Button
-                    size="sm"
-                    onClick={() =>
-                      document.getElementById("zineCoverInput")?.click()
-                    }
-                  >
-                    Upload
-                  </Button>
-                  <Input
-                    value={zineCoverFile ? "" : formData.zineCover}
-                    onChange={handleZineCoverUrlChange}
-                    placeholder="Paste image URL here"
-                    size="sm"
-                    flex={1}
-                  />
-                  <Input
-                    id="zineCoverInput"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleZineCoverChange}
-                    display="none"
-                  />
-                </Flex>
-              </FormControl>
-
-              <FormControl>
-                <FormLabel>SVS Profile (optional)</FormLabel>
-                <Input
-                  value={formData.svs_profile}
-                  onChange={handleFormChange("svs_profile")}
-                  placeholder="Enter your SVS profile information"
-                />
-              </FormControl>
-            </VStack>
-          </ModalBody>
-          <ModalFooter>
-      </ModalFooter>
-    </ModalContent>
-      </Modal>
-      <MergeAccountModal
-        isOpen={showMergeModal}
-        onClose={() => {
-          setShowMergeModal(false);
-          setProfileDiff(undefined);
-        }}
-        onMerge={handleMergeAccounts}
-        profileDiff={profileDiff}
-        isLoading={isGeneratingPreview || isMerging}
-      />
+                </FormControl>
+              </VStack>
+            </ModalBody>
+            <ModalFooter></ModalFooter>
+          </ModalContent>
+        </Modal>
+        <MergeAccountModal
+          isOpen={showMergeModal}
+          onClose={() => {
+            setShowMergeModal(false);
+            setProfileDiff(undefined);
+          }}
+          onMerge={handleMergeAccounts}
+          profileDiff={profileDiff}
+          isLoading={isGeneratingPreview || isMerging}
+        />
+        <ImageCropper
+          isOpen={isCropperOpen}
+          onClose={() => {
+            setIsCropperOpen(false);
+            setTempImageForCrop(null);
+          }}
+          imageSrc={tempImageForCrop || ""}
+          onCropComplete={handleCropComplete}
+          aspectRatio={1000 / 1300}
+          title="Crop Magazine Cover"
+        />
       </>
     );
   }
