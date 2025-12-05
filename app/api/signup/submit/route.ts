@@ -50,7 +50,7 @@ const createEmailTransporter = () => {
 };
 
 // Send keys via email
-const sendKeysEmail = async (email: string, username: string, keys: any, backupId?: string) => {
+const sendKeysEmail = async (email: string, username: string, keys: any) => {
   const transporter = createEmailTransporter();
   
   const emailTemplate = `
@@ -87,20 +87,6 @@ const sendKeysEmail = async (email: string, username: string, keys: any, backupI
       <p>You can now login to <a href="https://skatehive.app">Skatehive.app</a> using your username and posting key.</p>
       
       <p>Welcome to the Skatehive community! 🎉</p>
-      
-      ${backupId ? `
-      <div style="background-color: #d1ecf1; border: 1px solid #bee5eb; padding: 15px; border-radius: 8px; margin: 20px 0;">
-        <h4 style="color: #0c5460;">🛡️ Emergency Backup Available</h4>
-        <p style="color: #0c5460; font-size: 14px;">
-          In case you lose this email, we've created a secure 24-hour backup of your keys.<br>
-          <strong>Backup ID:</strong> ${backupId}<br>
-          <strong>Retrieval URL:</strong> ${process.env.NEXT_PUBLIC_APP_URL}/api/signup/key-backup/${backupId}
-        </p>
-        <p style="color: #721c24; font-size: 12px; background: #f8d7da; padding: 10px; border-radius: 4px;">
-          ⚠️ This backup expires in 24 hours and can only be used once. Save your keys from this email first!
-        </p>
-      </div>
-      ` : ''}
       
       <hr style="margin: 30px 0;">
       <p style="font-size: 12px; color: #6c757d;">
@@ -308,36 +294,12 @@ export async function POST(request: NextRequest) {
         console.error('Error logging VIP code usage success:', usageLogError);
       }
 
-      // Create emergency backup before sending email
-      let backupId = null;
-      try {
-        const backupResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/signup/key-backup`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username: signupSession.username,
-            keys: backup_blob.data,
-            signup_token
-          })
-        });
-        
-        if (backupResponse.ok) {
-          const backupData = await backupResponse.json();
-          backupId = backupData.backup_id;
-          console.log('Emergency backup created:', backupId);
-        }
-      } catch (backupError) {
-        console.error('Error creating emergency backup:', backupError);
-        // Continue anyway
-      }
-
       // Send keys via email
       try {
-        await sendKeysEmail(signupSession.email, signupSession.username, backup_blob.data, backupId);
+        await sendKeysEmail(signupSession.email, signupSession.username, backup_blob.data);
       } catch (emailError) {
         console.error('Error sending keys email:', emailError);
-        // Don't fail the whole process for email errors - we have backup!
-        console.log('Email failed but emergency backup available:', backupId);
+        // Don't fail the whole process for email errors
       }
 
       // Clear backup_blob from session for security
