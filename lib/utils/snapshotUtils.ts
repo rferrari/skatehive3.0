@@ -299,26 +299,16 @@ export const useSnapshotProposal = (url: string) => {
     } finally {
       setLoading(false);
     }
-  }, [url, refreshKey]);
+  }, [url]);
 
   useEffect(() => {
-    let ignore = false;
-
-    const fetchProposalData = async () => {
-      if (isSnapshotUrl(url)) {
-        await fetchProposal();
-      } else {
-        setProposal(null);
-        setLoading(false);
-      }
-    };
-
-    fetchProposalData();
-
-    return () => {
-      ignore = true;
-    };
-  }, [url, fetchProposal]);
+    if (isSnapshotUrl(url)) {
+      fetchProposal();
+    } else {
+      setProposal(null);
+      setLoading(false);
+    }
+  }, [url, fetchProposal, refreshKey]); // refreshKey triggers re-fetch when refresh() is called
 
   const refresh = useCallback(() => {
     setRefreshKey(prev => prev + 1);
