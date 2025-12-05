@@ -110,7 +110,10 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({
   try {
     src = src.replace(/&amp;/g, "&");
     src = decodeURIComponent(src);
-  } catch (e) {}
+  } catch (e) {
+    // URL decode failed - use original src (may contain encoded characters)
+    console.debug('Video URL decoding failed, using original:', src);
+  }
 
   let finalSrc = src;
   if (src.startsWith("/ipfs/")) {
@@ -358,9 +361,8 @@ export function CoinCreationModal({
   const { switchChain } = useSwitchChain();
 
   // Create post link for description
-  const postLink = `${
-    typeof window !== "undefined" ? window.location.origin : ""
-  }/post/${postData.author}/${postData.permlink}`;
+  const postLink = `${typeof window !== "undefined" ? window.location.origin : ""
+    }/post/${postData.author}/${postData.permlink}`;
 
   // Function to auto-generate symbol from title
   const generateSymbol = useCallback((name: string): string => {
@@ -816,7 +818,10 @@ export function CoinCreationModal({
       try {
         cleanVideoUrl = cleanVideoUrl.replace(/&amp;/g, "&");
         cleanVideoUrl = decodeURIComponent(cleanVideoUrl);
-      } catch (e) {}
+      } catch (e) {
+        // URL decode failed - use original URL (may contain encoded characters)
+        console.debug('Video URL decoding failed, using original:', cleanVideoUrl);
+      }
 
       if (cleanVideoUrl.startsWith("/ipfs/")) {
         cleanVideoUrl = `https://ipfs.skatehive.app${cleanVideoUrl}`;
@@ -979,8 +984,8 @@ export function CoinCreationModal({
               {!isConnected
                 ? "Connect Wallet"
                 : chainId !== base.id
-                ? "Switch to Base Network"
-                : "Create Coin"}
+                  ? "Switch to Base Network"
+                  : "Create Coin"}
             </Button>
           ) : (
             <Button

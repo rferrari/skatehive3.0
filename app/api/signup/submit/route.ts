@@ -52,7 +52,7 @@ const createEmailTransporter = () => {
 // Send keys via email
 const sendKeysEmail = async (email: string, username: string, keys: any) => {
   const transporter = createEmailTransporter();
-  
+
   const emailTemplate = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #333;">Welcome to Skatehive! 🛹</h2>
@@ -215,7 +215,7 @@ export async function POST(request: NextRequest) {
 
       let signerData;
       const responseText = await signerResponse.text();
-      
+
       try {
         signerData = JSON.parse(responseText);
       } catch (parseError) {
@@ -344,7 +344,7 @@ export async function POST(request: NextRequest) {
 
     } catch (signerError: any) {
       console.error('Signer service error:', signerError);
-      
+
       // Log failed VIP code usage
       const { error: failureLogError } = await supabase
         .from('vip_code_uses')

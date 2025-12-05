@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { downloadLimiter, getClientIP } from '@/lib/utils/rate-limiter';
 
 // Environment-aware Instagram server configuration
 const getInstagramServers = () => {
@@ -83,6 +84,27 @@ async function tryDownloadFromServer(serverUrl: string, instagramUrl: string): P
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting check
+    const ip = getClientIP(request);
+    const { allowed, remaining, resetIn } = downloadLimiter.check(ip);
+
+    if (!allowed) {
+      console.warn('Instagram download rate limit exceeded for IP:', ip);
+      return NextResponse.json(
+        {
+          error: 'Download rate limit exceeded. Please try again later.',
+          retryAfter: Math.ceil(resetIn / 1000)
+        },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': Math.ceil(resetIn / 1000).toString(),
+            'X-RateLimit-Remaining': remaining.toString(),
+          }
+        }
+      );
+    }
+
     const { url } = await request.json();
 
     if (!url) {

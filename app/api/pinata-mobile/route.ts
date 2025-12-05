@@ -1,6 +1,28 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { uploadLimiter, getClientIP } from '@/lib/utils/rate-limiter';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+    // Rate limiting check
+    const ip = getClientIP(request);
+    const { allowed, remaining, resetIn } = uploadLimiter.check(ip);
+
+    if (!allowed) {
+        console.warn('📱 Mobile upload rate limit exceeded for IP:', ip);
+        return NextResponse.json(
+            {
+                error: 'Upload rate limit exceeded. Please try again later.',
+                retryAfter: Math.ceil(resetIn / 1000)
+            },
+            {
+                status: 429,
+                headers: {
+                    'Retry-After': Math.ceil(resetIn / 1000).toString(),
+                    'X-RateLimit-Remaining': remaining.toString(),
+                }
+            }
+        );
+    }
+
     const pinataApiKey = process.env.PINATA_API_KEY;
     const pinataSecretApiKey = process.env.PINATA_SECRET_API_KEY;
 
