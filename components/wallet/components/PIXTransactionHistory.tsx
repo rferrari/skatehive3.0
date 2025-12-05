@@ -216,9 +216,9 @@ const PIXTransactionHistory = ({ searchAccount, pixDashboardData, language }: { 
             </Table>
           </Box>
 
-            <Text fontSize="lg" fontWeight="bold" mb={2} textAlign="center">
-              {langContent.historyTitle}
-            </Text>
+          <Text fontSize="lg" fontWeight="bold" mb={2} textAlign="center">
+            {langContent.historyTitle}
+          </Text>
 
           <Box overflowX="auto" color="white" width="100%" maxWidth="1200px" mx="auto">
             <Table size="sm">

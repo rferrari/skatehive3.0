@@ -36,24 +36,24 @@ export const extractSnapshotProposalId = (url: string): string | null => {
     // https://snapshot.org/#/space.eth/proposal/0x123...
     // https://demo.snapshot.org/#/space.eth/proposal/0x123...
     // https://snapshot.box/#/space.eth/proposal/0x123...
-    
+
     const urlObj = new URL(url);
-    
+
     // Check if it's a Snapshot domain
     if (!urlObj.hostname.includes('snapshot')) {
       return null;
     }
-    
+
     // Extract from hash fragment or path
     const fragment = urlObj.hash || urlObj.pathname;
-    
+
     // Look for proposal ID pattern
     const proposalMatch = fragment.match(/\/proposal\/([a-zA-Z0-9]+)/);
-    
+
     if (proposalMatch && proposalMatch[1]) {
       return proposalMatch[1];
     }
-    
+
     return null;
   } catch (error) {
     return null;
@@ -96,7 +96,7 @@ export const fetchSnapshotProposal = async (proposalId: string): Promise<Snapsho
         }
       }
     `;
-    
+
     const response = await fetch('https://hub.snapshot.org/graphql', {
       method: 'POST',
       headers: {
@@ -113,7 +113,7 @@ export const fetchSnapshotProposal = async (proposalId: string): Promise<Snapsho
     }
 
     const data = await response.json();
-    
+
     if (data.errors) {
       console.error('GraphQL errors:', data.errors);
       return null;
@@ -151,9 +151,9 @@ export const checkUserVote = async (proposalId: string, userAddress: string): Pr
       },
       body: JSON.stringify({
         query,
-        variables: { 
-          proposal: proposalId, 
-          voter: userAddress.toLowerCase() 
+        variables: {
+          proposal: proposalId,
+          voter: userAddress.toLowerCase()
         },
       }),
     });
@@ -163,7 +163,7 @@ export const checkUserVote = async (proposalId: string, userAddress: string): Pr
     }
 
     const data = await response.json();
-    
+
     if (data.errors) {
       console.error('GraphQL errors:', data.errors);
       return null;
@@ -179,8 +179,8 @@ export const checkUserVote = async (proposalId: string, userAddress: string): Pr
 
 // Get voting power for a user on a specific proposal
 export const getUserVotingPower = async (
-  userAddress: string, 
-  spaceId: string, 
+  userAddress: string,
+  spaceId: string,
   proposalId: string
 ): Promise<number> => {
   try {
@@ -199,7 +199,7 @@ export const getUserVotingPower = async (
       },
       body: JSON.stringify({
         query,
-        variables: { 
+        variables: {
           voter: userAddress.toLowerCase(),
           space: spaceId,
           proposal: proposalId
@@ -212,7 +212,7 @@ export const getUserVotingPower = async (
     }
 
     const data = await response.json();
-    
+
     if (data.errors) {
       console.error('GraphQL errors:', data.errors);
       return 0;
@@ -242,7 +242,7 @@ export const getProposalStatus = (proposal: SnapshotProposal) => {
   const now = Math.floor(Date.now() / 1000);
   const startTime = proposal.start;
   const endTime = proposal.end;
-  
+
   if (now < startTime) {
     return {
       status: 'pending' as const,
@@ -252,7 +252,7 @@ export const getProposalStatus = (proposal: SnapshotProposal) => {
     const timeLeft = endTime - now;
     const days = Math.floor(timeLeft / 86400);
     const hours = Math.floor((timeLeft % 86400) / 3600);
-    
+
     return {
       status: 'active' as const,
       timeText: days > 0 ? `${days}d ${hours}h left` : `${hours}h left`,
@@ -278,7 +278,7 @@ export const useSnapshotProposal = (url: string) => {
       setError(null);
 
       const proposalId = extractSnapshotProposalId(url);
-      
+
       if (!proposalId) {
         setProposal(null);
         setError('Invalid Snapshot URL');
@@ -286,7 +286,7 @@ export const useSnapshotProposal = (url: string) => {
       }
 
       const proposalData = await fetchSnapshotProposal(proposalId);
-      
+
       if (proposalData) {
         setProposal(proposalData);
       } else {
