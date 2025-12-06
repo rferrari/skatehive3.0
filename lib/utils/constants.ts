@@ -20,14 +20,12 @@ export const AIRDROP_CONTRACT_ADDRESS = "0x8bD8F0D46c84feCBFbF270bac4Ad28bFA2c78
 export const SKATEHIVE_HOT_ADDRESS = "0xB4964e1ecA55Db36a94e8aeFfBFBAb48529a2f6c";
 export const USDC_CONTRACT_ADDRESS =
   '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913';
-export const SENDIT_CONTRACT_ADDRESS =
-  '0xba5b9b2d2d06a9021eb3190ea5fb0e02160839a4';
 export const SUPABASE = {
   url: process.env.NEXT_PUBLIC_SUPABASE_URL as string,
   public_key: process.env.NEXT_PUBLIC_SUPABASE_PUBLIC_KEY as string,
   private_key: process.env.SUPABASE_PRIVATE_KEY as string,
 };
-export const PINATA_URL = process.env.NEXT_PUBLIC_PINATA_URL || "ipfs.skatehive.app"; 
+export const PINATA_URL = process.env.NEXT_PUBLIC_PINATA_URL || "ipfs.skatehive.app";
 
 // Default vote weight for snaps and posts (percentage)
 export const DEFAULT_VOTE_WEIGHT = 51; 

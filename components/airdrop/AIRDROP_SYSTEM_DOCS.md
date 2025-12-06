@@ -8,7 +8,7 @@ A comprehensive multi-blockchain airdrop system for the Skatehive platform suppo
 
 ### **Multi-Chain Support**
 
-- **Base Network**: HIGHER, USDC, SENDIT (ERC-20 tokens)
+- **Base Network**: HIGHER, USDC (ERC-20 tokens)
 - **Hive Network**: HIVE, HBD (native tokens)
 
 ### **Advanced User Filtering**
@@ -71,7 +71,6 @@ types/
 
 - **HIGHER**: `0x0578d8A44db98B23BF096A382e016e29a5Ce0ffe`
 - **USDC**: `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`
-- **SENDIT**: `0xba5b9b2d2d06a9021eb3190ea5fb0e02160839a4`
 
 ## 🔧 Implementation Details
 

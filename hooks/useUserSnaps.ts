@@ -28,7 +28,7 @@ export default function useUserSnaps(username: string) {
     const filterMediaSnaps = (snaps: Discussion[]): Discussion[] => {
         // First apply quality filters (reputation and downvote filtering)
         const qualityFilteredSnaps = filterAutoComments(snaps);
-        
+
         // Then filter for media content
         return qualityFilteredSnaps.filter(snap => {
             try {
@@ -291,24 +291,24 @@ export default function useUserSnaps(username: string) {
 
             // Try API method first
             try {
-            userSnaps = await fetchUserSnapsFromAPI(username);
+                userSnaps = await fetchUserSnapsFromAPI(username);
 
-            // If API returns no results, try Hive blockchain as fallback
-            if (userSnaps.length === 0) {
-                try {
-                userSnaps = await fetchUserSnapsFromHive(username);
-                } catch (hiveError) {
-                // Still return empty array from API rather than failing completely
+                // If API returns no results, try Hive blockchain as fallback
+                if (userSnaps.length === 0) {
+                    try {
+                        userSnaps = await fetchUserSnapsFromHive(username);
+                    } catch (hiveError) {
+                        // Still return empty array from API rather than failing completely
+                    }
                 }
-            }
             } catch (apiError) {
-            // Fallback to Hive blockchain if API method fails
-            try {
-                userSnaps = await fetchUserSnapsFromHive(username);
-            } catch (hiveError) {
-                setHasMore(false);
-                return [];
-            }
+                // Fallback to Hive blockchain if API method fails
+                try {
+                    userSnaps = await fetchUserSnapsFromHive(username);
+                } catch (hiveError) {
+                    setHasMore(false);
+                    return [];
+                }
             }
 
             return userSnaps;
