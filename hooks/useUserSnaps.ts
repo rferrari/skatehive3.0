@@ -152,7 +152,7 @@ export default function useUserSnaps(username: string) {
     const fetchUserSnapsFromAPI = async (username: string): Promise<Discussion[]> => {
         // For the first load, get all posts without pagination
         // The API seems to work better without pagination parameters
-        let apiUrl = `https://api.skatehive.app/api/v1/feed/${encodeURIComponent(username)}`;
+        let apiUrl = `https://api.skatehive.app/api/v2/feed/${encodeURIComponent(username)}`;
 
         // Only add pagination if we already have snaps (for potential future pagination)
         if (snaps.length > 0) {
