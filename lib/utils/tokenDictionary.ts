@@ -1,4 +1,5 @@
 import { ERC20ABI } from './abis/ERC20ABI';
+import { GNARS_ERC20_ADDRESS, HIGHER_ERC20_ADDRESS, SKATEHIVE_ERC20_ADDRESS } from './constants';
 
 export interface TokenInfo {
   address: string;
@@ -10,9 +11,23 @@ export interface TokenInfo {
 
 export const tokenDictionary: { [key: string]: TokenInfo } = {
   HIGHER: {
-    address: '0x0578d8A44db98B23BF096A382e016e29a5Ce0ffe',
+    address: HIGHER_ERC20_ADDRESS,
     abi: ERC20ABI,
     tokenLogo: "/logos/higher.png",
+    decimals: 18,
+    network: "base"
+  },
+  SKATEHIVE: {
+    address: SKATEHIVE_ERC20_ADDRESS,
+    abi: ERC20ABI,
+    tokenLogo: "/logos/SKATE_HIVE_CIRCLE.svg",
+    decimals: 18,
+    network: "base"
+  },
+  GNARS: {
+    address: GNARS_ERC20_ADDRESS,
+    abi: ERC20ABI,
+    tokenLogo: "https://www.gnars.wtf/images/logo.png",
     decimals: 18,
     network: "base"
   },
