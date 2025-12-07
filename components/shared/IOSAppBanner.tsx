@@ -42,26 +42,28 @@ export default function IOSAppBanner() {
     }
 
     const ua = navigator.userAgent;
-    
+
     // Check if iOS device (iPhone or iPad)
-    const isIOS = /iPhone|iPad/i.test(ua) || 
-      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); // iPad with iPadOS 13+
-    
+    const isIOS =
+      /iPhone|iPad/i.test(ua) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1); // iPad with iPadOS 13+
+
     // Check if Safari - Safari has the native smart app banner from meta tag
     // Safari UA contains "Safari" but NOT "CriOS" (Chrome) or "FxiOS" (Firefox)
-    const isSafari = /Safari/i.test(ua) && !/CriOS|FxiOS|OPiOS|EdgiOS/i.test(ua);
-    
+    const isSafari =
+      /Safari/i.test(ua) && !/CriOS|FxiOS|OPiOS|EdgiOS/i.test(ua);
+
     // Skip if not iOS (unless debug mode)
     if (!isIOS && !DEBUG_FORCE_SHOW) return;
-    
+
     // Skip if Safari on iOS - it will use the native meta tag banner
     if (isIOS && isSafari && !DEBUG_FORCE_SHOW) return;
 
     // Check if user is already in the native app (standalone mode)
-    const isStandalone = 
+    const isStandalone =
       (window.navigator as any).standalone === true ||
       window.matchMedia("(display-mode: standalone)").matches;
-    
+
     if (isStandalone) return;
 
     // Check if banner was dismissed
@@ -81,10 +83,11 @@ export default function IOSAppBanner() {
 
   const handleDismiss = useCallback(() => {
     // Dismiss for 7 days
-    const dismissUntil = Date.now() + DISMISS_DURATION_DAYS * 24 * 60 * 60 * 1000;
+    const dismissUntil =
+      Date.now() + DISMISS_DURATION_DAYS * 24 * 60 * 60 * 1000;
     localStorage.setItem(BANNER_DISMISSED_KEY, dismissUntil.toString());
     setIsAnimating(false);
-    
+
     // Wait for fade out animation
     setTimeout(() => setIsVisible(false), 300);
   }, []);
@@ -156,17 +159,22 @@ export default function IOSAppBanner() {
             </Text>
             <HStack spacing={0.5}>
               {[1, 2, 3, 4, 5].map((star) => (
-                <Box 
-                  key={star} 
-                  as="span" 
-                  color="#FFD700" 
+                <Box
+                  key={star}
+                  as="span"
+                  color="#FFD700"
                   fontSize="10px"
                   fontFamily="system-ui, -apple-system, sans-serif"
                 >
                   ★
                 </Box>
               ))}
-              <Text fontSize="xs" color="gray.500" ml={1} fontFamily="system-ui, -apple-system, sans-serif">
+              <Text
+                fontSize="xs"
+                color="gray.500"
+                ml={1}
+                fontFamily="system-ui, -apple-system, sans-serif"
+              >
                 FREE
               </Text>
             </HStack>
