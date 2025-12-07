@@ -106,6 +106,7 @@ export const metadata: Metadata = {
     "fc:frame": JSON.stringify(frameObject),
     "fc:frame:image": `${BASE_URL}/ogimage.png`,
     "fc:frame:post_url": BASE_URL,
+    "apple-itunes-app": "app-id=6751173076",
   },
 };
 

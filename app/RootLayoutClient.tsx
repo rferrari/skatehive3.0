@@ -13,6 +13,7 @@ import SplashScreen from "@/components/layout/SplashScreen";
 import SearchOverlay from "@/components/shared/SearchOverlay";
 import AirdropModal from "@/components/airdrop/AirdropModal";
 import CommunityToasts from "@/components/homepage/CommunityToasts";
+import IOSAppBanner from "@/components/shared/IOSAppBanner";
 import { Providers } from "./providers";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import { Analytics } from "@vercel/analytics/next";
@@ -192,6 +193,9 @@ function InnerLayout({
           leaderboardData={airdropProps.leaderboardData}
         />
       )}
+
+      {/* iOS App Store Banner - iPhone only */}
+      <IOSAppBanner />
 
       {/* Global Community Toast Notifications - Desktop only */}
       <CommunityToasts />
