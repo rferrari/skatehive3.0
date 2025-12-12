@@ -15,6 +15,16 @@ export interface ProcessingResult {
   errorType?: 'connection' | 'timeout' | 'server_error' | 'upload_rejected' | 'file_too_large' | 'unknown';
 }
 
+/** Server type identifiers */
+export type ServerKey = 'macmini' | 'oracle' | 'pi';
+
+/** Server configuration - SINGLE SOURCE OF TRUTH for server order */
+export const SERVER_CONFIG: Array<{ key: ServerKey; name: string; emoji: string; priority: string }> = [
+  { key: 'macmini', name: 'Mac Mini', emoji: '🍎', priority: 'PRIMARY' },
+  { key: 'oracle', name: 'Oracle', emoji: '🔮', priority: 'SECONDARY' },
+  { key: 'pi', name: 'Raspberry Pi', emoji: '🫐', priority: 'TERTIARY' },
+];
+
 /**
  * Enhanced processing options interface
  */
@@ -26,10 +36,14 @@ export interface EnhancedProcessingOptions {
   viewport?: string;
   connectionType?: string;
   onProgress?: (progress: number, stage: string) => void;
+  /** Called when attempting a new server */
+  onServerAttempt?: (serverKey: ServerKey, serverName: string, priority: string) => void;
+  /** Called when a server fails */
+  onServerFailed?: (serverKey: ServerKey, error?: string) => void;
 }
 
 /**
- * Process non-MP4 video on server - try Mac Mini first (has SSE progress), fallback to Oracle, then Pi
+ * Process non-MP4 video on server - tries servers in order defined by SERVER_CONFIG
  */
 export async function processVideoOnServer(
   file: File,
@@ -40,49 +54,64 @@ export async function processVideoOnServer(
   console.log('🔄 Server processing started:', file.name);
 
   // PRIMARY: Mac Mini M4 (has real-time SSE progress streaming)
-  console.log('🍎 Attempting Mac Mini M4 (PRIMARY) - https://minivlad.tail9656d3.ts.net/video/transcode');
+  const primaryServer = SERVER_CONFIG[0];
+  console.log(`${primaryServer.emoji} Attempting ${primaryServer.name} (${primaryServer.priority}) - https://minivlad.tail9656d3.ts.net/video/transcode`);
+  enhancedOptions?.onServerAttempt?.(primaryServer.key, primaryServer.name, primaryServer.priority);
+  
   const primaryResult = await tryServer(
     'https://minivlad.tail9656d3.ts.net/video',
     file,
     username,
-    'Mac Mini M4 (Primary)',
+    `${primaryServer.name} (${primaryServer.priority})`,
     enhancedOptions
   );
 
   if (primaryResult.success) {
-    console.log('✅ Mac Mini succeeded - no need to try other servers');
+    console.log(`✅ ${primaryServer.name} succeeded - no need to try other servers`);
     return primaryResult;
   }
+  
+  enhancedOptions?.onServerFailed?.(primaryServer.key, primaryResult.error);
 
   // SECONDARY: Oracle Cloud (needs SSE update)
-  console.log('🔮 Mac Mini failed, trying Oracle (SECONDARY) - https://146-235-239-243.sslip.io/transcode');
+  const secondaryServer = SERVER_CONFIG[1];
+  console.log(`${secondaryServer.emoji} ${primaryServer.name} failed, trying ${secondaryServer.name} (${secondaryServer.priority}) - https://146-235-239-243.sslip.io/transcode`);
+  enhancedOptions?.onServerAttempt?.(secondaryServer.key, secondaryServer.name, secondaryServer.priority);
+  
   const secondaryResult = await tryServer(
     'https://146-235-239-243.sslip.io',
     file,
     username,
-    'Oracle (Secondary)',
+    `${secondaryServer.name} (${secondaryServer.priority})`,
     enhancedOptions
   );
 
   if (secondaryResult.success) {
-    console.log('✅ Oracle succeeded');
+    console.log(`✅ ${secondaryServer.name} succeeded`);
     return secondaryResult;
   }
+  
+  enhancedOptions?.onServerFailed?.(secondaryServer.key, secondaryResult.error);
 
   // TERTIARY: Raspberry Pi (backup)
-  console.log('🫐 Oracle failed, trying Raspberry Pi (TERTIARY) - https://vladsberry.tail83ea3e.ts.net/video/transcode');
+  const tertiaryServer = SERVER_CONFIG[2];
+  console.log(`${tertiaryServer.emoji} ${secondaryServer.name} failed, trying ${tertiaryServer.name} (${tertiaryServer.priority}) - https://vladsberry.tail83ea3e.ts.net/video/transcode`);
+  enhancedOptions?.onServerAttempt?.(tertiaryServer.key, tertiaryServer.name, tertiaryServer.priority);
+  
   const tertiaryResult = await tryServer(
     'https://vladsberry.tail83ea3e.ts.net/video',
     file,
     username,
-    'Raspberry Pi (Tertiary)',
+    `${tertiaryServer.name} (${tertiaryServer.priority})`,
     enhancedOptions
   );
 
   if (tertiaryResult.success) {
-    console.log('✅ Raspberry Pi succeeded');
+    console.log(`✅ ${tertiaryServer.name} succeeded`);
     return tertiaryResult;
   }
+  
+  enhancedOptions?.onServerFailed?.(tertiaryServer.key, tertiaryResult.error);
 
   // All servers failed - return the most informative error with 'all' indicator
   console.error('❌ All transcoding servers failed!');

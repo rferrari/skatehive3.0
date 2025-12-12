@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { SERVER_CONFIG, ServerKey } from "@/lib/utils/videoProcessing";
 
 export interface TerminalLine {
   timestamp: Date;
   type: "info" | "success" | "error" | "warning" | "server";
-  server?: "oracle" | "macmini" | "pi" | "pinata";
+  server?: ServerKey | "pinata";
   message: string;
   status?: "pending" | "trying" | "success" | "failed";
 }
@@ -27,11 +28,39 @@ export interface VideoUploadTerminalProps {
   };
 }
 
+// Fun loading messages to entertain users during upload
+const funLoadingMessages = [
+  "🛹 Waxing the digital ledge...",
+  "🔥 Teaching pixels to kickflip...",
+  "⚡ Summoning the skateboard gods...",
+  "🎬 Your video is doing a manual across the internet...",
+  "🌀 Converting gnarliness to bytes...",
+  "💫 Spinning up the halfpipe servers...",
+  "🎯 Landing this upload like a first try tre flip...",
+  "🌊 Your clip is riding the data waves...",
+  "🏆 Processing 100% pure skateboarding vibes...",
+  "🔧 Tightening the truck bolts on your video...",
+  "🎪 Your edit is doing a circus kickflip...",
+  "🚀 Launching to IPFS at Mach shred...",
+  "🧪 Distilling pure stoke into frames...",
+  "🎸 Your video is shredding (literally)...",
+  "🌈 Adding extra steeze to each pixel...",
+  "🎭 Rehearsing the perfect upload...",
+  "🦄 A wild skateboard video appears...",
+  "🍕 Hold tight, this is better than waiting for pizza...",
+  "⏳ Good things come to those who wait (and skate)...",
+  "🔮 The upload oracle predicts: success!",
+  "🎲 Rolling the dice on a clean upload...",
+  "🧙 Casting upload spell... ✨",
+  "🎪 The server is doing a circus kickflip with your file...",
+];
+
 // Animated skateboard loading bar - uses real progress from upload
 const SkateboardLoader = ({ serverName, progress = 0, stage }: { serverName?: string; progress?: number; stage?: string }) => {
   const [skateFrame, setSkateFrame] = useState(0);
   const [lastProgress, setLastProgress] = useState(progress);
   const [stuckTime, setStuckTime] = useState(0);
+  const [messageIndex, setMessageIndex] = useState(0);
   
   // Skateboard animation frames (spinning effect)
   const skateFrames = ['🛹', '🛹', '🛹', '💨🛹', '🛹', '✨🛹', '🛹', '🔥🛹'];
@@ -56,9 +85,15 @@ const SkateboardLoader = ({ serverName, progress = 0, stage }: { serverName?: st
       setSkateFrame(prev => (prev + 1) % skateFrames.length);
     }, spinDelay);
     
+    // Rotate fun messages every 3 seconds
+    const messageInterval = setInterval(() => {
+      setMessageIndex(prev => (prev + 1) % funLoadingMessages.length);
+    }, 3000);
+    
     return () => {
       clearInterval(stuckInterval);
       clearInterval(skateInterval);
+      clearInterval(messageInterval);
     };
   }, [progress, lastProgress, stuckTime]);
 
@@ -74,18 +109,6 @@ const SkateboardLoader = ({ serverName, progress = 0, stage }: { serverName?: st
     return '░';
   }).join('');
 
-  const serverLabel = serverName ? ` → ${serverName}` : '';
-  
-  // Show stage info if available
-  const stageLabels: Record<string, string> = {
-    receiving: 'receiving file',
-    transcoding: 'transcoding video',
-    uploading: 'uploading to IPFS',
-    complete: 'complete!',
-    error: 'error',
-  };
-  const stageInfo = stage && stageLabels[stage] ? ` (${stageLabels[stage]})` : (stuckTime > 4 ? ' (processing...)' : '');
-
   return (
     <div className="font-mono text-xs my-1">
       <div className="flex items-center gap-2">
@@ -95,7 +118,7 @@ const SkateboardLoader = ({ serverName, progress = 0, stage }: { serverName?: st
         <span className="text-yellow-400">{Math.floor(displayProgress)}%</span>
       </div>
       <div className="text-gray-400 mt-0.5 animate-pulse">
-        ⏳ Processing{serverLabel}{stageInfo}... Keep this tab open
+        {funLoadingMessages[messageIndex]}
       </div>
     </div>
   );
@@ -240,24 +263,18 @@ export const VideoUploadTerminal: React.FC<VideoUploadTerminalProps> = ({
         )}
       </div>
 
-      {/* Server Status Bar */}
+      {/* Server Status Bar - dynamically ordered from SERVER_CONFIG */}
       <div className="px-3 py-1.5 bg-gray-800/50 border-b border-gray-700 flex gap-3 text-xs font-mono flex-wrap">
         <div className="flex items-center gap-1">
           <ServerIcon server="pinata" status={getServerStatus(lines, "pinata")} />
           <span className="text-gray-400">IPFS</span>
         </div>
-        <div className="flex items-center gap-1">
-          <ServerIcon server="oracle" status={getServerStatus(lines, "oracle")} />
-          <span className="text-gray-400">Oracle</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <ServerIcon server="macmini" status={getServerStatus(lines, "macmini")} />
-          <span className="text-gray-400">Mac</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <ServerIcon server="pi" status={getServerStatus(lines, "pi")} />
-          <span className="text-gray-400">Pi</span>
-        </div>
+        {SERVER_CONFIG.map((server) => (
+          <div key={server.key} className="flex items-center gap-1">
+            <ServerIcon server={server.key} status={getServerStatus(lines, server.key)} />
+            <span className="text-gray-400">{server.name.split(' ')[0]}</span>
+          </div>
+        ))}
       </div>
 
       {/* Terminal Content */}
@@ -392,9 +409,9 @@ function isLoading(lines: TerminalLine[]): boolean {
   
   if (hasCompletion) return false;
   
-  // Check if any server has "trying" status
-  const servers = ["oracle", "macmini", "pi", "pinata"];
-  for (const server of servers) {
+  // Check if any server has "trying" status - use SERVER_CONFIG for order
+  const allServers = ["pinata", ...SERVER_CONFIG.map(s => s.key)];
+  for (const server of allServers) {
     const status = getServerStatus(lines, server);
     if (status === "trying") return true;
   }
@@ -412,17 +429,17 @@ function isLoading(lines: TerminalLine[]): boolean {
   return false;
 }
 
-// Helper to get the name of the server currently being tried
+// Helper to get the name of the server currently being tried - uses SERVER_CONFIG
 function getCurrentServer(lines: TerminalLine[]): string | undefined {
+  // Build server names map dynamically from SERVER_CONFIG
   const serverNames: Record<string, string> = {
-    oracle: "Oracle",
-    macmini: "Mac Mini",
-    pi: "Raspberry Pi",
     pinata: "Pinata IPFS",
+    ...Object.fromEntries(SERVER_CONFIG.map(s => [s.key, s.name]))
   };
   
-  const servers = ["pinata", "oracle", "macmini", "pi"];
-  for (const server of servers) {
+  // Check in order: pinata first, then SERVER_CONFIG order
+  const allServers = ["pinata", ...SERVER_CONFIG.map(s => s.key)];
+  for (const server of allServers) {
     const status = getServerStatus(lines, server);
     if (status === "trying") return serverNames[server];
   }

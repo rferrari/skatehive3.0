@@ -17,6 +17,8 @@ import {
   processVideoOnServer,
   EnhancedProcessingOptions,
   ProcessingResult,
+  SERVER_CONFIG,
+  ServerKey,
 } from "@/lib/utils/videoProcessing";
 import { handleVideoUpload } from "@/lib/utils/videoUploadUtils";
 import { useHiveUser } from "@/contexts/UserContext";
@@ -142,23 +144,31 @@ function generateFunnyErrorMessage(errorDetails: ErrorDetails): string {
     return roasts[Math.floor(Math.random() * roasts.length)];
   };
 
-  // Build server chain status (Order: Mac Mini → Oracle → Pi)
+  // Build server chain status dynamically from SERVER_CONFIG
   const getServerChainStatus = (): string => {
     if (uploadType === 'mp4_direct') {
       return "📌 Pinata IPFS → ❌ (direct MP4 upload)";
     }
+    
+    // Build chain display from SERVER_CONFIG
+    const chainParts = SERVER_CONFIG.map(s => `${s.emoji} ${s.name} → ❌`);
+    const fullChain = chainParts.join(' | ');
+    
     if (failedServer === 'all') {
-      return "🍎 Mac Mini → ❌ | 🔮 Oracle → ❌ | 🫐 Pi → ❌";
+      return fullChain;
     }
-    if (failedServer === 'macmini') {
-      return "🍎 Mac Mini → ❌ (stopped here - should have tried Oracle & Pi!)";
+    
+    // Find which server failed and show chain up to that point
+    const failedIndex = SERVER_CONFIG.findIndex(s => s.key === failedServer);
+    if (failedIndex >= 0) {
+      const partialChain = chainParts.slice(0, failedIndex + 1).join(' | ');
+      const remaining = SERVER_CONFIG.slice(failedIndex + 1).map(s => s.name).join(' & ');
+      if (remaining) {
+        return `${partialChain} (stopped here - should have tried ${remaining}!)`;
+      }
+      return partialChain;
     }
-    if (failedServer === 'oracle') {
-      return "🍎 Mac Mini → ❌ | 🔮 Oracle → ❌ (stopped here - should have tried Pi!)";
-    }
-    if (failedServer === 'pi') {
-      return "🍎 Mac Mini → ❌ | 🔮 Oracle → ❌ | 🫐 Pi → ❌";
-    }
+    
     return `Upload type: ${uploadType}, Server: ${failedServer || 'unknown'}`;
   };
 
@@ -428,11 +438,20 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
           onProgress: (progress, stage) => {
             terminal.updateProgress(progress, stage);
             console.log(`📊 Server progress: ${progress}% - ${stage}`);
+          },
+          // Dynamic server attempt notifications
+          onServerAttempt: (serverKey, serverName, priority) => {
+            const serverConfig = SERVER_CONFIG.find(s => s.key === serverKey);
+            const emoji = serverConfig?.emoji || '🔄';
+            terminal.addLine(`${emoji} Trying ${serverName} (${priority})...`, "server", serverKey, "trying");
+          },
+          // Dynamic server failure notifications  
+          onServerFailed: (serverKey) => {
+            const serverConfig = SERVER_CONFIG.find(s => s.key === serverKey);
+            const name = serverConfig?.name || serverKey;
+            terminal.addLine(`✗ ${name} failed`, "error", serverKey, "failed");
           }
         };
-
-        // Show server attempts in terminal
-        terminal.addLine("🔮 Trying Oracle (PRIMARY)...", "server", "oracle", "trying");
 
         // For non-MP4 files, use server processing with streaming progress
         const result = await processVideoOnServer(
@@ -453,21 +472,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
             hash: result.hash,
           });
         } else {
-          // Log which servers failed in terminal
-          if (result.failedServer === 'all' || result.failedServer === 'pi') {
-            terminal.addLine("✗ Oracle failed", "error", "oracle", "failed");
-            terminal.addLine("🍎 Trying Mac Mini (SECONDARY)...", "server", "macmini", "trying");
-            terminal.addLine("✗ Mac Mini failed", "error", "macmini", "failed");
-            terminal.addLine("🫐 Trying Raspberry Pi (TERTIARY)...", "server", "pi", "trying");
-            terminal.addLine("✗ Raspberry Pi failed", "error", "pi", "failed");
-          } else if (result.failedServer === 'macmini') {
-            terminal.addLine("✗ Oracle failed", "error", "oracle", "failed");
-            terminal.addLine("🍎 Trying Mac Mini...", "server", "macmini", "trying");
-            terminal.addLine("✗ Mac Mini failed", "error", "macmini", "failed");
-          } else if (result.failedServer === 'oracle') {
-            terminal.addLine("✗ Oracle failed", "error", "oracle", "failed");
-          }
-          
+          // Server failures are already logged via onServerAttempt/onServerFailed callbacks
           // Create error details for the message
           errorDetails = {
             errorType: result.errorType,
