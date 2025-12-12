@@ -138,24 +138,25 @@ export const VideoUploadTerminal: React.FC<VideoUploadTerminalProps> = ({
   const [countdown, setCountdown] = useState<number | null>(null);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Check if upload was successful
-  const isSuccess = lines.some(l => 
+  // Check if upload was FULLY successful (final success, not intermediate steps)
+  const isFullyComplete = lines.some(l => 
     l.message.includes("Video ready!") || 
     l.message.includes("🎉") ||
     l.message.includes("IPFS CID:") ||
-    (l.type === "success" && l.message.includes("✓"))
+    l.message.includes("Upload complete") ||
+    (l.type === "success" && l.message.includes("✓ IPFS upload successful"))
   );
 
   // Check if there was an error
   const hasError = lines.some(l => l.type === "error");
 
-  // Auto-close countdown on success
+  // Auto-close countdown on success - only after FULL completion
   useEffect(() => {
-    // Only start countdown if success, no errors, auto-close enabled, and onClose provided
-    if (isSuccess && !hasError && autoCloseOnSuccess && onClose && countdown === null) {
+    // Only start countdown if fully complete, no errors, auto-close enabled, and onClose provided
+    if (isFullyComplete && !hasError && autoCloseOnSuccess && onClose && countdown === null) {
       setCountdown(autoCloseDelay);
     }
-  }, [isSuccess, hasError, autoCloseOnSuccess, onClose, autoCloseDelay, countdown]);
+  }, [isFullyComplete, hasError, autoCloseOnSuccess, onClose, autoCloseDelay, countdown]);
 
   // Handle countdown timer
   useEffect(() => {
@@ -336,7 +337,7 @@ export const VideoUploadTerminal: React.FC<VideoUploadTerminalProps> = ({
               <span className="text-green-400">
                 🎉 Success! Closing in {countdown}s
               </span>
-            ) : countdown === null && isSuccess ? (
+            ) : countdown === null && isFullyComplete ? (
               <span className="text-green-400">✅ Upload complete</span>
             ) : null}
           </div>
