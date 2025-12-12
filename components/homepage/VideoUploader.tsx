@@ -60,23 +60,32 @@ function generateFunnyErrorMessage(errorDetails: ErrorDetails): string {
     oracle: [
       "🔮 The Oracle has spoken... and it said 'nope'.",
       "🔮 Oracle decided to take a cosmic nap.",
+      "🔮 Oracle went full Morpheus and unplugged itself.",
     ],
     macmini: [
       "🍎 Vlad's Mac Mini is being dramatic again. Go mock him on Discord!",
       "🍎 The M4 chip decided it needed a coffee break.",
+      "🍎 Mac Mini said 'I'm a premium device, I don't do THIS.'",
     ],
     pi: [
       "🫐 The Raspberry Pi tried its best... but it's still a tiny computer.",
       "🫐 Pi is probably overheating in Vlad's closet.",
+      "🫐 Pi said 'I'm not THAT kind of dessert!'",
     ],
     pinata: [
       "📌 Pinata IPFS said 'no piñata for you today!'",
       "📌 The IPFS upload service is taking a siesta.",
+      "📌 Pinata went to find better candy. 🍬",
     ],
     all: [
-      "💀 ALL THREE SERVERS FAILED!",
-      "🔥 Oracle, Mac Mini, AND Pi all crashed!",
-      "☠️ Complete server meltdown!",
+      "💀 ALL THREE SERVERS FAILED! This is fine... 🔥🐕🔥",
+      "🔥 Mac Mini, Oracle, AND Pi all crashed! Time to touch grass.",
+      "☠️ Complete server apocalypse! Even the skateboards are crying.",
+      "🎭 The servers had a meeting and decided to collectively bail.",
+      "🪦 RIP your upload. Mac Mini, Oracle, and Pi all said 'not today fam'.",
+      "🤡 Three servers walk into a bar... and none of them could transcode your video.",
+      "🛹 Your video was so gnarly, it broke ALL our servers. Respect.",
+      "💩 Well, that escalated quickly. All servers went 💨",
     ]
   };
 
@@ -133,22 +142,22 @@ function generateFunnyErrorMessage(errorDetails: ErrorDetails): string {
     return roasts[Math.floor(Math.random() * roasts.length)];
   };
 
-  // Build server chain status
+  // Build server chain status (Order: Mac Mini → Oracle → Pi)
   const getServerChainStatus = (): string => {
     if (uploadType === 'mp4_direct') {
       return "📌 Pinata IPFS → ❌ (direct MP4 upload)";
     }
     if (failedServer === 'all') {
-      return "🔮 Oracle → ❌ | 🍎 Mac Mini → ❌ | 🫐 Pi → ❌";
-    }
-    if (failedServer === 'oracle') {
-      return "🔮 Oracle → ❌ (stopped here - should have tried Mac Mini & Pi!)";
+      return "🍎 Mac Mini → ❌ | 🔮 Oracle → ❌ | 🫐 Pi → ❌";
     }
     if (failedServer === 'macmini') {
-      return "🔮 Oracle → ❌ | 🍎 Mac Mini → ❌ (stopped here - should have tried Pi!)";
+      return "🍎 Mac Mini → ❌ (stopped here - should have tried Oracle & Pi!)";
+    }
+    if (failedServer === 'oracle') {
+      return "🍎 Mac Mini → ❌ | 🔮 Oracle → ❌ (stopped here - should have tried Pi!)";
     }
     if (failedServer === 'pi') {
-      return "🔮 Oracle → ❌ | 🍎 Mac Mini → ❌ | 🫐 Pi → ❌";
+      return "🍎 Mac Mini → ❌ | 🔮 Oracle → ❌ | 🫐 Pi → ❌";
     }
     return `Upload type: ${uploadType}, Server: ${failedServer || 'unknown'}`;
   };

@@ -29,7 +29,7 @@ export interface EnhancedProcessingOptions {
 }
 
 /**
- * Process non-MP4 video on server - try Oracle first, fallback to Mac Mini, then Pi
+ * Process non-MP4 video on server - try Mac Mini first (has SSE progress), fallback to Oracle, then Pi
  */
 export async function processVideoOnServer(
   file: File,
@@ -39,38 +39,38 @@ export async function processVideoOnServer(
 
   console.log('🔄 Server processing started:', file.name);
 
-  // PRIMARY: Oracle Cloud (fast, reliable)
-  console.log('🔮 Attempting Oracle (PRIMARY) - https://146-235-239-243.sslip.io/transcode');
+  // PRIMARY: Mac Mini M4 (has real-time SSE progress streaming)
+  console.log('🍎 Attempting Mac Mini M4 (PRIMARY) - https://minivlad.tail9656d3.ts.net/video/transcode');
   const primaryResult = await tryServer(
-    'https://146-235-239-243.sslip.io',
+    'https://minivlad.tail9656d3.ts.net/video',
     file,
     username,
-    'Oracle (Primary)',
+    'Mac Mini M4 (Primary)',
     enhancedOptions
   );
 
   if (primaryResult.success) {
-    console.log('✅ Oracle succeeded - no need to try other servers');
+    console.log('✅ Mac Mini succeeded - no need to try other servers');
     return primaryResult;
   }
 
-  // SECONDARY: Mac Mini M4 (powerful, home network)
-  console.log('🍎 Oracle failed, trying Mac Mini M4 (SECONDARY) - https://minivlad.tail9656d3.ts.net/video/transcode');
+  // SECONDARY: Oracle Cloud (needs SSE update)
+  console.log('🔮 Mac Mini failed, trying Oracle (SECONDARY) - https://146-235-239-243.sslip.io/transcode');
   const secondaryResult = await tryServer(
-    'https://minivlad.tail9656d3.ts.net/video',
+    'https://146-235-239-243.sslip.io',
     file,
     username,
-    'Mac Mini M4 (Secondary)',
+    'Oracle (Secondary)',
     enhancedOptions
   );
 
   if (secondaryResult.success) {
-    console.log('✅ Mac Mini succeeded');
+    console.log('✅ Oracle succeeded');
     return secondaryResult;
   }
 
   // TERTIARY: Raspberry Pi (backup)
-  console.log('🫐 Mac Mini failed, trying Raspberry Pi (TERTIARY) - https://vladsberry.tail83ea3e.ts.net/video/transcode');
+  console.log('🫐 Oracle failed, trying Raspberry Pi (TERTIARY) - https://vladsberry.tail83ea3e.ts.net/video/transcode');
   const tertiaryResult = await tryServer(
     'https://vladsberry.tail83ea3e.ts.net/video',
     file,
