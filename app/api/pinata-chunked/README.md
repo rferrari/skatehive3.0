@@ -112,11 +112,10 @@ Uploaded files include metadata:
 
 - **CID Version**: 1 (CIDv1)
 - **API Endpoint**: `https://api.pinata.cloud/pinning/pinFileToIPFS`
-- **Authentication**: API Key + Secret API Key
+- **Authentication**: JWT Bearer Token
 
 Required environment variables:
-- `PINATA_API_KEY`
-- `PINATA_SECRET_API_KEY`
+- `PINATA_JWT` - Get from Pinata dashboard > API Keys
 
 ## Usage Examples
 

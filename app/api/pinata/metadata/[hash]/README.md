@@ -59,7 +59,7 @@ Fetches metadata for a specific IPFS hash.
 **Response (500 Error):**
 ```json
 {
-  "error": "Pinata API credentials are missing"
+  "error": "Pinata credentials not configured"
 }
 ```
 
@@ -205,8 +205,8 @@ GET https://api.pinata.cloud/data/pinList?hashContains={hash}
 ```
 
 **Authentication:**
-- Headers: `pinata_api_key`, `pinata_secret_api_key`
-- Required env vars: `PINATA_API_KEY`, `PINATA_SECRET_API_KEY`
+- Header: `Authorization: Bearer {PINATA_JWT}`
+- Required env var: `PINATA_JWT`
 
 ## Timeout Protection
 

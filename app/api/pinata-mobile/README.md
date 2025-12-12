@@ -51,7 +51,7 @@ const response = await fetch('/api/pinata-mobile', {
 **500 - Missing Credentials:**
 ```json
 {
-  "error": "Pinata API credentials are missing"
+  "error": "Pinata credentials not configured"
 }
 ```
 
@@ -166,13 +166,13 @@ console.log('📱 Mobile Pinata API request:', {
 
 **Environment Variables:**
 ```bash
-PINATA_API_KEY=your_api_key
-PINATA_SECRET_API_KEY=your_secret_key
+# Single JWT for authentication (get from Pinata dashboard > API Keys)
+PINATA_JWT=your_pinata_jwt_token
 ```
 
 **IPFS Gateway:**
 ```
-https://gateway.pinata.cloud/ipfs/{IpfsHash}
+https://ipfs.skatehive.app/ipfs/{IpfsHash}
 ```
 
 ---

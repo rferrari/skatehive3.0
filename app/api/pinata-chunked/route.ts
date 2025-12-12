@@ -2,12 +2,11 @@ import { NextResponse } from 'next/server';
 
 // Chunked upload handler for large files
 export async function POST(request: Request) {
-    const pinataApiKey = process.env.PINATA_API_KEY;
-    const pinataSecretApiKey = process.env.PINATA_SECRET_API_KEY;
+    const pinataJwt = process.env.PINATA_JWT;
 
-    if (!pinataApiKey || !pinataSecretApiKey) {
-        console.error('Pinata API credentials are missing');
-        return NextResponse.json({ error: 'Pinata API credentials are missing' }, { status: 500 });
+    if (!pinataJwt) {
+        console.error('PINATA_JWT is missing from environment');
+        return NextResponse.json({ error: 'Pinata credentials not configured' }, { status: 500 });
     }
 
     try {
@@ -55,8 +54,7 @@ export async function POST(request: Request) {
             const uploadResponse = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
                 method: 'POST',
                 headers: {
-                    'pinata_api_key': pinataApiKey,
-                    'pinata_secret_api_key': pinataSecretApiKey,
+                    'Authorization': `Bearer ${pinataJwt}`,
                 },
                 body: uploadFormData,
             });

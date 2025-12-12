@@ -8,11 +8,10 @@ export async function GET(
     request: Request,
     { params }: { params: Promise<{ hash: string }> }
 ) {
-    const pinataApiKey = process.env.PINATA_API_KEY;
-    const pinataSecretApiKey = process.env.PINATA_SECRET_API_KEY;
+    const pinataJwt = process.env.PINATA_JWT;
 
-    if (!pinataApiKey || !pinataSecretApiKey) {
-        return NextResponse.json({ error: 'Pinata API credentials are missing' }, { status: 500 });
+    if (!pinataJwt) {
+        return NextResponse.json({ error: 'Pinata credentials not configured' }, { status: 500 });
     }
 
     try {
@@ -40,8 +39,7 @@ export async function GET(
         const response = await fetch(`https://api.pinata.cloud/data/pinList?hashContains=${hash}`, {
             method: 'GET',
             headers: {
-                'pinata_api_key': pinataApiKey,
-                'pinata_secret_api_key': pinataSecretApiKey,
+                'Authorization': `Bearer ${pinataJwt}`,
             },
             signal: controller.signal,
         });

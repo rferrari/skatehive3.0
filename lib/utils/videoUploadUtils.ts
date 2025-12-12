@@ -4,8 +4,6 @@
 
 import { clientErrorLogger, logUploadError, logSizeRestrictionError, logApiError } from './clientErrorLogger';
 
-const PINATA_JWT = process.env.NEXT_PUBLIC_PINATA_JWT;
-
 export function getVideoDuration(file: File): Promise<number> {
   return new Promise((resolve, reject) => {
     const video = document.createElement("video");
@@ -136,18 +134,12 @@ export async function uploadWithProgress(
     xhr.timeout = isMobile ? 600000 : 480000; // 10 minutes for mobile, 8 for desktop
 
     try {
-      let endpoint: string;
-      if (PINATA_JWT) {
-        endpoint = "https://api.pinata.cloud/pinning/pinFileToIPFS";
-        xhr.open("POST", endpoint);
-        xhr.setRequestHeader("Authorization", `Bearer ${PINATA_JWT}`);
-      } else {
-        endpoint = isMobile ? "/api/pinata-mobile" : "/api/pinata";
-        xhr.open("POST", endpoint);
-        if (isMobile) {
-          xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
-          xhr.setRequestHeader("X-Mobile-Upload", "true");
-        }
+      // Always use server-side API routes for security (keeps JWT server-side only)
+      const endpoint = isMobile ? "/api/pinata-mobile" : "/api/pinata";
+      xhr.open("POST", endpoint);
+      if (isMobile) {
+        xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+        xhr.setRequestHeader("X-Mobile-Upload", "true");
       }
 
       // IMPORTANT: Do NOT set the "Content-Type" header manually here. When

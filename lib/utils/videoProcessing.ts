@@ -7,6 +7,12 @@ export interface ProcessingResult {
   url?: string;
   hash?: string;
   error?: string;
+  /** Which server(s) failed: 'oracle' | 'macmini' | 'pi' | 'all' */
+  failedServer?: 'oracle' | 'macmini' | 'pi' | 'all';
+  /** HTTP status code if applicable */
+  statusCode?: number;
+  /** Error type: 'connection' | 'timeout' | 'server_error' | 'upload_rejected' | 'file_too_large' | 'unknown' */
+  errorType?: 'connection' | 'timeout' | 'server_error' | 'upload_rejected' | 'file_too_large' | 'unknown';
 }
 
 /**
@@ -19,10 +25,11 @@ export interface EnhancedProcessingOptions {
   browserInfo?: string;
   viewport?: string;
   connectionType?: string;
+  onProgress?: (progress: number, stage: string) => void;
 }
 
 /**
- * Process non-MP4 video on server - try Raspberry Pi first, fallback to proxy for smaller files
+ * Process non-MP4 video on server - try Oracle first, fallback to Mac Mini, then Pi
  */
 export async function processVideoOnServer(
   file: File,
@@ -32,10 +39,10 @@ export async function processVideoOnServer(
 
   console.log('🔄 Server processing started:', file.name);
 
-  // Try Oracle first (highest priority)
+  // PRIMARY: Oracle Cloud (fast, reliable)
   console.log('🔮 Attempting Oracle (PRIMARY) - https://146-235-239-243.sslip.io/transcode');
   const primaryResult = await tryServer(
-    'https://146-235-239-243.sslip.io/transcode',
+    'https://146-235-239-243.sslip.io',
     file,
     username,
     'Oracle (Primary)',
@@ -47,10 +54,10 @@ export async function processVideoOnServer(
     return primaryResult;
   }
 
-  // If Oracle fails, try Mac Mini M4 as secondary
+  // SECONDARY: Mac Mini M4 (powerful, home network)
   console.log('🍎 Oracle failed, trying Mac Mini M4 (SECONDARY) - https://minivlad.tail9656d3.ts.net/video/transcode');
   const secondaryResult = await tryServer(
-    'https://minivlad.tail9656d3.ts.net/video/transcode',
+    'https://minivlad.tail9656d3.ts.net/video',
     file,
     username,
     'Mac Mini M4 (Secondary)',
@@ -58,14 +65,14 @@ export async function processVideoOnServer(
   );
 
   if (secondaryResult.success) {
-    console.log('✅ Mac Mini M4 succeeded');
+    console.log('✅ Mac Mini succeeded');
     return secondaryResult;
   }
 
-  // If both fail, try Raspberry Pi as tertiary
+  // TERTIARY: Raspberry Pi (backup)
   console.log('🫐 Mac Mini failed, trying Raspberry Pi (TERTIARY) - https://vladsberry.tail83ea3e.ts.net/video/transcode');
   const tertiaryResult = await tryServer(
-    'https://vladsberry.tail83ea3e.ts.net/video/transcode',
+    'https://vladsberry.tail83ea3e.ts.net/video',
     file,
     username,
     'Raspberry Pi (Tertiary)',
@@ -77,20 +84,35 @@ export async function processVideoOnServer(
     return tertiaryResult;
   }
 
-  // Return the most informative error (try tertiary result first, then secondary, then primary)
-  return tertiaryResult.error ? tertiaryResult : (secondaryResult.error ? secondaryResult : primaryResult);
+  // All servers failed - return the most informative error with 'all' indicator
+  console.error('❌ All transcoding servers failed!');
+  const bestError = tertiaryResult.error ? tertiaryResult : (secondaryResult.error ? secondaryResult : primaryResult);
+  return {
+    ...bestError,
+    failedServer: 'all' // Override to indicate complete failure
+  };
 }
 
 /**
- * Try processing on a specific server
+ * Try processing on a specific server with SSE progress streaming
  */
 async function tryServer(
-  serverUrl: string,
+  serverBaseUrl: string,
   file: File,
   username: string,
   serverName: string,
   enhancedOptions?: EnhancedProcessingOptions
 ): Promise<ProcessingResult> {
+  // Extract server identifier from serverName
+  const serverKey = serverName.toLowerCase().includes('oracle') ? 'oracle' :
+                    serverName.toLowerCase().includes('mac') ? 'macmini' : 'pi';
+
+  // Determine endpoint paths based on server
+  const transcodeUrl = serverBaseUrl.includes('sslip.io') 
+    ? `${serverBaseUrl}/transcode`  // Oracle uses /transcode
+    : `${serverBaseUrl}/transcode`; // Others use /video/transcode but we changed base URL
+
+  let eventSource: EventSource | null = null;
 
   try {
     console.log(`🔄 Trying ${serverName}...`);
@@ -119,24 +141,51 @@ async function tryServer(
       formData.append('connectionType', enhancedOptions.connectionType);
     }
 
-    // Generate correlation ID for tracking
-    const correlationId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    formData.append('correlationId', correlationId);
+    // Generate correlation ID for tracking AND for SSE progress
+    const requestId = `${Date.now().toString(36)}-${Math.random().toString(36).substr(2, 6)}`;
+    formData.append('correlationId', requestId);
+
+    // Start SSE listener for progress updates BEFORE sending request
+    if (enhancedOptions?.onProgress) {
+      const progressUrl = serverBaseUrl.includes('sslip.io')
+        ? `${serverBaseUrl}/progress/${requestId}`
+        : `${serverBaseUrl}/progress/${requestId}`;
+      
+      try {
+        eventSource = new EventSource(progressUrl);
+        eventSource.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            console.log(`📊 [${serverName}] Progress: ${data.progress}% - ${data.stage}`);
+            enhancedOptions.onProgress?.(data.progress, data.stage);
+          } catch {
+            // Ignore parse errors
+          }
+        };
+        eventSource.onerror = () => {
+          // SSE errors are non-fatal, just log
+          console.log(`⚠️ SSE connection issue for ${serverName}`);
+        };
+      } catch {
+        // SSE not supported or failed to connect - continue without progress
+        console.log(`⚠️ SSE not available for ${serverName}, continuing without progress`);
+      }
+    }
 
     // Create abort controller for manual timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
       controller.abort();
-    }, 120000); // 2 minute timeout for video processing
+    }, 300000); // 5 minute timeout for video processing (increased for large files)
 
     try {
-      const response = await fetch(serverUrl, {
+      const response = await fetch(transcodeUrl, {
         method: 'POST',
         body: formData,
         signal: controller.signal
       });
 
-      clearTimeout(timeoutId); // Clear timeout if request completes
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -145,21 +194,37 @@ async function tryServer(
           error: errorText,
           creator: username
         });
-        throw new Error(`${serverName} responded with ${response.status}: ${errorText}`);
+        
+        let errorType: ProcessingResult['errorType'] = 'server_error';
+        if (response.status === 403) {
+          errorType = 'upload_rejected';
+        } else if (response.status === 413) {
+          errorType = 'file_too_large';
+        } else if (response.status >= 500) {
+          errorType = 'server_error';
+        }
+        
+        throw {
+          message: `${serverName} responded with ${response.status}: ${errorText}`,
+          statusCode: response.status,
+          errorType,
+          failedServer: serverKey
+        };
       }
 
       const result = await response.json();
 
-      // Check if we have a valid IPFS response (cid or gatewayUrl indicates success)
       if (!result.cid && !result.gatewayUrl && !result.ipfsUrl) {
         throw new Error(result.error || `${serverName} processing failed - no valid URL returned`);
       }
 
-      // Use Skatehive IPFS gateway for iframe embedding to avoid X-Frame-Options issues
       const hash = result.cid;
       const skateHiveUrl = `https://ipfs.skatehive.app/ipfs/${hash}`;
 
       console.log(`✅ ${serverName} processing successful`);
+      
+      // Final progress update
+      enhancedOptions?.onProgress?.(100, 'complete');
 
       return {
         success: true,
@@ -167,18 +232,54 @@ async function tryServer(
         hash
       };
     } catch (error) {
-      clearTimeout(timeoutId); // Clean up timeout in case of error
+      clearTimeout(timeoutId);
 
       if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error(`${serverName} request timed out`);
+        throw {
+          message: `${serverName} request timed out`,
+          errorType: 'timeout' as const,
+          failedServer: serverKey
+        };
       }
 
-      throw error; // Re-throw other errors
+      throw error;
     }
   } catch (error) {
+    // Handle custom error objects with extended info
+    if (error && typeof error === 'object' && 'message' in error) {
+      const customError = error as { message: string; statusCode?: number; errorType?: ProcessingResult['errorType']; failedServer?: string };
+      return {
+        success: false,
+        error: customError.message,
+        statusCode: customError.statusCode,
+        errorType: customError.errorType || 'unknown',
+        failedServer: serverKey
+      };
+    }
+    
+    // Handle connection errors
+    if (error instanceof Error) {
+      const isConnectionError = error.message.includes('Failed to fetch') || 
+                                error.message.includes('NetworkError') ||
+                                error.message.includes('net::ERR');
+      return {
+        success: false,
+        error: error.message,
+        errorType: isConnectionError ? 'connection' : 'unknown',
+        failedServer: serverKey
+      };
+    }
+    
     return {
       success: false,
-      error: error instanceof Error ? error.message : `${serverName} failed`
+      error: `${serverName} failed`,
+      errorType: 'unknown',
+      failedServer: serverKey
     };
+  } finally {
+    // Clean up SSE connection
+    if (eventSource) {
+      eventSource.close();
+    }
   }
 }

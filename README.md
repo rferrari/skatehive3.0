@@ -61,7 +61,7 @@ ADMIN_USERS=user1,user2,user3
 Additional variables used by specific features:
 
 - `ADMIN_USERS` – comma-separated list of usernames with admin privileges for Farcaster notifications (e.g., `user1,user2,user3`)
-- `PINATA_API_KEY` and `PINATA_SECRET_API_KEY` – upload media to Pinata/IPFS
+- `PINATA_JWT` – JWT token for Pinata/IPFS uploads (get from Pinata dashboard > API Keys)
 - `GIPHY_API_KEY` – GIF search in the composer
 - `NEXT_PUBLIC_ZORA_API_KEY` – obtain a Zora API key to enable Zora embeds
 - `EMAIL_USER`, `EMAIL_PASS`, `EMAIL_COMMUNITY`, `EMAIL_RECOVERYACC` – sending invite emails

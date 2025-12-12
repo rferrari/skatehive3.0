@@ -66,7 +66,7 @@ or
 **Response (500 Error):**
 ```json
 {
-  "error": "Pinata API credentials are missing"
+  "error": "Pinata credentials not configured"
 }
 ```
 
@@ -104,11 +104,10 @@ The endpoint automatically adds Pinata metadata:
 
 - **CID Version**: 1 (CIDv1)
 - **API Endpoint**: `https://api.pinata.cloud/pinning/pinJSONToIPFS`
-- **Authentication**: API Key + Secret API Key
+- **Authentication**: JWT Bearer Token
 
-Required environment variables:
-- `PINATA_API_KEY`
-- `PINATA_SECRET_API_KEY`
+Required environment variable:
+- `PINATA_JWT` - Get from Pinata dashboard > API Keys
 
 ## Token Metadata Standards
 
@@ -313,8 +312,7 @@ To unpin (admin operation):
 await fetch(`https://api.pinata.cloud/pinning/unpin/${hash}`, {
   method: 'DELETE',
   headers: {
-    'pinata_api_key': process.env.PINATA_API_KEY,
-    'pinata_secret_api_key': process.env.PINATA_SECRET_API_KEY
+    'Authorization': `Bearer ${process.env.PINATA_JWT}`
   }
 });
 ```

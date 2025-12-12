@@ -121,7 +121,8 @@ export function getDetailedDeviceInfo(): {
 export async function uploadToIPFS(
   file: File,
   username: string = 'anonymous',
-  enhancedOptions?: EnhancedUploadOptions
+  enhancedOptions?: EnhancedUploadOptions,
+  onProgress?: (progress: number) => void
 ): Promise<UploadResult> {
   try {
     // Auto-detect device info if not provided
@@ -157,16 +158,45 @@ export async function uploadToIPFS(
     const correlationId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     formData.append('correlationId', correlationId);
 
-    const response = await fetch('/api/pinata', {
-      method: 'POST',
-      body: formData
+    // Use XHR for progress support
+    const result = await new Promise<{ IpfsHash: string }>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+
+      if (onProgress) {
+        xhr.upload.addEventListener('progress', (event) => {
+          if (event.lengthComputable) {
+            const progress = Math.round((event.loaded / event.total) * 100);
+            onProgress(progress);
+          }
+        });
+      }
+
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const result = JSON.parse(xhr.responseText);
+            resolve(result);
+          } catch {
+            reject(new Error('Invalid response from server'));
+          }
+        } else {
+          reject(new Error(`Upload failed: ${xhr.status}`));
+        }
+      });
+
+      xhr.addEventListener('error', () => {
+        reject(new Error(`Network error: ${xhr.statusText || 'Unknown error'}`));
+      });
+
+      xhr.addEventListener('timeout', () => {
+        reject(new Error('Upload timeout'));
+      });
+
+      xhr.timeout = 480000; // 8 minutes
+
+      xhr.open('POST', '/api/pinata');
+      xhr.send(formData);
     });
-
-    if (!response.ok) {
-      throw new Error(`Upload failed: ${response.status}`);
-    }
-
-    const result = await response.json();
 
     if (!result.IpfsHash) {
       throw new Error('No IPFS hash returned');
