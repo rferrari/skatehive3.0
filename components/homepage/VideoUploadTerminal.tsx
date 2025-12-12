@@ -55,19 +55,47 @@ const funLoadingMessages = [
   "🎪 The server is doing a circus kickflip with your file...",
 ];
 
+// Initial preparation messages when FFmpeg is analyzing the video
+const preparingMessages = [
+  "🔍 Analyzing video dimensions...",
+  "📐 Measuring the steeze factor...",
+  "🎬 FFmpeg is warming up...",
+  "⚙️ Preparing transcoding pipeline...",
+  "🔧 Setting up the video grinder...",
+  "📦 Unpacking your footage...",
+  "🎯 Calculating optimal compression...",
+  "🧪 Analyzing video codec...",
+];
+
 // Animated skateboard loading bar - uses real progress from upload
 const SkateboardLoader = ({ serverName, progress = 0, stage }: { serverName?: string; progress?: number; stage?: string }) => {
   const [skateFrame, setSkateFrame] = useState(0);
   const [lastProgress, setLastProgress] = useState(progress);
   const [stuckTime, setStuckTime] = useState(0);
-  const [messageIndex, setMessageIndex] = useState(0);
+  const [messageIndex, setMessageIndex] = useState(() => Math.floor(Math.random() * funLoadingMessages.length));
+  const [prepMessageIndex, setPrepMessageIndex] = useState(() => Math.floor(Math.random() * preparingMessages.length));
+  const [dots, setDots] = useState('');
   
   // Skateboard animation frames (spinning effect)
   const skateFrames = ['🛹', '🛹', '🛹', '💨🛹', '🛹', '✨🛹', '🛹', '🔥🛹'];
   
+  // Preparing state frames (bouncing skateboard)
+  const prepFrames = ['🛹', '  🛹', '    🛹', '  🛹', '🛹', '🛹💨', '🛹✨', '🛹'];
+  
+  // Reset state when progress goes back to 0 (new upload)
+  useEffect(() => {
+    if (progress === 0) {
+      setLastProgress(0);
+      setStuckTime(0);
+      setSkateFrame(0);
+      setMessageIndex(Math.floor(Math.random() * funLoadingMessages.length));
+      setPrepMessageIndex(Math.floor(Math.random() * preparingMessages.length));
+    }
+  }, [progress]);
+  
   useEffect(() => {
     // Track if progress is "stuck"
-    if (progress !== lastProgress) {
+    if (progress !== lastProgress && progress !== 0) {
       setLastProgress(progress);
       setStuckTime(0);
     }
@@ -90,12 +118,43 @@ const SkateboardLoader = ({ serverName, progress = 0, stage }: { serverName?: st
       setMessageIndex(prev => (prev + 1) % funLoadingMessages.length);
     }, 3000);
     
+    // Rotate preparing messages every 2 seconds (faster to show activity)
+    const prepInterval = setInterval(() => {
+      setPrepMessageIndex(prev => (prev + 1) % preparingMessages.length);
+    }, 2000);
+    
+    // Animate dots for preparing state
+    const dotsInterval = setInterval(() => {
+      setDots(prev => prev.length >= 3 ? '' : prev + '.');
+    }, 400);
+    
     return () => {
       clearInterval(stuckInterval);
       clearInterval(skateInterval);
       clearInterval(messageInterval);
+      clearInterval(prepInterval);
+      clearInterval(dotsInterval);
     };
   }, [progress, lastProgress, stuckTime]);
+
+  // Show "preparing" state when progress is 0 (FFmpeg analyzing video)
+  if (progress === 0 || (stage === 'receiving' && progress < 5)) {
+    return (
+      <div className="font-mono text-xs my-1">
+        <div className="flex items-center gap-2">
+          <span className="text-gray-500">[</span>
+          <span className="text-cyan-400 animate-pulse">
+            {prepFrames[skateFrame % prepFrames.length]} ░░░░░░░░░░░░░░░░░░░░░░░░
+          </span>
+          <span className="text-gray-500">]</span>
+          <span className="text-cyan-400">⏳</span>
+        </div>
+        <div className="text-cyan-400 mt-0.5 animate-pulse">
+          {preparingMessages[prepMessageIndex]}{dots}
+        </div>
+      </div>
+    );
+  }
 
   // Generate the loading bar
   const trackWidth = 24;
@@ -160,6 +219,17 @@ export const VideoUploadTerminal: React.FC<VideoUploadTerminalProps> = ({
   const terminalRef = useRef<HTMLDivElement>(null);
   const [countdown, setCountdown] = useState<number | null>(null);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Reset countdown when lines are cleared (new upload started)
+  useEffect(() => {
+    if (lines.length === 0) {
+      setCountdown(null);
+      if (countdownRef.current) {
+        clearTimeout(countdownRef.current);
+        countdownRef.current = null;
+      }
+    }
+  }, [lines.length]);
 
   // Check if upload was FULLY successful (final success, not intermediate steps)
   const isFullyComplete = lines.some(l => 
