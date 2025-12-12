@@ -335,15 +335,11 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
           connectionType: deviceData.connectionType,
         };
 
-        console.log("📤 Video upload started:", file.name);
-
         // 3. Check if file already has a thumbnail from VideoTrimModal
         const existingThumbnail = (file as any).thumbnailUrl;
-        console.log("🖼️ Existing thumbnail:", existingThumbnail);
 
         // 4. Handle MP4 files - direct upload with enhanced options
         if (isMP4(file)) {
-          console.log("📹 MP4 file detected - direct upload");
           terminal.addLine("MP4 detected → Direct IPFS upload (no transcoding needed)", "info");
           terminal.addLine("Uploading to Pinata IPFS...", "server", "pinata" as any, "trying");
 
@@ -421,7 +417,6 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         }
 
         // 5. Non-MP4 files - process on server with enhanced options
-        console.log("🔄 Non-MP4 file detected - server transcoding required");
         terminal.addLine(`Non-MP4 file (${file.type}) → Server transcoding required`, "info");
         terminal.addLine("Starting 3-server fallback chain...", "info");
         
@@ -437,7 +432,6 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
           // Real-time progress from SSE!
           onProgress: (progress, stage) => {
             terminal.updateProgress(progress, stage);
-            console.log(`📊 Server progress: ${progress}% - ${stage}`);
           },
           // Dynamic server attempt notifications
           onServerAttempt: (serverKey, serverName, priority) => {

@@ -50,12 +50,8 @@ export async function processVideoOnServer(
   username: string = 'anonymous',
   enhancedOptions?: EnhancedProcessingOptions
 ): Promise<ProcessingResult> {
-
-  console.log('🔄 Server processing started:', file.name);
-
   // PRIMARY: Mac Mini M4 (has real-time SSE progress streaming)
   const primaryServer = SERVER_CONFIG[0];
-  console.log(`${primaryServer.emoji} Attempting ${primaryServer.name} (${primaryServer.priority}) - https://minivlad.tail9656d3.ts.net/video/transcode`);
   enhancedOptions?.onServerAttempt?.(primaryServer.key, primaryServer.name, primaryServer.priority);
   
   const primaryResult = await tryServer(
@@ -67,7 +63,6 @@ export async function processVideoOnServer(
   );
 
   if (primaryResult.success) {
-    console.log(`✅ ${primaryServer.name} succeeded - no need to try other servers`);
     return primaryResult;
   }
   
@@ -75,7 +70,6 @@ export async function processVideoOnServer(
 
   // SECONDARY: Oracle Cloud (needs SSE update)
   const secondaryServer = SERVER_CONFIG[1];
-  console.log(`${secondaryServer.emoji} ${primaryServer.name} failed, trying ${secondaryServer.name} (${secondaryServer.priority}) - https://146-235-239-243.sslip.io/transcode`);
   enhancedOptions?.onServerAttempt?.(secondaryServer.key, secondaryServer.name, secondaryServer.priority);
   
   const secondaryResult = await tryServer(
@@ -87,7 +81,6 @@ export async function processVideoOnServer(
   );
 
   if (secondaryResult.success) {
-    console.log(`✅ ${secondaryServer.name} succeeded`);
     return secondaryResult;
   }
   
@@ -95,7 +88,6 @@ export async function processVideoOnServer(
 
   // TERTIARY: Raspberry Pi (backup)
   const tertiaryServer = SERVER_CONFIG[2];
-  console.log(`${tertiaryServer.emoji} ${secondaryServer.name} failed, trying ${tertiaryServer.name} (${tertiaryServer.priority}) - https://vladsberry.tail83ea3e.ts.net/video/transcode`);
   enhancedOptions?.onServerAttempt?.(tertiaryServer.key, tertiaryServer.name, tertiaryServer.priority);
   
   const tertiaryResult = await tryServer(
@@ -107,14 +99,12 @@ export async function processVideoOnServer(
   );
 
   if (tertiaryResult.success) {
-    console.log(`✅ ${tertiaryServer.name} succeeded`);
     return tertiaryResult;
   }
   
   enhancedOptions?.onServerFailed?.(tertiaryServer.key, tertiaryResult.error);
 
   // All servers failed - return the most informative error with 'all' indicator
-  console.error('❌ All transcoding servers failed!');
   const bestError = tertiaryResult.error ? tertiaryResult : (secondaryResult.error ? secondaryResult : primaryResult);
   return {
     ...bestError,
@@ -144,8 +134,6 @@ async function tryServer(
   let eventSource: EventSource | null = null;
 
   try {
-    console.log(`🔄 Trying ${serverName}...`);
-
     const formData = new FormData();
     formData.append('video', file);
     formData.append('creator', username);
@@ -185,19 +173,16 @@ async function tryServer(
         eventSource.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
-            console.log(`📊 [${serverName}] Progress: ${data.progress}% - ${data.stage}`);
             enhancedOptions.onProgress?.(data.progress, data.stage);
           } catch {
             // Ignore parse errors
           }
         };
         eventSource.onerror = () => {
-          // SSE errors are non-fatal, just log
-          console.log(`⚠️ SSE connection issue for ${serverName}`);
+          // SSE errors are non-fatal, continue silently
         };
       } catch {
         // SSE not supported or failed to connect - continue without progress
-        console.log(`⚠️ SSE not available for ${serverName}, continuing without progress`);
       }
     }
 
@@ -218,11 +203,6 @@ async function tryServer(
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.warn(`${serverName} failed:`, {
-          status: response.status,
-          error: errorText,
-          creator: username
-        });
         
         let errorType: ProcessingResult['errorType'] = 'server_error';
         if (response.status === 403) {
@@ -249,8 +229,6 @@ async function tryServer(
 
       const hash = result.cid;
       const skateHiveUrl = `https://ipfs.skatehive.app/ipfs/${hash}`;
-
-      console.log(`✅ ${serverName} processing successful`);
       
       // Final progress update
       enhancedOptions?.onProgress?.(100, 'complete');
