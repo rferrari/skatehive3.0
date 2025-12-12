@@ -10,21 +10,21 @@ const getInstagramServers = () => {
     // Local development - try localhost first, then public Pi, then fallback
     return [
       'http://localhost:6666/download',
-      'https://raspberrypi.tail83ea3e.ts.net/instagram/download',
+      'https://vladsberry.tail83ea3e.ts.net/instagram/download',
       'https://skate-insta.onrender.com/download'
     ];
   } else if (isVercel) {
     // Vercel production - prioritize Mac Mini M4, then Pi, then Render fallback
     return [
       'https://minivlad.tail9656d3.ts.net/instagram/download',         // Mac Mini M4 (primary)
-      'https://raspberrypi.tail83ea3e.ts.net/instagram/download',  // Raspberry Pi (secondary)
+      'https://vladsberry.tail83ea3e.ts.net/instagram/download',  // Raspberry Pi (secondary)
       'https://skate-insta.onrender.com/download'               // Render (fallback)
     ];
   } else {
     // Other production - prioritize Mac Mini M4, then Pi, then Render
     return [
       'https://minivlad.tail9656d3.ts.net/instagram/download',         // Mac Mini M4 (primary)
-      'https://raspberrypi.tail83ea3e.ts.net/instagram/download',  // Raspberry Pi (secondary)
+      'https://vladsberry.tail83ea3e.ts.net/instagram/download',  // Raspberry Pi (secondary)
       'https://skate-insta.onrender.com/download'               // Render (fallback)
     ];
   }

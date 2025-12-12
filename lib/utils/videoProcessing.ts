@@ -63,9 +63,9 @@ export async function processVideoOnServer(
   }
 
   // If both fail, try Raspberry Pi as tertiary
-  console.log('🫐 Mac Mini failed, trying Raspberry Pi (TERTIARY) - https://raspberrypi.tail83ea3e.ts.net/video/transcode');
+  console.log('🫐 Mac Mini failed, trying Raspberry Pi (TERTIARY) - https://vladsberry.tail83ea3e.ts.net/video/transcode');
   const tertiaryResult = await tryServer(
-    'https://raspberrypi.tail83ea3e.ts.net/video/transcode',
+    'https://vladsberry.tail83ea3e.ts.net/video/transcode',
     file,
     username,
     'Raspberry Pi (Tertiary)',

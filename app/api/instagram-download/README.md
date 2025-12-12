@@ -37,12 +37,12 @@ Download Instagram content and pin to IPFS.
 
 ### Production (Vercel)
 1. **Mac Mini M4** (Primary): `https://minivlad.tail9656d3.ts.net/instagram/download`
-2. **Raspberry Pi** (Secondary): `https://raspberrypi.tail83ea3e.ts.net/instagram/download`
+2. **Raspberry Pi** (Secondary): `https://vladsberry.tail83ea3e.ts.net/instagram/download`
 3. **Render** (Fallback): `https://skate-insta.onrender.com/download`
 
 ### Development (Local)
 1. **Localhost** (Primary): `http://localhost:6666/download`
-2. **Raspberry Pi** (Secondary): `https://raspberrypi.tail83ea3e.ts.net/instagram/download`
+2. **Raspberry Pi** (Secondary): `https://vladsberry.tail83ea3e.ts.net/instagram/download`
 3. **Render** (Fallback): `https://skate-insta.onrender.com/download`
 
 **Timeout per server:** 2 minutes (120 seconds)
@@ -96,7 +96,7 @@ Download Instagram content and pin to IPFS.
   "details": "Last error: Server https://... timed out",
   "attemptedServers": [
     "https://minivlad.tail9656d3.ts.net/instagram/download",
-    "https://raspberrypi.tail83ea3e.ts.net/instagram/download",
+    "https://vladsberry.tail83ea3e.ts.net/instagram/download",
     "https://skate-insta.onrender.com/download"
   ]
 }

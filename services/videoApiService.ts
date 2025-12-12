@@ -33,7 +33,7 @@ interface VideoConversionRequest {
 class VideoApiService {
   private readonly oracleApiUrl = 'https://146-235-239-243.sslip.io';
   private readonly macMiniApiUrl = 'https://minivlad.tail9656d3.ts.net/video';
-  private readonly raspberryPiApiUrl = 'https://raspberrypi.tail83ea3e.ts.net/video';
+  private readonly raspberryPiApiUrl = 'https://vladsberry.tail83ea3e.ts.net/video';
 
   // Conversion timeout (15 minutes for larger files)
   private readonly CONVERSION_TIMEOUT = 900000;

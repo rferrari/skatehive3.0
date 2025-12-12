@@ -26,7 +26,7 @@ const PRIMARY_API_ENDPOINT = "https://146-235-239-243.sslip.io/transcode";
 const SECONDARY_API_ENDPOINT = "https://minivlad.tail9656d3.ts.net/video/transcode";
 
 // Fallback API configuration - Raspberry Pi (reliable backup)
-const FALLBACK_API_ENDPOINT = "https://raspberrypi.tail83ea3e.ts.net/video/transcode";
+const FALLBACK_API_ENDPOINT = "https://vladsberry.tail83ea3e.ts.net/video/transcode";
 
 /**
  * Attempts to upload and convert video using the primary API (Oracle)
