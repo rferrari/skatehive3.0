@@ -77,12 +77,14 @@ export default function Sidebar() {
     href,
     icon,
     children,
+    prefetch = true,
   }: {
     href: string;
     icon: any;
     children: React.ReactNode;
+    prefetch?: boolean;
   }) => (
-    <Link href={href} passHref style={{ textDecoration: 'none', color: 'inherit' }}>
+    <Link href={href} passHref prefetch={prefetch} style={{ textDecoration: 'none', color: 'inherit' }}>
       <Box
         display="flex"
         alignItems="center"
@@ -181,22 +183,22 @@ export default function Sidebar() {
             <NavItem href="/blog" icon={FiBook}>
               Magazine
             </NavItem>
-            <NavItem href="/leaderboard" icon={FiAward}>
+            <NavItem href="/leaderboard" icon={FiAward} prefetch={false}>
               Leaderboard
             </NavItem>
-            <NavItem href="/map" icon={FiMap}>
+            <NavItem href="/map" icon={FiMap} prefetch={false}>
               Skatespots
             </NavItem>
-            <NavItem href="/bounties" icon={FiTarget}>
+            <NavItem href="/bounties" icon={FiTarget} prefetch={false}>
               Bounties
             </NavItem>
             {user && (
-              <NavItem href="/notifications" icon={FiBell}>
+              <NavItem href="/notifications" icon={FiBell} prefetch={false}>
                 Notifications
               </NavItem>
             )}
             {isAnyProtocolConnected && (
-              <NavItem href="/wallet" icon={FiCreditCard}>
+              <NavItem href="/wallet" icon={FiCreditCard} prefetch={false}>
                 Wallet
               </NavItem>
             )}
