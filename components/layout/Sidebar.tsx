@@ -84,7 +84,12 @@ export default function Sidebar() {
     children: React.ReactNode;
     prefetch?: boolean;
   }) => (
-    <Link href={href} passHref prefetch={prefetch} style={{ textDecoration: 'none', color: 'inherit' }}>
+    <Link
+      href={href}
+      passHref
+      prefetch={prefetch}
+      style={{ textDecoration: "none", color: "inherit" }}
+    >
       <Box
         display="flex"
         alignItems="center"
@@ -95,7 +100,6 @@ export default function Sidebar() {
         cursor="pointer"
         role="group"
         width="100%"
-       
         pl={4}
         textDecoration="none"
         color="inherit"
@@ -104,18 +108,18 @@ export default function Sidebar() {
           "& > div": {
             bg: primaryBg,
             color: hoverTextColor,
-          }
+          },
         }}
         _focus={{
           textDecoration: "none",
-          outline: "none"
+          outline: "none",
         }}
         _active={{
-          textDecoration: "none"
+          textDecoration: "none",
         }}
         _visited={{
           textDecoration: "none",
-          color: "inherit"
+          color: "inherit",
         }}
         sx={{
           "&:hover": {
@@ -131,16 +135,10 @@ export default function Sidebar() {
           "&:visited": {
             textDecoration: "none !important",
             color: "inherit !important",
-          }
+          },
         }}
       >
-        <Box
-          display="flex"
-          alignItems="center"
-          px={0.25}
-          py={0}
-          my={0.5}
-        >
+        <Box display="flex" alignItems="center" px={0.25} py={0} my={0.5}>
           <Icon as={icon} boxSize={4} mr={2} />
           {children}
         </Box>
@@ -174,10 +172,7 @@ export default function Sidebar() {
             <SidebarLogo />
           </Box>
           <VStack spacing={0} align="stretch" mt={2}>
-            <NavItem
-              href="/"
-              icon={FiHome}
-            >
+            <NavItem href="/" icon={FiHome}>
               Home
             </NavItem>
             <NavItem href="/blog" icon={FiBook}>
