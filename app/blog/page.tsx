@@ -244,9 +244,7 @@ function BlogContent() {
         batch.batchHasMore
       );
 
-      startPrefetch(Boolean(nextCanPrefetch)).catch((error) => {
-        console.error("Prefetch failed:", error);
-      });
+      startPrefetch(Boolean(nextCanPrefetch));
     } catch (error) {
       console.error("Failed to fetch posts:", error);
       setError("Failed to load posts. Please try again later.");
