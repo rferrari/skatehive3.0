@@ -40,12 +40,24 @@ function BlogContent() {
       : "created"
   );
   const [allPosts, setAllPosts] = useState<Discussion[]>([]);
+  const [hasMore, setHasMore] = useState(true);
   const isFetching = useRef(false);
+  const seenPosts = useRef<Set<string>>(new Set());
+  const prefetchBatch = useRef<{
+    posts: Discussion[];
+    lastPost?: Discussion;
+    batchHasMore: boolean;
+  } | null>(null);
+  const prefetching = useRef(false);
   const [isGoatLoading, setIsGoatLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   const tag = process.env.NEXT_PUBLIC_HIVE_SEARCH_TAG;
+  const FETCH_LIMIT = Math.min(
+    BLOG_CONFIG.BRIDGE_API_MAX_LIMIT,
+    BLOG_CONFIG.POSTS_PER_PAGE * 2
+  );
 
   // Validate required environment variables
   useEffect(() => {
@@ -59,7 +71,7 @@ function BlogContent() {
   const params = useRef([
     {
       tag: tag,
-      limit: BLOG_CONFIG.POSTS_PER_PAGE as number,
+      limit: FETCH_LIMIT,
       start_author: "",
       start_permlink: "",
     },
@@ -126,11 +138,89 @@ function BlogContent() {
     }
   }, [tag]);
 
+  const fetchBatch = useCallback(async () => {
+    const posts = await findPosts(
+      query === "highest_paid" ? "created" : query,
+      params.current
+    );
+    let sortedPosts = posts;
+    if (query === "highest_paid") {
+      sortedPosts = [...posts].sort(
+        (a, b) => Number(getPayoutValue(b)) - Number(getPayoutValue(a))
+      );
+    }
+
+    const batchHasMore =
+      sortedPosts.length >= (params.current[0]?.limit || FETCH_LIMIT);
+    const lastPost = sortedPosts[sortedPosts.length - 1];
+
+    return { posts: sortedPosts, lastPost, batchHasMore };
+  }, [query, FETCH_LIMIT]);
+
+  const appendBatch = useCallback(
+    (
+      posts: Discussion[],
+      lastPost: Discussion | undefined,
+      batchHasMore: boolean
+    ) => {
+      if (!posts || posts.length === 0) {
+        setHasMore(false);
+        return { nextCanPrefetch: false };
+      }
+
+      // Filter out already seen posts to avoid bloating state
+      const freshPosts = posts.filter((post) => {
+        const key = `${post.author}/${post.permlink}`;
+        if (seenPosts.current.has(key)) return false;
+        seenPosts.current.add(key);
+        return true;
+      });
+
+      if (freshPosts.length > 0) {
+        setAllPosts((prevPosts) => [...prevPosts, ...freshPosts]);
+      }
+
+      const nextCanPrefetch = batchHasMore && Boolean(lastPost);
+      setHasMore(nextCanPrefetch);
+
+      if (nextCanPrefetch && lastPost) {
+        params.current = [
+          {
+            tag: tag,
+            limit: params.current[0]?.limit || FETCH_LIMIT,
+            start_author: lastPost.author,
+            start_permlink: lastPost.permlink,
+          },
+        ];
+      }
+
+      return { nextCanPrefetch };
+    },
+    [tag, FETCH_LIMIT]
+  );
+
+  const startPrefetch = useCallback(
+    async (canPrefetch: boolean) => {
+      if (!canPrefetch || prefetching.current) return;
+      prefetching.current = true;
+      try {
+        const batch = await fetchBatch();
+        prefetchBatch.current = batch;
+      } catch (error) {
+        console.error("Failed to prefetch posts:", error);
+      } finally {
+        prefetching.current = false;
+      }
+    },
+    [fetchBatch]
+  );
+
   const fetchPosts = useCallback(async () => {
     if (query === "goat") {
       fetchGoatPosts();
       return;
     }
+    if (!hasMore) return;
     if (isFetching.current) return; // Prevent multiple fetches
     if (!tag) {
       setError("Cannot fetch posts: missing search tag configuration");
@@ -141,54 +231,51 @@ function BlogContent() {
     setError(null);
 
     try {
-      const posts = await findPosts(
-        query === "highest_paid" ? "created" : query,
-        params.current
+      const batch =
+        prefetchBatch.current && !prefetching.current
+          ? prefetchBatch.current
+          : await fetchBatch();
+
+      prefetchBatch.current = null;
+
+      const { nextCanPrefetch } = appendBatch(
+        batch.posts,
+        batch.lastPost,
+        batch.batchHasMore
       );
-      let sortedPosts = posts;
-      if (query === "highest_paid") {
-        sortedPosts = [...posts].sort(
-          (a, b) => Number(getPayoutValue(b)) - Number(getPayoutValue(a))
-        );
-      }
-      if (sortedPosts.length > 0) {
-        setAllPosts((prevPosts) => {
-          // Combine previous posts with new posts
-          const combined = [...prevPosts, ...sortedPosts];
-          // Remove duplicates by author/permlink combination
-          const uniquePosts = Array.from(
-            new Map(
-              combined.map((p) => [p.author + "/" + p.permlink, p])
-            ).values()
-          );
-          return uniquePosts;
-        });
-        params.current = [
-          {
-            tag: tag,
-            limit: BLOG_CONFIG.POSTS_PER_PAGE as number,
-            start_author: sortedPosts[sortedPosts.length - 1].author,
-            start_permlink: sortedPosts[sortedPosts.length - 1].permlink,
-          },
-        ];
-      }
+
+      startPrefetch(Boolean(nextCanPrefetch)).catch((error) => {
+        console.error("Prefetch failed:", error);
+      });
     } catch (error) {
       console.error("Failed to fetch posts:", error);
       setError("Failed to load posts. Please try again later.");
     } finally {
       isFetching.current = false;
     }
-  }, [query, tag, fetchGoatPosts]);
+  }, [
+    query,
+    tag,
+    fetchGoatPosts,
+    hasMore,
+    fetchBatch,
+    appendBatch,
+    startPrefetch,
+  ]);
 
   useEffect(() => {
     // Clean up posts and reset state when query changes
     setAllPosts([]);
+    setHasMore(true);
+    seenPosts.current = new Set();
+    prefetchBatch.current = null;
+    prefetching.current = false;
     setError(null);
     isFetching.current = false;
     params.current = [
       {
         tag: tag,
-        limit: BLOG_CONFIG.POSTS_PER_PAGE as number,
+        limit: FETCH_LIMIT,
         start_author: "",
         start_permlink: "",
       },
@@ -296,6 +383,7 @@ function BlogContent() {
             fetchPosts={fetchPosts}
             viewMode={viewMode}
             context="blog"
+            hasMore={hasMore}
           />
         )}
       </Box>

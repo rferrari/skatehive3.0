@@ -12,12 +12,22 @@ import InfiniteScroll from "react-infinite-scroll-component";
 import PostGrid from "@/components/blog/PostGrid";
 import { Discussion } from "@hiveio/dhive";
 
+/**
+ * PostsInfiniteScroll Props
+ *
+ * Note: `hasMore` must be explicitly managed by the parent and passed in.
+ * The component does NOT assume a default value to avoid accidental infinite loading.
+ */
 interface PostsInfiniteScrollProps {
   allPosts: Discussion[];
   fetchPosts: () => Promise<void>;
+  /** Whether there are more items to load. Parent MUST manage this. */
+  hasMore: boolean;
   viewMode: "grid" | "list" | "magazine";
   context?: "blog" | "profile" | "rightsidebar";
   hideAuthorInfo?: boolean;
+  scrollableTargetId?: string;
+  scrollThreshold?: number | string;
 }
 
 export default function PostsInfiniteScroll({
@@ -26,19 +36,25 @@ export default function PostsInfiniteScroll({
   viewMode,
   context = "blog",
   hideAuthorInfo = false,
+  hasMore,
+  scrollableTargetId = "scrollableDiv",
+  scrollThreshold = "200px",
 }: PostsInfiniteScrollProps) {
-  const hasMore = allPosts.length % 12 === 0; // Adjust this logic based on your pagination
   // Determine columns based on context and viewMode
   const columns =
     viewMode === "grid" || viewMode === "magazine"
       ? (context === "rightsidebar" ? 1 : context === "profile" ? 2 : 3)
       : 1;
 
+  // Safety: ensure hasMore is a boolean; default to false at runtime to avoid accidental infinite loads
+  const safeHasMore = typeof hasMore === "boolean" ? hasMore : false;
+
   return (
     <InfiniteScroll
       dataLength={allPosts.length}
       next={fetchPosts}
-      hasMore={hasMore}
+      hasMore={safeHasMore}
+      scrollThreshold={scrollThreshold}
       loader={
         <SimpleGrid columns={{ base: 1, md: columns }} spacing={4}>
           {Array(6)
@@ -66,7 +82,7 @@ export default function PostsInfiniteScroll({
             ))}
         </SimpleGrid>
       }
-      scrollableTarget="scrollableDiv"
+      scrollableTarget={scrollableTargetId}
     >
       {allPosts && (
         <PostGrid

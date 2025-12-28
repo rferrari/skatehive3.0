@@ -555,6 +555,8 @@ export async function findPosts(query: string, params: any[]) {
   // Extract tag and limit from params
   const tag = params[0]?.tag || '';
   const requestedLimit = params[0]?.limit || 20;
+  const start_author = params[0]?.start_author || '';
+  const start_permlink = params[0]?.start_permlink || '';
   
   // Bridge API has a maximum limit of 20 per request
   // If more posts are needed, we'll need to make multiple requests
@@ -567,6 +569,8 @@ export async function findPosts(query: string, params: any[]) {
       sort: sort,
       tag: tag,
       limit: limit,
+      start_author: start_author || undefined,
+      start_permlink: start_permlink || undefined,
       observer: ''
     });
     return posts;
@@ -694,4 +698,3 @@ export async function getTransactionHistory(
     return { transactions: [], totalSentToPixbee: {} };
   }
 }
-
