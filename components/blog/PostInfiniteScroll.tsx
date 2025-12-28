@@ -43,7 +43,11 @@ export default function PostsInfiniteScroll({
   // Determine columns based on context and viewMode
   const columns =
     viewMode === "grid" || viewMode === "magazine"
-      ? (context === "rightsidebar" ? 1 : context === "profile" ? 2 : 3)
+      ? context === "rightsidebar"
+        ? 1
+        : context === "profile"
+        ? 2
+        : 3
       : 1;
 
   // Safety: ensure hasMore is a boolean; default to false at runtime to avoid accidental infinite loads
@@ -69,15 +73,42 @@ export default function PostsInfiniteScroll({
               >
                 {/* Header: avatar + author */}
                 <Flex alignItems="center" mb={4}>
-                  <SkeletonCircle size="10" mr={3} startColor="muted" endColor="primary" />
-                  <Skeleton height="20px" width="100px" startColor="muted" endColor="primary" />
+                  <SkeletonCircle
+                    size="10"
+                    mr={3}
+                    startColor="muted"
+                    endColor="primary"
+                  />
+                  <Skeleton
+                    height="20px"
+                    width="100px"
+                    startColor="muted"
+                    endColor="primary"
+                  />
                 </Flex>
                 {/* Main image/media */}
-                <Skeleton height="200px" width="100%" mb={4} startColor="muted" endColor="primary" />
+                <Skeleton
+                  height="200px"
+                  width="100%"
+                  mb={4}
+                  startColor="muted"
+                  endColor="primary"
+                />
                 {/* Title */}
-                <Skeleton height="20px" width="80%" mb={2} startColor="muted" endColor="primary" />
+                <Skeleton
+                  height="20px"
+                  width="80%"
+                  mb={2}
+                  startColor="muted"
+                  endColor="primary"
+                />
                 {/* Summary */}
-                <Skeleton height="20px" width="60%" startColor="muted" endColor="primary" />
+                <Skeleton
+                  height="20px"
+                  width="60%"
+                  startColor="muted"
+                  endColor="primary"
+                />
               </Box>
             ))}
         </SimpleGrid>
