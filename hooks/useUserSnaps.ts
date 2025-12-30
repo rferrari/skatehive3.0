@@ -60,11 +60,15 @@ export default function useUserSnaps(username: string) {
                 allImages.push(...mdImages);
             } catch {}
 
-            // 4. Extract direct media URLs in body
-            const directMediaPattern = /(https?:\/\/[^\s]+\.(?:png|jpe?g|gif|webp|mp4|mov|m4v|m3u8))/gi;
-            while ((match = directMediaPattern.exec(body)) !== null) {
+            // 4. Extract direct media URLs in body (avoid markdown duplicates and trailing punctuation)
+            const cleanedBody = body
+                // remove markdown image/link patterns so we don't double-capture
+                .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+                .replace(/\[[^\]]*\]\([^)]*\)/g, '');
+            const directMediaPattern = /(https?:\/\/[^\s)"']+\.(?:png|jpe?g|gif|webp|mp4|mov|m4v|m3u8))(?=$|\s|[)"'])/gi;
+            while ((match = directMediaPattern.exec(cleanedBody)) !== null) {
                 const url = match[1];
-                if (url.match(/\.(mp4|mov|m4v|m3u8)$/i)) {
+                if (/\.(mp4|mov|m4v|m3u8)$/i.test(url)) {
                     allVideos.push(url);
                 } else {
                     allImages.push(url);
@@ -148,7 +152,7 @@ export default function useUserSnaps(username: string) {
             }
 
             cursorRef.current = { ...currentCursor };
-            const exhausted = !keepFetching || guard >= 10 || accumulated.length === 0;
+            const exhausted = !keepFetching;
             if (exhausted) {
                 setHasMore(false);
             }

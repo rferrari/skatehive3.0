@@ -234,7 +234,7 @@ export default function SnapsGrid({ username }: SnapsGridProps) {
 
   // IntersectionObserver-based trigger to load more when sentinel enters view
   useEffect(() => {
-    if (!hasMore || isLoading) return;
+    if (!hasMore) return;
     const sentinel = sentinelRef.current;
     if (!sentinel) return;
 
@@ -251,7 +251,7 @@ export default function SnapsGrid({ username }: SnapsGridProps) {
 
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [hasMore, isLoading, loadMoreSnaps]);
+  }, [hasMore, loadMoreSnaps]);
 
   if (snaps.length === 0 && !isLoading) {
     return (
