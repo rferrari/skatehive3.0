@@ -89,6 +89,7 @@ export default function SnapsGrid({ username }: SnapsGridProps) {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [selectedSnapIndex, setSelectedSnapIndex] = useState<number>(0);
   const [hasCheckedUrl, setHasCheckedUrl] = useState<boolean>(false);
+  const sentinelRef = React.useRef<HTMLDivElement | null>(null);
 
   // Preload thumbnails for video snaps to improve perceived performance
   useEffect(() => {
@@ -231,6 +232,27 @@ export default function SnapsGrid({ username }: SnapsGridProps) {
     };
   }, [hasMore, isLoading, loadMoreSnaps]);
 
+  // IntersectionObserver-based trigger to load more when sentinel enters view
+  useEffect(() => {
+    if (!hasMore || isLoading) return;
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && hasMore && !isLoading) {
+            loadMoreSnaps();
+          }
+        });
+      },
+      { root: null, rootMargin: "400px 0px", threshold: 0 }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, isLoading, loadMoreSnaps]);
+
   if (snaps.length === 0 && !isLoading) {
     return (
       <VStack spacing={4} py={8}>
@@ -261,6 +283,8 @@ export default function SnapsGrid({ username }: SnapsGridProps) {
           </Box>
         ))}
       </Box>
+
+      <Box ref={sentinelRef} w="full" h="1px" />
 
       {isLoading && (
         <Box display="flex" justifyContent="center" py={4}>

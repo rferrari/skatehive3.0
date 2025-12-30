@@ -5,9 +5,12 @@ import HiveClient from '@/lib/hive/hiveclient';
 import { validateHiveUsernameFormat } from '@/lib/utils/hiveAccountUtils';
 import { filterAutoComments } from '@/lib/utils/postUtils';
 
-// Debug utility - disabled for production
-const debug = (...args: any[]) => {
-    // Disabled for production
+const SNAP_PAGE_SIZE = 20;
+
+const log = (...args: any[]) => {
+    // Toggle here if you want to silence logs
+    // return;
+    console.info('[Snaps]', ...args);
 };
 
 export default function useUserSnaps(username: string) {
@@ -16,49 +19,17 @@ export default function useUserSnaps(username: string) {
     const [hasMore, setHasMore] = useState(true);
     const fetchedPermlinksRef = useRef<Set<string>>(new Set());
     const initialLoadDoneRef = useRef<boolean>(false);
+    const cursorRef = useRef<{ startPermlink: string; beforeDate: string } | null>(null);
+    const apiPageRef = useRef<number>(1);
 
     const resetSnaps = useCallback(() => {
         setSnaps([]);
         setHasMore(true);
         fetchedPermlinksRef.current.clear();
         initialLoadDoneRef.current = false;
+        cursorRef.current = null;
+        apiPageRef.current = 1;
     }, []);
-
-    // Filter snaps to only include those with images or videos and good quality content
-    const filterMediaSnaps = (snaps: Discussion[]): Discussion[] => {
-        // First apply quality filters (reputation and downvote filtering)
-        const qualityFilteredSnaps = filterAutoComments(snaps);
-
-        // Then filter for media content
-        return qualityFilteredSnaps.filter(snap => {
-            try {
-                const body = snap.body || '';
-
-                // Only check for two patterns:
-                // 1. Markdown image syntax: ![alt](url) → Images
-                const hasMarkdownImages = /!\[.*?\]\([^\)]+\)/gi.test(body);
-
-                // 2. HTML iframe tags → Videos
-                const hasIframes = /<iframe[^>]*>/gi.test(body);
-
-                const result = hasMarkdownImages || hasIframes;
-
-                // Debug logging for each snap
-                // if (body.length > 0) {
-                //     debug(`Media check for snap ${snap.permlink}:`, {
-                //         hasMarkdownImages,
-                //         hasIframes,
-                //         result,
-                //         bodyPreview: body.substring(0, 200)
-                //     });
-                // }
-
-                return result;
-            } catch (error) {
-                return false;
-            }
-        });
-    };
 
     // Extract media URLs from snap body content
     const extractMediaFromSnap = (snap: Discussion) => {
@@ -80,6 +51,26 @@ export default function useUserSnaps(username: string) {
                 allVideos.push(match[1]);
             }
 
+            // 3. Extract media from json_metadata.image
+            try {
+                const metadata = JSON.parse(snap.json_metadata || '{}');
+                const mdImages = Array.isArray(metadata.image)
+                    ? metadata.image
+                    : (typeof metadata.image === 'string' ? [metadata.image] : []);
+                allImages.push(...mdImages);
+            } catch {}
+
+            // 4. Extract direct media URLs in body
+            const directMediaPattern = /(https?:\/\/[^\s]+\.(?:png|jpe?g|gif|webp|mp4|mov|m4v|m3u8))/gi;
+            while ((match = directMediaPattern.exec(body)) !== null) {
+                const url = match[1];
+                if (url.match(/\.(mp4|mov|m4v|m3u8)$/i)) {
+                    allVideos.push(url);
+                } else {
+                    allImages.push(url);
+                }
+            }
+
             // Deduplicate and ensure proper URLs
             const uniqueImages = [...new Set(allImages)].map(url =>
                 url.startsWith('http') ? url : `https://${url}`
@@ -98,68 +89,78 @@ export default function useUserSnaps(username: string) {
         }
     };
 
-    const fetchUserSnapsFromHive = async (username: string): Promise<Discussion[]> => {
+    const hasMedia = (snap: Discussion) => extractMediaFromSnap(snap).hasMedia;
+
+    const fetchUserSnapsFromHive = async (username: string): Promise<{ snaps: Discussion[]; exhausted: boolean }> => {
         try {
-            const tag = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || '';
-            const limit = 20;
+            const currentCursor = cursorRef.current || {
+                startPermlink: '',
+                beforeDate: new Date().toISOString().split('.')[0],
+            };
 
-            // Get user's posts from Hive blockchain
-            const posts = await HiveClient.database.call('get_discussions_by_author_before_date', [
-                username,
-                '', // No specific permlink for first call
-                new Date().toISOString(),
-                limit,
-            ]);
+            let accumulated: Discussion[] = [];
+            let keepFetching = true;
+            let guard = 0;
 
-            if (!posts.length) {
-                debug(`No posts found for user ${username} on Hive blockchain`);
-                // Return empty array but don't throw error - this is a valid result
-                return [];
+            while (keepFetching && guard < 10 && accumulated.length < SNAP_PAGE_SIZE) {
+                const posts = await HiveClient.call('bridge', 'get_account_posts', {
+                    sort: 'posts',
+                    account: username,
+                    start_author: currentCursor.startPermlink ? username : undefined,
+                    start_permlink: currentCursor.startPermlink || undefined,
+                    limit: SNAP_PAGE_SIZE,
+                    observer: ''
+                });
+
+                guard += 1;
+
+                if (!posts.length) {
+                    log('Hive: no posts returned', { cursor: currentCursor, guard });
+                    keepFetching = false;
+                    break;
+                }
+
+                const discussions: Discussion[] = posts.map((post: any) => ({
+                    ...post,
+                    json_metadata: typeof post.json_metadata === 'string'
+                        ? post.json_metadata
+                        : JSON.stringify(post.json_metadata || {})
+                }));
+
+                const mediaSnaps = discussions.filter((snap) => hasMedia(snap) && !fetchedPermlinksRef.current.has(snap.permlink));
+                accumulated = [...accumulated, ...mediaSnaps];
+                mediaSnaps.forEach((snap) => fetchedPermlinksRef.current.add(snap.permlink));
+
+                log('Hive batch', {
+                    guard,
+                    posts: posts.length,
+                    mediaSnaps: mediaSnaps.length,
+                    accumulated: accumulated.length,
+                });
+
+                const lastPost = posts[posts.length - 1];
+                currentCursor.startPermlink = lastPost?.permlink || currentCursor.startPermlink;
+                currentCursor.beforeDate = (lastPost?.created && String(lastPost.created).split('.')[0]) || currentCursor.beforeDate;
+
+                if (posts.length < SNAP_PAGE_SIZE) {
+                    keepFetching = false;
+                }
             }
 
-            // Filter posts that match our community tag if specified
-            const filteredPosts = tag ? posts.filter((post: any) => {
-                try {
-                    const metadata = JSON.parse(post.json_metadata || '{}');
-                    const tags = metadata.tags || [];
-                    return tags.includes(tag);
-                } catch {
-                    return false;
-                }
-            }) : posts;
-
-            debug(`Hive blockchain: Found ${posts.length} total posts, ${filteredPosts.length} matching tag "${tag}" for user ${username}`);
-
-            // Convert to Discussion format
-            const discussions: Discussion[] = filteredPosts.map((post: any) => ({
-                ...post,
-                json_metadata: typeof post.json_metadata === 'string'
-                    ? post.json_metadata
-                    : JSON.stringify(post.json_metadata || {})
-            }));
-
-            // Filter for media snaps
-            const mediaSnaps = filterMediaSnaps(discussions);
-
-            debug(`Hive blockchain: Found ${filteredPosts.length} posts, ${mediaSnaps.length} with media for user ${username}`);
-
-            return mediaSnaps;
+            cursorRef.current = { ...currentCursor };
+            const exhausted = !keepFetching || guard >= 10 || accumulated.length === 0;
+            if (exhausted) {
+                setHasMore(false);
+            }
+            return { snaps: accumulated, exhausted };
         } catch (error) {
             throw error;
         }
     };
 
-    const fetchUserSnapsFromAPI = async (username: string): Promise<Discussion[]> => {
-        // For the first load, get all posts without pagination
-        // The API seems to work better without pagination parameters
-        let apiUrl = `https://api.skatehive.app/api/v2/feed/${encodeURIComponent(username)}`;
-
-        // Only add pagination if we already have snaps (for potential future pagination)
-        if (snaps.length > 0) {
-            const limit = 20;
-            const currentPage = Math.floor(snaps.length / limit) + 1;
-            apiUrl += `?limit=${encodeURIComponent(limit.toString())}&page=${encodeURIComponent(currentPage.toString())}`;
-        }
+    const fetchUserSnapsFromAPI = async (username: string): Promise<{ snaps: Discussion[]; exhausted: boolean }> => {
+        const page = apiPageRef.current;
+        let apiUrl = `https://api.skatehive.app/api/v2/feed/${encodeURIComponent(username)}?limit=${SNAP_PAGE_SIZE}&page=${page}`;
 
         const response = await fetch(apiUrl);
         if (!response.ok) {
@@ -180,14 +181,14 @@ export default function useUserSnaps(username: string) {
         } else if (data.result && Array.isArray(data.result)) {
             userSnaps = data.result;
         } else {
-            return [];
+            return { snaps: [], exhausted: true };
         }
 
         // debug(`Found ${userSnaps.length} total snaps for user ${username}`);
 
         if (userSnaps.length === 0) {
             setHasMore(false);
-            return [];
+            return { snaps: [], exhausted: true };
         }
 
         // Filter out already fetched snaps
@@ -211,23 +212,22 @@ export default function useUserSnaps(username: string) {
             // })));
 
             // Convert to Discussion format
-            const discussions: Discussion[] = newSnaps.map((snap: any) => ({
-                ...snap,
-                json_metadata: (() => {
-                    if (snap.post_json_metadata) {
-                        return JSON.stringify(snap.post_json_metadata);
-                    } else if (typeof snap.json_metadata === 'string') {
-                        return snap.json_metadata;
-                    } else if (typeof snap.json_metadata === 'object') {
-                        return JSON.stringify(snap.json_metadata || {});
-                    } else {
-                        return JSON.stringify({});
-                    }
-                })()
-            }));
+        const discussions: Discussion[] = newSnaps.map((snap: any) => ({
+            ...snap,
+            json_metadata: (() => {
+                if (snap.post_json_metadata) {
+                    return JSON.stringify(snap.post_json_metadata);
+                } else if (typeof snap.json_metadata === 'string') {
+                    return snap.json_metadata;
+                } else if (typeof snap.json_metadata === 'object') {
+                    return JSON.stringify(snap.json_metadata || {});
+                } else {
+                    return JSON.stringify({});
+                }
+            })()
+        }));
 
-            // Filter for media snaps
-            const mediaSnaps = filterMediaSnaps(discussions);
+        const mediaSnaps = discussions.filter((snap) => hasMedia(snap) && !fetchedPermlinksRef.current.has(snap.permlink));
 
             // debug(`Filtered to ${mediaSnaps.length} snaps with media`);
 
@@ -256,25 +256,27 @@ export default function useUserSnaps(username: string) {
                 fetchedPermlinksRef.current.add(snap.permlink);
             });
 
-            // Check if we've reached the end
-            // Since we're fetching all at once initially, disable pagination
-            if (snaps.length === 0) {
-                // First load - we got all the user's posts
-                setHasMore(false);
-            } else {
-                // Future pagination logic (if needed)
+            if (userSnaps.length < SNAP_PAGE_SIZE) {
                 setHasMore(false);
             }
 
-            return mediaSnaps;
+            apiPageRef.current = page + 1;
+
+            return { snaps: mediaSnaps, exhausted: userSnaps.length < SNAP_PAGE_SIZE };
         } else {
             // No new snaps, we've probably reached the end
             setHasMore(false);
-            return [];
+            return { snaps: [], exhausted: true };
         }
     };
 
     const fetchUserSnaps = useCallback(async (): Promise<Discussion[]> => {
+        log('fetchUserSnaps:start', {
+            username,
+            cursor: cursorRef.current,
+            apiPage: apiPageRef.current,
+            fetched: fetchedPermlinksRef.current.size,
+        });
         // Validate username to prevent injection attacks
         if (!username || typeof username !== 'string') {
             return [];
@@ -288,15 +290,20 @@ export default function useUserSnaps(username: string) {
 
         try {
             let userSnaps: Discussion[] = [];
+            let exhausted = false;
 
             // Try API method first
             try {
-                userSnaps = await fetchUserSnapsFromAPI(username);
+                const apiResult = await fetchUserSnapsFromAPI(username);
+                userSnaps = apiResult.snaps;
+                exhausted = apiResult.exhausted;
 
                 // If API returns no results, try Hive blockchain as fallback
                 if (userSnaps.length === 0) {
                     try {
-                        userSnaps = await fetchUserSnapsFromHive(username);
+                        const hiveResult = await fetchUserSnapsFromHive(username);
+                        userSnaps = hiveResult.snaps;
+                        exhausted = hiveResult.exhausted;
                     } catch (hiveError) {
                         // Still return empty array from API rather than failing completely
                     }
@@ -304,13 +311,25 @@ export default function useUserSnaps(username: string) {
             } catch (apiError) {
                 // Fallback to Hive blockchain if API method fails
                 try {
-                    userSnaps = await fetchUserSnapsFromHive(username);
+                    const hiveResult = await fetchUserSnapsFromHive(username);
+                    userSnaps = hiveResult.snaps;
+                    exhausted = hiveResult.exhausted;
                 } catch (hiveError) {
                     setHasMore(false);
                     return [];
                 }
             }
 
+            if (exhausted) {
+                setHasMore(false);
+            }
+
+            log('fetchUserSnaps:done', {
+                returned: userSnaps.length,
+                hasMore,
+                exhausted,
+                cursor: cursorRef.current,
+            });
             return userSnaps;
         } catch (error) {
             setHasMore(false);
@@ -326,8 +345,13 @@ export default function useUserSnaps(username: string) {
             const newSnaps = await fetchUserSnaps();
 
             if (newSnaps.length === 0) {
-                setHasMore(false);
+                log('loadMoreSnaps: empty batch', {
+                    hasMore,
+                    cursor: cursorRef.current,
+                    fetched: fetchedPermlinksRef.current.size,
+                });
             } else {
+                log('loadMoreSnaps: appending', { count: newSnaps.length });
                 setSnaps(prevSnaps => {
                     const existingPermlinks = new Set(prevSnaps.map(snap => snap.permlink));
                     const uniqueSnaps = newSnaps.filter(snap => !existingPermlinks.has(snap.permlink));

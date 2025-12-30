@@ -352,7 +352,7 @@ const SnapModal = ({
             {!isVideo && (
               <a
                 href={currentMedia}
-                download={currentMedia.split("/").pop() || "media"}
+                download={currentMedia ? currentMedia.split("/").pop() || "media" : "media"}
                 style={{
                   position: "absolute",
                   bottom: "16px",
