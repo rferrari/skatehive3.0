@@ -20,10 +20,12 @@ import { FaImage } from "react-icons/fa";
 import { Discussion } from "@hiveio/dhive";
 import { getFileSignature, uploadImage } from "@/lib/hive/client-functions";
 import { getLastSnapsContainer } from "@/lib/hive/client-functions";
-import ImageCompressor, { ImageCompressorRef } from "@/lib/utils/ImageCompressor";
+import ImageCompressor, {
+  ImageCompressorRef,
+} from "@/lib/utils/ImageCompressor";
 import MatrixOverlay from "../graphics/MatrixOverlay";
 import imageCompression from "browser-image-compression";
-import * as exifr from 'exifr';
+import * as exifr from "exifr";
 
 interface SpotSnapComposerProps {
   onNewComment: (newComment: Partial<Discussion>) => void;
@@ -64,12 +66,12 @@ export default function SpotSnapComposer({
       const file = new File([blob], fileName || "compressed.jpg", {
         type: blob.type,
       });
-      
+
       // Extract GPS from original file if available
       if (originalFile) {
         await extractGPS(originalFile);
       }
-      
+
       const signature = await getFileSignature(file);
       const uploadUrl = await uploadImage(
         file,
@@ -101,15 +103,17 @@ export default function SpotSnapComposer({
       alert("Please enter a description or upload an image before posting.");
       return;
     }
-    
+
     // Check if we have location data
     const hasCoords = lat.trim() && lon.trim();
     const hasAddress = address.trim();
     const hasLocation = hasCoords || hasAddress;
-    
+
     // Warn user if no location data, but allow posting
     if (!hasLocation) {
-      const proceed = confirm("No location data detected. You can post the spot now and add location details later by editing the post. Would you like to continue?");
+      const proceed = confirm(
+        "No location data detected. You can post the spot now and add location details later by editing the post. Would you like to continue?"
+      );
       if (!proceed) return;
     }
     setIsLoading(true);
@@ -129,20 +133,22 @@ export default function SpotSnapComposer({
     } else if (hasAddress) {
       locationLine = `🌐 ${address}`;
     } else {
-      locationLine = "🌐 [To be added - edit this post to add location details]";
+      locationLine =
+        "🌐 [To be added - edit this post to add location details]";
     }
     let commentBody = `Spot Name: ${spotName}\n${locationLine}\n`;
     if (description) commentBody += `\n${description}`;
     if (validUrls.length > 0) {
       const imageMarkup = validUrls
-        .map(
-          (url: string | null, idx: number) => {
-            const caption = compressedImages[idx]?.caption;
-            // Only include caption if it's meaningful (not empty and not just the spot name)
-            const meaningfulCaption = caption && caption.trim() && caption.trim() !== spotName ? caption : "";
-            return `![${meaningfulCaption}](${url?.toString() || ""})`;
-          }
-        )
+        .map((url: string | null, idx: number) => {
+          const caption = compressedImages[idx]?.caption;
+          // Only include caption if it's meaningful (not empty and not just the spot name)
+          const meaningfulCaption =
+            caption && caption.trim() && caption.trim() !== spotName
+              ? caption
+              : "";
+          return `![${meaningfulCaption}](${url?.toString() || ""})`;
+        })
         .join("\n");
       commentBody += `\n\n${imageMarkup}`;
     }
@@ -194,34 +200,36 @@ export default function SpotSnapComposer({
   const translateCoordinateDirection = (coord: string): string => {
     if (!coord) return coord;
     // Replace Spanish "O" (Oeste/West) with "W"
-    return coord.replace(/^O\s*/, 'W').replace(/\s*O$/, ' W');
+    return coord.replace(/^O\s*/, "W").replace(/\s*O$/, " W");
   };
 
   // Add this function to extract GPS from image files
   const extractGPS = async (file: File) => {
     try {
       // Log file details for debugging
-      const fileInfo = `File: ${file.name} (${file.type}, ${Math.round(file.size / 1024)}KB)`;
-      console.log('🔍 GPS Debug:', fileInfo);
-      
+      const fileInfo = `File: ${file.name} (${file.type}, ${Math.round(
+        file.size / 1024
+      )}KB)`;
+      console.log("🔍 GPS Debug:", fileInfo);
+
       const gps = await exifr.gps(file);
-      console.log('🔍 GPS Data:', gps);
-      
+      console.log("🔍 GPS Data:", gps);
+
       if (gps && gps.latitude && gps.longitude) {
         const latStr = translateCoordinateDirection(gps.latitude.toString());
         const lonStr = translateCoordinateDirection(gps.longitude.toString());
         setLat(latStr);
         setLon(lonStr);
         // Don't auto-fill address with coordinates to avoid duplication
-        console.log('✅ GPS coordinates extracted successfully');
+        console.log("✅ GPS coordinates extracted successfully");
         return true; // Return true if GPS data was found
       } else {
         // No GPS data found - just log it, no need to alert user
-        console.log('⚠️ No GPS data found in image:', fileInfo);
+        console.log("⚠️ No GPS data found in image:", fileInfo);
       }
     } catch (e) {
       // Error reading EXIF - just log it, no need to alert user
-      console.error('❌ GPS extraction error:', e);
+      console.error("❌ GPS extraction error:", e);
     }
     return false; // Return false if no GPS data found
   };
@@ -256,13 +264,13 @@ export default function SpotSnapComposer({
             useWebWorker: true,
           };
           const compressedFile = await imageCompression(file, options);
-                  const url = URL.createObjectURL(compressedFile);
-        await handleCompressedImageUpload(url, compressedFile.name, file);
-        URL.revokeObjectURL(url);
+          const url = URL.createObjectURL(compressedFile);
+          await handleCompressedImageUpload(url, compressedFile.name, file);
+          URL.revokeObjectURL(url);
         } catch (err) {
           alert(
             "Error compressing image: " +
-            (err instanceof Error ? err.message : err)
+              (err instanceof Error ? err.message : err)
           );
         }
       } else {
@@ -333,14 +341,17 @@ export default function SpotSnapComposer({
         </FormControl>
         <FormControl>
           <FormLabel>
-            🌐 Loc. {!lat && !lon && compressedImages.length > 0 && (
+            🌐 Loc.{" "}
+            {!lat && !lon && compressedImages.length > 0 && (
               <Box as="span" color="orange.500" fontSize="sm">
                 (No GPS data found in photos)
               </Box>
             )}
           </FormLabel>
           <Input
-            placeholder={lat && lon ? `${lat}, ${lon}` : "e.g. 123 Skate St, New York, NY"}
+            placeholder={
+              lat && lon ? `${lat}, ${lon}` : "e.g. 123 Skate St, New York, NY"
+            }
             value={lat && lon ? `${lat}, ${lon}` : address}
             onChange={(e) => setAddress(e.target.value)}
             isDisabled={isLoading}
@@ -348,7 +359,6 @@ export default function SpotSnapComposer({
             bg={lat && lon ? "muted" : "background"}
             _focus={{ borderColor: "primary" }}
           />
-
         </FormControl>
         <FormControl>
           <Textarea
@@ -385,7 +395,10 @@ export default function SpotSnapComposer({
           >
             <FaImage size={28} />
             <Box fontSize="sm" mt={1}>
-              Upload <Box as="span" color="red.500">*</Box>
+              Upload{" "}
+              <Box as="span" color="red.500">
+                *
+              </Box>
             </Box>
           </Button>
           <Button
@@ -467,11 +480,16 @@ export default function SpotSnapComposer({
           borderRadius="base"
           pointerEvents="all"
         >
-          <Box color="primary" fontWeight="bold" fontSize="xl" textAlign="center">
+          <Box
+            color="primary"
+            fontWeight="bold"
+            fontSize="xl"
+            textAlign="center"
+          >
             Please log in to post a spot.
           </Box>
         </Box>
       )}
     </Box>
   );
-} 
+}

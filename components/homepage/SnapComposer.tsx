@@ -13,7 +13,10 @@ import {
 } from "@chakra-ui/react";
 import { useAioha } from "@aioha/react-ui";
 import GiphySelector from "./GiphySelector";
-import VideoUploader, { VideoUploaderRef, ErrorDemoPanel } from "./VideoUploader";
+import VideoUploader, {
+  VideoUploaderRef,
+  ErrorDemoPanel,
+} from "./VideoUploader";
 import VideoTrimModal from "./VideoTrimModal";
 import InstagramModal from "./InstagramModal";
 import { IGif } from "@giphy/js-types";
@@ -45,7 +48,9 @@ import { TbGif } from "react-icons/tb";
 import MatrixOverlay from "@/components/graphics/MatrixOverlay";
 
 // Check for demo mode via localStorage
-const SHOW_ERROR_DEMO = typeof window !== 'undefined' && localStorage.getItem('SKATEHIVE_ERROR_DEMO') === 'true';
+const SHOW_ERROR_DEMO =
+  typeof window !== "undefined" &&
+  localStorage.getItem("SKATEHIVE_ERROR_DEMO") === "true";
 
 interface SnapComposerProps {
   pa: string;
@@ -92,7 +97,7 @@ const SnapComposer = React.memo(function SnapComposer({
 
   // Instagram modal state
   const [isInstagramModalOpen, setInstagramModalOpen] = useState(false);
-  
+
   // Error demo panel state
   const [showErrorDemo, setShowErrorDemo] = useState(SHOW_ERROR_DEMO);
 
@@ -1088,18 +1093,18 @@ const SnapComposer = React.memo(function SnapComposer({
               onUploadStart={handleVideoUploadStart}
               onUploadFinish={handleVideoUploadFinish}
               onError={handleVideoError}
-              renderTerminal={(terminal) => (
-                <Box mt={2}>{terminal}</Box>
-              )}
+              renderTerminal={(terminal) => <Box mt={2}>{terminal}</Box>}
             />
           </Box>
-          
+
           {/* Error Demo Panel - toggle via localStorage.setItem('SKATEHIVE_ERROR_DEMO', 'true') */}
           {showErrorDemo && (
-            <ErrorDemoPanel onClose={() => {
-              setShowErrorDemo(false);
-              localStorage.removeItem('SKATEHIVE_ERROR_DEMO');
-            }} />
+            <ErrorDemoPanel
+              onClose={() => {
+                setShowErrorDemo(false);
+                localStorage.removeItem("SKATEHIVE_ERROR_DEMO");
+              }}
+            />
           )}
           {isGiphyModalOpen && (
             <Box position="relative">
