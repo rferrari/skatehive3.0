@@ -9,7 +9,6 @@ import {
   Wrap,
   Progress,
   Input,
-  Text,
   Tooltip,
 } from "@chakra-ui/react";
 import { useAioha } from "@aioha/react-ui";
@@ -578,10 +577,10 @@ const SnapComposer = React.memo(function SnapComposer({
     onClose,
   ]);
 
-  // Detect Ctrl+Enter and submit - memoized
+  // Detect Ctrl+Enter or Command+Enter and submit - memoized
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (event.ctrlKey && event.key === "Enter") {
+      if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
         handleComment();
       }
     },

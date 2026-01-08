@@ -183,9 +183,9 @@ export default function SpotSnapComposer({
     }
   }
 
-  // Detect Ctrl+Enter and submit
+  // Detect Ctrl+Enter or Command+Enter and submit
   function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (event.ctrlKey && event.key === "Enter") {
+    if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
       handleComment();
     }
   }
