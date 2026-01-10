@@ -20,8 +20,8 @@ export type ServerKey = 'macmini' | 'oracle' | 'pi';
 
 /** Server configuration - SINGLE SOURCE OF TRUTH for server order */
 export const SERVER_CONFIG: Array<{ key: ServerKey; name: string; emoji: string; priority: string }> = [
-  { key: 'macmini', name: 'Mac Mini', emoji: '🍎', priority: 'PRIMARY' },
-  { key: 'oracle', name: 'Oracle', emoji: '🔮', priority: 'SECONDARY' },
+  { key: 'oracle', name: 'Oracle', emoji: '🔮', priority: 'PRIMARY' },
+  { key: 'macmini', name: 'Mac Mini', emoji: '🍎', priority: 'SECONDARY' },
   { key: 'pi', name: 'Raspberry Pi', emoji: '🫐', priority: 'TERTIARY' },
 ];
 
@@ -50,12 +50,12 @@ export async function processVideoOnServer(
   username: string = 'anonymous',
   enhancedOptions?: EnhancedProcessingOptions
 ): Promise<ProcessingResult> {
-  // PRIMARY: Mac Mini M4 (has real-time SSE progress streaming)
+  // PRIMARY: Oracle Cloud
   const primaryServer = SERVER_CONFIG[0];
   enhancedOptions?.onServerAttempt?.(primaryServer.key, primaryServer.name, primaryServer.priority);
   
   const primaryResult = await tryServer(
-    'https://minivlad.tail9656d3.ts.net/video',
+    'https://146-235-239-243.sslip.io',
     file,
     username,
     `${primaryServer.name} (${primaryServer.priority})`,
@@ -68,12 +68,12 @@ export async function processVideoOnServer(
   
   enhancedOptions?.onServerFailed?.(primaryServer.key, primaryResult.error);
 
-  // SECONDARY: Oracle Cloud (needs SSE update)
+  // SECONDARY: Mac Mini M4 (has real-time SSE progress streaming)
   const secondaryServer = SERVER_CONFIG[1];
   enhancedOptions?.onServerAttempt?.(secondaryServer.key, secondaryServer.name, secondaryServer.priority);
   
   const secondaryResult = await tryServer(
-    'https://146-235-239-243.sslip.io',
+    'https://minivlad.tail9656d3.ts.net/video',
     file,
     username,
     `${secondaryServer.name} (${secondaryServer.priority})`,
