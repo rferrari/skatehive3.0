@@ -48,8 +48,8 @@ export interface EnhancedProcessingOptions {
 async function checkServerHealth(serverBaseUrl: string): Promise<boolean> {
   try {
     const healthUrl = serverBaseUrl.includes('sslip.io')
-      ? `${serverBaseUrl}/health`
-      : `${serverBaseUrl}/health`;
+      ? `${serverBaseUrl}/healthz`  // Oracle uses /healthz
+      : `${serverBaseUrl}/healthz`; // Other servers also use /healthz
     
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
