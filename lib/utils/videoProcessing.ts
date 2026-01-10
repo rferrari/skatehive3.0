@@ -43,6 +43,30 @@ export interface EnhancedProcessingOptions {
 }
 
 /**
+ * Quick health check for a server (3 second timeout)
+ */
+async function checkServerHealth(serverBaseUrl: string): Promise<boolean> {
+  try {
+    const healthUrl = serverBaseUrl.includes('sslip.io')
+      ? `${serverBaseUrl}/health`
+      : `${serverBaseUrl}/health`;
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+    
+    const response = await fetch(healthUrl, {
+      method: 'GET',
+      signal: controller.signal,
+    });
+    
+    clearTimeout(timeoutId);
+    return response.ok;
+  } catch (error) {
+    return false;
+  }
+}
+
+/**
  * Process non-MP4 video on server - tries servers in order defined by SERVER_CONFIG
  */
 export async function processVideoOnServer(
@@ -52,54 +76,105 @@ export async function processVideoOnServer(
 ): Promise<ProcessingResult> {
   // PRIMARY: Oracle Cloud
   const primaryServer = SERVER_CONFIG[0];
-  enhancedOptions?.onServerAttempt?.(primaryServer.key, primaryServer.name, primaryServer.priority);
+  const primaryUrl = 'https://146-235-239-243.sslip.io';
   
-  const primaryResult = await tryServer(
-    'https://146-235-239-243.sslip.io',
-    file,
-    username,
-    `${primaryServer.name} (${primaryServer.priority})`,
-    enhancedOptions
-  );
+  console.log(`🔍 Checking ${primaryServer.name} health...`);
+  const isPrimaryHealthy = await checkServerHealth(primaryUrl);
+  
+  let primaryResult: ProcessingResult;
+  if (isPrimaryHealthy) {
+    console.log(`✅ ${primaryServer.name} is healthy, attempting upload...`);
+    enhancedOptions?.onServerAttempt?.(primaryServer.key, primaryServer.name, primaryServer.priority);
+    
+    primaryResult = await tryServer(
+      primaryUrl,
+      file,
+      username,
+      `${primaryServer.name} (${primaryServer.priority})`,
+      enhancedOptions
+    );
 
-  if (primaryResult.success) {
-    return primaryResult;
+    if (primaryResult.success) {
+      return primaryResult;
+    }
+  } else {
+    console.log(`❌ ${primaryServer.name} health check failed, skipping...`);
+    primaryResult = {
+      success: false,
+      error: `${primaryServer.name} is offline (health check failed)`,
+      errorType: 'connection',
+      failedServer: primaryServer.key
+    };
   }
   
   enhancedOptions?.onServerFailed?.(primaryServer.key, primaryResult.error);
 
   // SECONDARY: Mac Mini M4 (has real-time SSE progress streaming)
   const secondaryServer = SERVER_CONFIG[1];
-  enhancedOptions?.onServerAttempt?.(secondaryServer.key, secondaryServer.name, secondaryServer.priority);
+  const secondaryUrl = 'https://minivlad.tail9656d3.ts.net/video';
   
-  const secondaryResult = await tryServer(
-    'https://minivlad.tail9656d3.ts.net/video',
-    file,
-    username,
-    `${secondaryServer.name} (${secondaryServer.priority})`,
-    enhancedOptions
-  );
+  console.log(`🔍 Checking ${secondaryServer.name} health...`);
+  const isSecondaryHealthy = await checkServerHealth(secondaryUrl);
+  
+  let secondaryResult: ProcessingResult;
+  if (isSecondaryHealthy) {
+    console.log(`✅ ${secondaryServer.name} is healthy, attempting upload...`);
+    enhancedOptions?.onServerAttempt?.(secondaryServer.key, secondaryServer.name, secondaryServer.priority);
+    
+    secondaryResult = await tryServer(
+      secondaryUrl,
+      file,
+      username,
+      `${secondaryServer.name} (${secondaryServer.priority})`,
+      enhancedOptions
+    );
 
-  if (secondaryResult.success) {
-    return secondaryResult;
+    if (secondaryResult.success) {
+      return secondaryResult;
+    }
+  } else {
+    console.log(`❌ ${secondaryServer.name} health check failed, skipping...`);
+    secondaryResult = {
+      success: false,
+      error: `${secondaryServer.name} is offline (health check failed)`,
+      errorType: 'connection',
+      failedServer: secondaryServer.key
+    };
   }
   
   enhancedOptions?.onServerFailed?.(secondaryServer.key, secondaryResult.error);
 
   // TERTIARY: Raspberry Pi (backup)
   const tertiaryServer = SERVER_CONFIG[2];
-  enhancedOptions?.onServerAttempt?.(tertiaryServer.key, tertiaryServer.name, tertiaryServer.priority);
+  const tertiaryUrl = 'https://vladsberry.tail83ea3e.ts.net/video';
   
-  const tertiaryResult = await tryServer(
-    'https://vladsberry.tail83ea3e.ts.net/video',
-    file,
-    username,
-    `${tertiaryServer.name} (${tertiaryServer.priority})`,
-    enhancedOptions
-  );
+  console.log(`🔍 Checking ${tertiaryServer.name} health...`);
+  const isTertiaryHealthy = await checkServerHealth(tertiaryUrl);
+  
+  let tertiaryResult: ProcessingResult;
+  if (isTertiaryHealthy) {
+    console.log(`✅ ${tertiaryServer.name} is healthy, attempting upload...`);
+    enhancedOptions?.onServerAttempt?.(tertiaryServer.key, tertiaryServer.name, tertiaryServer.priority);
+    
+    tertiaryResult = await tryServer(
+      tertiaryUrl,
+      file,
+      username,
+      `${tertiaryServer.name} (${tertiaryServer.priority})`,
+      enhancedOptions
+    );
 
-  if (tertiaryResult.success) {
-    return tertiaryResult;
+    if (tertiaryResult.success) {
+      return tertiaryResult;
+    }
+  } else {
+    console.log(`❌ ${tertiaryServer.name} health check failed, skipping...`);
+    tertiaryResult = {
+      success: false,
+      error: `${tertiaryServer.name} is offline (health check failed)`,
+      errorType: 'connection',
+      failedServer: tertiaryServer.key
+    };
   }
   
   enhancedOptions?.onServerFailed?.(tertiaryServer.key, tertiaryResult.error);
@@ -186,11 +261,14 @@ async function tryServer(
       }
     }
 
-    // Create abort controller for manual timeout
+    // Create abort controller with shorter timeout for faster failover
     const controller = new AbortController();
+    const fileSizeMB = file.size / (1024 * 1024);
+    // Dynamic timeout: 30s base + 10s per MB (max 3 minutes)
+    const timeout = Math.min(30000 + (fileSizeMB * 10000), 180000);
     const timeoutId = setTimeout(() => {
       controller.abort();
-    }, 300000); // 5 minute timeout for video processing (increased for large files)
+    }, timeout);
 
     try {
       const response = await fetch(transcodeUrl, {
