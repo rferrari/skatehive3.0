@@ -75,13 +75,13 @@ const SkateboardLoader = ({ serverName, progress = 0, stage }: { serverName?: st
   const [messageIndex, setMessageIndex] = useState(() => Math.floor(Math.random() * funLoadingMessages.length));
   const [prepMessageIndex, setPrepMessageIndex] = useState(() => Math.floor(Math.random() * preparingMessages.length));
   const [dots, setDots] = useState('');
-  
+
   // Skateboard animation frames (spinning effect)
   const skateFrames = ['🛹', '🛹', '🛹', '💨🛹', '🛹', '✨🛹', '🛹', '🔥🛹'];
-  
+
   // Preparing state frames (bouncing skateboard)
   const prepFrames = ['🛹', '  🛹', '    🛹', '  🛹', '🛹', '🛹💨', '🛹✨', '🛹'];
-  
+
   // Reset state when progress goes back to 0 (new upload)
   useEffect(() => {
     if (progress === 0) {
@@ -92,42 +92,42 @@ const SkateboardLoader = ({ serverName, progress = 0, stage }: { serverName?: st
       setPrepMessageIndex(Math.floor(Math.random() * preparingMessages.length));
     }
   }, [progress]);
-  
+
   useEffect(() => {
     // Track if progress is "stuck"
     if (progress !== lastProgress && progress !== 0) {
       setLastProgress(progress);
       setStuckTime(0);
     }
-    
+
     // Increment stuck time counter
     const stuckInterval = setInterval(() => {
       if (progress === lastProgress) {
         setStuckTime(prev => prev + 1);
       }
     }, 500);
-    
+
     // Skateboard animation - spins faster when "stuck" (no progress for 2+ seconds)
     const spinDelay = stuckTime > 4 ? 100 : 200; // Faster when stuck
     const skateInterval = setInterval(() => {
       setSkateFrame(prev => (prev + 1) % skateFrames.length);
     }, spinDelay);
-    
+
     // Rotate fun messages every 3 seconds
     const messageInterval = setInterval(() => {
       setMessageIndex(prev => (prev + 1) % funLoadingMessages.length);
     }, 3000);
-    
+
     // Rotate preparing messages every 2 seconds (faster to show activity)
     const prepInterval = setInterval(() => {
       setPrepMessageIndex(prev => (prev + 1) % preparingMessages.length);
     }, 2000);
-    
+
     // Animate dots for preparing state
     const dotsInterval = setInterval(() => {
       setDots(prev => prev.length >= 3 ? '' : prev + '.');
     }, 400);
-    
+
     return () => {
       clearInterval(stuckInterval);
       clearInterval(skateInterval);
@@ -161,7 +161,7 @@ const SkateboardLoader = ({ serverName, progress = 0, stage }: { serverName?: st
   const displayProgress = Math.min(progress, 100);
   const filledWidth = Math.floor((displayProgress / 100) * trackWidth);
   const skatePos = Math.max(0, Math.min(filledWidth, trackWidth - 1));
-  
+
   const track = Array(trackWidth).fill('─').map((char, i) => {
     if (i === skatePos) return skateFrames[skateFrame];
     if (i < skatePos) return '█';
@@ -190,7 +190,7 @@ const ServerIcon = ({ server, status }: { server: string; status?: string }) => 
     pi: "🫐",
     pinata: "📌",
   };
-  
+
   const statusIcons: Record<string, string> = {
     pending: "⏳",
     trying: "🔄",
@@ -232,8 +232,8 @@ export const VideoUploadTerminal: React.FC<VideoUploadTerminalProps> = ({
   }, [lines.length]);
 
   // Check if upload was FULLY successful (final success, not intermediate steps)
-  const isFullyComplete = lines.some(l => 
-    l.message.includes("Video ready!") || 
+  const isFullyComplete = lines.some(l =>
+    l.message.includes("Video ready!") ||
     l.message.includes("🎉") ||
     l.message.includes("IPFS CID:") ||
     l.message.includes("Upload complete") ||
@@ -359,21 +359,21 @@ export const VideoUploadTerminal: React.FC<VideoUploadTerminalProps> = ({
             {line.message}
           </div>
         ))}
-        
+
         {/* Show skateboard loader when any server is being tried */}
         {isLoading(lines) && (
           <div className="mt-1 mb-1">
             <SkateboardLoader serverName={getCurrentServer(lines)} progress={progress} stage={stage} />
           </div>
         )}
-        
+
         {/* Auto-close countdown message on success */}
         {countdown !== null && countdown > 0 && (
           <div className="mt-2 text-gray-400">
             <span className="text-green-400">✨ Auto-closing in </span>
             <span className="text-yellow-400 font-bold">{countdown}</span>
             <span className="text-green-400"> seconds...</span>
-            <button 
+            <button
               onClick={cancelCountdown}
               className="ml-2 text-gray-500 hover:text-white underline"
             >
@@ -381,7 +381,7 @@ export const VideoUploadTerminal: React.FC<VideoUploadTerminalProps> = ({
             </button>
           </div>
         )}
-        
+
         {/* Blinking cursor */}
         <span className="inline-block w-1.5 h-3 bg-green-400 animate-pulse" />
       </div>
@@ -428,7 +428,7 @@ export const VideoUploadTerminal: React.FC<VideoUploadTerminalProps> = ({
               <span className="text-green-400">✅ Upload complete</span>
             ) : null}
           </div>
-          
+
           <div className="flex gap-2">
             {countdown !== null && (
               <button
@@ -458,7 +458,7 @@ function getServerStatus(
 ): "pending" | "trying" | "success" | "failed" | undefined {
   const serverLines = lines.filter((l) => l.server === server);
   if (serverLines.length === 0) return "pending";
-  
+
   const lastLine = serverLines[serverLines.length - 1];
   return lastLine.status;
 }
@@ -466,36 +466,36 @@ function getServerStatus(
 // Helper to check if any server is currently being tried (loading state)
 function isLoading(lines: TerminalLine[]): boolean {
   if (lines.length === 0) return false;
-  
+
   // Check if upload completed (success or error)
-  const hasCompletion = lines.some(l => 
-    l.message.includes("Video ready!") || 
+  const hasCompletion = lines.some(l =>
+    l.message.includes("Video ready!") ||
     l.message.includes("🎉") ||
     l.message.includes("IPFS CID:") ||
     l.message.includes("✓ Transcoding successful") ||
     l.message.includes("✓ IPFS upload successful") ||
     (l.type === "error" && l.message.includes("failed"))
   );
-  
+
   if (hasCompletion) return false;
-  
+
   // Check if any server has "trying" status - use SERVER_CONFIG for order
   const allServers = ["pinata", ...SERVER_CONFIG.map(s => s.key)];
   for (const server of allServers) {
     const status = getServerStatus(lines, server);
     if (status === "trying") return true;
   }
-  
+
   // Also check if last line indicates ongoing activity
   const lastLine = lines[lines.length - 1];
-  if (lastLine.type === "info" && 
-      (lastLine.message.includes("Uploading") || 
-       lastLine.message.includes("Processing") ||
-       lastLine.message.includes("Trying") ||
-       lastLine.message.includes("Starting"))) {
+  if (lastLine.type === "info" &&
+    (lastLine.message.includes("Uploading") ||
+      lastLine.message.includes("Processing") ||
+      lastLine.message.includes("Trying") ||
+      lastLine.message.includes("Starting"))) {
     return true;
   }
-  
+
   return false;
 }
 
@@ -506,14 +506,14 @@ function getCurrentServer(lines: TerminalLine[]): string | undefined {
     pinata: "Pinata IPFS",
     ...Object.fromEntries(SERVER_CONFIG.map(s => [s.key, s.name]))
   };
-  
+
   // Check in order: pinata first, then SERVER_CONFIG order
   const allServers = ["pinata", ...SERVER_CONFIG.map(s => s.key)];
   for (const server of allServers) {
     const status = getServerStatus(lines, server);
     if (status === "trying") return serverNames[server];
   }
-  
+
   return undefined;
 }
 
@@ -549,7 +549,7 @@ export function useUploadTerminal() {
     setStage('');
     setErrorDetails(undefined);
   };
-  
+
   const updateProgress = (p: number, s?: string) => {
     setProgress(p);
     if (s) setStage(s);

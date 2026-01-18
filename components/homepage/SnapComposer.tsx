@@ -199,7 +199,7 @@ const SnapComposer = React.memo(function SnapComposer({
       console.error("Error checking video duration:", error);
       alert(
         "Failed to process video file: " +
-          (error instanceof Error ? error.message : String(error))
+        (error instanceof Error ? error.message : String(error))
       );
     }
   };
@@ -359,7 +359,7 @@ const SnapComposer = React.memo(function SnapComposer({
         } catch (err) {
           alert(
             "Error compressing image: " +
-              (err instanceof Error ? err.message : err)
+            (err instanceof Error ? err.message : err)
           );
         }
       } else {
@@ -636,7 +636,7 @@ const SnapComposer = React.memo(function SnapComposer({
           } catch (err) {
             alert(
               "Error compressing image: " +
-                (err instanceof Error ? err.message : err)
+              (err instanceof Error ? err.message : err)
             );
           }
         }
@@ -1130,7 +1130,7 @@ const SnapComposer = React.memo(function SnapComposer({
         onClose={() => setGifMakerOpen(false)}
         asModal={true}
         onGifCreated={handleGifCreated}
-        onUpload={() => {}} // Not used with onGifCreated
+        onUpload={() => { }} // Not used with onGifCreated
         isProcessing={isProcessingGif}
       />
       {/* Video Trim Modal */}

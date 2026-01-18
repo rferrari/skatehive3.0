@@ -85,7 +85,7 @@ export async function GET(
         const nextResponse = NextResponse.json(responseData);
         nextResponse.headers.set('Cache-Control', 'public, max-age=900'); // 15 minutes
         nextResponse.headers.set('X-Cache', 'MISS');
-        
+
         // Add CORS headers if needed
         nextResponse.headers.set('Access-Control-Allow-Origin', '*');
         nextResponse.headers.set('Access-Control-Allow-Methods', 'GET');
@@ -95,11 +95,11 @@ export async function GET(
 
     } catch (error) {
         console.error('Failed to fetch metadata:', error);
-        
+
         if (error instanceof Error && error.name === 'AbortError') {
             return NextResponse.json({ error: 'Request timeout' }, { status: 408 });
         }
-        
+
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }

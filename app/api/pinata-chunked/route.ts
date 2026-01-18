@@ -76,8 +76,8 @@ export async function POST(request: Request) {
         } else {
             // Multi-chunk handling would go here
             // For now, return error for multi-chunk
-            return NextResponse.json({ 
-                error: 'Multi-chunk uploads not yet implemented' 
+            return NextResponse.json({
+                error: 'Multi-chunk uploads not yet implemented'
             }, { status: 501 });
         }
 

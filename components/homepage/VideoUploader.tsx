@@ -118,7 +118,7 @@ function generateFunnyErrorMessage(errorDetails: ErrorDetails): string {
       }
       return "💡 Try: Wait a moment and retry. If it keeps failing, the IPFS service might be down.";
     }
-    
+
     if (statusCode === 403) {
       return "💡 Try: Use an MP4 file, or check if the video is corrupted.";
     }
@@ -149,15 +149,15 @@ function generateFunnyErrorMessage(errorDetails: ErrorDetails): string {
     if (uploadType === 'mp4_direct') {
       return "📌 Pinata IPFS → ❌ (direct MP4 upload)";
     }
-    
+
     // Build chain display from SERVER_CONFIG
     const chainParts = SERVER_CONFIG.map(s => `${s.emoji} ${s.name} → ❌`);
     const fullChain = chainParts.join(' | ');
-    
+
     if (failedServer === 'all') {
       return fullChain;
     }
-    
+
     // Find which server failed and show chain up to that point
     const failedIndex = SERVER_CONFIG.findIndex(s => s.key === failedServer);
     if (failedIndex >= 0) {
@@ -168,7 +168,7 @@ function generateFunnyErrorMessage(errorDetails: ErrorDetails): string {
       }
       return partialChain;
     }
-    
+
     return `Upload type: ${uploadType}, Server: ${failedServer || 'unknown'}`;
   };
 
@@ -177,28 +177,28 @@ function generateFunnyErrorMessage(errorDetails: ErrorDetails): string {
   const serverChain = getServerChainStatus();
   const statusExplanation = statusCode ? getStatusExplanation(statusCode) : null;
   const advice = getActionableAdvice();
-  
+
   // Format: Roast + Server Chain + Error Details + File Info + Advice
   let message = serverRoast;
   message += `\n\n📡 Servers tried:\n${serverChain}`;
-  
+
   if (statusCode) {
     message += `\n\n❌ Error: ${statusExplanation}`;
   } else if (errorType) {
     message += `\n\n❌ Error type: ${errorType}`;
   }
-  
+
   // Add file info
   message += `\n📁 File: ${fileInfo.name} (${fileInfo.size}, ${fileInfo.type})`;
-  
+
   // Add raw error if it has useful info
   if (rawError && !rawError.includes('Server processing failed')) {
     const shortError = rawError.length > 80 ? rawError.substring(0, 80) + '...' : rawError;
     message += `\n📝 Details: ${shortError}`;
   }
-  
+
   message += `\n\n${advice}`;
-  
+
   return message;
 }
 
@@ -240,14 +240,14 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const [currentFile, setCurrentFile] = useState<File | null>(null);
-    
+
     // Terminal state for showing upload progress
     const terminal = useUploadTerminal();
 
     // Get user context for enhanced logging
     const { hiveUser } = useHiveUser();
     const { hivePower } = useHivePower(username);
-    
+
     // Helper to format file size
     const formatFileSize = (bytes: number): string => {
       if (bytes < 1024) return `${bytes} B`;
@@ -298,7 +298,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
       setIsProcessing(true);
       setCurrentFile(file);
       onUploadStart?.();
-      
+
       // Initialize terminal
       terminal.clear();
       terminal.show();
@@ -361,13 +361,13 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
                   connectionType: deviceData.connectionType,
                 }
               );
-              
+
               if (result.success && result.url) {
                 terminal.updateProgress(100); // Upload complete!
                 terminal.addLine("✓ IPFS upload successful!", "success");
                 terminal.addLine(`CID: ${result.IpfsHash || 'unknown'}`, "info");
                 terminal.addLine("🎉 Video ready! Close this terminal when ready.", "success");
-                
+
                 onUpload({
                   url: result.url,
                   hash: result.IpfsHash,
@@ -390,7 +390,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
                 terminal.addLine("✓ IPFS upload successful!", "success");
                 terminal.addLine(`CID: ${uploadResult.hash || 'unknown'}`, "info");
                 terminal.addLine("🎉 Video ready! Close this terminal when ready.", "success");
-                
+
                 onUpload({
                   url: uploadResult.url,
                   hash: uploadResult.hash,
@@ -403,7 +403,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
           } catch (uploadError) {
             const errorMsg = uploadError instanceof Error ? uploadError.message : String(uploadError);
             terminal.addLine(`✗ Pinata IPFS failed: ${errorMsg}`, "error");
-            
+
             errorDetails = {
               errorType: 'ipfs_upload',
               statusCode: extractStatusCode(errorMsg),
@@ -419,9 +419,9 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
         // 5. Non-MP4 files - process on server with enhanced options
         terminal.addLine(`Non-MP4 file (${file.type}) → Server transcoding required`, "info");
         terminal.addLine("Starting 3-server fallback chain...", "info");
-        
+
         terminal.updateProgress(5, 'receiving');
-        
+
         const processingOptions: EnhancedProcessingOptions = {
           userHP: enhancedOptions.userHP,
           platform: enhancedOptions.platform,
@@ -460,7 +460,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
           terminal.addLine("✓ Transcoding successful!", "success");
           terminal.addLine(`IPFS CID: ${result.hash}`, "info");
           terminal.addLine("🎉 Video ready! Close this terminal when ready.", "success");
-          
+
           onUpload({
             url: result.url,
             hash: result.hash,
@@ -476,7 +476,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
             uploadType: 'transcoding',
             fileInfo: { name: file.name, size: formatFileSize(file.size), type: file.type }
           };
-          
+
           throw new Error(result.error || "Server processing failed");
         }
       } catch (error) {
@@ -490,21 +490,21 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
             failedServer: processingError.failedServer,
             rawError: rawMessage,
             uploadType: isMP4(currentFile!) ? 'mp4_direct' : 'transcoding',
-            fileInfo: { 
-              name: currentFile?.name || 'unknown', 
-              size: currentFile ? formatFileSize(currentFile.size) : 'unknown', 
-              type: currentFile?.type || 'unknown' 
+            fileInfo: {
+              name: currentFile?.name || 'unknown',
+              size: currentFile ? formatFileSize(currentFile.size) : 'unknown',
+              type: currentFile?.type || 'unknown'
             }
           };
         }
-        
+
         terminal.addLine(`❌ Upload failed: ${errorDetails.rawError}`, "error");
-        
+
         // Generate user-friendly message with funny roast
         const userMessage = generateFunnyErrorMessage(errorDetails);
         terminal.addLine("", "info"); // Empty line for spacing
         terminal.addLine(userMessage, "error");
-        
+
         // Set error details for debug panel
         terminal.setError({
           errorType: errorDetails.errorType,
@@ -512,7 +512,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
           failedServer: errorDetails.failedServer,
           rawError: errorDetails.rawError
         });
-        
+
         onError?.(userMessage);
         onUpload(null);
       } finally {
@@ -564,7 +564,7 @@ const VideoUploader = forwardRef<VideoUploaderRef, VideoUploaderProps>(
           onChange={handleFileChange}
           style={{ display: "none" }}
         />
-        
+
         {/* Terminal - either use renderTerminal prop or render inline */}
         {renderTerminal ? renderTerminal(terminalComponent) : terminalComponent}
       </>

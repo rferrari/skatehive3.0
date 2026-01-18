@@ -68,7 +68,7 @@ const ERROR_SCENARIOS: ErrorScenario[] = [
     rawError: 'Failed to fetch',
     uploadType: 'mp4_direct'
   },
-  
+
   // Oracle Transcoder Errors
   {
     id: 'oracle_500',
@@ -90,7 +90,7 @@ const ERROR_SCENARIOS: ErrorScenario[] = [
     rawError: 'Oracle (Primary) responded with 403: Upload rejected',
     uploadType: 'transcoding'
   },
-  
+
   // Mac Mini Errors
   {
     id: 'macmini_500',
@@ -111,7 +111,7 @@ const ERROR_SCENARIOS: ErrorScenario[] = [
     rawError: 'Mac Mini M4 (Secondary) request timed out',
     uploadType: 'transcoding'
   },
-  
+
   // Raspberry Pi Errors
   {
     id: 'pi_500',
@@ -132,7 +132,7 @@ const ERROR_SCENARIOS: ErrorScenario[] = [
     rawError: 'Failed to fetch - net::ERR_CONNECTION_REFUSED',
     uploadType: 'transcoding'
   },
-  
+
   // All Servers Failed
   {
     id: 'all_500',
@@ -162,7 +162,7 @@ const ERROR_SCENARIOS: ErrorScenario[] = [
     rawError: 'Failed to fetch - all servers unreachable',
     uploadType: 'transcoding'
   },
-  
+
   // File validation errors
   {
     id: 'validation_size',
@@ -262,7 +262,7 @@ const getActionableAdvice = (scenario: ErrorScenario): string => {
     }
     return "💡 Try: Wait a moment and retry.";
   }
-  
+
   if (scenario.statusCode === 403) {
     return "💡 Try: Use an MP4 file, or check if the video is corrupted.";
   }
@@ -290,20 +290,20 @@ const generateFullErrorMessage = (scenario: ErrorScenario): string => {
   const serverChain = getServerChainStatus(scenario.failedServer, scenario.uploadType);
   const statusExplanation = scenario.statusCode ? getStatusExplanation(scenario.statusCode) : null;
   const advice = getActionableAdvice(scenario);
-  
+
   let message = roast;
   message += `\n\n📡 Servers tried:\n${serverChain}`;
-  
+
   if (scenario.statusCode) {
     message += `\n\n❌ Error: ${statusExplanation}`;
   } else if (scenario.errorType) {
     message += `\n\n❌ Error type: ${scenario.errorType}`;
   }
-  
+
   message += `\n📁 File: test-video.mov (45.2 MB, video/quicktime)`;
   message += `\n📝 Details: ${scenario.rawError}`;
   message += `\n\n${advice}`;
-  
+
   return message;
 };
 
@@ -335,9 +335,8 @@ export const ErrorDemoPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =
               <button
                 key={scenario.id}
                 onClick={() => handleSelectScenario(scenario)}
-                className={`w-full text-left px-3 py-2 border-b border-gray-800 hover:bg-gray-800 transition-colors ${
-                  selectedScenario?.id === scenario.id ? 'bg-gray-800 border-l-2 border-l-green-500' : ''
-                }`}
+                className={`w-full text-left px-3 py-2 border-b border-gray-800 hover:bg-gray-800 transition-colors ${selectedScenario?.id === scenario.id ? 'bg-gray-800 border-l-2 border-l-green-500' : ''
+                  }`}
               >
                 <div className="text-sm font-medium text-white">{scenario.name}</div>
                 <div className="text-xs text-gray-400">{scenario.description}</div>
@@ -365,7 +364,7 @@ export const ErrorDemoPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =
                   <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 text-sm text-white whitespace-pre-wrap">
                     {generatedMessage}
                   </div>
-                  
+
                   {/* Regenerate button */}
                   <button
                     onClick={() => setGeneratedMessage(generateFullErrorMessage(selectedScenario))}
