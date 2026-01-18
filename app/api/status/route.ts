@@ -34,7 +34,7 @@ const CACHE_TTL_MS = 300000; // 5 minutes
 
 const signerUrl =
   process.env.NEXT_PUBLIC_SIGNER_URL ||
-  'https://minivlad.tail9656d3.ts.net';
+  'https://minivlad.tail83ea3e.ts.net';
 const signerToken =
   process.env.NEXT_PUBLIC_SIGNER_TOKEN ||
   'd1fa4884f3c12b49b922c96ad93413416e19a5dcde50499ee473c448622c54d9';
@@ -53,7 +53,7 @@ const SERVICE_DEFINITIONS: ServiceDefinition[] = [
     name: 'Mac Mini IG',
     category: 'Instagram Downloader',
     description: 'Mac Mini Instagram downloader / helper',
-    healthUrl: 'https://minivlad.tail9656d3.ts.net/instagram/healthz',
+    healthUrl: 'https://minivlad.tail83ea3e.ts.net/instagram/healthz',
   },
   {
     id: 'raspi-insta',
@@ -85,7 +85,7 @@ const SERVICE_DEFINITIONS: ServiceDefinition[] = [
     name: 'Mac Mini M4 (Secondary)',
     category: 'Video Transcoding',
     description: 'Mac Mini M4 (Secondary) video transcoding node',
-    healthUrl: 'https://minivlad.tail9656d3.ts.net/video/healthz',
+    healthUrl: 'https://minivlad.tail83ea3e.ts.net/video/healthz',
     priority: 2,
   },
   {

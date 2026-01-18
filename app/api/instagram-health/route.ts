@@ -20,10 +20,10 @@ async function checkServerHealth(serverUrl: string): Promise<{ healthy: boolean;
   }, 10000); // 10 seconds timeout per server
 
   try {
-    console.log(`🏥 Checking health for: ${serverUrl}/instagram/health`);
+    console.log(`🏥 Checking health for: ${serverUrl}/instagram/healthz`);
 
     // Try Instagram-specific health endpoint first
-    let response = await fetch(`${serverUrl}/instagram/health`, {
+    let response = await fetch(`${serverUrl}/instagram/healthz`, {
       method: 'GET',
       signal: controller.signal
     });

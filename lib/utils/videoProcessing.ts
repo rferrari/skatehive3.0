@@ -111,7 +111,7 @@ export async function processVideoOnServer(
 
   // SECONDARY: Mac Mini M4 (has real-time SSE progress streaming)
   const secondaryServer = SERVER_CONFIG[1];
-  const secondaryUrl = 'https://minivlad.tail9656d3.ts.net/video';
+  const secondaryUrl = 'https://minivlad.tail83ea3e.ts.net/video';
 
   console.log(`🔍 Checking ${secondaryServer.name} health...`);
   const isSecondaryHealthy = await checkServerHealth(secondaryUrl);

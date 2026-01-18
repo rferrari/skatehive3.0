@@ -261,7 +261,7 @@ CREATE TABLE auth_ott (
 
 ### Hive Account Manager Service
 
-**Current URL:** `https://victorian-sunshine-hrs-phones.trycloudflare.com`
+**Current URL:** `https://minivlad.tail83ea3e.ts.net`
 
 **Endpoints Used:**
 
@@ -326,7 +326,7 @@ NEXT_PUBLIC_SUPABASE_PUBLIC_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 # Hive Account Manager
-NEXT_PUBLIC_SIGNER_URL=https://victorian-sunshine-hrs-phones.trycloudflare.com
+NEXT_PUBLIC_SIGNER_URL=https://minivlad.tail83ea3e.ts.net
 NEXT_PUBLIC_SIGNER_TOKEN=d1fa4884f3c12b49b922c96ad93413416e19a5dcde50499ee473c448622c54d9
 
 # Email Service
