@@ -5,7 +5,7 @@ const getInstagramServers = () => {
   const isDevelopment = process.env.NODE_ENV === 'development';
 
   return [
-    'https://minivlad.tail9656d3.ts.net',        // Mac Mini M4 (primary)
+    'https://minivlad.tail83ea3e.ts.net',        // Mac Mini M4 (primary)
     'https://vladsberry.tail83ea3e.ts.net',     // Raspberry Pi (secondary)
     'https://skate-insta.onrender.com'           // Render (fallback)
   ];
@@ -20,10 +20,10 @@ async function checkServerHealth(serverUrl: string): Promise<{ healthy: boolean;
   }, 10000); // 10 seconds timeout per server
 
   try {
-    console.log(`🏥 Checking health for: ${serverUrl}/instagram/healthz`);
-    
+    console.log(`🏥 Checking health for: ${serverUrl}/instagram/health`);
+
     // Try Instagram-specific health endpoint first
-    let response = await fetch(`${serverUrl}/instagram/healthz`, {
+    let response = await fetch(`${serverUrl}/instagram/health`, {
       method: 'GET',
       signal: controller.signal
     });

@@ -36,7 +36,7 @@ Download Instagram content and pin to IPFS.
 ## Server Fallback Chain
 
 ### Production (Vercel)
-1. **Mac Mini M4** (Primary): `https://minivlad.tail9656d3.ts.net/instagram/download`
+1. **Mac Mini M4** (Primary): `https://minivlad.tail83ea3e.ts.net/instagram/download`
 2. **Raspberry Pi** (Secondary): `https://vladsberry.tail83ea3e.ts.net/instagram/download`
 3. **Render** (Fallback): `https://skate-insta.onrender.com/download`
 
@@ -59,7 +59,7 @@ Download Instagram content and pin to IPFS.
   "url": "https://ipfs.skatehive.app/ipfs/bafybeig...",
   "filename": "Video_by_username-DOCCkdVj0Iy.mp4",
   "bytes": 6653670,
-  "server": "https://minivlad.tail9656d3.ts.net/instagram/download"
+  "server": "https://minivlad.tail83ea3e.ts.net/instagram/download"
 }
 ```
 
@@ -95,7 +95,7 @@ Download Instagram content and pin to IPFS.
   "error": "All servers failed",
   "details": "Last error: Server https://... timed out",
   "attemptedServers": [
-    "https://minivlad.tail9656d3.ts.net/instagram/download",
+    "https://minivlad.tail83ea3e.ts.net/instagram/download",
     "https://vladsberry.tail83ea3e.ts.net/instagram/download",
     "https://skate-insta.onrender.com/download"
   ]

@@ -137,7 +137,7 @@ https://skatehive-transcoder.onrender.com
 ## Related Services
 
 - Oracle Transcoder: `https://146-235-239-243.sslip.io`
-- Mac Mini M4 Transcoder: `https://minivlad.tail9656d3.ts.net/video`
+- Mac Mini M4 Transcoder: `https://minivlad.tail83ea3e.ts.net/video`
 - Render Fallback: `https://skatehive-transcoder.onrender.com`
 
 ---

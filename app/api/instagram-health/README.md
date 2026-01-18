@@ -22,7 +22,7 @@ Checks health of all Instagram download servers.
   "healthy": true,
   "servers": [
     {
-      "server": "https://minivlad.tail9656d3.ts.net",
+      "server": "https://minivlad.tail83ea3e.ts.net",
       "healthy": true,
       "status": 200
     },
@@ -39,7 +39,7 @@ Checks health of all Instagram download servers.
   ],
   "healthyServers": [
     {
-      "server": "https://minivlad.tail9656d3.ts.net",
+      "server": "https://minivlad.tail83ea3e.ts.net",
       "healthy": true,
       "status": 200
     },
@@ -61,7 +61,7 @@ Checks health of all Instagram download servers.
 
 Three fallback servers (in priority order):
 
-1. **Mac Mini M4** (Primary): `https://minivlad.tail9656d3.ts.net`
+1. **Mac Mini M4** (Primary): `https://minivlad.tail83ea3e.ts.net`
 2. **Raspberry Pi** (Secondary): `https://vladsberry.tail83ea3e.ts.net`
 3. **Render** (Fallback): `https://skate-insta.onrender.com`
 

@@ -23,7 +23,7 @@ export interface VideoConversionOptions {
 const PRIMARY_API_ENDPOINT = "https://146-235-239-243.sslip.io/transcode";
 
 // Secondary API configuration - Mac Mini M4 (fast processing)
-const SECONDARY_API_ENDPOINT = "https://minivlad.tail9656d3.ts.net/video/transcode";
+const SECONDARY_API_ENDPOINT = "https://minivlad.tail83ea3e.ts.net/video/transcode";
 
 // Fallback API configuration - Raspberry Pi (reliable backup)
 const FALLBACK_API_ENDPOINT = "https://vladsberry.tail83ea3e.ts.net/video/transcode";

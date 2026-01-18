@@ -44,7 +44,7 @@ export default function RootLayoutClient({
   useEffect(() => {
     async function fetchLeaderboardData() {
       try {
-        const res = await fetch("https://api.skatehive.app/api/skatehive", {
+        const res = await fetch("https://api.skatehive.app/api/v2/leaderboard", {
           next: { revalidate: 300 },
         });
         if (res.ok) {

@@ -50,15 +50,15 @@ async function checkServerHealth(serverBaseUrl: string): Promise<boolean> {
     const healthUrl = serverBaseUrl.includes('sslip.io')
       ? `${serverBaseUrl}/healthz`  // Oracle uses /healthz
       : `${serverBaseUrl}/healthz`; // Other servers also use /healthz
-    
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
-    
+
     const response = await fetch(healthUrl, {
       method: 'GET',
       signal: controller.signal,
     });
-    
+
     clearTimeout(timeoutId);
     return response.ok;
   } catch (error) {
@@ -77,15 +77,15 @@ export async function processVideoOnServer(
   // PRIMARY: Oracle Cloud
   const primaryServer = SERVER_CONFIG[0];
   const primaryUrl = 'https://146-235-239-243.sslip.io';
-  
+
   console.log(`🔍 Checking ${primaryServer.name} health...`);
   const isPrimaryHealthy = await checkServerHealth(primaryUrl);
-  
+
   let primaryResult: ProcessingResult;
   if (isPrimaryHealthy) {
     console.log(`✅ ${primaryServer.name} is healthy, attempting upload...`);
     enhancedOptions?.onServerAttempt?.(primaryServer.key, primaryServer.name, primaryServer.priority);
-    
+
     primaryResult = await tryServer(
       primaryUrl,
       file,
@@ -106,21 +106,21 @@ export async function processVideoOnServer(
       failedServer: primaryServer.key
     };
   }
-  
+
   enhancedOptions?.onServerFailed?.(primaryServer.key, primaryResult.error);
 
   // SECONDARY: Mac Mini M4 (has real-time SSE progress streaming)
   const secondaryServer = SERVER_CONFIG[1];
   const secondaryUrl = 'https://minivlad.tail9656d3.ts.net/video';
-  
+
   console.log(`🔍 Checking ${secondaryServer.name} health...`);
   const isSecondaryHealthy = await checkServerHealth(secondaryUrl);
-  
+
   let secondaryResult: ProcessingResult;
   if (isSecondaryHealthy) {
     console.log(`✅ ${secondaryServer.name} is healthy, attempting upload...`);
     enhancedOptions?.onServerAttempt?.(secondaryServer.key, secondaryServer.name, secondaryServer.priority);
-    
+
     secondaryResult = await tryServer(
       secondaryUrl,
       file,
@@ -141,21 +141,21 @@ export async function processVideoOnServer(
       failedServer: secondaryServer.key
     };
   }
-  
+
   enhancedOptions?.onServerFailed?.(secondaryServer.key, secondaryResult.error);
 
   // TERTIARY: Raspberry Pi (backup)
   const tertiaryServer = SERVER_CONFIG[2];
   const tertiaryUrl = 'https://vladsberry.tail83ea3e.ts.net/video';
-  
+
   console.log(`🔍 Checking ${tertiaryServer.name} health...`);
   const isTertiaryHealthy = await checkServerHealth(tertiaryUrl);
-  
+
   let tertiaryResult: ProcessingResult;
   if (isTertiaryHealthy) {
     console.log(`✅ ${tertiaryServer.name} is healthy, attempting upload...`);
     enhancedOptions?.onServerAttempt?.(tertiaryServer.key, tertiaryServer.name, tertiaryServer.priority);
-    
+
     tertiaryResult = await tryServer(
       tertiaryUrl,
       file,
@@ -176,7 +176,7 @@ export async function processVideoOnServer(
       failedServer: tertiaryServer.key
     };
   }
-  
+
   enhancedOptions?.onServerFailed?.(tertiaryServer.key, tertiaryResult.error);
 
   // All servers failed - return the most informative error with 'all' indicator
@@ -199,10 +199,10 @@ async function tryServer(
 ): Promise<ProcessingResult> {
   // Extract server identifier from serverName
   const serverKey = serverName.toLowerCase().includes('oracle') ? 'oracle' :
-                    serverName.toLowerCase().includes('mac') ? 'macmini' : 'pi';
+    serverName.toLowerCase().includes('mac') ? 'macmini' : 'pi';
 
   // Determine endpoint paths based on server
-  const transcodeUrl = serverBaseUrl.includes('sslip.io') 
+  const transcodeUrl = serverBaseUrl.includes('sslip.io')
     ? `${serverBaseUrl}/transcode`  // Oracle uses /transcode
     : `${serverBaseUrl}/transcode`; // Others use /video/transcode but we changed base URL
 
@@ -242,7 +242,7 @@ async function tryServer(
       const progressUrl = serverBaseUrl.includes('sslip.io')
         ? `${serverBaseUrl}/progress/${requestId}`
         : `${serverBaseUrl}/progress/${requestId}`;
-      
+
       try {
         eventSource = new EventSource(progressUrl);
         eventSource.onmessage = (event) => {
@@ -281,7 +281,7 @@ async function tryServer(
 
       if (!response.ok) {
         const errorText = await response.text();
-        
+
         let errorType: ProcessingResult['errorType'] = 'server_error';
         if (response.status === 403) {
           errorType = 'upload_rejected';
@@ -290,7 +290,7 @@ async function tryServer(
         } else if (response.status >= 500) {
           errorType = 'server_error';
         }
-        
+
         throw {
           message: `${serverName} responded with ${response.status}: ${errorText}`,
           statusCode: response.status,
@@ -307,7 +307,7 @@ async function tryServer(
 
       const hash = result.cid;
       const skateHiveUrl = `https://ipfs.skatehive.app/ipfs/${hash}`;
-      
+
       // Final progress update
       enhancedOptions?.onProgress?.(100, 'complete');
 
@@ -341,12 +341,12 @@ async function tryServer(
         failedServer: serverKey
       };
     }
-    
+
     // Handle connection errors
     if (error instanceof Error) {
-      const isConnectionError = error.message.includes('Failed to fetch') || 
-                                error.message.includes('NetworkError') ||
-                                error.message.includes('net::ERR');
+      const isConnectionError = error.message.includes('Failed to fetch') ||
+        error.message.includes('NetworkError') ||
+        error.message.includes('net::ERR');
       return {
         success: false,
         error: error.message,
@@ -354,7 +354,7 @@ async function tryServer(
         failedServer: serverKey
       };
     }
-    
+
     return {
       success: false,
       error: `${serverName} failed`,

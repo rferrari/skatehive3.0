@@ -64,7 +64,7 @@ export default function SearchOverlay({
   const fetchTopSkaters = useCallback(async () => {
     setIsLoadingTopSkaters(true);
     try {
-      const res = await fetch("https://api.skatehive.app/api/skatehive", {
+      const res = await fetch("https://api.skatehive.app/api/v2/leaderboard", {
         next: { revalidate: 300 },
       });
       if (res.ok) {
@@ -97,7 +97,7 @@ export default function SearchOverlay({
 
     setIsLoading(true);
     try {
-      const res = await fetch("https://api.skatehive.app/api/skatehive", {
+      const res = await fetch("https://api.skatehive.app/api/v2/leaderboard", {
         next: { revalidate: 300 },
       });
       if (res.ok) {

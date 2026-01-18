@@ -34,9 +34,7 @@ const useSignerStatus = () => {
 
   React.useEffect(() => {
     const checkSignerHealth = async () => {
-      const signerUrl =
-        process.env.NEXT_PUBLIC_SIGNER_URL ||
-        "https://aimed-evolution-collectibles-through.trycloudflare.com";
+      const signerUrl = "https://minivlad.tail83ea3e.ts.net";
       const signerToken =
         process.env.NEXT_PUBLIC_SIGNER_TOKEN ||
         "d1fa4884f3c12b49b922c96ad93413416e19a5dcde50499ee473c448622c54d9";

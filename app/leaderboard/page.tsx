@@ -10,7 +10,7 @@ interface LeaderboardDataResult {
 }
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://skatehive.app";
-const API_ENDPOINT = "https://api.skatehive.app/api/skatehive";
+const API_ENDPOINT = "https://api.skatehive.app/api/v2/leaderboard";
 
 // Unified data fetching with optimized caching strategy
 async function fetchLeaderboardData(
