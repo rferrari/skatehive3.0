@@ -3,12 +3,16 @@
 
 import { PrivateKey, Operation } from '@hiveio/dhive';
 import HiveClient from "./hiveclient";
+import { HIVE_CONFIG } from '@/config/app.config';
+
+// Centralized app author with fallback for consistency across all functions
+const APP_AUTHOR = HIVE_CONFIG.APP_ACCOUNT || 'skatedev';
 
 // Import client functions that we need for server-side operations
 // Note: This is a workaround since getLastSnapsContainer is in client-functions
 // In a real app, you might want to extract this to a shared utilities file
 async function getLastSnapsContainer() {
-  const author = process.env.NEXT_PUBLIC_THREAD_AUTHOR || 'peak.snaps';
+  const author = HIVE_CONFIG.THREADS.AUTHOR;
   const beforeDate = new Date().toISOString().split('.')[0];
   const permlink = '';
   const limit = 1;
@@ -23,7 +27,7 @@ async function getLastSnapsContainer() {
 }
 
 /**
- * Create a post on Hive using the skatedev account posting key
+ * Create a post on Hive using the app account posting key
  * @param title Post title
  * @param body Post body content
  * @param tags Array of tags
@@ -49,7 +53,7 @@ export async function createPostAsSkatedev({
 }): Promise<{ success: boolean; author: string; permlink: string; error?: string }> {
   try {
     const postingKey = process.env.HIVE_POSTING_KEY;
-    const author = process.env.NEXT_PUBLIC_HIVE_USER || 'skatedev';
+    const author = APP_AUTHOR;
 
     if (!postingKey) {
       throw new Error("HIVE_POSTING_KEY is not set in the environment");
@@ -64,7 +68,7 @@ export async function createPostAsSkatedev({
     const jsonMetadata = {
       app: "Skatehive App 3.0",
       tags: [
-        process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || 'hive-173115',
+        HIVE_CONFIG.COMMUNITY_TAG,
         'skatehive',
         'ethereum',
         'coin-creation',
@@ -81,7 +85,7 @@ export async function createPostAsSkatedev({
       'comment',
       {
         parent_author: '',
-        parent_permlink: process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || 'hive-173115',
+        parent_permlink: HIVE_CONFIG.COMMUNITY_TAG,
         author,
         permlink,
         title,
@@ -101,7 +105,8 @@ export async function createPostAsSkatedev({
     };
 
   } catch (error) {
-    console.error('❌ Failed to create post as skatedev:', error);
+     console.error(`❌ Failed to create post as ${HIVE_CONFIG.APP_ACCOUNT}:`, error);
+
     return {
       success: false,
       author: '',
@@ -112,7 +117,7 @@ export async function createPostAsSkatedev({
 }
 
 /**
- * Create a snap comment on Hive using the skatedev account posting key
+ * Create a snap comment on Hive using the app account posting key
  * @param body Comment body content
  * @param tags Array of tags
  * @param images Array of image URLs
@@ -138,15 +143,15 @@ export async function createSnapAsSkatedev({
 }): Promise<{ success: boolean; author: string; permlink: string; error?: string }> {
   try {
     const postingKey = process.env.HIVE_POSTING_KEY;
-    const author = process.env.NEXT_PUBLIC_HIVE_USER || 'skatedev';
+    const author = APP_AUTHOR;
 
     if (!postingKey) {
       throw new Error("HIVE_POSTING_KEY is not set in the environment");
     }
 
     // Get the latest snaps container for parent
-    let parentAuthor = process.env.NEXT_PUBLIC_THREAD_AUTHOR || 'peak.snaps';
-    let parentPermlink = process.env.NEXT_PUBLIC_THREAD_PERMLINK || 'snaps';
+    let parentAuthor = HIVE_CONFIG.THREADS.AUTHOR;
+    let parentPermlink = HIVE_CONFIG.THREADS.PERMLINK;
     
     try {
       const lastSnapsContainer = await getLastSnapsContainer();
@@ -163,9 +168,9 @@ export async function createSnapAsSkatedev({
     const jsonMetadata = {
       app: "Skatehive App 3.0",
       tags: [
-        process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || 'hive-173115',
-        'snaps',
-        'skatehive',
+        HIVE_CONFIG.COMMUNITY_TAG,
+        HIVE_CONFIG.THREADS.PERMLINK,
+        HIVE_CONFIG.SEARCH_TAG,
         'ethereum',
         'coin-creation',
         ...tags
@@ -203,7 +208,7 @@ export async function createSnapAsSkatedev({
     };
 
   } catch (error) {
-    console.error('❌ Failed to create snap as skatedev:', error);
+    console.error(`❌ Failed to create snap as ${HIVE_CONFIG.APP_ACCOUNT}:`, error);
     return {
       success: false,
       author: '',
@@ -234,15 +239,14 @@ export async function updatePostWithCoinInfo({
 }): Promise<{ success: boolean; error?: string }> {
   try {
     const postingKey = process.env.HIVE_POSTING_KEY;
-    const skatedevAccount = process.env.NEXT_PUBLIC_HIVE_USER || 'skatedev';
 
     if (!postingKey) {
       throw new Error("HIVE_POSTING_KEY is not set in the environment");
     }
 
-    // Only allow updating posts by skatedev account
-    if (author !== skatedevAccount) {
-      throw new Error("Can only update posts created by skatedev account");
+    // Only allow updating posts by app account
+    if (author !== APP_AUTHOR) {
+      throw new Error(`Can only update posts created by ${HIVE_CONFIG.APP_ACCOUNT} account`);
     }
 
     // Get the current post

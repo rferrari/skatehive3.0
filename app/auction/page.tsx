@@ -7,6 +7,7 @@ import {
   NO_AUCTION_METADATA,
   DEFAULT_AUCTION_METADATA,
 } from "@/lib/utils/metadata";
+import { APP_CONFIG } from "@/config/app.config";
 
 // Generate metadata for the main auction page
 export async function generateMetadata(): Promise<Metadata> {
@@ -63,19 +64,13 @@ export async function generateMetadata(): Promise<Metadata> {
             action: {
               type: "launch_frame",
               name: "Skatehive",
-              url: `${
-                process.env.NEXT_PUBLIC_APP_URL || "https://skatehive.app"
-              }/auction/`,
+              url: `${APP_CONFIG.APP_URL}/auction/`,
             },
           },
-          postUrl: `${
-            process.env.NEXT_PUBLIC_APP_URL || "https://skatehive.app"
-          }/auction`,
+          postUrl: `${APP_CONFIG.APP_URL}/auction`,
         }),
         "fc:frame:image": tokenImage,
-        "fc:frame:post_url": `${
-          process.env.NEXT_PUBLIC_APP_URL || "https://skatehive.app"
-        }/auction/`,
+        "fc:frame:post_url": `${APP_CONFIG.APP_URL}/auction/`,
       },
     };
   } catch (error) {

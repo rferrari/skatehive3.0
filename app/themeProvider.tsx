@@ -6,6 +6,7 @@ import React, {
   useEffect,
 } from "react";
 import { ChakraProvider, extendTheme } from "@chakra-ui/react";
+import { APP_CONFIG } from "@/config/app.config";
 
 // Import themes
 import forestTheme from "@/themes/forest";
@@ -51,6 +52,9 @@ export const themeMap = {
 
 export type ThemeName = keyof typeof themeMap;
 
+// Canonical fallback theme - must be a valid key in themeMap
+const FALLBACK_THEME: ThemeName = 'hackerPlus';
+
 interface ThemeContextProps {
   themeName: ThemeName;
   setThemeName: (themeName: ThemeName) => void;
@@ -67,12 +71,26 @@ export const useTheme = () => {
   return context;
 };
 
+/**
+ * Validates a theme name against themeMap and returns a valid ThemeName.
+ * Falls back to FALLBACK_THEME if the provided theme is invalid.
+ */
+function getValidTheme(theme: string | undefined): ThemeName {
+  if (theme && theme in themeMap) {
+    return theme as ThemeName;
+  }
+  return FALLBACK_THEME;
+}
+
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
-  const defaultTheme =
-    (process.env.NEXT_PUBLIC_THEME as ThemeName) || "hackerPlus";
-  const [themeName, setThemeName] = useState<ThemeName>(
-    themeMap[defaultTheme] ? defaultTheme : "hackerPlus"
-  );
+  // Get theme from env, then APP_CONFIG, validate against themeMap
+  // Prefer env var if explicitly set, otherwise use config default
+  const envTheme = APP_CONFIG.THEME_OVERRIDE;
+  const configTheme = APP_CONFIG.DEFAULT_THEME;
+  const validatedEnv = getValidTheme(envTheme);
+  const defaultTheme = envTheme ? validatedEnv : getValidTheme(configTheme);
+  
+  const [themeName, setThemeName] = useState<ThemeName>(defaultTheme);
   const [theme, setTheme] = useState(themeMap[themeName]);
 
   useEffect(() => {

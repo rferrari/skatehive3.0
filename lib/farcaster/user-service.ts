@@ -1,4 +1,5 @@
 import { getTokenStore } from '@/lib/farcaster/token-store-factory';
+import { APP_CONFIG } from '@/config/app.config';
 
 /**
  * Service to manage Farcaster FID to Hive username mappings
@@ -164,7 +165,7 @@ export class SkateHiveNotifications {
                 title: `${emoji} New Vote`,
                 body: `@${voterHiveUsername} ${voteType} "${postTitle}"`,
                 targetUsers: [postAuthorHiveUsername],
-                targetUrl: `https://skatehive.app/post/${postAuthorHiveUsername}/${postTitle}`
+                targetUrl: `${APP_CONFIG.BASE_URL}/post/${postAuthorHiveUsername}/${postTitle}`
             })
         });
     }
@@ -189,7 +190,7 @@ export class SkateHiveNotifications {
                 title: '💬 New Comment',
                 body: `@${commenterHiveUsername} commented on "${postTitle}"`,
                 targetUsers: [postAuthorHiveUsername],
-                targetUrl: `https://skatehive.app/post/${postAuthorHiveUsername}/${postTitle}`
+                targetUrl: `${APP_CONFIG.BASE_URL}/post/${postAuthorHiveUsername}/${postTitle}`
             })
         });
     }
@@ -211,7 +212,7 @@ export class SkateHiveNotifications {
                 title: '👤 New Follower',
                 body: `@${followerHiveUsername} started following you`,
                 targetUsers: [followedHiveUsername],
-                targetUrl: `https://skatehive.app/user/${followerHiveUsername}`
+                targetUrl: `${APP_CONFIG.BASE_URL}/user/${followerHiveUsername}`
             })
         });
     }
@@ -234,7 +235,7 @@ export class SkateHiveNotifications {
                 title: '🔔 Mention',
                 body: `@${mentionerHiveUsername} mentioned you`,
                 targetUsers: [mentionedHiveUsername],
-                targetUrl: `https://skatehive.app/user/${mentionerHiveUsername}`
+                targetUrl: `${APP_CONFIG.BASE_URL}/user/${mentionerHiveUsername}`
             })
         });
     }

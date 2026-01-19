@@ -10,8 +10,20 @@
 import { performance } from "perf_hooks";
 import { Discussion } from "@hiveio/dhive";
 import { findPosts } from "@/lib/hive/client-functions";
+import { HIVE_CONFIG } from "@/config/app.config";
 
-const TAG = process.env.NEXT_PUBLIC_HIVE_SEARCH_TAG || "skatehive";
+const TAG = HIVE_CONFIG.SEARCH_TAG;
+
+// Validate TAG before running the performance test
+if (!TAG || typeof TAG !== 'string' || TAG.trim() === '') {
+  console.error(
+    '❌ Error: HIVE_CONFIG.SEARCH_TAG is missing or empty.\n' +
+    '   Expected a valid Hive tag string (e.g., "skatehive").\n' +
+    '   Please check config/app.config.ts and ensure SEARCH_TAG is defined in HIVE_CONFIG.'
+  );
+  process.exit(1);
+}
+
 const LIMIT = 8;
 const BATCHES = 8;
 // Delay between batches to mimic human scroll pauses

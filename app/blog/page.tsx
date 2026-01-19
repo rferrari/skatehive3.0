@@ -22,7 +22,8 @@ import {
   VALID_VIEW_MODES,
   type QueryType,
   type ViewMode,
-} from "@/constants/blogConfig";
+} from "@/config/blog.config";
+import { HIVE_CONFIG } from "@/config/app.config";
 
 function BlogContent() {
   const searchParams = useSearchParams();
@@ -53,20 +54,11 @@ function BlogContent() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  const tag = process.env.NEXT_PUBLIC_HIVE_SEARCH_TAG;
+  const tag = HIVE_CONFIG.SEARCH_TAG;
   const FETCH_LIMIT = Math.min(
     BLOG_CONFIG.BRIDGE_API_MAX_LIMIT,
     BLOG_CONFIG.POSTS_PER_PAGE * 2
   );
-
-  // Validate required environment variables
-  useEffect(() => {
-    if (!tag) {
-      setError(
-        "NEXT_PUBLIC_HIVE_SEARCH_TAG environment variable is not configured"
-      );
-    }
-  }, [tag]);
 
   const params = useRef([
     {
@@ -306,8 +298,7 @@ function BlogContent() {
     setViewMode("grid");
   };
   // Magazine props (same as /magazine/page.tsx)
-  const communityTag =
-    process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || "hive-173115";
+  const communityTag = HIVE_CONFIG.COMMUNITY_TAG;
   const magazineTag = [{ tag: communityTag, limit: 20 }]; // Bridge API max limit is 20
   const magazineQuery = "created"; // Use trending for blog magazine view
 

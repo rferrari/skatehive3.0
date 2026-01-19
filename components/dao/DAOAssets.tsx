@@ -91,15 +91,15 @@ export default function DAOAssets() {
   const ethereumAddresses = [
     {
       label: "SkateHive Hot Wallet",
-      address: SKATEHIVE_HOT_ADDRESS || "Not configured",
+      address: SKATEHIVE_HOT_ADDRESS,
     },
     {
       label: "SkateHive Base Multisig",
-      address: SKATEHIVE_BASE_MULTISIG || "Not configured",
+      address: SKATEHIVE_BASE_MULTISIG,
     },
     {
       label: "Treasury Contract",
-      address: DAO_ADDRESSES.treasury || "Not configured",
+      address: DAO_ADDRESSES.treasury,
     },
   ];
 
@@ -131,7 +131,7 @@ export default function DAOAssets() {
       const balances: { [key: string]: PortfolioData } = {};
 
       for (const addr of ethereumAddresses) {
-        if (addr.address && addr.address !== "Not configured") {
+        if (addr.address) {
           try {
             const response = await fetch(`/api/portfolio/${addr.address}`);
             if (response.ok) {

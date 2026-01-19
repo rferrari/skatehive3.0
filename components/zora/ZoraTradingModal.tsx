@@ -30,6 +30,7 @@ import { useZoraTrade } from "@/hooks/useZoraTrade";
 import { useProfileCoins } from "@/hooks/useProfileCoins";
 import { useSwitchChain, useChainId } from "wagmi";
 import { base } from "wagmi/chains";
+import { ETH_ADDRESSES } from "@/config/app.config";
 
 // Simple inline debounce hook
 function useDebounce<T>(value: T, delay: number): T {
@@ -70,7 +71,7 @@ interface Currency {
   image?: string; // Add optional image property
 }
 
-const USDC_ADDRESS = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" as Address; // Base USDC
+const USDC_ADDRESS = ETH_ADDRESSES.USDC; // Base USDC
 
 // Base currencies that are always available
 const BASE_CURRENCIES: Currency[] = [

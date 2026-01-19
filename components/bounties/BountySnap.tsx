@@ -30,6 +30,7 @@ import { parse, isAfter } from "date-fns";
 import { useTheme } from "@/app/themeProvider";
 import PaperOutline from "@/components/graphics/PaperOutline";
 import { UpvoteButton } from "@/components/shared";
+import { APP_CONFIG } from "@/config/app.config";
 
 const separateContent = (body: string) => {
   const textParts: string[] = [];
@@ -48,7 +49,8 @@ const separateContent = (body: string) => {
 const renderMedia = (mediaContent: string) => {
   return mediaContent.split("\n").map((item: string, index: number) => {
     if (!item.trim()) return null;
-    if (item.includes("![") && item.includes("ipfs.skatehive.app/ipfs/")) {
+    const ipfsHost = APP_CONFIG.IPFS_GATEWAY;
+    if (item.includes("![") && item.includes(`${ipfsHost}/ipfs/`)) {
       return (
         <Box
           key={index}
@@ -73,10 +75,10 @@ const renderMedia = (mediaContent: string) => {
         if (url.includes("gateway.pinata.cloud/ipfs/")) {
           const ipfsHash = url.match(/\/ipfs\/([\w-]+)/)?.[1];
           if (ipfsHash) {
-            const skatehiveUrl = `https://ipfs.skatehive.app/ipfs/${ipfsHash}`;
+            const skatehiveUrl = `https://${APP_CONFIG.IPFS_GATEWAY}/ipfs/${ipfsHash}`;
             return <VideoRenderer key={index} src={skatehiveUrl} />;
           }
-        } else if (url.includes("ipfs.skatehive.app/ipfs/")) {
+        } else if (url.includes(`${APP_CONFIG.IPFS_GATEWAY}/ipfs/`)) {
           return <VideoRenderer key={index} src={url} />;
         }
       }

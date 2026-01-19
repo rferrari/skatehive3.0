@@ -2,6 +2,8 @@
  * Clean video processing service - Step 2
  */
 
+import { APP_CONFIG } from "@/config/app.config";
+
 export interface ProcessingResult {
   success: boolean;
   url?: string;
@@ -309,7 +311,7 @@ async function tryServer(
       }
 
       const hash = result.cid;
-      const skateHiveUrl = `https://ipfs.skatehive.app/ipfs/${hash}`;
+      const skateHiveUrl = `https://${APP_CONFIG.IPFS_GATEWAY}/ipfs/${hash}`;
 
       // Final progress update
       enhancedOptions?.onProgress?.(100, 'complete');

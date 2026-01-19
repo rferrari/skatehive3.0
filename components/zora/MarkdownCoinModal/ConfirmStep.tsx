@@ -22,6 +22,7 @@ import {
   Spinner,
 } from "@chakra-ui/react";
 import { CheckIcon, InfoIcon } from "@chakra-ui/icons";
+import { APP_CONFIG, ETH_ADDRESSES } from "@/config/app.config";
 
 import { CarouselImage } from "./CarouselStep";
 
@@ -127,7 +128,7 @@ export function ConfirmStep({
         reading_time: "[calculated-minutes]",
         original_author: author,
         original_permlink: "[post-permlink]",
-        original_url: `https://skatehive.app/post/${author}/[permlink]`,
+        original_url: `${APP_CONFIG.BASE_URL}/post/${author}/[permlink]`,
         carousel_images: includedImages.length.toString(),
         has_carousel: includedImages.length > 0 ? "true" : "false",
         carousel_type: "CAROUSEL",
@@ -149,7 +150,7 @@ export function ConfirmStep({
       },
       coinParams: {
         payoutRecipient: "[user-wallet-address]",
-        platformReferrer: "0x8D36b2cBc8f5Bc9fB43065D5E0485bc2a37eA94E", // SKATEHIVE_PLATFORM_REFERRER
+        platformReferrer: ETH_ADDRESSES.PLATFORM_REFERRER, // SKATEHIVE_PLATFORM_REFERRER
         currency: "ZORA", // DeployCurrency.ZORA
       },
       network: {
@@ -220,7 +221,7 @@ export function ConfirmStep({
       },
       urls: {
         zora: "https://zora.co/coin/base/[contract-address]",
-        skatehive: `https://skatehive.app/post/${author}/[permlink]`,
+        skatehive: `${APP_CONFIG.BASE_URL}/post/${author}/[permlink]`,
         basescan: "https://basescan.org/address/[contract-address]",
       },
       postUpdate: {

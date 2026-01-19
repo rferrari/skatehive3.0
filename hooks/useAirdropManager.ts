@@ -3,6 +3,7 @@ import { SortOption, AirdropUser, AirdropSummary, AirdropConfig } from '@/types/
 import { tokenDictionary } from '@/lib/utils/tokenDictionary';
 import { SKATEHIVE_HOT_ADDRESS } from '@/lib/utils/constants';
 import { SkaterData } from '@/types/leaderboard';
+import { ETH_ADDRESSES } from "@/config/app.config";
 
 interface AirdropManagerProps {
   leaderboardData: SkaterData[];
@@ -70,7 +71,7 @@ export const useAirdropManager = ({ leaderboardData, config }: AirdropManagerPro
         if (!ethAddress || typeof ethAddress !== 'string') return false;
         if (ethAddress.trim() === '' || ethAddress === 'null') return false;
         if (!ethAddress.startsWith('0x') || ethAddress.length !== 42) return false;
-        if (ethAddress === '0x0000000000000000000000000000000000000000') return false;
+        if (ethAddress === ETH_ADDRESSES.ZERO) return false;
         // Additional checksum validation could be added here
         return true;
       });
@@ -172,7 +173,7 @@ export const useAirdropManager = ({ leaderboardData, config }: AirdropManagerPro
       
       if (isERC20) {
         return user.eth_address && 
-               user.eth_address !== '0x0000000000000000000000000000000000000000';
+               user.eth_address !== ETH_ADDRESSES.ZERO;
       }
       return user.hive_author && user.hive_author.length >= 3;
     }).length
@@ -227,7 +228,7 @@ export const useAirdropManager = ({ leaderboardData, config }: AirdropManagerPro
     return leaderboardData.filter(user => {
       if (isERC20) {
         return !user.eth_address || 
-               user.eth_address === '0x0000000000000000000000000000000000000000';
+               user.eth_address === ETH_ADDRESSES.ZERO;
       }
       return !user.hive_author || user.hive_author.length < 3;
     });

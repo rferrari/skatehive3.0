@@ -2,6 +2,8 @@
  * Utility functions for working with IPFS metadata from Pinata
  */
 
+import { APP_CONFIG } from "@/config/app.config";
+
 export interface IPFSMetadata {
     name: string;
     keyvalues: {
@@ -37,7 +39,7 @@ export async function getIPFSMetadata(ipfsHash: string): Promise<IPFSMetadata | 
 
 /**
  * Extract IPFS hash from a full IPFS URL
- * @param url The full IPFS URL (e.g., https://ipfs.skatehive.app/ipfs/QmXXX)
+ * @param url The full IPFS URL (e.g., https://${APP_CONFIG.IPFS_GATEWAY}/ipfs/QmXXX)
  * @returns The IPFS hash or null if invalid
  */
 export function extractIPFSHash(url: string): string | null {
@@ -84,7 +86,7 @@ export function getIpfsGatewayUrls(url: string): string[] {
         `https://ipfs.io/ipfs/${hash}`,           // Public IPFS gateway (most reliable)
         `https://cloudflare-ipfs.com/ipfs/${hash}`, // Cloudflare IPFS gateway
         `https://gateway.pinata.cloud/ipfs/${hash}`, // Pinata public gateway
-        `https://ipfs.skatehive.app/ipfs/${hash}`,   // SkateHive gateway (as fallback)
+        `https://${APP_CONFIG.IPFS_GATEWAY}/ipfs/${hash}`,   // SkateHive gateway (as fallback)
     ];
 }
 

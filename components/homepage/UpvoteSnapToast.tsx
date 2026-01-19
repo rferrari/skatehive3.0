@@ -8,7 +8,7 @@ import { getLastSnapsContainer, getPost } from "@/lib/hive/client-functions";
 import { Discussion } from "@hiveio/dhive";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
 import { usePeriodicTimer } from "@/hooks/usePeriodicTimer";
-import { TOAST_CONFIG } from "@/constants/toastConfig";
+import { TOAST_CONFIG } from "@/config/toast.config";
 import ToastCard from "@/components/shared/ToastCard";
 
 interface UpvoteSnapToastProps {

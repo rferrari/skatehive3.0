@@ -5,6 +5,8 @@ import { clientErrorLogger, logSizeRestrictionError } from './clientErrorLogger'
  * For handling client-side video uploads and validation
  */
 
+import { APP_CONFIG } from "@/config/app.config";
+
 export interface UploadResult {
   success: boolean;
   url?: string;
@@ -204,7 +206,7 @@ export async function uploadToIPFS(
 
     console.log('✅ IPFS upload successful');
 
-    const ipfsUrl = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`;
+    const ipfsUrl = `https://${APP_CONFIG.IPFS_GATEWAY}/ipfs/${result.IpfsHash}`;
 
     return {
       success: true,

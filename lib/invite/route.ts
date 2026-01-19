@@ -2,6 +2,7 @@
 import nodemailer from 'nodemailer';
 import { htmlToText } from 'html-to-text';
 import getMailTemplate_Invite from './template';
+import { APP_CONFIG, EMAIL_DEFAULTS } from '@/config/app.config';
 
 export default async function serverMailer(
   to: string,
@@ -15,9 +16,9 @@ export default async function serverMailer(
 
   // Create transporter object using nodemailer
   const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT),
-    secure: (process.env.SMTP_SECURE === 'true'),   // true for 465, false for other ports
+    host: process.env.SMTP_HOST || EMAIL_DEFAULTS.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT) || EMAIL_DEFAULTS.SMTP_PORT,
+    secure: process.env.SMTP_SECURE ? process.env.SMTP_SECURE === 'true' : EMAIL_DEFAULTS.SMTP_SECURE,   // true for 465, false for other ports
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
@@ -41,8 +42,8 @@ export default async function serverMailer(
     };
 
     const info = await transporter.sendMail({
-      from: process.env.EMAIL_COMMUNITY, // '<>>' + NAME + '>'+ (process.env.NEXT_PUBLIC_COMMUNITY_NAME || 'Skatehive'),
-      bcc: process.env.EMAIL_RECOVERYACC, //email to store keys to recovery accounts
+      from: process.env.EMAIL_USER || EMAIL_DEFAULTS.FROM_ADDRESS,
+      bcc: process.env.EMAIL_RECOVERYACC || APP_CONFIG.RECOVERY_ACCOUNT, // email to store keys to recovery accounts
       to, subject,
       text, html,
       attachments: [{

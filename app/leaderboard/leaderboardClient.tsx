@@ -29,6 +29,7 @@ import React from "react";
 import useIsMobile from "@/hooks/useIsMobile";
 import { Name } from "@coinbase/onchainkit/identity";
 import { SkaterData } from "@/types/leaderboard";
+import { ETH_ADDRESSES } from "@/config/app.config";
 
 interface Props {
   skatersData: SkaterData[];
@@ -128,7 +129,7 @@ export default function LeaderboardClient({ skatersData }: Props) {
                 {!isMobile &&
                   skater.eth_address &&
                   skater.eth_address !==
-                  "0x0000000000000000000000000000000000000000" && (
+                  ETH_ADDRESSES.ZERO && (
                     <EthAddress address={skater.eth_address} />
                   )}
                 {!isMobile && (
@@ -211,10 +212,10 @@ export default function LeaderboardClient({ skatersData }: Props) {
           // This shows active users who haven't connected ETH
           const aHasEth =
             a.eth_address &&
-            a.eth_address !== "0x0000000000000000000000000000000000000000";
+            a.eth_address !== ETH_ADDRESSES.ZERO;
           const bHasEth =
             b.eth_address &&
-            b.eth_address !== "0x0000000000000000000000000000000000000000";
+            b.eth_address !== ETH_ADDRESSES.ZERO;
 
           if (aHasEth === bHasEth) {
             return b.posts_score - a.posts_score; // Same ETH status, sort by activity
@@ -264,7 +265,7 @@ export default function LeaderboardClient({ skatersData }: Props) {
     if (sortBy === "eth") {
       const hasEthAddress =
         skater.eth_address &&
-        skater.eth_address !== "0x0000000000000000000000000000000000000000";
+        skater.eth_address !== ETH_ADDRESSES.ZERO;
       return hasEthAddress ? (
         <Text fontSize="lg" color="green.400">
           ✅

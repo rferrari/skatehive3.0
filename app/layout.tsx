@@ -5,6 +5,7 @@ import "./globals.css";
 import { Metadata } from "next";
 import { ColorModeScript } from "@chakra-ui/react";
 import Image from "next/image";
+import { APP_CONFIG } from "@/config/app.config";
 // import '@aioha/react-ui/dist/build.css';
 import "@coinbase/onchainkit/styles.css";
 
@@ -16,7 +17,7 @@ const vt323 = VT323({
   variable: "--font-vt323",
 });
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://skatehive.app";
+const BASE_URL = APP_CONFIG.ORIGIN;
 
 const frameObject = {
   version: "next",
@@ -127,7 +128,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         {/* Preconnect to IPFS gateway for faster video loading */}
-        <link rel="preconnect" href="https://ipfs.skatehive.app" />
+        <link rel="preconnect" href={`https://${APP_CONFIG.IPFS_GATEWAY}`} />
       </head>
       <body className="chakra-ui-dark">
         <div id="splash-root">

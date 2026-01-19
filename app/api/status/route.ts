@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { EXTERNAL_SERVICES } from '@/config/app.config';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,10 +35,10 @@ const CACHE_TTL_MS = 300000; // 5 minutes
 
 const signerUrl =
   process.env.NEXT_PUBLIC_SIGNER_URL ||
-  'https://minivlad.tail83ea3e.ts.net';
+  EXTERNAL_SERVICES.SIGNER_URL;
 const signerToken =
   process.env.NEXT_PUBLIC_SIGNER_TOKEN ||
-  'd1fa4884f3c12b49b922c96ad93413416e19a5dcde50499ee473c448622c54d9';
+  EXTERNAL_SERVICES.SIGNER_TOKEN;
 
 const SERVICE_DEFINITIONS: ServiceDefinition[] = [
   // Instagram Downloaders

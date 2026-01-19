@@ -17,9 +17,10 @@ import {
   FaGamepad,
 } from "react-icons/fa";
 import { PageResult } from "./types";
+import { ETH_ADDRESSES } from "@/config/app.config";
 
 // Platform configuration
-export const SKATEHIVE_PLATFORM_REFERRER = "0xB4964e1ecA55Db36a94e8aeFfBFBAb48529a2f6c";
+export const SKATEHIVE_PLATFORM_REFERRER = ETH_ADDRESSES.SKATEHIVE_HOT;
 
 export const STATIC_PAGES: PageResult[] = [
   {

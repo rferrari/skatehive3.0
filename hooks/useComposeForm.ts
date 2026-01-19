@@ -6,6 +6,7 @@ import { KeyTypes } from "@aioha/aioha";
 import { generatePermlink, prepareImageArray, insertAtCursor } from "@/lib/markdown/composeUtils";
 import { Beneficiary } from "@/components/compose/BeneficiariesInput";
 import { validateHiveUsernameFormat } from "@/lib/utils/hiveAccountUtils";
+import { HIVE_CONFIG } from "@/config/app.config";
 
 export const useComposeForm = () => {
     const [markdown, setMarkdown] = useState("");
@@ -21,7 +22,7 @@ export const useComposeForm = () => {
     const { aioha, user } = useAioha();
     const toast = useToast();
     const router = useRouter();
-    const communityTag = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || "blog";
+    const communityTag = HIVE_CONFIG.COMMUNITY_TAG;
 
     const placeholders = [
         "Don't forget a title...",

@@ -4,6 +4,7 @@
 
 import React from 'react';
 import { fetchFile } from '@ffmpeg/util';
+import { APP_CONFIG } from "@/config/app.config";
 
 export async function generateThumbnailWithCanvas(
   file: File
@@ -171,11 +172,17 @@ export async function uploadThumbnail(
     });
 
     if (!thumbnailResponse.ok) {
+      const errorText = await thumbnailResponse.text().catch(() => '');
+      console.error("Thumbnail upload failed", {
+        status: thumbnailResponse.status,
+        statusText: thumbnailResponse.statusText,
+        response: errorText,
+      });
       throw new Error("Failed to upload thumbnail");
     }
 
     const thumbnailResult = await thumbnailResponse.json();
-    return `https://ipfs.skatehive.app/ipfs/${thumbnailResult.IpfsHash}`;
+    return `https://${APP_CONFIG.IPFS_GATEWAY}/ipfs/${thumbnailResult.IpfsHash}`;
   } catch (error) {
     console.error("Thumbnail upload failed:", error);
     return null;

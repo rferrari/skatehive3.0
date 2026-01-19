@@ -2,11 +2,12 @@ import { Metadata } from "next";
 import ProfilePage from "@/components/profile/ProfilePage";
 import { cleanUsername } from "@/lib/utils/cleanUsername";
 import HiveClient from "@/lib/hive/hiveclient";
+import { APP_CONFIG } from "@/config/app.config";
 
 // Constants
-const DOMAIN_URL = "https://skatehive.app";
+const DOMAIN_URL = APP_CONFIG.BASE_URL;
 const FALLBACK_AVATAR = "https://images.ecency.com/webp/u/default/avatar/small";
-const FALLBACK_BANNER = "https://skatehive.app/ogimage.png";
+const FALLBACK_BANNER = `${APP_CONFIG.BASE_URL}/ogimage.png`;
 
 type Props = {
   params: Promise<{ username: string }>;

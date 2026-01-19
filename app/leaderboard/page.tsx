@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import LeaderboardClient from "./leaderboardClient";
 import { SkaterData } from "@/types/leaderboard";
+import { APP_CONFIG } from "@/config/app.config";
 
 interface LeaderboardDataResult {
   data: SkaterData[];
@@ -9,8 +10,8 @@ interface LeaderboardDataResult {
   podiumImageUrl: string;
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://skatehive.app";
-const API_ENDPOINT = "https://api.skatehive.app/api/v2/leaderboard";
+const BASE_URL = APP_CONFIG.ORIGIN;
+const API_ENDPOINT = `${APP_CONFIG.API_BASE_URL}/api/v2/leaderboard`;
 
 // Unified data fetching with optimized caching strategy
 async function fetchLeaderboardData(

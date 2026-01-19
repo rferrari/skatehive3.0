@@ -12,9 +12,9 @@ import {
 } from "@chakra-ui/react";
 import { useEffect, useMemo, useState } from "react";
 import SkateHiveMagazineModal from "./SkateHiveMagazineModal";
+import { HIVE_CONFIG } from "@/config/app.config";
 
-const SKATEHIVE_TAG =
-  process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || "hive-173115";
+const SKATEHIVE_TAG = HIVE_CONFIG.COMMUNITY_TAG;
 
 function CommunityTotalPayout() {
   const [totalHBDPayout, setTotalHBDPayout] = useState<number>(0);

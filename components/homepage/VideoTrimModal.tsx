@@ -30,6 +30,7 @@ import {
   Center,
 } from "@chakra-ui/react";
 import { getFileSignature, uploadImage } from "@/lib/hive/client-functions";
+import { uploadThumbnail } from "@/lib/utils/videoThumbnailUtils";
 
 // Lazy load heavy components
 const VideoPlayer = lazy(() => import("./VideoPlayer"));
@@ -408,11 +409,19 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = memo(
           type: "image/webp",
         });
 
-        // Upload in parallel for better performance
-        const [signature, hiveUrl] = await Promise.all([
-          getFileSignature(thumbnailFile),
-          uploadImage(thumbnailFile, await getFileSignature(thumbnailFile)),
-        ]);
+        // Attempt Hive image upload first, fall back to Pinata if signature fails
+        let hiveUrl: string | null = null;
+        try {
+          const signature = await getFileSignature(thumbnailFile);
+          hiveUrl = await uploadImage(thumbnailFile, signature);
+        } catch (error) {
+          console.warn("Hive thumbnail upload failed, falling back to Pinata:", error);
+          hiveUrl = await uploadThumbnail(thumbnailFile);
+        }
+
+        if (!hiveUrl) {
+          throw new Error("Thumbnail upload failed");
+        }
 
         setThumbnailUrl(hiveUrl);
         setIsGeneratingThumbnail(false);

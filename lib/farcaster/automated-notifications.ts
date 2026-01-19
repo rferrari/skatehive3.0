@@ -5,6 +5,7 @@ import { SkateHiveFarcasterService, FarcasterPreferences } from './skatehive-int
 import { farcasterNotificationService } from './notification-service';
 import { getTokenStore } from './token-store-factory';
 import { HiveToFarcasterNotification } from '@/types/farcaster';
+import { APP_CONFIG } from '@/config/app.config';
 
 // Content enrichment cache to prevent duplicate API calls
 const enrichmentCache = new Map<string, { content: string | null; timestamp: number }>();
@@ -456,7 +457,7 @@ export class AutomatedNotificationService {
      */
     private static async convertHiveToFarcasterNotification(notification: Notifications): Promise<HiveToFarcasterNotification | null> {
         try {
-            const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://skatehive.app';
+            const baseUrl = APP_CONFIG.ORIGIN;
 
             // Extract notification details
             let title = '';
@@ -688,7 +689,7 @@ export class AutomatedNotificationService {
         notificationType: string
     ): Promise<string | null> {
         try {
-            const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://skatehive.app';
+            const baseUrl = APP_CONFIG.ORIGIN;
             const postUrl = `${baseUrl}/post/${author}/${permlink}`;
 
             const response = await fetch(postUrl, {

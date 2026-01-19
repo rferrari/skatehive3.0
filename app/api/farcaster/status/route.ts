@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTokenStore } from '@/lib/farcaster/token-store-factory';
+import { APP_CONFIG } from '@/config/app.config';
 
 export async function GET() {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://skatehive.app';
+    const baseUrl = APP_CONFIG.ORIGIN;
 
     // Check if manifest is accessible
     let manifestStatus = 'Unknown';

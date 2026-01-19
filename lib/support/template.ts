@@ -3,6 +3,8 @@
  * @param text - The text to escape
  * @returns The escaped text safe for HTML insertion
  */
+import { APP_CONFIG } from "@/config/app.config";
+
 function escapeHtml(text: string): string {
   const map: Record<string, string> = {
     '&': '&amp;',
@@ -94,7 +96,7 @@ export default function getSupportTemplate(
         <div style="border-top: 1px solid #eee; padding-top: 20px; text-align: center; color: #666; font-size: 12px;">
           <p style="margin: 0;">
             This support request was sent from the SkateHive mobile application<br>
-            <a href="https://skatehive.app" style="color: #FF6B35; text-decoration: none;">skatehive.app</a>
+            <a href="${APP_CONFIG.BASE_URL}" style="color: #FF6B35; text-decoration: none;">${APP_CONFIG.DOMAIN}</a>
           </p>
         </div>
       </div>

@@ -15,6 +15,7 @@ import {
 } from "@chakra-ui/react";
 import { FarcasterPreferences } from "@/lib/farcaster/skatehive-integration";
 import { useFarcasterMiniapp } from "@/hooks/useFarcasterMiniapp";
+import { APP_CONFIG } from "@/config/app.config";
 
 interface FarcasterMiniappLinkProps {
   hiveUsername: string;
@@ -91,9 +92,7 @@ export default function FarcasterMiniappLink({
               title: "🛹 Connected to SkateHive!",
               body: `Welcome @${user.username}! Your Farcaster account is now linked to SkateHive.`,
               hiveUsername: hiveUsername,
-              sourceUrl: `${
-                process.env.NEXT_PUBLIC_BASE_URL || "https://skatehive.app"
-              }/settings/farcaster`,
+              sourceUrl: `${APP_CONFIG.ORIGIN}/settings/farcaster`,
             }),
           });
         } catch (notificationError) {

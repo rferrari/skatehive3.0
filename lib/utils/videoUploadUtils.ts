@@ -3,6 +3,7 @@
  */
 
 import { clientErrorLogger, logUploadError, logSizeRestrictionError, logApiError } from './clientErrorLogger';
+import { APP_CONFIG } from "@/config/app.config";
 
 export function getVideoDuration(file: File): Promise<number> {
   return new Promise((resolve, reject) => {
@@ -309,7 +310,7 @@ export async function handleVideoUpload(
 
     return {
       success: true,
-      url: `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`,
+      url: `https://${APP_CONFIG.IPFS_GATEWAY}/ipfs/${result.IpfsHash}`,
       IpfsHash: result.IpfsHash
     };
   } catch (error) {

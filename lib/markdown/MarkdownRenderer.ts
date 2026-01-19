@@ -2,6 +2,7 @@ import { DefaultRenderer } from "@hiveio/content-renderer";
 import DOMPurify from "dompurify";
 import { LRUCache } from "@/lib/utils/LRUCache";
 import { getCacheKey } from "@/lib/utils/hashUtils";
+import { APP_CONFIG } from "@/config/app.config";
 
 // LRU caches with bounded memory usage
 // Cache keys are deterministic hashes instead of full markdown strings for memory efficiency
@@ -40,7 +41,7 @@ function getSanitizedHTML(html: string): string {
                     /^https:\/\/player\.vimeo\.com\/video\/[0-9]+(\?.*)?$/,
                     /^https:\/\/3speak\.tv\/embed\?v=[^"'<>\s]+$/,
                     /^https:\/\/odysee\.com\/.+$/,
-                    /^https:\/\/ipfs\.skatehive\.app\/ipfs\/.+$/,
+                    new RegExp(`^https:\\/\\/${APP_CONFIG.IPFS_GATEWAY.replace('.', '\\.') }\\/ipfs\\/.+$`),
                     /^https:\/\/gateway\.pinata\.cloud\/ipfs\/.+$/
                 ];
                 
@@ -114,16 +115,17 @@ export function processMediaContent(content: string): string {
     processedContent = processedContent.replace(
         /!\[.*?\]\((https:\/\/(?:gateway\.pinata\.cloud|ipfs\.skatehive\.app)\/ipfs\/([\w-]+)(\.[a-zA-Z0-9]+)?)[^)]*\)/g,
         (_, url, hash, ext) => {
+            const resolvedUrl = url.replace('ipfs.skatehive.app', APP_CONFIG.IPFS_GATEWAY);
             if (isLikelyVideoID(url)) {
                 return createSimpleVideoTag(hash);
             } else {
                 // Check if it's a GIF to apply special styling
                 const isGif = ext && ext.toLowerCase() === '.gif';
                 if (isGif) {
-                    return `<div style="display: flex; justify-content: center; align-items: center; margin: 2rem 0;"><img src='${url}' alt='IPFS GIF' style='max-width: min(80%, 600px); min-width: min(300px, 90vw); height: auto; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);'/></div>`;
+                    return `<div style="display: flex; justify-content: center; align-items: center; margin: 2rem 0;"><img src='${resolvedUrl}' alt='IPFS GIF' style='max-width: min(80%, 600px); min-width: min(300px, 90vw); height: auto; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);'/></div>`;
                 } else {
                     // Regular image styling
-                    return `<div style="display: flex; justify-content: center; align-items: center; margin: 1.5rem 0;"><img src='${url}' alt='IPFS Image' style='max-width: 100%; height: auto; box-shadow: 0 2px 16px rgba(0,0,0,0.12);'/></div>`;
+                    return `<div style="display: flex; justify-content: center; align-items: center; margin: 1.5rem 0;"><img src='${resolvedUrl}' alt='IPFS Image' style='max-width: 100%; height: auto; box-shadow: 0 2px 16px rgba(0,0,0,0.12);'/></div>`;
                 }
             }
         }
@@ -292,7 +294,7 @@ async function processMentionsWithValidation(content: string): Promise<string> {
             if (beforeMatch.match(/https?:\/\/[^\s]*$/) || 
                 beforeMatch.includes('worldmappin.com') ||
                 beforeMatch.includes('zora.co') ||
-                beforeMatch.includes('skatehive.app') ||
+                beforeMatch.includes(APP_CONFIG.DOMAIN) ||
                 afterMatch.match(/^[^\s]*\.(com|org|co|app|io)/)) {
                 return match; // Return original mention without processing
             }
@@ -348,7 +350,7 @@ export default async function markdownRenderer(markdown: string): Promise<string
             hashtagUrlFn: (hashtag: string) => "/trending/" + hashtag,
             isLinkSafeFn: () => true,
             addExternalCssClassToMatchingLinksFn: () => true,
-            ipfsPrefix: "https://ipfs.skatehive.app",
+            ipfsPrefix: `https://${APP_CONFIG.IPFS_GATEWAY}`,
         });
         const html = renderer.render(markdownWithValidatedMentions);
         
@@ -400,9 +402,9 @@ function createSimpleVideoTag(videoID: string): string {
             playsinline 
             webkit-playsinline 
             muted
-            poster="https://ipfs.skatehive.app/ipfs/${videoID}?format=preview">
-            <source src="https://ipfs.skatehive.app/ipfs/${videoID}" type="video/mp4">
-            <source src="https://ipfs.skatehive.app/ipfs/${videoID}" type="video/webm">
+            poster="https://${APP_CONFIG.IPFS_GATEWAY}/ipfs/${videoID}?format=preview">
+            <source src="https://${APP_CONFIG.IPFS_GATEWAY}/ipfs/${videoID}" type="video/mp4">
+            <source src="https://${APP_CONFIG.IPFS_GATEWAY}/ipfs/${videoID}" type="video/webm">
             Your browser doesn't support HTML5 video.
         </video>
     </div>`;

@@ -7,6 +7,7 @@ import { useAioha } from "@aioha/react-ui";
 import { base } from 'wagmi/chains';
 import { uploadToIpfs } from '@/lib/markdown/composeUtils';
 import { Discussion } from "@hiveio/dhive";
+import { APP_CONFIG } from "@/config/app.config";
 
 export interface MarkdownCoinData {
   name: string;
@@ -173,12 +174,12 @@ const createCarouselContent = async (cardImageFile: File, markdownImages: string
     // Always return a carousel structure (even if only the generated card)
     return {
       mime: "image/png", // Main mime type
-      uri: `ipfs://${cleanCardImageIPFS.replace('https://ipfs.skatehive.app/ipfs/', '')}`, // Main image URI with ipfs:// protocol
+      uri: `ipfs://${cleanCardImageIPFS.replace(`https://${APP_CONFIG.IPFS_GATEWAY}/ipfs/`, '')}`, // Main image URI with ipfs:// protocol
       type: "CAROUSEL",
       carousel: {
         version: "1.0.0",
         media: carouselMedia.map(item => ({
-          uri: `ipfs://${item.uri.replace('https://ipfs.skatehive.app/ipfs/', '')}`,
+          uri: `ipfs://${item.uri.replace(`https://${APP_CONFIG.IPFS_GATEWAY}/ipfs/`, '')}`,
           mime: item.mime
         }))
       }
@@ -359,7 +360,7 @@ export function useMarkdownCoin() {
 
       // Prepare the description with markdown content
       const convertedMarkdown = convertToMarkdown(post.body);
-      let description = `${post.title}\n\nBy @${post.author}\n\nOriginal post: https://skatehive.app/post/${post.author}/${post.permlink}\n\n---\n\n${convertedMarkdown}`;
+      let description = `${post.title}\n\nBy @${post.author}\n\nOriginal post: ${APP_CONFIG.BASE_URL}/post/${post.author}/${post.permlink}\n\n---\n\n${convertedMarkdown}`;
 
       // Truncate description if it's too long (some metadata builders have limits)
       const MAX_DESCRIPTION_LENGTH = 2000;
@@ -448,7 +449,7 @@ export function useMarkdownCoin() {
         const manualMetadata = {
           name: post.title,
           description: description,
-          image: `ipfs://${cleanCardImageUrl.replace('https://ipfs.skatehive.app/ipfs/', '')}`,
+          image: `ipfs://${cleanCardImageUrl.replace(`https://${APP_CONFIG.IPFS_GATEWAY}/ipfs/`, '')}`,
           content: carouselContent, // Embed the full carousel structure directly
           properties: {
             content_type: 'longform-post',
@@ -458,7 +459,7 @@ export function useMarkdownCoin() {
             reading_time: Math.ceil(post.body.split(/\s+/).filter(w => w.length > 0).length / 200).toString(),
             original_author: post.author,
             original_permlink: post.permlink,
-            original_url: `https://skatehive.app/post/${post.author}/${post.permlink}`,
+            original_url: `${APP_CONFIG.BASE_URL}/post/${post.author}/${post.permlink}`,
             carousel_images: (carouselContent.carousel?.media?.length || 1).toString(),
             has_carousel: carouselContent.carousel ? 'true' : 'false',
             carousel_type: carouselContent.type || 'CAROUSEL',
@@ -510,7 +511,7 @@ export function useMarkdownCoin() {
       const createMetadataParameters = {
         name: post.title,
         symbol: symbol,
-        uri: `ipfs://${cleanMetadataUrl.replace('https://ipfs.skatehive.app/ipfs/', '')}` as `ipfs://${string}`
+        uri: `ipfs://${cleanMetadataUrl.replace(`https://${APP_CONFIG.IPFS_GATEWAY}/ipfs/`, '')}` as `ipfs://${string}`
       };
 
       // LOG FINAL METADATA PARAMETERS SENT TO ZORA

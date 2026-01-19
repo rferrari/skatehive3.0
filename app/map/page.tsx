@@ -1,5 +1,6 @@
 import dynamic from "next/dynamic";
 import { Metadata } from "next";
+import { APP_CONFIG } from "@/config/app.config";
 
 export const metadata: Metadata = {
   title: "Skate Map | Find and Share Skatespots Worldwide",
@@ -18,10 +19,10 @@ export const metadata: Metadata = {
     title: "Skate Map | Global Skatespot Finder",
     description:
       "Explore skateparks and street spots submitted by skaters worldwide.",
-    url: "https://skatehive.app/map",
+    url: `${APP_CONFIG.BASE_URL}/map`,
     images: [
       {
-        url: "https://skatehive.app/og-map.png",
+        url: `${APP_CONFIG.BASE_URL}/og-map.png`,
         width: 1200,
         height: 630,
         alt: "Skatehive Map Open Graph Image",
@@ -35,10 +36,10 @@ export const metadata: Metadata = {
     title: "Skate Map | Global Skatespot Finder",
     description:
       "Explore skateparks and street spots submitted by skaters worldwide.",
-    images: ["https://skatehive.app/og-map.png"],
+    images: [`${APP_CONFIG.BASE_URL}/og-map.png`],
   },
   alternates: {
-    canonical: "https://skatehive.app/map",
+    canonical: `${APP_CONFIG.BASE_URL}/map`,
   },
 };
 

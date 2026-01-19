@@ -6,6 +6,7 @@ import { signImageHash } from "./server-functions";
 import { Discussion, Notifications, Operation } from "@hiveio/dhive";
 import { extractNumber } from "../utils/extractNumber";
 import { VideoPart } from "@/types/VideoPart";
+import { HIVE_CONFIG } from '@/config/app.config';
 
 
 interface HiveKeychainResponse {
@@ -13,9 +14,7 @@ interface HiveKeychainResponse {
   publicKey: string
 }
 
-const communityTag = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG;
-const defaultThreadAuthor = process.env.NEXT_PUBLIC_THREAD_AUTHOR || 'peak.snaps';
-const defaultThreadPermlink = process.env.NEXT_PUBLIC_THREAD_PERMLINK || 'snaps';
+const communityTag = HIVE_CONFIG.COMMUNITY_TAG;
 
 export async function vote(props: Vote): Promise<KeychainRequestResponse> {
   const keychain = new KeychainSDK(window)
@@ -325,7 +324,7 @@ export function getFileSignature(file: File): Promise<string> {
 
 export async function uploadImage(file: File, signature: string, index?: number, setUploadProgress?: React.Dispatch<React.SetStateAction<number[]>>): Promise<string> {
 
-  const signatureUser = process.env.NEXT_PUBLIC_HIVE_USER
+  const signatureUser = HIVE_CONFIG.APP_ACCOUNT;
 
   const formData = new FormData();
   formData.append("file", file, file.name);
@@ -352,12 +351,30 @@ export async function uploadImage(file: File, signature: string, index?: number,
         const response = JSON.parse(xhr.responseText);
         resolve(response.url);
       } else {
-        reject(new Error('Failed to upload image'));
+        console.error('Image upload failed:', {
+          status: xhr.status,
+          statusText: xhr.statusText,
+          response: xhr.responseText,
+          signatureUser,
+          filename: file.name,
+          fileType: file.type,
+          fileSize: file.size,
+        });
+        reject(new Error(`Failed to upload image (${xhr.status})`));
       }
     };
 
     xhr.onerror = () => {
-      reject(new Error('Failed to upload image'));
+      console.error('Image upload network error:', {
+        status: xhr.status,
+        statusText: xhr.statusText,
+        response: xhr.responseText,
+        signatureUser,
+        filename: file.name,
+        fileType: file.type,
+        fileSize: file.size,
+      });
+      reject(new Error('Failed to upload image (network error)'));
     };
 
     xhr.send(formData);
@@ -581,7 +598,7 @@ export async function findPosts(query: string, params: any[]) {
 }
 
 export async function getLastSnapsContainer() {
-  const author = process.env.NEXT_PUBLIC_THREAD_AUTHOR || defaultThreadAuthor;
+  const author = HIVE_CONFIG.THREADS.AUTHOR;
   const beforeDate = new Date().toISOString().split('.')[0];
   const permlink = '';
   const limit = 1;

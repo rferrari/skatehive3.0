@@ -19,6 +19,7 @@ import { FaEthereum } from "react-icons/fa";
 import { useAccount } from "wagmi";
 import { useCoinCreation } from "@/hooks/useCoinCreation";
 import { createSnapAsSkatedev } from "@/lib/hive/server-actions";
+import { HIVE_CONFIG } from "@/config/app.config";
 
 interface CoinCreatorComposerProps {
   onClose?: () => void;
@@ -114,7 +115,7 @@ export default function CoinCreatorComposer({
         postBody: "", // We'll set this later
         postJsonMetadata: JSON.stringify({
           app: "Skatehive App 3.0",
-          tags: ["coin-creation", "ethereum", "snaps", symbol.toLowerCase()],
+          tags: ["coin-creation", "ethereum", HIVE_CONFIG.THREADS.PERMLINK, symbol.toLowerCase()],
           creator_ethereum_address: address,
           ...(mediaFile && {
             media_type: mediaType,

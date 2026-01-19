@@ -25,6 +25,7 @@ import {
 } from "@chakra-ui/react";
 import { useMemo, useState, useCallback, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { APP_CONFIG } from "@/config/app.config";
 import type { DevMetadataDialogProps } from "./DevMetadataDialog";
 import {
     IMAGE_REGEX,
@@ -267,7 +268,7 @@ export default function DevMetadataDialogContent({
 
             let customMetadata: Record<string, string> = {};
             try {
-                const skateResponse = await fetch(`https://ipfs.skatehive.app/ipfs/${cid}`, {
+                const skateResponse = await fetch(`https://${APP_CONFIG.IPFS_GATEWAY}/ipfs/${cid}`, {
                     method: "HEAD",
                 });
                 const headers: Record<string, string> = {};
@@ -319,7 +320,7 @@ export default function DevMetadataDialogContent({
         const cleanedBody = cleanDescription(activeComment.body || "");
         const description = metadataDescription ||
             (cleanedBody ? `${cleanedBody.slice(0, 200)}...` : "No description");
-        const origin = typeof window !== "undefined" ? window.location.origin : "https://skatehive.app";
+        const origin = typeof window !== "undefined" ? window.location.origin : APP_CONFIG.BASE_URL;
         const url = `${origin}/post/${activeComment.author}/${activeComment.permlink}`;
 
         return {

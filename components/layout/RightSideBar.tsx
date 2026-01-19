@@ -12,6 +12,7 @@ import { Discussion } from "@hiveio/dhive";
 import { findPosts } from "@/lib/hive/client-functions";
 import PostGrid from "@/components/blog/PostGrid";
 import { CommunityTotalPayout } from "../shared";
+import { HIVE_CONFIG } from "@/config/app.config";
 
 export default function RightSideBar() {
   const [allPosts, setAllPosts] = useState<Discussion[]>([]);
@@ -24,7 +25,7 @@ export default function RightSideBar() {
   const prefillInProgress = useRef(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
-  const tag = process.env.NEXT_PUBLIC_HIVE_SEARCH_TAG;
+  const tag = HIVE_CONFIG.SEARCH_TAG;
   const QUERY = "created";
 
   const params = useRef([

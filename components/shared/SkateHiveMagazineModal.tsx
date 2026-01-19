@@ -17,6 +17,7 @@ import {
 import { FaBookOpen, FaTrophy, FaCoins } from "react-icons/fa";
 import { useState } from "react";
 import MagazineModal from "./MagazineModal";
+import { HIVE_CONFIG } from "@/config/app.config";
 
 interface SkateHiveMagazineModalProps {
   isOpen: boolean;
@@ -42,8 +43,7 @@ export default function SkateHiveMagazineModal({
     setIsMagazineOpen(false);
   };
 
-  const communityTag =
-    process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || "hive-173115";
+  const communityTag = HIVE_CONFIG.COMMUNITY_TAG;
   const magazineTag = [{ tag: communityTag, limit: 20 }]; // Bridge API max limit is 20
   const magazineQuery = "trending";
 

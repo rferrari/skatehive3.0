@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import HiveClient from '@/lib/hive/hiveclient';
 import { Discussion } from '@hiveio/dhive';
+import { APP_CONFIG } from '@/config/app.config';
 
 interface Props {
     params: Promise<{
@@ -57,7 +58,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
         const title = `${post.author}'s Snap - SkateHive`;
         const description = cleanBody || `Check out this awesome snap by @${post.author} on SkateHive`;
-        const url = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://skatehive.app'}/user/${username}/snap/${permlink}`;
+        const url = `${APP_CONFIG.ORIGIN}/user/${username}/snap/${permlink}`;
 
         return {
             title,

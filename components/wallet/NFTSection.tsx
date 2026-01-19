@@ -31,6 +31,7 @@ import { FaEye, FaEyeSlash, FaExternalLinkAlt } from "react-icons/fa";
 import { usePortfolioContext } from "../../contexts/PortfolioContext";
 import { NFT, blockchainDictionary } from "../../types/portfolio";
 import useIsMobile from "@/hooks/useIsMobile";
+import { DAO_ADDRESSES, ETH_ADDRESSES } from "@/config/app.config";
 
 export default function NFTSection() {
   const { isConnected, address } = useAccount();
@@ -62,7 +63,7 @@ export default function NFTSection() {
       const isGnars =
         collectionName.includes("gnars") ||
         collectionName.includes("gnar") ||
-        (collectionAddress === "0x880fb3cf5c6cc2d7dfc13a993e839a9411200c17" &&
+        (collectionAddress === ETH_ADDRESSES.GNARS_NFT.toLowerCase() &&
           network === "base");
 
       // Check for SkateHive NFTs (multiple possible variations)
@@ -70,7 +71,7 @@ export default function NFTSection() {
         collectionName.includes("skatehive") ||
         collectionName.includes("skate hive") ||
         collectionName.includes("skthv") ||
-        collectionAddress === "0xfe10d3ce1b0f090935670368ec6de00d8d965523"; // SkateHive contract address
+        collectionAddress === DAO_ADDRESSES.token.toLowerCase(); // SkateHive contract address
 
       return isGnars || isSkateHive;
     });

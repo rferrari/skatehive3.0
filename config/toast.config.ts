@@ -1,3 +1,9 @@
+/**
+ * Toast Configuration
+ * 
+ * Configuration for toast notifications throughout the app
+ */
+
 export const TOAST_CONFIG = {
   SHOW_INTERVAL: 120000, // Show every 2 minutes
   DISPLAY_DURATION: 16000, // Display for 16 seconds

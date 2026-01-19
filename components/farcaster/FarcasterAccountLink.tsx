@@ -13,6 +13,7 @@ import {
 import { SignInButton, useSignIn } from "@farcaster/auth-kit";
 import { FarcasterPreferences } from "@/lib/farcaster/skatehive-integration";
 import { useFarcasterSession } from "@/hooks/useFarcasterSession";
+import { APP_CONFIG } from "@/config/app.config";
 
 interface FarcasterAccountLinkProps {
   hiveUsername: string;
@@ -105,9 +106,7 @@ export default function FarcasterAccountLink({
               title: "🛹 Connected to SkateHive!",
               body: `Welcome @${farcasterUsername}! Your Farcaster account is now linked to SkateHive.`,
               hiveUsername: hiveUsername,
-              sourceUrl: `${
-                process.env.NEXT_PUBLIC_BASE_URL || "https://skatehive.app"
-              }/settings`,
+              sourceUrl: `${APP_CONFIG.ORIGIN}/settings`,
             }),
           });
         } catch (notificationError) {

@@ -1,4 +1,11 @@
-// Blog page configuration constants
+/**
+ * Blog Configuration
+ * 
+ * Configuration for blog pages and post fetching
+ */
+
+import { HIVE_CONFIG } from './app.config';
+
 export const BLOG_CONFIG = {
   POSTS_PER_PAGE: 12,
   BRIDGE_API_MAX_LIMIT: 20, // Hive Bridge API maximum limit per request
@@ -29,8 +36,6 @@ export const VALID_VIEW_MODES = [
 export type QueryType = typeof VALID_QUERIES[number];
 export type ViewMode = typeof VALID_VIEW_MODES[number];
 
-// Environment variable keys
-export const ENV_KEYS = {
-  HIVE_SEARCH_TAG: 'NEXT_PUBLIC_HIVE_SEARCH_TAG',
-  HIVE_COMMUNITY_TAG: 'NEXT_PUBLIC_HIVE_COMMUNITY_TAG',
-} as const;
+// Hive configuration - use config values directly
+export const HIVE_SEARCH_TAG = HIVE_CONFIG.SEARCH_TAG;
+export const HIVE_COMMUNITY_TAG = HIVE_CONFIG.COMMUNITY_TAG;

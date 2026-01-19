@@ -2,10 +2,11 @@ import PostPage from "@/components/blog/PostPage";
 import HiveClient from "@/lib/hive/hiveclient";
 import { cleanUsername } from "@/lib/utils/cleanUsername";
 import { Metadata } from "next";
+import { APP_CONFIG } from "@/config/app.config";
 
 // Constants
-const DOMAIN_URL = "https://skatehive.app";
-const FALLBACK_IMAGE = "https://skatehive.app/ogimage.png";
+const DOMAIN_URL = APP_CONFIG.BASE_URL;
+const FALLBACK_IMAGE = `${APP_CONFIG.BASE_URL}/ogimage.png`;
 
 // Function to safely parse JSON metadata that might be double-encoded
 function parseJsonMetadata(

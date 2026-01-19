@@ -1,5 +1,6 @@
 import React from "react";
 import VideoRenderer from "@/components/layout/VideoRenderer";
+import { APP_CONFIG } from "@/config/app.config";
 
 interface VideoEmbedProps {
   type: "VIDEO" | "ODYSEE" | "YOUTUBE" | "VIMEO";
@@ -11,10 +12,11 @@ export function VideoEmbed({ type, id, index }: VideoEmbedProps) {
   switch (type) {
     case "VIDEO":
       return (
-        <VideoRenderer
-          key={`video-${id}-${index}`}
-          src={`https://ipfs.skatehive.app/ipfs/${id}`}
-        />
+          <VideoRenderer
+            key={`video-${id}-${index}`}
+            src={`https://${APP_CONFIG.IPFS_GATEWAY}/ipfs/${id}`}
+          />
+
       );
 
     case "ODYSEE":

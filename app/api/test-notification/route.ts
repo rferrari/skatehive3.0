@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { APP_CONFIG } from '@/config/app.config';
 
 export async function GET(request: NextRequest) {
     // Only allow in development environment
@@ -15,13 +16,13 @@ export async function GET(request: NextRequest) {
         }
 
         // Test URL generation with the current environment
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+        const baseUrl = APP_CONFIG.ORIGIN || 'http://localhost:3000'
 
         // Test URL construction like the notification service does
-        const testHiveUrl = `https://skatehive.app/post/hive-196037/@${username}/test-post-permlink`
+        const testHiveUrl = `${APP_CONFIG.BASE_URL}/post/hive-196037/@${username}/test-post-permlink`
 
         // Test URL parsing
-        const cleanUrl = testHiveUrl.replace('https://skatehive.app/', '')
+        const cleanUrl = testHiveUrl.replace(`${APP_CONFIG.BASE_URL}/`, '')
 
         // Test final URL construction
         const finalUrl = `${baseUrl}/${cleanUrl}`

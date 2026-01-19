@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
 import nodemailer from 'nodemailer';
+import { APP_CONFIG, EMAIL_DEFAULTS } from '@/config/app.config';
 
 // Initialize Supabase client with service role key for admin operations
 const supabase = createClient(
@@ -39,9 +40,9 @@ interface HiveAuthority {
 // Create email transporter
 const createEmailTransporter = () => {
   return nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: process.env.SMTP_SECURE === 'true',
+    host: process.env.SMTP_HOST || EMAIL_DEFAULTS.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT || EMAIL_DEFAULTS.SMTP_PORT.toString()),
+    secure: process.env.SMTP_SECURE ? process.env.SMTP_SECURE === 'true' : EMAIL_DEFAULTS.SMTP_SECURE,
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
@@ -84,20 +85,20 @@ const sendKeysEmail = async (email: string, username: string, keys: any) => {
         </ul>
       </div>
       
-      <p>You can now login to <a href="https://skatehive.app">Skatehive.app</a> using your username and posting key.</p>
+      <p>You can now login to <a href="${APP_CONFIG.BASE_URL}">${APP_CONFIG.DOMAIN}</a> using your username and posting key.</p>
       
       <p>Welcome to the Skatehive community! 🎉</p>
       
       <hr style="margin: 30px 0;">
       <p style="font-size: 12px; color: #6c757d;">
-        This email was sent from ${process.env.EMAIL_COMMUNITY || 'Skatehive'}<br>
-        Recovery account: ${process.env.EMAIL_RECOVERYACC || 'skatehive'}
+        This email was sent from ${APP_CONFIG.NAME}<br>
+        Recovery account: ${APP_CONFIG.RECOVERY_ACCOUNT}
       </p>
     </div>
   `;
 
   await transporter.sendMail({
-    from: process.env.EMAIL_USER,
+    from: process.env.EMAIL_USER || EMAIL_DEFAULTS.FROM_ADDRESS,
     to: email,
     subject: `Welcome to Skatehive - Your Account Keys for @${username}`,
     html: emailTemplate,

@@ -1,5 +1,7 @@
 import { getLocalizedStrings } from "./localization";
 
+import { APP_CONFIG } from "@/config/app.config";
+
 export default function getMailTemplate_Invite(
   createdby: string,
   desiredUsername: string,
@@ -45,7 +47,7 @@ export default function getMailTemplate_Invite(
       <!-- Image Button (CTA) -->
       <div style="text-align: center; margin: 30px 0;">
         <a href="${localizedStrings.ctaLink}" target="_blank">
-          <img src="https://ipfs.skatehive.app/ipfs/QmUkU1BL1yHfk9h33V1BXjBF1FpQKEhAcJxpzV2PixCfLi" alt="${localizedStrings.ctaAltText}" style="max-width: 100%; border-radius: 10px; box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);">
+          <img src="https://${APP_CONFIG.IPFS_GATEWAY}/ipfs/QmUkU1BL1yHfk9h33V1BXjBF1FpQKEhAcJxpzV2PixCfLi" alt="${localizedStrings.ctaAltText}" style="max-width: 100%; border-radius: 10px; box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);">
         </a>
         <p style="font-size: 14px; color: ${localizedStrings.colors.helpText}; margin-top: 10px;">${localizedStrings.ctaHelpText}</p>
       </div>
@@ -64,7 +66,7 @@ export default function getMailTemplate_Invite(
     </div>
     <!-- Footer -->
     <div style="background-color: ${localizedStrings.colors.background2}; color: ${localizedStrings.colors.helpText}; text-align: center; padding: 20px; font-size: 14px;">
-      <p style="margin: 20px 0 0;"><a href="https://skatehive.app/" style="color: ${localizedStrings.colors.link};">${localizedStrings.footerLinkText}</a></p>
+      <p style="margin: 20px 0 0;"><a href="${APP_CONFIG.BASE_URL}/" style="color: ${localizedStrings.colors.link};">${localizedStrings.footerLinkText}</a></p>
     </div>
   </div>
 </div>

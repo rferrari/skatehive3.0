@@ -1,8 +1,9 @@
 import { MetadataRoute } from 'next';
 import HiveClient from '@/lib/hive/hiveclient';
+import { APP_CONFIG, HIVE_CONFIG } from '@/config/app.config';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://skatehive.app';
+    const baseUrl = APP_CONFIG.ORIGIN;
 
     // Static pages with proper priorities
     const staticPages: MetadataRoute.Sitemap = [
@@ -89,7 +90,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     try {
         // Fetch recent snaps for sitemap using the correct bridge API
         const recentPosts = await HiveClient.call('bridge', 'get_ranked_posts', {
-            tag: process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || 'hive-173115',
+            tag: HIVE_CONFIG.COMMUNITY_TAG,
             limit: 50,
             sort: 'created'
         });

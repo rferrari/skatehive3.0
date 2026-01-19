@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { APP_CONFIG, HIVE_CONFIG } from '@/config/app.config';
 
 export async function GET(request: NextRequest) {
   try {
@@ -7,7 +8,7 @@ export async function GET(request: NextRequest) {
     const limit = searchParams.get('limit') || '10';
     
     // Use the external API's pagination directly
-    const apiUrl = `https://api.skatehive.app/api/v2/skatespots?limit=${limit}&page=${page}`;
+    const apiUrl = `${APP_CONFIG.API_BASE_URL}/api/v2/skatespots?limit=${limit}&page=${page}`;
     
     const response = await fetch(apiUrl, {
       method: 'GET',
@@ -26,7 +27,7 @@ export async function GET(request: NextRequest) {
     // Filter to only include skatespot posts
     const skatespots = data.data.filter((post: any) => {
       const tags = post.tags || [];
-      return tags.includes('skatespot') && tags.includes('hive-173115');
+      return tags.includes('skatespot') && tags.includes(HIVE_CONFIG.COMMUNITY_TAG);
     });
     
     // Transform the data to match the expected Discussion format

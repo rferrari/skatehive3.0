@@ -1,5 +1,6 @@
 import { ERC20ABI } from './abis/ERC20ABI';
 import { GNARS_ERC20_ADDRESS, HIGHER_ERC20_ADDRESS, SKATEHIVE_ERC20_ADDRESS } from './constants';
+import { ETH_ADDRESSES } from "@/config/app.config";
 
 export interface TokenInfo {
   address: string;
@@ -32,7 +33,7 @@ export const tokenDictionary: { [key: string]: TokenInfo } = {
     network: "base"
   },
   USDC: {
-    address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+    address: ETH_ADDRESSES.USDC,
     abi: ERC20ABI,
     tokenLogo: "/logos/usdc.png",
     decimals: 6,

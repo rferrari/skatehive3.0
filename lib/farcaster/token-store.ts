@@ -1,6 +1,7 @@
 import { FarcasterUserToken, FarcasterWebhookPayload, FarcasterSignature } from '@/types/farcaster';
 import { createHash, createVerify } from 'crypto';
 import { ethers } from 'ethers';
+import { ETH_ADDRESSES, EXTERNAL_SERVICES } from '@/config/app.config';
 
 // ⚠️ WARNING: In-memory storage for Farcaster notification tokens
 // MUST be replaced with persistent database storage before production deployment
@@ -106,7 +107,7 @@ async function getFarcasterPublicKey(fid: string): Promise<string | null> {
     try {
         // In production, you would fetch from Farcaster Hub API
         // For now, we'll use a mock implementation
-        const hubUrl = process.env.FARCASTER_HUB_URL || 'https://nemes.farcaster.xyz:2281';
+        const hubUrl = process.env.FARCASTER_HUB_URL || EXTERNAL_SERVICES.FARCASTER_HUB_URL;
 
         const response = await fetch(`${hubUrl}/v1/userDataByFid?fid=${fid}&user_data_type=6`);
         if (!response.ok) {
@@ -354,7 +355,7 @@ export function createMockFarcasterWebhook(
     const header = {
         fid: parseInt(fid),
         type: 'custody',
-        key: '0x1234567890abcdef1234567890abcdef12345678',
+        key: ETH_ADDRESSES.ZERO,
         timestamp: Math.floor(Date.now() / 1000)
     };
 

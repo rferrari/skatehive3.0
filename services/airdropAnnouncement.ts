@@ -1,5 +1,6 @@
 import { createSnapAsSkatedev } from '@/lib/hive/server-actions';
 import { uploadToHiveImagesWithRetry } from '@/lib/utils/imageUpload';
+import { APP_CONFIG, ETH_ADDRESSES, HIVE_CONFIG } from '@/config/app.config';
 
 export interface AirdropRecipient {
   hive_author: string;
@@ -150,13 +151,13 @@ export async function createAirdropAnnouncement(params: AirdropAnnouncementParam
     // Create the snap with the image both in content and metadata
     const snapResult = await createSnapAsSkatedev({
       body: content,
-      tags: ['skatehive', 'airdrop', params.token.toLowerCase(), 'community'],
-      ethereumAddress: params.creator?.ethereumAddress || '0x0000000000000000000000000000000000000000',
+      tags: [HIVE_CONFIG.SEARCH_TAG, 'airdrop', params.token.toLowerCase(), 'community'],
+      ethereumAddress: params.creator?.ethereumAddress || ETH_ADDRESSES.ZERO,
       images: imageUrl ? [imageUrl] : [] // Include image in metadata for proper display
     });
     
     if (snapResult.success && snapResult.permlink) {
-      const postUrl = `https://skatehive.app/post/skatedev/${snapResult.permlink}`;
+      const postUrl = `${APP_CONFIG.BASE_URL}/post/${HIVE_CONFIG.APP_ACCOUNT}/${snapResult.permlink}`;
       
       return {
         postUrl,

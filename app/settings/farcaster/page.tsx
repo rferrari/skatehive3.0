@@ -17,6 +17,7 @@ import {
   AlertDescription,
 } from "@chakra-ui/react";
 import FarcasterUniversalLink from "@/components/farcaster/FarcasterUniversalLink";
+import { APP_CONFIG } from "@/config/app.config";
 
 export default function FarcasterAdminPage() {
   const { user } = useAioha();
@@ -28,7 +29,7 @@ export default function FarcasterAdminPage() {
   const [customNotification, setCustomNotification] = useState({
     title: "",
     body: "",
-    targetUrl: "https://skatehive.app",
+    targetUrl: APP_CONFIG.BASE_URL as string,
   });
 
   const toast = useToast();
@@ -105,7 +106,7 @@ export default function FarcasterAdminPage() {
         setCustomNotification({
           title: "",
           body: "",
-          targetUrl: "https://skatehive.app",
+          targetUrl: APP_CONFIG.BASE_URL as string,
         });
       } else {
         toast({
@@ -148,7 +149,7 @@ export default function FarcasterAdminPage() {
           type: "test",
           title: "Test Notification",
           body: "This is a test notification from SkateHive.",
-          sourceUrl: "https://skatehive.app",
+          sourceUrl: APP_CONFIG.BASE_URL,
           adminUsername: userName,
         }),
       });
@@ -298,7 +299,7 @@ export default function FarcasterAdminPage() {
                     targetUrl: e.target.value,
                   })
                 }
-                placeholder="https://skatehive.app"
+                placeholder={APP_CONFIG.BASE_URL}
                 bg="gray.700"
                 color="white"
                 _placeholder={{ color: "gray.400" }}

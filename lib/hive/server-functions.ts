@@ -4,6 +4,7 @@
 import { PrivateKey, KeyRole, Operation } from '@hiveio/dhive';
 import { Buffer } from 'buffer';
 import nodemailer from 'nodemailer';
+import { EMAIL_DEFAULTS } from '@/config/app.config';
 import HiveClient from "./hiveclient";
 
 // import { DefaultRenderer } from "@hiveio/content-renderer";
@@ -23,12 +24,14 @@ export async function signImageHash(hash: string): Promise<string> {
 }
 
 export async function sendInvite(email: string, url: string): Promise<void> {
-    if (!process.env.EMAIL_HOST || !process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-        throw new Error('Email environment variables (EMAIL_HOST, EMAIL_USER, EMAIL_PASS) must be set.');
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+        throw new Error('Email environment variables (EMAIL_USER, EMAIL_PASS) must be set.');
     }
 
     const transporter = nodemailer.createTransport({
-        service: 'gmail',  // This automatically sets host, port, and security settings for Gmail
+        host: process.env.SMTP_HOST || EMAIL_DEFAULTS.SMTP_HOST,
+        port: Number(process.env.SMTP_PORT || EMAIL_DEFAULTS.SMTP_PORT),
+        secure: process.env.SMTP_SECURE ? process.env.SMTP_SECURE === 'true' : EMAIL_DEFAULTS.SMTP_SECURE,
         auth: {
             user: process.env.EMAIL_USER,  // Your Gmail address
             pass: process.env.EMAIL_PASS,  // App password or your Gmail password if "less secure apps" is enabled
@@ -37,7 +40,7 @@ export async function sendInvite(email: string, url: string): Promise<void> {
 
     // Email options
     const mailOptions = {
-        from: process.env.EMAIL_USER, // Sender address
+        from: process.env.EMAIL_USER || EMAIL_DEFAULTS.FROM_ADDRESS, // Sender address
         to: email, // Recipient address
         subject: 'Hive Invitation', // Subject link
         html: `<p>Click the following link to create your account:</p><a href="${url}">${url}</a>`, // Email body with reset link

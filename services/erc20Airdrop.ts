@@ -14,8 +14,9 @@ import { wagmiConfig } from '@/app/providers';
 import { tokenDictionary } from '@/lib/utils/tokenDictionary';
 import { AirdropUser, TransactionStatus } from '@/types/airdrop';
 import { airdropABI } from '@/lib/utils/abis/airdropABI';
+import { ETH_ADDRESSES } from '@/config/app.config';
 
-const AIRDROP_CONTRACT = '0x8bD8F0D46c84feCBFbF270bac4Ad28bFA2c78F05';
+const AIRDROP_CONTRACT = ETH_ADDRESSES.AIRDROP_CONTRACT;
 
 
 interface AirdropResult {
@@ -110,7 +111,7 @@ export class ERC20AirdropService {
         functionName: 'allowance',
         args: [
           userAddress as `0x${string}`,
-          process.env.NEXT_PUBLIC_AIRDROP_CONTRACT_ADDRESS as `0x${string}`
+          ETH_ADDRESSES.AIRDROP_CONTRACT
         ]
       });
       

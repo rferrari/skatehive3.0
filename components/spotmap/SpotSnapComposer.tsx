@@ -20,6 +20,7 @@ import { FaImage } from "react-icons/fa";
 import { Discussion } from "@hiveio/dhive";
 import { getFileSignature, uploadImage } from "@/lib/hive/client-functions";
 import { getLastSnapsContainer } from "@/lib/hive/client-functions";
+import { HIVE_CONFIG } from "@/config/app.config";
 import ImageCompressor, {
   ImageCompressorRef,
 } from "@/lib/utils/ImageCompressor";
@@ -163,7 +164,7 @@ export default function SpotSnapComposer({
         permlink,
         "",
         commentBody,
-        { app: "Skatehive App 3.0", tags: ["hive-173115", "skatespot"] }
+        { app: "Skatehive App 3.0", tags: [HIVE_CONFIG.COMMUNITY_TAG, "skatespot"] }
       );
       if (commentResponse.success) {
         postBodyRef.current!.value = "";

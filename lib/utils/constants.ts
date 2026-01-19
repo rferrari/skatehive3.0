@@ -1,33 +1,33 @@
 import { Address } from 'viem';
+import { DAO_ADDRESSES as CONFIG_DAO_ADDRESSES, ETH_ADDRESSES, APP_CONFIG, getAlchemyRpcUrl, EXTERNAL_SERVICES, getSupabaseConfigSafe } from '@/config/app.config';
 
-export const WC_PROJECT_ID = process.env.NEXT_PUBLIC_WC_PROJECT_ID as string;
-export const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY as string;
-export const RPC_URL = `https://base-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_KEY}`;
-export const GRAPHQL_URL =
-  'https://api.goldsky.com/api/public/project_clkk1ucdyf6ak38svcatie9tf/subgraphs/nouns-builder-base-mainnet/stable/gn';
+// Web3/Blockchain configuration - all from centralized APP_CONFIG
+export const WC_PROJECT_ID = APP_CONFIG.WALLETCONNECT_PROJECT_ID;
+export const ETHERSCAN_API_KEY = APP_CONFIG.ETHERSCAN_API_KEY;
+export const RPC_URL = getAlchemyRpcUrl();
+export const GRAPHQL_URL = EXTERNAL_SERVICES.DAO_GRAPHQL_URL;
 
-export const DAO_ADDRESSES = {
-  token: process.env.NEXT_PUBLIC_TOKEN as Address,
-  metadata: process.env.NEXT_PUBLIC_METADATA as Address,
-  auction: process.env.NEXT_PUBLIC_AUCTION as Address,
-  treasury: process.env.NEXT_PUBLIC_TREASURY as Address,
-  governor: process.env.NEXT_PUBLIC_GOVERNOR as Address,
-};
+// Re-export DAO_ADDRESSES from config
+export const DAO_ADDRESSES = CONFIG_DAO_ADDRESSES;
 
 
-export const SKATEHIVE_BASE_MULTISIG = "0xC1afA4c0A70B622d7b71d42241Bb4d52B6F3E218"
-export const AIRDROP_CONTRACT_ADDRESS = "0x8bD8F0D46c84feCBFbF270bac4Ad28bFA2c78F05";
-export const SKATEHIVE_HOT_ADDRESS = "0xB4964e1ecA55Db36a94e8aeFfBFBAb48529a2f6c";
-export const USDC_CONTRACT_ADDRESS = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913';
-export const SKATEHIVE_ERC20_ADDRESS = '0x4200000000000000000000000000000000000042';
-export const GNARS_ERC20_ADDRESS = '0x6d1b360c25614cb6a6f911c2d1d5c0b6e4a3bcae';
-export const HIGHER_ERC20_ADDRESS = '0x0578d8A44db98B23BF096A382e016e29a5Ce0ffe';
+export const SKATEHIVE_BASE_MULTISIG = ETH_ADDRESSES.SKATEHIVE_MULTISIG;
+export const AIRDROP_CONTRACT_ADDRESS = ETH_ADDRESSES.AIRDROP_CONTRACT;
+export const SKATEHIVE_HOT_ADDRESS = ETH_ADDRESSES.SKATEHIVE_HOT;
+export const USDC_CONTRACT_ADDRESS = ETH_ADDRESSES.USDC;
+export const SKATEHIVE_ERC20_ADDRESS = ETH_ADDRESSES.SKATEHIVE_ERC20;
+export const GNARS_ERC20_ADDRESS = ETH_ADDRESSES.GNARS_ERC20;
+export const HIGHER_ERC20_ADDRESS = ETH_ADDRESSES.HIGHER_ERC20;
+
+// Supabase config - use getSupabaseConfigSafe() to avoid build-time errors
+// Callers should handle undefined values or use getSupabaseConfig() for validation
+const supabaseConfig = getSupabaseConfigSafe();
 export const SUPABASE = {
-  url: process.env.NEXT_PUBLIC_SUPABASE_URL as string,
-  public_key: process.env.NEXT_PUBLIC_SUPABASE_PUBLIC_KEY as string,
-  private_key: process.env.SUPABASE_PRIVATE_KEY as string,
+  url: supabaseConfig.url,
+  public_key: supabaseConfig.publicKey,
+  private_key: supabaseConfig.privateKey,
 };
-export const PINATA_URL = process.env.NEXT_PUBLIC_PINATA_URL || "ipfs.skatehive.app";
+export const PINATA_URL = APP_CONFIG.PINATA_GATEWAY;
 
 // Default vote weight for snaps and posts (percentage)
-export const DEFAULT_VOTE_WEIGHT = 51; 
+export const DEFAULT_VOTE_WEIGHT: number = APP_CONFIG.DEFAULT_VOTE_WEIGHT; 

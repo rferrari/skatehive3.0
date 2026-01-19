@@ -22,8 +22,9 @@ import {
   Card,
   CardBody,
   Link,
-  useColorModeValue,
 } from "@chakra-ui/react";
+import { APP_CONFIG } from "@/config/app.config";
+
 import {
   FaEnvelope,
   FaQuestionCircle,
@@ -382,7 +383,7 @@ export default function SupportPage() {
                 <Icon as={FaExternalLinkAlt} ml={1} boxSize={3} />
               </Link>
               <Link
-                href="https://skatehive.app/blog"
+                href={`${APP_CONFIG.BASE_URL}/blog`}
                 isExternal
                 color="primary"
                 fontWeight="medium"

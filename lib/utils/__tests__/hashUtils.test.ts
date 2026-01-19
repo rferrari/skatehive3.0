@@ -148,7 +148,7 @@ describe('hashUtils', () => {
 
 Check out this sick trick! 🛹
 
-![trick](https://ipfs.skatehive.app/ipfs/QmX123...)
+![trick](https://example.com/ipfs/QmX123...)
 
 @gnars killed it today!
 

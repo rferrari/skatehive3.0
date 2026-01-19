@@ -1,6 +1,6 @@
 import { Button } from "@chakra-ui/react";
 import { ReactElement, ReactNode } from "react";
-import { TOAST_STYLES } from "@/constants/toastConfig";
+import { TOAST_STYLES } from "@/config/toast.config";
 
 interface ToastCardProps {
   title: string;

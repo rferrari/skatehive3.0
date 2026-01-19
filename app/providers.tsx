@@ -18,6 +18,7 @@ import { AuthKitProvider } from "@farcaster/auth-kit";
 import "@farcaster/auth-kit/styles.css";
 import { dynamicRainbowTheme } from "@/lib/themes/rainbowkitTheme";
 import { useState } from "react";
+import { APP_CONFIG } from "@/config/app.config";
 
 const aioha = new Aioha();
 
@@ -26,17 +27,15 @@ if (typeof window !== "undefined") {
   aioha.registerLedger();
   aioha.registerPeakVault();
   aioha.registerHiveAuth({
-    name: process.env.NEXT_PUBLIC_COMMUNITY_NAME || "skatehive",
+    name: APP_CONFIG.NAME.toLowerCase(),
     description: "",
   });
   aioha.loadAuth();
 }
 
 export const wagmiConfig = getDefaultConfig({
-  appName: process.env.NEXT_PUBLIC_COMMUNITY_NAME || "skatehive",
-  projectId:
-    process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ||
-    "6465a9e6cbe7a3cb53461864e01d3e8d",
+  appName: APP_CONFIG.NAME,
+  projectId: APP_CONFIG.WALLETCONNECT_PROJECT_ID,
   chains: [base, mainnet],
   transports: {
     [base.id]: http(),
@@ -47,7 +46,7 @@ export const wagmiConfig = getDefaultConfig({
 
 const farcasterAuthConfig = {
   rpcUrl: "https://mainnet.optimism.io",
-  domain: process.env.NEXT_PUBLIC_DOMAIN || "skatehive.app",
+  domain: APP_CONFIG.DOMAIN,
   // siweUri is optional - Auth Kit handles SIWE verification internally
   // Only needed if you want custom server-side session management
   relay: "https://relay.farcaster.xyz", // Ensure relay is specified
@@ -91,8 +90,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
             >
               <OnchainKitProvider
                 chain={base}
-                apiKey={process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY}
-                projectId={process.env.NEXT_PUBLIC_CDP_PROJECT_ID}
+                apiKey={APP_CONFIG.ONCHAINKIT_API_KEY}
+                projectId={APP_CONFIG.CDP_PROJECT_ID}
               >
                 <AuthKitProvider config={farcasterAuthConfig}>
                   <AiohaProvider aioha={aioha}>

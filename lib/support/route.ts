@@ -1,6 +1,7 @@
 'use server'
 import nodemailer from 'nodemailer';
 import { htmlToText } from 'html-to-text';
+import { APP_CONFIG, EMAIL_DEFAULTS } from '@/config/app.config';
 import getSupportTemplate from './template';
 
 interface SupportRequest {
@@ -39,8 +40,8 @@ export default async function supportMailer(request: SupportRequest): Promise<bo
 
     // Send to support team
     const info = await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: process.env.EMAIL_RECOVERYACC || process.env.EMAIL_USER, // Support team email (using recovery account)
+      from: process.env.EMAIL_USER || EMAIL_DEFAULTS.FROM_ADDRESS,
+      to: process.env.EMAIL_RECOVERYACC || process.env.EMAIL_USER || EMAIL_DEFAULTS.FROM_ADDRESS, // Support team email (using recovery account)
       replyTo: email, // Allow direct reply to user
       subject: `[SkateHive Support] ${subject}`,
       text,
@@ -58,7 +59,7 @@ export default async function supportMailer(request: SupportRequest): Promise<bo
       });
 
       await transporter.sendMail({
-        from: process.env.EMAIL_USER,
+        from: process.env.EMAIL_USER || EMAIL_DEFAULTS.FROM_ADDRESS,
         to: email,
         subject: 'SkateHive Support - We received your message',
         text: confirmationText,
@@ -130,7 +131,7 @@ function getConfirmationTemplate(userEmail: string): string {
           If you have additional information or urgent concerns, please reply to this email.
         </p>
         <div style="text-align: center; margin: 30px 0;">
-          <a href="https://skatehive.app" style="background: #4CAF50; color: white; text-decoration: none; padding: 12px 24px; border-radius: 5px; display: inline-block;">
+          <a href="${APP_CONFIG.BASE_URL}" style="background: #4CAF50; color: white; text-decoration: none; padding: 12px 24px; border-radius: 5px; display: inline-block;">
             Return to SkateHive
           </a>
         </div>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { farcasterNotificationService } from '@/lib/farcaster/notification-service';
 import { HiveToFarcasterNotification } from '@/types/farcaster';
 import { isServerSideAdmin, logSecurityAttempt, createUnauthorizedResponse } from '@/lib/server/adminUtils';
+import { APP_CONFIG } from '@/config/app.config';
 
 export async function POST(request: NextRequest) {
     try {
@@ -36,7 +37,7 @@ export async function POST(request: NextRequest) {
             title: title.substring(0, 32), // Ensure Farcaster limit
             body: messageBody.substring(0, 128), // Ensure Farcaster limit
             hiveUsername: hiveUsername || 'skatehive',
-            sourceUrl: sourceUrl || process.env.NEXT_PUBLIC_BASE_URL || 'https://skatehive.app',
+            sourceUrl: sourceUrl || APP_CONFIG.ORIGIN,
             metadata: {
                 author: 'skatehive',
                 permlink: type === 'custom' ? 'custom-notification' : 'test-notification',
@@ -94,21 +95,22 @@ export async function GET() {
                 broadcast: 'true to send to all users, false for targeted (optional)'
             }
         },
-        examples: {
+            examples: {
             testNotification: {
                 type: 'test',
                 title: '� Test Notification',
                 body: 'This is a test notification from SkateHive!',
                 hiveUsername: 'skatehive',
-                sourceUrl: 'https://skatehive.app'
+                sourceUrl: APP_CONFIG.BASE_URL
             },
             customBroadcast: {
                 type: 'custom',
                 title: '📢 Announcement',
                 body: 'New features available on SkateHive!',
-                sourceUrl: 'https://skatehive.app',
+                sourceUrl: APP_CONFIG.BASE_URL,
                 broadcast: true
             }
         }
+
     });
 }

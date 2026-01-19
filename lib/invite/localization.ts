@@ -1,52 +1,54 @@
-export function getLocalizedStrings(language: string) {
-  type LanguageStrings = {
-    [key: string]: {
-      colors: {
-        background1: string;
-        background2: string;
-        foreground1: string;
-        foreground2: string;
-        keyBackground: string;
-        alertBackground: string;
-        highlightBackground: string;
-        link: string;
-        codeText: string;
-        helpText: string;
-      };
-      welcomeMessage: string;
-      onboardedMessage: string;
-      keepKeysSafeMessage: string;
-      usernameLabel: string;
-      masterPasswordLabel: string;
-      importKeysMessage: string;
-      ownerKeyLabel: string;
-      activeKeyLabel: string;
-      postingKeyLabel: string;
-      memoKeyLabel: string;
-      importantMessage: string;
-      keysDescriptionTitle: string;
-      postingKeyDescription: string;
-      activeKeyDescription: string;
-      memoKeyDescription: string;
-      ownerKeyDescription: string;
-      keysRulesTitle: string;
-      keysRules: string;
-      footerMessage: string;
-      introParagraph: string;
-      howToLoginTitle: string;
-      installKeychainStep: string;
-      openKeychainStep: string;
-      enterDetailsStep: string;
-      readyStep: string;
-      ctaAltText: string;
-      ctaHelpText: string;
-      ctaLink: string;
-      warningMessage: string;
-      keysExplanationTitle: string;
-      footerLinkText: string;
-    };
-  };
+import { APP_CONFIG } from "@/config/app.config";
 
+type LanguageStrings = {
+  [key: string]: {
+    colors: {
+      background1: string;
+      background2: string;
+      foreground1: string;
+      foreground2: string;
+      keyBackground: string;
+      alertBackground: string;
+      highlightBackground: string;
+      link: string;
+      codeText: string;
+      helpText: string;
+    };
+    welcomeMessage: string;
+    onboardedMessage: string;
+    keepKeysSafeMessage: string;
+    usernameLabel: string;
+    masterPasswordLabel: string;
+    importKeysMessage: string;
+    ownerKeyLabel: string;
+    activeKeyLabel: string;
+    postingKeyLabel: string;
+    memoKeyLabel: string;
+    importantMessage: string;
+    keysDescriptionTitle: string;
+    postingKeyDescription: string;
+    activeKeyDescription: string;
+    memoKeyDescription: string;
+    ownerKeyDescription: string;
+    keysRulesTitle: string;
+    keysRules: string;
+    footerMessage: string;
+    introParagraph: string;
+    howToLoginTitle: string;
+    installKeychainStep: string;
+    openKeychainStep: string;
+    enterDetailsStep: string;
+    readyStep: string;
+    ctaAltText: string;
+    ctaHelpText: string;
+    ctaLink: string;
+    warningMessage: string;
+    keysExplanationTitle: string;
+    footerLinkText: string;
+  };
+};
+
+export function getLocalizedStrings(language: string) {
   const strings: LanguageStrings = {
     EN: {
       colors: {
@@ -81,7 +83,7 @@ export function getLocalizedStrings(language: string) {
       installKeychainStep: "<strong>Install Hive Keychain:</strong><br> Desktop 👉 <a href=\"https://hive-keychain.com/\" target=\"_blank\" style=\"color: #4caf50;\">https://hive-keychain.com/</a> <strong>For Mobile, install Keychain App:</strong> <br> Apple 👉 <a href=\"https://apps.apple.com/us/app/hive-keychain/id1552190010\" target=\"_blank\" style=\"color: #4caf50;\">App Store</a> <br> Android 👉 <a href=\"https://play.google.com/store/apps/details?id=com.mobilekeychain\" target=\"_blank\" style=\"color: #4caf50;\">Google Play</a>",
       openKeychainStep: "Open the Hive Keychain Wallet and navigate to <strong>Accounts</strong>. Add your account <strong>Using Keys/Pwd</strong>.",
       enterDetailsStep: "<strong>Enter your username</strong> (<code style=\"color:#ccc;\">{desiredUsername}</code>) and paste your Master Password.",
-      readyStep: "<strong>You're ready to go!</strong> You can now log in to <a href=\"https://skatehive.app/\" style=\"color: #4caf50;\">Skatehive.app</a> and other Hive Front ends securely. <br>If you are on mobile, you must access Skatehive.app THROUGH the Hive Keychain's Web Browser!</br>",
+      readyStep: `<strong>You're ready to go!</strong> You can now log in to <a href="${APP_CONFIG.BASE_URL}/" style="color: #4caf50;">${APP_CONFIG.DOMAIN}</a> and other Hive Front ends securely. <br>If you are on mobile, you must access ${APP_CONFIG.DOMAIN} THROUGH the Hive Keychain's Web Browser!</br>`,
       ctaAltText: "Watch Tutorial",
       ctaHelpText: "Need help? Watch the tutorial above ☝️",
       ctaLink: "https://docs.skatehive.app/docs/create-account",
@@ -126,7 +128,7 @@ export function getLocalizedStrings(language: string) {
       installKeychainStep: "<strong>Instalar a Hive Keychain:</strong><br> Desktop 👉 <a href=\"https://hive-keychain.com/\" target=\"_blank\" style=\"color: #4caf50;\">https://hive-keychain.com/</a> <strong>Para celular, instale o aplicativo Keychain:</strong> <br> Apple 👉 <a href=\"https://apps.apple.com/us/app/hive-keychain/id1552190010\" target=\"_blank\" style=\"color: #4caf50;\">App Store</a> <br> Android 👉 <a href=\"https://play.google.com/store/apps/details?id=com.mobilekeychain\" target=\"_blank\" style=\"color: #4caf50;\">Google Play</a>",
       openKeychainStep: "Abrir a carteira Hive Keychain e navegar até <strong>Contas</strong>. Adicione sua conta <strong>usando chaves/senha</strong>.",
       enterDetailsStep: "<strong>Digite seu nome de usuário</strong> (<code style=\"color:#ccc;\">{desiredUsername}</code>) e cole sua senha mestra.",
-      readyStep: "<strong>Você está pronto para começar!</strong> Agora você pode fazer login no <a href=\"https://skatehive.app/\" style=\"color: #4caf50;\">Skatehive.app</a> e outros front-ends do Hive de forma segura. <br>Se estiver no celular, você deve acessar o Skatehive.app POR MEIO do navegador web do Hive Keychain!</br>",
+      readyStep: `<strong>Você está pronto para começar!</strong> Agora você pode fazer login no <a href="${APP_CONFIG.BASE_URL}/" style="color: #4caf50;">${APP_CONFIG.DOMAIN}</a> e outros front-ends do Hive de forma segura. <br>Se estiver no celular, você deve acessar o ${APP_CONFIG.DOMAIN} POR MEIO do navegador web do Hive Keychain!</br>`,
       ctaAltText: "Assistir Tutorial",
       ctaHelpText: "Precisa de ajuda? Assista ao tutorial acima ☝️",
       ctaLink: "https://docs.skatehive.app/pt-br/docs/create-account",
@@ -171,7 +173,7 @@ export function getLocalizedStrings(language: string) {
       installKeychainStep: "<strong>Instalar Hive Keychain:</strong><br> Desktop 👉 <a href=\"https://hive-keychain.com/\" target=\"_blank\" style=\"color: #4caf50;\">https://hive-keychain.com/</a> <strong>Para móviles, instala la aplicación Keychain:</strong> <br> Apple 👉 <a href=\"https://apps.apple.com/us/app/hive-keychain/id1552190010\" target=\"_blank\" style=\"color: #4caf50;\">App Store</a> <br> Android 👉 <a href=\"https://play.google.com/store/apps/details?id=com.mobilekeychain\" target=\"_blank\" style=\"color: #4caf50;\">Google Play</a>",
       openKeychainStep: "Abre la billetera Hive Keychain y navega hasta <strong>Cuentas</strong>. Agrega tu cuenta <strong>usando claves/contraseña</strong>.",
       enterDetailsStep: "<strong>Ingresa tu nombre de usuario</strong> (<code style=\"color:#ccc;\">{desiredUsername}</code>) y pega tu contraseña maestra.",
-      readyStep: "<strong>¡Estás listo para empezar!</strong> Ahora puedes iniciar sesión en <a href=\"https://skatehive.app/\" style=\"color: #4caf50;\">Skatehive.app</a> y otros front-ends de Hive de forma segura. <br>Si estás en un móvil, debes acceder a Skatehive.app A TRAVÉS del navegador web de Hive Keychain!</br>",
+      readyStep: `<strong>¡Estás listo para empezar!</strong> Ahora puedes iniciar sesión en <a href="${APP_CONFIG.BASE_URL}/" style="color: #4caf50;">${APP_CONFIG.DOMAIN}</a> y otros front-ends de Hive de forma segura. <br>Si estás en un móvil, debes acceder a ${APP_CONFIG.DOMAIN} A TRAVÉS del navegador web de Hive Keychain!</br>`,
       ctaAltText: "Ver Tutorial",
       ctaHelpText: "¿Necesitas ayuda? Mira el tutorial de arriba ☝️",
       ctaLink: "https://docs.skatehive.app/es/docs/create-account",

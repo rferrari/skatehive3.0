@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { downloadLimiter, getClientIP } from '@/lib/utils/rate-limiter';
+import { APP_CONFIG } from '@/config/app.config';
 
 // Environment-aware Instagram server configuration
 const getInstagramServers = () => {
@@ -65,7 +66,7 @@ async function tryDownloadFromServer(serverUrl: string, instagramUrl: string): P
     return {
       success: true,
       cid: result.cid,
-      url: result.pinata_gateway || `https://ipfs.skatehive.app/ipfs/${result.cid}`,
+      url: result.pinata_gateway || `https://${APP_CONFIG.IPFS_GATEWAY}/ipfs/${result.cid}`,
       filename: result.filename,
       bytes: result.bytes,
       server: serverUrl

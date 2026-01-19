@@ -1,6 +1,7 @@
 import HiveClient from '@/lib/hive/hiveclient';
 import { Discussion } from '@hiveio/dhive';
 import { useState, useEffect, useRef } from 'react';
+import { HIVE_CONFIG } from '@/config/app.config';
 
 interface lastContainerInfo {
   permlink: string;
@@ -39,8 +40,8 @@ export const useSnaps = () => {
 
   // Fetch comments with a minimum size
   async function getMoreSnaps(): Promise<Discussion[]> {
-  const tag = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || 'hive-173115';
-  const author = process.env.NEXT_PUBLIC_THREAD_AUTHOR || "peak.snaps";
+    const tag = HIVE_CONFIG.COMMUNITY_TAG;
+    const author = HIVE_CONFIG.THREADS.AUTHOR;
     const limit = 3;
     const allFilteredComments: Discussion[] = [];
 
@@ -146,7 +147,7 @@ export const useSnaps = () => {
 
 
   async function fetchFromNewApi(): Promise<Discussion[]> {
-    const tag = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || '';
+    const tag = HIVE_CONFIG.COMMUNITY_TAG;
     const limit = 10;
     const apiUrl = `https://api.skatehive.app/api/v2/feed?limit=${limit}&page=${currentPage}`;
     // const apiUrl = `http://localhost:3001/api/v2/feed?limit=${limit}&page=${currentPage}`;

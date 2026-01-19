@@ -5,6 +5,7 @@ import { useAioha, AiohaModal } from '@aioha/react-ui';
 import { KeyTypes } from '@aioha/aioha';
 import '@aioha/react-ui/dist/build.css';
 import { getCommunityInfo, getProfile } from '@/lib/hive/client-functions';
+import { HIVE_CONFIG } from '@/config/app.config';
 
 interface ProfileInfo {
     metadata: {
@@ -27,7 +28,7 @@ export default function Header() {
     const [loading, setLoading] = useState(true);
     const { user, aioha } = useAioha();
 
-    const communityTag = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG;
+    const communityTag = HIVE_CONFIG.COMMUNITY_TAG;
 
     useEffect(() => {
         const fetchData = async () => {

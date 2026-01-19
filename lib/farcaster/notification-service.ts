@@ -6,6 +6,7 @@ import {
 } from '@/types/farcaster';
 import { getTokenStore } from '@/lib/farcaster/token-store-factory';
 import { Notifications } from '@hiveio/dhive';
+import { APP_CONFIG } from '@/config/app.config';
 
 class FarcasterNotificationService {
     private readonly maxRetries = 3;
@@ -52,7 +53,7 @@ class FarcasterNotificationService {
     // Convert Hive notification to Farcaster format
     private convertHiveToFarcasterNotification(
         hiveNotification: Notifications,
-        baseUrl: string = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.skatehive.app'
+        baseUrl: string = APP_CONFIG.ORIGIN
     ): HiveToFarcasterNotification {
         const type = hiveNotification.type;
         let title = 'SkateHive';
@@ -192,7 +193,7 @@ class FarcasterNotificationService {
         tokens: string[],
         notificationUrl: string
     ): Promise<FarcasterNotificationResponse> {
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://skatehive.app';
+        const baseUrl = APP_CONFIG.ORIGIN;
 
         const request: FarcasterNotificationRequest = {
             notificationId: this.generateNotificationId(notification),

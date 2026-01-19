@@ -1,5 +1,7 @@
 import { extractImageUrls } from "@/lib/utils/extractImageUrls";
 
+import { APP_CONFIG } from "@/config/app.config";
+
 // Helper function to get file extension from MIME type
 const getExtensionFromMimeType = (mimeType: string): string => {
     const mimeToExt: { [key: string]: string } = {
@@ -121,7 +123,7 @@ export const uploadToIpfs = async (
     }
 
     const result = await response.json();
-    const ipfsUrl = `https://ipfs.skatehive.app/ipfs/${result.IpfsHash}`;
+    const ipfsUrl = `https://${APP_CONFIG.IPFS_GATEWAY}/ipfs/${result.IpfsHash}`;
     
     // Automatically add file extension to the IPFS URL
     return ensureImageFilename(ipfsUrl, blob.type, fileName);

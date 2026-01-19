@@ -5,6 +5,7 @@ import { getCoin } from "@zoralabs/coins-sdk";
 import { base } from "viem/chains";
 import { createPublicClient, http } from "viem";
 import ZoraCoinPageClient from "./ZoraCoinPageClient";
+import { APP_CONFIG } from "@/config/app.config";
 
 interface PageProps {
   params: {
@@ -206,13 +207,13 @@ export async function generateMetadata({
             action: {
               type: "launch_frame",
               name: "Skatehive",
-              url: `https://skatehive.app/coin/${address}`,
+              url: `${APP_CONFIG.BASE_URL}/coin/${address}`,
             },
           },
-          postUrl: `https://skatehive.app/coin/${address}`,
+          postUrl: `${APP_CONFIG.BASE_URL}/coin/${address}`,
         }),
         "fc:frame:image": imageUrl,
-        "fc:frame:post_url": `https://skatehive.app/coin/${address}`,
+        "fc:frame:post_url": `${APP_CONFIG.BASE_URL}/coin/${address}`,
       },
     };
   } catch (error) {
@@ -258,10 +259,11 @@ export default async function CoinPage({ params }: PageProps) {
       try {
         let metadataUrl = coin.tokenUri;
         if (coin.tokenUri.startsWith("ipfs://")) {
-          metadataUrl = coin.tokenUri.replace(
-            "ipfs://",
-            "https://ipfs.skatehive.app/ipfs/"
-          );
+            metadataUrl = coin.tokenUri.replace(
+              "ipfs://",
+              `https://${APP_CONFIG.IPFS_GATEWAY}/ipfs/`
+            );
+
         }
 
         const response = await fetch(metadataUrl);
@@ -296,12 +298,13 @@ export default async function CoinPage({ params }: PageProps) {
       videoUrl:
         // First check for animation_url in contract metadata
         contractMetadata?.animation_url
-          ? contractMetadata.animation_url.startsWith("ipfs://")
-            ? contractMetadata.animation_url.replace(
-                "ipfs://",
-                "https://ipfs.skatehive.app/ipfs/"
-              )
-            : contractMetadata.animation_url
+            ? contractMetadata.animation_url.startsWith("ipfs://")
+              ? contractMetadata.animation_url.replace(
+                  "ipfs://",
+                  `https://${APP_CONFIG.IPFS_GATEWAY}/ipfs/`
+                )
+              : contractMetadata.animation_url
+
           : // Then check mediaContent for videos
           coin.mediaContent?.mimeType?.startsWith("video/")
           ? coin.mediaContent.originalUri

@@ -11,6 +11,7 @@ import { useFarcasterContext } from "@/hooks/useFarcasterContext";
 import { useAioha } from "@aioha/react-ui";
 import { CoinCreationModal } from "@/components/shared/CoinCreationModal";
 import DevMetadataDialog from "./DevMetadataDialog";
+import { APP_CONFIG } from "@/config/app.config";
 
 // Regex patterns - defined outside component to prevent recreation on every render
 const IMAGE_REGEX = /!\[.*?\]\((.*?)\)/g;
@@ -20,8 +21,11 @@ const VIDEO_TAG_REGEX = /<video[^>]*src=["']([^"']+)["'][^>]*>/gi;
 const DIRECT_VIDEO_REGEX =
   /https?:\/\/[^\s]+\.(mp4|webm|mov|avi|mkv|flv|wmv|m4v|ogv)(\?[^\s]*)?/gi;
 const IPFS_REGEX =
-  /https?:\/\/(?:ipfs\.skatehive\.app|gateway\.ipfs\.io|ipfs\.io\/ipfs)\/[^\s\)]+/gi;
+  /https?:\/\/(?:ipfs\.skatehive\.app|gateway\.ipfs\.io|ipfs\.io\/ipfs)\/[\s\)]+/gi;
 const MARKDOWN_MEDIA_REGEX = /!\[.*?\]\((https?:\/\/[^\)]+)\)/gi;
+
+const ipfsGatewayHost = APP_CONFIG.IPFS_GATEWAY;
+
 const POTENTIAL_VIDEO_REGEX =
   /https?:\/\/(?:(?:www\.)?(?:youtube\.com\/watch|youtu\.be\/|vimeo\.com\/|dailymotion\.com\/video\/)|[^\s]+\/[^\s]*(?:video|stream|media)[^\s]*)/gi;
 
@@ -44,7 +48,7 @@ const checkIfUrlIsVideo = async (url: string): Promise<boolean> => {
     return contentType.startsWith("video/");
   } catch (error) {
     // If we can't check, assume IPFS URLs might be videos if they're from skatehive
-    return url.includes("ipfs.skatehive.app");
+    return url.includes(ipfsGatewayHost);
   }
 };
 
@@ -213,7 +217,7 @@ const ShareMenuButtons = ({ comment }: ShareMenuButtonsProps) => {
     const markdownUrls = [...videoUrls];
     markdownUrls.forEach((url) => {
       if (
-        url.includes("ipfs.skatehive.app") ||
+        url.includes(ipfsGatewayHost) ||
         url.includes("gateway.ipfs.io") ||
         url.includes("ipfs.io/ipfs")
       ) {

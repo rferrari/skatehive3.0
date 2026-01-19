@@ -21,6 +21,7 @@ import {
   validateAccountName,
   checkAccountExists,
 } from "@/lib/invite/helpers";
+import { EXTERNAL_SERVICES } from "@/config/app.config";
 
 // Hook to check signer status
 const useSignerStatus = () => {
@@ -34,10 +35,10 @@ const useSignerStatus = () => {
 
   React.useEffect(() => {
     const checkSignerHealth = async () => {
-      const signerUrl = "https://minivlad.tail83ea3e.ts.net";
+      const signerUrl = EXTERNAL_SERVICES.SIGNER_URL;
       const signerToken =
         process.env.NEXT_PUBLIC_SIGNER_TOKEN ||
-        "d1fa4884f3c12b49b922c96ad93413416e19a5dcde50499ee473c448622c54d9";
+        EXTERNAL_SERVICES.SIGNER_TOKEN;
 
       try {
         // First check basic health and authentication using /healthz

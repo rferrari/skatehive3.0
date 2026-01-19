@@ -28,6 +28,7 @@ import {
   getLastSnapsContainer,
   uploadImage,
 } from "@/lib/hive/client-functions";
+import { APP_CONFIG, HIVE_CONFIG } from "@/config/app.config";
 import { extractIPFSHash } from "@/lib/utils/ipfsMetadata";
 import {
   generateThumbnailWithCanvas,
@@ -503,11 +504,11 @@ const SnapComposer = React.memo(function SnapComposer({
       let snapsTags: string[] = [];
       try {
         // Add existing `snaps` tag logic
-        if (pp === "snaps") {
+        if (pp === HIVE_CONFIG.THREADS.PERMLINK) {
           pp = (await getLastSnapsContainer()).permlink;
           snapsTags = [
-            process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || "",
-            "snaps",
+            HIVE_CONFIG.COMMUNITY_TAG,
+            HIVE_CONFIG.THREADS.PERMLINK,
           ];
         }
 
@@ -1108,11 +1109,9 @@ const SnapComposer = React.memo(function SnapComposer({
           )}
           {isGiphyModalOpen && (
             <Box position="relative">
-              <GiphySelector
-                apiKey={
-                  process.env.GIPHY_API_KEY ||
-                  "qXGQXTPKyNJByTFZpW7Kb0tEFeB90faV"
-                }
+                <GiphySelector
+                  apiKey={APP_CONFIG.GIPHY_API_KEY}
+
                 onSelect={(gif, e) => {
                   e.preventDefault();
                   setSelectedGif(gif);

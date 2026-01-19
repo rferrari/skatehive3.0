@@ -14,7 +14,7 @@ import { FaTh, FaBars, FaPen, FaSort } from "react-icons/fa";
 import { FiBook } from "react-icons/fi";
 import { useRouter, usePathname } from "next/navigation";
 import { useAioha } from "@aioha/react-ui";
-import { QueryType, ViewMode } from "@/constants/blogConfig";
+import { QueryType, ViewMode } from "@/config/blog.config";
 
 interface TopBarProps {
   viewMode: ViewMode;

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { TOAST_CONFIG } from "@/constants/toastConfig";
+import { TOAST_CONFIG } from "@/config/toast.config";
 
 // Custom hook to check if we're on desktop without SSR issues
 export function useIsDesktop() {

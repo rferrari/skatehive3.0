@@ -9,6 +9,7 @@ import { KeyTypes } from "@aioha/aioha";
 import { Operation } from "@hiveio/dhive";
 import { updatePostWithCoinInfo } from "@/lib/hive/server-actions";
 import { base } from 'wagmi/chains';
+import { HIVE_CONFIG } from '@/config/app.config';
 
 // Utility function to generate thumbnail from video file
 const generateVideoThumbnail = async (videoFile: File): Promise<File> => {
@@ -250,7 +251,7 @@ export function useCoinCreation() {
 
       // Check if the coin creator is the same as the post author OR if this was posted server-side
       const isPostAuthor = user && coinData.postAuthor && user.toLowerCase() === coinData.postAuthor.toLowerCase();
-      const isServerSidePost = !user && coinData.postAuthor === (process.env.NEXT_PUBLIC_HIVE_USER || 'skatedev');
+      const isServerSidePost = !user && coinData.postAuthor === HIVE_CONFIG.APP_ACCOUNT;
       
       if ((isPostAuthor || isServerSidePost) && result.address) {
         try {

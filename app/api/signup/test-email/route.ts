@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import nodemailer from 'nodemailer';
+import { EMAIL_DEFAULTS } from '@/config/app.config';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -35,17 +36,17 @@ export async function POST(request: NextRequest) {
 
     // Create email transporter
     console.log('Email config:', {
-      host: process.env.SMTP_HOST,
-      port: process.env.SMTP_PORT,
-      secure: process.env.SMTP_SECURE,
+      host: process.env.SMTP_HOST || EMAIL_DEFAULTS.SMTP_HOST,
+      port: process.env.SMTP_PORT || EMAIL_DEFAULTS.SMTP_PORT,
+      secure: process.env.SMTP_SECURE ?? EMAIL_DEFAULTS.SMTP_SECURE,
       user: process.env.EMAIL_USER ? 'SET' : 'MISSING',
       pass: process.env.EMAIL_PASS ? 'SET' : 'MISSING'
     });
 
     const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: process.env.SMTP_SECURE === 'true', // false for 587, true for 465
+      host: process.env.SMTP_HOST || EMAIL_DEFAULTS.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT || EMAIL_DEFAULTS.SMTP_PORT.toString()),
+      secure: process.env.SMTP_SECURE ? process.env.SMTP_SECURE === 'true' : EMAIL_DEFAULTS.SMTP_SECURE,
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
@@ -99,7 +100,7 @@ SkateHive Team 🛹
 
     // Send email
     await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+      from: process.env.EMAIL_USER || EMAIL_DEFAULTS.FROM_ADDRESS,
       to: email,
       subject: emailSubject,
       text: emailBody,

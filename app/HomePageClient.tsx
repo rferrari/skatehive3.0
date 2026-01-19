@@ -10,10 +10,11 @@ import SnapReplyModal from "@/components/homepage/SnapReplyModal";
 import { useSnaps } from "@/hooks/useSnaps";
 import useIsMobile from "@/hooks/useIsMobile";
 import { useRouter } from "next/navigation";
+import { HIVE_CONFIG } from "@/config/app.config";
 
 export default function HomePageClient() {
-  const thread_author = process.env.NEXT_PUBLIC_THREAD_AUTHOR || "peak.snaps";
-  const thread_permlink = process.env.NEXT_PUBLIC_THREAD_PERMLINK || "snaps";
+  const thread_author = HIVE_CONFIG.THREADS.AUTHOR;
+  const thread_permlink = HIVE_CONFIG.THREADS.PERMLINK;
   const isMobile = useIsMobile();
   const router = useRouter();
 

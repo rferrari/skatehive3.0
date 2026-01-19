@@ -22,6 +22,7 @@ import {
     FormatFileSizeFunction,
     GetMimeIconFunction,
 } from "../types/DevMetadataTypes";
+import { APP_CONFIG } from "@/config/app.config";
 
 interface PinataTabProps {
     comment: TabComponentProps["comment"];
@@ -370,7 +371,7 @@ export const PinataTab = ({
                 <VStack align="stretch" spacing={2}>
                     <HStack>
                         <Badge colorScheme="green">Primary</Badge>
-                        <Code fontSize="xs">ipfs.skatehive.app</Code>
+                        <Code fontSize="xs">{APP_CONFIG.IPFS_GATEWAY}</Code>
                     </HStack>
                     <HStack>
                         <Badge colorScheme="blue">Pinata</Badge>

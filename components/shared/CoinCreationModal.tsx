@@ -36,6 +36,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { useCoinCreation, CoinCreationData } from "@/hooks/useCoinCreation";
 import { useAccount, useChainId, useSwitchChain } from "wagmi";
 import { base } from "wagmi/chains";
+import { APP_CONFIG } from "@/config/app.config";
 
 interface CoinCreationModalProps {
   isOpen: boolean;
@@ -117,9 +118,9 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({
 
   let finalSrc = src;
   if (src.startsWith("/ipfs/")) {
-    finalSrc = `https://ipfs.skatehive.app${src}`;
+    finalSrc = `https://${APP_CONFIG.IPFS_GATEWAY}${src}`;
   } else if (src.startsWith("ipfs://")) {
-    finalSrc = `https://ipfs.skatehive.app/ipfs/${src.replace("ipfs://", "")}`;
+    finalSrc = `https://${APP_CONFIG.IPFS_GATEWAY}/ipfs/${src.replace("ipfs://", "")}`;
   }
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -824,9 +825,9 @@ export function CoinCreationModal({
       }
 
       if (cleanVideoUrl.startsWith("/ipfs/")) {
-        cleanVideoUrl = `https://ipfs.skatehive.app${cleanVideoUrl}`;
+        cleanVideoUrl = `https://${APP_CONFIG.IPFS_GATEWAY}${cleanVideoUrl}`;
       } else if (cleanVideoUrl.startsWith("ipfs://")) {
-        cleanVideoUrl = `https://ipfs.skatehive.app/ipfs/${cleanVideoUrl.replace(
+        cleanVideoUrl = `https://${APP_CONFIG.IPFS_GATEWAY}/ipfs/${cleanVideoUrl.replace(
           "ipfs://",
           ""
         )}`;

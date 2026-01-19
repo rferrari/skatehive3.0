@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { HIVE_CONFIG } from "@/config/app.config";
 
 declare const StWidget: any;
 
@@ -81,7 +82,7 @@ export default function ChatPage() {
       if (typeof StWidget === "function" && container) {
         container.innerHTML = "";
         widgetRef.current = new StWidget(
-          "https://chat.peakd.com/t/hive-173115/0"
+          `https://chat.peakd.com/t/${HIVE_CONFIG.COMMUNITY_TAG}/0`
         );
         widgetRef.current.setProperties(widgetOptions);
         const element = widgetRef.current.createElement(

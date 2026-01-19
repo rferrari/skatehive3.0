@@ -1,6 +1,7 @@
 import { Discussion } from "@hiveio/dhive";
 import { fetchComments } from "@/lib/hive/fetchComments";
 import { filterAutoComments } from "./postUtils";
+import { APP_CONFIG } from "@/config/app.config";
 
 export interface MediaItem {
   type: "image" | "video" | "iframe";
@@ -140,7 +141,7 @@ const isIpfsUrl = (url: string): boolean => {
     url.includes('pinata.cloud') ||
     url.includes('gateway.pinata.cloud') ||
     url.includes('mypinata.cloud') ||
-    url.includes('ipfs.skatehive.app') ||
+    url.includes(APP_CONFIG.IPFS_GATEWAY) ||
     url.includes('ipfs.io') ||
     url.includes('cloudflare-ipfs.com') ||
     url.includes('dweb.link') ||
@@ -160,7 +161,7 @@ const extractIpfsHash = (url: string): string | null => {
 // Helper function to convert any IPFS URL to skatehive gateway
 const convertToSkatehiveGateway = (url: string): string => {
   const hash = extractIpfsHash(url);
-  return hash ? `https://ipfs.skatehive.app/ipfs/${hash}` : url;
+  return hash ? `https://${APP_CONFIG.IPFS_GATEWAY}/ipfs/${hash}` : url;
 };
 
 export const parseMediaContent = (mediaContent: string): MediaItem[] => {

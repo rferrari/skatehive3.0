@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { APP_CONFIG } from '@/config/app.config';
 
 interface OpenGraphData {
   title?: string;
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest) {
 
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; SkateHive/1.0; +https://skatehive.app)',
+        'User-Agent': `Mozilla/5.0 (compatible; SkateHive/1.0; +${APP_CONFIG.BASE_URL})`,
       },
       signal: controller.signal,
     });

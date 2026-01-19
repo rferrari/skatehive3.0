@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import { formatEther } from "viem";
+import { APP_CONFIG } from "@/config/app.config";
 
 interface AuctionMetadataProps {
   tokenName: string;
@@ -35,7 +36,7 @@ export function generateAuctionMetadata({
     ? `${status} auction for ${tokenName}. ${bidText}: ${currentBid} ETH. View this unique skateboarding art NFT on SkateHive.`
     : `${status} auction for ${tokenName}. ${bidText}: ${currentBid} ETH. Participate in SkateHive auctions to acquire unique skateboarding art and voting rights.`;
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://skatehive.app";
+  const baseUrl = APP_CONFIG.APP_URL;
   const auctionUrl = tokenId 
     ? `${baseUrl}/auction/${tokenId}` 
     : `${baseUrl}/auction/`;

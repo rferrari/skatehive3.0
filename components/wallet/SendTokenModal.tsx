@@ -30,6 +30,7 @@ import { parseUnits, isAddress } from "viem";
 import { TokenDetail } from "../../types/portfolio";
 import { formatBalance } from "../../lib/utils/portfolioUtils";
 import useIsMobile from "@/hooks/useIsMobile";
+import { ETH_ADDRESSES } from "@/config/app.config";
 
 interface SendTokenModalProps {
   isOpen: boolean;
@@ -169,7 +170,7 @@ export default function SendTokenModal({
 
       // Handle ETH transfer differently from ERC20 tokens
       if (
-        token.token.address === "0x0000000000000000000000000000000000000000"
+        token.token.address === ETH_ADDRESSES.ZERO
       ) {
         // ETH transfer
         sendTransaction({

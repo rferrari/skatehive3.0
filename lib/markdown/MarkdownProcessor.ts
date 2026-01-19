@@ -3,6 +3,7 @@ import { extractZoraCoinLinks } from "@/lib/utils/extractImageUrls";
 import { isSnapshotUrl } from "@/lib/utils/snapshotUtils";
 import { LRUCache } from "@/lib/utils/LRUCache";
 import { getCacheKey } from "@/lib/utils/hashUtils";
+import { APP_CONFIG } from "@/config/app.config";
 
 export interface ProcessedMarkdown {
   originalContent: string;
@@ -79,7 +80,7 @@ export class MarkdownProcessor {
       
       // Replace both zora.co and skatehive.app URLs
       const zoraUrl = `https://zora.co/coin/${addressWithChain}`;
-      const skatehiveUrl = `https://skatehive.app/coin/${addressWithChain}`;
+      const skatehiveUrl = `${APP_CONFIG.BASE_URL}/coin/${addressWithChain}`;
       const placeholder = `[[ZORACOIN:${address}]]`;
       
       processedContent = processedContent.replace(zoraUrl, placeholder);

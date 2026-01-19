@@ -1,8 +1,10 @@
+import { APP_CONFIG } from "../../../config/app.config";
+
 export async function GET() {
   const appUrl =
     process.env.NEXT_PUBLIC_NODE_ENV === 'development'
       ? 'http://localhost:3000'
-      : 'https://skatehive.app';
+      : APP_CONFIG.BASE_URL;
 
   const config = {
     accountAssociation: {
@@ -17,8 +19,8 @@ export async function GET() {
       homeUrl: appUrl,
       imageUrl: `${appUrl}/opengraph-image.png`,
       webhookUrl: `${appUrl}/api/webhook`,
-      iconUrl: `https://ipfs.skatehive.app/ipfs/QmXTZqirogp735AaPFcpzAjmwS57mPYsJhktJMuRuSV5Rm`,
-      splashImageUrl: `https://ipfs.skatehive.app/ipfs/QmXTZqirogp735AaPFcpzAjmwS57mPYsJhktJMuRuSV5Rm`,
+      iconUrl: `https://${APP_CONFIG.IPFS_GATEWAY}/ipfs/QmXTZqirogp735AaPFcpzAjmwS57mPYsJhktJMuRuSV5Rm`,
+      splashImageUrl: `https://${APP_CONFIG.IPFS_GATEWAY}/ipfs/QmXTZqirogp735AaPFcpzAjmwS57mPYsJhktJMuRuSV5Rm`,
       splashBackgroundColor: '#000000',
       subtitle: 'Skateboarding Social Network',
       description: 'Connect with skaters worldwide, share your tricks, and build the skateboarding community on Web3',
