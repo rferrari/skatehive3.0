@@ -78,7 +78,7 @@ export async function createAccount(username: string, password: string) {
     const op: Operation = [
         'create_claimed_account',
         {
-            creator: process.env.ACCOUNT_CREATOR, // Creator account
+            creator: process.env.HIVE_ACCOUNT_CREATOR, // Creator account
             new_account_name: username, // New account name
             owner: {
                 weight_threshold: 1,
@@ -103,7 +103,7 @@ export async function createAccount(username: string, password: string) {
 
     // Broadcast the operation using HiveClient
     try {
-        if (process.env.ACCOUNT_KEY) await HiveClient.broadcast.sendOperations([op], PrivateKey.from(process.env.ACCOUNT_KEY));
+        if (process.env.HIVE_ACTIVE_KEY) await HiveClient.broadcast.sendOperations([op], PrivateKey.from(process.env.HIVE_ACTIVE_KEY));
     } catch (error) {
         console.error('Error creating account:', error);
     }

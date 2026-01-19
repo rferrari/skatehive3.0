@@ -127,11 +127,6 @@ export const APP_CONFIG = {
     return process.env.NEXT_PUBLIC_BASE_URL || this.BASE_URL;
   },
 
-  /** Public app URL (legacy env override or fallback) */
-  get APP_URL() {
-    return process.env.NEXT_PUBLIC_APP_URL || this.BASE_URL;
-  },
-
   /** IPFS gateway host (env override or fallback) */
   get IPFS_GATEWAY() {
     return process.env.NEXT_PUBLIC_IPFS_GATEWAY || this.PINATA_GATEWAY;
