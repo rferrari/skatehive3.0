@@ -5,11 +5,12 @@ import {
   useToast,
   useDisclosure,
 } from "@chakra-ui/react";
-import { FaTwitter, FaLink, FaThumbsDown } from "react-icons/fa";
+import { FaTwitter, FaLink, FaThumbsDown, FaCode } from "react-icons/fa";
 import React, { useMemo, useCallback } from "react";
 import { useFarcasterContext } from "@/hooks/useFarcasterContext";
 import { useAioha } from "@aioha/react-ui";
 import { CoinCreationModal } from "@/components/shared/CoinCreationModal";
+import DevMetadataDialog from "./DevMetadataDialog";
 
 // Regex patterns - defined outside component to prevent recreation on every render
 const IMAGE_REGEX = /!\[.*?\]\((.*?)\)/g;
@@ -56,11 +57,11 @@ interface ShareablePost {
   parent_author?: string;
   parent_permlink?: string;
   json_metadata?:
-    | string
-    | {
-        image?: string[];
-        [key: string]: any;
-      };
+  | string
+  | {
+    image?: string[];
+    [key: string]: any;
+  };
 }
 
 // Custom Farcaster Icon Component
@@ -96,6 +97,13 @@ const ShareMenuButtons = ({ comment }: ShareMenuButtonsProps) => {
     isOpen: isCoinModalOpen,
     onOpen: onCoinModalOpen,
     onClose: onCoinModalClose,
+  } = useDisclosure();
+
+  // Dev metadata dialog - only used in development
+  const {
+    isOpen: isMetadataOpen,
+    onOpen: onMetadataOpen,
+    onClose: onMetadataClose,
   } = useDisclosure();
 
   // Parse json_metadata if it's a string
@@ -448,11 +456,28 @@ const ShareMenuButtons = ({ comment }: ShareMenuButtonsProps) => {
         <FaThumbsDown style={{ marginRight: "8px" }} />
         Downvote Post
       </MenuItem>
+      {/* Dev Metadata Menu Item - only in development */}
+      {process.env.NODE_ENV === "development" && (
+        <MenuItem
+          onClick={onMetadataOpen}
+          bg={"background"}
+          color={"purple.400"}
+        >
+          <FaCode style={{ marginRight: "8px" }} />
+          [DEV] Metadata
+        </MenuItem>
+      )}
       {/* Coin Creation Modal */}
       <CoinCreationModal
         isOpen={isCoinModalOpen}
         onClose={onCoinModalClose}
         postData={postData}
+      />
+      {/* Dev Metadata Dialog - only renders in development */}
+      <DevMetadataDialog
+        isOpen={isMetadataOpen}
+        onClose={onMetadataClose}
+        comment={comment}
       />
     </>
   );
