@@ -1371,7 +1371,7 @@ export default function DevMetadataDialogContent({
                                                                     {(() => {
                                                                         const kv = data.keyvalues || data.metadata?.keyvalues || {};
                                                                         if (Object.keys(kv).length === 0) return null;
-                                                                        
+
                                                                         return (
                                                                             <Box mt={2} p={2} bg="gray.800" borderRadius="md">
                                                                                 <Text fontSize="xs" color="cyan.400" fontWeight="bold" mb={2}>
@@ -1479,7 +1479,7 @@ export default function DevMetadataDialogContent({
                                                                                     {/* Any other unknown fields */}
                                                                                     {Object.entries(kv)
                                                                                         .filter(([key]) => ![
-                                                                                            'thumbnailUrl', 'thumbnail', 'source_app', 'platform', 
+                                                                                            'thumbnailUrl', 'thumbnail', 'source_app', 'platform',
                                                                                             'creator', 'fileType', 'fileSize', 'uploadDate',
                                                                                             'app_version', 'requestId', 'deviceInfo', 'userHP',
                                                                                             'isMobile', 'userAgent', 'clientIP'
