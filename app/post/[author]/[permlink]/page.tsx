@@ -10,7 +10,7 @@ const FALLBACK_IMAGE = "https://skatehive.app/ogimage.png";
 // Function to safely parse JSON metadata that might be double-encoded
 function parseJsonMetadata(
   jsonMetadata: any
-): { image?: string[]; thumbnail?: string[] } | null {
+): { image?: string[]; images?: string[]; thumbnail?: string[] } | null {
   if (!jsonMetadata) return null;
 
   try {
@@ -30,6 +30,7 @@ function parseJsonMetadata(
     if (parsed && typeof parsed === "object") {
       return {
         image: Array.isArray(parsed.image) ? parsed.image : undefined,
+        images: Array.isArray(parsed.images) ? parsed.images : undefined,
         thumbnail: Array.isArray(parsed.thumbnail)
           ? parsed.thumbnail
           : undefined,
@@ -182,6 +183,8 @@ export async function generateMetadata({
       bannerImage = parsedMetadata.thumbnail[0];
     } else if (parsedMetadata?.image && parsedMetadata.image[0]) {
       bannerImage = parsedMetadata.image[0];
+    } else if (parsedMetadata?.images && parsedMetadata.images[0]) {
+      bannerImage = parsedMetadata.images[0];
     } else if (imageUrls[0]) {
       bannerImage = imageUrls[0];
     }
@@ -218,6 +221,8 @@ export async function generateMetadata({
         title: title,
         description: description,
         images: bannerImage,
+        site: "@skatabordhive",
+        creator: `@${cleanedAuthor}`,
       },
       other: {
         "fc:frame": JSON.stringify({
