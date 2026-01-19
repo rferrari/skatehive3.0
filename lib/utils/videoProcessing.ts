@@ -212,7 +212,7 @@ async function tryServer(
     const formData = new FormData();
     formData.append('video', file);
     formData.append('creator', username);
-    
+
     // SOURCE APP IDENTIFIER - Always send 'webapp' from web application
     formData.append('source_app', 'webapp');
 
