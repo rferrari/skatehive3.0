@@ -70,6 +70,17 @@ export const getPrivateKeys = async (username: string, password: string, roles =
 };
 
 export async function createAccount(username: string, password: string) {
+    const creatorAccount = process.env.HIVE_ACCOUNT_CREATOR;
+    const activeKey = process.env.HIVE_ACTIVE_KEY;
+
+    if (!creatorAccount) {
+        throw new Error("HIVE_ACCOUNT_CREATOR is not set in the environment");
+    }
+
+    if (!activeKey) {
+        throw new Error("HIVE_ACTIVE_KEY is not set in the environment");
+    }
+
     // Get private and public keys
     const keys = await getPrivateKeys(username, password);
     const { ownerPubkey, activePubkey, postingPubkey, memoPubkey } = keys;
@@ -78,7 +89,7 @@ export async function createAccount(username: string, password: string) {
     const op: Operation = [
         'create_claimed_account',
         {
-            creator: process.env.HIVE_ACCOUNT_CREATOR, // Creator account
+            creator: creatorAccount, // Creator account
             new_account_name: username, // New account name
             owner: {
                 weight_threshold: 1,
@@ -103,10 +114,12 @@ export async function createAccount(username: string, password: string) {
 
     // Broadcast the operation using HiveClient
     try {
-        if (process.env.HIVE_ACTIVE_KEY) await HiveClient.broadcast.sendOperations([op], PrivateKey.from(process.env.HIVE_ACTIVE_KEY));
+        await HiveClient.broadcast.sendOperations([op], PrivateKey.from(activeKey));
     } catch (error) {
         console.error('Error creating account:', error);
+        throw error;
     }
 }
+
 
 

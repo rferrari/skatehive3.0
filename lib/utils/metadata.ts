@@ -36,7 +36,7 @@ export function generateAuctionMetadata({
     ? `${status} auction for ${tokenName}. ${bidText}: ${currentBid} ETH. View this unique skateboarding art NFT on SkateHive.`
     : `${status} auction for ${tokenName}. ${bidText}: ${currentBid} ETH. Participate in SkateHive auctions to acquire unique skateboarding art and voting rights.`;
 
-  const baseUrl = APP_CONFIG.APP_URL;
+  const baseUrl = APP_CONFIG.ORIGIN;
   const auctionUrl = tokenId 
     ? `${baseUrl}/auction/${tokenId}` 
     : `${baseUrl}/auction/`;

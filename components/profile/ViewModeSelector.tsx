@@ -88,7 +88,7 @@ const ViewModeSelector = memo(function ViewModeSelector({
   // Get current main tab index
   const currentMainTabIndex = useMemo(
     () => mainTabs.findIndex((tab) => tab.key === currentMainTab),
-    [currentMainTab]
+    [currentMainTab, mainTabs]
   );
 
   const handleMainTabChange = useCallback(

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   VStack,
   HStack,
@@ -88,20 +88,23 @@ export default function DAOAssets() {
   }, []);
 
   // Ethereum addresses configuration
-  const ethereumAddresses = [
-    {
-      label: "SkateHive Hot Wallet",
-      address: SKATEHIVE_HOT_ADDRESS,
-    },
-    {
-      label: "SkateHive Base Multisig",
-      address: SKATEHIVE_BASE_MULTISIG,
-    },
-    {
-      label: "Treasury Contract",
-      address: DAO_ADDRESSES.treasury,
-    },
-  ];
+  const ethereumAddresses = useMemo(
+    () => [
+      {
+        label: "SkateHive Hot Wallet",
+        address: SKATEHIVE_HOT_ADDRESS,
+      },
+      {
+        label: "SkateHive Base Multisig",
+        address: SKATEHIVE_BASE_MULTISIG,
+      },
+      {
+        label: "Treasury Contract",
+        address: DAO_ADDRESSES.treasury,
+      },
+    ],
+    []
+  );
 
   const hiveAddresses = [
     {
@@ -149,7 +152,7 @@ export default function DAOAssets() {
     };
 
     fetchEthereumBalances();
-  }, []);
+  }, [ethereumAddresses]);
 
   const getEthereumBalance = (address: string) => {
     const data = ethereumBalances[address];

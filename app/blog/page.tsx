@@ -275,7 +275,7 @@ function BlogContent() {
     } else {
       fetchPosts();
     }
-  }, [fetchPosts, fetchGoatPosts, query, tag]);
+  }, [fetchPosts, fetchGoatPosts, query, tag, FETCH_LIMIT]);
 
   // Detect mobile and force grid view
   useEffect(() => {

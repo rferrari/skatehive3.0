@@ -6,7 +6,7 @@ import { APP_CONFIG, EMAIL_DEFAULTS } from '@/config/app.config';
 
 // Initialize Supabase client with service role key for admin operations
 const supabase = createClient(
-  process.env.SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
   {
     auth: {

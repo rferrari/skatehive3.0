@@ -135,7 +135,7 @@ export default function BountyList({
     }
     return true;
     });
-  }, [filter, displayedBounties, user]);
+  }, [filter, displayedBounties, user, rewardedBounties]);
 
   // Sorting logic
   const sortedBounties = useMemo(() => {

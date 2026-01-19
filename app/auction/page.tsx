@@ -64,13 +64,13 @@ export async function generateMetadata(): Promise<Metadata> {
             action: {
               type: "launch_frame",
               name: "Skatehive",
-              url: `${APP_CONFIG.APP_URL}/auction/`,
+              url: `${APP_CONFIG.ORIGIN}/auction/`,
             },
           },
-          postUrl: `${APP_CONFIG.APP_URL}/auction`,
+          postUrl: `${APP_CONFIG.ORIGIN}/auction`,
         }),
         "fc:frame:image": tokenImage,
-        "fc:frame:post_url": `${APP_CONFIG.APP_URL}/auction/`,
+        "fc:frame:post_url": `${APP_CONFIG.ORIGIN}/auction/`,
       },
     };
   } catch (error) {
