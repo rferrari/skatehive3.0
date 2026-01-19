@@ -89,10 +89,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     try {
         // Fetch recent snaps for sitemap using the correct bridge API
+        const tag = HIVE_CONFIG.COMMUNITY_TAG;
+        if (!tag) {
+            throw new Error('Missing Hive community tag for sitemap');
+        }
+
         const recentPosts = await HiveClient.call('bridge', 'get_ranked_posts', {
-            tag: HIVE_CONFIG.COMMUNITY_TAG,
-            limit: 50,
-            sort: 'created'
+            sort: 'created',
+            tag,
+            limit: 20,
+            start_author: undefined,
+            start_permlink: undefined,
+            observer: ''
         });
 
         // Filter and map in one pass for better performance

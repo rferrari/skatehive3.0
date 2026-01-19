@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 
 // Chunked upload handler for large files
 export async function POST(request: Request) {

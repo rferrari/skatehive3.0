@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 
 // Simple in-memory cache for metadata (consider Redis for production)
 const metadataCache = new Map<string, { data: any; timestamp: number }>();

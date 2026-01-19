@@ -137,11 +137,9 @@ const SnapshotPreview: React.FC<SnapshotPreviewProps> = ({ url }) => {
   const { address: userAddress, isConnected } = useAccount();
   const { vote, isVoting } = useSnapshotVoting();
   const [userVote, setUserVote] = useState<any>(null);
-  const [userVotingPower, setUserVotingPower] = useState(0);
   const [votingPower, setVotingPower] = useState(0);
   const [hasCheckedVote, setHasCheckedVote] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const toast = useToast();
 
   console.log("🗳️ [SnapshotPreview] Hook results:", {
     proposal: proposal?.id,
@@ -167,18 +165,17 @@ const SnapshotPreview: React.FC<SnapshotPreviewProps> = ({ url }) => {
       return;
     }
 
+    const proposalId = proposal.id;
+    const spaceId = proposal.space.id;
+
     try {
-      const vote = await checkUserVote(proposal.id, userAddress);
+      const vote = await checkUserVote(proposalId, userAddress);
 
       if (vote) {
         setUserVote(vote.choice);
       }
 
-      const vp = await getUserVotingPower(
-        userAddress,
-        proposal.space.id,
-        proposal.id
-      );
+      const vp = await getUserVotingPower(userAddress, spaceId, proposalId);
 
       setVotingPower(vp);
       setHasCheckedVote(true);
@@ -188,13 +185,13 @@ const SnapshotPreview: React.FC<SnapshotPreviewProps> = ({ url }) => {
         error
       );
     }
-  }, [proposal?.id, userAddress, hasCheckedVote]);
+  }, [proposal, userAddress, hasCheckedVote]);
 
   React.useEffect(() => {
     if (proposal && userAddress && !hasCheckedVote) {
       checkExistingVote();
     }
-  }, [proposal?.id, userAddress, hasCheckedVote, checkExistingVote]);
+  }, [proposal, userAddress, hasCheckedVote, checkExistingVote]);
 
   const handleVote = async (choiceIndex: number) => {
     if (!proposal || !isConnected || !userAddress) {

@@ -386,21 +386,6 @@ const Conversation = ({
     [commentText.length]
   );
 
-  const handleToggleReplies = useCallback(async (commentPermlink: string) => {
-    setExpandedReplies((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(commentPermlink)) {
-        newSet.delete(commentPermlink);
-      } else {
-        newSet.add(commentPermlink);
-        // Fetch replies when expanding
-        // Fetch replies when expanding
-        fetchRepliesForComment(commentPermlink).catch(console.error);
-      }
-      return newSet;
-    });
-  }, []);
-
   const fetchRepliesForComment = useCallback(
     async (commentPermlink: string) => {
       // Find the comment to get its author
@@ -431,6 +416,24 @@ const Conversation = ({
       }
     },
     [allComments, toast]
+  );
+
+  const handleToggleReplies = useCallback(
+    async (commentPermlink: string) => {
+      setExpandedReplies((prev) => {
+        const newSet = new Set(prev);
+        if (newSet.has(commentPermlink)) {
+          newSet.delete(commentPermlink);
+        } else {
+          newSet.add(commentPermlink);
+          // Fetch replies when expanding
+          // Fetch replies when expanding
+          fetchRepliesForComment(commentPermlink).catch(console.error);
+        }
+        return newSet;
+      });
+    },
+    [fetchRepliesForComment]
   );
 
   const onBackClick = useCallback(() => {

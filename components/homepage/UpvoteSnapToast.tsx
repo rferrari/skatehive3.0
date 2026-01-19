@@ -61,7 +61,7 @@ export default function UpvoteSnapToast({
     }
   }, [user]);
 
-  const handleUpvote = async () => {
+  const handleUpvote = useCallback(async () => {
     if (!user || !snapContainer) return;
 
     try {
@@ -94,7 +94,7 @@ export default function UpvoteSnapToast({
         isClosable: true,
       });
     }
-  };
+  }, [aioha, snapContainer, toast, user]);
 
   const showUpvoteToast = useCallback(() => {
     if (!isMounted || !isDesktop || !user || !snapContainer || hasVoted || isSnapVoteLoading) {

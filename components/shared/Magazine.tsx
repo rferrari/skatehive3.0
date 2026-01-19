@@ -165,7 +165,7 @@ export default function Magazine(props: MagazineProps) {
     if (props.query && props.query !== currentQuery) {
       setCurrentQuery(props.query);
     }
-  }, [props.query]);
+  }, [props.query, currentQuery]);
 
   // Only use the hook to fetch posts if tag and query are provided and valid
   const shouldFetchPosts = !!(

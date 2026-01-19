@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 import { uploadLimiter, getClientIP } from '@/lib/utils/rate-limiter';
 
 export async function POST(request: NextRequest) {

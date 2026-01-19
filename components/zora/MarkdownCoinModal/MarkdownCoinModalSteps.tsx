@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Modal,
   ModalOverlay,
@@ -280,37 +280,7 @@ export function MarkdownCoinModal({
   });
   const toast = useToast();
 
-  // Extract images from markdown when modal opens and regenerate when colors change
-  useEffect(() => {
-    if (isOpen) {
-      setCurrentStep("cover");
-      setResult(null);
-      // Always generate preview when modal opens to ensure carousel is populated
-      console.log("🔄 Modal opened, generating preview...");
-      generatePreview();
-    } else {
-      // Clean up blob URLs
-      if (cardPreview) {
-        URL.revokeObjectURL(cardPreview);
-        setCardPreview(null);
-      }
-      // Reset carousel images when modal closes
-      setCarouselImages([]);
-      setCarouselPreview([]);
-      setMarkdownImages([]);
-    }
-  }, [isOpen, selectedColors]); // Add selectedColors as dependency
-
-  // Extract images from markdown when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      const images = extractMarkdownImages(post.body);
-      console.log("🖼️ Extracted markdown images:", images);
-      setMarkdownImages(images);
-    }
-  }, [isOpen, post.body, cardPreview]);
-
-  const generatePreview = async () => {
+  const generatePreview = useCallback(async () => {
     console.log("🎯 Starting generatePreview function");
     setIsGeneratingPreview(true);
     try {
@@ -358,19 +328,11 @@ export function MarkdownCoinModal({
       });
 
       console.log("🎠 Final carousel preview:", carousel);
-      console.log(
-        "🎯 Setting carouselImages state with",
-        carousel.length,
-        "images"
-      );
+
       setCarouselPreview(carousel);
       setCarouselImages(carousel);
-
-      // Generate markdown description
-      const markdown = convertToMarkdown(post.body);
-      setMarkdownDescription(markdown);
     } catch (error) {
-      console.error("Failed to generate preview:", error);
+      console.error("❌ Preview generation failed:", error);
       toast({
         title: "Preview generation failed",
         description: "Unable to generate image preview",
@@ -381,7 +343,37 @@ export function MarkdownCoinModal({
     } finally {
       setIsGeneratingPreview(false);
     }
-  };
+  }, [markdownImages, post, selectedColors, toast]);
+
+  // Extract images from markdown when modal opens and regenerate when colors change
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentStep("cover");
+      setResult(null);
+      // Always generate preview when modal opens to ensure carousel is populated
+      console.log("🔄 Modal opened, generating preview...");
+      generatePreview();
+      return;
+    }
+
+    if (cardPreview) {
+      URL.revokeObjectURL(cardPreview);
+      setCardPreview(null);
+    }
+
+    setCarouselImages([]);
+    setCarouselPreview([]);
+    setMarkdownImages([]);
+  }, [isOpen, selectedColors, generatePreview, cardPreview]);
+
+  // Extract images from markdown when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      const images = extractMarkdownImages(post.body);
+      console.log("🖼️ Extracted markdown images:", images);
+      setMarkdownImages(images);
+    }
+  }, [isOpen, post.body]);
 
   const handleCreateCoin = async (
     metadata: {

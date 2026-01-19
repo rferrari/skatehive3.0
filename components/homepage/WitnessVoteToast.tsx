@@ -46,7 +46,7 @@ export default function WitnessVoteToast({
     }
   }, [user, hiveAccount]);
 
-  const handleWitnessVote = async () => {
+  const handleWitnessVote = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -72,7 +72,7 @@ export default function WitnessVoteToast({
         isClosable: true,
       });
     }
-  };
+  }, [toast, user]);
 
   const showWitnessVoteToast = useCallback(() => {
     if (!isMounted || !isDesktop || !user || hasVotedWitness) {

@@ -107,27 +107,7 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
       }
     }, [isOpen, profileData]);
 
-    useEffect(() => {
-      if (isOpen && (isConnected || isFarcasterConnected)) {
-        // Check if user already has an Ethereum wallet in their metadata
-        const hasExistingEthWallet =
-          profileData.ethereum_address &&
-          profileData.ethereum_address.trim() !== "";
-
-        // Only show merge modal if user doesn't already have an Ethereum wallet
-        if (!hasExistingEthWallet) {
-          setShowMergeModal(true);
-          generatePreview();
-        }
-      }
-    }, [
-      isOpen,
-      isConnected,
-      isFarcasterConnected,
-      profileData.ethereum_address,
-    ]);
-
-    const generatePreview = async () => {
+    const generatePreview = useCallback(async () => {
       if (!user || user !== username) return;
 
       setIsGeneratingPreview(true);
@@ -162,7 +142,36 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
       } finally {
         setIsGeneratingPreview(false);
       }
-    };
+    }, [
+      user,
+      username,
+      isConnected,
+      address,
+      isFarcasterConnected,
+      farcasterProfile,
+      toast,
+    ]);
+
+    useEffect(() => {
+      if (isOpen && (isConnected || isFarcasterConnected)) {
+        // Check if user already has an Ethereum wallet in their metadata
+        const hasExistingEthWallet =
+          profileData.ethereum_address &&
+          profileData.ethereum_address.trim() !== "";
+
+        // Only show merge modal if user doesn't already have an Ethereum wallet
+        if (!hasExistingEthWallet) {
+          setShowMergeModal(true);
+          generatePreview();
+        }
+      }
+    }, [
+      isOpen,
+      isConnected,
+      isFarcasterConnected,
+      profileData.ethereum_address,
+      generatePreview,
+    ]);
 
     // Memoized form field handlers
     const handleFormChange = useCallback(

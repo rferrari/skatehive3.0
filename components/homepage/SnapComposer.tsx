@@ -372,140 +372,22 @@ const SnapComposer = React.memo(function SnapComposer({
   };
 
   const handleComment = useCallback(async () => {
-    let commentBody = postBodyRef.current?.value || "";
-
-    if (
-      !commentBody.trim() &&
-      compressedImages.length === 0 &&
-      !selectedGif &&
-      !videoUrl
-    ) {
-      alert(
-        "Please enter some text, upload an image, select a gif, or upload a video before posting."
-      );
-      return; // Do not proceed
+    const commentBody = postBodyRef.current?.value?.trim() ?? "";
+    if (!commentBody) {
+      alert("Comment cannot be empty");
+      return;
     }
 
     setIsLoading(true);
-    setUploadProgress([]);
-
-    const permlink = new Date()
-      .toISOString()
-      .replace(/[^a-zA-Z0-9]/g, "")
-      .toLowerCase();
-
-    let validUrls: string[] = compressedImages.map((img) => img.url);
-
-    // Add video thumbnail to images if we have a video
-    if (videoUrl) {
-      try {
-        console.log("🎥 Video URL:", videoUrl);
-        const hash = extractIPFSHash(videoUrl);
-        console.log("🔗 Extracted IPFS hash:", hash);
-        if (hash) {
-          console.log(
-            "📡 Fetching metadata from:",
-            `/api/pinata/metadata/${hash}`
-          );
-          const response = await fetch(`/api/pinata/metadata/${hash}`, {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            signal: AbortSignal.timeout(10000), // 10 second timeout
-          });
-
-          console.log("📝 Response status:", response.status, response.ok);
-          if (response.ok) {
-            const metadata = await response.json();
-            console.log("📊 Metadata:", metadata);
-            const thumbnailUrl = metadata?.keyvalues?.thumbnailUrl;
-            console.log("🖼️ Thumbnail URL:", thumbnailUrl);
-            if (thumbnailUrl) {
-              validUrls.push(thumbnailUrl);
-              console.log("✅ Added thumbnail to validUrls:", thumbnailUrl);
-            } else {
-              console.warn(
-                "⚠️ No thumbnail URL found in metadata, generating thumbnail on-demand"
-              );
-              // Generate thumbnail using existing utility function
-              try {
-                // Create a File object from the video URL to use with generateThumbnailWithCanvas
-                const videoResponse = await fetch(videoUrl);
-                const videoBlob = await videoResponse.blob();
-                const videoFile = new File([videoBlob], "video.mp4", {
-                  type: "video/mp4",
-                });
-
-                const thumbnailUrl = await generateThumbnailWithCanvas(
-                  videoFile
-                );
-                if (thumbnailUrl) {
-                  // Convert blob URL to actual blob and upload
-                  const thumbnailBlob = await fetch(thumbnailUrl).then((res) =>
-                    res.blob()
-                  );
-                  const uploadedThumbnailUrl = await uploadThumbnail(
-                    thumbnailBlob,
-                    user || undefined
-                  );
-
-                  if (uploadedThumbnailUrl) {
-                    validUrls.push(uploadedThumbnailUrl);
-                    console.log(
-                      "🎨 Generated and uploaded thumbnail:",
-                      uploadedThumbnailUrl
-                    );
-                  }
-
-                  // Clean up blob URL
-                  URL.revokeObjectURL(thumbnailUrl);
-                }
-              } catch (err) {
-                console.warn("Failed to generate thumbnail on-demand:", err);
-              }
-            }
-          } else {
-            console.warn("❌ Failed to fetch metadata, response not ok");
-          }
-        } else {
-          console.warn("⚠️ Could not extract IPFS hash from video URL");
-        }
-      } catch (error) {
-        console.warn("Failed to fetch video thumbnail for metadata:", error);
-        // Continue posting even if thumbnail fetch fails
-      }
-    }
-
-    if (validUrls.length > 0) {
-      const imageMarkup = compressedImages
-        .map((img) => {
-          const caption = img.caption;
-          // Only include caption if it's meaningful (not empty and not just "image")
-          const meaningfulCaption =
-            caption && caption.trim() && caption.trim() !== "image"
-              ? caption
-              : "";
-          return `![${meaningfulCaption}](${img.url})`;
-        })
-        .join("\n");
-      commentBody += `\n\n${imageMarkup}`;
-    }
-
-    if (selectedGif) {
-      commentBody += `\n\n![gif](${selectedGif.images.downsized_medium.url})`;
-    }
-
-    if (videoUrl) {
-      commentBody += `\n\n<iframe src="${videoUrl}" frameborder="0" allowfullscreen></iframe>`;
-    }
 
     if (commentBody) {
       let snapsTags: string[] = [];
       try {
+        let postPermlink = pp;
+
         // Add existing `snaps` tag logic
-        if (pp === HIVE_CONFIG.THREADS.PERMLINK) {
-          pp = (await getLastSnapsContainer()).permlink;
+        if (postPermlink === HIVE_CONFIG.THREADS.PERMLINK) {
+          postPermlink = (await getLastSnapsContainer()).permlink;
           snapsTags = [
             HIVE_CONFIG.COMMUNITY_TAG,
             HIVE_CONFIG.THREADS.PERMLINK,
@@ -515,6 +397,8 @@ const SnapComposer = React.memo(function SnapComposer({
         // Extract hashtags from the comment body and add to `snapsTags`
         const hashtags = extractHashtags(commentBody);
         snapsTags = [...new Set([...snapsTags, ...hashtags])]; // Add hashtags without duplicates
+
+        const validUrls = compressedImages.map((image) => image.url);
 
         // Prepare metadata with proper thumbnail handling for video-only posts
         const hasRegularImages = compressedImages.length > 0;
@@ -537,9 +421,10 @@ const SnapComposer = React.memo(function SnapComposer({
           );
         }
 
+        const permlink = crypto.randomUUID();
         const commentResponse = await aioha.comment(
           pa,
-          pp,
+          postPermlink,
           permlink,
           "",
           commentBody,
@@ -572,8 +457,6 @@ const SnapComposer = React.memo(function SnapComposer({
     }
   }, [
     compressedImages,
-    selectedGif,
-    videoUrl,
     pa,
     pp,
     extractHashtags,

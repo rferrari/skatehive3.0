@@ -150,28 +150,30 @@ export default function SearchOverlay({
         clearTimeout(debounceRef.current);
       }
     };
-  }, [query, fetchSkaters]);
+  }, [query, fetchSkaters, pathname]);
 
   const filteredSkaters = skaters.filter((skater) =>
     skater.hive_author.toLowerCase().includes(query.toLowerCase())
   );
 
   // Also search commands when not using "/" prefix
-  const filteredCommands =
-    !query.startsWith("/") && query.trim()
-      ? COMMAND_PAGES.filter(
-          (page) =>
-            page.path !== pathname &&
-            (page.title.toLowerCase().includes(query.toLowerCase()) ||
-              page.description.toLowerCase().includes(query.toLowerCase()))
-        )
-      : [];
+  const filteredCommands = useMemo(
+    () =>
+      !query.startsWith("/") && query.trim()
+        ? COMMAND_PAGES.filter(
+            (page) =>
+              page.path !== pathname &&
+              (page.title.toLowerCase().includes(query.toLowerCase()) ||
+                page.description.toLowerCase().includes(query.toLowerCase()))
+          )
+        : [],
+    [pathname, query]
+  );
 
-  const allResults = [
-    ...filteredPages,
-    ...filteredSkaters,
-    ...filteredCommands,
-  ];
+  const allResults = useMemo(
+    () => [...filteredPages, ...filteredSkaters, ...filteredCommands],
+    [filteredPages, filteredSkaters, filteredCommands]
+  );
 
   const initialSuggestions = useMemo(() => {
     return query ? allResults : [...popularPages, ...topSkaters];

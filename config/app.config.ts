@@ -167,7 +167,7 @@ export const EMAIL_DEFAULTS = {
 
 export const EXTERNAL_SERVICES = {
   /** DAO GraphQL API */
-  DAO_GRAPHQL_URL: 'https://api.nouns.build/api/chain/8453/daos/0xfe10d3ce1b0f090935670368ec6de00d8d965523',
+  DAO_GRAPHQL_URL: process.env.NEXT_PUBLIC_DAO_GRAPHQL_URL || 'https://api.goldsky.com/api/public/project_cm33ek8kjx6pz010i2c3w8z25/subgraphs/nouns-builder-base-mainnet/latest/gn',
 
   /** Hive signer URL */
   HIVE_SIGNER_URL: 'https://hivesigner.com',

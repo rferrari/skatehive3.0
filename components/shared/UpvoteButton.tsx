@@ -201,6 +201,9 @@ const handleVote = useCallback(
       setShowSlider,
       isHivePowerLoading,
       onUpvoteStoke,
+      setActiveVotes,
+      setVoted,
+      toast,
     ]
   );
 

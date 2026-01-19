@@ -258,7 +258,7 @@ export default function MarkdownEditor({
                 return children;
             },
         }),
-        [markdown, setMarkdown]
+        []
     );
 
     return (

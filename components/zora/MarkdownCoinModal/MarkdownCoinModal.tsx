@@ -158,13 +158,14 @@ export function MarkdownCoinModal({
       }
     },
     [
-      post.author,
+      post,
       isGeneratingPreview,
       selectedThumbnail,
       editableTitle,
       editableDescription,
       selectedColors,
       cardPreview,
+      toast,
     ]
   );
 
@@ -192,7 +193,7 @@ export function MarkdownCoinModal({
       setHasInitialized(false);
       setCardPreview(null);
     }
-  }, [isOpen, postId, currentPostId]);
+  }, [isOpen, postId, currentPostId, defaultColors]);
 
   // Initialize carousel images when modal opens
   useEffect(() => {
@@ -245,7 +246,7 @@ export function MarkdownCoinModal({
 
       initializeAsync();
     }
-  }, [isOpen, hasInitialized, post.body, post.title]);
+  }, [isOpen, hasInitialized, post]);
 
   // Cleanup blob URLs and timeouts on component unmount
   useEffect(() => {

@@ -251,7 +251,7 @@ export default function SnapsGrid({ username }: SnapsGridProps) {
 
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [hasMore, loadMoreSnaps]);
+  }, [hasMore, isLoading, loadMoreSnaps]);
 
   if (snaps.length === 0 && !isLoading) {
     return (

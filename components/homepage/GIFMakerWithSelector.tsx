@@ -4,6 +4,7 @@ import React, {
   forwardRef,
   useState,
   useEffect,
+  useCallback,
 } from "react";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile } from "@ffmpeg/util";
@@ -214,15 +215,15 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
     };
 
     // Check if selection is valid for GIF creation
-    const isValidSelection = () => {
+    const isValidSelection = useCallback(() => {
       if (startTime === null || endTime === null) return false;
       const duration = endTime - startTime;
       return duration > 0 && duration <= 6;
-    };
+    }, [startTime, endTime]);
 
     useEffect(() => {
       setCanConvert(isValidSelection());
-    }, [startTime, endTime]);
+    }, [isValidSelection]);
 
     const handleConvert = async () => {
       if (!videoFile || startTime === null || endTime === null) return;

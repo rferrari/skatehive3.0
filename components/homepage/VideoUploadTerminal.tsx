@@ -135,7 +135,7 @@ const SkateboardLoader = ({ serverName, progress = 0, stage }: { serverName?: st
       clearInterval(prepInterval);
       clearInterval(dotsInterval);
     };
-  }, [progress, lastProgress, stuckTime]);
+  }, [progress, lastProgress, stuckTime, skateFrames.length]);
 
   // Show "preparing" state when progress is 0 (FFmpeg analyzing video)
   if (progress === 0 || (stage === 'receiving' && progress < 5)) {

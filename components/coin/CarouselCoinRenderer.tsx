@@ -32,6 +32,7 @@ export const CarouselCoinRenderer = React.memo<CarouselCoinRendererProps>(
     const [loadingStates, setLoadingStates] = useState<Record<number, boolean>>(
       {}
     );
+    const carouselLength = carouselMedia?.length ?? 0;
 
     // Handle IPFS URLs
     const getMediaUrl = useCallback((uri: string) => {
@@ -44,17 +45,17 @@ export const CarouselCoinRenderer = React.memo<CarouselCoinRendererProps>(
 
     const nextMedia = useCallback(() => {
       setCurrentIndex((prev) => {
-        if (!carouselMedia || carouselMedia.length === 0) return prev;
-        return (prev + 1) % carouselMedia.length;
+        if (carouselLength === 0) return prev;
+        return (prev + 1) % carouselLength;
       });
-    }, [carouselMedia?.length]);
+    }, [carouselLength]);
 
     const prevMedia = useCallback(() => {
       setCurrentIndex((prev) => {
-        if (!carouselMedia || carouselMedia.length === 0) return prev;
-        return (prev - 1 + carouselMedia.length) % carouselMedia.length;
+        if (carouselLength === 0) return prev;
+        return (prev - 1 + carouselLength) % carouselLength;
       });
-    }, [carouselMedia?.length]);
+    }, [carouselLength]);
 
     const goToMedia = useCallback((index: number) => {
       setCurrentIndex(index);
@@ -70,14 +71,10 @@ export const CarouselCoinRenderer = React.memo<CarouselCoinRendererProps>(
 
     // Reset index when carousel media changes to prevent out of bounds
     useEffect(() => {
-      if (
-        carouselMedia &&
-        carouselMedia.length > 0 &&
-        currentIndex >= carouselMedia.length
-      ) {
+      if (carouselLength > 0 && currentIndex >= carouselLength) {
         setCurrentIndex(0);
       }
-    }, [carouselMedia?.length, currentIndex]);
+    }, [carouselLength, currentIndex]);
 
     // Memoize current media to prevent unnecessary re-renders
     const currentMedia = useMemo(() => {

@@ -356,6 +356,8 @@ export default function ZoraTradingModal({
     isConnected,
     getTradeQuote,
     isHydrated,
+    getTokenDecimals,
+    fromBalance?.decimals,
   ]);
 
   const handleCurrencySwap = () => {

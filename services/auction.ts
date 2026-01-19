@@ -95,7 +95,8 @@ export async function fetchAuction(tokenAddress: string): Promise<Auction[]> {
 
     return data.auctions;
   } catch (error) {
-    throw new Error('Error fetching auction data');
+    console.error("Error fetching auction data:", error);
+    return [];
   }
 }
 
