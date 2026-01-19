@@ -2,7 +2,7 @@ import { APP_CONFIG } from "../../../config/app.config";
 
 export async function GET() {
   const appUrl =
-    process.env.NEXT_PUBLIC_NODE_ENV === 'development'
+    process.env.NODE_ENV === 'development'
       ? 'http://localhost:3000'
       : APP_CONFIG.BASE_URL;
 

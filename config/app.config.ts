@@ -111,7 +111,6 @@ export const APP_CONFIG = {
   /** WalletConnect Project ID (from env or fallback) */
   get WALLETCONNECT_PROJECT_ID() {
     return process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 
-           process.env.NEXT_PUBLIC_WC_PROJECT_ID || 
            // burner key
            '6465a9e6cbe7a3cb53461864e01d3e8d';
   },
@@ -121,15 +120,7 @@ export const APP_CONFIG = {
     return process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY;
   },
   
-  /** Coinbase CDP Project ID (from env) */
-  get CDP_PROJECT_ID() {
-    return process.env.NEXT_PUBLIC_CDP_PROJECT_ID;
-  },
-  
-  /** Etherscan API Key for contract verification (from env) */
-  get ETHERSCAN_API_KEY() {
-    return process.env.ETHERSCAN_API_KEY;
-  },
+
 
   /** Primary app origin (env override or fallback) */
   get ORIGIN() {
@@ -182,9 +173,6 @@ export const EMAIL_DEFAULTS = {
 export const EXTERNAL_SERVICES = {
   /** DAO GraphQL API */
   DAO_GRAPHQL_URL: 'https://api.nouns.build/api/chain/8453/daos/0xfe10d3ce1b0f090935670368ec6de00d8d965523',
-  
-  /** Farcaster Hub URL */
-  FARCASTER_HUB_URL: 'https://nemes.farcaster.xyz:2281',
 
   /** Hive signer URL */
   HIVE_SIGNER_URL: 'https://hivesigner.com',
@@ -202,39 +190,22 @@ export const EXTERNAL_SERVICES = {
 // ============================================================================
 
 /**
- * Get the Alchemy RPC URL for Base mainnet
- * Requires NEXT_PUBLIC_ALCHEMY_KEY environment variable
- */
-export function getAlchemyRpcUrl(): string {
-  const key = process.env.NEXT_PUBLIC_ALCHEMY_KEY;
-  if (!key) {
-    console.warn('NEXT_PUBLIC_ALCHEMY_KEY not set, using public RPC');
-    return 'https://mainnet.base.org';
-  }
-  return `https://base-mainnet.g.alchemy.com/v2/${key}`;
-}
-
-/**
- * Supabase configuration type with optional private key
- * (privateKey is only available server-side)
+ * Supabase configuration type
  */
 export interface SupabaseConfig {
   url: string;
   publicKey: string;
-  privateKey?: string;
 }
 
 /**
  * Get Supabase configuration from environment variables.
  * Validates that required env vars are present and throws descriptive errors if not.
  * 
- * @param requirePrivateKey - If true, also validates SUPABASE_PRIVATE_KEY (for server-side usage)
  * @throws Error if required environment variables are missing
  */
-export function getSupabaseConfig(requirePrivateKey = false): SupabaseConfig {
+export function getSupabaseConfig(): SupabaseConfig {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const publicKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLIC_KEY;
-  const privateKey = process.env.SUPABASE_PRIVATE_KEY;
 
   const missingVars: string[] = [];
 
@@ -243,9 +214,6 @@ export function getSupabaseConfig(requirePrivateKey = false): SupabaseConfig {
   }
   if (!publicKey) {
     missingVars.push('NEXT_PUBLIC_SUPABASE_PUBLIC_KEY');
-  }
-  if (requirePrivateKey && !privateKey) {
-    missingVars.push('SUPABASE_PRIVATE_KEY');
   }
 
   if (missingVars.length > 0) {
@@ -258,7 +226,6 @@ export function getSupabaseConfig(requirePrivateKey = false): SupabaseConfig {
   return {
     url: url!,
     publicKey: publicKey!,
-    ...(privateKey && { privateKey }),
   };
 }
 
@@ -270,6 +237,5 @@ export function getSupabaseConfigSafe() {
   return {
     url: process.env.NEXT_PUBLIC_SUPABASE_URL,
     publicKey: process.env.NEXT_PUBLIC_SUPABASE_PUBLIC_KEY,
-    privateKey: process.env.SUPABASE_PRIVATE_KEY,
   };
 }

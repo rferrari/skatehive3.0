@@ -91,7 +91,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
               <OnchainKitProvider
                 chain={base}
                 apiKey={APP_CONFIG.ONCHAINKIT_API_KEY}
-                projectId={APP_CONFIG.CDP_PROJECT_ID}
               >
                 <AuthKitProvider config={farcasterAuthConfig}>
                   <AiohaProvider aioha={aioha}>

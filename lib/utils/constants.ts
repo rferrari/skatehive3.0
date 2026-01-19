@@ -1,10 +1,7 @@
-import { Address } from 'viem';
-import { DAO_ADDRESSES as CONFIG_DAO_ADDRESSES, ETH_ADDRESSES, APP_CONFIG, getAlchemyRpcUrl, EXTERNAL_SERVICES, getSupabaseConfigSafe } from '@/config/app.config';
+import { DAO_ADDRESSES as CONFIG_DAO_ADDRESSES, ETH_ADDRESSES, APP_CONFIG, EXTERNAL_SERVICES, getSupabaseConfigSafe } from '@/config/app.config';
 
 // Web3/Blockchain configuration - all from centralized APP_CONFIG
 export const WC_PROJECT_ID = APP_CONFIG.WALLETCONNECT_PROJECT_ID;
-export const ETHERSCAN_API_KEY = APP_CONFIG.ETHERSCAN_API_KEY;
-export const RPC_URL = getAlchemyRpcUrl();
 export const GRAPHQL_URL = EXTERNAL_SERVICES.DAO_GRAPHQL_URL;
 
 // Re-export DAO_ADDRESSES from config
@@ -25,7 +22,6 @@ const supabaseConfig = getSupabaseConfigSafe();
 export const SUPABASE = {
   url: supabaseConfig.url,
   public_key: supabaseConfig.publicKey,
-  private_key: supabaseConfig.privateKey,
 };
 export const PINATA_URL = APP_CONFIG.PINATA_GATEWAY;
 

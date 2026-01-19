@@ -6,7 +6,7 @@
 
 Centralized client-side error logging endpoint that writes errors to server-side log files. Captures JavaScript errors, warnings, and info messages from the frontend with contextual metadata. Supports querying logs with filtering options.
 
-**Status**: ⚠️ Active (Consider migrating to Sentry)  
+**Status**: ✅ Active  
 **Methods**: `POST`, `GET`  
 **Path**: `/api/logs/client-errors`
 
@@ -307,34 +307,6 @@ gzip logs/client-errors-2025-01-14.log
 
 // Delete logs older than 90 days
 find logs/ -name "*.log.gz" -mtime +90 -delete
-```
-
-## Migration to Sentry
-
-🔥 **High Priority**: Consider migrating to Sentry for better error tracking
-
-**Benefits:**
-- Automatic grouping and deduplication
-- Source map support
-- Release tracking
-- User context and breadcrumbs
-- Performance monitoring
-- Better search and filtering
-- Alerts and notifications
-
-**Migration:**
-```javascript
-// Replace custom logging
-import * as Sentry from "@sentry/react";
-
-Sentry.init({
-  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-  environment: process.env.NODE_ENV,
-  tracesSampleRate: 0.1,
-});
-
-// Errors automatically captured
-Sentry.captureException(error);
 ```
 
 ## Performance Impact

@@ -136,5 +136,4 @@ export interface SignupEnvVars {
   EMAIL_COMMUNITY?: string;
   EMAIL_RECOVERYACC?: string;
   JWT_SECRET?: string;
-  NEXTAUTH_SECRET?: string;
 }

@@ -180,7 +180,7 @@ function OTTLogin() {
 ## Environment Variables
 
 Required:
-- `JWT_SECRET` or `NEXTAUTH_SECRET` - JWT signing key
+- `JWT_SECRET` - JWT signing key
 - `SUPABASE_URL` - Database connection
 - `SUPABASE_SERVICE_ROLE_KEY` - Admin access
 

@@ -12,7 +12,6 @@ import {
 import { useTheme, ThemeName, themeMap } from "@/app/themeProvider";
 import LottieAnimation from "@/components/shared/LottieAnimation";
 import LogoMatrix from "@/components/graphics/LogoMatrix";
-import FarcasterUniversalLink from "@/components/farcaster/FarcasterUniversalLink";
 import VoteWeightSlider from "@/components/settings/VoteWeightSlider";
 import UpvoteStoke from "@/components/graphics/UpvoteStoke";
 
@@ -107,14 +106,6 @@ const MainSettings: React.FC<MainSettingsProps> = ({ userData }) => {
           onVoteWeightUpdate={(voteWeight) => {
             // Vote weight updated
           }}
-        />
-      )}
-
-      {/* Farcaster Account Link */}
-      {userData.hiveUsername && (
-        <FarcasterUniversalLink
-          hiveUsername={userData.hiveUsername}
-          postingKey={userData.postingKey}
         />
       )}
 

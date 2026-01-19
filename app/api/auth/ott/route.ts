@@ -16,9 +16,9 @@ const supabase = createClient(
 
 // JWT secret for signing tokens
 const getJwtSecret = () => {
-  const secret = process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET;
+  const secret = process.env.JWT_SECRET;
   if (!secret) {
-    throw new Error('JWT_SECRET or NEXTAUTH_SECRET environment variable is required');
+    throw new Error('JWT_SECRET environment variable is required');
   }
   return new TextEncoder().encode(secret);
 };

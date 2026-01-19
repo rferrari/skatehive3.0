@@ -208,6 +208,7 @@ export class HiveProfileService {
 
     /**
      * Sync Farcaster information between database and Hive profile
+     * @deprecated Removed - Farcaster notifications feature removed
      */
     static async syncFarcasterInfo(hiveUsername: string): Promise<{
         success: boolean;
@@ -215,70 +216,10 @@ export class HiveProfileService {
         source: 'hive' | 'database' | 'none';
         data?: any;
     }> {
-        try {
-            // Import here to avoid circular dependency
-            const { SkateHiveFarcasterService } = await import('../farcaster/skatehive-integration');
-
-            // Get info from both sources
-            const [hiveProfile, databasePrefs] = await Promise.all([
-                this.getFarcasterFromHiveProfile(hiveUsername),
-                SkateHiveFarcasterService.getUserPreferences(hiveUsername)
-            ]);
-
-            if (!hiveProfile && !databasePrefs) {
-                return {
-                    success: true,
-                    message: 'No Farcaster connection found',
-                    source: 'none'
-                };
-            }
-
-            if (hiveProfile && !databasePrefs) {
-                return {
-                    success: true,
-                    message: 'Farcaster info found in Hive profile but not in database',
-                    source: 'hive',
-                    data: hiveProfile
-                };
-            }
-
-            if (!hiveProfile && databasePrefs) {
-                return {
-                    success: true,
-                    message: 'Farcaster info found in database but not in Hive profile',
-                    source: 'database',
-                    data: {
-                        fid: databasePrefs.fid,
-                        username: databasePrefs.farcasterUsername,
-                        notifications: databasePrefs.notificationsEnabled
-                    }
-                };
-            }
-
-            // Both exist, check for consistency
-            if (hiveProfile && databasePrefs && hiveProfile.fid !== databasePrefs.fid) {
-                return {
-                    success: false,
-                    message: 'Inconsistent Farcaster FID between Hive profile and database',
-                    source: 'database',
-                    data: { hive: hiveProfile, database: databasePrefs }
-                };
-            }
-
-            return {
-                success: true,
-                message: 'Farcaster info is consistent',
-                source: 'database',
-                data: databasePrefs
-            };
-
-        } catch (error) {
-            console.error('Failed to sync Farcaster info:', error);
-            return {
-                success: false,
-                message: 'Failed to sync Farcaster information',
-                source: 'none'
-            };
-        }
+        return {
+            success: false,
+            message: 'Farcaster notification features have been removed',
+            source: 'none'
+        };
     }
 }
