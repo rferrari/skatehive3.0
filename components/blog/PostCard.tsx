@@ -455,13 +455,6 @@ export default function PostCard({
     );
   }
 
-  const postCardPulseGradient =
-    "linear-gradient(90deg, var(--chakra-colors-primary, #38ff8e) 0%, var(--chakra-colors-accent, #00e676) 100%)";
-  const postCardBoxShadowAccent =
-    "0 0 0 0 var(--chakra-colors-accent, rgba(72, 255, 128, 0.7))";
-  const postCardBoxShadowAccent10 =
-    "0 0 0 10px var(--chakra-colors-accent, rgba(72, 255, 128, 0))";
-
   return (
     <>
       <style jsx global>{`
@@ -608,13 +601,13 @@ export default function PostCard({
             </Box>
           )}
 
-          {/* Content Box with Green Border */}
+          {/* Content Box */}
           <Box
             border="2px solid"
             borderColor="muted"
             borderRadius="none"
             overflow="hidden"
-            bg="background"
+            bg="transparent"
           >
             {/* Image Section */}
             <Box
@@ -740,11 +733,11 @@ export default function PostCard({
             >
               <Box
                 borderTop="1px solid"
-                borderColor="primary"
+                borderColor="muted"
                 p={3}
                 textAlign="center"
                 cursor="pointer"
-                bg="background"
+                bg="transparent"
                 transition="color 0.2s"
                 _hover={{
                   "& .post-title-text": { color: "accent" },

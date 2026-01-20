@@ -776,7 +776,7 @@ const SnapComposer = React.memo(function SnapComposer({
             </Wrap>
           )}
 
-          <HStack justify="space-between" mb={1}>
+          <HStack justify="space-between" mb={0}>
             <HStack>
               {/* Image Upload Button */}
               <Box position="relative">
