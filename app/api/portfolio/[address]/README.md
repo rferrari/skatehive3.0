@@ -4,7 +4,7 @@
 
 ## Overview
 
-Fetches cryptocurrency portfolio data for a blockchain address from Pioneers.dev API. Returns token balances, NFT holdings, DeFi positions, and total net worth across multiple networks. Includes data transformation to normalize the external API response format.
+Fetches cryptocurrency portfolio data for a blockchain address from the KeepKey Zapper API. Returns token balances and total net worth across multiple networks. Includes data transformation to normalize the external API response format.
 
 **Status**: ✅ Active (Production)  
 **Method**: `GET`  
@@ -90,7 +90,7 @@ Each token includes:
 
 This endpoint proxies to:
 ```
-https://pioneers.dev/api/v1/portfolio/{address}
+https://api.keepkey.info/api/v1/zapper/portfolio/{address}
 ```
 
 The external API returns nested data structures that are flattened and normalized by this endpoint.
@@ -163,7 +163,7 @@ curl https://skatehive.app/api/portfolio/0x742d35Cc6634C0532925a3b844Bc9e7595f0b
 
 ## Network Support
 
-Supported networks (from Pioneers.dev):
+Supported networks (from KeepKey/Zapper):
 - Ethereum (mainnet)
 - Polygon
 - Binance Smart Chain

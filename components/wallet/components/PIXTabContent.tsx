@@ -23,6 +23,7 @@ import { useAioha } from "@aioha/react-ui";
 import useHiveAccount from "@/hooks/useHiveAccount";
 import PixTransferGuide from "./PIXTransferGuide";
 import PIXFAQ from "./PIXFAQ";
+import useHivePower from "@/hooks/useHivePower";
 
 export interface PixDashboardData {
   pixbeePixKey: string;
@@ -469,7 +470,8 @@ export default function PIXTabContent() {
   const [pixDashboardData, setDashboardData] = useState<PixDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [language, setLanguage] = useState<'en' | 'pt'>('pt');
-  const toast = useToast();
+  const { user } = useAioha();
+  const { hivePower, isLoading: isHivePowerLoading } = useHivePower(user || "");
 
   const toggleLanguage = () => {
     setLanguage(language === 'en' ? 'pt' : 'en');
@@ -479,12 +481,20 @@ export default function PIXTabContent() {
     en: {
       heading: '💸 Pix',
       description: 'Fast, secure, and convenient way to send HBD via PIX! Use Skatebank service powered by Pixbee to Buy and Sell instantly using PIX.',
-      offline: 'Skatebank is offline now. Try later',
+      gateTitle: 'PIX is locked for accounts under 1000 HP.',
+      gateDescription: 'The FBI said only accounts with 1000 Hive Power can access PIX for now.',
+      hivePowerLabel: 'Your Hive Power',
+      missingLabel: 'Missing {missing} HP to unlock',
+      buyButton: 'Buy Hive Power',
     },
     pt: {
       heading: '💸 Pix',
       description: 'Maneira rápida, segura e conveniente de enviar HBD via PIX! Use o serviço Skatebank powered by Pixbee para comprar e vender usando PIX.',
-      offline: 'Skatebank está offline agora. Tente mais tarde',
+      gateTitle: 'O FBI falou que só pode liberar o PIX para quem tiver mais de 1000 Hive Power',
+      gateDescription: 'Mostra o teu HP ai pra gente liberar a chave do PIX.',
+      hivePowerLabel: 'Seu Hive Power',
+      missingLabel: 'Faltam {missing} HP para liberar',
+      buyButton: 'Comprar Hive Power',
     },
   };
 
@@ -518,14 +528,19 @@ export default function PIXTabContent() {
         setDashboardData(parsedData);
       } catch (error) {
         console.error("Failed to load PIX data", error);
-        toast({ title: "Failed to load PIX data", status: "error", duration: 3000 });
       } finally {
         setLoading(false);
       }
     }
 
     fetchData();
-  }, [toast]);
+  }, []);
+
+  const hivePowerValue = hivePower ?? 0;
+  const missingHivePower = Math.max(0, 1000 - hivePowerValue);
+  const buyHivePowerUrl = user
+    ? `https://wallet.hive.blog/@${user}`
+    : "https://wallet.hive.blog/";
 
   return (
     <Box position="relative">
@@ -576,7 +591,60 @@ export default function PIXTabContent() {
             <PIXFAQ language={language} />
           </>
         ) : (
-          <Text color="red.400">{langContent.offline}</Text>
+          <Box
+            p={6}
+            borderRadius="lg"
+            border="1px solid"
+            borderColor="primary"
+            bg="background"
+          >
+            <VStack spacing={4} align="stretch">
+              <Heading size="md" fontFamily="Joystix" color="primary">
+                {langContent.gateTitle}
+              </Heading>
+              <Text color="text">{langContent.gateDescription}</Text>
+              <Box
+                p={4}
+                borderRadius="md"
+                border="1px solid"
+                borderColor="primary"
+                bg="background"
+              >
+                <Text fontSize="sm" color="text">
+                  {langContent.hivePowerLabel}
+                </Text>
+                <Text fontSize="4xl" fontWeight="bold" color="primary">
+                  {isHivePowerLoading
+                    ? "..."
+                    : `${hivePowerValue.toFixed(2)} HP`}
+                </Text>
+                <Text fontSize="sm" color="text" mb={3}>
+                  {langContent.missingLabel.replace(
+                    "{missing}",
+                    missingHivePower.toFixed(2)
+                  )}
+                </Text>
+                <Input
+                  value={missingHivePower.toFixed(2)}
+                  isReadOnly
+                  bg="background"
+                  borderColor="primary"
+                />
+              </Box>
+              <Button
+                as="a"
+                href={buyHivePowerUrl}
+                target="_blank"
+                rel="noreferrer"
+                bg="primary"
+                color="background"
+                fontFamily="Joystix"
+                _hover={{ bg: "primary", color: "background" }}
+              >
+                {langContent.buyButton}
+              </Button>
+            </VStack>
+          </Box>
         )}
       </VStack>
     </Box>

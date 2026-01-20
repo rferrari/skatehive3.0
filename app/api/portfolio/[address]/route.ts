@@ -14,7 +14,7 @@ export async function GET(
   }
 
   try {
-    const apiUrl = `https://pioneers.dev/api/v1/portfolio/${address}`;
+    const apiUrl = `https://api.keepkey.info/api/v1/zapper/portfolio/${address}`;
     
     const response = await fetch(apiUrl, {
       headers: {
@@ -36,97 +36,120 @@ export async function GET(
 
     const rawData = await response.json();
 
-    // Try different ways to extract tokens
     const addressLower = address.toLowerCase();
-    let rawTokens = [];
-    
-    if (Array.isArray(rawData.tokens)) {
-      rawTokens = rawData.tokens;
-    } else if (rawData.tokens && typeof rawData.tokens === 'object') {
-      rawTokens = rawData.tokens[addressLower] || 
-                  rawData.tokens[address] || 
-                  rawData.tokens[address.toUpperCase()] || [];
-    }
-    
-    if (rawTokens.length === 0 && rawData.balances) {
-      if (rawData.balances[addressLower]) {
-        rawTokens = rawData.balances[addressLower];
-      }
-    }
-    
-    if (rawTokens.length === 0) {
-      if (rawData.data && rawData.data.tokens) {
-        rawTokens = rawData.data.tokens;
-      } else if (rawData.result && rawData.result.tokens) {
-        rawTokens = rawData.result.tokens;
-      }
-    }
-    
-    const apps = rawData.apps || [];
-    const nftNetWorth = rawData.nftNetWorth?.[addressLower] || 0;
+    const rawBalances = Array.isArray(rawData.balances) ? rawData.balances : [];
+    const rawTokens = Array.isArray(rawData.tokens) ? rawData.tokens : [];
+    const combinedTokens = [...rawBalances, ...rawTokens];
 
-    // Calculate totals from the nested token data
-    const totalBalanceUsdTokens = rawTokens.reduce((sum: number, token: any) => {
-      const tokenData = token.token || token;
-      const balanceUSD = parseFloat(tokenData.balanceUSD || token.balanceUSD || 0);
-      return sum + balanceUSD;
+    const parseNetworkId = (networkId: unknown): number => {
+      if (typeof networkId === "number") {
+        return networkId;
+      }
+
+      if (typeof networkId === "string") {
+        const parts = networkId.split(":");
+        const lastPart = parts[parts.length - 1];
+        const parsed = parseInt(lastPart, 10);
+        return Number.isNaN(parsed) ? 1 : parsed;
+      }
+
+      return 1;
+    };
+
+    const transformedTokens = combinedTokens.map((token: any, index: number) => {
+      const tokenAddress = token.tokenAddress || token.address || "";
+      const network = token.chain || token.network || "ethereum";
+      const tokenId = token.key || token.id || `${network}-${tokenAddress}-${index}`;
+      const balance = Number(token.balance || 0);
+      const balanceUSD = Number(token.valueUsd ?? token.balanceUSD ?? 0);
+      const price = Number(token.priceUsd ?? token.price ?? 0);
+      const decimals = Number(token.decimals ?? 18);
+      const symbol = token.symbol || token.ticker || "UNKNOWN";
+      const name = token.name || symbol;
+      const now = new Date().toISOString();
+
+      return {
+        address: tokenAddress,
+        assetCaip: token.caip || token.assetCaip || "",
+        key: tokenId,
+        network,
+        token: {
+          address: tokenAddress,
+          balance,
+          balanceRaw: token.balanceRaw || "0",
+          balanceUSD,
+          canExchange: false,
+          coingeckoId: "",
+          createdAt: now,
+          decimals,
+          externallyVerified: false,
+          hide: false,
+          holdersEnabled: false,
+          id: tokenId,
+          label: null,
+          name,
+          networkId: parseNetworkId(token.networkId),
+          price,
+          priceUpdatedAt: now,
+          status: "active",
+          symbol,
+          totalSupply: "0",
+          updatedAt: now,
+          verified: false,
+        },
+        updatedAt: now,
+      };
+    });
+
+    const ethPriceUsd = combinedTokens.reduce((price: number, token: any) => {
+      if (price > 0) return price;
+      const symbol = (token.symbol || token.ticker || "").toLowerCase();
+      const tokenPrice = Number(token.priceUsd ?? token.price ?? 0);
+      return symbol === "eth" && tokenPrice > 0 ? tokenPrice : 0;
     }, 0);
 
-    const totalBalanceUSDApp = apps.reduce((sum: number, app: any) => {
-      return sum + (app.balanceUSD || 0);
-    }, 0);
+    const rawNfts = Array.isArray(rawData.nfts) ? rawData.nfts : [];
+    const transformedNfts = rawNfts.map((nft: any) => {
+      const estimatedUsd = Number(nft.estimatedValue?.valueUsd ?? 0);
+      const estimatedEth = ethPriceUsd > 0 ? estimatedUsd / ethPriceUsd : 0;
+      const estimatedEthString = estimatedEth.toString();
 
-    const totalNetWorth = totalBalanceUsdTokens + totalBalanceUSDApp + nftNetWorth;
+      return {
+        tokenId: nft.tokenId,
+        rarityRank: nft.rarityRank,
+        token: {
+          name: nft.name || "",
+          medias: [],
+          estimatedValueEth: estimatedEthString,
+          collection: {
+            name: nft.collection?.name || "Unknown Collection",
+            address: nft.collection?.address || "",
+            network: nft.collection?.network || "",
+            floorPriceEth: estimatedEthString,
+          },
+        },
+      };
+    });
 
-    // Transform to our expected format
+    const totalBalanceUsdTokens = Number(
+      rawData.totalBalanceUsdTokens ??
+        transformedTokens.reduce(
+          (sum: number, token: any) => sum + (token.token.balanceUSD || 0),
+          0
+        )
+    );
+    const totalBalanceUSDApp = Number(rawData.totalBalanceUSDApp ?? 0);
+    const totalNetWorth = Number(
+      rawData.totalNetWorth ?? totalBalanceUsdTokens + totalBalanceUSDApp
+    );
+
     const transformedData = {
       totalNetWorth,
       totalBalanceUsdTokens,
       totalBalanceUSDApp,
-      nftUsdNetWorth: { [addressLower]: nftNetWorth.toString() },
-      tokens: rawTokens.map((token: any) => {
-        // The external API has nested token structure: token.token contains the actual token data
-        const tokenData = token.token || token;
-        
-        // Extract actual token address (not the wallet address)
-        const tokenAddress = tokenData.address || token.address || '';
-        
-        // Use the key as fallback identifier if available
-        const tokenId = token.key || tokenData.id || tokenAddress;
-        
-        return {
-          address: tokenAddress,
-          assetCaip: token.assetCaip || '',
-          key: tokenId,
-          network: token.network || tokenData.network || 'ethereum',
-          token: {
-            address: tokenAddress,
-            balance: parseFloat(tokenData.balance || 0),
-            balanceRaw: tokenData.balanceRaw || '0',
-            balanceUSD: parseFloat(tokenData.balanceUSD || 0),
-            canExchange: tokenData.canExchange || false,
-            coingeckoId: tokenData.coingeckoId || '',
-            createdAt: tokenData.createdAt || new Date().toISOString(),
-            decimals: parseInt(tokenData.decimals || 18),
-            externallyVerified: tokenData.externallyVerified || false,
-            hide: tokenData.hide || false,
-            holdersEnabled: tokenData.holdersEnabled || false,
-            id: tokenId,
-            label: tokenData.label || null,
-            name: tokenData.name || tokenData.symbol || 'Unknown Token',
-            networkId: parseInt(tokenData.networkId || 1),
-            price: parseFloat(tokenData.price || 0),
-            priceUpdatedAt: tokenData.priceUpdatedAt || new Date().toISOString(),
-            status: tokenData.status || 'active',
-            symbol: tokenData.symbol || 'UNKNOWN',
-            totalSupply: tokenData.totalSupply || '0',
-            updatedAt: tokenData.updatedAt || new Date().toISOString(),
-            verified: tokenData.verified || false,
-          },
-          updatedAt: token.updatedAt || new Date().toISOString(),
-        };
-      }),
-      nfts: [],
+      nftUsdNetWorth: rawData.nftUsdNetWorth || { [addressLower]: "0" },
+      tokens: transformedTokens,
+      nfts: transformedNfts,
     };
 
     return NextResponse.json(transformedData);
