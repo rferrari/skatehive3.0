@@ -112,7 +112,7 @@ export function TokenSelectionStep({
               mt={3}
               p={3}
               bg="cardBg"
-              borderRadius="md"
+              borderRadius="none"
               border="1px solid"
               borderColor="border"
             >
@@ -149,7 +149,7 @@ export function TokenSelectionStep({
                 p={3}
                 bg="orange.50"
                 _dark={{ bg: "orange.900", borderColor: "orange.700" }}
-                borderRadius="md"
+                borderRadius="none"
                 border="1px solid"
                 borderColor="orange.200"
               >

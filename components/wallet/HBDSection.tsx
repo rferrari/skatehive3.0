@@ -132,7 +132,7 @@ const HBDSection = memo(function HBDSection({
             mt={2}
             mb={2}
             bg="transparent"
-            borderRadius="md"
+            borderRadius="none"
             border="1px solid"
             borderColor="gray.200"
         >

@@ -109,7 +109,7 @@ const SkateErrorFallback: React.FC<SkateErrorFallbackProps> = ({
     <>
       <Box
         p={4}
-        borderRadius="md"
+        borderRadius="none"
         bg={theme.colors.muted}
         border={`1px solid ${theme.colors.border}`}
         textAlign="center"

@@ -361,7 +361,7 @@ export default function PostDetails({
                   w="auto"
                   bg="gray.800"
                   color="white"
-                  borderRadius="md"
+                  borderRadius="none"
                   boxShadow="lg"
                   p={2}
                 >
@@ -569,7 +569,7 @@ export default function PostDetails({
                 w="auto"
                 bg="gray.800"
                 color="white"
-                borderRadius="md"
+                borderRadius="none"
                 boxShadow="lg"
                 p={2}
               >

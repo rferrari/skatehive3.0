@@ -158,7 +158,7 @@ export default function SendModal({ isOpen, onClose, token }: SendModalProps) {
             <Box
               p={4}
               bg="gray.800"
-              borderRadius="md"
+              borderRadius="none"
               border="1px solid"
               borderColor="gray.700"
             >

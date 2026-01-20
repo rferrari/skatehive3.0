@@ -10,9 +10,12 @@ import {
   Button,
   Skeleton,
   Flex,
+  Image,
+  Icon,
 } from "@chakra-ui/react";
 import { Discussion, Notifications } from "@hiveio/dhive";
 import { useState, useEffect, useRef, useCallback } from "react";
+import { FaPlay, FaFileAlt } from "react-icons/fa";
 import {
   getPost,
   checkFollow,
@@ -67,6 +70,7 @@ export default function NotificationItem({
   const postAuthor = rawPostAuthor.replace(/^@/, "");
   const [parentPost, setParentPost] = useState<Discussion | null>(null);
   const [magPostThumbnail, setMagPostThumbnail] = useState<string>("");
+  const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
   const [reply, setReply] = useState<Discussion | null>(null);
   const [originalApp, setOriginalApp] = useState<string>("");
   const [isFollowingBack, setIsFollowingBack] = useState<boolean>(false);
@@ -95,8 +99,36 @@ export default function NotificationItem({
       // Check if user has voted on this post
       setHasVoted(checkIfUserVoted(post));
 
-      // Set the post content regardless of type
-      setPostContent(post.body || "No content available");
+       // Set the post content regardless of type
+       setPostContent(post.body || "No content available");
+
+// Extract video thumbnail from iframe or video tags
+        const iframeMatch = (post.body || "").match(
+          /<iframe[^>]*src=["']([^"']+)["'][^>]*><\/iframe>/i
+        );
+        const videoMatch = (post.body || "").match(
+          /<video[^>]*poster=["']([^"']+)["'][^>]*>/i
+        );
+        
+        if (videoMatch && videoMatch[1]) {
+          // Use video poster if available
+          setVideoPreviewUrl(videoMatch[1]);
+        } else if (iframeMatch && iframeMatch[1]) {
+          // For YouTube/Vimeo embeds, try to extract thumbnail
+          const youtubeMatch = iframeMatch[1].match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/);
+          const vimeoMatch = iframeMatch[1].match(/vimeo\.com\/(\d+)/);
+          
+          if (youtubeMatch && youtubeMatch[1]) {
+            setVideoPreviewUrl(`https://img.youtube.com/vi/${youtubeMatch[1]}/mqdefault.jpg`);
+          } else if (vimeoMatch && vimeoMatch[1]) {
+            setVideoPreviewUrl(`https://vumbnail.com/${vimeoMatch[1]}.jpg`);
+          } else {
+            setVideoPreviewUrl(null);
+          }
+        } else {
+          setVideoPreviewUrl(null);
+        }
+
 
       if (
         notification.type === "reply" ||
@@ -334,385 +366,435 @@ export default function NotificationItem({
             100% { box-shadow: ${notificationBoxShadowAccent}; }
           }
         `}</style>
-        <Box flex="1" w="full">
-          <HStack
-            spacing={{ base: 2, md: 3 }}
-            align={{ base: "flex-start", md: "center" }}
-          >
-            <Avatar
-              src={`https://images.hive.blog/u/${author}/avatar/sm`}
-              name=""
-              size={{ base: "sm", md: "xs" }}
-            />
-            {notification.type === "follow" ? (
-              <HStack spacing={2}>
-                <Text
-                  color={isNew ? "accent" : "primary"}
-                  fontSize={{ base: "xs", md: "sm" }}
-                >
-                  {notification.msg.replace(/^@/, "")}
-                </Text>
-                {isFollowingBack ? (
-                  <Text fontSize={{ base: "xs", md: "sm" }} color="primary">
-                    Following
-                  </Text>
-                ) : (
-                  <Button
-                    size={{ base: "xs", md: "sm" }}
-                    onClick={handleFollowBack}
-                  >
-                    Follow Back
-                  </Button>
-                )}
-              </HStack>
-            ) : notification.type === "vote" ? (
-              <Box>
-                <Text
-                  color={isNew ? "accent" : "primary"}
-                  fontSize={{ base: "xs", md: "sm" }}
-                  display="flex"
-                  alignItems="center"
-                  flexWrap="wrap"
-                  noOfLines={2}
-                  wordBreak="break-word"
-                >
-                  <Link
-                    href={`/user/${author}`}
-                    color={isNew ? "accent" : "primary"}
-                    fontWeight="bold"
-                    _hover={{ textDecoration: "underline" }}
-                  >
-                    {notification.msg.replace(/^@/, "").split(" ")[0]}
-                  </Link>
-                  <Text as="span" ml={{ base: 0.5, md: 1 }}>
-                    upvoted your
-                  </Text>
-                  <Link
-                    href={`/${notification.url}`}
-                    color={isNew ? "accent" : "primary"}
-                    fontWeight="bold"
-                    _hover={{ textDecoration: "underline" }}
-                    ml={{ base: 0.5, md: 1 }}
-                  >
-                    post
-                  </Link>
-                  {":"}
-                  <Text
-                    as="span"
-                    color="success"
-                    fontWeight="bold"
-                    ml={{ base: 0.5, md: 1 }}
-                  >
-                    {(() => {
-                      const match = notification.msg.match(/\(([^)]+)\)/);
-                      return match && match[1] ? `(${match[1]})` : "";
-                    })()}
-                  </Text>
-                  {/* Inline postContent preview for vote notifications */}
-                  {notification.type === "vote" && postContent && (
+        <HStack
+          w="full"
+          spacing={4}
+          align={{ base: "flex-start", md: "center" }}
+          justify="space-between"
+        >
+          <Box flex="1" minW={0}>
+            <HStack
+              spacing={{ base: 2, md: 3 }}
+              align={{ base: "flex-start", md: "center" }}
+            >
+              <Avatar
+                src={`https://images.hive.blog/u/${author}/avatar/sm`}
+                name=""
+                size={{ base: "sm", md: "xs" }}
+              />
+              <Box flex="1" minW={0}>
+                {notification.type === "follow" ? (
+                  <HStack spacing={2}>
                     <Text
-                      as="span"
-                      color="success"
-                      fontWeight="normal"
-                      ml={{ base: 0.5, md: 1 }}
-                      fontSize={{ base: "2xs", md: "xs" }}
-                    >
-                      &quot;{postContent.replace(/\n/g, " ").slice(0, 100)}
-                      {postContent.length > 100 ? "…" : ""}&quot;
-                    </Text>
-                  )}
-                  <Text
-                    as="span"
-                    fontSize={{ base: "2xs", md: "xs" }}
-                    color="muted"
-                    ml={{ base: 1, md: 2 }}
-                  >
-                    {formattedDate}
-                  </Text>
-                </Text>
-              </Box>
-            ) : notification.type === "reply_comment" ? (
-              <Box>
-                <Text
-                  color={isNew ? "accent" : "primary"}
-                  fontSize={{ base: "xs", md: "sm" }}
-                  display="flex"
-                  alignItems="center"
-                  flexWrap="wrap"
-                  noOfLines={2}
-                  wordBreak="break-word"
-                  maxW={{ base: "95vw", md: "100%" }}
-                  overflowX="hidden"
-                >
-                  <Link
-                    href={`/user/${author}`}
-                    color={isNew ? "accent" : "primary"}
-                    fontWeight="bold"
-                    _hover={{ textDecoration: "underline" }}
-                    maxW={{ base: "40vw", md: "100%" }}
-                    overflowWrap="anywhere"
-                  >
-                    {notification.msg.replace(/^@/, "").split(" ")[0]}
-                  </Link>
-                  <Text as="span" ml={{ base: 0.5, md: 1 }}>
-                    replied to your
-                  </Text>
-                  <Link
-                    href={`/${
-                      parentPost
-                        ? `@${parentPost.author}/${parentPost.permlink}`
-                        : notification.url
-                    }`}
-                    color={isNew ? "accent" : "primary"}
-                    fontWeight="bold"
-                    _hover={{ textDecoration: "underline" }}
-                    ml={{ base: 0.5, md: 1 }}
-                    maxW={{ base: "30vw", md: "100%" }}
-                    overflowWrap="anywhere"
-                  >
-                    comment
-                  </Link>
-                  {/* Inline quoted comment, small and muted */}
-                  {parentPost?.body && (
-                    <Text
-                      as="span"
-                      fontSize="xs"
-                      color="text"
-                      ml={2}
-                      isTruncated
-                      verticalAlign="middle"
-                      display="inline-block"
-                      maxW={{ base: "40vw", md: "100%" }}
-                      overflowWrap="anywhere"
-                    >
-                      {(() => {
-                        const replaced = parentPost.body
-                          .replace(/!\[.*?\]\(.*?\)/g, "🖼️")
-                          .replace(/<img[^>]*>/gi, "🖼️")
-                          .replace(/\n/g, " ");
-                        return `"${replaced.slice(0, 60)}${
-                          replaced.length > 60 ? "…" : ""
-                        }"`;
-                      })()}
-                    </Text>
-                  )}
-                  {":"}
-                </Text>
-                {/* Main reply content using HiveMarkdown */}
-                {reply && (
-                  <Box
-                    mt={1}
-                    ml={{ base: 2, md: 4 }}
-                    pl={{ base: 2, md: 3 }}
-                    pr={{ base: 2, md: 0 }}
-                    borderLeft="2px solid"
-                    borderColor="border"
-                    bg="muted"
-                    borderRadius="0"
-                    maxW={{ base: "95vw", md: "100%" }}
-                    overflowX="auto"
-                  >
-                    <HiveMarkdown
-                      markdown={postContent}
-                      className="notification-reply-comment-markdown"
-                    />
-                  </Box>
-                )}
-              </Box>
-            ) : notification.type === "mention" ? (
-              <Box>
-                <Text
-                  color={isNew ? "accent" : "primary"}
-                  fontSize={{ base: "xs", md: "sm" }}
-                  display="flex"
-                  alignItems="center"
-                  flexWrap="wrap"
-                  noOfLines={2}
-                  wordBreak="break-word"
-                >
-                  <Link
-                    href={`/user/${author}`}
-                    color={isNew ? "accent" : "primary"}
-                    fontWeight="bold"
-                    _hover={{ textDecoration: "underline" }}
-                  >
-                    {notification.msg.replace(/^@/, "").split(" ")[0]}
-                  </Link>
-                  <Text as="span" ml={{ base: 0.5, md: 1 }}>
-                    mentioned you in
-                  </Text>
-                  {parentPost?.title && (
-                    <Link
-                      href={`/${
-                        parentPost
-                          ? `@${parentPost.author}/${parentPost.permlink}`
-                          : notification.url
-                      }`}
                       color={isNew ? "accent" : "primary"}
-                      fontWeight="bold"
-                      _hover={{ textDecoration: "underline" }}
-                      ml={{ base: 0.5, md: 1 }}
+                      fontSize={{ base: "xs", md: "sm" }}
                     >
-                      {parentPost.title}
-                    </Link>
-                  )}
-                  {":"}
-                  <Text
-                    as="span"
-                    fontSize={{ base: "2xs", md: "xs" }}
-                    color="muted"
-                    ml={{ base: 1, md: 2 }}
-                  >
-                    {formattedDate}
-                  </Text>
-                </Text>
-              </Box>
-            ) : notification.type === "reply" ? (
-              <Box>
-                <Text
-                  color={isNew ? "accent" : "primary"}
-                  fontSize={{ base: "xs", md: "sm" }}
-                  display="flex"
-                  alignItems="center"
-                  flexWrap="wrap"
-                  whiteSpace="normal"
-                  wordBreak="break-word"
-                >
-                  <Link
-                    href={`/user/${author}`}
-                    color={isNew ? "accent" : "primary"}
-                    fontWeight="bold"
-                    _hover={{ textDecoration: "underline" }}
-                  >
-                    {notification.msg.replace(/^@/, "").split(" ")[0]}
-                  </Link>
-                  <Text as="span" ml={{ base: 0.5, md: 1 }}>
-                    replied to your
-                  </Text>
-                  <Link
-                    href={`/${
-                      parentPost
-                        ? `@${parentPost.author}/${parentPost.permlink}`
-                        : notification.url
-                    }`}
-                    color={isNew ? "accent" : "primary"}
-                    fontWeight="bold"
-                    _hover={{ textDecoration: "underline" }}
-                    ml={{ base: 0.5, md: 1 }}
-                  >
-                    post
-                  </Link>
-                  {":"}
-                </Text>
-                {/* Parent post preview using HiveMarkdown */}
-                {parentPost?.title && (
-                  <HiveMarkdown markdown={parentPost.title} />
-                )}
-                {/* Main reply content using HiveMarkdown */}
-                {reply && <HiveMarkdown markdown={postContent} />}
-              </Box>
-            ) : (
-              <Text
-                color={isNew ? "accent" : "primary"}
-                fontSize={{ base: "xs", md: "sm" }}
-                noOfLines={2}
-                overflow="hidden"
-                textOverflow="ellipsis"
-                wordBreak="break-word"
-              >
-                {notification.msg.replace(/^@/, "")} - {parentPost?.title}
-                {(notification.type === "reply" ||
-                  notification.type === "reply_comment") &&
-                  ` using ${originalApp}`}
-              </Text>
-            )}
-          </HStack>
-          {/* Only show post summary for non-vote, non-reblog, non-reply, non-reply_comment, non-mention notifications */}
-          {parentPost &&
-            !["vote", "reblog", "reply", "reply_comment", "mention"].includes(
-              notification.type
-            ) && (
-              <>
-                <Divider my={2} />
-                <VStack align="start" spacing={2} w="100%">
-                  {isLoading ? (
-                    <>
-                      <Skeleton
-                        height="16px"
-                        width="100%"
-                        startColor="muted"
-                        endColor="primary"
-                      />
-                      <Skeleton
-                        height="16px"
-                        width="100%"
-                        startColor="muted"
-                        endColor="primary"
-                      />
-                    </>
-                  ) : (
-                    <>
-                      <Text
-                        fontSize={{ base: "xs", md: "sm" }}
-                        color="primary"
-                        ml={{ base: 2, md: 5 }}
-                        noOfLines={3}
-                        overflow="hidden"
-                        textOverflow="ellipsis"
-                        w="100%"
-                        wordBreak="break-word"
-                      >
-                        {postContent}
+                      {notification.msg.replace(/^@/, "")}
+                    </Text>
+                    {isFollowingBack ? (
+                      <Text fontSize={{ base: "xs", md: "sm" }} color="primary">
+                        Following
                       </Text>
-                    </>
-                  )}
-                </VStack>
-              </>
-            )}
-          {/* Indent Reply and upvote to align with main text, not all the way right */}
-          {(notification.type === "reply" ||
-            notification.type === "reply_comment") && (
-            <Box mt={2} w="100%" ml={{ base: 2, md: 8 }}>
-              <Flex alignItems="center" mb={2}>
-                <Text
-                  onClick={handleReplyClick}
-                  fontSize={{ base: "xs", md: "sm" }}
-                  cursor="pointer"
-                  mr={2}
-                >
-                  Reply
-                </Text>
-                {reply ? (
-                  <Box w="50%">
-                    <UpvoteButton
-                      discussion={reply}
-                      voted={hasVoted}
-                      setVoted={(newVotedState) => {
-                        setHasVoted(newVotedState);
-                      }}
-                      activeVotes={reply.active_votes || []}
-                      setActiveVotes={(votes) => {
-                        if (reply) {
-                          setReply({ ...reply, active_votes: votes });
-                        }
-                      }}
-                      showSlider={showSlider}
-                      setShowSlider={setShowSlider}
-                      variant="withSlider"
-                      size="sm"
-                    />
+                    ) : (
+                      <Button
+                        size={{ base: "xs", md: "sm" }}
+                        onClick={handleFollowBack}
+                      >
+                        Follow Back
+                      </Button>
+                    )}
+                  </HStack>
+                ) : notification.type === "vote" ? (
+                  <Box>
+                    <Text
+                      color={isNew ? "accent" : "primary"}
+                      fontSize={{ base: "xs", md: "sm" }}
+                      display="flex"
+                      alignItems="center"
+                      flexWrap="wrap"
+                      noOfLines={2}
+                      wordBreak="break-word"
+                    >
+                      <Link
+                        href={`/user/${author}`}
+                        color={isNew ? "accent" : "primary"}
+                        fontWeight="bold"
+                        _hover={{ textDecoration: "underline" }}
+                      >
+                        {notification.msg.replace(/^@/, "").split(" ")[0]}
+                      </Link>
+                      <Text as="span" ml={{ base: 0.5, md: 1 }}>
+                        upvoted your
+                      </Text>
+                      <Link
+                        href={`/${notification.url}`}
+                        color={isNew ? "accent" : "primary"}
+                        fontWeight="bold"
+                        _hover={{ textDecoration: "underline" }}
+                        ml={{ base: 0.5, md: 1 }}
+                      >
+                        post
+                      </Link>
+                      {":"}
+                      <Text
+                        as="span"
+                        color="success"
+                        fontWeight="bold"
+                        ml={{ base: 0.5, md: 1 }}
+                      >
+                        {(() => {
+                          const match = notification.msg.match(/\(([^)]+)\)/);
+                          return match && match[1] ? `(${match[1]})` : "";
+                        })()}
+                      </Text>
+                      {notification.type === "vote" && postContent && (
+                        <Text
+                          as="span"
+                          color="success"
+                          fontWeight="normal"
+                          ml={{ base: 0.5, md: 1 }}
+                          fontSize={{ base: "2xs", md: "xs" }}
+                        >
+                          &quot;{postContent.replace(/\n/g, " ").slice(0, 100)}
+                          {postContent.length > 100 ? "…" : ""}&quot;
+                        </Text>
+                      )}
+                      <Text
+                        as="span"
+                        fontSize={{ base: "2xs", md: "xs" }}
+                        color="muted"
+                        ml={{ base: 1, md: 2 }}
+                      >
+                        {formattedDate}
+                      </Text>
+                    </Text>
+                  </Box>
+                ) : notification.type === "reply_comment" ? (
+                  <Box>
+                    <Text
+                      color={isNew ? "accent" : "primary"}
+                      fontSize={{ base: "xs", md: "sm" }}
+                      display="flex"
+                      alignItems="center"
+                      flexWrap="wrap"
+                      noOfLines={2}
+                      wordBreak="break-word"
+                      maxW={{ base: "95vw", md: "100%" }}
+                      overflowX="hidden"
+                    >
+                      <Link
+                        href={`/user/${author}`}
+                        color={isNew ? "accent" : "primary"}
+                        fontWeight="bold"
+                        _hover={{ textDecoration: "underline" }}
+                        maxW={{ base: "40vw", md: "100%" }}
+                        overflowWrap="anywhere"
+                      >
+                        {notification.msg.replace(/^@/, "").split(" ")[0]}
+                      </Link>
+                      <Text as="span" ml={{ base: 0.5, md: 1 }}>
+                        replied to your
+                      </Text>
+                      <Link
+                        href={`/${
+                          parentPost
+                            ? `@${parentPost.author}/${parentPost.permlink}`
+                            : notification.url
+                        }`}
+                        color={isNew ? "accent" : "primary"}
+                        fontWeight="bold"
+                        _hover={{ textDecoration: "underline" }}
+                        ml={{ base: 0.5, md: 1 }}
+                        maxW={{ base: "30vw", md: "100%" }}
+                        overflowWrap="anywhere"
+                      >
+                        comment
+                      </Link>
+                      {parentPost?.body && (
+                        <Text
+                          as="span"
+                          fontSize="xs"
+                          color="text"
+                          ml={2}
+                          isTruncated
+                          verticalAlign="middle"
+                          display="inline-block"
+                          maxW={{ base: "40vw", md: "100%" }}
+                          overflowWrap="anywhere"
+                        >
+                          {(() => {
+                            const replaced = parentPost.body
+                              .replace(/!\[.*?\]\(.*?\)/g, "🖼️")
+                              .replace(/<img[^>]*>/gi, "🖼️")
+                              .replace(/\n/g, " ");
+                            return `"${replaced.slice(0, 60)}${
+                              replaced.length > 60 ? "…" : ""
+                            }"`;
+                          })()}
+                        </Text>
+                      )}
+                      {":"}
+                    </Text>
+                    {reply && (
+                      <Box
+                        mt={1}
+                        ml={{ base: 2, md: 4 }}
+                        pl={{ base: 2, md: 3 }}
+                        pr={{ base: 2, md: 0 }}
+                        borderLeft="2px solid"
+                        borderColor="border"
+                        bg="muted"
+                        borderRadius="0"
+                        maxW={{ base: "95vw", md: "100%" }}
+                        overflowX="auto"
+                      >
+                        <HiveMarkdown
+                          markdown={postContent}
+                          className="notification-reply-comment-markdown"
+                        />
+                      </Box>
+                    )}
+                  </Box>
+                ) : notification.type === "mention" ? (
+                  <Box>
+                    <Text
+                      color={isNew ? "accent" : "primary"}
+                      fontSize={{ base: "xs", md: "sm" }}
+                      display="flex"
+                      alignItems="center"
+                      flexWrap="wrap"
+                      noOfLines={2}
+                      wordBreak="break-word"
+                    >
+                      <Link
+                        href={`/user/${author}`}
+                        color={isNew ? "accent" : "primary"}
+                        fontWeight="bold"
+                        _hover={{ textDecoration: "underline" }}
+                      >
+                        {notification.msg.replace(/^@/, "").split(" ")[0]}
+                      </Link>
+                      <Text as="span" ml={{ base: 0.5, md: 1 }}>
+                        mentioned you in
+                      </Text>
+                      {parentPost?.title && (
+                        <Link
+                          href={`/${
+                            parentPost
+                              ? `@${parentPost.author}/${parentPost.permlink}`
+                              : notification.url
+                          }`}
+                          color={isNew ? "accent" : "primary"}
+                          fontWeight="bold"
+                          _hover={{ textDecoration: "underline" }}
+                          ml={{ base: 0.5, md: 1 }}
+                        >
+                          {parentPost.title}
+                        </Link>
+                      )}
+                      {":"}
+                      <Text
+                        as="span"
+                        fontSize={{ base: "2xs", md: "xs" }}
+                        color="muted"
+                        ml={{ base: 1, md: 2 }}
+                      >
+                        {formattedDate}
+                      </Text>
+                    </Text>
+                  </Box>
+                ) : notification.type === "reply" ? (
+                  <Box>
+                    <Text
+                      color={isNew ? "accent" : "primary"}
+                      fontSize={{ base: "xs", md: "sm" }}
+                      display="flex"
+                      alignItems="center"
+                      flexWrap="wrap"
+                      whiteSpace="normal"
+                      wordBreak="break-word"
+                    >
+                      <Link
+                        href={`/user/${author}`}
+                        color={isNew ? "accent" : "primary"}
+                        fontWeight="bold"
+                        _hover={{ textDecoration: "underline" }}
+                      >
+                        {notification.msg.replace(/^@/, "").split(" ")[0]}
+                      </Link>
+                      <Text as="span" ml={{ base: 0.5, md: 1 }}>
+                        replied to your
+                      </Text>
+                      <Link
+                        href={`/${
+                          parentPost
+                            ? `@${parentPost.author}/${parentPost.permlink}`
+                            : notification.url
+                        }`}
+                        color={isNew ? "accent" : "primary"}
+                        fontWeight="bold"
+                        _hover={{ textDecoration: "underline" }}
+                        ml={{ base: 0.5, md: 1 }}
+                      >
+                        post
+                      </Link>
+                      {":"}
+                    </Text>
+                    {parentPost?.title && (
+                      <HiveMarkdown markdown={parentPost.title} />
+                    )}
+                    {reply && <HiveMarkdown markdown={postContent} />}
                   </Box>
                 ) : (
-                  <Text fontSize="xs" color="muted">
-                    Loading...
+                  <Text
+                    color={isNew ? "accent" : "primary"}
+                    fontSize={{ base: "xs", md: "sm" }}
+                    noOfLines={2}
+                    overflow="hidden"
+                    textOverflow="ellipsis"
+                    wordBreak="break-word"
+                  >
+                    {notification.msg.replace(/^@/, "")} - {parentPost?.title}
+                    {(notification.type === "reply" ||
+                      notification.type === "reply_comment") &&
+                      ` using ${originalApp}`}
                   </Text>
                 )}
-              </Flex>
+              </Box>
+            </HStack>
+            {parentPost &&
+              !["vote", "reblog", "reply", "reply_comment", "mention"].includes(
+                notification.type
+              ) && (
+                <>
+                  <Divider my={2} />
+                  <VStack align="start" spacing={2} w="100%">
+                    {isLoading ? (
+                      <>
+                        <Skeleton
+                          height="16px"
+                          width="100%"
+                          startColor="muted"
+                          endColor="primary"
+                        />
+                        <Skeleton
+                          height="16px"
+                          width="100%"
+                          startColor="muted"
+                          endColor="primary"
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <Text
+                          fontSize={{ base: "xs", md: "sm" }}
+                          color="primary"
+                          ml={{ base: 2, md: 5 }}
+                          noOfLines={3}
+                          overflow="hidden"
+                          textOverflow="ellipsis"
+                          w="100%"
+                          wordBreak="break-word"
+                        >
+                          {postContent}
+                        </Text>
+                      </>
+                    )}
+                  </VStack>
+                </>
+              )}
+            {(notification.type === "reply" ||
+              notification.type === "reply_comment") && (
+              <Box mt={2} w="100%" ml={{ base: 2, md: 8 }}>
+                <Flex alignItems="center" mb={2}>
+                  <Text
+                    onClick={handleReplyClick}
+                    fontSize={{ base: "xs", md: "sm" }}
+                    cursor="pointer"
+                    mr={2}
+                  >
+                    Reply
+                  </Text>
+                  {reply ? (
+                    <Box w="50%">
+                      <UpvoteButton
+                        discussion={reply}
+                        voted={hasVoted}
+                        setVoted={(newVotedState) => {
+                          setHasVoted(newVotedState);
+                        }}
+                        activeVotes={reply.active_votes || []}
+                        setActiveVotes={(votes) => {
+                          if (reply) {
+                            setReply({ ...reply, active_votes: votes });
+                          }
+                        }}
+                        showSlider={showSlider}
+                        setShowSlider={setShowSlider}
+                        variant="withSlider"
+                        size="sm"
+                      />
+                    </Box>
+                  ) : (
+                    <Text fontSize="xs" color="muted">
+                      Loading...
+                    </Text>
+                  )}
+                </Flex>
+              </Box>
+            )}
+          </Box>
+          {(videoPreviewUrl || magPostThumbnail) && (
+            <Box
+              w={{ base: "96px", md: "120px" }}
+              h={{ base: "64px", md: "80px" }}
+              borderRadius="base"
+              overflow="hidden"
+              border="1px solid"
+              borderColor="border"
+              bg="background"
+              flexShrink={0}
+              position="relative"
+            >
+              <Image
+                src={videoPreviewUrl || magPostThumbnail}
+                alt="Notification preview"
+                objectFit="cover"
+                w="100%"
+                h="100%"
+                loading="lazy"
+              />
+              {videoPreviewUrl && (
+                <Box
+                  position="absolute"
+                  inset={0}
+                  bg="rgba(0, 0, 0, 0.35)"
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                >
+                  <FaPlay color="white" size={18} />
+                </Box>
+              )}
             </Box>
           )}
-        </Box>
-        {/* No thumbnail for reply notifications */}
-      </HStack>
+          {!videoPreviewUrl && !magPostThumbnail && (
+            <Box
+              w={{ base: "96px", md: "120px" }}
+              h={{ base: "64px", md: "80px" }}
+              borderRadius="base"
+              border="1px solid"
+              borderColor="border"
+              bg="muted"
+              flexShrink={0}
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+            >
+              <Icon as={FaFileAlt} color="muted" boxSize={5} />
+            </Box>
+          )}
+        </HStack>
       {displayCommentPrompt && (
         <Box mt={2}>
           {/* Show replies first */}
@@ -742,6 +824,7 @@ export default function NotificationItem({
           />
         </Box>
       )}
+      </HStack>
     </div>
   );
 }

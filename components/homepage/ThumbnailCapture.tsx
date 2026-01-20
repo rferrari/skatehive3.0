@@ -30,7 +30,7 @@ const ThumbnailCapture: React.FC<ThumbnailCaptureProps> = ({
         <Box
           width="200px"
           height="112px"
-          borderRadius="md"
+          borderRadius="none"
           overflow="hidden"
           border="2px solid"
           borderColor="green.500"
@@ -51,7 +51,7 @@ const ThumbnailCapture: React.FC<ThumbnailCaptureProps> = ({
         <Box
           width="200px"
           height="112px"
-          borderRadius="md"
+          borderRadius="none"
           border="2px dashed"
           borderColor="gray.500"
           display="flex"

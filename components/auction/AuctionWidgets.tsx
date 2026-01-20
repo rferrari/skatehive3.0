@@ -68,7 +68,7 @@ export function QuickBidWidget() {
             src={auction.token.image}
             alt={auction.token.name}
             boxSize="64px"
-            borderRadius="md"
+            borderRadius="none"
             objectFit="cover"
           />
           <VStack align="start" spacing={1}>

@@ -324,7 +324,7 @@ export default function Composer() {
               borderBottomColor={
                 activeSettingsTab === "captions" ? "background" : "muted"
               }
-              borderRadius="md"
+              borderRadius="none"
               borderBottomRadius={0}
               borderRightRadius={0}
               bg={
@@ -358,7 +358,7 @@ export default function Composer() {
             borderBottomColor={
               activeSettingsTab === "beneficiaries" ? "background" : "muted"
             }
-            borderRadius="md"
+            borderRadius="none"
             borderBottomRadius={0}
             borderRightRadius={imagesInMarkdown.length === 0 ? 0 : 0}
             borderLeftRadius={imagesInMarkdown.length > 0 ? 0 : "md"}
@@ -396,7 +396,7 @@ export default function Composer() {
             borderBottomColor={
               activeSettingsTab === "thumbnail" ? "background" : "muted"
             }
-            borderRadius="md"
+            borderRadius="none"
             borderBottomRadius={0}
             borderLeftRadius={0}
             bg={
@@ -429,7 +429,7 @@ export default function Composer() {
                     maxW="120px"
                     maxH="80px"
                     objectFit="cover"
-                    borderRadius="md"
+                    borderRadius="none"
                     border="1px solid"
                     borderColor="muted"
                   />

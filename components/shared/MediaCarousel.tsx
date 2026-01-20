@@ -189,7 +189,7 @@ function renderMediaItem(
             alignItems="center"
             justifyContent="center"
             bg={isCarouselMode ? "rgba(0,0,0,0.05)" : "transparent"}
-            borderRadius="md"
+            borderRadius="none"
             overflow="hidden"
           >
             <Box
@@ -220,7 +220,7 @@ function renderMediaItem(
           alignItems="center"
           justifyContent="center"
           bg={isCarouselMode ? "black" : "transparent"}
-          borderRadius="md"
+          borderRadius="none"
         >
           {isCarouselMode ? (
             <Box

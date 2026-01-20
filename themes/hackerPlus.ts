@@ -54,7 +54,7 @@ const hackerPlusTheme = extendTheme({
   borders: {
     tb1: '1px solid #A8FF60',
     tb2: '2px solid #FFD700',
-    borderRadius: '6px',
+    borderRadius: '0px',
   },
   shadows: {
     xs: '0 0 2px 0 rgba(168, 255, 96, 0.3)',
@@ -70,7 +70,7 @@ const hackerPlusTheme = extendTheme({
       baseStyle: {
         fontWeight: 'bold',
         textTransform: 'uppercase',
-        borderRadius: 'md',
+        borderRadius: 'none',
       },
       variants: {
         solid: {

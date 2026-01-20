@@ -36,7 +36,7 @@ export default function ThumbnailPicker({
               selectedThumbnail === url ? "2px solid" : "2px solid transparent"
             }
             borderColor={selectedThumbnail === url ? "accent" : "transparent"}
-            borderRadius="md"
+            borderRadius="none"
             overflow="hidden"
             cursor="pointer"
             onClick={() => setSelectedThumbnail(url)}
@@ -62,7 +62,7 @@ export default function ThumbnailPicker({
               selectedThumbnail === url ? "2px solid" : "2px solid transparent"
             }
             borderColor={selectedThumbnail === url ? "accent" : "transparent"}
-            borderRadius="md"
+            borderRadius="none"
             overflow="hidden"
             cursor="pointer"
             onClick={() => setSelectedThumbnail(url)}

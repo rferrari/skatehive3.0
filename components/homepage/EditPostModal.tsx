@@ -88,7 +88,7 @@ const EditPostModal = ({
               width="100%"
               p={4}
               bg={mutedColor}
-              borderRadius="md"
+              borderRadius="none"
               border="1px solid"
               borderColor={mutedColor}
             >

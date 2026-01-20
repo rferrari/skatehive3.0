@@ -126,7 +126,7 @@ export function ConfirmationStep({
             <Box
               p={4}
               bg="cardBg"
-              borderRadius="md"
+              borderRadius="none"
               border="1px solid"
               borderColor="border"
             >

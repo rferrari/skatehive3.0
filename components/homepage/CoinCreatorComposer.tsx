@@ -315,7 +315,7 @@ ${zoraUrl}
                   maxW="300px"
                   maxH="300px"
                   objectFit="cover"
-                  borderRadius="md"
+                  borderRadius="none"
                   border="2px solid"
                   borderColor="green.300"
                   mx="auto"

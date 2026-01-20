@@ -169,7 +169,7 @@ const MobileProfileHeader = memo(function MobileProfileHeader({
                   fontSize="xs"
                   px={2}
                   py={1}
-                  borderRadius="md"
+                  borderRadius="none"
                 >
                   Follows you
                 </Badge>
@@ -189,7 +189,7 @@ const MobileProfileHeader = memo(function MobileProfileHeader({
                   fontWeight="bold"
                   px={3}
                   py={1}
-                  borderRadius="md"
+                  borderRadius="none"
                   _hover={{
                     bg: isFollowing ? "whiteAlpha.200" : undefined,
                   }}

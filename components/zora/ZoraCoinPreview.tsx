@@ -210,7 +210,7 @@ export default function ZoraCoinPreview({ address }: ZoraCoinPreviewProps) {
       <Box 
         border="1px" 
         borderColor="gray.600" 
-        borderRadius="md" 
+        borderRadius="none" 
         p={3} 
         my={4}
       >
@@ -238,7 +238,7 @@ export default function ZoraCoinPreview({ address }: ZoraCoinPreviewProps) {
       <Box
         border="1px"
         borderColor="gray.600"
-        borderRadius="md"
+        borderRadius="none"
         p={3}
         my={4}
         overflow="hidden"
@@ -267,7 +267,7 @@ export default function ZoraCoinPreview({ address }: ZoraCoinPreviewProps) {
                 src={token.image}
                 alt={token.name}
                 width="full"
-                borderRadius="md"
+                borderRadius="none"
               />
             ) : null}
           </VStack>
@@ -311,7 +311,7 @@ export default function ZoraCoinPreview({ address }: ZoraCoinPreviewProps) {
             size="sm"
             onClick={onOpen}
             variant="solid"
-            borderRadius="md"
+            borderRadius="none"
             _hover={{ transform: "scale(1.05)" }}
             transition="all 0.2s"
             width={{ base: "full", md: "auto" }}

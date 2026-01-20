@@ -474,7 +474,7 @@ export default function BountyList({
             bg="transparent"
             border="1px solid"
             borderColor="gray.600"
-            borderRadius="md"
+            borderRadius="none"
             width="100%"
             sx={{
               overflowX: { base: "auto", md: "visible" },

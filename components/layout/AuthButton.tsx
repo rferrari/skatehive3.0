@@ -302,6 +302,7 @@ export default function AuthButton() {
         bg="background"
         border="1px solid"
         borderColor="border"
+        borderRadius={0}
         w="full"
         mt="auto"
         mb={8}

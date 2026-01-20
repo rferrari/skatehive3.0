@@ -95,7 +95,7 @@ const ProfileDiffTable: React.FC<ProfileDiffTableProps> = ({ diff }) => {
         <Code 
           fontSize="xs" 
           p={2} 
-          borderRadius="md" 
+          borderRadius="none" 
           maxW="250px" 
           maxH="100px"
           overflow="auto"
@@ -161,7 +161,7 @@ const ProfileDiffTable: React.FC<ProfileDiffTableProps> = ({ diff }) => {
 
       {/* Changes Table */}
       <Box 
-        borderRadius="md" 
+        borderRadius="none" 
         overflow="hidden" 
         border="1px" 
         borderColor="border"

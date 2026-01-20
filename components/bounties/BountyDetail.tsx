@@ -195,7 +195,7 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
         <Box
           position="relative"
           p={4}
-          borderRadius="md"
+          borderRadius="none"
           bg="gray.800"
           textAlign="center"
           height="150px"
@@ -467,7 +467,7 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
                       gap={2}
                       bg="muted"
                       p={2}
-                      borderRadius="md"
+                      borderRadius="none"
                       border="1px solid"
                       borderColor="border"
                       flex="0 0 calc(50% - 6px)"

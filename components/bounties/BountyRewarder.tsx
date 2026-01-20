@@ -432,7 +432,7 @@ const BountyRewarder: React.FC<BountyRewarderProps> = ({
                   p={2}
                   border="1px solid"
                   borderColor="border"
-                  borderRadius="md"
+                  borderRadius="none"
                   bg="background"
                 >
                   <HStack spacing={3} align="center">

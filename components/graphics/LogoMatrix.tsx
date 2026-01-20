@@ -145,7 +145,7 @@ const LogoMatrix = () => {
           textAlign="center"
           fontFamily="'Joystix', monospace"
           p={[2, 3, 4]}
-          borderRadius="md"
+          borderRadius="none"
           opacity={messageVisible ? 1 : 0}
           transition="opacity 0.4s"
           maxW={["90vw", "80vw", "50vw", "40vw"]}

@@ -308,7 +308,7 @@ export default function SearchOverlay({
       <ModalOverlay bg="blackAlpha.600" />
       <ModalContent
         bg="background"
-        borderRadius="lg"
+        borderRadius="none"
         border="1px solid"
         borderColor="accent"
         maxW="500px"

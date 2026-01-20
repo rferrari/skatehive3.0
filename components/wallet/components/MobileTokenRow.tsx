@@ -71,7 +71,7 @@ export default function MobileTokenRow({
                     fontWeight="500"
                     px={1.5}
                     py={0.5}
-                    borderRadius="md"
+                    borderRadius="none"
                   >
                     {consolidatedToken.chains.length}
                   </Badge>

@@ -597,7 +597,7 @@ const SnapModal = ({
                         <Box
                           key={`optimistic-${index}`}
                           p={2}
-                          borderRadius="md"
+                          borderRadius="none"
                           bg="muted"
                           opacity={0.8}
                           borderLeft="3px solid"
@@ -616,7 +616,7 @@ const SnapModal = ({
                         <Box
                           key={comment.permlink || index}
                           p={2}
-                          borderRadius="md"
+                          borderRadius="none"
                           bg="muted"
                         >
                           <Snap

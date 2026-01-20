@@ -223,7 +223,7 @@ export function AuctionBid({
           opacity={0.1}
           border="1px solid"
           borderColor="error"
-          borderRadius="md"
+          borderRadius="none"
           py={3}
         >
           <AlertIcon color="error" />
@@ -370,7 +370,7 @@ export function AuctionBid({
         bg="background"
         border="1px solid"
         borderColor="border"
-        borderRadius="md"
+        borderRadius="none"
         overflowY="auto"
         maxH={{ base: "200px", md: "300px" }}
         sx={{
@@ -432,7 +432,7 @@ export function AuctionBid({
                   py={{ base: 2, md: 3 }}
                   mx={{ base: 1, md: 2 }}
                   mb={1}
-                  borderRadius="md"
+                  borderRadius="none"
                   transition="all 0.2s ease"
                   _hover={{
                     bg: "background",

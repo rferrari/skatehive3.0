@@ -99,7 +99,7 @@ const OpenGraphPreview: React.FC<OpenGraphPreviewProps> = ({ url }) => {
         <Box
           border="1px solid"
           borderColor="gray.200"
-          borderRadius="md"
+          borderRadius="none"
           overflow="hidden"
           width="400px"
           minW="300px"
@@ -126,7 +126,7 @@ const OpenGraphPreview: React.FC<OpenGraphPreviewProps> = ({ url }) => {
         <Box
           border="1px solid"
           borderColor="gray.200"
-          borderRadius="md"
+          borderRadius="none"
           overflow="hidden"
           width="400px"
           minW="400px"

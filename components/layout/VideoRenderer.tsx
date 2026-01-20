@@ -487,7 +487,7 @@ const VideoRenderer = ({ src, skipThumbnailLoad, ...props }: RendererProps) => {
             alignItems="center"
             justifyContent="center"
             bg="gray.800"
-            borderRadius="md"
+            borderRadius="none"
           >
             <Text color="gray.400" fontSize="sm" textAlign="center">
               Video failed to load

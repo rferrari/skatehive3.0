@@ -420,7 +420,7 @@ export default function PostCard({
                 w="auto"
                 bg="gray.800"
                 color="white"
-                borderRadius="md"
+                borderRadius="none"
                 boxShadow="lg"
                 p={2}
               >
@@ -857,7 +857,7 @@ export default function PostCard({
                   aria-label="Payout details"
                   bg="background"
                   color="primary"
-                  borderRadius="md"
+                  borderRadius="none"
                   p={2}
                   hasArrow
                   placement="top"

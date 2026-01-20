@@ -120,7 +120,7 @@ export const PinataTab = ({
                                     key={cid}
                                     p={3}
                                     bg={bgColor}
-                                    borderRadius="md"
+                                    borderRadius="none"
                                     border="1px solid"
                                     borderColor={borderColor}
                                 >

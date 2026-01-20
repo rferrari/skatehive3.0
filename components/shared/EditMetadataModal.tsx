@@ -223,7 +223,7 @@ export function EditMetadataModal({
                     <Image
                       src={imageUrl}
                       alt="Preview"
-                      borderRadius="md"
+                      borderRadius="none"
                       objectFit="cover"
                     />
                   </AspectRatio>

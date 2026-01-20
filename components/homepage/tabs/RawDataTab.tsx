@@ -33,7 +33,7 @@ export const RawDataTab = ({ comment }: RawDataTabProps) => {
                     <Box
                         p={4}
                         bg={codeBg}
-                        borderRadius="md"
+                        borderRadius="none"
                         overflowX="auto"
                         maxH="400px"
                         overflowY="auto"
@@ -56,7 +56,7 @@ export const RawDataTab = ({ comment }: RawDataTabProps) => {
                     <Box
                         p={4}
                         bg={codeBg}
-                        borderRadius="md"
+                        borderRadius="none"
                         overflowX="auto"
                         maxH="400px"
                         overflowY="auto"

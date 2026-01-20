@@ -578,7 +578,7 @@ SkateHive Team 🛹
               <Box
                 bg="blue.900"
                 p={3}
-                borderRadius="md"
+                borderRadius="none"
                 border="1px solid"
                 borderColor="blue.400"
               >
@@ -619,7 +619,7 @@ SkateHive Team 🛹
             <Box
               bg="gray.800"
               p={4}
-              borderRadius="md"
+              borderRadius="none"
               border="2px solid"
               borderColor="yellow.400"
             >
@@ -745,7 +745,7 @@ SkateHive Team 🛹
             <Box
               bg="red.900"
               p={3}
-              borderRadius="md"
+              borderRadius="none"
               border="1px solid"
               borderColor="red.400"
             >
@@ -786,7 +786,7 @@ SkateHive Team 🛹
               <Box
                 bg={statusMsg.includes("✅") ? "green.900" : "blue.900"}
                 p={3}
-                borderRadius="md"
+                borderRadius="none"
                 border="1px solid"
                 borderColor={
                   statusMsg.includes("✅") ? "green.400" : "blue.400"
@@ -940,7 +940,7 @@ SkateHive Team 🛹
           border="1px solid"
           borderColor={`${getStatusColor()}.400`}
           p={3}
-          borderRadius="md"
+          borderRadius="none"
         >
           <Flex align="center" justify="space-between">
             <Text
@@ -993,7 +993,7 @@ SkateHive Team 🛹
           <Box
             bg="red.900"
             p={3}
-            borderRadius="md"
+            borderRadius="none"
             border="1px solid"
             borderColor="red.400"
           >

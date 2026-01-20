@@ -221,7 +221,7 @@ export default function TokenSearchModal({
                         key={`${token.symbol}-${token.type}-${index}`}
                         p={3}
                         bg="muted"
-                        borderRadius="md"
+                        borderRadius="none"
                         cursor="pointer"
                         _hover={{ bg: "hover" }}
                         onClick={() => handleTokenClick(token)}
@@ -287,7 +287,7 @@ export default function TokenSearchModal({
                           key={`${token.token.symbol}-${index}`}
                           p={3}
                           bg="muted"
-                          borderRadius="md"
+                          borderRadius="none"
                           cursor="pointer"
                           _hover={{ bg: "hover" }}
                           onClick={() => handleTokenClick(token)}

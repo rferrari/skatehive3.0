@@ -162,7 +162,7 @@ export function CoverStep({
         justifyContent="center"
         p={6}
         bg="muted"
-        borderRadius="md"
+        borderRadius="none"
         border="1px solid"
         borderColor="primary"
         minH="400px"
@@ -185,7 +185,7 @@ export function CoverStep({
                 alt="Coin Card Preview"
                 maxW="250px"
                 maxH="375px"
-                borderRadius="md"
+                borderRadius="none"
               />
               <Badge
                 position="absolute"
@@ -230,7 +230,7 @@ export function CoverStep({
         <Box
           p={4}
           bg="muted"
-          borderRadius="md"
+          borderRadius="none"
           border="1px solid"
           borderColor="primary"
         >
@@ -302,7 +302,7 @@ export function CoverStep({
                             ? theme.colors.primary
                             : "transparent"
                         }
-                        borderRadius="md"
+                        borderRadius="none"
                         cursor="pointer"
                         transition="all 0.2s"
                         _hover={{

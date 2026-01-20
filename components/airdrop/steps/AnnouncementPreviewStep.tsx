@@ -156,7 +156,7 @@ export function AnnouncementPreviewStep({
             <Box
               p={4}
               bg="cardBg"
-              borderRadius="md"
+              borderRadius="none"
               border="1px solid"
               borderColor="border"
             >
@@ -173,7 +173,7 @@ export function AnnouncementPreviewStep({
                 alt="Network visualization"
                 maxH="200px"
                 objectFit="contain"
-                borderRadius="md"
+                borderRadius="none"
                 border="1px solid"
                 borderColor="border"
               />
@@ -226,7 +226,7 @@ export function AnnouncementPreviewStep({
         <Box
           p={4}
           bg="cardBg"
-          borderRadius="md"
+          borderRadius="none"
           border="1px solid"
           borderColor="border"
         >

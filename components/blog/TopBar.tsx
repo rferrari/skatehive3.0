@@ -71,7 +71,7 @@ export default function TopBar({
             fontWeight="bold"
             px={6}
             py={2}
-            borderRadius="md"
+            borderRadius="none"
             boxShadow="0 2px 8px var(--chakra-colors-primary-alpha)"
             _hover={{
               borderColor: "primary",
@@ -106,7 +106,7 @@ export default function TopBar({
           fontWeight="bold"
           px={6}
           py={2}
-          borderRadius="md"
+          borderRadius="none"
           boxShadow="0 2px 8px var(--chakra-colors-primary-alpha)"
           display={{ base: "none", md: "flex" }}
           _hover={{

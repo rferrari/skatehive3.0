@@ -56,7 +56,7 @@ export default function FarcasterUniversalWallet({
         <Box
           p={3}
           bg="gray.50"
-          borderRadius="md"
+          borderRadius="none"
           border="1px solid"
           borderColor="gray.200"
         >
@@ -120,7 +120,7 @@ export default function FarcasterUniversalWallet({
                 <Box
                   p={3}
                   bg="purple.50"
-                  borderRadius="md"
+                  borderRadius="none"
                   border="1px solid"
                   borderColor="purple.200"
                   w="full"

@@ -142,7 +142,7 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({
       <Box
         border="1px"
         borderColor="primary"
-        borderRadius="md"
+        borderRadius="none"
         overflow="hidden"
         maxWidth="400px"
         mx="auto"
@@ -228,7 +228,7 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({
               alt="Selected thumbnail"
               maxH="120px"
               mx="auto"
-              borderRadius="md"
+              borderRadius="none"
               border="1px"
               borderColor="primary"
             />

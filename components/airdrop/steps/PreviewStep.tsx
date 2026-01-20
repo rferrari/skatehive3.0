@@ -235,7 +235,7 @@ export function PreviewStep({
                     bg="blackAlpha.700"
                     px={2}
                     py={1}
-                    borderRadius="md"
+                    borderRadius="none"
                     whiteSpace="nowrap"
                   >
                     {user.hive_author}
@@ -408,7 +408,7 @@ export function PreviewStep({
                   key={user.hive_author + index}
                   p={3}
                   bg="cardBg"
-                  borderRadius="md"
+                  borderRadius="none"
                   border="1px solid"
                   borderColor="border"
                   justify="space-between"
@@ -465,7 +465,7 @@ export function PreviewStep({
                 p={3}
                 bg="blue.50"
                 _dark={{ bg: "blue.900" }}
-                borderRadius="md"
+                borderRadius="none"
                 border="1px solid"
                 borderColor="blue.200"
               >
@@ -499,7 +499,7 @@ export function PreviewStep({
                 p={3}
                 bg="green.50"
                 _dark={{ bg: "green.900" }}
-                borderRadius="md"
+                borderRadius="none"
                 border="1px solid"
                 borderColor="green.200"
               >
@@ -519,7 +519,7 @@ export function PreviewStep({
                 p={3}
                 bg="yellow.50"
                 _dark={{ bg: "yellow.900" }}
-                borderRadius="md"
+                borderRadius="none"
                 border="1px solid"
                 borderColor="yellow.200"
               >
@@ -541,7 +541,7 @@ export function PreviewStep({
               <Box
                 border="1px solid"
                 borderColor="border"
-                borderRadius="md"
+                borderRadius="none"
                 overflow="hidden"
                 bg="transparent"
                 position="relative"
@@ -614,7 +614,7 @@ export function PreviewStep({
           <Box
             bg="cardBg"
             p={3}
-            borderRadius="md"
+            borderRadius="none"
             border="1px solid"
             borderColor="border"
           >

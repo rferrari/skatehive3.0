@@ -128,7 +128,7 @@ export function WalletDistributionChart({
         <Box
           bg={theme.colors.background}
           p={3}
-          borderRadius="md"
+          borderRadius="none"
           border="1px solid"
           borderColor={theme.colors.border}
           boxShadow="2xl"

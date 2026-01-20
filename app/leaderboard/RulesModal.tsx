@@ -53,7 +53,7 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
               mb={4}
               fontSize="sm"
               color="primary"
-              borderRadius="md"
+              borderRadius="none"
               overflow="hidden"
               style={{ borderCollapse: "collapse" }}
             >
@@ -170,7 +170,7 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
             <Box
               bg="muted"
               color="primary"
-              borderRadius="md"
+              borderRadius="none"
               p={3}
               fontSize="sm"
               mb={4}
@@ -190,7 +190,7 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
               <Box
                 bg="accent"
                 color="background"
-                borderRadius="md"
+                borderRadius="none"
                 p={2}
                 fontSize="xs"
                 fontFamily="mono"
@@ -211,7 +211,7 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
             <Box
               bg="accent"
               color="background"
-              borderRadius="md"
+              borderRadius="none"
               p={3}
               fontSize="sm"
               fontFamily="mono"

@@ -33,7 +33,7 @@ export default function PageResult({
       <HStack spacing={3}>
         <Box
           p={2}
-          borderRadius="md"
+          borderRadius="none"
           bg={highlightedIndex === index ? "primary" : "accent"}
           color={highlightedIndex === index ? "muted" : "background"}
         >

@@ -349,7 +349,7 @@ function PIXForm({ pixDashboardData, language }: PIXFormProps) {
             p={3}
             border="1px solid"
             borderColor="muted"
-            borderRadius="md"
+            borderRadius="none"
             backgroundImage="url('/images/brl.webp')"
             backgroundSize="cover"
             backgroundPosition="left"
@@ -429,7 +429,7 @@ function BalanceBarGraph({ data }: { data: PixDashboardData }) {
       <HStack
         h="24px"
         w="100%"
-        borderRadius="md"
+        borderRadius="none"
         overflow="hidden"
         border="1px solid"
         borderColor="muted"

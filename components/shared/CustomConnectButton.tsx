@@ -117,7 +117,7 @@ export function CustomConnectButton({
                     borderColor="error"
                     _hover={{ bg: "error", opacity: 0.8 }}
                     {...getButtonSize()}
-                    borderRadius="md"
+                    borderRadius="none"
                     fontWeight="medium"
                     border="1px solid"
                   >
@@ -136,7 +136,7 @@ export function CustomConnectButton({
                       size="sm"
                       color="text"
                       _hover={{ bg: "muted" }}
-                      borderRadius="md"
+                      borderRadius="none"
                       minW="auto"
                       px={2}
                       h="32px"

@@ -87,7 +87,7 @@ const ZoraProfileCoinDisplay = memo(function ZoraProfileCoinDisplay({
         align="center"
         p={size === "xs" ? 0.5 : size === "sm" ? 1 : 2}
         bg={size === "xs" ? "transparent" : "whiteAlpha.100"}
-        borderRadius="md"
+        borderRadius="none"
         border={size === "xs" ? "none" : "1px solid"}
         borderColor={size === "xs" ? "transparent" : "whiteAlpha.200"}
       >

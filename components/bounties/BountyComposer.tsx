@@ -328,7 +328,7 @@ export default function BountyComposer({
               color="text"
               borderWidth="1px"
               borderColor="muted"
-              borderRadius="md"
+              borderRadius="none"
               _hover={{ borderColor: "primary" }}
               _focus={{ borderColor: "primary", boxShadow: "outline" }}
             />
@@ -385,7 +385,7 @@ export default function BountyComposer({
                       alt={img.fileName}
                       boxSize="80px"
                       objectFit="cover"
-                      borderRadius="md"
+                      borderRadius="none"
                       borderWidth="2px"
                       borderColor="primary"
                     />
@@ -415,7 +415,7 @@ export default function BountyComposer({
                   src={videoUrl}
                   controls
                   maxW="100%"
-                  borderRadius="md"
+                  borderRadius="none"
                 />
               </Box>
             )}
@@ -444,7 +444,7 @@ export default function BountyComposer({
                 color="text"
                 borderWidth="1px"
                 borderColor="muted"
-                borderRadius="md"
+                borderRadius="none"
                 _hover={{ borderColor: "primary" }}
                 _focus={{ borderColor: "primary", boxShadow: "outline" }}
                 isDisabled={isLoading}

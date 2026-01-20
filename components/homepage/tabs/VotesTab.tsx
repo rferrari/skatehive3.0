@@ -32,7 +32,7 @@ export const VotesTab = ({ comment }: VotesTabProps) => {
                                 key={i}
                                 p={2}
                                 bg={codeBg}
-                                borderRadius="md"
+                                borderRadius="none"
                                 mb={1}
                                 justify="space-between"
                             >

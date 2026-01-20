@@ -531,7 +531,7 @@ const Conversation = ({
                     color="primary"
                     px={2}
                     py={0.5}
-                    borderRadius="md"
+                    borderRadius="none"
                     fontSize="xs"
                   >
                     author

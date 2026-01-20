@@ -276,7 +276,7 @@ export default function HiveUsernameInput({
           bg={suggestionBg}
           border="1px solid"
           borderColor={borderColor}
-          borderRadius="md"
+          borderRadius="none"
           boxShadow={shadowColor}
           mt={1}
           maxHeight="200px"

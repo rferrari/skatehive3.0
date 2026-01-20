@@ -249,7 +249,7 @@ export default function ConnectionModal({
                 p={4}
                 border="1px solid"
                 borderColor="border"
-                borderRadius="md"
+                borderRadius="none"
               >
                 <HStack spacing={3}>
                   <Icon
@@ -289,7 +289,7 @@ export default function ConnectionModal({
                         hasArrow
                         bg="gray.800"
                         color="white"
-                        borderRadius="md"
+                        borderRadius="none"
                         p={3}
                         maxW="300px"
                       >

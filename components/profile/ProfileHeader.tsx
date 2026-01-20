@@ -97,7 +97,7 @@ const ProfileHeader = function ProfileHeader({
                   cursor="pointer"
                   onClick={() => setShowZoraProfile(false)}
                   p={1.5}
-                  borderRadius="md"
+                  borderRadius="none"
                   bg={!showZoraProfile ? "primary" : "whiteAlpha.200"}
                   border="1px solid"
                   borderColor={!showZoraProfile ? "primary" : "whiteAlpha.300"}
@@ -123,7 +123,7 @@ const ProfileHeader = function ProfileHeader({
                   cursor="pointer"
                   onClick={() => setShowZoraProfile(true)}
                   p={1.5}
-                  borderRadius="md"
+                  borderRadius="none"
                   bg={showZoraProfile ? "primary" : "whiteAlpha.200"}
                   border="1px solid"
                   borderColor={showZoraProfile ? "primary" : "whiteAlpha.300"}

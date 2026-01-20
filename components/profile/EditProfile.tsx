@@ -576,7 +576,7 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
                   bg="gray.100"
                   _dark={{ bg: "gray.700" }}
                   p={2}
-                  borderRadius="md"
+                  borderRadius="none"
                   wordBreak="break-all"
                   flex={1}
                 >

@@ -89,7 +89,6 @@ const SnapComposer = React.memo(function SnapComposer({
   >([]);
 
   const imageUploadInputRef = useRef<HTMLInputElement>(null);
-  const videoUploadInputRef = useRef<HTMLInputElement>(null);
 
   // GIF maker state and refs (direct integration)
   const [isGifMakerOpen, setGifMakerOpen] = useState(false);
@@ -777,13 +776,13 @@ const SnapComposer = React.memo(function SnapComposer({
           )}
 
           <HStack justify="space-between" mb={0}>
-            <HStack>
-              {/* Image Upload Button */}
+            <HStack spacing={3} align="center" wrap="nowrap">
+              {/* Media Upload Button */}
               <Box position="relative">
                 <IconButton
-                  id="snap-composer-image-upload-btn"
-                  data-testid="snap-composer-image-upload"
-                  aria-label="Upload Image"
+                  id="snap-composer-media-upload-btn"
+                  data-testid="snap-composer-media-upload"
+                  aria-label="Upload Media"
                   icon={
                     <FaImage color="var(--chakra-colors-primary)" size={22} />
                   }
@@ -794,6 +793,7 @@ const SnapComposer = React.memo(function SnapComposer({
                   height="48px"
                   width="48px"
                   p={0}
+                  mr={0}
                   display="flex"
                   alignItems="center"
                   justifyContent="center"
@@ -806,19 +806,19 @@ const SnapComposer = React.memo(function SnapComposer({
                 />
                 <input
                   type="file"
-                  accept=".jpg,.jpeg,.png,.heic,.gif,.webp"
+                  accept=".jpg,.jpeg,.png,.heic,.gif,.webp,video/*"
                   style={{ display: "none" }}
                   ref={imageUploadInputRef}
-                  onChange={handleUnifiedImageUpload}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (!file) return;
+                    if (file.type.startsWith("video/")) {
+                      handleVideoUpload(event);
+                    } else {
+                      handleUnifiedImageUpload(event);
+                    }
+                  }}
                   multiple
-                />
-                {/* Hidden Video Upload Input */}
-                <input
-                  type="file"
-                  accept="video/*"
-                  style={{ display: "none" }}
-                  ref={videoUploadInputRef}
-                  onChange={handleVideoUpload}
                 />
               </Box>
               {/* Giphy Button (only in reply modal) */}
@@ -837,6 +837,7 @@ const SnapComposer = React.memo(function SnapComposer({
                   height="48px"
                   width="48px"
                   p={0}
+                  mr={0}
                   display="flex"
                   alignItems="center"
                   justifyContent="center"
@@ -848,33 +849,13 @@ const SnapComposer = React.memo(function SnapComposer({
                   onClick={() => setGiphyModalOpen((open) => !open)}
                 />
               )}
-              <ImageCompressor
-                ref={imageCompressorRef}
-                onUpload={handleCompressedImageUpload}
-                isProcessing={isLoading}
-              />
-              <Button
-                id="snap-composer-video-upload-btn"
-                data-testid="snap-composer-video-upload"
-                variant="ghost"
-                isDisabled={isLoading}
-                border="2px solid transparent"
-                borderRadius="full"
-                height="48px"
-                width="48px"
-                p={0}
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-                _hover={{
-                  borderColor: "primary",
-                  boxShadow: "0 0 0 2px var(--chakra-colors-primary)",
-                }}
-                _active={{ borderColor: "accent" }}
-                onClick={() => videoUploadInputRef.current?.click()}
-              >
-                <FaVideo color="var(--chakra-colors-primary)" size={22} />
-              </Button>
+              <Box display="none">
+                <ImageCompressor
+                  ref={imageCompressorRef}
+                  onUpload={handleCompressedImageUpload}
+                  isProcessing={isLoading}
+                />
+              </Box>
               {/* GIF Maker Button */}
               <IconButton
                 id="snap-composer-gif-maker-btn"
@@ -945,7 +926,7 @@ const SnapComposer = React.memo(function SnapComposer({
                 isLoading={isLoading}
                 isDisabled={isLoading || isUploadingMedia}
                 onClick={handleComment}
-                borderRadius={buttonSize === "sm" ? "sm" : "base"}
+                borderRadius={"none"}
                 fontWeight="bold"
                 px={buttonSize === "sm" ? 1 : 8}
                 mt={2}

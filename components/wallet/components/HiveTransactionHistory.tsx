@@ -109,7 +109,7 @@ const HiveTransactionHistory = ({ searchAccount }: { searchAccount: string }) =>
                         <HStack
                             p={4}
                             bg="background"
-                            borderRadius="md"
+                            borderRadius="none"
                             mb={4}
                             border="2px solid"
                             textAlign="center"

@@ -413,7 +413,7 @@ const AirdropManager: React.FC<AirdropManagerProps> = ({ leaderboardData }) => {
               mt={4}
               p={4}
               bg="muted"
-              borderRadius="md"
+              borderRadius="none"
               border="1px solid"
               borderColor="border"
               maxH="400px"
@@ -506,7 +506,7 @@ const AirdropManager: React.FC<AirdropManagerProps> = ({ leaderboardData }) => {
                       key={user.hive_author + index}
                       p={2}
                       bg="background"
-                      borderRadius="md"
+                      borderRadius="none"
                       border="1px solid"
                       borderColor="border"
                       align="center"

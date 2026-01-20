@@ -223,7 +223,7 @@ export default function DAOAssets() {
                 _hover={{ color: "primary" }}
                 px={6}
                 py={3}
-                borderRadius="md"
+                borderRadius="none"
                 mx={1}
               >
                 <VStack spacing={2}>
@@ -253,7 +253,7 @@ export default function DAOAssets() {
                 _hover={{ color: "primary" }}
                 px={8}
                 py={4}
-                borderRadius="md"
+                borderRadius="none"
                 mx={1}
               >
                 <VStack spacing={2}>

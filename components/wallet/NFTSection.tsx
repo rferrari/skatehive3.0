@@ -124,7 +124,7 @@ export default function NFTSection() {
       <Box
         p={4}
         bg="background"
-        borderRadius="md"
+        borderRadius="none"
         border="1px solid"
         borderColor="gray.700"
         mb={3}
@@ -138,13 +138,13 @@ export default function NFTSection() {
               alt={collectionName}
               w="80px"
               h="80px"
-              borderRadius="md"
+              borderRadius="none"
               objectFit="cover"
               fallback={
                 <Box
                   w="80px"
                   h="80px"
-                  borderRadius="md"
+                  borderRadius="none"
                   bg="gray.600"
                   display="flex"
                   alignItems="center"
@@ -230,7 +230,7 @@ export default function NFTSection() {
       <HStack
         p={4}
         bg="background"
-        borderRadius="md"
+        borderRadius="none"
         mb={4}
         border="2px solid"
         textAlign="center"
@@ -404,13 +404,13 @@ export default function NFTSection() {
                                         alt={collectionName}
                                         w="40px"
                                         h="40px"
-                                        borderRadius="md"
+                                        borderRadius="none"
                                         objectFit="cover"
                                         fallback={
                                           <Box
                                             w="40px"
                                             h="40px"
-                                            borderRadius="md"
+                                            borderRadius="none"
                                             bg="gray.600"
                                             display="flex"
                                             alignItems="center"

@@ -137,7 +137,7 @@ const LoadingComponent = () => {
           textAlign="center"
           fontFamily="Joystix"
           p={4}
-          borderRadius="md"
+          borderRadius="none"
           color="primary"
           opacity={messageVisible ? 1 : 0}
           transition="opacity 0.4s"

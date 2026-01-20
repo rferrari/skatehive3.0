@@ -311,7 +311,7 @@ export const PreviewsTab = ({
                         borderLeft="4px solid"
                         borderColor="purple.500"
                         bg={codeBg}
-                        borderRadius="md"
+                        borderRadius="none"
                         p={3}
                         maxW="400px"
                     >
@@ -349,7 +349,7 @@ export const PreviewsTab = ({
                             <Image
                                 src={previewData.image}
                                 alt="Telegram preview"
-                                borderRadius="md"
+                                borderRadius="none"
                                 mb={2}
                                 fallbackSrc="https://via.placeholder.com/400x200?text=No+Image"
                             />

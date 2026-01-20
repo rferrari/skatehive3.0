@@ -172,7 +172,7 @@ const ViewModeSelector = memo(function ViewModeSelector({
               bg="transparent"
               border="1px solid"
               borderColor="gray.600"
-              borderRadius="md"
+              borderRadius="none"
             >
               {availablePostViewModes.map((mode) => {
                 const IconComponent = mode.icon;

@@ -146,7 +146,7 @@ export default function EmbeddedMap() {
               <Button
                 bg="background"
                 color="primary"
-                borderRadius="md"
+                borderRadius="none"
                 px={{ base: 6, md: 4 }}
                 py={{ base: 3, md: 2 }}
                 fontWeight="bold"
@@ -246,7 +246,7 @@ export default function EmbeddedMap() {
               my={4}
               p={4}
               bg="red.50"
-              borderRadius="md"
+              borderRadius="none"
               border="1px solid"
               borderColor="red.200"
             >

@@ -215,7 +215,7 @@ export default function FarcasterMiniappWallet({
       <Box
         p={3}
         bg="blue.50"
-        borderRadius="md"
+        borderRadius="none"
         border="1px solid"
         borderColor="blue.200"
       >

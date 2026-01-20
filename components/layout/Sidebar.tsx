@@ -3,9 +3,7 @@ import React, { useEffect, useState } from "react";
 import {
   Box,
   VStack,
-  Button,
   Icon,
-  Image,
   Flex,
   useToken,
   Link as ChakraLink,
@@ -18,7 +16,6 @@ import { useFarcasterSession } from "@/hooks/useFarcasterSession";
 import {
   FiHome,
   FiBell,
-  FiUser,
   FiBook,
   FiMap,
   FiCreditCard,
@@ -27,7 +24,6 @@ import {
   FiAward,
   FiTarget,
 } from "react-icons/fi";
-import { motion } from "framer-motion";
 import { useTheme } from "@/app/themeProvider";
 import { useNotifications } from "@/contexts/NotificationContext";
 import SidebarLogo from "../graphics/SidebarLogo";
@@ -37,8 +33,6 @@ export default function Sidebar() {
   const { user } = useAioha();
   const { isConnected: isEthereumConnected } = useAccount();
   const { isAuthenticated: isFarcasterConnected } = useFarcasterSession();
-  const router = useRouter();
-  const pathname = usePathname();
   const [bellAnimating, setBellAnimating] = useState(false);
   const [isClientMounted, setIsClientMounted] = useState(false);
   const { themeName } = useTheme();
@@ -95,7 +89,7 @@ export default function Sidebar() {
         alignItems="center"
         px={1}
         py={0.5}
-        borderRadius="md"
+        borderRadius="none"
         transition="background 0.2s"
         cursor="pointer"
         role="group"

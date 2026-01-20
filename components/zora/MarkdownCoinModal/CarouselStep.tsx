@@ -168,7 +168,7 @@ export function CarouselStep({
           <Box
             p={4}
             bg="muted"
-            borderRadius="md"
+            borderRadius="none"
             border="1px solid"
             borderColor="primary"
           >
@@ -178,7 +178,7 @@ export function CarouselStep({
                 display="flex"
                 justifyContent="center"
                 alignItems="center"
-                borderRadius="md"
+                borderRadius="none"
                 minH="250px"
                 opacity={currentImage?.isIncluded ? 1 : 0.5}
               >
@@ -188,7 +188,7 @@ export function CarouselStep({
                   maxW="400px"
                   maxH="240px"
                   objectFit="contain"
-                  borderRadius="md"
+                  borderRadius="none"
                 />
               </Box>
 
@@ -267,7 +267,7 @@ export function CarouselStep({
                       ? "primary"
                       : "red.500"
                   }
-                  borderRadius="md"
+                  borderRadius="none"
                   overflow="hidden"
                   opacity={item.isIncluded ? 1 : 0.5}
                   _hover={{
@@ -332,7 +332,7 @@ export function CarouselStep({
                         px={2}
                         py={1}
                         h="24px"
-                        borderRadius="md"
+                        borderRadius="none"
                         boxShadow="0 2px 4px rgba(0,0,0,0.3)"
                         _hover={{
                           transform: "scale(1.05)",

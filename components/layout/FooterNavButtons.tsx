@@ -798,7 +798,7 @@ export default function FooterNavButtons() {
           onMouseDown={handleMouseDown}
           onTouchStart={handleTouchStart}
           onClick={(e) => e.stopPropagation()}
-          borderRadius="md"
+          borderRadius="none"
           bg="rgba(255, 255, 255, 0.1)"
           _hover={{ bg: "rgba(255, 255, 255, 0.2)" }}
           display="flex"
@@ -839,7 +839,7 @@ export default function FooterNavButtons() {
           onMouseDown={handleMouseDown}
           onTouchStart={handleTouchStart}
           onClick={(e) => e.stopPropagation()}
-          borderRadius="md"
+          borderRadius="none"
           bg="rgba(255, 255, 255, 0.1)"
           _hover={{ bg: "rgba(255, 255, 255, 0.2)" }}
           display="flex"
@@ -880,7 +880,7 @@ export default function FooterNavButtons() {
           onMouseDown={handleMouseDown}
           onTouchStart={handleTouchStart}
           onClick={(e) => e.stopPropagation()}
-          borderRadius="md"
+          borderRadius="none"
           bg="rgba(255, 255, 255, 0.1)"
           _hover={{ bg: "rgba(255, 255, 255, 0.2)" }}
           display="flex"
@@ -922,7 +922,7 @@ export default function FooterNavButtons() {
           onMouseDown={handleMouseDown}
           onTouchStart={handleTouchStart}
           onClick={(e) => e.stopPropagation()}
-          borderRadius="md"
+          borderRadius="none"
           bg="rgba(255, 255, 255, 0.1)"
           _hover={{ bg: "rgba(255, 255, 255, 0.2)" }}
           display="flex"

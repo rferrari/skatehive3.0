@@ -354,7 +354,7 @@ export const CoinTabs: React.FC<CoinTabsProps> = ({ coinData }) => {
                           fontSize="sm"
                           px={3}
                           py={1}
-                          borderRadius="md"
+                          borderRadius="none"
                           fontWeight="medium"
                         >
                           {calculatePercentage(

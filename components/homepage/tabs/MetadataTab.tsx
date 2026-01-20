@@ -116,7 +116,7 @@ export const MetadataTab = ({ parsedMetadata }: MetadataTabProps) => {
                 <Box
                     p={4}
                     bg={codeBg}
-                    borderRadius="md"
+                    borderRadius="none"
                     overflowX="auto"
                     maxH="500px"
                     overflowY="auto"

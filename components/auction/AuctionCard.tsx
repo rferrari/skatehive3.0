@@ -65,7 +65,7 @@ export default function AuctionCard({
     return (
       <Box
         bg="secondary"
-        borderRadius="md"
+        borderRadius="none"
         border="1px solid"
         borderColor="border"
         p={6}
@@ -83,7 +83,7 @@ export default function AuctionCard({
     return (
       <Box
         bg="secondary"
-        borderRadius="md"
+        borderRadius="none"
         border="1px solid"
         borderColor="border"
         p={6}
@@ -256,7 +256,7 @@ export default function AuctionCard({
                       py={{ base: 2, md: 3 }}
                       px={{ base: 3, md: 4 }}
                       bg="muted"
-                      borderRadius="md"
+                      borderRadius="none"
                     >
                       <HStack spacing={{ base: 2, md: 4 }}>
                         <Text fontSize="sm" fontWeight="bold" color="primary">

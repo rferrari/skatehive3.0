@@ -202,7 +202,7 @@ export const CarouselCoinRenderer = React.memo<CarouselCoinRendererProps>(
               color="white"
               px={3}
               py={1}
-              borderRadius="md"
+              borderRadius="none"
               fontSize="sm"
               zIndex={2}
             >
@@ -221,7 +221,7 @@ export const CarouselCoinRenderer = React.memo<CarouselCoinRendererProps>(
                 onClick={() => goToMedia(index)}
                 border={index === currentIndex ? "2px solid" : "1px solid"}
                 borderColor={index === currentIndex ? "blue.500" : "gray.300"}
-                borderRadius="md"
+                borderRadius="none"
                 overflow="hidden"
                 flexShrink={0}
                 opacity={index === currentIndex ? 1 : 0.7}

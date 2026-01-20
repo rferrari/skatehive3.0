@@ -339,7 +339,7 @@ export function CustomizationStep({
             <Box
               w="40px"
               h="20px"
-              borderRadius="md"
+              borderRadius="none"
               bgGradient={`linear(to-r, ${selectedColors.gradient.start}, ${selectedColors.gradient.middle}, ${selectedColors.gradient.end})`}
             />
             <Text fontSize="xs" color="muted">

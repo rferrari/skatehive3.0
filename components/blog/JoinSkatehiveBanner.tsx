@@ -45,7 +45,7 @@ export default function JoinSkatehiveBanner() {
       <Alert
         status="info"
         variant="left-accent"
-        borderRadius="md"
+        borderRadius="none"
         alignItems="center"
         colorScheme="primary"
         w={{ base: '95%', md: '75%' }}

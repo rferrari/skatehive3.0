@@ -349,7 +349,7 @@ export function ConfirmStep({
         <Box
           p={4}
           bg="blue.900"
-          borderRadius="md"
+          borderRadius="none"
           border="2px solid"
           borderColor="blue.400"
           position="relative"
@@ -414,7 +414,7 @@ export function ConfirmStep({
       <Box
         p={4}
         bg="muted"
-        borderRadius="md"
+        borderRadius="none"
         border="1px solid"
         borderColor="primary"
       >
@@ -469,7 +469,7 @@ export function ConfirmStep({
       <Box
         p={4}
         bg="muted"
-        borderRadius="md"
+        borderRadius="none"
         border="1px solid"
         borderColor="primary"
       >
@@ -488,7 +488,7 @@ export function ConfirmStep({
             <AccordionItem
               border="1px solid"
               borderColor="primary"
-              borderRadius="md"
+              borderRadius="none"
               mb={2}
             >
               <AccordionButton
@@ -521,7 +521,7 @@ export function ConfirmStep({
                   p={3}
                   bg="blackAlpha.500"
                   color="colorBackground"
-                  borderRadius="md"
+                  borderRadius="none"
                   border="1px solid"
                   borderColor="primary"
                 >
@@ -534,7 +534,7 @@ export function ConfirmStep({
             <AccordionItem
               border="1px solid"
               borderColor="primary"
-              borderRadius="md"
+              borderRadius="none"
               mb={2}
             >
               <AccordionButton
@@ -567,7 +567,7 @@ export function ConfirmStep({
                   p={3}
                   bg="blackAlpha.500"
                   color="colorBackground"
-                  borderRadius="md"
+                  borderRadius="none"
                   border="1px solid"
                   borderColor="primary"
                 >
@@ -580,7 +580,7 @@ export function ConfirmStep({
             <AccordionItem
               border="1px solid"
               borderColor="primary"
-              borderRadius="md"
+              borderRadius="none"
             >
               <AccordionButton
                 bg="blackAlpha.300"
@@ -612,7 +612,7 @@ export function ConfirmStep({
                   p={3}
                   bg="blackAlpha.500"
                   color="colorBackground"
-                  borderRadius="md"
+                  borderRadius="none"
                   border="1px solid"
                   borderColor="primary"
                 >

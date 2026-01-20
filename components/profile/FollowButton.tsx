@@ -79,7 +79,7 @@ export default function FollowButton({
             colorScheme={isFollowing ? 'secondary' : 'primary'}
             isLoading={isFollowLoading}
             isDisabled={isFollowLoading}
-            borderRadius="md"
+            borderRadius="none"
             fontWeight="bold"
             px={2}
             py={0}
