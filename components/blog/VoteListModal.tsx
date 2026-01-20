@@ -19,6 +19,7 @@ import React from "react";
 interface Vote {
   voter: string;
   weight?: number;
+  percent?: number;
   rshares?: number;
 }
 
@@ -86,7 +87,11 @@ const VoteListPopover = ({ trigger, votes, post }: VoteListPopoverProps) => {
                     <Avatar size="sm" name={vote.voter} src={`https://images.hive.blog/u/${vote.voter}/avatar/sm`} mr={1} />
                     <Text fontWeight="medium" fontSize="sm" isTruncated>{vote.voter}</Text>
                     <Text ml={2} fontSize="xs" color="gray.500" isTruncated>
-                      {"("}{vote.percent ? `${vote.percent / 100}%` : "No weight"}{")"}
+                      {"("}{typeof vote.percent === "number"
+                        ? `${vote.percent / 100}%`
+                        : typeof vote.weight === "number"
+                        ? `${vote.weight / 100}%`
+                        : "No weight"}{")"}
                     </Text>
                   </Link>
                   <Text fontFamily="mono" color={valueColor} fontSize="sm">

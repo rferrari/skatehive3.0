@@ -12,8 +12,12 @@ import {
   PopoverBody,
   useDisclosure,
   Tooltip,
+  Menu,
+  MenuButton,
+  MenuList,
+  IconButton,
 } from "@chakra-ui/react";
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Discussion } from "@hiveio/dhive";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination } from "swiper/modules";
@@ -33,6 +37,8 @@ import useHivePower from "@/hooks/useHivePower";
 import { parseJsonMetadata } from "@/lib/hive/metadata-utils";
 import MatrixOverlay from "@/components/graphics/MatrixOverlay";
 import { UpvoteButton } from "@/components/shared";
+import { BiDotsHorizontal } from "react-icons/bi";
+import ShareMenuButtons from "@/components/homepage/ShareMenuButtons";
 
 interface PostJsonMetadata {
   app?: string;
@@ -63,7 +69,7 @@ export default function PostCard({
   const metadata = useMemo((): PostJsonMetadata => {
     const parsed = parseJsonMetadata(json_metadata);
     // Ensure we always return a valid object, even if parseJsonMetadata fails
-    return (parsed && typeof parsed === 'object') ? parsed : {};
+    return parsed && typeof parsed === "object" ? parsed : {};
   }, [json_metadata]);
 
   const [imageUrls, setImageUrls] = useState<string[]>([]);
@@ -85,6 +91,16 @@ export default function PostCard({
       (item) => item.voter.toLowerCase() === user?.toLowerCase()
     )
   );
+
+  useEffect(() => {
+    setActiveVotes(post.active_votes || []);
+    setPayoutValue(parseFloat(getPayoutValue(post)));
+    setVoted(
+      post.active_votes?.some(
+        (item) => item.voter.toLowerCase() === user?.toLowerCase()
+      )
+    );
+  }, [post, user]);
   const router = useRouter();
   const default_thumbnail =
     "https://images.hive.blog/u/" + author + "/avatar/large";
@@ -106,35 +122,57 @@ export default function PostCard({
   const isPending = timeDifferenceInDays < 7;
   // Calculate payout timestamp (creation + 7 days)
 
-  useEffect(() => {
+  const summary = useMemo(() => {
+    let summarySource = body;
+    if (listView) {
+      summarySource = summarySource.replace(/!\[[^\]]*\]\([^\)]*\)/g, "");
+      summarySource = summarySource.replace(/!\[\]\([^\)]*\)/g, "");
+      summarySource = summarySource.replace(/\[[^\]]*\]\([^\)]*\)/g, "");
+      summarySource = summarySource.replace(
+        /https?:\/\/[\w\-._~:/?#[\]@!$&'()*+,;=%]+/g,
+        ""
+      );
+      summarySource = summarySource.replace(/<[^>]+>/g, "");
+    }
+
+    return summarySource
+      .replace(/[#*_`>\[\]()!\-]/g, "")
+      .replace(/\n+/g, " ");
+  }, [body, listView]);
+
+  const mediaData = useMemo(() => {
     let images: string[] = [];
     if (metadata.image) {
-      images = Array.isArray(metadata.image)
-        ? metadata.image
-        : [metadata.image];
+      images = Array.isArray(metadata.image) ? metadata.image : [metadata.image];
     }
-    // Extract additional images from markdown content
+
     const markdownImages = extractImageUrls(body);
     images = images.concat(markdownImages);
 
-    // Filter out failed images only
-    const validImages = images.filter((img) => {
-      if (failedImages.has(img)) return false;
-      return true;
-    });
-
+    const uniqueImages = Array.from(new Set(images));
+    const validImages = uniqueImages.filter((img) => !failedImages.has(img));
     if (validImages.length > 0) {
-      setImageUrls(validImages);
-    } else {
-      const ytLinks = extractYoutubeLinks(body);
-      if (ytLinks.length > 0) {
-        setYoutubeLinks(ytLinks);
-        setImageUrls([]);
-      } else {
-        setImageUrls([default_thumbnail]);
-      }
+      return { imageUrls: validImages, youtubeLinks: [] as LinkWithDomain[] };
     }
-  }, [body, metadata, default_thumbnail, post, failedImages]);
+
+    const ytLinks = extractYoutubeLinks(body);
+    if (ytLinks.length > 0) {
+      const uniqueLinks = Array.from(new Set(ytLinks.map((link) => link.url)))
+        .map((url) => ytLinks.find((link) => link.url === url)!)
+        .filter(Boolean);
+      return { imageUrls: [] as string[], youtubeLinks: uniqueLinks };
+    }
+
+    return {
+      imageUrls: [default_thumbnail],
+      youtubeLinks: [] as LinkWithDomain[],
+    };
+  }, [body, metadata.image, failedImages, default_thumbnail]);
+
+  useEffect(() => {
+    setImageUrls(mediaData.imageUrls);
+    setYoutubeLinks(mediaData.youtubeLinks);
+  }, [mediaData]);
 
   // **Function to load more slides**
   function handleSlideChange(swiper: any) {
@@ -147,9 +185,33 @@ export default function PostCard({
     }
   }
 
-  // Modified to only stop propagation
-  function stopPropagation(e: React.MouseEvent) {
-    e.stopPropagation();
+  function handleSwiperInit(swiper: any) {
+    setTimeout(() => {
+      if (!swiper.el) return;
+      const next = swiper.el.querySelector(".swiper-button-next");
+      const prev = swiper.el.querySelector(".swiper-button-prev");
+      
+      // Named handlers for cleanup
+      const handleNextClick = (event: Event) => event.stopPropagation();
+      const handlePrevClick = (event: Event) => event.stopPropagation();
+      
+      if (next) {
+        next.addEventListener("click", handleNextClick);
+      }
+      if (prev) {
+        prev.addEventListener("click", handlePrevClick);
+      }
+      
+      // Clean up listeners on destroy
+      swiper.on('destroy', () => {
+        if (next) {
+          next.removeEventListener("click", handleNextClick);
+        }
+        if (prev) {
+          prev.removeEventListener("click", handlePrevClick);
+        }
+      });
+    }, 0);
   }
 
   // Enhanced function to handle image load errors with fallback
@@ -158,7 +220,11 @@ export default function PostCard({
     const originalSrc = img.src;
 
     // Track failed images to avoid retrying them
-    setFailedImages((prev) => new Set(prev).add(originalSrc));
+    setFailedImages((prev) => {
+      const next = new Set(prev);
+      next.add(originalSrc);
+      return next;
+    });
 
     // If this is not already the fallback image, try to set it
     if (img.src !== default_thumbnail) {
@@ -174,47 +240,31 @@ export default function PostCard({
     return false;
   }
 
-  // Extract summary for listView: remove image markdown, allow up to 3 lines, no char limit
-  let summarySource = body;
-  if (listView) {
-    summarySource = summarySource.replace(/!\[[^\]]*\]\([^\)]*\)/g, ""); // Remove ![alt](url)
-    summarySource = summarySource.replace(/!\[\]\([^\)]*\)/g, ""); // Remove ![](url)
-    // Remove markdown links [text](url)
-    summarySource = summarySource.replace(/\[[^\]]*\]\([^\)]*\)/g, "");
-    // Remove raw URLs (http/https/ftp)
-    summarySource = summarySource.replace(
-      /https?:\/\/[\w\-._~:/?#[\]@!$&'()*+,;=%]+/g,
-      ""
-    );
-    // Remove HTML tags
-    summarySource = summarySource.replace(/<[^>]+>/g, "");
-  }
-  // For listView, do not slice to a char limit; let noOfLines handle truncation
-  const summary = summarySource
-    .replace(/[#*_`>\[\]()!\-]/g, "")
-    .replace(/\n+/g, " ");
+
 
   // Deduplicate votes by voter (keep the last occurrence)
   const uniqueVotesMap = new Map();
   activeVotes.forEach((vote) => {
     uniqueVotesMap.set(vote.voter, vote);
   });
-  const uniqueVotes = Array.from(uniqueVotesMap.values());
 
-  // Helper to convert Asset or string to string
-  function assetToString(val: string | { toString: () => string }): string {
-    return typeof val === "string" ? val : val.toString();
-  }
-  // Helper to parse payout strings like "1.234 HBD"
-  function parsePayout(
-    val: string | { toString: () => string } | undefined
-  ): number {
-    if (!val) return 0;
-    const str = assetToString(val);
-    return parseFloat(str.replace(" HBD", "").replace(",", ""));
-  }
-  const authorPayout = parsePayout(post.total_payout_value);
-  const curatorPayout = parsePayout(post.curator_payout_value);
+  const { authorPayout, curatorPayout } = useMemo(() => {
+    const assetToString = (val: string | { toString: () => string }): string =>
+      typeof val === "string" ? val : val.toString();
+
+    const parsePayout = (
+      val: string | { toString: () => string } | undefined
+    ): number => {
+      if (!val) return 0;
+      const str = assetToString(val);
+      return parseFloat(str.replace(" HBD", "").replace(/,/g, ""));
+    };
+
+    return {
+      authorPayout: parsePayout(post.total_payout_value),
+      curatorPayout: parsePayout(post.curator_payout_value),
+    };
+  }, [post.total_payout_value, post.curator_payout_value]);
 
   if (listView) {
     return (
@@ -389,14 +439,6 @@ export default function PostCard({
           --swiper-pagination-color: var(--chakra-colors-primary);
         }
 
-        .custom-swiper .swiper-button-next,
-        .custom-swiper .swiper-button-prev {
-          transition: transform 0.18s cubic-bezier(0.4, 0.2, 0.2, 1);
-        }
-        .custom-swiper .swiper-button-next:active,
-        .custom-swiper .swiper-button-prev:active {
-          transform: scale(1.18);
-        }
 
         .custom-swiper .swiper-button-next::after,
         .custom-swiper .swiper-button-prev::after {
@@ -463,12 +505,14 @@ export default function PostCard({
                 alignItems="center"
                 minWidth={0}
                 justifyContent="space-between"
+                gap={3}
               >
                 <Link
                   href={`/@${author}`}
                   display="flex"
                   alignItems="center"
                   _hover={{ textDecoration: "underline" }}
+                  minWidth={0}
                 >
                   <Avatar
                     size="sm"
@@ -482,19 +526,30 @@ export default function PostCard({
                     color="primary"
                     _hover={{ color: "accent" }}
                     isTruncated
+                    maxW="240px"
                   >
                     {author}
                   </Text>
+                  <Text fontSize="xs" color="gray.500" ml={2}>
+                    · {postDate}
+                  </Text>
                 </Link>
-                <Text
-                  fontSize="xs"
-                  color="gray.500"
-                  ml={2}
-                  minWidth="40px"
-                  textAlign="right"
-                >
-                  {postDate}
-                </Text>
+                <Menu>
+                  <MenuButton
+                    as={IconButton}
+                    aria-label="Post actions"
+                    icon={<BiDotsHorizontal />}
+                    size="sm"
+                    variant="ghost"
+                    _active={{ bg: "none" }}
+                    _hover={{ bg: "none" }}
+                    bg="background"
+                    color="primary"
+                  />
+                  <MenuList bg="background" color="primary">
+                    <ShareMenuButtons comment={post} />
+                  </MenuList>
+                </Menu>
               </Flex>
             </Box>
           )}
@@ -524,28 +579,10 @@ export default function PostCard({
                   modules={[Navigation, Pagination]}
                   onSlideChange={handleSlideChange}
                   className="custom-swiper"
-                  onSwiper={(swiper) => {
-                    setTimeout(() => {
-                      if (!swiper.el) return;
-                      const next = swiper.el.querySelector(
-                        ".swiper-button-next"
-                      );
-                      const prev = swiper.el.querySelector(
-                        ".swiper-button-prev"
-                      );
-                      if (next)
-                        next.addEventListener("click", (e) =>
-                          e.stopPropagation()
-                        );
-                      if (prev)
-                        prev.addEventListener("click", (e) =>
-                          e.stopPropagation()
-                        );
-                    }, 0);
-                  }}
+                  onSwiper={handleSwiperInit}
                 >
                   {imageUrls.slice(0, visibleImages).map((url, index) => (
-                    <SwiperSlide key={index}>
+                    <SwiperSlide key={`${url}-${index}`}>
                       <Box h="200px" w="100%" sx={{ userSelect: "none" }}>
                         <Image
                           src={url}
@@ -568,28 +605,10 @@ export default function PostCard({
                   navigation={true}
                   modules={[Navigation, Pagination]}
                   className="custom-swiper"
-                  onSwiper={(swiper) => {
-                    setTimeout(() => {
-                      if (!swiper.el) return;
-                      const next = swiper.el.querySelector(
-                        ".swiper-button-next"
-                      );
-                      const prev = swiper.el.querySelector(
-                        ".swiper-button-prev"
-                      );
-                      if (next)
-                        next.addEventListener("click", (e) =>
-                          e.stopPropagation()
-                        );
-                      if (prev)
-                        prev.addEventListener("click", (e) =>
-                          e.stopPropagation()
-                        );
-                    }, 0);
-                  }}
+                  onSwiper={handleSwiperInit}
                 >
                   {youtubeLinks.map((link, index) => (
-                    <SwiperSlide key={index}>
+                    <SwiperSlide key={`${link.url}-${index}`}>
                       <Box h="200px" w="100%">
                         <iframe
                           src={link.url}

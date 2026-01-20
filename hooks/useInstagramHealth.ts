@@ -27,7 +27,9 @@ export function useInstagramHealth(checkInterval: number = 30000): InstagramHeal
         lastChecked: new Date()
       });
     } catch (error) {
-      console.error('❌ useInstagramHealth: Health check failed:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('❌ useInstagramHealth: Health check failed:', error);
+      }
       setStatus({
         healthy: false,
         loading: false,

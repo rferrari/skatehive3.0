@@ -11,6 +11,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Discussion } from "@hiveio/dhive";
 import { findPosts } from "@/lib/hive/client-functions";
 import PostGrid from "@/components/blog/PostGrid";
+import { filterAutoComments } from "@/lib/utils/postUtils";
 import { CommunityTotalPayout } from "../shared";
 import { HIVE_CONFIG } from "@/config/app.config";
 
@@ -43,9 +44,10 @@ export default function RightSideBar() {
     setIsLoading(true); // Set loading state
     try {
       const posts: Discussion[] = await findPosts(QUERY, params.current);
+      const filteredPosts = filterAutoComments(posts);
 
       // Filter out duplicates to avoid runaway list growth
-      const freshPosts = posts.filter((post) => {
+      const freshPosts = filteredPosts.filter((post) => {
         const key = `${post.author}/${post.permlink}`;
         if (seenPosts.current.has(key)) return false;
         seenPosts.current.add(key);

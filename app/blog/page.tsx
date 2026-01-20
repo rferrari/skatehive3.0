@@ -9,6 +9,7 @@ import {
 import { useState, useRef, useEffect, useCallback, Suspense } from "react";
 import { Discussion } from "@hiveio/dhive";
 import { findPosts, getPayoutValue } from "@/lib/hive/client-functions";
+import { filterAutoComments } from "@/lib/utils/postUtils";
 import TopBar from "@/components/blog/TopBar";
 import PostInfiniteScroll from "@/components/blog/PostInfiniteScroll";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -42,7 +43,13 @@ function BlogContent() {
   );
   const [allPosts, setAllPosts] = useState<Discussion[]>([]);
   const [hasMore, setHasMore] = useState(true);
+  const hasMoreRef = useRef(true);
   const isFetching = useRef(false);
+
+  const setHasMoreState = useCallback((value: boolean) => {
+    hasMoreRef.current = value;
+    setHasMore(value);
+  }, []);
   const seenPosts = useRef<Set<string>>(new Set());
   const prefetchBatch = useRef<{
     posts: Discussion[];
@@ -93,9 +100,10 @@ function BlogContent() {
 
     try {
       while (keepFetching && batchCount < BLOG_CONFIG.MAX_GOAT_BATCHES) {
-        const posts = await findPosts("created", params.current);
-        if (!posts || posts.length === 0) break;
-        allFetchedPosts = [...allFetchedPosts, ...posts];
+         const posts = await findPosts("created", params.current);
+         const filteredPosts = filterAutoComments(posts);
+         if (!filteredPosts || filteredPosts.length === 0) break;
+         allFetchedPosts = [...allFetchedPosts, ...filteredPosts];
         // Remove duplicates by permlink
         const uniquePosts = Array.from(
           new Map(
@@ -107,18 +115,18 @@ function BlogContent() {
           (a, b) => Number(getPayoutValue(b)) - Number(getPayoutValue(a))
         );
         // Show top 12 so far
-        setAllPosts(sorted.slice(0, BLOG_CONFIG.POSTS_PER_PAGE));
-        // Prepare for next batch
-        params.current = [
-          {
-            tag: tag,
-            limit: BLOG_CONFIG.GOAT_BATCH_SIZE as number,
-            start_author: posts[posts.length - 1].author,
-            start_permlink: posts[posts.length - 1].permlink,
-          },
-        ];
+         setAllPosts(sorted.slice(0, BLOG_CONFIG.POSTS_PER_PAGE));
+         // Prepare for next batch
+         params.current = [
+           {
+             tag: tag,
+             limit: BLOG_CONFIG.GOAT_BATCH_SIZE as number,
+             start_author: filteredPosts[filteredPosts.length - 1].author,
+             start_permlink: filteredPosts[filteredPosts.length - 1].permlink,
+           },
+         ];
         batchCount++;
-        if (posts.length < BLOG_CONFIG.GOAT_BATCH_SIZE) break;
+         if (filteredPosts.length < BLOG_CONFIG.GOAT_BATCH_SIZE) break;
         // Add delay to avoid rate limits
         await new Promise((res) => setTimeout(res, BLOG_CONFIG.BATCH_DELAY_MS));
       }
@@ -131,11 +139,12 @@ function BlogContent() {
   }, [tag]);
 
   const fetchBatch = useCallback(async () => {
-    const posts = await findPosts(
-      query === "highest_paid" ? "created" : query,
-      params.current
-    );
-    let sortedPosts = posts;
+        const posts = await findPosts(
+          query === "highest_paid" ? "created" : query,
+          params.current
+        );
+        const filteredPosts = filterAutoComments(posts);
+        let sortedPosts = filteredPosts;
     if (query === "highest_paid") {
       sortedPosts = [...posts].sort(
         (a, b) => Number(getPayoutValue(b)) - Number(getPayoutValue(a))
@@ -156,7 +165,7 @@ function BlogContent() {
       batchHasMore: boolean
     ) => {
       if (!posts || posts.length === 0) {
-        setHasMore(false);
+        setHasMoreState(false);
         return { nextCanPrefetch: false };
       }
 
@@ -173,7 +182,7 @@ function BlogContent() {
       }
 
       const nextCanPrefetch = batchHasMore && Boolean(lastPost);
-      setHasMore(nextCanPrefetch);
+      setHasMoreState(nextCanPrefetch);
 
       if (nextCanPrefetch && lastPost) {
         params.current = [
@@ -188,7 +197,7 @@ function BlogContent() {
 
       return { nextCanPrefetch };
     },
-    [tag, FETCH_LIMIT]
+    [tag, FETCH_LIMIT, setHasMoreState]
   );
 
   const startPrefetch = useCallback(
@@ -212,7 +221,7 @@ function BlogContent() {
       fetchGoatPosts();
       return;
     }
-    if (!hasMore) return;
+    if (!hasMoreRef.current) return;
     if (isFetching.current) return; // Prevent multiple fetches
     if (!tag) {
       setError("Cannot fetch posts: missing search tag configuration");
@@ -247,7 +256,6 @@ function BlogContent() {
     query,
     tag,
     fetchGoatPosts,
-    hasMore,
     fetchBatch,
     appendBatch,
     startPrefetch,
@@ -256,7 +264,7 @@ function BlogContent() {
   useEffect(() => {
     // Clean up posts and reset state when query changes
     setAllPosts([]);
-    setHasMore(true);
+    setHasMoreState(true);
     seenPosts.current = new Set();
     prefetchBatch.current = null;
     prefetching.current = false;
@@ -275,7 +283,7 @@ function BlogContent() {
     } else {
       fetchPosts();
     }
-  }, [fetchPosts, fetchGoatPosts, query, tag, FETCH_LIMIT]);
+  }, [fetchPosts, fetchGoatPosts, query, tag, FETCH_LIMIT, setHasMoreState]);
 
   // Detect mobile and force grid view
   useEffect(() => {

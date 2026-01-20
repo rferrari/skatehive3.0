@@ -81,19 +81,30 @@ export function countDownvotes(activeVotes: any[]): number {
  * - Posts from accounts with reputation less than 0
  * - Posts with 2 or more downvotes
  * - Posts from hiveBuzz account
+ * - Posts downvoted by admins (when NEXT_PUBLIC_ADMIN_USERS is set)
  */
 export function filterAutoComments(discussions: any[]): any[] {
     // Import getReputation from client-functions to avoid duplication
     const { getReputation } = require('@/lib/hive/client-functions');
-    
+    const adminUsers = process.env.NEXT_PUBLIC_ADMIN_USERS?.split(",")
+        .map((user) => user.trim().toLowerCase())
+        .filter(Boolean) || [];
+
     return discussions.filter((discussion: any) => {
         // Deduplicate votes first to ensure accurate counting
         const deduplicatedVotes = deduplicateVotes(discussion.active_votes || []);
         const downvoteCount = countDownvotes(deduplicatedVotes);
-        
+
+        const hasAdminDownvote = adminUsers.length > 0
+            ? deduplicatedVotes.some((vote) =>
+                adminUsers.includes(String(vote.voter || "").toLowerCase()) &&
+                ((vote.weight || 0) < 0 || (vote.percent || 0) < 0 || (vote.rshares || 0) < 0)
+            )
+            : false;
+
         // Get author reputation and convert to readable format
         const rawReputation = discussion.author_reputation || 0;
-        
+
         // Bridge API returns reputation already calculated (e.g., 67.94)
         // Old condenser API returns raw large numbers (e.g., 288278181484)
         // If the value is already between -100 and 100, it's already calculated
@@ -105,16 +116,21 @@ export function filterAutoComments(discussions: any[]): any[] {
             // Raw reputation that needs calculation
             authorReputation = getReputation(rawReputation);
         }
-        
+
         // Filter conditions:
         // 1. Filter out posts with 2 or more downvotes (community disapproval)
         // 2. Filter out posts from accounts with reputation less than 0
         // 3. Filter out hiveBuzz comments
+        // 4. Filter out posts with admin downvotes
         const hasAcceptableDownvotes = downvoteCount < 2;
         const hasAcceptableReputation = authorReputation >= 0;
         const isNotHiveBuzz = discussion.author.toLowerCase() !== 'hivebuzz';
-        
-        const shouldShow = hasAcceptableDownvotes && hasAcceptableReputation && isNotHiveBuzz;
+
+        const shouldShow =
+            hasAcceptableDownvotes &&
+            hasAcceptableReputation &&
+            isNotHiveBuzz &&
+            !hasAdminDownvote;
 
         return shouldShow;
     });

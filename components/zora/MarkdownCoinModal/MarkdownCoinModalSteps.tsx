@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Modal,
   ModalOverlay,
@@ -9,7 +9,6 @@ import {
   VStack,
   HStack,
   Text,
-  Button,
   Box,
   Badge,
   useToast,
@@ -263,6 +262,7 @@ export function MarkdownCoinModal({
   const { createMarkdownCoin, isCreating } = useMarkdownCoin();
   const [currentStep, setCurrentStep] = useState<Step>("cover");
   const [cardPreview, setCardPreview] = useState<string | null>(null);
+  const cardPreviewRef = useRef<string | null>(null);
   const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
   const [markdownImages, setMarkdownImages] = useState<string[]>([]);
   const [carouselPreview, setCarouselPreview] = useState<any[]>([]);
@@ -301,6 +301,7 @@ export function MarkdownCoinModal({
 
       // Create blob URL for preview
       const previewUrl = URL.createObjectURL(coinCardFile);
+      cardPreviewRef.current = previewUrl;
       setCardPreview(previewUrl);
 
       // Create carousel preview
@@ -356,15 +357,16 @@ export function MarkdownCoinModal({
       return;
     }
 
-    if (cardPreview) {
-      URL.revokeObjectURL(cardPreview);
+    if (cardPreviewRef.current) {
+      URL.revokeObjectURL(cardPreviewRef.current);
+      cardPreviewRef.current = null;
       setCardPreview(null);
     }
 
     setCarouselImages([]);
     setCarouselPreview([]);
     setMarkdownImages([]);
-  }, [isOpen, selectedColors, generatePreview, cardPreview]);
+  }, [isOpen, selectedColors, markdownImages, generatePreview]);
 
   // Extract images from markdown when modal opens
   useEffect(() => {

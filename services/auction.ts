@@ -72,7 +72,7 @@ export async function fetchAuctionByTokenId(tokenId: number): Promise<Auction | 
     return null;
   } catch (error) {
     console.error("Error in fetchAuctionByTokenId:", error);
-    throw new Error("Error fetching auction by tokenId");
+    throw error instanceof Error ? error : new Error("Error fetching auction by tokenId");
   }
 }
 import { noCacheApolloClient } from '@/lib/utils/apollo';
@@ -96,7 +96,7 @@ export async function fetchAuction(tokenAddress: string): Promise<Auction[]> {
     return data.auctions;
   } catch (error) {
     console.error("Error fetching auction data:", error);
-    return [];
+    throw error instanceof Error ? error : new Error("Error fetching auction data");
   }
 }
 

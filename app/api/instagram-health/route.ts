@@ -20,7 +20,9 @@ async function checkServerHealth(serverUrl: string): Promise<{ healthy: boolean;
   }, 10000); // 10 seconds timeout per server
 
   try {
-    console.log(`🏥 Checking health for: ${serverUrl}/instagram/healthz`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`🏥 Checking health for: ${serverUrl}/instagram/healthz`);
+    }
 
     // Try Instagram-specific health endpoint first
     let response = await fetch(`${serverUrl}/instagram/healthz`, {
@@ -30,7 +32,9 @@ async function checkServerHealth(serverUrl: string): Promise<{ healthy: boolean;
 
     // If Instagram health endpoint doesn't exist, try generic healthz
     if (!response.ok && response.status === 404) {
-      console.log(`🔄 Trying generic healthz for: ${serverUrl}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`🔄 Trying generic healthz for: ${serverUrl}`);
+      }
       response = await fetch(`${serverUrl}/healthz`, {
         method: 'GET',
         signal: controller.signal
@@ -39,7 +43,9 @@ async function checkServerHealth(serverUrl: string): Promise<{ healthy: boolean;
 
     // If still no luck, try root endpoint
     if (!response.ok && response.status === 404) {
-      console.log(`🔄 Trying root endpoint for: ${serverUrl}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`🔄 Trying root endpoint for: ${serverUrl}`);
+      }
       response = await fetch(serverUrl, {
         method: 'GET',
         signal: controller.signal
@@ -48,36 +54,50 @@ async function checkServerHealth(serverUrl: string): Promise<{ healthy: boolean;
 
     clearTimeout(timeoutId);
 
-    console.log(`📊 Response for ${serverUrl}: status=${response.status}, ok=${response.ok}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`📊 Response for ${serverUrl}: status=${response.status}, ok=${response.ok}`);
+    }
 
     if (response.ok) {
       try {
         const data = await response.json();
-        console.log(`📋 Response data for ${serverUrl}:`, data);
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`📋 Response data for ${serverUrl}:`, data);
+        }
         // Check if the response indicates the server is ok
         const isHealthy = data.status === 'ok' || response.status === 200;
         return { healthy: isHealthy, status: response.status };
       } catch {
         // If JSON parsing fails but response is ok, consider it healthy
-        console.log(`✅ JSON parse failed but response OK for ${serverUrl}`);
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`✅ JSON parse failed but response OK for ${serverUrl}`);
+        }
         return { healthy: true, status: response.status };
       }
     } else {
-      console.log(`❌ Server error for ${serverUrl}: ${response.status}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`❌ Server error for ${serverUrl}: ${response.status}`);
+      }
       return { healthy: false, status: response.status, error: 'Server returned error status' };
     }
 
   } catch (fetchError) {
     clearTimeout(timeoutId);
 
-    console.error(`💥 Fetch error for ${serverUrl}:`, fetchError);
+    if (process.env.NODE_ENV === 'development') {
+      console.error(`💥 Fetch error for ${serverUrl}:`, fetchError);
+    }
 
     if (fetchError instanceof Error && fetchError.name === 'AbortError') {
-      console.log(`⏰ Timeout for ${serverUrl}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`⏰ Timeout for ${serverUrl}`);
+      }
       return { healthy: false, error: 'Server timeout' };
     }
 
-    console.log(`🔌 Connection failed for ${serverUrl}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`🔌 Connection failed for ${serverUrl}`);
+    }
     return { healthy: false, error: 'Server unreachable' };
   }
 }

@@ -420,18 +420,22 @@ const Conversation = ({
 
   const handleToggleReplies = useCallback(
     async (commentPermlink: string) => {
+      let wasAdded = false;
+
       setExpandedReplies((prev) => {
         const newSet = new Set(prev);
         if (newSet.has(commentPermlink)) {
           newSet.delete(commentPermlink);
         } else {
           newSet.add(commentPermlink);
-          // Fetch replies when expanding
-          // Fetch replies when expanding
-          fetchRepliesForComment(commentPermlink).catch(console.error);
+          wasAdded = true;
         }
         return newSet;
       });
+
+      if (wasAdded) {
+        fetchRepliesForComment(commentPermlink).catch(console.error);
+      }
     },
     [fetchRepliesForComment]
   );
