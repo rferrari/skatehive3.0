@@ -12,9 +12,11 @@ import {
   MenuItem,
   Menu,
   MenuList,
+  Flex,
 } from "@chakra-ui/react";
 import { Discussion } from "@hiveio/dhive";
 import { FaRegComment } from "react-icons/fa";
+import { LuArrowUp, LuArrowDown, LuDollarSign } from "react-icons/lu";
 import { useAioha } from "@aioha/react-ui";
 import { useState, useMemo } from "react";
 import { getPayoutValue } from "@/lib/hive/client-functions";
@@ -35,6 +37,7 @@ import {
 } from "@/lib/utils/postUtils";
 import { BiDotsHorizontal } from "react-icons/bi";
 import MediaRenderer from "../shared/MediaRenderer";
+import VoteListPopover from "@/components/blog/VoteListModal";
 
 interface SnapProps {
   discussion: Discussion;
@@ -100,6 +103,7 @@ const Snap = ({
       (item: { voter: string }) => item.voter === user
     ) || false
   );
+  const [isHovered, setIsHovered] = useState(false);
 
   function handleConversation() {
     if (setConversation) {
@@ -233,63 +237,131 @@ const Snap = ({
         />
 
         {!showSlider && (
-          <HStack justify="center" spacing={8} mt={3}>
-            <UpvoteButton
-              discussion={discussion}
-              voted={voted}
-              setVoted={setVoted}
-              activeVotes={activeVotes}
-              setActiveVotes={setActiveVotes}
-              showSlider={showSlider}
-              setShowSlider={setShowSlider}
-              onVoteSuccess={(estimatedValue?: number) => {
-                setVoted(true);
-                if (estimatedValue) {
-                  setRewardAmount((prev) =>
-                    parseFloat((prev + estimatedValue).toFixed(3))
-                  );
+          <HStack 
+            justify="center" 
+            spacing={6}
+            mt={3} 
+            w="100%"
+          >
+            {/* Upvote Section */}
+            <HStack
+              minW="72px"
+              justify="center"
+              px={2}
+              py={1}
+              borderRadius="md"
+              cursor="pointer"
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
+              onClick={() => {
+                if (!voted) {
+                  setShowSlider(true);
                 }
               }}
-              estimateVoteValue={estimateVoteValue}
-              isHivePowerLoading={isHivePowerLoading}
-              variant="withSlider"
-              size="sm"
-            />
-            <HStack>
-              <Tooltip label="comments" hasArrow openDelay={1000}>
-                <Button
-                  leftIcon={<FaRegComment size={18} />}
-                  variant="ghost"
-                  onClick={() => {
-                    if (effectiveDepth > 0) {
-                      handleReplyButtonClick(discussion.permlink);
-                    } else {
-                      handleConversation();
-                    }
-                  }}
-                  size="sm"
+              opacity={0.9}
+              _hover={{ opacity: 0.7 }}
+              transition="opacity 0.2s"
+            >
+              <HStack spacing={1.5}>
+                {voted || isHovered ? (
+                  <Box boxSize="18px" display="flex" alignItems="center" justifyContent="center">
+                    <LuArrowUp size={18} color="var(--chakra-colors-primary)" />
+                  </Box>
+                ) : (
+                  <Box boxSize="18px" display="flex" alignItems="center" justifyContent="center">
+                    <LuArrowDown size={18} color="var(--chakra-colors-primary)" />
+                  </Box>
+                )}
+                <Text 
+                  fontSize="sm" 
+                  fontWeight="medium"
+                  color="primary"
+                >
+                  {activeVotes.length}
+                </Text>
+              </HStack>
+            </HStack>
+
+            {/* Comment Section */}
+            <HStack
+              minW="72px"
+              justify="center"
+              px={2}
+              py={1}
+              borderRadius="md"
+              cursor="pointer"
+              onClick={() => {
+                if (effectiveDepth > 0) {
+                  handleReplyButtonClick(discussion.permlink);
+                } else {
+                  handleConversation();
+                }
+              }}
+              opacity={0.9}
+              _hover={{ opacity: 0.7 }}
+              transition="opacity 0.2s"
+            >
+              <HStack spacing={1.5}>
+                <Box boxSize="18px" display="flex" alignItems="center" justifyContent="center">
+                  <FaRegComment size={18} color="var(--chakra-colors-primary)" />
+                </Box>
+                <Text 
+                  fontSize="sm" 
+                  fontWeight="medium"
+                  color="primary"
                 >
                   {commentCount}
-                </Button>
-              </Tooltip>
+                </Text>
+              </HStack>
             </HStack>
+
+            {/* Payout Section */}
             <Tooltip
               label={
                 isPending
                   ? `Pending - ${daysRemaining} day${
                       daysRemaining !== 1 ? "s" : ""
-                    } until payout`
+                    } until payout - Click to see voters`
                   : `Author: $${authorPayout.toFixed(
                       3
-                    )} | Curators: $${curatorPayout.toFixed(3)}`
+                    )} | Curators: $${curatorPayout.toFixed(3)} - Click to see voters`
               }
               hasArrow
               openDelay={500}
               placement="top"
             >
-              <Text fontWeight="bold" fontSize="sm" cursor="pointer">
-                ${rewardAmount.toFixed(2)}
-              </Text>
+              <Box>
+                <VoteListPopover
+                  trigger={
+                    <HStack
+                      minW="72px"
+                      justify="center"
+                      px={2}
+                      py={1}
+                      borderRadius="md"
+                      cursor="pointer"
+                      opacity={0.9}
+                      _hover={{ opacity: 0.7 }}
+                      transition="opacity 0.2s"
+                    >
+                      <HStack spacing={1.5}>
+                        <Box boxSize="18px" display="flex" alignItems="center" justifyContent="center">
+                          <LuDollarSign size={18} color="var(--chakra-colors-primary)" />
+                        </Box>
+                        <Text 
+                          fontSize="sm" 
+                          fontWeight="medium"
+                          color="primary"
+                        >
+                          {rewardAmount.toFixed(2)}
+                        </Text>
+                      </HStack>
+                    </HStack>
+                  }
+                  votes={activeVotes}
+                  post={discussion}
+                />
+              </Box>
             </Tooltip>
           </HStack>
         )}
@@ -304,6 +376,7 @@ const Snap = ({
             showSlider={showSlider}
             setShowSlider={setShowSlider}
             onVoteSuccess={(estimatedValue?: number) => {
+              setVoted(true);
               if (estimatedValue) {
                 setRewardAmount((prev) =>
                   parseFloat((prev + estimatedValue).toFixed(3))

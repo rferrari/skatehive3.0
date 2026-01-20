@@ -25,8 +25,6 @@ import { AirdropModal } from "../airdrop/AirdropModal";
 import { Discussion } from "@hiveio/dhive"; // Add this import for consistency
 import LogoMatrix from "../graphics/LogoMatrix";
 import {
-  countDownvotes,
-  deduplicateVotes,
   filterAutoComments,
 } from "@/lib/utils/postUtils";
 import { useAioha } from "@aioha/react-ui";

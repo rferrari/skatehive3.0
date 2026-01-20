@@ -14,7 +14,7 @@ import {
   SliderFilledTrack,
   SliderThumb,
 } from "@chakra-ui/react";
-import { LuArrowUpRight } from "react-icons/lu";
+import { LuArrowUp, LuArrowDown } from "react-icons/lu";
 import { useAioha } from "@aioha/react-ui";
 import { Discussion } from "@hiveio/dhive";
 import VoteListPopover from "@/components/blog/VoteListModal";
@@ -63,6 +63,7 @@ const UpvoteButton = ({
   const [sliderValue, setSliderValue] = useState(userVoteWeight);
   const [isVoting, setIsVoting] = useState(false);
   const [lastVoteTime, setLastVoteTime] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
 
   // Refs for immediate concurrency/debounce checks (non-atomic state guard)
   const isVotingRef = useRef(false);
@@ -260,21 +261,26 @@ const handleVote = useCallback(
             justifyContent="center"
             cursor="pointer"
             onClick={handleHeartClick}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
             p={1}
-            borderRadius="full"
-            bg={voted ? "primary" : "muted"}
-            border="1px solid"
-            borderColor="primary"
-            _hover={{ bg: "muted" }}
-            transition="background 0.2s, border-radius 0.2s"
+            _hover={{ opacity: 0.7 }}
+            transition="opacity 0.2s"
             className={`upvote-container ${className}`}
           >
-                        <LuArrowUpRight
-              size={24}
-              color={voted ? "var(--chakra-colors-background)" : "var(--chakra-colors-primary)"}
-              style={{ opacity: 1 }}
-              className={!voted ? "arrow-pulse-hover" : ""}
-            />
+            {voted || isHovered ? (
+              <LuArrowUp
+                size={24}
+                color={voted ? "#22c55e" : "var(--chakra-colors-primary)"}
+                style={{ opacity: 1 }}
+              />
+            ) : (
+              <LuArrowDown
+                size={24}
+                color="var(--chakra-colors-primary)"
+                style={{ opacity: 1 }}
+              />
+            )}
           </Box>
         </Tooltip>
       </HStack>
@@ -284,7 +290,7 @@ const handleVote = useCallback(
   // With vote count variant (matches Snap styling exactly)
   if (variant === "withVoteCount") {
     return (
-      <HStack>
+      <HStack spacing={0}>
         <Tooltip
           label={voted ? "already voted" : "upvote"}
           hasArrow
@@ -297,21 +303,26 @@ const handleVote = useCallback(
             justifyContent="center"
             cursor="pointer"
             onClick={handleHeartClick}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
             p={1}
-            borderRadius="full"
-            bg={voted ? "primary" : "muted"}
-            border="1px solid"
-            borderColor="primary"
-            _hover={{ bg: "muted" }}
-            transition="background 0.2s, border-radius 0.2s"
+            _hover={{ opacity: 0.7 }}
+            transition="opacity 0.2s"
             className={`upvote-container ${className}`}
           >
-                        <LuArrowUpRight
-              size={24}
-              color={voted ? "var(--chakra-colors-background)" : "var(--chakra-colors-primary)"}
-              style={{ opacity: 1 }}
-              className={!voted ? "arrow-pulse-hover" : ""}
-            />
+            {voted || isHovered ? (
+              <LuArrowUp
+                size={24}
+                color={voted ? "#22c55e" : "var(--chakra-colors-primary)"}
+                style={{ opacity: 1 }}
+              />
+            ) : (
+              <LuArrowDown
+                size={24}
+                color="var(--chakra-colors-primary)"
+                style={{ opacity: 1 }}
+              />
+            )}
           </Box>
         </Tooltip>
         <VoteListPopover
@@ -319,7 +330,6 @@ const handleVote = useCallback(
             <Button
               variant="ghost"
               size={size}
-              ml={0}
               p={1}
               _hover={{ textDecoration: "underline" }}
               onClick={(e) => e.stopPropagation()}
@@ -339,7 +349,7 @@ const handleVote = useCallback(
     // If slider is disabled in user preferences, don't show the slider
     if (disableSlider) {
       return (
-        <HStack>
+        <HStack spacing={0}>
           <Tooltip
             label={voted ? "already voted" : "upvote"}
             hasArrow
@@ -352,23 +362,26 @@ const handleVote = useCallback(
               justifyContent="center"
               cursor="pointer"
               onClick={handleHeartClick}
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
               p={1}
-              borderRadius="full"
-              bg={voted ? "primary" : "muted"}
-              border="1px solid"
-              borderColor="primary"
-              _hover={{ bg: "muted" }}
-              transition="background 0.2s, border-radius 0.2s"
-              className={`upvote-container ${className} ${
-                !voted ? "arrow-bg-fade" : ""
-              }`}
+              _hover={{ opacity: 0.7 }}
+              transition="opacity 0.2s"
+              className={`upvote-container ${className}`}
             >
-                          <LuArrowUpRight
-              size={24}
-              color={voted ? "var(--chakra-colors-background)" : "var(--chakra-colors-primary)"}
-              style={{ opacity: 1 }}
-              className={!voted ? "arrow-pulse-hover" : ""}
-            />
+              {voted || isHovered ? (
+                <LuArrowUp
+                  size={24}
+                  color={voted ? "#22c55e" : "var(--chakra-colors-primary)"}
+                  style={{ opacity: 1 }}
+                />
+              ) : (
+                <LuArrowDown
+                  size={24}
+                  color="var(--chakra-colors-primary)"
+                  style={{ opacity: 1 }}
+                />
+              )}
             </Box>
           </Tooltip>
           <VoteListPopover
@@ -376,7 +389,6 @@ const handleVote = useCallback(
               <Button
                 variant="ghost"
                 size={size}
-                ml={1}
                 p={1}
                 _hover={{ textDecoration: "underline" }}
                 onClick={(e) => e.stopPropagation()}
@@ -457,7 +469,7 @@ const handleVote = useCallback(
     }
 
     return (
-      <HStack>
+      <HStack spacing={0}>
         <Tooltip
           label={voted ? "already voted" : "upvote"}
           hasArrow
@@ -470,21 +482,26 @@ const handleVote = useCallback(
             justifyContent="center"
             cursor="pointer"
             onClick={handleHeartClick}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
             p={1}
-            borderRadius="full"
-            bg={voted ? "primary" : "muted"}
-            border="1px solid"
-            borderColor="primary"
-            _hover={{ bg: "muted" }}
-            transition="background 0.2s, border-radius 0.2s"
+            _hover={{ opacity: 0.7 }}
+            transition="opacity 0.2s"
             className={`upvote-container ${className}`}
           >
-                        <LuArrowUpRight
-              size={24}
-              color={voted ? "var(--chakra-colors-background)" : "var(--chakra-colors-primary)"}
-              style={{ opacity: 1 }}
-              className={!voted ? "arrow-pulse-hover" : ""}
-            />
+            {voted || isHovered ? (
+              <LuArrowUp
+                size={24}
+                color={voted ? "#22c55e" : "var(--chakra-colors-primary)"}
+                style={{ opacity: 1 }}
+              />
+            ) : (
+              <LuArrowDown
+                size={24}
+                color="var(--chakra-colors-primary)"
+                style={{ opacity: 1 }}
+              />
+            )}
           </Box>
         </Tooltip>
         <VoteListPopover
@@ -492,7 +509,6 @@ const handleVote = useCallback(
             <Button
               variant="ghost"
               size={size}
-              ml={1}
               p={1}
               _hover={{ textDecoration: "underline" }}
               onClick={(e) => e.stopPropagation()}
