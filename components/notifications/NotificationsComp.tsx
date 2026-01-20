@@ -88,100 +88,103 @@ export default function NotificationsComp({ username }: NotificationCompProps) {
 
   return (
     <Box
-      p={0}
       w="full"
-      maxH={"100vh"}
+      maxH="100vh"
       overflowY="auto"
+      px={{ base: 4, md: 6, xl: 8 }}
+      py={{ base: 5, md: 6 }}
       sx={{
         "&::-webkit-scrollbar": { display: "none" },
         scrollbarWidth: "none",
       }}
     >
-      <Flex justify="space-between" align="center" mb={4}>
-        <Text ml={1} fontSize="2xl" fontWeight="bold">
-          Notifications
-        </Text>
-        {user == username && (
-          <Button onClick={handleMarkAsRead} size="sm">
-            Mark as Read
-          </Button>
-        )}
-      </Flex>
-      <Select
-        value={filter}
-        onChange={(e) => setFilter(e.target.value)}
-        maxW="200px"
-        mb={4}
-        bg="muted"
-        borderColor="border"
-        color="text"
-        _focus={{
-          borderColor: "primary",
-          boxShadow: "0 0 0 1px var(--chakra-colors-primary)",
-        }}
-        _hover={{ borderColor: "primary" }}
-      >
-        <option value="all">All</option>
-        {notificationTypeOrder
-          .filter((type) => notifications.some((n) => n.type === type))
-          .map((type) => (
-            <option key={type} value={type}>
-              {notificationTypeLabels[type]}
-            </option>
-          ))}
-      </Select>
-      {isLoading ? (
-        <Stack spacing={4} w="full">
-          {[...Array(5)].map((_, i) => (
-            <Box
-              key={i}
-              p={3}
-              borderRadius="base"
-              bg="primary"
-              w="full"
-              minH="80px"
-              display="flex"
-              alignItems="center"
-            >
-              <SkeletonCircle
-                size="8"
-                mr={4}
-                startColor="muted"
-                endColor="primary"
-              />
-              <Box flex="1">
-                <Skeleton
-                  height="16px"
-                  width="40%"
-                  mb={2}
+      <Box w="full" maxW="980px" mx="auto">
+        <Flex justify="space-between" align="center" mb={{ base: 4, md: 6 }}>
+          <Text fontSize={{ base: "xl", md: "2xl" }} fontWeight="bold">
+            Notifications
+          </Text>
+          {user == username && (
+            <Button onClick={handleMarkAsRead} size="sm">
+              Mark as Read
+            </Button>
+          )}
+        </Flex>
+        <Select
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          maxW={{ base: "220px", md: "240px" }}
+          mb={{ base: 4, md: 6 }}
+          bg="muted"
+          borderColor="border"
+          color="text"
+          _focus={{
+            borderColor: "primary",
+            boxShadow: "0 0 0 1px var(--chakra-colors-primary)",
+          }}
+          _hover={{ borderColor: "primary" }}
+        >
+          <option value="all">All</option>
+          {notificationTypeOrder
+            .filter((type) => notifications.some((n) => n.type === type))
+            .map((type) => (
+              <option key={type} value={type}>
+                {notificationTypeLabels[type]}
+              </option>
+            ))}
+        </Select>
+        {isLoading ? (
+          <Stack spacing={4} w="full">
+            {[...Array(5)].map((_, i) => (
+              <Box
+                key={i}
+                p={3}
+                borderRadius="base"
+                bg="primary"
+                w="full"
+                minH="80px"
+                display="flex"
+                alignItems="center"
+              >
+                <SkeletonCircle
+                  size="8"
+                  mr={4}
                   startColor="muted"
                   endColor="primary"
                 />
-                <SkeletonText
-                  noOfLines={2}
-                  spacing={2}
-                  width="80%"
-                  startColor="muted"
-                  endColor="primary"
-                />
+                <Box flex="1">
+                  <Skeleton
+                    height="16px"
+                    width="40%"
+                    mb={2}
+                    startColor="muted"
+                    endColor="primary"
+                  />
+                  <SkeletonText
+                    noOfLines={2}
+                    spacing={2}
+                    width="80%"
+                    startColor="muted"
+                    endColor="primary"
+                  />
+                </Box>
               </Box>
-            </Box>
-          ))}
-        </Stack>
-      ) : filteredNotifications.length > 0 ? (
-        <Stack spacing={4} w="full">
-          {filteredNotifications.map((notification) => (
-            <NotificationItem
-              key={notification.id}
-              notification={notification}
-              lastReadDate={lastReadDate}
-              currentUser={username}
-            />
-          ))}
-        </Stack>
-      ) : (
-        <Text>No notifications</Text>
-      )}
+            ))}
+          </Stack>
+        ) : filteredNotifications.length > 0 ? (
+          <Stack spacing={4} w="full">
+            {filteredNotifications.map((notification) => (
+              <NotificationItem
+                key={notification.id}
+                notification={notification}
+                lastReadDate={lastReadDate}
+                currentUser={username}
+              />
+            ))}
+          </Stack>
+        ) : (
+          <Text>No notifications</Text>
+        )}
+      </Box>
     </Box>
   );
 }

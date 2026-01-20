@@ -1,36 +1,52 @@
+"use client";
+
 import {
   Box,
   Avatar,
   Text,
   HStack,
-  IconButton,
-  Link,
   VStack,
   Divider,
-  Button,
   Skeleton,
   Flex,
-  Image,
-  Icon,
 } from "@chakra-ui/react";
 import { Discussion, Notifications } from "@hiveio/dhive";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { FaPlay, FaFileAlt } from "react-icons/fa";
 import {
   getPost,
   checkFollow,
   changeFollow,
 } from "../../lib/hive/client-functions";
-import { parseJsonMetadata } from "@/lib/hive/metadata-utils";
+import { parseJsonMetadata, getImageUrls } from "@/lib/hive/metadata-utils";
 import { fetchComments } from "../../lib/hive/fetchComments";
 import SnapComposer from "../homepage/SnapComposer";
-import HiveMarkdown from "../shared/HiveMarkdown";
 import UpvoteButton from "../shared/UpvoteButton";
+
+// Import extracted components
+import ReplyItem from "./ReplyItem";
+import NotificationPreview from "./NotificationPreview";
+import {
+  FollowNotification,
+  VoteNotification,
+  ReplyNotification,
+  ReplyCommentNotification,
+  MentionNotification,
+} from "./content";
+
+// Import utils
+import {
+  extractMediaFromBody,
+  extractThumbnailFromMetadata,
+  sanitizeNotificationBody,
+  formatNotificationDate,
+  isNotificationNew,
+  extractAuthorFromMessage,
+} from "./utils";
 
 interface NotificationItemProps {
   notification: Notifications;
   lastReadDate: string;
-  currentUser: string; // Added currentUser prop
+  currentUser: string;
 }
 
 export default function NotificationItem({
@@ -38,201 +54,384 @@ export default function NotificationItem({
   lastReadDate,
   currentUser,
 }: NotificationItemProps) {
-  const author = notification.msg.trim().replace(/^@/, "").split(" ")[0];
-  const [displayCommentPrompt, setDisplayCommentPrompt] =
-    useState<boolean>(false);
-  const [postContent, setPostContent] = useState<string>("");
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [hasVoted, setHasVoted] = useState<boolean>(false);
-  const [showSlider, setShowSlider] = useState<boolean>(false);
+  const author = extractAuthorFromMessage(notification.msg);
+  const [displayCommentPrompt, setDisplayCommentPrompt] = useState(false);
+  const [postContent, setPostContent] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasVoted, setHasVoted] = useState(false);
+  const [showSlider, setShowSlider] = useState(false);
   const [replies, setReplies] = useState<Discussion[]>([]);
-  const [repliesLoading, setRepliesLoading] = useState<boolean>(false);
-  const formattedDate = new Date(notification.date + "Z").toLocaleString(
-    "en-US",
-    {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: false,
-    }
-  );
+  const [repliesLoading, setRepliesLoading] = useState(false);
 
-  const notificationDateStr = notification.date.endsWith("Z")
-    ? notification.date
-    : `${notification.date}Z`;
-  const notificationDate = new Date(notificationDateStr);
-  const lastRead = new Date(lastReadDate);
-  const isNew = notificationDate > lastRead;
+  const formattedDate = formatNotificationDate(notification.date);
+  const isNew = isNotificationNew(notification.date, lastReadDate);
+
   const [rawPostAuthor, postId] = notification.url.split("/");
   const postAuthor = rawPostAuthor.replace(/^@/, "");
+
   const [parentPost, setParentPost] = useState<Discussion | null>(null);
-  const [magPostThumbnail, setMagPostThumbnail] = useState<string>("");
+  const [magPostThumbnail, setMagPostThumbnail] = useState("");
+  const [inlineImageUrl, setInlineImageUrl] = useState<string | null>(null);
   const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
   const [reply, setReply] = useState<Discussion | null>(null);
-  const [originalApp, setOriginalApp] = useState<string>("");
-  const [isFollowingBack, setIsFollowingBack] = useState<boolean>(false);
+  const [originalApp, setOriginalApp] = useState("");
+  const [isFollowingBack, setIsFollowingBack] = useState(false);
 
-  // Add a cache for posts
   const postCache = useRef<Record<string, Discussion>>({});
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Add helper to fetch comment content
+  /**
+   * Helper to extract media preview from a post
+   * Returns previewUrl (image/video thumbnail), inlineImageUrl (embedded images), and videoSourceUrl (direct video URL)
+   */
+  const getMediaFromPost = useCallback((post: Discussion): { 
+    previewUrl: string | null; 
+    inlineImageUrl: string | null;
+    videoSourceUrl: string | null;
+  } => {
+    const bodyMedia = extractMediaFromBody(post.body || "");
+    let previewUrl = bodyMedia.previewUrl;
+    let inlineImageUrl = bodyMedia.inlineImageUrl;
+    let videoSourceUrl = bodyMedia.videoSourceUrl;
+
+    // If no preview from body, try metadata with detailed logging
+    if (!previewUrl) {
+      try {
+        const metadata = post.json_metadata ? parseJsonMetadata(post.json_metadata) : {};
+        // Enable logging for debugging
+        const metadataThumbnail = extractThumbnailFromMetadata(metadata, true);
+        if (metadataThumbnail) {
+          previewUrl = metadataThumbnail;
+        }
+        // Also check for images in metadata
+        if (!previewUrl && !inlineImageUrl) {
+          const imageUrls = getImageUrls(metadata);
+          if (imageUrls.length > 0) {
+            inlineImageUrl = imageUrls[0];
+          }
+        }
+      } catch (err) {
+        console.error("[notifications] Error extracting media from metadata:", err);
+      }
+    }
+
+    // Log the final extraction result
+    console.log("[notifications] getMediaFromPost result:", {
+      author: post.author,
+      permlink: post.permlink?.slice(0, 30),
+      previewUrl: previewUrl?.slice(0, 60),
+      inlineImageUrl: inlineImageUrl?.slice(0, 60),
+      videoSourceUrl: videoSourceUrl?.slice(0, 60),
+    });
+
+    return { previewUrl, inlineImageUrl, videoSourceUrl };
+  }, []);
+
+  /**
+   * Fetch and cache a post by author/permlink
+   */
+  const fetchAndCachePost = useCallback(async (author: string, permlink: string): Promise<Discussion> => {
+    const cacheKey = `${author}_${permlink}`;
+    if (postCache.current[cacheKey]) {
+      return postCache.current[cacheKey];
+    }
+    const post = await getPost(author, permlink);
+    postCache.current[cacheKey] = post;
+    return post;
+  }, []);
+
+  /**
+   * Get the root post by traversing up the parent chain
+   */
+  /**
+   * Check if a post is a "snap container" (a holder post for snap comments)
+   */
+  const isSnapContainer = useCallback((post: Discussion): boolean => {
+    // Snap containers typically have specific authors or patterns
+    const containerAuthors = ['peak.snaps', 'snaps', 'hive.snaps'];
+    const isContainer = containerAuthors.includes(post.author) || 
+                        post.permlink?.includes('snap-container') ||
+                        post.title?.includes('Snaps Container');
+    return isContainer;
+  }, []);
+
+  /**
+   * Get the best media source - prefer user's content over container posts
+   * This handles the case where snaps are comments on container posts
+   */
+  const getBestMediaSource = useCallback(async (
+    notificationPost: Discussion,
+    preferParent: boolean = false
+  ): Promise<{ mediaSource: Discussion; strategy: string }> => {
+    // First, check if the notification post itself has media
+    const notificationMedia = getMediaFromPost(notificationPost);
+    const hasNotificationMedia = notificationMedia.previewUrl || notificationMedia.inlineImageUrl;
+
+    console.log(`[notifications] Notification post has media: ${hasNotificationMedia ? 'yes' : 'no'}`);
+    
+    // If we want the parent (for reply notifications)
+    if (preferParent && notificationPost.parent_author && notificationPost.parent_permlink) {
+      const parentPost = await fetchAndCachePost(
+        notificationPost.parent_author,
+        notificationPost.parent_permlink
+      );
+      
+      // Check if parent is a snap container
+      if (isSnapContainer(parentPost)) {
+        console.log(`[notifications] Parent is a snap container, using notification post instead`);
+        // The notification post is likely a comment with actual content
+        return { 
+          mediaSource: notificationPost, 
+          strategy: "notification post (parent is container)" 
+        };
+      }
+
+      const parentMedia = getMediaFromPost(parentPost);
+      const hasParentMedia = parentMedia.previewUrl || parentMedia.inlineImageUrl;
+
+      console.log(`[notifications] Parent post has media: ${hasParentMedia ? 'yes' : 'no'}`);
+
+      // Return parent if it has media, otherwise try to find better source
+      if (hasParentMedia) {
+        return { mediaSource: parentPost, strategy: "parent post (your content)" };
+      }
+
+      // If parent has no media, check if notification post does
+      if (hasNotificationMedia) {
+        return { mediaSource: notificationPost, strategy: "notification post (parent has no media)" };
+      }
+
+      // Last resort: return parent anyway
+      return { mediaSource: parentPost, strategy: "parent post (no media found)" };
+    }
+
+    // For non-parent cases, just return the notification post
+    if (hasNotificationMedia) {
+      return { mediaSource: notificationPost, strategy: "notification post" };
+    }
+
+    // Try to get parent if exists and has media
+    if (notificationPost.parent_author && notificationPost.parent_permlink) {
+      const parentPost = await fetchAndCachePost(
+        notificationPost.parent_author,
+        notificationPost.parent_permlink
+      );
+
+      // Skip container posts
+      if (!isSnapContainer(parentPost)) {
+        const parentMedia = getMediaFromPost(parentPost);
+        if (parentMedia.previewUrl || parentMedia.inlineImageUrl) {
+          return { mediaSource: parentPost, strategy: "parent post (fallback)" };
+        }
+      }
+    }
+
+    return { mediaSource: notificationPost, strategy: "notification post (default)" };
+  }, [fetchAndCachePost, getMediaFromPost, isSnapContainer]);
+
+  /**
+   * Fetch content and apply notification-type-specific media preview strategy
+   * 
+   * Notification types and their preview strategies:
+   * - reply: Show media from YOUR original post/comment that was replied to
+   * - reply_comment: Show media from YOUR comment that was replied to (NOT root container)
+   * - vote: Show media from YOUR post/comment that was voted on
+   * - mention: Show media from THE POST/COMMENT where you were mentioned
+   * - reblog: Show media from YOUR post that was reblogged
+   * - follow: No media preview (show avatar instead)
+   * 
+   * IMPORTANT: Skip "snap container" posts and prefer actual user content
+   */
   const fetchCommentContent = useCallback(async () => {
     const checkIfUserVoted = (post: Discussion | null) => {
       if (!post || !post.active_votes || !currentUser) return false;
       return post.active_votes.some((vote) => vote.voter === currentUser);
     };
+
+    console.log(`\n[notifications] ========== NOTIFICATION ==========`);
+    console.log(`[notifications] Type: ${notification.type}`);
+    console.log(`[notifications] URL: ${notification.url}`);
+    console.log(`[notifications] Message: ${notification.msg}`);
+
     try {
       setIsLoading(true);
-      const replyKey = `${postAuthor}_${postId}`;
-      let post: Discussion;
-      if (postCache.current[replyKey]) {
-        post = postCache.current[replyKey];
-      } else {
-        post = await getPost(postAuthor, postId);
-        postCache.current[replyKey] = post;
-      }
-      setReply(post);
 
-      // Check if user has voted on this post
-      setHasVoted(checkIfUserVoted(post));
+      // Step 1: Fetch the post referenced in the notification URL
+      const notificationPost = await fetchAndCachePost(postAuthor, postId);
+      console.log(`[notifications] Fetched notification post: @${notificationPost.author}/${notificationPost.permlink}`);
+      console.log(`[notifications] Post has parent: ${notificationPost.parent_author ? 'yes' : 'no'}`);
+      console.log(`[notifications] Post body preview: ${(notificationPost.body || '').slice(0, 150)}...`);
 
-       // Set the post content regardless of type
-       setPostContent(post.body || "No content available");
+      setReply(notificationPost);
+      setHasVoted(checkIfUserVoted(notificationPost));
+      setPostContent(notificationPost.body || "No content available");
 
-// Extract video thumbnail from iframe or video tags
-        const iframeMatch = (post.body || "").match(
-          /<iframe[^>]*src=["']([^"']+)["'][^>]*><\/iframe>/i
-        );
-        const videoMatch = (post.body || "").match(
-          /<video[^>]*poster=["']([^"']+)["'][^>]*>/i
-        );
-        
-        if (videoMatch && videoMatch[1]) {
-          // Use video poster if available
-          setVideoPreviewUrl(videoMatch[1]);
-        } else if (iframeMatch && iframeMatch[1]) {
-          // For YouTube/Vimeo embeds, try to extract thumbnail
-          const youtubeMatch = iframeMatch[1].match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/);
-          const vimeoMatch = iframeMatch[1].match(/vimeo\.com\/(\d+)/);
-          
-          if (youtubeMatch && youtubeMatch[1]) {
-            setVideoPreviewUrl(`https://img.youtube.com/vi/${youtubeMatch[1]}/mqdefault.jpg`);
-          } else if (vimeoMatch && vimeoMatch[1]) {
-            setVideoPreviewUrl(`https://vumbnail.com/${vimeoMatch[1]}.jpg`);
-          } else {
-            setVideoPreviewUrl(null);
-          }
-        } else {
+      // Step 2: Apply notification-type-specific preview strategy
+      let mediaSourcePost: Discussion | null = null;
+      let previewStrategy = "";
+
+      switch (notification.type) {
+        case "follow":
+          // No media preview for follow notifications (show avatar)
+          previewStrategy = "none (follow notification - showing avatar)";
+          console.log(`[notifications] Strategy: ${previewStrategy}`);
           setVideoPreviewUrl(null);
-        }
+          setInlineImageUrl(null);
+          setMagPostThumbnail("");
+          setParentPost(null);
+          break;
 
-
-      if (
-        notification.type === "reply" ||
-        notification.type === "reply_comment" ||
-        notification.type === "mention" ||
-        notification.type === "vote" ||
-        notification.type === "reblog"
-      ) {
-        // Check if it's a comment (has parent_author) or a root post
-        if (post.parent_author && post.parent_permlink) {
-          // It's a comment - fetch its parent
-          const parentKey = `${post.parent_author}_${post.parent_permlink}`;
-          let parentPostData: Discussion;
-          if (postCache.current[parentKey]) {
-            parentPostData = postCache.current[parentKey];
+        case "vote":
+          // Show media from the post/comment that was voted on
+          // This is YOUR content, so show its media directly
+          previewStrategy = "voted content (your post/comment)";
+          const voteResult = await getBestMediaSource(notificationPost, false);
+          mediaSourcePost = voteResult.mediaSource;
+          previewStrategy = voteResult.strategy;
+          
+          // Set parent for context display
+          if (notificationPost.parent_author && notificationPost.parent_permlink) {
+            const voteParent = await fetchAndCachePost(
+              notificationPost.parent_author,
+              notificationPost.parent_permlink
+            );
+            setParentPost(isSnapContainer(voteParent) ? notificationPost : voteParent);
           } else {
-            parentPostData = await getPost(
-              post.parent_author,
-              post.parent_permlink
-            );
-            postCache.current[parentKey] = parentPostData;
+            setParentPost(notificationPost);
           }
-          setParentPost(parentPostData);
+          break;
 
-          // Get metadata from parent post
-          try {
-            const post_metadata =
-              parentPostData && parentPostData.json_metadata
-                ? parseJsonMetadata(parentPostData.json_metadata)
-                : {};
-            if (
-              post_metadata &&
-              post_metadata.image &&
-              post_metadata.image.length > 0
-            ) {
-              setMagPostThumbnail(post_metadata.image[0]);
-              setOriginalApp(post_metadata.app || "");
-            } else {
-              setMagPostThumbnail(
-                "https://images.hive.blog/u/" + post.author + "/avatar"
-              );
-            }
-          } catch (err) {
-            console.error("Error parsing parent post metadata:", err);
-            setMagPostThumbnail(
-              "https://images.hive.blog/u/" + post.author + "/avatar"
+        case "reply":
+          // Show media from YOUR original post that was replied to
+          // The notification post is the reply, its parent is YOUR content
+          previewStrategy = "your content that was replied to";
+          const replyResult = await getBestMediaSource(notificationPost, true);
+          mediaSourcePost = replyResult.mediaSource;
+          previewStrategy = replyResult.strategy;
+          
+          if (notificationPost.parent_author && notificationPost.parent_permlink) {
+            const replyParent = await fetchAndCachePost(
+              notificationPost.parent_author,
+              notificationPost.parent_permlink
             );
+            setParentPost(replyParent);
+          } else {
+            setParentPost(notificationPost);
           }
-        } else {
-          // It's a root post - use the post itself as "parent"
-          setParentPost(post);
+          break;
 
-          // Get metadata from the post itself
-          try {
-            const post_metadata = post.json_metadata
-              ? parseJsonMetadata(post.json_metadata)
-              : {};
-            if (
-              post_metadata &&
-              post_metadata.image &&
-              post_metadata.image.length > 0
-            ) {
-              setMagPostThumbnail(post_metadata.image[0]);
-              setOriginalApp(post_metadata.app || "");
-            } else {
-              setMagPostThumbnail(
-                "https://images.hive.blog/u/" + post.author + "/avatar"
-              );
-            }
-          } catch (err) {
-            console.error("Error parsing post metadata:", err);
-            setMagPostThumbnail(
-              "https://images.hive.blog/u/" + post.author + "/avatar"
+        case "reply_comment":
+          // Show media from YOUR COMMENT that was replied to
+          // NOT the root post - that's often a container with generic images
+          previewStrategy = "your comment that was replied to";
+          const replyCommentResult = await getBestMediaSource(notificationPost, true);
+          mediaSourcePost = replyCommentResult.mediaSource;
+          previewStrategy = replyCommentResult.strategy;
+          
+          if (notificationPost.parent_author && notificationPost.parent_permlink) {
+            const commentParent = await fetchAndCachePost(
+              notificationPost.parent_author,
+              notificationPost.parent_permlink
             );
+            setParentPost(commentParent);
+          } else {
+            setParentPost(notificationPost);
           }
+          break;
+
+        case "mention":
+          // Show media from the post/comment where you were mentioned
+          previewStrategy = "content where you were mentioned";
+          const mentionResult = await getBestMediaSource(notificationPost, false);
+          mediaSourcePost = mentionResult.mediaSource;
+          previewStrategy = mentionResult.strategy;
+          setParentPost(notificationPost);
+          break;
+
+        case "reblog":
+          // Show media from YOUR post that was reblogged
+          previewStrategy = "reblogged post";
+          const reblogResult = await getBestMediaSource(notificationPost, false);
+          mediaSourcePost = reblogResult.mediaSource;
+          previewStrategy = reblogResult.strategy;
+          setParentPost(notificationPost);
+          break;
+
+        default:
+          // Default: try to show media from the notification post
+          previewStrategy = "default (notification post)";
+          const defaultResult = await getBestMediaSource(notificationPost, false);
+          mediaSourcePost = defaultResult.mediaSource;
+          previewStrategy = defaultResult.strategy;
+          setParentPost(notificationPost);
+          break;
+      }
+
+      // Step 3: Extract media from the determined source
+      if (mediaSourcePost) {
+        console.log(`[notifications] Strategy: ${previewStrategy}`);
+        console.log(`[notifications] Media source: @${mediaSourcePost.author}/${mediaSourcePost.permlink}`);
+        console.log(`[notifications] Media source title: ${mediaSourcePost.title || "(no title - comment)"}`);
+        console.log(`[notifications] Media source body preview: ${(mediaSourcePost.body || "").slice(0, 200)}...`);
+
+        const { previewUrl, inlineImageUrl, videoSourceUrl } = getMediaFromPost(mediaSourcePost);
+        
+        console.log(`[notifications] Extracted preview URL: ${previewUrl || "null"}`);
+        console.log(`[notifications] Extracted inline image: ${inlineImageUrl || "null"}`);
+        console.log(`[notifications] Extracted video source URL: ${videoSourceUrl || "null"}`);
+
+        // Use videoSourceUrl as fallback preview for IPFS videos
+        // The video URL itself can be used as a preview with proper handling in NotificationPreview
+        const effectivePreviewUrl = previewUrl || videoSourceUrl;
+        
+        setVideoPreviewUrl(effectivePreviewUrl);
+        setInlineImageUrl(inlineImageUrl);
+
+        // Also set magPostThumbnail from metadata images
+        try {
+          const metadata = mediaSourcePost.json_metadata 
+            ? parseJsonMetadata(mediaSourcePost.json_metadata) 
+            : {};
+          const imageUrls = getImageUrls(metadata);
+          setMagPostThumbnail(imageUrls.length > 0 ? imageUrls[0] : "");
+          setOriginalApp(metadata.app || "");
+          console.log(`[notifications] Metadata images: ${imageUrls.length > 0 ? imageUrls[0] : "none"}`);
+          console.log(`[notifications] Original app: ${metadata.app || "unknown"}`);
+          console.log(`[notifications] Effective preview URL: ${effectivePreviewUrl || "none"}`);
+        } catch (err) {
+          console.error("[notifications] Error parsing metadata:", err);
+          setMagPostThumbnail("");
         }
       }
+
+      console.log(`[notifications] ========== END ==========\n`);
+
     } catch (error) {
       setPostContent("Error loading content");
-      console.error("Error in fetchCommentContent:", error);
+      console.error("[notifications] Error in fetchCommentContent:", error);
     } finally {
       setIsLoading(false);
     }
-  }, [postAuthor, postId, notification.type, postCache, currentUser]);
+  }, [postAuthor, postId, notification.type, notification.url, notification.msg, currentUser, fetchAndCachePost, getBestMediaSource, getMediaFromPost, isSnapContainer]);
 
-  // Replace the existing handleReplyClick with this version
+  // Handle reply button click
   function handleReplyClick() {
     if (!displayCommentPrompt) {
       setDisplayCommentPrompt(true);
       fetchCommentContent();
-      fetchExistingReplies(); // Fetch existing replies when opening
+      fetchExistingReplies();
       window.dispatchEvent(
         new CustomEvent("activeComposerChange", { detail: notification.url })
       );
     } else {
       setDisplayCommentPrompt(false);
-      // Optionally dispatch a null detail if needed; others remain closed anyway.
       window.dispatchEvent(
         new CustomEvent("activeComposerChange", { detail: null })
       );
     }
   }
 
-  // Add a global listener to collapse this composer when another is opened
+  // Collapse composer when another is opened
   useEffect(() => {
     function handleActiveComposerChange(e: CustomEvent) {
       if (e.detail && e.detail !== notification.url) {
@@ -251,9 +450,7 @@ export default function NotificationItem({
     };
   }, [notification.url]);
 
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  // Use IntersectionObserver to lazy load comment/parent content when visible
+  // Lazy load content when visible
   useEffect(() => {
     if (
       ["reply", "reply_comment", "mention", "vote", "reblog"].includes(
@@ -277,7 +474,7 @@ export default function NotificationItem({
     }
   }, [notification.type, notification.url, fetchCommentContent]);
 
-  // For follow notifications, check follow state on mount
+  // Check follow state for follow notifications
   useEffect(() => {
     if (notification.type === "follow" && currentUser) {
       checkFollow(currentUser, author)
@@ -291,16 +488,12 @@ export default function NotificationItem({
     setIsFollowingBack(true);
   }
 
-  // Handle new replies
   function handleNewReply(newComment: Partial<Discussion>) {
-    const newReply = newComment as Discussion;
-    setReplies((prev) => [...prev, newReply]);
+    setReplies((prev) => [...prev, newComment as Discussion]);
   }
 
-  // Fetch existing replies when reply button is clicked
   async function fetchExistingReplies() {
     if (!reply) return;
-
     setRepliesLoading(true);
     try {
       const existingReplies = await fetchComments(
@@ -317,13 +510,89 @@ export default function NotificationItem({
     }
   }
 
-  // Replace hardcoded gradient and box-shadow with theme variables
+  // Theme styles
   const notificationPulseGradient =
     "linear-gradient(180deg, var(--chakra-colors-primary) 0%, var(--chakra-colors-accent) 100%)";
-  const notificationBoxShadowAccent =
-    "0 0 8px 2px var(--chakra-colors-primary)";
+  const notificationBoxShadowAccent = "0 0 8px 2px var(--chakra-colors-primary)";
   const notificationBoxShadowAccent16 =
     "0 0 16px 4px var(--chakra-colors-primary)";
+
+  // Render notification content based on type
+  const renderNotificationContent = () => {
+    switch (notification.type) {
+      case "follow":
+        return (
+          <FollowNotification
+            message={notification.msg}
+            isNew={isNew}
+            isFollowingBack={isFollowingBack}
+            onFollowBack={handleFollowBack}
+          />
+        );
+      case "vote":
+        return (
+          <VoteNotification
+            message={notification.msg}
+            notificationUrl={notification.url}
+            postContent={postContent}
+            formattedDate={formattedDate}
+            isNew={isNew}
+            author={author}
+          />
+        );
+      case "reply_comment":
+        return (
+          <ReplyCommentNotification
+            message={notification.msg}
+            notificationUrl={notification.url}
+            parentPost={parentPost}
+            reply={reply}
+            postContent={postContent}
+            isNew={isNew}
+            author={author}
+          />
+        );
+      case "mention":
+        return (
+          <MentionNotification
+            message={notification.msg}
+            notificationUrl={notification.url}
+            parentPost={parentPost}
+            formattedDate={formattedDate}
+            isNew={isNew}
+            author={author}
+          />
+        );
+      case "reply":
+        return (
+          <ReplyNotification
+            message={notification.msg}
+            notificationUrl={notification.url}
+            parentPost={parentPost}
+            reply={reply}
+            postContent={postContent}
+            isNew={isNew}
+            author={author}
+          />
+        );
+      default:
+        return (
+          <Text
+            color={isNew ? "accent" : "primary"}
+            fontSize={{ base: "xs", md: "sm" }}
+            noOfLines={2}
+            overflow="hidden"
+            textOverflow="ellipsis"
+            wordBreak="break-word"
+          >
+            {notification.msg.replace(/^@/, "")} - {parentPost?.title}
+            {(notification.type === "reply" ||
+              notification.type === "reply_comment") &&
+              ` using ${originalApp}`}
+          </Text>
+        );
+    }
+  };
 
   return (
     <div ref={containerRef}>
@@ -335,14 +604,7 @@ export default function NotificationItem({
         align="stretch"
         position="relative"
         direction={{ base: "column", md: "row" }}
-        sx={
-          isNew
-            ? {
-                boxShadow: "none",
-                animation: undefined,
-              }
-            : {}
-        }
+        sx={isNew ? { boxShadow: "none", animation: undefined } : {}}
         _before={
           isNew
             ? {
@@ -366,6 +628,7 @@ export default function NotificationItem({
             100% { box-shadow: ${notificationBoxShadowAccent}; }
           }
         `}</style>
+
         <HStack
           w="full"
           spacing={4}
@@ -383,285 +646,11 @@ export default function NotificationItem({
                 size={{ base: "sm", md: "xs" }}
               />
               <Box flex="1" minW={0}>
-                {notification.type === "follow" ? (
-                  <HStack spacing={2}>
-                    <Text
-                      color={isNew ? "accent" : "primary"}
-                      fontSize={{ base: "xs", md: "sm" }}
-                    >
-                      {notification.msg.replace(/^@/, "")}
-                    </Text>
-                    {isFollowingBack ? (
-                      <Text fontSize={{ base: "xs", md: "sm" }} color="primary">
-                        Following
-                      </Text>
-                    ) : (
-                      <Button
-                        size={{ base: "xs", md: "sm" }}
-                        onClick={handleFollowBack}
-                      >
-                        Follow Back
-                      </Button>
-                    )}
-                  </HStack>
-                ) : notification.type === "vote" ? (
-                  <Box>
-                    <Text
-                      color={isNew ? "accent" : "primary"}
-                      fontSize={{ base: "xs", md: "sm" }}
-                      display="flex"
-                      alignItems="center"
-                      flexWrap="wrap"
-                      noOfLines={2}
-                      wordBreak="break-word"
-                    >
-                      <Link
-                        href={`/user/${author}`}
-                        color={isNew ? "accent" : "primary"}
-                        fontWeight="bold"
-                        _hover={{ textDecoration: "underline" }}
-                      >
-                        {notification.msg.replace(/^@/, "").split(" ")[0]}
-                      </Link>
-                      <Text as="span" ml={{ base: 0.5, md: 1 }}>
-                        upvoted your
-                      </Text>
-                      <Link
-                        href={`/${notification.url}`}
-                        color={isNew ? "accent" : "primary"}
-                        fontWeight="bold"
-                        _hover={{ textDecoration: "underline" }}
-                        ml={{ base: 0.5, md: 1 }}
-                      >
-                        post
-                      </Link>
-                      {":"}
-                      <Text
-                        as="span"
-                        color="success"
-                        fontWeight="bold"
-                        ml={{ base: 0.5, md: 1 }}
-                      >
-                        {(() => {
-                          const match = notification.msg.match(/\(([^)]+)\)/);
-                          return match && match[1] ? `(${match[1]})` : "";
-                        })()}
-                      </Text>
-                      {notification.type === "vote" && postContent && (
-                        <Text
-                          as="span"
-                          color="success"
-                          fontWeight="normal"
-                          ml={{ base: 0.5, md: 1 }}
-                          fontSize={{ base: "2xs", md: "xs" }}
-                        >
-                          &quot;{postContent.replace(/\n/g, " ").slice(0, 100)}
-                          {postContent.length > 100 ? "…" : ""}&quot;
-                        </Text>
-                      )}
-                      <Text
-                        as="span"
-                        fontSize={{ base: "2xs", md: "xs" }}
-                        color="muted"
-                        ml={{ base: 1, md: 2 }}
-                      >
-                        {formattedDate}
-                      </Text>
-                    </Text>
-                  </Box>
-                ) : notification.type === "reply_comment" ? (
-                  <Box>
-                    <Text
-                      color={isNew ? "accent" : "primary"}
-                      fontSize={{ base: "xs", md: "sm" }}
-                      display="flex"
-                      alignItems="center"
-                      flexWrap="wrap"
-                      noOfLines={2}
-                      wordBreak="break-word"
-                      maxW={{ base: "95vw", md: "100%" }}
-                      overflowX="hidden"
-                    >
-                      <Link
-                        href={`/user/${author}`}
-                        color={isNew ? "accent" : "primary"}
-                        fontWeight="bold"
-                        _hover={{ textDecoration: "underline" }}
-                        maxW={{ base: "40vw", md: "100%" }}
-                        overflowWrap="anywhere"
-                      >
-                        {notification.msg.replace(/^@/, "").split(" ")[0]}
-                      </Link>
-                      <Text as="span" ml={{ base: 0.5, md: 1 }}>
-                        replied to your
-                      </Text>
-                      <Link
-                        href={`/${
-                          parentPost
-                            ? `@${parentPost.author}/${parentPost.permlink}`
-                            : notification.url
-                        }`}
-                        color={isNew ? "accent" : "primary"}
-                        fontWeight="bold"
-                        _hover={{ textDecoration: "underline" }}
-                        ml={{ base: 0.5, md: 1 }}
-                        maxW={{ base: "30vw", md: "100%" }}
-                        overflowWrap="anywhere"
-                      >
-                        comment
-                      </Link>
-                      {parentPost?.body && (
-                        <Text
-                          as="span"
-                          fontSize="xs"
-                          color="text"
-                          ml={2}
-                          isTruncated
-                          verticalAlign="middle"
-                          display="inline-block"
-                          maxW={{ base: "40vw", md: "100%" }}
-                          overflowWrap="anywhere"
-                        >
-                          {(() => {
-                            const replaced = parentPost.body
-                              .replace(/!\[.*?\]\(.*?\)/g, "🖼️")
-                              .replace(/<img[^>]*>/gi, "🖼️")
-                              .replace(/\n/g, " ");
-                            return `"${replaced.slice(0, 60)}${
-                              replaced.length > 60 ? "…" : ""
-                            }"`;
-                          })()}
-                        </Text>
-                      )}
-                      {":"}
-                    </Text>
-                    {reply && (
-                      <Box
-                        mt={1}
-                        ml={{ base: 2, md: 4 }}
-                        pl={{ base: 2, md: 3 }}
-                        pr={{ base: 2, md: 0 }}
-                        borderLeft="2px solid"
-                        borderColor="border"
-                        bg="muted"
-                        borderRadius="0"
-                        maxW={{ base: "95vw", md: "100%" }}
-                        overflowX="auto"
-                      >
-                        <HiveMarkdown
-                          markdown={postContent}
-                          className="notification-reply-comment-markdown"
-                        />
-                      </Box>
-                    )}
-                  </Box>
-                ) : notification.type === "mention" ? (
-                  <Box>
-                    <Text
-                      color={isNew ? "accent" : "primary"}
-                      fontSize={{ base: "xs", md: "sm" }}
-                      display="flex"
-                      alignItems="center"
-                      flexWrap="wrap"
-                      noOfLines={2}
-                      wordBreak="break-word"
-                    >
-                      <Link
-                        href={`/user/${author}`}
-                        color={isNew ? "accent" : "primary"}
-                        fontWeight="bold"
-                        _hover={{ textDecoration: "underline" }}
-                      >
-                        {notification.msg.replace(/^@/, "").split(" ")[0]}
-                      </Link>
-                      <Text as="span" ml={{ base: 0.5, md: 1 }}>
-                        mentioned you in
-                      </Text>
-                      {parentPost?.title && (
-                        <Link
-                          href={`/${
-                            parentPost
-                              ? `@${parentPost.author}/${parentPost.permlink}`
-                              : notification.url
-                          }`}
-                          color={isNew ? "accent" : "primary"}
-                          fontWeight="bold"
-                          _hover={{ textDecoration: "underline" }}
-                          ml={{ base: 0.5, md: 1 }}
-                        >
-                          {parentPost.title}
-                        </Link>
-                      )}
-                      {":"}
-                      <Text
-                        as="span"
-                        fontSize={{ base: "2xs", md: "xs" }}
-                        color="muted"
-                        ml={{ base: 1, md: 2 }}
-                      >
-                        {formattedDate}
-                      </Text>
-                    </Text>
-                  </Box>
-                ) : notification.type === "reply" ? (
-                  <Box>
-                    <Text
-                      color={isNew ? "accent" : "primary"}
-                      fontSize={{ base: "xs", md: "sm" }}
-                      display="flex"
-                      alignItems="center"
-                      flexWrap="wrap"
-                      whiteSpace="normal"
-                      wordBreak="break-word"
-                    >
-                      <Link
-                        href={`/user/${author}`}
-                        color={isNew ? "accent" : "primary"}
-                        fontWeight="bold"
-                        _hover={{ textDecoration: "underline" }}
-                      >
-                        {notification.msg.replace(/^@/, "").split(" ")[0]}
-                      </Link>
-                      <Text as="span" ml={{ base: 0.5, md: 1 }}>
-                        replied to your
-                      </Text>
-                      <Link
-                        href={`/${
-                          parentPost
-                            ? `@${parentPost.author}/${parentPost.permlink}`
-                            : notification.url
-                        }`}
-                        color={isNew ? "accent" : "primary"}
-                        fontWeight="bold"
-                        _hover={{ textDecoration: "underline" }}
-                        ml={{ base: 0.5, md: 1 }}
-                      >
-                        post
-                      </Link>
-                      {":"}
-                    </Text>
-                    {parentPost?.title && (
-                      <HiveMarkdown markdown={parentPost.title} />
-                    )}
-                    {reply && <HiveMarkdown markdown={postContent} />}
-                  </Box>
-                ) : (
-                  <Text
-                    color={isNew ? "accent" : "primary"}
-                    fontSize={{ base: "xs", md: "sm" }}
-                    noOfLines={2}
-                    overflow="hidden"
-                    textOverflow="ellipsis"
-                    wordBreak="break-word"
-                  >
-                    {notification.msg.replace(/^@/, "")} - {parentPost?.title}
-                    {(notification.type === "reply" ||
-                      notification.type === "reply_comment") &&
-                      ` using ${originalApp}`}
-                  </Text>
-                )}
+                {renderNotificationContent()}
               </Box>
             </HStack>
+
+            {/* Post content for non-standard notification types */}
             {parentPost &&
               !["vote", "reblog", "reply", "reply_comment", "mention"].includes(
                 notification.type
@@ -685,24 +674,24 @@ export default function NotificationItem({
                         />
                       </>
                     ) : (
-                      <>
-                        <Text
-                          fontSize={{ base: "xs", md: "sm" }}
-                          color="primary"
-                          ml={{ base: 2, md: 5 }}
-                          noOfLines={3}
-                          overflow="hidden"
-                          textOverflow="ellipsis"
-                          w="100%"
-                          wordBreak="break-word"
-                        >
-                          {postContent}
-                        </Text>
-                      </>
+                      <Text
+                        fontSize={{ base: "xs", md: "sm" }}
+                        color="primary"
+                        ml={{ base: 2, md: 5 }}
+                        noOfLines={3}
+                        overflow="hidden"
+                        textOverflow="ellipsis"
+                        w="100%"
+                        wordBreak="break-word"
+                      >
+                        {sanitizeNotificationBody(postContent)}
+                      </Text>
                     )}
                   </VStack>
                 </>
               )}
+
+            {/* Reply actions */}
             {(notification.type === "reply" ||
               notification.type === "reply_comment") && (
               <Box mt={2} w="100%" ml={{ base: 2, md: 8 }}>
@@ -720,9 +709,7 @@ export default function NotificationItem({
                       <UpvoteButton
                         discussion={reply}
                         voted={hasVoted}
-                        setVoted={(newVotedState) => {
-                          setHasVoted(newVotedState);
-                        }}
+                        setVoted={setHasVoted}
                         activeVotes={reply.active_votes || []}
                         setActiveVotes={(votes) => {
                           if (reply) {
@@ -744,240 +731,46 @@ export default function NotificationItem({
               </Box>
             )}
           </Box>
-          {(videoPreviewUrl || magPostThumbnail) && (
-            <Box
-              w={{ base: "96px", md: "120px" }}
-              h={{ base: "64px", md: "80px" }}
-              borderRadius="base"
-              overflow="hidden"
-              border="1px solid"
-              borderColor="border"
-              bg="background"
-              flexShrink={0}
-              position="relative"
-            >
-              <Image
-                src={videoPreviewUrl || magPostThumbnail}
-                alt="Notification preview"
-                objectFit="cover"
-                w="100%"
-                h="100%"
-                loading="lazy"
-              />
-              {videoPreviewUrl && (
-                <Box
-                  position="absolute"
-                  inset={0}
-                  bg="rgba(0, 0, 0, 0.35)"
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                >
-                  <FaPlay color="white" size={18} />
-                </Box>
-              )}
-            </Box>
-          )}
-          {!videoPreviewUrl && !magPostThumbnail && (
-            <Box
-              w={{ base: "96px", md: "120px" }}
-              h={{ base: "64px", md: "80px" }}
-              borderRadius="base"
-              border="1px solid"
-              borderColor="border"
-              bg="muted"
-              flexShrink={0}
-              display="flex"
-              alignItems="center"
-              justifyContent="center"
-            >
-              <Icon as={FaFileAlt} color="muted" boxSize={5} />
-            </Box>
-          )}
-        </HStack>
-      {displayCommentPrompt && (
-        <Box mt={2}>
-          {/* Show replies first */}
-          {repliesLoading ? (
-            <Box p={2} textAlign="center" mb={2}>
-              <Text fontSize="xs" color="muted">
-                Loading replies...
-              </Text>
-            </Box>
-          ) : replies.length > 0 ? (
-            <VStack spacing={2} align="stretch" mb={2}>
-              {replies.map((reply: Discussion) => (
-                <ReplyItem
-                  key={`${reply.author}/${reply.permlink}`}
-                  reply={reply}
-                  currentUser={currentUser}
-                />
-              ))}
-            </VStack>
-          ) : null}
-          {/* Composer below replies */}
-          <SnapComposer
-            pa={postAuthor}
-            pp={postId}
-            onNewComment={handleNewReply}
-            onClose={() => setDisplayCommentPrompt(false)}
+
+          {/* Preview thumbnail */}
+          <NotificationPreview
+            videoPreviewUrl={videoPreviewUrl}
+            magPostThumbnail={magPostThumbnail}
+            inlineImageUrl={inlineImageUrl}
+            notificationType={notification.type}
+            author={author}
           />
-        </Box>
-      )}
-      </HStack>
-    </div>
-  );
-}
+        </HStack>
 
-// ReplyItem component for nested replies
-interface ReplyItemProps {
-  reply: Discussion;
-  currentUser: string;
-}
-
-function ReplyItem({ reply, currentUser }: ReplyItemProps) {
-  const [showReplies, setShowReplies] = useState<boolean>(false);
-  const [nestedReplies, setNestedReplies] = useState<Discussion[]>([]);
-  const [nestedRepliesLoading, setNestedRepliesLoading] =
-    useState<boolean>(false);
-  const [hasVoted, setHasVoted] = useState<boolean>(false);
-  const [showSlider, setShowSlider] = useState<boolean>(false);
-
-  // Check if user has voted on this reply
-  useEffect(() => {
-    if (reply.active_votes && currentUser) {
-      const userVoted = reply.active_votes.some(
-        (vote) => vote.voter === currentUser
-      );
-      setHasVoted(userVoted);
-    }
-  }, [reply.active_votes, currentUser]);
-
-  // Handle new nested replies
-  function handleNewNestedReply(newComment: Partial<Discussion>) {
-    const newReply = newComment as Discussion;
-    setNestedReplies((prev) => [...prev, newReply]);
-  }
-
-  // Fetch existing nested replies
-  async function fetchNestedReplies() {
-    setNestedRepliesLoading(true);
-    try {
-      const existingReplies = await fetchComments(
-        reply.author,
-        reply.permlink,
-        false
-      );
-      setNestedReplies(existingReplies);
-    } catch (error) {
-      console.error("Error fetching nested replies:", error);
-      setNestedReplies([]);
-    } finally {
-      setNestedRepliesLoading(false);
-    }
-  }
-
-  // Handle reply button click
-  function handleReplyClick() {
-    if (!showReplies) {
-      setShowReplies(true);
-      fetchNestedReplies();
-    } else {
-      setShowReplies(false);
-    }
-  }
-
-  return (
-    <Box
-      p={2}
-      borderRadius="md"
-      bg="muted"
-      borderLeft="2px solid"
-      borderColor="border"
-      ml={4}
-    >
-      {/* Reply content */}
-      <HStack mb={1} spacing={2}>
-        <Avatar
-          size="xs"
-          name={reply.author}
-          src={`https://images.hive.blog/u/${reply.author}/avatar/sm`}
-        />
-        <Text fontSize="xs" fontWeight="bold" color="primary">
-          {reply.author}
-        </Text>
-        <Text fontSize="xs" color="muted">
-          {reply.created === "just now"
-            ? "just now"
-            : new Date(reply.created + "Z").toLocaleString()}
-        </Text>
-      </HStack>
-      <Box ml={6} mb={2}>
-        <HiveMarkdown markdown={reply.body} />
-      </Box>
-
-      {/* Reply actions */}
-      <Box ml={6}>
-        <Flex alignItems="center" w="100%">
-          <Text
-            onClick={handleReplyClick}
-            fontSize="xs"
-            cursor="pointer"
-            mr={2}
-            color="primary"
-            _hover={{ textDecoration: "underline" }}
-          >
-            Reply
-          </Text>
-          <Box w="50%">
-            <UpvoteButton
-              discussion={reply}
-              voted={hasVoted}
-              setVoted={setHasVoted}
-              activeVotes={reply.active_votes || []}
-              setActiveVotes={(votes) => {
-                // Update the reply's active votes
-                Object.assign(reply, { active_votes: votes });
-              }}
-              showSlider={showSlider}
-              setShowSlider={setShowSlider}
-              variant="withSlider"
-              size="sm"
+        {/* Composer and replies */}
+        {displayCommentPrompt && (
+          <Box mt={2}>
+            {repliesLoading ? (
+              <Box p={2} textAlign="center" mb={2}>
+                <Text fontSize="xs" color="muted">
+                  Loading replies...
+                </Text>
+              </Box>
+            ) : replies.length > 0 ? (
+              <VStack spacing={2} align="stretch" mb={2}>
+                {replies.map((replyItem: Discussion) => (
+                  <ReplyItem
+                    key={`${replyItem.author}/${replyItem.permlink}`}
+                    reply={replyItem}
+                    currentUser={currentUser}
+                  />
+                ))}
+              </VStack>
+            ) : null}
+            <SnapComposer
+              pa={postAuthor}
+              pp={postId}
+              onNewComment={handleNewReply}
+              onClose={() => setDisplayCommentPrompt(false)}
             />
           </Box>
-        </Flex>
-      </Box>
-
-      {/* Nested replies */}
-      {showReplies && (
-        <Box mt={2} ml={4}>
-          {nestedRepliesLoading ? (
-            <Box p={2} textAlign="center">
-              <Text fontSize="xs" color="muted">
-                Loading replies...
-              </Text>
-            </Box>
-          ) : nestedReplies.length > 0 ? (
-            <VStack spacing={2} align="stretch" mb={2}>
-              {nestedReplies.map((nestedReply: Discussion) => (
-                <ReplyItem
-                  key={`${nestedReply.author}/${nestedReply.permlink}`}
-                  reply={nestedReply}
-                  currentUser={currentUser}
-                />
-              ))}
-            </VStack>
-          ) : null}
-
-          {/* Nested composer */}
-          <SnapComposer
-            pa={reply.author}
-            pp={reply.permlink}
-            onNewComment={handleNewNestedReply}
-            onClose={() => setShowReplies(false)}
-          />
-        </Box>
-      )}
-    </Box>
+        )}
+      </HStack>
+    </div>
   );
 }
