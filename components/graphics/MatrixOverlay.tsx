@@ -13,6 +13,7 @@ const MatrixOverlay: React.FC<{ coverMode?: boolean }> = ({
     const ctx = canvas.getContext("2d");
     let animationFrameId: number;
     let frame = 0;
+    let themeFrame = 0;
 
     // Set canvas size
     const setCanvasSize = () => {
@@ -22,46 +23,26 @@ const MatrixOverlay: React.FC<{ coverMode?: boolean }> = ({
     };
     setCanvasSize();
 
-    // Use ResizeObserver for parent/container size changes
-    const resizeObserver = new window.ResizeObserver(() => {
-      setCanvasSize();
-    });
-    if (canvas.parentElement) {
-      resizeObserver.observe(canvas.parentElement);
-    }
-
-    // Matrix characters
     const letters =
       "アァカサタナハマヤャラワガザダバパキシチヒミリギジビツヌムルグズヅエケセテネヘレヱゼデペオコホヨロヲボポABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ΘΨΟΠΣΔΦΓΛΞ";
     const fontSize = 16;
     let columns = Math.floor((canvas?.width || 0) / fontSize);
     let drops = Array(columns).fill(1);
 
-    function draw() {
+    let fadeStyle: string | CanvasGradient = "rgba(0,0,0,0.1)";
+    let textColor = "#212121";
+
+    const updateThemeColors = () => {
       if (!ctx || !canvas) return;
-      // Slow down animation: only draw every 6th frame
-      frame++;
-      if (frame % 6 !== 0) {
-        animationFrameId = requestAnimationFrame(draw);
-        return;
-      }
-      // Use theme background color for fade effect (linear-gradient)
-      let bgColor = getComputedStyle(document.body)
+      const bgColor = getComputedStyle(document.body)
         .getPropertyValue("--chakra-colors-background")
         .trim();
-      let borderColor =
-        getComputedStyle(document.body)
-          .getPropertyValue("--chakra-colors-border")
-          .trim() || "#e0e0e0";
-      // If background is a gradient, use it as a fillStyle
-      let fadeStyle: string | CanvasGradient = bgColor;
+
       if (bgColor.startsWith("linear-gradient")) {
-        // Create a canvas gradient matching the CSS linear-gradient
-        // For simplicity, parse the two color stops from the gradient string
         const match = bgColor.match(
           /linear-gradient\(45deg,\s*(#[0-9a-fA-F]{6}),\s*(#[0-9a-fA-F]{6})/
         );
-        if (match && ctx) {
+        if (match) {
           const grad = ctx.createLinearGradient(
             0,
             0,
@@ -73,34 +54,64 @@ const MatrixOverlay: React.FC<{ coverMode?: boolean }> = ({
           fadeStyle = grad;
         }
       } else if (bgColor.startsWith("#")) {
-        // fallback to rgba with alpha for solid color
-        function hexToRgba(hex: string, alpha: number) {
-          hex = hex.replace("#", "");
-          if (hex.length === 3) {
-            hex = hex
+        const hex = bgColor.replace("#", "");
+        const normalized = hex.length === 3
+          ? hex
               .split("")
-              .map((x: string) => x + x)
-              .join("");
-          }
-          if (hex.length !== 6) return `rgba(0,0,0,${alpha})`;
-          const r = parseInt(hex.substring(0, 2), 16);
-          const g = parseInt(hex.substring(2, 4), 16);
-          const b = parseInt(hex.substring(4, 6), 16);
-          return `rgba(${r},${g},${b},${alpha})`;
+              .map((x) => x + x)
+              .join("")
+          : hex;
+        if (normalized.length === 6) {
+          const r = parseInt(normalized.substring(0, 2), 16);
+          const g = parseInt(normalized.substring(2, 4), 16);
+          const b = parseInt(normalized.substring(4, 6), 16);
+          fadeStyle = `rgba(${r},${g},${b},0.1)`;
         }
-        fadeStyle = hexToRgba(bgColor, 0.1);
-      } else {
-        fadeStyle = bgColor ? bgColor : "rgba(0,0,0,0.1)";
+      } else if (bgColor) {
+        fadeStyle = bgColor;
       }
-      ctx.fillStyle = fadeStyle;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.font = fontSize + "px monospace";
-      let textColor =
+
+      textColor =
         getComputedStyle(document.body)
           .getPropertyValue("--chakra-colors-text")
           .trim() || "#212121";
-      // Use theme text color for matrix text
+    };
+
+    const resetColumns = () => {
+      columns = Math.floor((canvas?.width || 0) / fontSize);
+      drops = Array(columns).fill(1);
+    };
+
+    updateThemeColors();
+
+    // Use ResizeObserver for parent/container size changes
+    const resizeObserver = new window.ResizeObserver(() => {
+      setCanvasSize();
+      resetColumns();
+      updateThemeColors();
+    });
+    if (canvas.parentElement) {
+      resizeObserver.observe(canvas.parentElement);
+    }
+
+    function draw() {
+      if (!ctx || !canvas) return;
+      frame += 1;
+      if (frame % 6 !== 0) {
+        animationFrameId = requestAnimationFrame(draw);
+        return;
+      }
+
+      themeFrame += 1;
+      if (themeFrame % 120 === 0) {
+        updateThemeColors();
+      }
+
+      ctx.fillStyle = fadeStyle;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.font = fontSize + "px monospace";
       ctx.fillStyle = textColor;
+
       for (let i = 0; i < drops.length; i++) {
         const text = letters[Math.floor(Math.random() * letters.length)];
         ctx.fillText(text, i * fontSize, drops[i] * fontSize);
@@ -118,8 +129,8 @@ const MatrixOverlay: React.FC<{ coverMode?: boolean }> = ({
     // Handle resize
     const handleResize = () => {
       setCanvasSize();
-      columns = Math.floor((canvas?.width || 0) / fontSize);
-      drops = Array(columns).fill(1);
+      resetColumns();
+      updateThemeColors();
     };
 
     window.addEventListener("resize", handleResize);

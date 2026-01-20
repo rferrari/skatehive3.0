@@ -1,6 +1,7 @@
 "use client";
 import {
   Box,
+  Divider,
   Flex,
   SimpleGrid,
   Skeleton,
@@ -164,6 +165,7 @@ export default function RightSideBar() {
       }}
     >
       <CommunityTotalPayout />
+      <Divider my={2} borderColor="muted" />
       {allPosts.length > 0 ? (
         <PostGrid posts={allPosts} columns={1} />
       ) : isLoading ? (

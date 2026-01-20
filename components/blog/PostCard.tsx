@@ -17,7 +17,7 @@ import {
   MenuList,
   IconButton,
 } from "@chakra-ui/react";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Discussion } from "@hiveio/dhive";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination } from "swiper/modules";
@@ -112,6 +112,19 @@ export default function PostCard({
     onToggle: togglePayout,
   } = useDisclosure();
   const [showMatrix, setShowMatrix] = useState(false);
+  const matrixTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const matrixHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (matrixTimerRef.current) {
+        clearTimeout(matrixTimerRef.current);
+      }
+      if (matrixHideTimerRef.current) {
+        clearTimeout(matrixHideTimerRef.current);
+      }
+    };
+  }, []);
 
   // Calculate days remaining for pending payout
   const createdDate = new Date(post.created);
@@ -232,12 +245,29 @@ export default function PostCard({
       img.onerror = null; // Prevent infinite loop
     }
 
+    const mask = img.parentElement?.querySelector(
+      ".post-card-image-mask"
+    ) as HTMLElement | null;
+    if (mask) {
+      mask.classList.add("is-loaded");
+    }
+
     // Prevent the error from bubbling up
     e.preventDefault();
     e.stopPropagation();
 
     // Return false to prevent the default error handling
     return false;
+  }
+
+  function handleImageLoad(e: React.SyntheticEvent<HTMLImageElement, Event>) {
+    const img = e.currentTarget;
+    const mask = img.parentElement?.querySelector(
+      ".post-card-image-mask"
+    ) as HTMLElement | null;
+    if (mask) {
+      mask.classList.add("is-loaded");
+    }
   }
 
 
@@ -316,7 +346,6 @@ export default function PostCard({
           <Box flex={1} overflow="hidden">
             <Link
               href={`/post/${author}/${post.permlink}`}
-              _hover={{ textDecoration: "underline" }}
             >
               <Text
                 fontWeight="bold"
@@ -326,6 +355,8 @@ export default function PostCard({
                 whiteSpace="normal"
                 wordBreak="break-word"
                 noOfLines={2}
+                _hover={{ textDecoration: "underline" }}
+
               >
                 {title}
               </Text>
@@ -465,6 +496,30 @@ export default function PostCard({
             box-shadow: 0 0 0 0 rgba(72, 255, 128, 0);
           }
         }
+
+        .post-card-matrix {
+          opacity: 0;
+          transition: opacity 0.24s ease;
+          will-change: opacity;
+        }
+
+        .post-card-matrix.is-visible {
+          opacity: 1;
+        }
+
+        .post-card-image-mask.is-loaded {
+          opacity: 0;
+        }
+
+        .post-card-image-mask {
+          opacity: 1;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .post-card-matrix {
+            transition: none;
+          }
+        }
       `}</style>
       <Box
         position="relative"
@@ -474,8 +529,7 @@ export default function PostCard({
         height="100%"
         cursor="default"
       >
-        {/* MatrixOverlay covers the whole card, only when showMatrix is true */}
-        {showMatrix && (
+          {/* MatrixOverlay covers the whole card, only when showMatrix is true */}
           <Box
             position="absolute"
             top={0}
@@ -484,10 +538,10 @@ export default function PostCard({
             height="100%"
             zIndex={1}
             pointerEvents="none"
+            className={`post-card-matrix${showMatrix ? " is-visible" : ""}`}
           >
             <MatrixOverlay />
           </Box>
-        )}
         <Box
           py={4}
           px={4}
@@ -570,30 +624,47 @@ export default function PostCard({
               justifyContent="center"
               zIndex={2}
             >
-              {imageUrls.length > 0 ? (
-                <Swiper
-                  spaceBetween={10}
-                  slidesPerView={1}
-                  pagination={{ clickable: true }}
-                  navigation={true}
-                  modules={[Navigation, Pagination]}
-                  onSlideChange={handleSlideChange}
-                  className="custom-swiper"
-                  onSwiper={handleSwiperInit}
-                >
+               {imageUrls.length > 0 ? (
+                 <Swiper
+                   spaceBetween={10}
+                   slidesPerView={1}
+                   pagination={{ clickable: true }}
+                   navigation={true}
+                   modules={[Navigation, Pagination]}
+                   onSlideChange={handleSlideChange}
+                   className="custom-swiper"
+                   onSwiper={handleSwiperInit}
+                   observer={false}
+                   observeParents={false}
+                   watchSlidesProgress={false}
+                   watchOverflow={true}
+                 >
                   {imageUrls.slice(0, visibleImages).map((url, index) => (
                     <SwiperSlide key={`${url}-${index}`}>
-                      <Box h="200px" w="100%" sx={{ userSelect: "none" }}>
-                        <Image
-                          src={url}
-                          alt={title}
-                          objectFit="cover"
-                          w="100%"
-                          h="100%"
-                          loading="lazy"
-                          onError={handleImageError}
-                        />
-                      </Box>
+                       <Box h="200px" w="100%" position="relative" sx={{ userSelect: "none" }}>
+                   <Image
+                     src={url}
+                     alt={title}
+                     objectFit="cover"
+                     w="100%"
+                     h="100%"
+                     loading="lazy"
+                     decoding="async"
+                     transform="none"
+                     transition="none"
+                     onError={handleImageError}
+                     onLoad={handleImageLoad}
+                   />
+                          <Box
+                            position="absolute"
+                            inset={0}
+                            bg="background"
+                            opacity={0}
+                            transition="opacity 0.18s ease"
+                            pointerEvents="none"
+                            className="post-card-image-mask"
+                          />
+                       </Box>
                     </SwiperSlide>
                   ))}
                 </Swiper>
@@ -609,32 +680,55 @@ export default function PostCard({
                 >
                   {youtubeLinks.map((link, index) => (
                     <SwiperSlide key={`${link.url}-${index}`}>
-                      <Box h="200px" w="100%">
-                        <iframe
-                          src={link.url}
-                          title={`YouTube video from ${link.domain}`}
-                          width="100%"
-                          height="100%"
-                          frameBorder="0"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                        ></iframe>
-                      </Box>
+                       <Box h="200px" w="100%" position="relative">
+                          <iframe
+                            src={link.url}
+                            title={`YouTube video from ${link.domain}`}
+                            width="100%"
+                            height="100%"
+                            frameBorder="0"
+                            loading="lazy"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                          ></iframe>
+                          <Box
+                            position="absolute"
+                            inset={0}
+                            bg="background"
+                            opacity={0}
+                            transition="opacity 0.18s ease"
+                            pointerEvents="none"
+                            className="post-card-image-mask"
+                          />
+                       </Box>
                     </SwiperSlide>
                   ))}
                 </Swiper>
               ) : (
-                <Box h="200px" w="100%">
-                  <Image
-                    src={default_thumbnail}
-                    alt="default thumbnail"
-                    objectFit="cover"
-                    w="100%"
-                    h="100%"
-                    loading="lazy"
-                    onError={handleImageError}
-                  />
-                </Box>
+                 <Box h="200px" w="100%" position="relative">
+                    <Image
+                      src={default_thumbnail}
+                      alt="default thumbnail"
+                      objectFit="cover"
+                      w="100%"
+                      h="100%"
+                      loading="lazy"
+                      decoding="async"
+                      transform="none"
+                      transition="none"
+                      onError={handleImageError}
+                      onLoad={handleImageLoad}
+                    />
+                    <Box
+                      position="absolute"
+                      inset={0}
+                      bg="background"
+                      opacity={0}
+                      transition="opacity 0.18s ease"
+                      pointerEvents="none"
+                      className="post-card-image-mask"
+                    />
+                 </Box>
               )}
             </Box>
 
@@ -655,8 +749,32 @@ export default function PostCard({
                 _hover={{
                   "& .post-title-text": { color: "accent" },
                 }}
-                onMouseEnter={() => setShowMatrix(true)}
-                onMouseLeave={() => setShowMatrix(false)}
+                onMouseEnter={() => {
+                  if (matrixHideTimerRef.current) {
+                    clearTimeout(matrixHideTimerRef.current);
+                    matrixHideTimerRef.current = null;
+                  }
+                  if (matrixTimerRef.current) {
+                    clearTimeout(matrixTimerRef.current);
+                  }
+                  matrixTimerRef.current = setTimeout(
+                    () => setShowMatrix(true),
+                    80
+                  );
+                }}
+                onMouseLeave={() => {
+                  if (matrixTimerRef.current) {
+                    clearTimeout(matrixTimerRef.current);
+                    matrixTimerRef.current = null;
+                  }
+                  if (matrixHideTimerRef.current) {
+                    clearTimeout(matrixHideTimerRef.current);
+                  }
+                  matrixHideTimerRef.current = setTimeout(
+                    () => setShowMatrix(false),
+                    160
+                  );
+                }}
                 position="relative"
                 zIndex={3}
               >
