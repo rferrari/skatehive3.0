@@ -7,6 +7,11 @@ export interface ExtractedMedia {
   videoSourceUrl: string | null;
 }
 
+export interface VoteValue {
+  amount: number;
+  currency: string;
+}
+
 /**
  * Extract media (images, video thumbnails) from post body HTML/Markdown
  */
@@ -276,4 +281,27 @@ export function extractAuthorFromMessage(msg: string): string {
 export function extractVotePercentage(msg: string): string {
   const match = msg.match(/\(([^)]+)\)/);
   return match && match[1] ? `(${match[1]})` : "";
+}
+
+/**
+ * Extract a monetary value from a vote notification message
+ */
+export function extractVoteValue(msg: string): VoteValue | null {
+  const dollarMatch = msg.match(/\$([0-9.,]+)/);
+  if (dollarMatch && dollarMatch[1]) {
+    const amount = parseFloat(dollarMatch[1].replace(/,/g, ""));
+    if (!Number.isNaN(amount)) {
+      return { amount, currency: "$" };
+    }
+  }
+
+  const tokenMatch = msg.match(/([0-9.,]+)\s*(HBD|HIVE)/i);
+  if (tokenMatch && tokenMatch[1] && tokenMatch[2]) {
+    const amount = parseFloat(tokenMatch[1].replace(/,/g, ""));
+    if (!Number.isNaN(amount)) {
+      return { amount, currency: tokenMatch[2].toUpperCase() };
+    }
+  }
+
+  return null;
 }

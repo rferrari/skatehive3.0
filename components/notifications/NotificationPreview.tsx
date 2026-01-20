@@ -44,7 +44,7 @@ export default function NotificationPreview({
       <Box
         w={{ base: "96px", md: "120px" }}
         h={{ base: "64px", md: "80px" }}
-        borderRadius="base"
+        borderRadius="none"
         overflow="hidden"
         border="1px solid"
         borderColor="border"
@@ -69,7 +69,7 @@ export default function NotificationPreview({
       <Box
         w={{ base: "96px", md: "120px" }}
         h={{ base: "64px", md: "80px" }}
-        borderRadius="base"
+        borderRadius="none"
         overflow="hidden"
         border="1px solid"
         borderColor="border"
@@ -119,7 +119,7 @@ export default function NotificationPreview({
         <Box
           w={{ base: "96px", md: "120px" }}
           h={{ base: "64px", md: "80px" }}
-          borderRadius="base"
+          borderRadius="none"
           border="1px solid"
           borderColor="border"
           bg="gray.800"
@@ -148,7 +148,7 @@ export default function NotificationPreview({
       <Box
         w={{ base: "96px", md: "120px" }}
         h={{ base: "64px", md: "80px" }}
-        borderRadius="base"
+        borderRadius="none"
         overflow="hidden"
         border="1px solid"
         borderColor="border"
@@ -185,7 +185,7 @@ export default function NotificationPreview({
     <Box
       w={{ base: "96px", md: "120px" }}
       h={{ base: "64px", md: "80px" }}
-      borderRadius="base"
+      borderRadius="none"
       border="1px solid"
       borderColor="border"
       bg="muted"

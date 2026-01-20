@@ -6,5 +6,7 @@ export {
   isNotificationNew,
   extractAuthorFromMessage,
   extractVotePercentage,
+  extractVoteValue,
   type ExtractedMedia,
+  type VoteValue,
 } from "./mediaExtraction";

@@ -27,7 +27,7 @@ export default function VoteNotification({
     <Box>
       <Text
         color={isNew ? "accent" : "primary"}
-        fontSize={{ base: "xs", md: "sm" }}
+        fontSize={{ base: "sm", md: "sm" }}
         display="flex"
         alignItems="center"
         flexWrap="wrap"

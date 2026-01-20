@@ -19,16 +19,16 @@ export default function FollowNotification({
     <HStack spacing={2}>
       <Text
         color={isNew ? "accent" : "primary"}
-        fontSize={{ base: "xs", md: "sm" }}
+        fontSize={{ base: "sm", md: "sm" }}
       >
         {message.replace(/^@/, "")}
       </Text>
       {isFollowingBack ? (
-        <Text fontSize={{ base: "xs", md: "sm" }} color="primary">
+        <Text fontSize={{ base: "sm", md: "sm" }} color="primary">
           Following
         </Text>
       ) : (
-        <Button size={{ base: "xs", md: "sm" }} onClick={onFollowBack}>
+        <Button size={{ base: "sm", md: "sm" }} onClick={onFollowBack}>
           Follow Back
         </Button>
       )}

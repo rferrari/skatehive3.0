@@ -160,6 +160,7 @@ export default function ReplyItem({ reply, currentUser }: ReplyItemProps) {
             pp={reply.permlink}
             onNewComment={handleNewNestedReply}
             onClose={() => setShowReplies(false)}
+            submitLabel="Reply"
           />
         </Box>
       )}

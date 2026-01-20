@@ -14,7 +14,12 @@ import {
 import { useAioha } from "@aioha/react-ui";
 import { KeyTypes } from "@aioha/aioha";
 import { useNotifications } from "@/contexts/NotificationContext";
-import NotificationItem from "./NotificationItem";
+import NotificationItem, { type NotificationItemData } from "./NotificationItem";
+import {
+  extractAuthorFromMessage,
+  extractVoteValue,
+  type VoteValue,
+} from "./utils";
 
 interface NotificationCompProps {
   username: string;
@@ -59,11 +64,80 @@ export default function NotificationsComp({ username }: NotificationCompProps) {
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
+  const mergedNotifications = sortedNotifications.reduce<
+    NotificationItemData[]
+  >((acc, notification) => {
+    if (notification.type !== "vote") {
+      acc.push(notification);
+      return acc;
+    }
+
+    const existingIndex = acc.findIndex(
+      (item) => item.type === "vote" && item.url === notification.url
+    );
+
+    const author = extractAuthorFromMessage(notification.msg);
+    const voteValue = extractVoteValue(notification.msg);
+
+    if (existingIndex === -1) {
+      acc.push({
+        ...notification,
+        mergedVotes: {
+          authors: [author],
+          totalCount: 1,
+          totalValue: voteValue ?? undefined,
+          voteValues: { [author]: voteValue ?? null },
+        },
+      });
+      return acc;
+    }
+
+    const existing = acc[existingIndex];
+    const existingAuthors = existing.mergedVotes?.authors ?? [];
+    const nextAuthors = existingAuthors.includes(author)
+      ? existingAuthors
+      : [...existingAuthors, author];
+
+    const existingVoteValues = existing.mergedVotes?.voteValues ?? {};
+    const nextVoteValues = {
+      ...existingVoteValues,
+      ...(existingVoteValues[author] ? {} : { [author]: voteValue ?? null }),
+    };
+
+    const nextTotalValue = Object.values(nextVoteValues).reduce<
+      VoteValue | undefined
+    >((accum, value) => {
+      if (!value) return accum;
+      if (!accum) {
+        return { currency: value.currency, amount: value.amount };
+      }
+      if (accum.currency !== value.currency) {
+        return undefined;
+      }
+      return {
+        currency: accum.currency,
+        amount: accum.amount + value.amount,
+      };
+    }, undefined);
+
+    acc[existingIndex] = {
+      ...existing,
+      mergedVotes: {
+        authors: nextAuthors,
+        totalCount: nextAuthors.length,
+        totalValue: nextTotalValue,
+        voteValues: nextVoteValues,
+      },
+    };
+
+    return acc;
+  }, []);
+
   // Filter notifications by type
   const filteredNotifications =
     filter === "all"
-      ? sortedNotifications
-      : sortedNotifications.filter((n) => n.type === filter);
+      ? mergedNotifications
+      : mergedNotifications.filter((n) => n.type === filter);
 
   // Get all unique types for dropdown
   const notificationTypes = Array.from(

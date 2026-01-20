@@ -28,6 +28,7 @@ import NotificationPreview from "./NotificationPreview";
 import {
   FollowNotification,
   VoteNotification,
+  GroupedVoteNotification,
   ReplyNotification,
   ReplyCommentNotification,
   MentionNotification,
@@ -41,10 +42,20 @@ import {
   formatNotificationDate,
   isNotificationNew,
   extractAuthorFromMessage,
+  type VoteValue,
 } from "./utils";
 
+export interface NotificationItemData extends Notifications {
+  mergedVotes?: {
+    authors: string[];
+    totalCount: number;
+    totalValue?: VoteValue | null;
+    voteValues: Record<string, VoteValue | null>;
+  };
+}
+
 interface NotificationItemProps {
-  notification: Notifications;
+  notification: NotificationItemData;
   lastReadDate: string;
   currentUser: string;
 }
@@ -512,10 +523,10 @@ export default function NotificationItem({
 
   // Theme styles
   const notificationPulseGradient =
-    "linear-gradient(180deg, var(--chakra-colors-primary) 0%, var(--chakra-colors-accent) 100%)";
-  const notificationBoxShadowAccent = "0 0 8px 2px var(--chakra-colors-primary)";
+    "linear-gradient(180deg, rgba(0,0,0,0) 0%, var(--chakra-colors-primary) 100%)";
+  const notificationBoxShadowAccent = "0 0 4px 1px var(--chakra-colors-primary)";
   const notificationBoxShadowAccent16 =
-    "0 0 16px 4px var(--chakra-colors-primary)";
+    "0 0 8px 2px var(--chakra-colors-primary)";
 
   // Render notification content based on type
   const renderNotificationContent = () => {
@@ -530,6 +541,20 @@ export default function NotificationItem({
           />
         );
       case "vote":
+        if (notification.mergedVotes && notification.mergedVotes.totalCount > 1) {
+          return (
+            <GroupedVoteNotification
+              authors={notification.mergedVotes.authors}
+              totalCount={notification.mergedVotes.totalCount}
+              totalValue={notification.mergedVotes.totalValue}
+              voteValues={notification.mergedVotes.voteValues}
+              postContent={postContent}
+              notificationUrl={notification.url}
+              formattedDate={formattedDate}
+              isNew={isNew}
+            />
+          );
+        }
         return (
           <VoteNotification
             message={notification.msg}
@@ -577,12 +602,12 @@ export default function NotificationItem({
         );
       default:
         return (
-          <Text
-            color={isNew ? "accent" : "primary"}
-            fontSize={{ base: "xs", md: "sm" }}
-            noOfLines={2}
-            overflow="hidden"
-            textOverflow="ellipsis"
+            <Text
+              color={isNew ? "accent" : "primary"}
+              fontSize={{ base: "sm", md: "sm" }}
+              noOfLines={2}
+              overflow="hidden"
+              textOverflow="ellipsis"
             wordBreak="break-word"
           >
             {notification.msg.replace(/^@/, "")} - {parentPost?.title}
@@ -596,14 +621,13 @@ export default function NotificationItem({
 
   return (
     <div ref={containerRef}>
-      <HStack
+      <VStack
         spacing={{ base: 2, md: 3 }}
         p={{ base: 2, md: 3 }}
         bg="muted"
         w="full"
         align="stretch"
         position="relative"
-        direction={{ base: "column", md: "row" }}
         sx={isNew ? { boxShadow: "none", animation: undefined } : {}}
         _before={
           isNew
@@ -613,10 +637,10 @@ export default function NotificationItem({
                 left: 0,
                 top: 0,
                 bottom: 0,
-                width: { base: "4px", md: "6px" },
+                width: { base: "3px", md: "4px" },
                 background: notificationPulseGradient,
                 boxShadow: notificationBoxShadowAccent,
-                animation: "pulseGlowLeft 1.5s infinite",
+                animation: "pulseGlowLeft 2.5s infinite",
               }
             : {}
         }
@@ -634,6 +658,7 @@ export default function NotificationItem({
           spacing={4}
           align={{ base: "flex-start", md: "center" }}
           justify="space-between"
+          direction={{ base: "column", md: "row" }}
         >
           <Box flex="1" minW={0}>
             <HStack
@@ -643,7 +668,7 @@ export default function NotificationItem({
               <Avatar
                 src={`https://images.hive.blog/u/${author}/avatar/sm`}
                 name=""
-                size={{ base: "sm", md: "xs" }}
+                size={{ base: "xs", md: "sm" }}
               />
               <Box flex="1" minW={0}>
                 {renderNotificationContent()}
@@ -698,7 +723,7 @@ export default function NotificationItem({
                 <Flex alignItems="center" mb={2}>
                   <Text
                     onClick={handleReplyClick}
-                    fontSize={{ base: "xs", md: "sm" }}
+                    fontSize={{ base: "sm", md: "sm" }}
                     cursor="pointer"
                     mr={2}
                   >
@@ -744,7 +769,7 @@ export default function NotificationItem({
 
         {/* Composer and replies */}
         {displayCommentPrompt && (
-          <Box mt={2}>
+          <Box w="full">
             {repliesLoading ? (
               <Box p={2} textAlign="center" mb={2}>
                 <Text fontSize="xs" color="muted">
@@ -767,10 +792,11 @@ export default function NotificationItem({
               pp={postId}
               onNewComment={handleNewReply}
               onClose={() => setDisplayCommentPrompt(false)}
+              submitLabel="Reply"
             />
           </Box>
         )}
-      </HStack>
+      </VStack>
     </div>
   );
 }
