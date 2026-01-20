@@ -16,6 +16,7 @@ import {
   MenuButton,
   MenuList,
   IconButton,
+  HStack,
 } from "@chakra-ui/react";
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Discussion } from "@hiveio/dhive";
@@ -39,6 +40,8 @@ import MatrixOverlay from "@/components/graphics/MatrixOverlay";
 import { UpvoteButton } from "@/components/shared";
 import { BiDotsHorizontal } from "react-icons/bi";
 import ShareMenuButtons from "@/components/homepage/ShareMenuButtons";
+import { LuArrowUp, LuArrowDown, LuDollarSign } from "react-icons/lu";
+import VoteListPopover from "@/components/blog/VoteListModal";
 
 interface PostJsonMetadata {
   app?: string;
@@ -91,6 +94,7 @@ export default function PostCard({
       (item) => item.voter.toLowerCase() === user?.toLowerCase()
     )
   );
+  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     setActiveVotes(post.active_votes || []);
@@ -375,81 +379,98 @@ export default function PostCard({
               {summary}
             </Text>
           </Box>
-          {/* Horizontal buttons at bottom right - always visible */}
-          <Flex
-            alignItems="center"
-            justifyContent="flex-end"
-            gap={4}
+          {/* Action bar */}
+          <HStack 
+            justify="space-between" 
             mt={2}
             flexShrink={0}
           >
-            <UpvoteButton
-              discussion={post}
-              voted={voted}
-              setVoted={setVoted}
-              activeVotes={activeVotes}
-              setActiveVotes={setActiveVotes}
-              onVoteSuccess={(estimatedValue?: number) => {
-                if (estimatedValue) {
-                  setPayoutValue((prev) => prev + estimatedValue);
+            <HStack
+              minW="72px"
+              justify="center"
+              px={2}
+              py={1}
+              borderRadius="md"
+              cursor="pointer"
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
+              onClick={() => {
+                if (!voted) {
+                  setShowSlider(true);
                 }
               }}
-              estimateVoteValue={estimateVoteValue}
-              isHivePowerLoading={isHivePowerLoading}
-              variant="withVoteCount"
-              size="sm"
-            />
-            <Popover
-              placement="top"
-              isOpen={isPayoutOpen}
-              onClose={closePayout}
-              closeOnBlur={true}
+              opacity={0.9}
+              _hover={{ opacity: 0.7 }}
+              transition="opacity 0.2s"
             >
-              <PopoverTrigger>
-                <span
-                  style={{ cursor: "pointer" }}
-                  onMouseDown={openPayout}
-                  onMouseUp={closePayout}
+              <HStack spacing={1.5}>
+                {voted || isHovered ? (
+                  <Box boxSize="18px" display="flex" alignItems="center" justifyContent="center">
+                    <LuArrowUp size={18} color="var(--chakra-colors-primary)" />
+                  </Box>
+                ) : (
+                  <Box boxSize="18px" display="flex" alignItems="center" justifyContent="center">
+                    <LuArrowDown size={18} color="var(--chakra-colors-primary)" />
+                  </Box>
+                )}
+                <Text 
+                  fontSize="sm" 
+                  fontWeight="medium"
+                  color="primary"
                 >
-                  <Text fontWeight="bold" fontSize="xl">
-                    ${payoutValue.toFixed(2)}
-                  </Text>
-                </span>
-              </PopoverTrigger>
-              <PopoverContent
-                w="auto"
-                bg="gray.800"
-                color="white"
-                borderRadius="none"
-                boxShadow="lg"
-                p={2}
-              >
-                <PopoverArrow />
-                <PopoverBody>
-                  {isPending ? (
-                    <div>
-                      <div>
-                        <b>Pending</b>
-                      </div>
-                      <div>
-                        {daysRemaining} day{daysRemaining !== 1 ? "s" : ""}{" "}
-                        until payout
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <div>
-                        Author: <b>${authorPayout.toFixed(3)}</b>
-                      </div>
-                      <div>
-                        Curators: <b>${curatorPayout.toFixed(3)}</b>
-                      </div>
-                    </>
-                  )}
-                </PopoverBody>
-              </PopoverContent>
-            </Popover>
-          </Flex>
+                  {activeVotes.length}
+                </Text>
+              </HStack>
+            </HStack>
+
+            <Tooltip
+              label={
+                isPending
+                  ? `Pending - ${daysRemaining} day${
+                      daysRemaining !== 1 ? "s" : ""
+                    } until payout - Click to see voters`
+                  : `Author: $${authorPayout.toFixed(
+                      3
+                    )} | Curators: $${curatorPayout.toFixed(3)} - Click to see voters`
+              }
+              hasArrow
+              openDelay={500}
+              placement="top"
+            >
+              <Box>
+                <VoteListPopover
+                  trigger={
+                    <HStack
+                      minW="72px"
+                      justify="center"
+                      px={2}
+                      py={1}
+                      borderRadius="md"
+                      cursor="pointer"
+                      opacity={0.9}
+                      _hover={{ opacity: 0.7 }}
+                      transition="opacity 0.2s"
+                    >
+                      <HStack spacing={1.5}>
+                        <Box boxSize="18px" display="flex" alignItems="center" justifyContent="center">
+                          <LuDollarSign size={18} color="var(--chakra-colors-primary)" />
+                        </Box>
+                        <Text 
+                          fontSize="sm" 
+                          fontWeight="medium"
+                          color="primary"
+                        >
+                          {payoutValue.toFixed(2)}
+                        </Text>
+                      </HStack>
+                    </HStack>
+                  }
+                  votes={activeVotes}
+                  post={post}
+                />
+              </Box>
+            </Tooltip>
+          </HStack>
         </Flex>
       </Box>
     );
@@ -807,69 +828,97 @@ export default function PostCard({
                 size="sm"
               />
             ) : (
-              <Flex
+              <HStack 
+                justify="space-between" 
                 mt={4}
-                justifyContent="space-between"
-                alignItems="center"
-                gap={6}
+                w="100%"
               >
-                <UpvoteButton
-                  discussion={post}
-                  voted={voted}
-                  setVoted={setVoted}
-                  activeVotes={activeVotes}
-                  setActiveVotes={setActiveVotes}
-                  showSlider={showSlider}
-                  setShowSlider={setShowSlider}
-                  onVoteSuccess={(estimatedValue?: number) => {
-                    if (estimatedValue) {
-                      setPayoutValue((prev) => prev + estimatedValue);
+                <HStack
+                  minW="72px"
+                  justify="center"
+                  px={2}
+                  py={1}
+                  borderRadius="md"
+                  cursor="pointer"
+                  onMouseEnter={() => setIsHovered(true)}
+                  onMouseLeave={() => setIsHovered(false)}
+                  onClick={() => {
+                    if (!voted) {
+                      setShowSlider(true);
                     }
                   }}
-                  estimateVoteValue={estimateVoteValue}
-                  isHivePowerLoading={isHivePowerLoading}
-                  variant="withSlider"
-                  size="sm"
-                />
-                <Tooltip
-                  label={
-                    isPending ? (
-                      <Box>
-                        <div>
-                          <b>Pending</b>
-                        </div>
-                        <div>
-                          {daysRemaining} day{daysRemaining !== 1 ? "s" : ""}{" "}
-                          until payout
-                        </div>
+                  opacity={0.9}
+                  _hover={{ opacity: 0.7 }}
+                  transition="opacity 0.2s"
+                >
+                  <HStack spacing={1.5}>
+                    {voted || isHovered ? (
+                      <Box boxSize="18px" display="flex" alignItems="center" justifyContent="center">
+                        <LuArrowUp size={18} color="var(--chakra-colors-primary)" />
                       </Box>
                     ) : (
-                      <Box>
-                        <div>
-                          Author: <b>${authorPayout.toFixed(3)}</b>
-                        </div>
-                        <div>
-                          Curators: <b>${curatorPayout.toFixed(3)}</b>
-                        </div>
+                      <Box boxSize="18px" display="flex" alignItems="center" justifyContent="center">
+                        <LuArrowDown size={18} color="var(--chakra-colors-primary)" />
                       </Box>
-                    )
-                  }
-                  aria-label="Payout details"
-                  bg="background"
-                  color="primary"
-                  borderRadius="none"
-                  p={2}
-                  hasArrow
-                  placement="top"
-                  openDelay={200}
-                >
-                  <span style={{ cursor: "pointer" }}>
-                    <Text fontWeight="normal" fontSize="md">
-                      ${payoutValue.toFixed(2)}
+                    )}
+                    <Text 
+                      fontSize="sm" 
+                      fontWeight="medium"
+                      color="primary"
+                    >
+                      {activeVotes.length}
                     </Text>
-                  </span>
+                  </HStack>
+                </HStack>
+
+                <Tooltip
+                  label={
+                    isPending
+                      ? `Pending - ${daysRemaining} day${
+                          daysRemaining !== 1 ? "s" : ""
+                        } until payout - Click to see voters`
+                      : `Author: $${authorPayout.toFixed(
+                          3
+                        )} | Curators: $${curatorPayout.toFixed(3)} - Click to see voters`
+                  }
+                  hasArrow
+                  openDelay={500}
+                  placement="top"
+                >
+                  <Box>
+                    <VoteListPopover
+                      trigger={
+                        <HStack
+                          minW="72px"
+                          justify="center"
+                          px={2}
+                          py={1}
+                          borderRadius="md"
+                          cursor="pointer"
+                          opacity={0.9}
+                          _hover={{ opacity: 0.7 }}
+                          transition="opacity 0.2s"
+                        >
+                          <HStack spacing={1.5}>
+                            <Box boxSize="18px" display="flex" alignItems="center" justifyContent="center">
+                              <LuDollarSign size={18} color="var(--chakra-colors-primary)" />
+                            </Box>
+                            <Text 
+                              fontSize="sm" 
+                              fontWeight="medium"
+                              color="primary"
+                            >
+                              {payoutValue.toFixed(2)}
+                            </Text>
+                          </HStack>
+                        </HStack>
+                      }
+                      votes={activeVotes}
+                      post={post}
+                    />
+                  </Box>
                 </Tooltip>
-              </Flex>
+              </HStack>
             )}
           </Box>
         </Box>
