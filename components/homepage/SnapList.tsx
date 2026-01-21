@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import {
   Box,
@@ -120,9 +120,55 @@ export default function SnapList({
     }
   };
 
-  const filteredAndSortedComments = filterAutoComments([
-    ...displayedComments,
-  ]).sort((a: Discussion, b: Discussion) => {
+  const handleDeleteComment = useCallback((permlink: string) => {
+    setDisplayedComments((prev) =>
+      prev.filter((comment) => comment.permlink !== permlink)
+    );
+  }, []);
+
+  // Filter out deleted posts (soft-deleted content)
+  const filterDeletedPosts = (comments: Discussion[]): Discussion[] => {
+    return comments.filter((comment) => {
+      const body = comment.body?.trim().toLowerCase();
+      return body !== "deleted";
+    });
+  };
+
+  // Filter out duplicate posts by the same author with identical content
+  const filterDuplicates = (comments: Discussion[]): Discussion[] => {
+    const seen = new Map<string, Set<string>>();
+    
+    return comments.filter((comment) => {
+      const commentAuthor = comment.author;
+      const content = (comment.body?.trim() || '').toLowerCase();
+      
+      if (!content) return true; // Keep empty posts
+      
+      if (!seen.has(commentAuthor)) {
+        seen.set(commentAuthor, new Set());
+      }
+      
+      const authorContents = seen.get(commentAuthor)!;
+      
+      if (authorContents.has(content)) {
+        if (process.env.NODE_ENV === "development") {
+          console.log('🗑️ Hiding duplicate post:', {
+            author: commentAuthor,
+            permlink: comment.permlink,
+            preview: content.substring(0, 50) + '...'
+          });
+        }
+        return false; // Filter out duplicate
+      }
+      
+      authorContents.add(content);
+      return true; // Keep unique post
+    });
+  };
+
+  const filteredAndSortedComments = filterDuplicates(
+    filterDeletedPosts(filterAutoComments([...displayedComments]))
+  ).sort((a: Discussion, b: Discussion) => {
     // Sort by creation date (newest first) instead of payout value
     // This ensures users see the latest content first, including new Zora posts
     const aDate = new Date(a.created).getTime();
@@ -437,6 +483,7 @@ export default function SnapList({
                   onOpen={onOpenConversation}
                   setReply={setReply}
                   {...(!post ? { setConversation } : {})}
+                  onDelete={handleDeleteComment}
                 />
               ))}
             </VStack>

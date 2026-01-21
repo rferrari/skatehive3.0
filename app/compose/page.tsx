@@ -494,7 +494,7 @@ export default function Composer() {
           onClick={handleSubmit}
           isLoading={isSubmitting}
           loadingText="Publishing..."
-          isDisabled={isSubmitting || !title.trim()}
+          isDisabled={isSubmitting || !title.trim() || !selectedThumbnail}
           px={8}
         >
           Publish
