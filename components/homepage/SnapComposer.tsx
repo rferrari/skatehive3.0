@@ -10,6 +10,7 @@ import {
   Progress,
   Input,
   Tooltip,
+  useToast,
 } from "@chakra-ui/react";
 import { useAioha } from "@aioha/react-ui";
 import GiphySelector from "./GiphySelector";
@@ -28,6 +29,7 @@ import {
   getLastSnapsContainer,
   uploadImage,
 } from "@/lib/hive/client-functions";
+import HiveClient from "@/lib/hive/hiveclient";
 import { APP_CONFIG, HIVE_CONFIG } from "@/config/app.config";
 import { extractIPFSHash } from "@/lib/utils/ipfsMetadata";
 import {
@@ -73,6 +75,7 @@ const SnapComposer = React.memo(function SnapComposer({
   buttonSize = "lg",
 }: SnapComposerProps) {
   const { user, aioha } = useAioha();
+  const toast = useToast();
   const postBodyRef = useRef<HTMLTextAreaElement>(null);
   const [selectedGif, setSelectedGif] = useState<IGif | null>(null);
   const [isGiphyModalOpen, setGiphyModalOpen] = useState(false);
@@ -370,10 +373,87 @@ const SnapComposer = React.memo(function SnapComposer({
     e.target.value = ""; // Reset input
   };
 
+  // Function to check if the content is a duplicate of the user's recent comments to the same parent
+  const checkForDuplicatePost = useCallback(async (
+    content: string
+  ): Promise<boolean> => {
+    if (!user) return false;
+
+    const TIMEOUT_MS = 3000; // 3 second timeout
+
+    try {
+      // Create a timeout promise
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        const timeoutId = setTimeout(() => {
+          reject(new Error('Duplicate check timeout'));
+        }, TIMEOUT_MS);
+        // Store timeout ID for potential cleanup (though Promise.race handles this)
+        return () => clearTimeout(timeoutId);
+      });
+
+      // Create the API call promise
+      const fetchPromise = HiveClient.database.call('get_content_replies', [
+        pa,
+        pp,
+      ]) as Promise<Discussion[]>;
+
+      // Race the API call against the timeout
+      const replies = await Promise.race([fetchPromise, timeoutPromise]);
+
+      if (replies && replies.length > 0) {
+        // Filter to only this user's recent comments (last 5)
+        const userReplies = replies
+          .filter((reply) => reply.author === user)
+          .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime())
+          .slice(0, 5);
+
+        const newContent = content.trim().toLowerCase();
+
+        // Check if any of the recent comments match exactly
+        for (const reply of userReplies) {
+          const existingContent = (reply.body?.trim() || '').toLowerCase();
+          if (existingContent === newContent) {
+            if (process.env.NODE_ENV === "development") {
+              console.log('🚫 Duplicate post detected:', {
+                existing: reply.permlink,
+                content: newContent.substring(0, 50) + '...'
+              });
+            }
+            return true; // Duplicate detected
+          }
+        }
+      }
+
+      return false; // Not a duplicate
+    } catch (error) {
+      if (error instanceof Error && error.message === 'Duplicate check timeout') {
+        console.warn('⏱️ Duplicate check timed out after', TIMEOUT_MS, 'ms - allowing post');
+        return false; // Fail-open: allow posting if timeout occurs
+      }
+      console.error('Error checking for duplicate post:', error);
+      return false; // Fail-open: allow posting if check fails
+    }
+  }, [user, pa, pp]);
+
   const handleComment = useCallback(async () => {
     const commentBody = postBodyRef.current?.value?.trim() ?? "";
     if (!commentBody) {
       alert("Comment cannot be empty");
+      return;
+    }
+
+    // Check for duplicate post
+    const isDuplicate = await checkForDuplicatePost(commentBody);
+    if (isDuplicate) {
+      toast({
+        title: "⚠️ Duplicate Post Detected",
+        description: "You've already posted this exact content in this thread. Please write something new or modify your message.",
+        status: "warning",
+        duration: 8000,
+        isClosable: true,
+        position: "top",
+        variant: "solid",
+      });
       return;
     }
 
@@ -463,6 +543,8 @@ const SnapComposer = React.memo(function SnapComposer({
     user,
     onNewComment,
     onClose,
+    checkForDuplicatePost,
+    toast,
   ]);
 
   // Detect Ctrl+Enter or Command+Enter and submit - memoized

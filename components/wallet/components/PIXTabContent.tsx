@@ -538,6 +538,7 @@ export default function PIXTabContent() {
 
   const hivePowerValue = hivePower ?? 0;
   const missingHivePower = Math.max(0, 1000 - hivePowerValue);
+  const hivePowerProgress = Math.min(100, (hivePowerValue / 1000) * 100);
   const buyHivePowerUrl = user
     ? `https://wallet.hive.blog/@${user}`
     : "https://wallet.hive.blog/";
@@ -597,6 +598,16 @@ export default function PIXTabContent() {
             border="1px solid"
             borderColor="primary"
             bg="background"
+            position="relative"
+            overflow="hidden"
+            _before={{
+              content: '""',
+              position: "absolute",
+              inset: 0,
+              background:
+                "radial-gradient(circle at 20% 20%, rgba(178, 255, 0, 0.14), transparent 55%), radial-gradient(circle at 80% 0%, rgba(178, 255, 0, 0.1), transparent 45%)",
+              pointerEvents: "none",
+            }}
           >
             <VStack spacing={4} align="stretch">
               <Heading size="md" fontFamily="Joystix" color="primary">
@@ -604,32 +615,94 @@ export default function PIXTabContent() {
               </Heading>
               <Text color="text">{langContent.gateDescription}</Text>
               <Box
-                p={4}
-                borderRadius="md"
+                p={{ base: 5, md: 6 }}
+                borderRadius="none"
                 border="1px solid"
                 borderColor="primary"
-                bg="background"
+                bg="rgba(0, 0, 0, 0.35)"
+                position="relative"
+                overflow="hidden"
               >
-                <Text fontSize="sm" color="text">
-                  {langContent.hivePowerLabel}
-                </Text>
-                <Text fontSize="4xl" fontWeight="bold" color="primary">
-                  {isHivePowerLoading
-                    ? "..."
-                    : `${hivePowerValue.toFixed(2)} HP`}
-                </Text>
-                <Text fontSize="sm" color="text" mb={3}>
-                  {langContent.missingLabel.replace(
-                    "{missing}",
-                    missingHivePower.toFixed(2)
-                  )}
-                </Text>
-                <Input
-                  value={missingHivePower.toFixed(2)}
-                  isReadOnly
-                  bg="background"
-                  borderColor="primary"
-                />
+                <VStack spacing={4} align="stretch">
+                  <Text fontSize="sm" color="text" textAlign="center">
+                    {langContent.hivePowerLabel}
+                  </Text>
+                  <Box
+                    position="relative"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                    minH={{ base: "150px", md: "175px" }}
+                  >
+                    <Box
+                      position="absolute"
+                      inset={0}
+                      borderRadius="none"
+                      border="1px solid"
+                      borderColor="primary"
+                      opacity={0.45}
+                      boxShadow="0 0 18px rgba(178, 255, 0, 0.2)"
+                    />
+                    <Box
+                      position="absolute"
+                      inset={{ base: "10px", md: "12px" }}
+                      borderRadius="none"
+                      border="1px solid"
+                      borderColor="primary"
+                      opacity={0.85}
+                      boxShadow="0 0 24px rgba(178, 255, 0, 0.28)"
+                    />
+                    <VStack spacing={1} position="relative" zIndex={1}>
+                      <Text fontSize="xs" color="text" letterSpacing="0.2em">
+                        HIVE POWER
+                      </Text>
+                      <Text
+                        fontSize={{ base: "3xl", md: "4xl" }}
+                        fontWeight="bold"
+                        color="primary"
+                        fontFamily="Joystix"
+                      >
+                        {isHivePowerLoading
+                          ? "..."
+                          : `${hivePowerValue.toFixed(2)} HP`}
+                      </Text>
+                      <Text fontSize="sm" color="text">
+                        {langContent.missingLabel.replace(
+                          "{missing}",
+                          missingHivePower.toFixed(2)
+                        )}
+                      </Text>
+                    </VStack>
+                  </Box>
+                  <Box>
+                    <HStack justify="space-between" fontSize="xs" color="text" mb={2}>
+                      <Text>0 HP</Text>
+                      <Text>1000 HP</Text>
+                    </HStack>
+                    <Box
+                      h="10px"
+                      borderRadius="none"
+                      border="1px solid"
+                      borderColor="primary"
+                      bg="rgba(178, 255, 0, 0.08)"
+                      overflow="hidden"
+                    >
+                      <Box
+                        h="full"
+                        w={`${hivePowerProgress}%`}
+                        bg="primary"
+                        boxShadow="0 0 14px rgba(178, 255, 0, 0.5)"
+                      />
+                    </Box>
+                  </Box>
+                  <Input
+                    value={missingHivePower.toFixed(2)}
+                    isReadOnly
+                    bg="background"
+                    borderColor="primary"
+                    aria-label="Missing Hive Power to reach 1000 HP"
+                  />
+                </VStack>
               </Box>
               <Button
                 as="a"
