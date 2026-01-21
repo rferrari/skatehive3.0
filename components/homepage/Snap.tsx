@@ -12,13 +12,13 @@ import {
   MenuItem,
   Menu,
   MenuList,
-  Flex,
 } from "@chakra-ui/react";
+import { DeleteIcon } from "@chakra-ui/icons";
 import { Discussion } from "@hiveio/dhive";
 import { FaRegComment } from "react-icons/fa";
 import { LuArrowUp, LuArrowDown, LuDollarSign } from "react-icons/lu";
 import { useAioha } from "@aioha/react-ui";
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { getPayoutValue } from "@/lib/hive/client-functions";
 import { EnhancedMarkdownRenderer } from "@/components/markdown/EnhancedMarkdownRenderer";
 import { getPostDate } from "@/lib/utils/GetPostDate";
@@ -30,6 +30,7 @@ import useHivePower from "@/hooks/useHivePower";
 import { separateContent, fetchFilteredReplies } from "@/lib/utils/snapUtils";
 import { SlPencil } from "react-icons/sl";
 import { usePostEdit } from "@/hooks/usePostEdit";
+import { usePostDelete } from "@/hooks/usePostDelete";
 import {
   parsePayout,
   calculatePayoutDays,
@@ -45,6 +46,7 @@ interface SnapProps {
   setReply: (discussion: Discussion) => void;
   setConversation?: (conversation: Discussion) => void;
   onCommentAdded?: () => void;
+  onDelete?: (permlink: string) => void;
 }
 
 const Snap = ({
@@ -53,6 +55,7 @@ const Snap = ({
   setReply,
   setConversation,
   onCommentAdded,
+  onDelete,
 }: SnapProps) => {
   const { user } = useAioha();
   const {
@@ -62,7 +65,6 @@ const Snap = ({
   } = useHivePower(user);
   const commentDate = getPostDate(discussion.created);
 
-  // Use the custom hook for edit functionality
   const {
     isEditing,
     editedContent,
@@ -72,6 +74,18 @@ const Snap = ({
     handleCancelEdit,
     handleSaveEdit,
   } = usePostEdit(discussion);
+
+  const [isDeleted, setIsDeleted] = useState(false);
+  const { isDeleting, handleDelete, handleSoftDelete } = usePostDelete(
+    discussion,
+    () => {
+      setIsDeleted(true);
+      onDelete?.(discussion.permlink);
+    }
+  );
+  const hasRepliesOrVotes =
+    (discussion.children ?? 0) > 0 ||
+    (discussion.active_votes?.length ?? 0) > 0;
 
   const [showSlider, setShowSlider] = useState(false);
   const [activeVotes, setActiveVotes] = useState(discussion.active_votes || []);
@@ -88,9 +102,7 @@ const Snap = ({
     Record<string, boolean>
   >({});
 
-  // State to track comment count for optimistic updates
   const [commentCount, setCommentCount] = useState(discussion.children ?? 0);
-  // console.log("comment icon counter debug:", commentCount, discussion.children);
   const effectiveDepth = discussion.depth || 0;
 
   const { text, media } = useMemo(
@@ -117,9 +129,7 @@ const Snap = ({
       ...prev,
       [discussion.permlink]: [...(prev[discussion.permlink] || []), newReply],
     }));
-    // Update comment count optimistically
     setCommentCount((prev) => prev + 1);
-    // Notify parent component if callback is provided
     if (onCommentAdded) {
       onCommentAdded();
     }
@@ -130,7 +140,6 @@ const Snap = ({
       ...prev,
       [permlink]: !prev[permlink],
     }));
-    // If opening, fetch replies if not already loaded
     if (!inlineComposerStates[permlink]) {
       setInlineRepliesLoading((prev) => ({ ...prev, [permlink]: true }));
       try {
@@ -150,6 +159,18 @@ const Snap = ({
   const authorPayout = parsePayout(discussion.total_payout_value);
   const curatorPayout = parsePayout(discussion.curator_payout_value);
   const { daysRemaining, isPending } = calculatePayoutDays(discussion.created);
+
+  const handleDeleteClick = () => {
+    if (hasRepliesOrVotes) {
+      handleSoftDelete();
+    } else {
+      handleDelete();
+    }
+  };
+
+  if (isDeleted) {
+    return null;
+  }
 
   return (
     <Box pl={effectiveDepth > 1 ? 1 : 0} ml={effectiveDepth > 1 ? 2 : 0}>
@@ -208,6 +229,17 @@ const Snap = ({
                   Edit
                 </MenuItem>
               )}
+              {user === discussion.author && (
+                <MenuItem
+                  onClick={handleDeleteClick}
+                  bg={"background"}
+                  color={"error"}
+                  isDisabled={isDeleting}
+                >
+                  <DeleteIcon style={{ marginRight: "8px" }} />
+                  Delete
+                </MenuItem>
+              )}
               <ShareMenuButtons comment={discussion} />
             </MenuList>
           </Menu>
@@ -225,7 +257,6 @@ const Snap = ({
           </Box>
         </Box>
 
-        {/* Edit Modal */}
         <EditPostModal
           isOpen={isEditing}
           onClose={handleCancelEdit}
@@ -243,7 +274,6 @@ const Snap = ({
             mt={3} 
             w="100%"
           >
-            {/* Upvote Section */}
             <HStack
               minW="72px"
               justify="center"
@@ -282,7 +312,6 @@ const Snap = ({
               </HStack>
             </HStack>
 
-            {/* Comment Section */}
             <HStack
               minW="72px"
               justify="center"
@@ -315,7 +344,6 @@ const Snap = ({
               </HStack>
             </HStack>
 
-            {/* Payout Section */}
             <Tooltip
               label={
                 isPending
@@ -403,7 +431,6 @@ const Snap = ({
               }
               post
             />
-            {/* Show replies for this permlink */}
             {inlineRepliesMap[discussion.permlink] &&
               inlineRepliesMap[discussion.permlink].length > 0 && (
                 <VStack spacing={2} align="stretch" mt={2}>
@@ -417,6 +444,7 @@ const Snap = ({
                           onOpen={onOpen}
                           setReply={setReply}
                           setConversation={setConversation}
+                          onDelete={onDelete}
                         />
                       );
                     }

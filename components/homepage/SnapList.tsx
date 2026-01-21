@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import {
   Box,
@@ -119,6 +119,12 @@ export default function SnapList({
       ]);
     }
   };
+
+  const handleDeleteComment = useCallback((permlink: string) => {
+    setDisplayedComments((prev) =>
+      prev.filter((comment) => comment.permlink !== permlink)
+    );
+  }, []);
 
   // Filter out duplicate posts by the same author with identical content
   const filterDuplicates = (comments: Discussion[]): Discussion[] => {
@@ -469,6 +475,7 @@ export default function SnapList({
                   onOpen={onOpenConversation}
                   setReply={setReply}
                   {...(!post ? { setConversation } : {})}
+                  onDelete={handleDeleteComment}
                 />
               ))}
             </VStack>
