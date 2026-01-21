@@ -109,18 +109,17 @@ export default function ThumbnailPicker({
       border={
         selectedThumbnail === url ? "2px solid" : "2px solid transparent"
       }
-      borderColor={selectedThumbnail === url ? "accent" : "transparent"}
-      borderRadius="none"
+      borderColor={selectedThumbnail === url ? "#6a9e6a" : "transparent"}
       overflow="hidden"
       cursor="pointer"
       onClick={() => setSelectedThumbnail(url)}
-      _hover={{ borderColor: "primary" }}
+      _hover={{ borderColor: "#6a9e6a" }}
       width="96px"
       height="96px"
       display="flex"
       alignItems="center"
       justifyContent="center"
-      bg="muted"
+      bg="rgba(255,255,255,0.03)"
       position="relative"
     >
       {isVideo ? (
@@ -142,7 +141,7 @@ export default function ThumbnailPicker({
           position="absolute"
           top={1}
           right={1}
-          bg="accent"
+          bg="#6a9e6a"
           borderRadius="full"
           p={1}
         >
@@ -157,9 +156,9 @@ export default function ThumbnailPicker({
           position="absolute"
           top={1}
           left={1}
-          bg="error"
+          bg="rgba(180,80,80,0.5)"
           color="white"
-          _hover={{ bg: "error", opacity: 0.8 }}
+          _hover={{ bg: "rgba(180,80,80,0.7)" }}
           onClick={onRemove}
           borderRadius="full"
           minW="20px"
@@ -171,9 +170,16 @@ export default function ThumbnailPicker({
 
   return (
     <Box>
-      <Box mb={3} fontWeight="bold" color="primary">
-        Choose a thumbnail:
-      </Box>
+      <Text
+        letterSpacing="0.08em"
+        fontSize="11px"
+        color="#888"
+        mb={3}
+        fontWeight="medium"
+        textTransform="uppercase"
+      >
+        Thumbnail
+      </Text>
       <Flex wrap="wrap" gap={3} alignItems="flex-start">
         {uploadedThumbnail && (
           <ThumbnailBox
@@ -188,27 +194,25 @@ export default function ThumbnailPicker({
           <ThumbnailBox key={url + idx} url={url} isVideo />
         ))}
         <Box
-          border="2px dashed"
-          borderColor="muted"
-          borderRadius="none"
+          border="2px dashed rgba(255,255,255,0.12)"
           overflow="hidden"
           cursor={isUploading ? "wait" : "pointer"}
           onClick={handleUploadClick}
-          _hover={{ borderColor: "primary" }}
+          _hover={{ borderColor: "#6a9e6a" }}
           width="96px"
           height="96px"
           display="flex"
           alignItems="center"
           justifyContent="center"
-          bg="muted"
+          bg="rgba(255,255,255,0.02)"
           position="relative"
         >
           {isUploading ? (
-            <Spinner size="sm" color="primary" />
+            <Spinner size="sm" color="#6a9e6a" />
           ) : (
             <VStack spacing={1}>
-              <FaUpload color="var(--chakra-colors-primary)" size={18} />
-              <Text fontSize="xs" color="muted" textAlign="center">
+              <FaUpload color="#6a9e6a" size={18} />
+              <Text fontSize="xs" color="#b0b0b0" textAlign="center">
                 Upload
               </Text>
             </VStack>
@@ -224,17 +228,17 @@ export default function ThumbnailPicker({
         </Box>
       </Flex>
       {uploadError && (
-        <Text color="error" fontSize="sm" mt={2}>
+        <Text color="#c87070" fontSize="sm" mt={2}>
           {uploadError}
         </Text>
       )}
       {selectedThumbnail && (
-        <Box mt={2} color="muted" fontSize="sm">
+        <Box mt={2} color="#888" fontSize="sm">
           Selected:{" "}
           <span
             style={{
               wordBreak: "break-all",
-              color: "var(--chakra-colors-primary)",
+              color: "#6a9e6a",
             }}
           >
             {selectedThumbnail}

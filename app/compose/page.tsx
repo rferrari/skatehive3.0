@@ -11,7 +11,6 @@ import {
   Text,
   HStack,
   VStack,
-  Image,
 } from "@chakra-ui/react";
 import ImageCompressor, {
   ImageCompressorRef,
@@ -56,18 +55,8 @@ export default function Composer() {
     isSubmitting,
   } = useComposeForm();
 
-  // Local state for compose page features
-  const [activeSettingsTab, setActiveSettingsTab] = useState<string | null>(
-    null
-  );
-  const [imagesInMarkdown] = useState<Array<{ url: string; alt?: string }>>([]);
+  const [activeSettingsTab, setActiveSettingsTab] = useState<string>("thumbnail");
 
-  // Placeholder functions - TODO: Implement image caption functionality
-  const updateImageCaption = (url: string, caption: string) => {
-    console.log("TODO: Update image caption", url, caption);
-  };
-
-  // Use the wrapped handleSubmit from useComposeForm
   const handleSubmit = originalHandleSubmit;
 
   React.useEffect(() => {}, [
@@ -78,11 +67,9 @@ export default function Composer() {
     isSubmitting,
   ]);
 
-  // Refs
   const imageCompressorRef = useRef<ImageCompressorRef>(null);
   const videoUploaderRef = useRef<VideoUploaderRef>(null);
 
-  // Custom image upload handler that inserts inline with editable captions
   const handleImageUploadWithCaption = async (
     url: string | null,
     fileName?: string
@@ -97,7 +84,6 @@ export default function Composer() {
           fileName || "compressed-image.jpg"
         );
 
-        // Insert into markdown at cursor position
         insertAtCursorWrapper(`\n![](${ipfsUrl})\n`);
       } catch (error) {
         console.error("Error uploading compressed image to IPFS:", error);
@@ -109,7 +95,6 @@ export default function Composer() {
     }
   };
 
-  // Upload hooks
   const {
     isUploading: isImageUploading,
     isCompressingImage,
@@ -124,112 +109,87 @@ export default function Composer() {
     setIsCompressingVideo,
   } = useVideoUpload(insertAtCursorWrapper);
 
-  // Video error state
   const [videoError, setVideoError] = useState<string | null>(null);
 
-  // GIF upload handler
   const handleGifUpload = async (gifBlob: Blob, fileName: string) => {
     try {
-      // Ensure filename has .gif extension
       const gifFileName = fileName.endsWith(".gif")
         ? fileName
         : `${fileName}.gif`;
 
-      // Create a File object from the blob with proper .gif extension
       const gifFile = new File([gifBlob], gifFileName, { type: "image/gif" });
 
-      // Upload to IPFS using the same method as images
       const { uploadToIpfs } = await import("@/lib/markdown/composeUtils");
       const ipfsUrl = await uploadToIpfs(gifFile, gifFileName);
 
-      // Insert into markdown at cursor position
       insertAtCursorWrapper(`\n![](${ipfsUrl})\n`);
     } catch (error) {
       console.error("Error uploading GIF to IPFS:", error);
-      throw error; // Re-throw so MarkdownEditor can handle fallback
+      throw error;
     }
   };
 
-  // Create trigger functions with refs
   const handleImageTrigger = createImageTrigger(imageCompressorRef);
   const handleVideoTrigger = createVideoTrigger(videoUploaderRef);
-
-  // Video duration error handling
-  const [videoDurationError, setVideoDurationError] = useState<string | null>(
-    null
-  );
-
-  const handleVideoDurationError = (duration: number) => {
-    const minutes = Math.floor(duration / 60);
-    const seconds = Math.floor(duration % 60);
-    setVideoDurationError(
-      `Video is ${minutes}m ${seconds}s long. Long videos will be uploaded without compression to prevent crashes.`
-    );
-    // Clear error after 5 seconds
-    setTimeout(() => setVideoDurationError(null), 5000);
-  };
 
   const { isUploading: isDropUploading, onDrop } = useFileDropUpload(
     insertAtCursorWrapper
   );
   const { isDragActive } = useDropzone({ onDrop, noClick: true });
 
-  // Combined uploading state
   const isUploading = isImageUploading || isDropUploading;
-
-  // TODO: Implement GIF modal functionality
-  // Handle GIF modal effects - currently disabled until GIF modal is implemented
-  // React.useEffect(() => {
-  //   if (isGifModalOpen) {
-  //     gifMakerWithSelectorRef.current?.reset();
-  //     setGifUrl(null);
-  //     setGifSize(null);
-  //     setIsProcessingGif(false);
-  //   }
-  // }, [isGifModalOpen, setGifUrl, setGifSize, setIsProcessingGif]);
 
   return (
     <Flex
       width="100%"
-      height="92vh"
-      bgColor="background"
+      minHeight="100vh"
+      bg="#0d0e12"
       justify="center"
-      p="1"
+      p={{ base: 3, md: 6 }}
       direction="column"
-      overflow="hidden"
     >
       <Flex
         direction={{ base: "column", md: "row" }}
         align={{ base: "stretch", md: "center" }}
         justify={{ base: "flex-start", md: "space-between" }}
         mb={4}
-        gap={2}
+        gap={3}
         width="100%"
-        position="relative"
+        maxWidth="1200px"
+        mx="auto"
       >
         <Input
           placeholder={placeholders[placeholderIndex]}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           size="lg"
-          borderRadius="base"
-          fontSize="3xl"
-          fontWeight="bold"
-          _placeholder={{ fontSize: "3xl" }}
-          maxLength={123}
+          fontSize="1.5rem"
+          fontWeight="600"
           flex="1"
           minW={0}
+          border="1px solid rgba(255,255,255,0.08)"
+          color="#e0e0e0"
+          _placeholder={{ color: "#666" }}
+          _hover={{ borderColor: "rgba(255,255,255,0.15)" }}
+          _focus={{
+            borderColor: "#6a9e6a",
+            boxShadow: "0 0 0 1px #6a9e6a",
+          }}
+          maxLength={123}
         />
       </Flex>
 
       {isUploading && (
-        <Center>
-          <Spinner />
+        <Center mb={3}>
+          <HStack spacing={2} color="#888">
+            <Spinner size="sm" color="#6a9e6a" />
+            <Text fontSize="sm">Uploading...</Text>
+          </HStack>
         </Center>
       )}
 
-      <Flex width="100%" justify="flex-end" mb={2}>
-        <Box minWidth="220px">
+      <Flex width="100%" justify="flex-end" mb={3} maxWidth="1200px" mx="auto">
+        <Box minWidth="200px">
           <VideoUploader
             ref={videoUploaderRef}
             onUpload={handleVideoUpload}
@@ -244,23 +204,25 @@ export default function Composer() {
         </Box>
       </Flex>
 
-      {videoDurationError && (
-        <Center bg="red.50" color="red.800" p={2} borderRadius="md" mb={2}>
-          {videoDurationError}
-        </Center>
-      )}
 
       {videoError && (
-        <Center bg="red.500" color="white" p={3} borderRadius="md" mb={2}>
-          <Flex direction="column" align="center" gap={2}>
+        <Center
+          bg="rgba(180,80,80,0.1)"
+          color="#c87070"
+          p={3}
+          mb={3}
+          maxWidth="1200px"
+          mx="auto"
+          width="100%"
+        >
+          <Flex direction="column" align="center" gap={2} width="100%">
             <Text fontSize="sm">❌ {videoError}</Text>
             <Button
               size="xs"
-              colorScheme="red"
-              variant="outline"
-              color="white"
-              borderColor="white"
-              _hover={{ bg: "red.600" }}
+              bg="rgba(180,80,80,0.2)"
+              color="#c87070"
+              border="1px solid rgba(180,80,80,0.2)"
+              _hover={{ bg: "rgba(180,80,80,0.3)" }}
               onClick={() => setVideoError(null)}
             >
               Dismiss
@@ -270,25 +232,28 @@ export default function Composer() {
       )}
 
       <Flex
-        flex="1"
-        borderRadius="base"
+        h="500px"
         justify="center"
-        overflow="hidden"
         width="100%"
+        maxWidth="1200px"
+        mx="auto"
+        border="1px solid rgba(255,255,255,0.08)"
       >
-        <MarkdownEditor
-          markdown={markdown}
-          setMarkdown={setMarkdown}
-          onDrop={onDrop}
-          isDragActive={isDragActive}
-          previewMode={previewMode}
-          user={user}
-          handleImageTrigger={handleImageTrigger}
-          handleVideoTrigger={handleVideoTrigger}
-          isUploading={isUploading}
-          insertAtCursor={insertAtCursorWrapper}
-          handleGifUpload={handleGifUpload}
-        />
+        <Box flex={1} display="flex" flexDirection="column" overflow="hidden">
+          <MarkdownEditor
+            markdown={markdown}
+            setMarkdown={setMarkdown}
+            onDrop={onDrop}
+            isDragActive={isDragActive}
+            previewMode={previewMode}
+            user={user}
+            handleImageTrigger={handleImageTrigger}
+            handleVideoTrigger={handleVideoTrigger}
+            isUploading={isUploading}
+            insertAtCursor={insertAtCursorWrapper}
+            handleGifUpload={handleGifUpload}
+          />
+        </Box>
 
         <ImageCompressor
           ref={imageCompressorRef}
@@ -298,172 +263,80 @@ export default function Composer() {
         />
       </Flex>
 
-      <HashtagInput
-        hashtags={hashtags}
-        hashtagInput={hashtagInput}
-        setHashtagInput={setHashtagInput}
-        setHashtags={setHashtags}
-      />
+      <Box maxWidth="1200px" mx="auto" width="100%" mt={4}>
+        <HashtagInput
+          hashtags={hashtags}
+          hashtagInput={hashtagInput}
+          setHashtagInput={setHashtagInput}
+          setHashtags={setHashtags}
+        />
+      </Box>
 
-      {/* Settings Tabs */}
-      <Box mt={4}>
-        {/* Custom Tab Buttons */}
-        <HStack spacing={0} mb={0}>
-          {imagesInMarkdown.length > 0 && (
-            <Button
-              size="sm"
-              onClick={() =>
-                setActiveSettingsTab(
-                  activeSettingsTab === "captions" ? null : "captions"
-                )
-              }
-              border="1px solid"
-              borderColor={
-                activeSettingsTab === "captions" ? "accent" : "muted"
-              }
-              borderBottomColor={
-                activeSettingsTab === "captions" ? "background" : "muted"
-              }
-              borderRadius="none"
-              borderBottomRadius={0}
-              borderRightRadius={0}
-              bg={
-                activeSettingsTab === "captions" ? "background" : "transparent"
-              }
-              color={activeSettingsTab === "captions" ? "accent" : "primary"}
-              fontWeight="semibold"
-              _hover={{
-                bg: activeSettingsTab === "captions" ? "background" : "muted",
-                borderColor:
-                  activeSettingsTab === "captions" ? "accent" : "primary",
-              }}
-            >
-              <HStack spacing={2}>
-                <span>📷</span>
-                <Text>Image Captions ({imagesInMarkdown.length})</Text>
-              </HStack>
-            </Button>
-          )}
+      <Box mt={4} maxWidth="1200px" mx="auto" width="100%">
+        <HStack spacing={0} mb={0} align="stretch">
           <Button
             size="sm"
-            onClick={() =>
-              setActiveSettingsTab(
-                activeSettingsTab === "beneficiaries" ? null : "beneficiaries"
-              )
-            }
+            onClick={() => setActiveSettingsTab("thumbnail")}
             border="1px solid"
-            borderColor={
-              activeSettingsTab === "beneficiaries" ? "accent" : "muted"
-            }
-            borderBottomColor={
-              activeSettingsTab === "beneficiaries" ? "background" : "muted"
-            }
-            borderRadius="none"
-            borderBottomRadius={0}
-            borderRightRadius={imagesInMarkdown.length === 0 ? 0 : 0}
-            borderLeftRadius={imagesInMarkdown.length > 0 ? 0 : "md"}
-            bg={
-              activeSettingsTab === "beneficiaries"
-                ? "background"
-                : "transparent"
-            }
-            color={activeSettingsTab === "beneficiaries" ? "accent" : "primary"}
-            fontWeight="semibold"
+            borderColor={activeSettingsTab === "thumbnail" ? "#6a9e6a" : "rgba(255,255,255,0.08)"}
+            borderBottomColor={activeSettingsTab === "thumbnail" ? "#16191f" : "rgba(255,255,255,0.08)"}
+            bg={activeSettingsTab === "thumbnail" ? "#16191f" : "transparent"}
+            color={activeSettingsTab === "thumbnail" ? "#6a9e6a" : "#888"}
+            fontWeight="medium"
+            fontSize="sm"
             _hover={{
-              bg:
-                activeSettingsTab === "beneficiaries" ? "background" : "muted",
-              borderColor:
-                activeSettingsTab === "beneficiaries" ? "accent" : "primary",
+              bg: activeSettingsTab === "thumbnail" ? "#16191f" : "rgba(255,255,255,0.03)",
+              color: activeSettingsTab === "thumbnail" ? "#6a9e6a" : "#ccc",
             }}
+            mr="-1px"
+            px={4}
+            h="36px"
           >
-            <HStack spacing={2}>
-              <span>💰</span>
-              <Text>
-                Beneficiaries{" "}
-                {beneficiaries.length > 0 && `(${beneficiaries.length})`}
-              </Text>
-            </HStack>
+            🖼️ Thumbnail
           </Button>
           <Button
             size="sm"
-            onClick={() =>
-              setActiveSettingsTab(
-                activeSettingsTab === "thumbnail" ? null : "thumbnail"
-              )
-            }
+            onClick={() => setActiveSettingsTab("beneficiaries")}
             border="1px solid"
-            borderColor={activeSettingsTab === "thumbnail" ? "accent" : "muted"}
-            borderBottomColor={
-              activeSettingsTab === "thumbnail" ? "background" : "muted"
-            }
-            borderRadius="none"
-            borderBottomRadius={0}
-            borderLeftRadius={0}
-            bg={
-              activeSettingsTab === "thumbnail" ? "background" : "transparent"
-            }
-            color={activeSettingsTab === "thumbnail" ? "accent" : "primary"}
-            fontWeight="semibold"
+            borderColor={activeSettingsTab === "beneficiaries" ? "#6a9e6a" : "rgba(255,255,255,0.08)"}
+            borderBottomColor={activeSettingsTab === "beneficiaries" ? "#16191f" : "rgba(255,255,255,0.08)"}
+            bg={activeSettingsTab === "beneficiaries" ? "#16191f" : "transparent"}
+            color={activeSettingsTab === "beneficiaries" ? "#6a9e6a" : "#888"}
+            fontWeight="medium"
+            fontSize="sm"
             _hover={{
-              bg: activeSettingsTab === "thumbnail" ? "background" : "muted",
-              borderColor:
-                activeSettingsTab === "thumbnail" ? "accent" : "primary",
+              bg: activeSettingsTab === "beneficiaries" ? "#16191f" : "rgba(255,255,255,0.03)",
+              color: activeSettingsTab === "beneficiaries" ? "#6a9e6a" : "#ccc",
             }}
+            ml="-1px"
+            px={4}
+            h="36px"
           >
-            <HStack spacing={2}>
-              <span>🖼️</span>
-              <Text>Thumbnail</Text>
-            </HStack>
+            💰 Beneficiaries {beneficiaries.length > 0 && `(${beneficiaries.length})`}
           </Button>
         </HStack>
 
-        {/* Tab Content */}
-        {activeSettingsTab === "captions" && imagesInMarkdown.length > 0 && (
-          <Box p={4} bg="background" alignSelf="flex-start">
-            <VStack spacing={4} align="stretch">
-              {imagesInMarkdown.map((image, index) => (
-                <HStack key={`${image.url}-${index}`} spacing={4} align="start">
-                  <Image
-                    src={image.url}
-                    alt={image.alt || "Uploaded image"}
-                    maxW="120px"
-                    maxH="80px"
-                    objectFit="cover"
-                    borderRadius="none"
-                    border="1px solid"
-                    borderColor="muted"
-                  />
-                  <VStack flex="1" align="stretch" spacing={2}>
-                    <Text fontSize="sm" color="muted" fontWeight="medium">
-                      Image {index + 1}
-                    </Text>
-                    <Input
-                      placeholder="Enter caption for this image..."
-                      value={image.alt}
-                      onChange={(e) =>
-                        updateImageCaption(image.url, e.target.value)
-                      }
-                      size="sm"
-                      bg="background"
-                      borderColor="muted"
-                      _hover={{ borderColor: "primary" }}
-                      _focus={{
-                        borderColor: "accent",
-                        boxShadow: "0 0 0 1px var(--chakra-colors-accent)",
-                      }}
-                    />
-                    <Text fontSize="xs" color="muted" noOfLines={1}>
-                      URL: {image.url}
-                    </Text>
-                  </VStack>
-                </HStack>
-              ))}
-            </VStack>
+        {activeSettingsTab === "thumbnail" && (
+          <Box
+            p={4}
+            bg="#16191f"
+            border="1px solid rgba(255,255,255,0.08)"
+          >
+            <ThumbnailPicker
+              show={true}
+              markdown={markdown}
+              selectedThumbnail={selectedThumbnail}
+              setSelectedThumbnail={setSelectedThumbnail}
+            />
           </Box>
         )}
 
         {activeSettingsTab === "beneficiaries" && (
-          <Box p={4} bg="background" alignSelf="flex-start">
+          <Box
+            p={4}
+            bg="#16191f"
+            border="1px solid rgba(255,255,255,0.08)"
+          >
             <BeneficiariesInput
               beneficiaries={beneficiaries}
               setBeneficiaries={(newBeneficiaries) => {
@@ -473,29 +346,21 @@ export default function Composer() {
             />
           </Box>
         )}
-
-        {activeSettingsTab === "thumbnail" && (
-          <Box p={4} bg="background" alignSelf="flex-start">
-            <ThumbnailPicker
-              show={true}
-              markdown={markdown}
-              selectedThumbnail={selectedThumbnail}
-              setSelectedThumbnail={setSelectedThumbnail}
-            />
-          </Box>
-        )}
       </Box>
 
-      {/* Publish Button */}
-      <Flex mt={4} justify="flex-end">
+      <Flex mt={4} justify="flex-end" maxWidth="1200px" mx="auto" width="100%">
         <Button
           size="md"
-          colorScheme="blue"
+          bg="#5a7a5a"
+          color="#fff"
+          fontWeight="bold"
           onClick={handleSubmit}
           isLoading={isSubmitting}
           loadingText="Publishing..."
           isDisabled={isSubmitting || !title.trim() || !selectedThumbnail}
-          px={8}
+          px={10}
+          h="44px"
+          _hover={{ bg: "#6a8c6a" }}
         >
           Publish
         </Button>
