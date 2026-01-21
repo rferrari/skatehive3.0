@@ -126,6 +126,14 @@ export default function SnapList({
     );
   }, []);
 
+  // Filter out deleted posts (soft-deleted content)
+  const filterDeletedPosts = (comments: Discussion[]): Discussion[] => {
+    return comments.filter((comment) => {
+      const body = comment.body?.trim().toLowerCase();
+      return body !== "deleted";
+    });
+  };
+
   // Filter out duplicate posts by the same author with identical content
   const filterDuplicates = (comments: Discussion[]): Discussion[] => {
     const seen = new Map<string, Set<string>>();
@@ -159,7 +167,7 @@ export default function SnapList({
   };
 
   const filteredAndSortedComments = filterDuplicates(
-    filterAutoComments([...displayedComments])
+    filterDeletedPosts(filterAutoComments([...displayedComments]))
   ).sort((a: Discussion, b: Discussion) => {
     // Sort by creation date (newest first) instead of payout value
     // This ensures users see the latest content first, including new Zora posts
