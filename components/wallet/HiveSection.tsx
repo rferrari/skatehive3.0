@@ -32,37 +32,38 @@ const HiveSection = memo(function HiveSection({
   }, []);
 
   return (
-    <Box
-      p={4}
-      bg="transparent"
-      borderRadius="md"
-      border="1px solid"
-      borderColor="gray.200"
-    >
-      <HStack justify="space-between" align="center">
-        <HStack spacing={3}>
-          <CustomHiveIcon color={"red"} />
-          <Box>
-            <HStack spacing={2} align="center">
-              <Text fontSize="lg" fontWeight="bold" color="red">
-                HIVE
-              </Text>
-              <IconButton
-                aria-label="Info about Hive"
-                icon={<FaQuestionCircle />}
-                size="xs"
-                variant="ghost"
-                color="gray.400"
-                onClick={handleInfoToggle}
-              />
-            </HStack>
-            {/* {!isMobile && (
+    <>
+      <Box
+        p={4}
+        bg="transparent"
+        borderRadius="md"
+        border="1px solid"
+        borderColor="gray.200"
+      >
+        <HStack justify="space-between" align="center">
+          <HStack spacing={3}>
+            <CustomHiveIcon color={"red"} />
+            <Box>
+              <HStack spacing={2} align="center">
+                <Text fontSize="lg" fontWeight="bold" color="red">
+                  HIVE
+                </Text>
+                <IconButton
+                  aria-label="Info about Hive"
+                  icon={<FaQuestionCircle />}
+                  size="xs"
+                  variant="ghost"
+                  color="gray.400"
+                  onClick={handleInfoToggle}
+                />
+              </HStack>
+              {/* {!isMobile && (
               <Text fontSize="sm" color="gray.400">
                 The primary token of the Hive Blockchain
               </Text>
             )} */}
-          </Box>
-        </HStack>
+            </Box>
+          </HStack>
 
           <HStack spacing={3} align="center">
             <HStack spacing={1}>
