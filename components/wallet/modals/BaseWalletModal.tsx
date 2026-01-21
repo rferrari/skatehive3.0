@@ -24,6 +24,29 @@ interface BaseWalletModalProps {
 }
 
 /**
+ * Utility function to check if an error is from user cancellation
+ * @param error - Error message
+ * @param errorCode - Optional error code
+ * @returns true if the error indicates user cancellation
+ */
+export function isUserCancelled(error?: any, errorCode?: number): boolean {
+    if (!error) return false;
+
+    // Convert to string and handle objects that might have a message property
+    const errorString = typeof error === 'string' ? error : (error.message || JSON.stringify(error));
+    const lowerError = errorString.toLowerCase();
+
+    return (
+        lowerError.includes('cancel') ||
+        lowerError.includes('user rejected') ||
+        lowerError.includes('user denied') ||
+        lowerError.includes('rejected') ||
+        lowerError.includes('denied') ||
+        errorCode === 4001
+    );
+}
+
+/**
  * Base modal wrapper for all wallet operations
  * Provides consistent styling, mobile responsiveness, and transaction handling
  */

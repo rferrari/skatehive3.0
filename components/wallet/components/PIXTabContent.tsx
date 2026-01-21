@@ -15,6 +15,7 @@ import {
   OrderedList,
   ListItem,
   IconButton,
+  useDisclosure,
 } from "@chakra-ui/react";
 import { FaGlobe } from 'react-icons/fa';
 import PIXTransactionHistory from "./PIXTransactionHistory";
@@ -24,6 +25,7 @@ import useHiveAccount from "@/hooks/useHiveAccount";
 import PixTransferGuide from "./PIXTransferGuide";
 import PIXFAQ from "./PIXFAQ";
 import useHivePower from "@/hooks/useHivePower";
+import { PowerUpModal } from "../modals";
 
 export interface PixDashboardData {
   pixbeePixKey: string;
@@ -471,7 +473,9 @@ export default function PIXTabContent() {
   const [loading, setLoading] = useState(true);
   const [language, setLanguage] = useState<'en' | 'pt'>('pt');
   const { user } = useAioha();
+  const { hiveAccount } = useHiveAccount(user || "");
   const { hivePower, isLoading: isHivePowerLoading } = useHivePower(user || "");
+  const { isOpen: isPowerUpOpen, onOpen: onPowerUpOpen, onClose: onPowerUpClose } = useDisclosure();
 
   const toggleLanguage = () => {
     setLanguage(language === 'en' ? 'pt' : 'en');
@@ -485,7 +489,7 @@ export default function PIXTabContent() {
       gateDescription: 'The FBI said only accounts with 1000 Hive Power can access PIX for now.',
       hivePowerLabel: 'Your Hive Power',
       missingLabel: 'Missing {missing} HP to unlock',
-      buyButton: 'Buy Hive Power',
+      buyButton: 'Power Up',
     },
     pt: {
       heading: '💸 Pix',
@@ -494,22 +498,29 @@ export default function PIXTabContent() {
       gateDescription: 'Mostra o teu HP ai pra gente liberar a chave do PIX.',
       hivePowerLabel: 'Seu Hive Power',
       missingLabel: 'Faltam {missing} HP para liberar',
-      buyButton: 'Comprar Hive Power',
+      buyButton: 'Power Up',
     },
   };
 
   const langContent = content[language];
 
   useEffect(() => {
+    const abortController = new AbortController();
+
     async function fetchData() {
       try {
         const res = await fetch(
-          (process.env.NEXT_PUBLIC_PIXBEE_ENDPOINT || "https://aphid-glowing-fish.ngrok-free.app") + "/skatebank",
-          glowinOptions
+          (process.env.NEXT_PUBLIC_PIXBEE_ENDPOINT
+            || "https://aphid-glowing-fish.ngrok-free.app")
+          + "/skatebank",
+          {
+            ...glowinOptions,
+            signal: abortController.signal,
+          }
         );
 
         if (!res.ok) {
-          throw new Error("Skatebank offline");
+          throw new Error(`HTTP error! status: ${res.status}`);
         }
 
         const json = await res.json();
@@ -527,21 +538,36 @@ export default function PIXTabContent() {
 
         setDashboardData(parsedData);
       } catch (error) {
-        console.error("Failed to load PIX data", error);
+        // Only log error if it's not an abort error
+        if (error instanceof Error && error.name !== 'AbortError') {
+          console.error("Failed to load PIX data:", error.message);
+        }
+        // Set dashboard data to null on error so UI can show appropriate message
+        setDashboardData(null);
       } finally {
-        setLoading(false);
+        // Only set loading to false if not aborted
+        if (!abortController.signal.aborted) {
+          setLoading(false);
+        }
       }
     }
 
     fetchData();
+
+    // Cleanup function to abort fetch if component unmounts
+    return () => {
+      abortController.abort();
+    };
   }, []);
 
   const hivePowerValue = hivePower ?? 0;
   const missingHivePower = Math.max(0, 1000 - hivePowerValue);
   const hivePowerProgress = Math.min(100, (hivePowerValue / 1000) * 100);
-  const buyHivePowerUrl = user
-    ? `https://wallet.hive.blog/@${user}`
-    : "https://wallet.hive.blog/";
+
+  // Get HIVE balance for PowerUpModal
+  const hiveBalance = hiveAccount?.balance
+    ? String(hiveAccount.balance).split(" ")[0]
+    : "0.000";
 
   return (
     <Box position="relative">
@@ -705,10 +731,7 @@ export default function PIXTabContent() {
                 </VStack>
               </Box>
               <Button
-                as="a"
-                href={buyHivePowerUrl}
-                target="_blank"
-                rel="noreferrer"
+                onClick={onPowerUpOpen}
                 bg="primary"
                 color="background"
                 fontFamily="Joystix"
@@ -720,6 +743,13 @@ export default function PIXTabContent() {
           </Box>
         )}
       </VStack>
+
+      {/* PowerUpModal */}
+      <PowerUpModal
+        isOpen={isPowerUpOpen}
+        onClose={onPowerUpClose}
+        balance={hiveBalance}
+      />
     </Box>
   );
 }

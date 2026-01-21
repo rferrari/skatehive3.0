@@ -27,9 +27,17 @@ export function useHiveActions() {
             await getProfile(to);
 
             const result = await aioha.transfer(to, amount, 'HIVE', memo);
+            if (result && typeof result === 'object' && 'success' in result && !result.success) {
+                return {
+                    success: false,
+                    error: result.message || result.msg || result.error || "Failed to send HIVE",
+                    errorCode: result.code || 4001,
+                };
+            }
+
             return {
                 success: true,
-                result,
+                result: typeof result === 'string' ? result : (result.id || result.tx_id || result.transaction_id || JSON.stringify(result)),
             };
         } catch (err: any) {
             return {
@@ -48,9 +56,17 @@ export function useHiveActions() {
     const powerUp = async (amount: number): Promise<TransactionResult> => {
         try {
             const result = await aioha.stakeHive(amount);
+            if (result && typeof result === 'object' && 'success' in result && !result.success) {
+                return {
+                    success: false,
+                    error: result.message || result.msg || result.error || "Failed to power up HIVE",
+                    errorCode: result.code || 4001,
+                };
+            }
+
             return {
                 success: true,
-                result,
+                result: typeof result === 'string' ? result : (result.id || result.tx_id || result.transaction_id || JSON.stringify(result)),
             };
         } catch (err: any) {
             return {
@@ -69,9 +85,17 @@ export function useHiveActions() {
     const powerDown = async (amount: number): Promise<TransactionResult> => {
         try {
             const result = await aioha.unstakeHive(amount);
+            if (result && typeof result === 'object' && 'success' in result && !result.success) {
+                return {
+                    success: false,
+                    error: result.message || result.msg || result.error || "Failed to power down HIVE",
+                    errorCode: result.code || 4001,
+                };
+            }
+
             return {
                 success: true,
-                result,
+                result: typeof result === 'string' ? result : (result.id || result.tx_id || result.transaction_id || JSON.stringify(result)),
             };
         } catch (err: any) {
             return {
@@ -97,9 +121,17 @@ export function useHiveActions() {
             await getProfile(to);
 
             const result = await aioha.delegateStakedHive(to, amount);
+            if (result && typeof result === 'object' && 'success' in result && !result.success) {
+                return {
+                    success: false,
+                    error: result.message || result.msg || result.error || "Failed to delegate HIVE",
+                    errorCode: result.code || 4001,
+                };
+            }
+
             return {
                 success: true,
-                result,
+                result: typeof result === 'string' ? result : (result.id || result.tx_id || result.transaction_id || JSON.stringify(result)),
             };
         } catch (err: any) {
             return {
@@ -135,9 +167,18 @@ export function useHiveActions() {
                 ],
                 KeyTypes.Active
             );
+
+            if (result && typeof result === 'object' && 'success' in result && !result.success) {
+                return {
+                    success: false,
+                    error: result.message || result.msg || result.error || "Failed to transfer HIVE to savings",
+                    errorCode: result.code || 4001,
+                };
+            }
+
             return {
                 success: true,
-                result,
+                result: typeof result === 'string' ? result : (result.id || result.tx_id || result.transaction_id || JSON.stringify(result)),
             };
         } catch (err: any) {
             return {
@@ -174,9 +215,18 @@ export function useHiveActions() {
                 ],
                 KeyTypes.Active
             );
+
+            if (result && typeof result === 'object' && 'success' in result && !result.success) {
+                return {
+                    success: false,
+                    error: result.message || result.msg || result.error || "Failed to withdraw HIVE from savings",
+                    errorCode: result.code || 4001,
+                };
+            }
+
             return {
                 success: true,
-                result,
+                result: typeof result === 'string' ? result : (result.id || result.tx_id || result.transaction_id || JSON.stringify(result)),
             };
         } catch (err: any) {
             return {

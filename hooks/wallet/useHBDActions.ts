@@ -27,9 +27,17 @@ export function useHBDActions() {
             await getProfile(to);
 
             const result = await aioha.transfer(to, amount, 'HBD', memo);
+            if (result && typeof result === 'object' && 'success' in result && !result.success) {
+                return {
+                    success: false,
+                    error: result.message || result.msg || result.error || "Failed to send HBD",
+                    errorCode: result.code || 4001,
+                };
+            }
+
             return {
                 success: true,
-                result,
+                result: typeof result === 'string' ? result : (result.id || result.tx_id || result.transaction_id || JSON.stringify(result)),
             };
         } catch (err: any) {
             return {
@@ -71,9 +79,17 @@ export function useHBDActions() {
                 KeyTypes.Active
             );
 
+            if (result && typeof result === 'object' && 'success' in result && !result.success) {
+                return {
+                    success: false,
+                    error: result.message || result.msg || result.error || "Failed to convert",
+                    errorCode: result.code || 4001,
+                };
+            }
+
             return {
                 success: true,
-                result,
+                result: typeof result === 'string' ? result : (result.id || result.tx_id || result.transaction_id || JSON.stringify(result)),
             };
         } catch (err: any) {
             return {

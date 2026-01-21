@@ -39,9 +39,17 @@ export function useBankActions() {
                 KeyTypes.Active
             );
 
+            if (result && typeof result === 'object' && 'success' in result && !result.success) {
+                return {
+                    success: false,
+                    error: result.message || result.msg || result.error || `Failed to deposit ${currency} to savings`,
+                    errorCode: result.code || 4001,
+                };
+            }
+
             return {
                 success: true,
-                result,
+                result: typeof result === 'string' ? result : (result.id || result.tx_id || result.transaction_id || JSON.stringify(result)),
             };
         } catch (err: any) {
             return {
@@ -81,9 +89,17 @@ export function useBankActions() {
                 KeyTypes.Active
             );
 
+            if (result && typeof result === 'object' && 'success' in result && !result.success) {
+                return {
+                    success: false,
+                    error: result.message || result.msg || result.error || `Failed to withdraw ${currency} from savings`,
+                    errorCode: result.code || 4001,
+                };
+            }
+
             return {
                 success: true,
-                result,
+                result: typeof result === 'string' ? result : (result.id || result.tx_id || result.transaction_id || JSON.stringify(result)),
             };
         } catch (err: any) {
             return {
@@ -126,9 +142,17 @@ export function useBankActions() {
                 method: KeychainKeyTypes.active,
             });
 
+            if (response && !response.success) {
+                return {
+                    success: false,
+                    error: (response as any).message || (response as any).msg || (response as any).error || "Failed to claim HBD interest",
+                    errorCode: (response as any).code || 4001,
+                };
+            }
+
             return {
                 success: true,
-                result: response,
+                result: typeof response === 'string' ? response : ((response as any).result?.id || (response as any).id || (response as any).tx_id || JSON.stringify(response)),
             };
         } catch (err: any) {
             return {

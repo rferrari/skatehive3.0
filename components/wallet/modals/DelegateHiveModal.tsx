@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Text, VStack, Box, useToast } from "@chakra-ui/react";
-import { BaseWalletModal, showTransactionSuccess } from "./BaseWalletModal";
+import { BaseWalletModal, showTransactionSuccess, isUserCancelled } from "./BaseWalletModal";
 import { AmountInput, UsernameInput } from "./components";
 import { DelegateHiveModalProps } from "./types";
 import { useHiveActions } from "@/hooks/wallet";
@@ -52,14 +52,16 @@ export function DelegateHiveModal({
             onClose();
             setAmount("");
             setUsername("");
-        } else {
-            toast({
-                title: "Transaction Failed",
-                description: result.error || "Failed to delegate HIVE",
-                status: "error",
-                duration: 5000,
-                isClosable: true,
-            });
+        } else if (result.error) {
+            if (!isUserCancelled(result.error, result.errorCode)) {
+                toast({
+                    title: "Transaction Failed",
+                    description: result.error || "Failed to delegate HIVE",
+                    status: "error",
+                    duration: 5000,
+                    isClosable: true,
+                });
+            }
         }
     };
 

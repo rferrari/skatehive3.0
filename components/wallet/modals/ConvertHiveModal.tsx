@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Text, VStack, Box, HStack, IconButton, useToast } from "@chakra-ui/react";
 import { ArrowForwardIcon } from "@chakra-ui/icons";
-import { BaseWalletModal, showTransactionSuccess } from "./BaseWalletModal";
+import { BaseWalletModal, showTransactionSuccess, isUserCancelled } from "./BaseWalletModal";
 import { AmountInput } from "./components";
 import { ConvertHiveModalProps, ConversionDirection } from "./types";
 import { useHBDActions } from "@/hooks/wallet";
@@ -41,14 +41,16 @@ export function ConvertHiveModal({
             showTransactionSuccess(result.result, toast);
             onClose();
             setAmount("");
-        } else {
-            toast({
-                title: "Transaction Failed",
-                description: result.error || "Failed to convert",
-                status: "error",
-                duration: 5000,
-                isClosable: true,
-            });
+        } else if (result.error) {
+            if (!isUserCancelled(result.error, result.errorCode)) {
+                toast({
+                    title: "Transaction Failed",
+                    description: result.error || "Failed to convert",
+                    status: "error",
+                    duration: 5000,
+                    isClosable: true,
+                });
+            }
         }
     };
 

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Text, VStack, useToast } from "@chakra-ui/react";
-import { BaseWalletModal, showTransactionSuccess } from "./BaseWalletModal";
+import { BaseWalletModal, showTransactionSuccess, isUserCancelled } from "./BaseWalletModal";
 import { AmountInput, UsernameInput, MemoInput } from "./components";
 import { SendHiveModalProps } from "./types";
 import { useHiveActions } from "@/hooks/wallet";
@@ -60,14 +60,16 @@ export function SendHiveModal({
             setUsername("");
             setMemo("");
             setEncryptMemo(false);
-        } else {
-            toast({
-                title: "Transaction Failed",
-                description: result.error || "Failed to send HIVE",
-                status: "error",
-                duration: 5000,
-                isClosable: true,
-            });
+        } else if (result.error) {
+            if (!isUserCancelled(result.error, result.errorCode)) {
+                toast({
+                    title: "Transaction Failed",
+                    description: result.error || "Failed to send HIVE",
+                    status: "error",
+                    duration: 5000,
+                    isClosable: true,
+                });
+            }
         }
     };
 
