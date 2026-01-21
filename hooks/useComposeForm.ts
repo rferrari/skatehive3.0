@@ -64,6 +64,16 @@ export const useComposeForm = () => {
             return;
         }
 
+        if (!selectedThumbnail) {
+            toast({
+                title: "Please select a thumbnail for your post.",
+                status: "error",
+                duration: 4000,
+                isClosable: true,
+            });
+            return;
+        }
+
         setIsSubmitting(true);
 
         const imageArray = prepareImageArray(markdown, selectedThumbnail);
