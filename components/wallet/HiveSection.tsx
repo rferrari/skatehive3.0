@@ -50,10 +50,10 @@ const HiveSection = memo(function HiveSection({
     >
       <HStack justify="space-between" align="center">
         <HStack spacing={3}>
-          <CustomHiveIcon color={theme.colors.primary} />
+          <CustomHiveIcon color={"red"} />
           <Box>
             <HStack spacing={2} align="center">
-              <Text fontSize="lg" fontWeight="bold" color="primary">
+              <Text fontSize="lg" fontWeight="bold" color="red">
                 HIVE
               </Text>
               <IconButton
