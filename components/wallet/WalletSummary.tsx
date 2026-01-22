@@ -1,31 +1,17 @@
 import {
   Box,
   VStack,
-  HStack,
-  Text,
-  Button,
-  Divider,
-  IconButton,
   useToast,
-  Center,
+
 } from "@chakra-ui/react";
 import { useAccount, useDisconnect } from "wagmi";
 import { useFarcasterSession } from "../../hooks/useFarcasterSession";
 import { useSignIn } from "@farcaster/auth-kit";
-import {
-  Identity,
-  Avatar,
-  Name,
-  Address,
-  Badge,
-} from "@coinbase/onchainkit/identity";
+
 import { memo, useCallback, useMemo } from "react";
 import { usePortfolioContext } from "../../contexts/PortfolioContext";
 import { WalletDistributionChart } from "./WalletDistributionChart";
-import FarcasterUniversalWallet from "../farcaster/FarcasterUniversalWallet";
-import { IoLogOutSharp } from "react-icons/io5";
-import { FaEthereum } from "react-icons/fa";
-import { Wallet, ConnectWallet } from "@coinbase/onchainkit/wallet";
+
 interface WalletSummaryProps {
   hiveUsername?: string;
   totalHiveValue: number;
@@ -48,7 +34,6 @@ const WalletSummary = memo(function WalletSummary({
   } = useFarcasterSession();
   const { signOut } = useSignIn({});
   const {
-    aggregatedPortfolio,
     farcasterVerifiedPortfolios,
     portfolio,
     farcasterPortfolio,
@@ -68,38 +53,6 @@ const WalletSummary = memo(function WalletSummary({
     [isEthConnected, hiveUsername, isFarcasterConnected]
   );
 
-  // Memoized event handlers
-  const handleDisconnect = useCallback(() => {
-    disconnect();
-  }, [disconnect]);
-
-  const handleFarcasterDisconnect = useCallback(() => {
-    try {
-      // Sign out from Auth Kit if authenticated
-      if (isFarcasterConnected) {
-        signOut();
-      }
-
-      // Clear our persisted session
-      clearSession();
-
-      toast({
-        status: "success",
-        title: "Signed out from Farcaster",
-        description: "You have been disconnected from Farcaster",
-        duration: 3000,
-      });
-    } catch (error) {
-      console.error("Error signing out from Farcaster:", error);
-      toast({
-        status: "error",
-        title: "Sign out failed",
-        description: "There was an error signing out from Farcaster",
-        duration: 5000,
-      });
-    }
-  }, [isFarcasterConnected, signOut, clearSession, toast]);
-
   // Case 1: No wallets connected
   if (!connectionStatus.hasWallets) {
     return <></>;
@@ -110,7 +63,6 @@ const WalletSummary = memo(function WalletSummary({
     <Box
       p={6}
       bg="background"
-      borderRadius="xl"
       border="1px solid"
       borderColor="border"
       position="relative"

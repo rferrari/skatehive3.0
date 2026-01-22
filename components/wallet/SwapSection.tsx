@@ -200,7 +200,6 @@ export default function SwapSection({
 
   return (
     <Box
-      borderRadius="xl"
       bg={theme.colors.muted}
       p={6}
       width="100%"

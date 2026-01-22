@@ -43,10 +43,8 @@ import TotalPortfolioValue from "./components/TotalPortfolioValue";
 import MobileActionButtons from "./components/MobileActionButtons";
 import { TokenDetail } from "@/types/portfolio";
 import PIXTabContent from "./components/PIXTabContent";
-import { formatValue } from "@/lib/utils/portfolioUtils";
 import HiveTransactionHistory from "./components/HiveTransactionHistory";
 import ClaimRewards from "./components/ClaimRewards";
-import { CopyIcon, ExternalLinkIcon } from "@chakra-ui/icons";
 
 interface HiveToken {
   symbol: string;
@@ -337,7 +335,6 @@ export default function MainWallet({ username }: MainWalletProps) {
             <Box
               p={{ base: 2, sm: 3, md: 4 }}
               border="none"
-              borderRadius="base"
               bg="muted"
               boxShadow="none"
               display="flex"
@@ -346,12 +343,12 @@ export default function MainWallet({ username }: MainWalletProps) {
               minW={0}
             >
               <Tabs
-                variant="soft-rounded"
+                variant="enclosed"
                 colorScheme="blue"
                 size="md"
                 flex={1}
               >
-                <TabList mb={4} bg="background" p={1} borderRadius="lg">
+                <TabList mb={4} bg="background" p={1}>
                   <Tab
                     _selected={{ bg: "primary", color: "background" }}
                     _hover={{ bg: "primary", opacity: 0.8 }}
@@ -498,7 +495,6 @@ export default function MainWallet({ username }: MainWalletProps) {
                           <Box
                             p={4}
                             bg="background"
-                            borderRadius="lg"
                             border="1px solid"
                             borderColor="muted"
                           >
@@ -550,17 +546,17 @@ export default function MainWallet({ username }: MainWalletProps) {
               justifyContent="flex-start"
               minW={0}
             >
-              <MarketPrices
-                hivePrice={hivePrice}
-                hbdPrice={hbdPrice}
-                isPriceLoading={isPriceLoading}
-              />
               <WalletSummary
                 hiveUsername={user}
                 totalHiveValue={totalHiveAssetsValue}
                 isPriceLoading={isPriceLoading}
                 onConnectEthereum={openConnectModal}
                 onConnectHive={handleConnectHive}
+              />
+              <MarketPrices
+                hivePrice={hivePrice}
+                hbdPrice={hbdPrice}
+                isPriceLoading={isPriceLoading}
               />
               <SwapSection
                 hivePrice={hivePrice}

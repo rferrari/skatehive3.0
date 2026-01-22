@@ -20,7 +20,6 @@ export default function MarketPrices({
   return (
     <Box
       bg={"muted"}
-      borderRadius="md"
       px={4}
       py={3}
       width="100%"
