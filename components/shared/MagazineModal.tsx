@@ -2,10 +2,14 @@
 import React, { useMemo } from "react";
 import {
   Box,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalBody,
+  ModalCloseButton,
 } from "@chakra-ui/react";
 import Magazine from "./Magazine";
 import { Discussion } from "@hiveio/dhive";
-import SkateModal from "./SkateModal";
 
 interface MagazineModalProps {
   isOpen: boolean;
@@ -91,26 +95,35 @@ const MagazineModal = React.memo(function MagazineModal({
   if (!isOpen) return null; // Don't render anything when closed
 
   return (
-    <SkateModal
+    <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="skatehive-magazine"
       size="full"
       motionPreset="none"
       blockScrollOnMount={false}
       closeOnOverlayClick={true}
     >
-      <Box
-        p={0}
-        m={0}
-        w="100%"
-        h="100%"
-        overflow="hidden"
-        position="relative"
-      >
-        <Magazine {...magazineProps} />
-      </Box>
-    </SkateModal>
+      <ModalOverlay bg="blackAlpha.800" />
+      <ModalContent bg="background" m={0} borderRadius={0}>
+        <ModalCloseButton
+          zIndex={10}
+          color="text"
+          _hover={{ bg: "red.500", color: "white" }}
+        />
+        <ModalBody p={0} m={0} w="100%" h="100vh" overflow="hidden">
+          <Box
+            p={0}
+            m={0}
+            w="100%"
+            h="100%"
+            overflow="hidden"
+            position="relative"
+          >
+            <Magazine {...magazineProps} />
+          </Box>
+        </ModalBody>
+      </ModalContent>
+    </Modal>
   );
 });
 

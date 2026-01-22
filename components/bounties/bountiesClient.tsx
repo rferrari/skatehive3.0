@@ -86,7 +86,6 @@ export default function BountiesClient() {
             fontWeight="bold"
             px={{ base: 4, md: 8 }}
             py={{ base: 4, md: 6 }}
-            borderRadius="xl"
             boxShadow="md"
             ml={{ base: 0, md: 8 }}
             width={{ base: "100%", md: "auto" }}

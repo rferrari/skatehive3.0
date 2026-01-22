@@ -1,23 +1,16 @@
 import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
-  ModalBody,
-  ModalCloseButton,
   Button,
   Text,
   VStack,
   HStack,
   Box,
-  useColorModeValue,
   Icon,
 } from "@chakra-ui/react";
 import { FaBookOpen, FaTrophy, FaCoins } from "react-icons/fa";
 import { useState } from "react";
 import MagazineModal from "./MagazineModal";
 import { HIVE_CONFIG } from "@/config/app.config";
+import SkateModal from "./SkateModal";
 
 interface SkateHiveMagazineModalProps {
   isOpen: boolean;
@@ -29,10 +22,6 @@ export default function SkateHiveMagazineModal({
   onClose,
 }: SkateHiveMagazineModalProps) {
   const [isMagazineOpen, setIsMagazineOpen] = useState(false);
-
-  const borderColor = useColorModeValue("gray.200", "gray.600");
-  const accentColor = useColorModeValue("green.500", "green.300");
-  const textColor = useColorModeValue("gray.700", "gray.200");
 
   const handleOpenMagazine = () => {
     setIsMagazineOpen(true);
@@ -49,95 +38,80 @@ export default function SkateHiveMagazineModal({
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={onClose} size="lg" isCentered>
-        <ModalOverlay bg="blackAlpha.700" backdropFilter="blur(4px)" />
-        <ModalContent
-          bg="background"
-          border="1px solid"
-          borderColor={borderColor}
-          borderRadius="xl"
-          boxShadow="2xl"
-        >
-          <ModalHeader
-            textAlign="center"
-            fontSize="2xl"
-            fontWeight="bold"
-            color={accentColor}
-            pb={2}
+      <SkateModal
+        isOpen={isOpen}
+        onClose={onClose}
+        title="SkateHive Magazine: Infinity Mag"
+        size="lg"
+        footer={
+          <Button
+            colorScheme="green"
+            size="lg"
+            onClick={handleOpenMagazine}
+            leftIcon={<Icon as={FaBookOpen} />}
+            w="full"
           >
-            📖 SkateHive Magazine: &ldquo;Infinity Mag&rdquo;
-          </ModalHeader>
-          <ModalCloseButton />
-
-          <ModalBody pb={6}>
-            <VStack spacing={6} align="stretch">
-              <Text
-                fontSize="md"
-                color={textColor}
-                textAlign="center"
-                lineHeight="tall"
-              >
-                The Skatehive App is more than just a platform; it&apos;s a
-                digital skateboard magazine where skaters contribute to the
-                pages of its Infinity Mag. Each post, trick clip, or story
-                shared becomes part of a living, evolving publication created
-                entirely by skaters, for skaters.
-              </Text>
-
-              <VStack spacing={4} align="stretch">
-                <HStack spacing={4} align="center">
-                  <Icon as={FaBookOpen} color="blue.500" boxSize={6} />
-                  <Box flex={1}>
-                    <Text fontWeight="bold" color={accentColor}>
-                      Made by Skaters
-                    </Text>
-                    <Text fontSize="sm" color={textColor}>
-                      Every piece of content is created by the skateboarding
-                      community
-                    </Text>
-                  </Box>
-                </HStack>
-
-                <HStack spacing={4} align="center">
-                  <Icon as={FaTrophy} color="orange.500" boxSize={6} />
-                  <Box flex={1}>
-                    <Text fontWeight="bold" color={accentColor}>
-                      Curated by Skaters
-                    </Text>
-                    <Text fontSize="sm" color={textColor}>
-                      Community votes and engagement determine what gets
-                      featured
-                    </Text>
-                  </Box>
-                </HStack>
-
-                <HStack spacing={4} align="center">
-                  <Icon as={FaCoins} color="yellow.500" boxSize={6} />
-                  <Box flex={1}>
-                    <Text fontWeight="bold" color={accentColor}>
-                      Monetized by Page
-                    </Text>
-                    <Text fontSize="sm" color={textColor}>
-                      Contributors earn rewards for their content and engagement
-                    </Text>
-                  </Box>
-                </HStack>
-              </VStack>
-            </VStack>
-          </ModalBody>
-
-          <ModalFooter justifyContent="center">
-            <Button
-              colorScheme="green"
-              size="lg"
-              onClick={handleOpenMagazine}
-              leftIcon={<Icon as={FaBookOpen} />}
+            View Infinity Mag
+          </Button>
+        }
+      >
+        <Box p={6}>
+          <VStack spacing={6} align="stretch">
+            <Text
+              fontSize="md"
+              color="text"
+              textAlign="center"
+              lineHeight="tall"
             >
-              View Infinity Mag
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+              The Skatehive App is more than just a platform; it&apos;s a
+              digital skateboard magazine where skaters contribute to the
+              pages of its Infinity Mag. Each post, trick clip, or story
+              shared becomes part of a living, evolving publication created
+              entirely by skaters, for skaters.
+            </Text>
+
+            <VStack spacing={4} align="stretch">
+              <HStack spacing={4} align="center">
+                <Icon as={FaBookOpen} color="blue.500" boxSize={6} />
+                <Box flex={1}>
+                  <Text fontWeight="bold" color="primary">
+                    Made by Skaters
+                  </Text>
+                  <Text fontSize="sm" color="dim">
+                    Every piece of content is created by the skateboarding
+                    community
+                  </Text>
+                </Box>
+              </HStack>
+
+              <HStack spacing={4} align="center">
+                <Icon as={FaTrophy} color="orange.500" boxSize={6} />
+                <Box flex={1}>
+                  <Text fontWeight="bold" color="primary">
+                    Curated by Skaters
+                  </Text>
+                  <Text fontSize="sm" color="dim">
+                    Community votes and engagement determine what gets
+                    featured
+                  </Text>
+                </Box>
+              </HStack>
+
+              <HStack spacing={4} align="center">
+                <Icon as={FaCoins} color="yellow.500" boxSize={6} />
+                <Box flex={1}>
+                  <Text fontWeight="bold" color="primary">
+                    Monetized by Page
+                  </Text>
+                  <Text fontSize="sm" color="dim">
+                    Contributors earn rewards for their content and engagement
+                  </Text>
+                </Box>
+              </HStack>
+            </VStack>
+          </VStack>
+        </Box>
+      </SkateModal>
 
       {/* Magazine Modal */}
       <MagazineModal

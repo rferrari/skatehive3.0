@@ -196,7 +196,6 @@ export default function GameClientPage() {
         <ModalContent
           bg="background"
           m={0}
-          borderRadius={0}
           maxW="100vw"
           maxH="100vh"
           h="100vh"

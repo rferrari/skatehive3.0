@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Button,
@@ -8,6 +8,8 @@ import {
   Heading,
   Icon,
   Input,
+  InputGroup,
+  InputRightElement,
   Select,
   Spinner,
   Switch,
@@ -49,6 +51,7 @@ export default function InvitePage() {
   const [accountAvailable, setAccountAvailable] = useState(false);
   const [accountInvalid, setAccountInvalid] = useState<string | null>(null);
   const [isCheckedOnce, setIsCheckedOnce] = useState(false);
+  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
   const [masterPassword, setMasterPassword] = useState("");
   const [keys, setKeys] = useState<any>(null);
   const [areKeysDownloaded, setAreKeysDownloaded] = useState(false);
@@ -58,6 +61,63 @@ export default function InvitePage() {
   const [broadcastSuccess, setBroadcastSuccess] = useState(false);
   const [broadcastError, setBroadcastError] = useState("");
   const [broadcastMessage, setBroadcastMessage] = useState("");
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Set mounted state after hydration
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Debounced auto-check for username availability
+  useEffect(() => {
+    if (!isMounted) return;
+    const checkUsername = async () => {
+      if (!desiredUsername) {
+        setIsCheckedOnce(false);
+        setAccountAvailable(false);
+        setAccountInvalid(null);
+        setKeys(null);
+        setMasterPassword("");
+        setAreKeysDownloaded(false);
+        return;
+      }
+
+      const isValidAccountName = validateAccountName(desiredUsername);
+      if (isValidAccountName !== null) {
+        setAccountInvalid(String(isValidAccountName));
+        setIsCheckedOnce(true);
+        setAccountAvailable(false);
+        setAreKeysDownloaded(false);
+        return;
+      }
+
+      setAccountInvalid("");
+      setIsCheckingUsername(true);
+      const isAvailable = await checkAccountExists(desiredUsername);
+      setIsCheckedOnce(true);
+      setAccountAvailable(isAvailable);
+      setIsCheckingUsername(false);
+
+      if (isAvailable) {
+        // Generate keys
+        const password = generatePassword();
+        setMasterPassword(password);
+        const generatedKeys = getPrivateKeys(desiredUsername, password);
+        setKeys(generatedKeys);
+        setAreKeysDownloaded(true);
+      } else {
+        setAccountAvailable(false);
+        setAreKeysDownloaded(false);
+        setAccountInvalid("Account is not available. Please choose another nickname.");
+      }
+    };
+
+    const debounceTimer = setTimeout(() => {
+      checkUsername();
+    }, 500);
+
+    return () => clearTimeout(debounceTimer);
+  }, [desiredUsername, isMounted]);
 
   const handleCheck = async () => {
     setBroadcastSuccess(false);
@@ -213,183 +273,223 @@ export default function InvitePage() {
   }
 
   return (
-    <Box p={8} maxW="container.md" mx="auto">
-      <Heading size="lg" mb={4}>
-        Invite a Shredder to Skatehive
-      </Heading>
-      <Box bg="secondary" p={3} borderRadius="md" mb={2}>
-        <Text fontSize="sm" color="text">
-          <b>What are Account Creation Tokens (ACTs)?</b>
-          <br />
-          ACTs let you create new Hive accounts for free. You earn ACTs
-          automatically by holding Hive Power (staked HIVE). Each ACT can be
-          used to create one new account. If you have no ACTs, you&apos;ll need
-          to pay a 3 HIVE fee to create an account.
-        </Text>
-        <Accordion allowToggle mt={2}>
-          <AccordionItem border="none">
-            <AccordionButton px={0} _hover={{ bg: "muted" }}>
-              <Box
-                as="span"
-                flex="1"
-                textAlign="left"
-                color="accent"
-                fontSize="sm"
-              >
-                More info about earning ACTs
-              </Box>
-              <AccordionIcon />
-            </AccordionButton>
-            <AccordionPanel pb={2} color="text" fontSize="sm">
-              <b>Rule of thumb:</b> You need at least 5000 HP to start
-              generating ACTs, and each ACT requires 100 billion Resource
-              Credits (RC). The more HP you have, the faster you&apos;ll earn
-              ACTs.
-            </AccordionPanel>
-          </AccordionItem>
-        </Accordion>
-      </Box>
-      {/* ACT Balance Display */}
-      {isAccountLoading ? (
-        <Flex align="center" mb={2}>
-          <Spinner size="sm" mr={2} /> Loading ACT balance...
-        </Flex>
-      ) : (
-        <Box mb={2}>
-          <Text fontWeight="bold" color="primary">
-            Account Creation Tokens (ACT):{" "}
-            {hiveAccount?.pending_claimed_accounts ?? 0}
+    <Box p={8} maxW="container.md" mx="auto" bg="background">
+      <VStack spacing={6} align="stretch">
+        <Heading size="lg" color="primary">
+          Invite a Shredder to Skatehive
+        </Heading>
+
+        {/* Account Creation Method Toggle - MOVED UP */}
+        <Box p={4} bg="panel" border="1px solid" borderColor="border">
+          <Text fontWeight="bold" color="text" mb={3}>
+            Choose Account Creation Method
           </Text>
-          {Number(hiveAccount?.pending_claimed_accounts ?? 0) === 0 && (
-            <Text color="error" fontSize="sm">
-              You have no ACTs. You must pay 3 HIVE to create an account.
-            </Text>
-          )}
-        </Box>
-      )}
-      <VStack spacing={4} align="stretch">
-        <FormControl>
-          <Text fontWeight="bold">Friend&apos;s desired Hive Wallet Name</Text>
-          <Input
-            type="text"
-            placeholder="Friend's desired Hive Wallet Name"
-            value={desiredUsername}
-            onChange={(e) => setDesiredUsername(e.target.value)}
-            maxW="375px"
-            bg="background"
-            color="text"
-            mb={2}
-          />
-        </FormControl>
-        <FormControl>
-          <Text fontWeight="bold">Friend&apos;s Email</Text>
-          <Input
-            type="email"
-            placeholder="Friend's email"
-            value={desiredEmail}
-            onChange={(e) => setDesiredEmail(e.target.value)}
-            maxW="375px"
-            bg="background"
-            color="text"
-            mb={2}
-          />
-        </FormControl>
-        <FormControl>
-          <Text fontWeight="bold">Choose Account Creation Method</Text>
-          <Switch
-            isChecked={useAccountToken}
-            onChange={() => setUseAccountToken(!useAccountToken)}
-            mb={2}
-          />
-          <Text fontSize="sm" color="accent">
-            {useAccountToken ? "Using Account Creation Token" : "Paying 3 HIVE"}
-          </Text>
-        </FormControl>
-        <FormControl>
-          <Text fontWeight="bold">Choose Email Language</Text>
-          <Select
-            value={selectedLanguage}
-            onChange={(e) => setSelectedLanguage(e.target.value)}
-            maxW="375px"
-            bg="background"
-            color="text"
-            mb={2}
-          >
-            {randomLanguages.map((lang) => (
-              <option key={lang.code} value={lang.code}>
-                {lang.label}
-              </option>
-            ))}
-          </Select>
-        </FormControl>
-        <Button
-          colorScheme="accent"
-          onClick={handleCheck}
-          isLoading={loading}
-          isDisabled={!desiredUsername || !desiredEmail}
-        >
-          Check if @{desiredUsername || "..."} is available!
-        </Button>
-        {isCheckedOnce && (
-          <Flex
-            border="2px solid"
-            borderColor="accent"
-            borderRadius="5px"
-            bg="background"
-            p="10px"
-            align="center"
-            mb={2}
-          >
-            {accountAvailable ? (
-              <Icon as={FaCheck} color="success" />
-            ) : (
-              <Icon as={FaTimes} color="error" />
-            )}
-            <Text color={accountAvailable ? "accent" : "text"} ml={2}>
-              {accountAvailable
-                ? "Yeah!! Account available. Drop it!"
-                : "Please choose another nickname! " +
-                  String(accountInvalid).replace(/'/g, "&apos;")}
+          <Flex align="center" gap={3}>
+            <Switch
+              isChecked={useAccountToken}
+              onChange={() => setUseAccountToken(!useAccountToken)}
+              colorScheme="green"
+            />
+            <Text fontSize="md" color="primary" fontWeight="bold">
+              {useAccountToken ? "Using Account Creation Token" : "Paying 3 HIVE"}
             </Text>
           </Flex>
+        </Box>
+
+        {/* ACT Balance Display - Only shown when using ACT */}
+        {useAccountToken && (
+          <>
+            {isAccountLoading ? (
+              <Flex align="center" p={4} bg="panel" border="1px solid" borderColor="border">
+                <Spinner size="sm" mr={2} color="primary" /> 
+                <Text color="text">Loading ACT balance...</Text>
+              </Flex>
+            ) : (
+              <Box p={4} bg="panel" border="1px solid" borderColor="border">
+                <Text fontWeight="bold" color="primary" fontSize="lg">
+                  Account Creation Tokens (ACT):{" "}
+                  {hiveAccount?.pending_claimed_accounts ?? 0}
+                </Text>
+                {Number(hiveAccount?.pending_claimed_accounts ?? 0) === 0 && (
+                  <Text color="error" fontSize="sm" mt={2}>
+                    You have no ACTs. You must pay 3 HIVE to create an account.
+                  </Text>
+                )}
+              </Box>
+            )}
+
+            {/* Info Box */}
+            <Box bg="panel" p={4} border="1px solid" borderColor="border">
+              <Text fontSize="sm" color="text" mb={3}>
+                <b>What are Account Creation Tokens (ACTs)?</b>
+                <br />
+                ACTs let you create new Hive accounts for free. You earn ACTs
+                automatically by holding Hive Power (staked HIVE). Each ACT can be
+                used to create one new account. If you have no ACTs, you&apos;ll need
+                to pay a 3 HIVE fee to create an account.
+              </Text>
+              <Accordion allowToggle>
+                <AccordionItem border="none">
+                  <AccordionButton px={0} _hover={{ bg: "panelHover" }}>
+                    <Box
+                      as="span"
+                      flex="1"
+                      textAlign="left"
+                      color="secondary"
+                      fontSize="sm"
+                      fontWeight="bold"
+                    >
+                      More info about earning ACTs
+                    </Box>
+                    <AccordionIcon color="secondary" />
+                  </AccordionButton>
+                  <AccordionPanel pb={2} color="text" fontSize="sm">
+                    <b>Rule of thumb:</b> You need at least 5000 HP to start
+                    generating ACTs, and each ACT requires 100 billion Resource
+                    Credits (RC). The more HP you have, the faster you&apos;ll earn
+                    ACTs.
+                  </AccordionPanel>
+                </AccordionItem>
+              </Accordion>
+            </Box>
+          </>
         )}
+
+
+        {/* Form Inputs */}
+        <Box p={4} bg="panel" border="1px solid" borderColor="border">
+          <VStack spacing={4} align="stretch">
+            <FormControl>
+              <Text fontWeight="bold" color="text" mb={2}>
+                Friend&apos;s desired Hive Wallet Name
+              </Text>
+              <InputGroup>
+                <Input
+                  type="text"
+                  placeholder="Friend's desired Hive Wallet Name"
+                  value={desiredUsername}
+                  onChange={(e) => setDesiredUsername(e.target.value)}
+                  bg="inputBg"
+                  color="inputText"
+                  borderColor={isCheckedOnce ? (accountAvailable ? "success" : "error") : "inputBorder"}
+                  _placeholder={{ color: "inputPlaceholder" }}
+                  _hover={{ borderColor: "primary" }}
+                  _focus={{ borderColor: "primary", boxShadow: "none" }}
+                />
+                <InputRightElement>
+                  {isCheckingUsername ? (
+                    <Spinner size="sm" color="primary" />
+                  ) : isCheckedOnce && desiredUsername ? (
+                    accountAvailable ? (
+                      <Icon as={FaCheck} color="success" boxSize={5} />
+                    ) : (
+                      <Icon as={FaTimes} color="error" boxSize={5} />
+                    )
+                  ) : null}
+                </InputRightElement>
+              </InputGroup>
+              {isCheckedOnce && !accountAvailable && accountInvalid && (
+                <Text color="error" fontSize="sm" mt={1}>
+                  {accountInvalid}
+                </Text>
+              )}
+              {isCheckedOnce && accountAvailable && (
+                <Text color="success" fontSize="sm" mt={1}>
+                  ✓ Username available!
+                </Text>
+              )}
+            </FormControl>
+
+            <FormControl>
+              <Text fontWeight="bold" color="text" mb={2}>
+                Friend&apos;s Email
+              </Text>
+              <Input
+                type="email"
+                placeholder="Friend's email"
+                value={desiredEmail}
+                onChange={(e) => setDesiredEmail(e.target.value)}
+                bg="inputBg"
+                color="inputText"
+                borderColor="inputBorder"
+                _placeholder={{ color: "inputPlaceholder" }}
+                _hover={{ borderColor: "primary" }}
+                _focus={{ borderColor: "primary", boxShadow: "none" }}
+              />
+            </FormControl>
+
+            <FormControl>
+              <Text fontWeight="bold" color="text" mb={2}>
+                Choose Email Language
+              </Text>
+              <Select
+                value={selectedLanguage}
+                onChange={(e) => setSelectedLanguage(e.target.value)}
+                bg="inputBg"
+                color="inputText"
+                borderColor="inputBorder"
+                _hover={{ borderColor: "primary" }}
+                _focus={{ borderColor: "primary", boxShadow: "none" }}
+              >
+                {randomLanguages.map((lang) => (
+                  <option key={lang.code} value={lang.code}>
+                    {lang.label}
+                  </option>
+                ))}
+              </Select>
+            </FormControl>
+          </VStack>
+        </Box>
+
+        {/* Create Account Button */}
         <Button
-          colorScheme="success"
+          bg="success"
+          color="background"
+          _hover={{ bg: "primary" }}
           onClick={handleCreateAccount}
           isLoading={loading}
           isDisabled={!areKeysDownloaded}
+          size="lg"
         >
           Looks Good, Let&apos;s Go For It!
         </Button>
+
+        {/* Success Message */}
         {broadcastSuccess && (
-          <Text
-            borderRadius="15"
-            borderColor="accent"
+          <Box
+            border="2px solid"
+            borderColor="success"
             p={5}
-            background="muted"
-            fontSize="14px"
-            whiteSpace="pre"
-            mb={2}
-            color="success"
-            textAlign="center"
+            bg="panel"
           >
-            {broadcastMessage}
-          </Text>
+            <Text
+              fontSize="14px"
+              whiteSpace="pre"
+              color="success"
+              textAlign="center"
+            >
+              {broadcastMessage}
+            </Text>
+          </Box>
         )}
+
+        {/* Error Message */}
         {broadcastError && (
-          <Text
-            borderRadius="15"
+          <Box
+            border="2px solid"
             borderColor="error"
             p={5}
-            background="muted"
-            fontSize="14px"
-            whiteSpace="pre"
-            mb={2}
-            color="error"
-            textAlign="center"
+            bg="panel"
           >
-            {broadcastError}
-          </Text>
+            <Text
+              fontSize="14px"
+              whiteSpace="pre"
+              color="error"
+              textAlign="center"
+            >
+              {broadcastError}
+            </Text>
+          </Box>
         )}
       </VStack>
     </Box>
