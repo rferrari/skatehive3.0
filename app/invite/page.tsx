@@ -62,6 +62,15 @@ export default function InvitePage() {
   const [broadcastError, setBroadcastError] = useState("");
   const [broadcastMessage, setBroadcastMessage] = useState("");
   const [isMounted, setIsMounted] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+
+  // Email validation helper
+  const validateEmail = (email: string): string | null => {
+    if (!email) return "Email is required";
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) return "Please enter a valid email address";
+    return null;
+  };
 
   // Set mounted state after hydration
   useEffect(() => {
@@ -119,6 +128,17 @@ export default function InvitePage() {
     return () => clearTimeout(debounceTimer);
   }, [desiredUsername, isMounted]);
 
+  // Validate email on change
+  useEffect(() => {
+    if (!isMounted) return;
+    if (desiredEmail) {
+      const error = validateEmail(desiredEmail);
+      setEmailError(error);
+    } else {
+      setEmailError(null);
+    }
+  }, [desiredEmail, isMounted]);
+
   const handleCheck = async () => {
     setBroadcastSuccess(false);
     setBroadcastError("");
@@ -170,6 +190,20 @@ export default function InvitePage() {
     setBroadcastSuccess(false);
     setBroadcastError("");
     setBroadcastMessage("");
+
+    // Validate email
+    const emailValidationError = validateEmail(desiredEmail);
+    if (emailValidationError) {
+      setBroadcastError(emailValidationError);
+      setEmailError(emailValidationError);
+      return;
+    }
+
+    // Validate username availability
+    if (!accountAvailable || !areKeysDownloaded) {
+      setBroadcastError("Please wait for username validation to complete.");
+      return;
+    }
 
     if (
       !isLoaded ||
@@ -400,22 +434,42 @@ export default function InvitePage() {
               )}
             </FormControl>
 
-            <FormControl>
+            <FormControl isInvalid={emailError !== null && desiredEmail !== ""}>
               <Text fontWeight="bold" color="text" mb={2}>
                 Friend&apos;s Email
               </Text>
-              <Input
-                type="email"
-                placeholder="Friend's email"
-                value={desiredEmail}
-                onChange={(e) => setDesiredEmail(e.target.value)}
-                bg="inputBg"
-                color="inputText"
-                borderColor="inputBorder"
-                _placeholder={{ color: "inputPlaceholder" }}
-                _hover={{ borderColor: "primary" }}
-                _focus={{ borderColor: "primary", boxShadow: "none" }}
-              />
+              <InputGroup>
+                <Input
+                  type="email"
+                  placeholder="Friend's email"
+                  value={desiredEmail}
+                  onChange={(e) => setDesiredEmail(e.target.value)}
+                  bg="inputBg"
+                  color="inputText"
+                  borderColor={emailError && desiredEmail ? "error" : "inputBorder"}
+                  _placeholder={{ color: "inputPlaceholder" }}
+                  _hover={{ borderColor: "primary" }}
+                  _focus={{ borderColor: "primary", boxShadow: "none" }}
+                />
+                <InputRightElement>
+                  {desiredEmail && !emailError && (
+                    <Icon as={FaCheck} color="success" boxSize={5} />
+                  )}
+                  {desiredEmail && emailError && (
+                    <Icon as={FaTimes} color="error" boxSize={5} />
+                  )}
+                </InputRightElement>
+              </InputGroup>
+              {emailError && desiredEmail && (
+                <Text color="error" fontSize="sm" mt={1}>
+                  {emailError}
+                </Text>
+              )}
+              {desiredEmail && !emailError && (
+                <Text color="success" fontSize="sm" mt={1}>
+                  ✓ Valid email
+                </Text>
+              )}
             </FormControl>
 
             <FormControl>
@@ -448,7 +502,7 @@ export default function InvitePage() {
           _hover={{ bg: "primary" }}
           onClick={handleCreateAccount}
           isLoading={loading}
-          isDisabled={!areKeysDownloaded}
+          isDisabled={!areKeysDownloaded || !desiredEmail || emailError !== null || !accountAvailable}
           size="lg"
         >
           Looks Good, Let&apos;s Go For It!
