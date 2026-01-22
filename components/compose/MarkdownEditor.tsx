@@ -4,8 +4,9 @@ import { useDropzone } from "react-dropzone";
 import { Components } from "@uiw/react-markdown-preview";
 import VideoRenderer from "../layout/VideoRenderer";
 import HiveMarkdown from "../shared/HiveMarkdown";
-import { FaImage, FaVideo, FaColumns } from "react-icons/fa";
+import { FaColumns } from "react-icons/fa";
 import { TbGif } from "react-icons/tb";
+import { MdPermMedia } from "react-icons/md";
 import GIFMakerWithSelector, { GIFMakerRef as GIFMakerWithSelectorRef } from "../homepage/GIFMakerWithSelector";
 
 interface MarkdownEditorProps {
@@ -15,8 +16,7 @@ interface MarkdownEditorProps {
   isDragActive: boolean;
   previewMode: "edit" | "preview" | "live";
   user?: any;
-  handleImageTrigger?: () => void;
-  handleVideoTrigger?: () => void;
+  handleMediaUpload?: () => void;
   isUploading?: boolean;
   insertAtCursor?: (text: string) => void;
   handleGifUpload?: (blob: Blob, fileName: string) => Promise<void>;
@@ -29,8 +29,7 @@ export default function MarkdownEditor({
   isDragActive,
   previewMode,
   user,
-  handleImageTrigger,
-  handleVideoTrigger,
+  handleMediaUpload,
   isUploading = false,
   insertAtCursor,
   handleGifUpload,
@@ -224,22 +223,14 @@ export default function MarkdownEditor({
         {isMounted && user && (
           <>
             <IconButton
-              aria-label="Add image"
-              icon={<FaImage />}
+              aria-label="Upload media (image or video)"
+              icon={<MdPermMedia />}
               size="sm"
               variant="ghost"
               color={textMuted}
               _hover={{ color: textPrimary, bg: "rgba(255,255,255,0.06)" }}
-              onClick={handleImageTrigger}
-            />
-            <IconButton
-              aria-label="Add video"
-              icon={<FaVideo />}
-              size="sm"
-              variant="ghost"
-              color={textMuted}
-              _hover={{ color: textPrimary, bg: "rgba(255,255,255,0.06)" }}
-              onClick={handleVideoTrigger}
+              onClick={handleMediaUpload}
+              title="Upload Image or Video"
             />
             <IconButton
               aria-label="Create GIF"

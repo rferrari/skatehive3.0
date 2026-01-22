@@ -13,6 +13,7 @@ import {
   VStack,
   Alert,
   AlertIcon,
+  Tooltip,
 } from "@chakra-ui/react";
 import ImageCompressor, {
   ImageCompressorRef,
@@ -120,6 +121,7 @@ export default function Composer() {
 
   const [videoError, setVideoError] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [showThumbnailWarning, setShowThumbnailWarning] = useState(false);
 
   const handleGifUpload = async (gifBlob: Blob, fileName: string) => {
     try {
@@ -141,6 +143,43 @@ export default function Composer() {
 
   const handleImageTrigger = createImageTrigger(imageCompressorRef);
   const handleVideoTrigger = createVideoTrigger(videoUploaderRef);
+
+  // Unified media upload handler - simply triggers the appropriate uploader based on their internal file inputs
+  const handleMediaUpload = () => {
+    // Create a temporary file input that accepts both images and videos
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*,video/*';
+    input.style.display = 'none';
+    document.body.appendChild(input);
+    
+    input.onchange = async (e: Event) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      document.body.removeChild(input);
+      
+      if (!file) return;
+      
+      if (file.type.startsWith('image/')) {
+        // Set state for image upload
+        setIsImageUploading(true);
+        // Manually process the image file through the image upload pipeline
+        const reader = new FileReader();
+        reader.onload = async () => {
+          const url = reader.result as string;
+          await handleImageUploadWithCaption(url, file.name, file);
+        };
+        reader.readAsDataURL(file);
+      } else if (file.type.startsWith('video/')) {
+        // Directly pass file to video uploader's handleFile method
+        if (videoUploaderRef.current) {
+          setIsCompressingVideo(true);
+          videoUploaderRef.current.handleFile(file);
+        }
+      }
+    };
+    
+    input.click();
+  };
 
   const { isUploading: isDropUploading, onDrop } = useFileDropUpload(
     insertAtCursorWrapper
@@ -283,8 +322,7 @@ export default function Composer() {
             isDragActive={isDragActive}
             previewMode={previewMode}
             user={user}
-            handleImageTrigger={handleImageTrigger}
-            handleVideoTrigger={handleVideoTrigger}
+            handleMediaUpload={handleMediaUpload}
             isUploading={isUploading}
             insertAtCursor={insertAtCursorWrapper}
             handleGifUpload={handleGifUpload}
@@ -414,22 +452,74 @@ export default function Composer() {
         )}
       </Box>
 
-      <Flex mt={4} justify="flex-end" maxWidth="1200px" mx="auto" width="100%">
-        <Button
-          size="md"
-          bg="primary"
-          color="background"
-          fontWeight="bold"
-          onClick={handleSubmit}
-          isLoading={isSubmitting}
-          loadingText="Publishing..."
-          isDisabled={isSubmitting || !title.trim() || !selectedThumbnail}
-          px={10}
-          h="44px"
-          _hover={{ bg: "accent" }}
+      {showThumbnailWarning && !selectedThumbnail && (
+        <Alert
+          status="warning"
+          mb={3}
+          maxWidth="1200px"
+          mx="auto"
+          width="100%"
+          bg="rgba(255, 193, 7, 0.1)"
+          border="1px solid"
+          borderColor="warning"
+          color="text"
         >
-          Publish
-        </Button>
+          <AlertIcon color="warning" />
+          <Box flex="1">
+            <Text fontWeight="bold" mb={1}>Thumbnail Required</Text>
+            <Text fontSize="sm">Please select a thumbnail from the Thumbnail tab before publishing.</Text>
+          </Box>
+          <Button
+            size="sm"
+            variant="ghost"
+            color="warning"
+            onClick={() => {
+              setShowThumbnailWarning(false);
+              setActiveSettingsTab("thumbnail");
+            }}
+          >
+            Select Thumbnail
+          </Button>
+        </Alert>
+      )}
+
+      <Flex mt={4} justify="flex-end" maxWidth="1200px" mx="auto" width="100%">
+        <Tooltip
+          label={
+            !selectedThumbnail
+              ? "Please select a thumbnail first"
+              : !title.trim()
+              ? "Please add a title first"
+              : ""
+          }
+          isDisabled={!!selectedThumbnail && !!title.trim() && !isSubmitting}
+          hasArrow
+          bg="error"
+          color="white"
+          placement="top"
+        >
+          <Button
+            size="md"
+            bg="primary"
+            color="background"
+            fontWeight="bold"
+            onClick={() => {
+              if (!selectedThumbnail) {
+                setShowThumbnailWarning(true);
+                return;
+              }
+              handleSubmit();
+            }}
+            isLoading={isSubmitting}
+            loadingText="Publishing..."
+            isDisabled={isSubmitting || !title.trim() || !selectedThumbnail}
+            px={10}
+            h="44px"
+            _hover={{ bg: "accent" }}
+          >
+            Publish
+          </Button>
+        </Tooltip>
       </Flex>
     </Flex>
   );
