@@ -43,14 +43,15 @@ export default function HashtagInput({
 
   return (
     <Box
-      bg="#16191f"
-      border="1px solid rgba(255,255,255,0.08)"
+      bg="panel"
+      border="1px solid"
+      borderColor="border"
       p={4}
     >
       <Text
         letterSpacing="0.1em"
         fontSize="11px"
-        color="#888"
+        color="dim"
         mb={3}
         fontWeight="600"
         textTransform="uppercase"
@@ -65,14 +66,15 @@ export default function HashtagInput({
           onKeyDown={handleHashtagKeyDown}
           height="44px"
           flex="1"
-          bg="#0d0e12"
-          border="1px solid rgba(255,255,255,0.08)"
-          color="#d8d8d8"
-          _placeholder={{ color: "#666" }}
-          _hover={{ borderColor: "rgba(255,255,255,0.15)" }}
+          bg="inputBg"
+          border="1px solid"
+          borderColor="inputBorder"
+          color="inputText"
+          _placeholder={{ color: "inputPlaceholder" }}
+          _hover={{ borderColor: "primary" }}
           _focus={{
-            borderColor: "#6a9e6a",
-            boxShadow: "0 0 0 1px #6a9e6a",
+            borderColor: "primary",
+            boxShadow: "0 0 0 1px var(--chakra-colors-primary)",
           }}
           fontSize="15px"
         />
@@ -85,18 +87,18 @@ export default function HashtagInput({
                 size="lg"
                 borderRadius="20px"
                 variant="outline"
-                borderColor="rgba(106,158,106,0.3)"
-                bg="rgba(106,158,106,0.05)"
+                borderColor="primary"
+                bg="transparent"
                 _hover={{
-                  borderColor: "#6a9e6a",
-                  bg: "rgba(106,158,106,0.1)",
+                  borderColor: "primary",
+                  bg: "subtle",
                 }}
               >
-                <TagLabel color="#6a9e6a" fontWeight="500">#{tag}</TagLabel>
+                <TagLabel color="primary" fontWeight="500">#{tag}</TagLabel>
                 <TagCloseButton
                   onClick={() => removeHashtag(index)}
-                  color="#666"
-                  _hover={{ color: "#fff" }}
+                  color="dim"
+                  _hover={{ color: "text" }}
                 />
               </Tag>
             </WrapItem>

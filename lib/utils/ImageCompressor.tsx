@@ -20,9 +20,14 @@ export interface ImageCompressorRef {
 const SUPPORTED_TYPES = [
   "image/jpeg",
   "image/png",
-  // "image/heic", // browser-image-compression does not support HEIC
-  // "image/heif",
+  "image/gif",
+  "image/webp",
+  "image/svg+xml",
+  "image/bmp",
+  "image/tiff",
 ];
+
+const SUPPORTED_EXTENSIONS = ["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp", "tiff", "heic", "heif"];
 
 const statusStyle: React.CSSProperties = {
   marginTop: 8,
@@ -68,18 +73,40 @@ const ImageCompressor = forwardRef<ImageCompressorRef, ImageCompressorProps>(
         setStatus("");
         return;
       }
+
+      // Check file extension for unsupported types
+      const fileName = file.name.toLowerCase();
+      const hasUnsupportedExtension = SUPPORTED_EXTENSIONS.some(
+        ext => fileName.endsWith(`.${ext}`) && !SUPPORTED_TYPES.some(type => {
+          const extType = `image/${ext === 'jpg' ? 'jpeg' : ext}`;
+          return type === extType || (ext === 'svg' && type === 'image/svg+xml') || (ext === 'bmp' && type === 'image/bmp') || (ext === 'tiff' && type === 'image/tiff');
+        })
+      );
+
       if (!SUPPORTED_TYPES.includes(file.type)) {
-        setError("Unsupported file type. Please upload a JPEG or PNG image.");
+        setError(`Unsupported file type: ${file.type || fileName.split('.').pop()}. Supported types: JPEG, PNG, GIF, WebP, SVG, BMP, TIFF`);
         onUpload(null);
         return;
       }
+
       try {
-        setStatus("Resizing and compressing image...");
+        setStatus("Compressing image...");
         const options = {
           maxSizeMB: 2,
           maxWidthOrHeight: 1920,
           useWebWorker: true,
         };
+
+        // Skip compression for GIF, WebP, and SVG (they're already optimized)
+        if (file.type === "image/gif" || file.type === "image/webp" || file.type === "image/svg+xml") {
+          setStatus("Preparing image...");
+          const url = URL.createObjectURL(file);
+          setBlobUrl(url);
+          setStatus("Image ready!");
+          onUpload(url, file.name, file);
+          return;
+        }
+
         const compressedFile = await imageCompression(file, options);
         if (blobUrl) {
           URL.revokeObjectURL(blobUrl);
@@ -89,8 +116,8 @@ const ImageCompressor = forwardRef<ImageCompressorRef, ImageCompressorProps>(
         setStatus("Image compressed successfully!");
         onUpload(url, compressedFile.name, file);
       } catch (err: any) {
-        console.error(err);
-        setError("Error compressing image.");
+        console.error("Image compression error:", err);
+        setError(`Error processing image: ${err.message || 'Unknown error'}`);
         setStatus("");
         onUpload(null);
       }
@@ -101,7 +128,7 @@ const ImageCompressor = forwardRef<ImageCompressorRef, ImageCompressorProps>(
         <input
           ref={inputRef}
           type="file"
-          accept="image/jpeg,image/png"
+          accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml,image/bmp,image/tiff"
           style={{ display: "none" }}
           onChange={handleImageUpload}
           disabled={isProcessing}

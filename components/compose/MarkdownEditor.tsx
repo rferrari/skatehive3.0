@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useRef, useEffect } from "react";
-import { Box, Textarea, HStack, IconButton, Button, Flex, Text } from "@chakra-ui/react";
+import { Box, Textarea, HStack, IconButton, Button, Flex, Text, useColorModeValue } from "@chakra-ui/react";
 import { useDropzone } from "react-dropzone";
 import { Components } from "@uiw/react-markdown-preview";
 import VideoRenderer from "../layout/VideoRenderer";
@@ -41,6 +41,13 @@ export default function MarkdownEditor({
   const [splitView, setSplitView] = useState(false);
   const [splitPosition, setSplitPosition] = useState(50);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const bgMain = "background";
+  const bgMuted = "panel";
+  const textPrimary = "text";
+  const textMuted = "dim";
+  const borderColor = "border";
+  const primaryColor = "primary";
 
   useEffect(() => {
     setIsMounted(true);
@@ -169,24 +176,24 @@ export default function MarkdownEditor({
             );
           }
         }
-        return <p style={{ color: "#d8d8d8", lineHeight: 1.8, marginBottom: "12px" }} {...props}>{children}</p>;
+        return <p style={{ color: "var(--chakra-colors-text)", lineHeight: 1.8, marginBottom: "12px" }} {...props}>{children}</p>;
       },
       a: ({ href, children, ...props }) => (
-        <a href={href} {...props} style={{ color: "#6a9e6a", textDecoration: "none" }}>
+        <a href={href} {...props} style={{ color: "var(--chakra-colors-primary)", textDecoration: "none" }}>
           {children}
         </a>
       ),
-      h1: ({ children }) => <h1 style={{ color: "#ffffff", fontSize: "1.75em", fontWeight: 700, marginBottom: "16px", marginTop: "24px" }}>{children}</h1>,
-      h2: ({ children }) => <h2 style={{ color: "#ffffff", fontSize: "1.5em", fontWeight: 600, marginBottom: "14px", marginTop: "20px" }}>{children}</h2>,
-      h3: ({ children }) => <h3 style={{ color: "#ffffff", fontSize: "1.25em", fontWeight: 600, marginBottom: "12px", marginTop: "16px" }}>{children}</h3>,
-      strong: ({ children }) => <strong style={{ color: "#ffffff", fontWeight: 700 }}>{children}</strong>,
-      em: ({ children }) => <em style={{ color: "#c8c8c8" }}>{children}</em>,
-      code: ({ children }) => <code style={{ color: "#6a9e6a", backgroundColor: "rgba(106,158,106,0.1)", padding: "3px 8px", fontSize: "0.9em", fontFamily: "monospace" }}>{children}</code>,
-      pre: ({ children }) => <pre style={{ backgroundColor: "rgba(255,255,255,0.04)", padding: "16px", overflow: "auto", margin: "16px 0" }}>{children}</pre>,
-      blockquote: ({ children }) => <blockquote style={{ borderLeft: "4px solid #6a9e6a", paddingLeft: "16px", color: "#b8b8b8", margin: "16px 0", backgroundColor: "rgba(255,255,255,0.02)", padding: "12px 16px" }}>{children}</blockquote>,
-      ul: ({ children }) => <ul style={{ color: "#d8d8d8", paddingLeft: "24px", lineHeight: 1.9, margin: "12px 0" }}>{children}</ul>,
-      ol: ({ children }) => <ol style={{ color: "#d8d8d8", paddingLeft: "24px", lineHeight: 1.9, margin: "12px 0" }}>{children}</ol>,
-      li: ({ children }) => <li style={{ marginBottom: "6px" }}>{children}</li>,
+      h1: ({ children }) => <h1 style={{ color: "var(--chakra-colors-text)", fontSize: "1.75em", fontWeight: 700, marginBottom: "16px", marginTop: "24px" }}>{children}</h1>,
+      h2: ({ children }) => <h2 style={{ color: "var(--chakra-colors-text)", fontSize: "1.5em", fontWeight: 600, marginBottom: "14px", marginTop: "20px" }}>{children}</h2>,
+      h3: ({ children }) => <h3 style={{ color: "var(--chakra-colors-text)", fontSize: "1.25em", fontWeight: 600, marginBottom: "12px", marginTop: "16px" }}>{children}</h3>,
+      strong: ({ children }) => <strong style={{ color: "var(--chakra-colors-text)", fontWeight: 700 }}>{children}</strong>,
+      em: ({ children }) => <em style={{ color: "var(--chakra-colors-text)", opacity: 0.8 }}>{children}</em>,
+      code: ({ children }) => <code style={{ color: "var(--chakra-colors-primary)", backgroundColor: "var(--chakra-colors-muted)", padding: "3px 8px", fontSize: "0.9em", fontFamily: "monospace" }}>{children}</code>,
+      pre: ({ children }) => <pre style={{ backgroundColor: "var(--chakra-colors-muted)", padding: "16px", overflow: "auto", margin: "16px 0" }}>{children}</pre>,
+      blockquote: ({ children }) => <blockquote style={{ borderLeft: "4px solid var(--chakra-colors-primary)", paddingLeft: "16px", color: "var(--chakra-colors-text)", margin: "16px 0", backgroundColor: "var(--chakra-colors-muted)", padding: "12px 16px" }}>{children}</blockquote>,
+      ul: ({ children }) => <ul style={{ color: "var(--chakra-colors-text)", paddingLeft: "24px", lineHeight: 1.9, margin: "12px 0" }}>{children}</ul>,
+      ol: ({ children }) => <ol style={{ color: "var(--chakra-colors-text)", paddingLeft: "24px", lineHeight: 1.9, margin: "12px 0" }}>{children}</ol>,
+      li: ({ children }) => <li style={{ marginBottom: "6px", color: "var(--chakra-colors-text)" }}>{children}</li>,
     }),
     []
   );
@@ -198,8 +205,9 @@ export default function MarkdownEditor({
       position="relative"
       width="100%"
       height="100%"
-      bg="#16191f"
-      border={isDragActive ? "2px solid #6a9e6a" : "1px solid rgba(255,255,255,0.08)"}
+      bg={bgMain}
+      border={isDragActive ? "2px solid" : "1px solid"}
+      borderColor={isDragActive ? primaryColor : borderColor}
       display="flex"
       flexDirection="column"
       overflow="hidden"
@@ -208,8 +216,9 @@ export default function MarkdownEditor({
         spacing={1}
         px={3}
         py={2}
-        bg="#1a1f28"
-        borderBottom="1px solid rgba(255,255,255,0.06)"
+        bg={bgMuted}
+        borderBottom="1px solid"
+        borderColor={borderColor}
         flexWrap="wrap"
       >
         {isMounted && user && (
@@ -219,8 +228,8 @@ export default function MarkdownEditor({
               icon={<FaImage />}
               size="sm"
               variant="ghost"
-              color="#888"
-              _hover={{ color: "#fff", bg: "rgba(255,255,255,0.06)" }}
+              color={textMuted}
+              _hover={{ color: textPrimary, bg: "rgba(255,255,255,0.06)" }}
               onClick={handleImageTrigger}
             />
             <IconButton
@@ -228,8 +237,8 @@ export default function MarkdownEditor({
               icon={<FaVideo />}
               size="sm"
               variant="ghost"
-              color="#888"
-              _hover={{ color: "#fff", bg: "rgba(255,255,255,0.06)" }}
+              color={textMuted}
+              _hover={{ color: textPrimary, bg: "rgba(255,255,255,0.06)" }}
               onClick={handleVideoTrigger}
             />
             <IconButton
@@ -237,24 +246,24 @@ export default function MarkdownEditor({
               icon={<TbGif size={18} />}
               size="sm"
               variant="ghost"
-              color="#888"
-              _hover={{ color: "#fff", bg: "rgba(255,255,255,0.06)" }}
+              color={textMuted}
+              _hover={{ color: textPrimary, bg: "rgba(255,255,255,0.06)" }}
               onClick={() => {
                 gifMakerWithSelectorRef.current?.reset();
                 setGifMakerOpen(true);
               }}
             />
-            <Box w="1px" h="18px" bg="rgba(255,255,255,0.08)" mx={1} />
+            <Box w="1px" h="18px" bg={borderColor} mx={1} />
           </>
         )}
         <Button
           size="xs"
           variant="ghost"
-          color="#888"
+          color={textMuted}
           fontWeight="600"
           h="28px"
           px={2}
-          _hover={{ color: "#fff", bg: "rgba(255,255,255,0.06)" }}
+          _hover={{ color: textPrimary, bg: "rgba(255,255,255,0.06)" }}
           onClick={() => handleInsert("**", "**")}
         >
           B
@@ -262,11 +271,11 @@ export default function MarkdownEditor({
         <Button
           size="xs"
           variant="ghost"
-          color="#888"
+          color={textMuted}
           fontStyle="italic"
           h="28px"
           px={2}
-          _hover={{ color: "#fff", bg: "rgba(255,255,255,0.06)" }}
+          _hover={{ color: textPrimary, bg: "rgba(255,255,255,0.06)" }}
           onClick={() => handleInsert("*", "*")}
         >
           I
@@ -274,10 +283,10 @@ export default function MarkdownEditor({
         <Button
           size="xs"
           variant="ghost"
-          color="#888"
+          color={textMuted}
           h="28px"
           px={2}
-          _hover={{ color: "#fff", bg: "rgba(255,255,255,0.06)" }}
+          _hover={{ color: textPrimary, bg: "rgba(255,255,255,0.06)" }}
           onClick={() => handleInsert("~~", "~~")}
         >
           S
@@ -285,10 +294,10 @@ export default function MarkdownEditor({
         <Button
           size="xs"
           variant="ghost"
-          color="#888"
+          color={textMuted}
           h="28px"
           px={2}
-          _hover={{ color: "#fff", bg: "rgba(255,255,255,0.06)" }}
+          _hover={{ color: textPrimary, bg: "rgba(255,255,255,0.06)" }}
           onClick={() => handleInsert("\n- ")}
         >
           List
@@ -296,10 +305,10 @@ export default function MarkdownEditor({
         <Button
           size="xs"
           variant="ghost"
-          color="#888"
+          color={textMuted}
           h="28px"
           px={2}
-          _hover={{ color: "#fff", bg: "rgba(255,255,255,0.06)" }}
+          _hover={{ color: textPrimary, bg: "rgba(255,255,255,0.06)" }}
           onClick={() => handleInsert("\n> ")}
         >
           Quote
@@ -307,30 +316,30 @@ export default function MarkdownEditor({
         <Button
           size="xs"
           variant="ghost"
-          color="#888"
+          color={textMuted}
           h="28px"
           px={2}
-          _hover={{ color: "#fff", bg: "rgba(255,255,255,0.06)" }}
+          _hover={{ color: textPrimary, bg: "rgba(255,255,255,0.06)" }}
           onClick={() => handleInsert("`", "`")}
         >
           Code
         </Button>
-        <Box w="1px" h="18px" bg="rgba(255,255,255,0.08)" mx={1} />
+        <Box w="1px" h="18px" bg={borderColor} mx={1} />
         <IconButton
           aria-label="Toggle split view"
           icon={<FaColumns />}
           size="sm"
           variant="ghost"
-          color={splitView ? "#6a9e6a" : "#888"}
-          bg={splitView ? "rgba(106,158,106,0.1)" : "transparent"}
-          _hover={{ color: "#fff", bg: "rgba(255,255,255,0.06)" }}
+          color={splitView ? primaryColor : textMuted}
+          bg={splitView ? `${primaryColor}20` : "transparent"}
+          _hover={{ color: textPrimary, bg: "rgba(255,255,255,0.06)" }}
           onClick={() => setSplitView(!splitView)}
         />
       </HStack>
 
       {splitView ? (
         <Flex flex={1} overflow="hidden">
-          <Box flex={`0 0 ${splitPosition}%`} height="100%" borderRight="1px solid rgba(255,255,255,0.08)" display="flex" flexDirection="column">
+          <Box flex={`0 0 ${splitPosition}%`} height="100%" borderRight="1px solid" borderColor={borderColor} display="flex" flexDirection="column">
             <Box overflow="auto" flex={1} width="100%">
               <Textarea
                 id="markdown-textarea"
@@ -347,21 +356,21 @@ export default function MarkdownEditor({
                 fontFamily="inherit"
                 bg="transparent"
                 border="none"
-                color="#d8d8d8"
-                _placeholder={{ color: "#666" }}
+                color={textPrimary}
+                _placeholder={{ color: textMuted }}
                 _focus={{ outline: "none", boxShadow: "none" }}
                 sx={{
-                  "&::placeholder": { color: "#666 !important" },
+                  "&::placeholder": { color: `${textMuted} !important` },
                   "&:focus": { outline: "none !important", boxShadow: "none !important" },
                 }}
-                style={{ caretColor: "#6a9e6a" }}
+                style={{ caretColor: primaryColor }}
               />
             </Box>
           </Box>
-          <Box flex={`0 0 ${100 - splitPosition}%`} height="100%" bg="#16191f" overflow="auto" p={4}>
+          <Box flex={`0 0 ${100 - splitPosition}%`} height="100%" bg={bgMain} overflow="auto" p={4}>
             <Text
               fontSize="11px"
-              color="#666"
+              color={textMuted}
               fontWeight="600"
               textTransform="uppercase"
               letterSpacing="0.1em"
@@ -369,7 +378,7 @@ export default function MarkdownEditor({
             >
               Preview
             </Text>
-            <Box color="#d8d8d8" fontSize="15px" lineHeight="1.7">
+            <Box color={textPrimary} fontSize="15px" lineHeight="1.7">
               <HiveMarkdown markdown={markdown} />
             </Box>
           </Box>
@@ -383,42 +392,42 @@ export default function MarkdownEditor({
             bg="transparent"
             transform="translateX(-50%)"
             zIndex={10}
-            _hover={{ bg: "rgba(106,158,106,0.3)" }}
+            _hover={{ bg: `${primaryColor}50` }}
             onMouseDown={handleSplitMouseDown}
             display="flex"
             alignItems="center"
             justifyContent="center"
           >
-            <Box w="2px" h="40px" bg="#6a9e6a" borderRadius="1px" opacity={0.5} />
+            <Box w="2px" h="40px" bg={primaryColor} borderRadius="1px" opacity={0.5} />
           </Box>
         </Flex>
       ) : (
         <Box flex={1} overflow="hidden" display="flex" flexDirection="column">
           <Box overflow="auto" flex={1} width="100%">
             <Textarea
-            id="markdown-textarea"
-            value={markdown}
-            onChange={(e) => setMarkdown(e.target.value)}
-            placeholder="Write your content here..."
-            variant="unstyled"
-            resize="none"
-            width="100%"
-            height="100%"
-            p={4}
-            fontSize="16px"
-            lineHeight="1.7"
-            fontFamily="inherit"
-            bg="transparent"
-            border="none"
-            color="#d8d8d8"
-            _placeholder={{ color: "#666" }}
-            _focus={{ outline: "none", boxShadow: "none" }}
-            sx={{
-              "&::placeholder": { color: "#666 !important" },
-              "&:focus": { outline: "none !important", boxShadow: "none !important" },
-            }}
-            style={{ caretColor: "#6a9e6a" }}
-          />
+              id="markdown-textarea"
+              value={markdown}
+              onChange={(e) => setMarkdown(e.target.value)}
+              placeholder="Write your content here..."
+              variant="unstyled"
+              resize="none"
+              width="100%"
+              height="100%"
+              p={4}
+              fontSize="16px"
+              lineHeight="1.7"
+              fontFamily="inherit"
+              bg="transparent"
+              border="none"
+              color={textPrimary}
+              _placeholder={{ color: textMuted }}
+              _focus={{ outline: "none", boxShadow: "none" }}
+              sx={{
+                "&::placeholder": { color: `${textMuted} !important` },
+                "&:focus": { outline: "none !important", boxShadow: "none !important" },
+              }}
+              style={{ caretColor: primaryColor }}
+            />
           </Box>
         </Box>
       )}
@@ -426,8 +435,9 @@ export default function MarkdownEditor({
       {previewMode === "preview" && !splitView && (
         <Box
           p={4}
-          bg="#16191f"
-          borderTop="1px solid rgba(255,255,255,0.06)"
+          bg={bgMuted}
+          borderTop="1px solid"
+          borderColor={borderColor}
           maxHeight="50%"
           overflow="auto"
         >

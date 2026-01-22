@@ -67,21 +67,25 @@ export const insertAtCursor = (
     setMarkdown: (value: string) => void
 ) => {
     const textarea = document.querySelector(
-        ".w-md-editor-text-input"
+        "#markdown-textarea"
     ) as HTMLTextAreaElement;
     if (textarea) {
         const start = textarea.selectionStart;
         const end = textarea.selectionEnd;
-        const text = markdown;
-        const before = text.substring(0, start);
-        const after = text.substring(end);
-        setMarkdown(`${before}${content}${after}`);
+        const before = markdown.substring(0, start);
+        const after = markdown.substring(end);
+        const newMarkdown = `${before}${content}${after}`;
+        setMarkdown(newMarkdown);
         // Reset cursor position after React re-render
         setTimeout(() => {
             textarea.focus();
             const newPosition = start + content.length;
             textarea.setSelectionRange(newPosition, newPosition);
         }, 0);
+    } else {
+        // Fallback: just append to the end
+        console.warn("Textarea not found, appending to end");
+        setMarkdown(markdown + content);
     }
 };
 

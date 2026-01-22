@@ -16,6 +16,7 @@ import useHiveAccount from "@/hooks/useHiveAccount";
 import useProfileData from "@/hooks/useProfileData";
 import MainSettings from "@/components/settings/MainSettings";
 import AdvancedSettings from "@/components/settings/AdvancedSettings";
+import AssetsSettings from "@/components/settings/AssetsSettings";
 
 const Settings = () => {
   const { user } = useAioha();
@@ -82,6 +83,18 @@ const Settings = () => {
                 color="primary"
                 fontWeight="semibold"
               >
+                🎨 Assets
+              </Tab>
+              <Tab
+                _selected={{
+                  color: "accent",
+                  borderColor: "accent",
+                  borderBottomColor: "background",
+                  bg: "background",
+                }}
+                color="primary"
+                fontWeight="semibold"
+              >
                 🔧 Advanced
               </Tab>
             </TabList>
@@ -89,6 +102,9 @@ const Settings = () => {
             <TabPanels>
               <TabPanel px={0} py={6}>
                 <MainSettings userData={userData} />
+              </TabPanel>
+              <TabPanel px={0} py={6}>
+                <AssetsSettings userData={userData} />
               </TabPanel>
               <TabPanel px={0} py={6}>
                 <AdvancedSettings userData={userData} />

@@ -134,19 +134,19 @@ export default function BeneficiariesInput({
           <Text
             letterSpacing="0.1em"
             fontSize="11px"
-            color="#888"
+            color="dim"
             mb={2}
             fontWeight="600"
             textTransform="uppercase"
           >
             Beneficiaries
           </Text>
-          <Text fontSize="14px" color="#b0b0b0">
+          <Text fontSize="14px" color="text">
             Set reward beneficiaries who will receive a percentage of this post&apos;s earnings.
           </Text>
-          <Text fontSize="12px" color="#666" mt={1}>
-            Total: <Text as="span" color="#6a9e6a">{totalPercentage.toFixed(1)}%</Text> | Author keeps:{" "}
-            <Text as="span" color="#b0b0b0">{(100 - totalPercentage).toFixed(1)}%</Text>
+          <Text fontSize="12px" color="dim" mt={1}>
+            Total: <Text as="span" color="primary">{totalPercentage.toFixed(1)}%</Text> | Author keeps:{" "}
+            <Text as="span" color="text">{((100 - totalPercentage)).toFixed(1)}%</Text>
           </Text>
         </Box>
 
@@ -163,14 +163,15 @@ export default function BeneficiariesInput({
                   }}
                   size="md"
                   isDisabled={isSubmitting}
-                  bg="#0d0e12"
-                  border="1px solid rgba(255,255,255,0.08)"
-                  color="#d8d8d8"
-                  _placeholder={{ color: "#666" }}
-                  _hover={{ borderColor: "rgba(255,255,255,0.15)" }}
+                  bg="inputBg"
+                  border="1px solid"
+                  borderColor="inputBorder"
+                  color="inputText"
+                  _placeholder={{ color: "inputPlaceholder" }}
+                  _hover={{ borderColor: "primary" }}
                   _focus={{
-                    borderColor: "#6a9e6a",
-                    boxShadow: "0 0 0 1px #6a9e6a",
+                    borderColor: "primary",
+                    boxShadow: "0 0 0 1px var(--chakra-colors-primary)",
                   }}
                 />
               </FormControl>
@@ -193,14 +194,15 @@ export default function BeneficiariesInput({
                   }}
                   size="md"
                   isDisabled={isSubmitting}
-                  bg="#0d0e12"
-                  border="1px solid rgba(255,255,255,0.08)"
-                  color="#d8d8d8"
-                  _placeholder={{ color: "#666" }}
-                  _hover={{ borderColor: "rgba(255,255,255,0.15)" }}
+                  bg="inputBg"
+                  border="1px solid"
+                  borderColor="inputBorder"
+                  color="inputText"
+                  _placeholder={{ color: "inputPlaceholder" }}
+                  _hover={{ borderColor: "primary" }}
                   _focus={{
-                    borderColor: "#6a9e6a",
-                    boxShadow: "0 0 0 1px #6a9e6a",
+                    borderColor: "primary",
+                    boxShadow: "0 0 0 1px var(--chakra-colors-primary)",
                   }}
                 />
               </FormControl>
@@ -212,8 +214,8 @@ export default function BeneficiariesInput({
                 variant="ghost"
                 onClick={() => removeBeneficiary(index)}
                 isDisabled={isSubmitting}
-                color="#666"
-                _hover={{ color: "#c87070", bg: "rgba(200,110,110,0.08)" }}
+                color="dim"
+                _hover={{ color: "error", bg: "rgba(200,110,110,0.08)" }}
               />
             </HStack>
           ))}
@@ -224,12 +226,12 @@ export default function BeneficiariesInput({
           onClick={addBeneficiary}
           size="sm"
           variant="outline"
-          color="#888"
-          borderColor="rgba(255,255,255,0.12)"
+          color="dim"
+          borderColor="border"
           _hover={{
-            borderColor: "#6a9e6a",
-            color: "#6a9e6a",
-            bg: "rgba(106,158,106,0.05)",
+            borderColor: "primary",
+            color: "primary",
+            bg: "transparent",
           }}
           isDisabled={isSubmitting || beneficiaries.length >= 8}
           h="36px"
@@ -244,10 +246,10 @@ export default function BeneficiariesInput({
             bg="rgba(180,80,80,0.1)"
             border="1px solid rgba(180,80,80,0.2)"
           >
-            <AlertIcon color="#c87070" />
+            <AlertIcon color="error" />
             <VStack align="start" spacing={1}>
               {errors.map((error, index) => (
-                <Text key={index} fontSize="12px" color="#c87070">
+                <Text key={index} fontSize="12px" color="error">
                   {error}
                 </Text>
               ))}
@@ -262,8 +264,8 @@ export default function BeneficiariesInput({
             bg="rgba(106,158,106,0.08)"
             border="1px solid rgba(106,158,106,0.15)"
           >
-            <AlertIcon color="#6a9e6a" />
-            <Text fontSize="12px" color="#b8b8b8">
+            <AlertIcon color="primary" />
+            <Text fontSize="12px" color="text">
               {beneficiaries.length}{" "}
               {beneficiaries.length === 1 ? "beneficiary" : "beneficiaries"}{" "}
               will receive {totalPercentage.toFixed(1)}% of post rewards

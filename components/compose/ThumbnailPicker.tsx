@@ -20,6 +20,7 @@ interface ThumbnailPickerProps {
   markdown: string;
   selectedThumbnail: string | null;
   setSelectedThumbnail: (thumbnail: string | null) => void;
+  uploadedVideoUrl?: string | null;
 }
 
 export default function ThumbnailPicker({
@@ -27,6 +28,7 @@ export default function ThumbnailPicker({
   markdown,
   selectedThumbnail,
   setSelectedThumbnail,
+  uploadedVideoUrl,
 }: ThumbnailPickerProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -109,11 +111,11 @@ export default function ThumbnailPicker({
       border={
         selectedThumbnail === url ? "2px solid" : "2px solid transparent"
       }
-      borderColor={selectedThumbnail === url ? "#6a9e6a" : "transparent"}
+      borderColor={selectedThumbnail === url ? "primary" : "transparent"}
       overflow="hidden"
       cursor="pointer"
       onClick={() => setSelectedThumbnail(url)}
-      _hover={{ borderColor: "#6a9e6a" }}
+      _hover={{ borderColor: "primary" }}
       width="96px"
       height="96px"
       display="flex"
@@ -141,11 +143,11 @@ export default function ThumbnailPicker({
           position="absolute"
           top={1}
           right={1}
-          bg="#6a9e6a"
+          bg="primary"
           borderRadius="full"
           p={1}
         >
-          <FaCheck size={10} color="white" />
+          <FaCheck size={10} color="var(--chakra-colors-background)" />
         </Box>
       )}
       {onRemove && (
@@ -157,7 +159,7 @@ export default function ThumbnailPicker({
           top={1}
           left={1}
           bg="rgba(180,80,80,0.5)"
-          color="white"
+          color="background"
           _hover={{ bg: "rgba(180,80,80,0.7)" }}
           onClick={onRemove}
           borderRadius="full"
@@ -173,7 +175,7 @@ export default function ThumbnailPicker({
       <Text
         letterSpacing="0.08em"
         fontSize="11px"
-        color="#888"
+        color="dim"
         mb={3}
         fontWeight="medium"
         textTransform="uppercase"
@@ -187,6 +189,9 @@ export default function ThumbnailPicker({
             onRemove={handleRemoveUploaded}
           />
         )}
+        {uploadedVideoUrl && (
+          <ThumbnailBox url={uploadedVideoUrl} isVideo />
+        )}
         {imageUrls.map((url, idx) => (
           <ThumbnailBox key={url + idx} url={url} />
         ))}
@@ -194,25 +199,26 @@ export default function ThumbnailPicker({
           <ThumbnailBox key={url + idx} url={url} isVideo />
         ))}
         <Box
-          border="2px dashed rgba(255,255,255,0.12)"
+          border="2px dashed"
+          borderColor="border"
           overflow="hidden"
           cursor={isUploading ? "wait" : "pointer"}
           onClick={handleUploadClick}
-          _hover={{ borderColor: "#6a9e6a" }}
+          _hover={{ borderColor: "primary" }}
           width="96px"
           height="96px"
           display="flex"
           alignItems="center"
           justifyContent="center"
-          bg="rgba(255,255,255,0.02)"
+          bg="subtle"
           position="relative"
         >
           {isUploading ? (
-            <Spinner size="sm" color="#6a9e6a" />
+            <Spinner size="sm" color="primary" />
           ) : (
             <VStack spacing={1}>
-              <FaUpload color="#6a9e6a" size={18} />
-              <Text fontSize="xs" color="#b0b0b0" textAlign="center">
+              <FaUpload color="var(--chakra-colors-primary)" size={18} />
+              <Text fontSize="xs" color="text" textAlign="center">
                 Upload
               </Text>
             </VStack>
@@ -228,17 +234,17 @@ export default function ThumbnailPicker({
         </Box>
       </Flex>
       {uploadError && (
-        <Text color="#c87070" fontSize="sm" mt={2}>
+        <Text color="error" fontSize="sm" mt={2}>
           {uploadError}
         </Text>
       )}
       {selectedThumbnail && (
-        <Box mt={2} color="#888" fontSize="sm">
+        <Box mt={2} color="dim" fontSize="sm">
           Selected:{" "}
           <span
             style={{
               wordBreak: "break-all",
-              color: "#6a9e6a",
+              color: "var(--chakra-colors-primary)",
             }}
           >
             {selectedThumbnail}

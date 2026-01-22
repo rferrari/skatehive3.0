@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { Box, Text, Flex, Button, VStack, HStack, IconButton, useColorModeValue } from "@chakra-ui/react";
 import { SERVER_CONFIG, ServerKey } from "@/lib/utils/videoProcessing";
 
 export interface TerminalLine {
@@ -16,10 +17,10 @@ export interface VideoUploadTerminalProps {
   isVisible: boolean;
   onClose?: () => void;
   debugMode?: boolean;
-  progress?: number; // Real upload progress (0-100)
-  stage?: string; // Current processing stage
-  autoCloseOnSuccess?: boolean; // Auto-close terminal after success
-  autoCloseDelay?: number; // Delay in seconds (default 10)
+  progress?: number;
+  stage?: string;
+  autoCloseOnSuccess?: boolean;
+  autoCloseDelay?: number;
   errorDetails?: {
     errorType?: string;
     statusCode?: number;
@@ -28,7 +29,6 @@ export interface VideoUploadTerminalProps {
   };
 }
 
-// Fun loading messages to entertain users during upload
 const funLoadingMessages = [
   "🛹 Waxing the digital ledge...",
   "🔥 Teaching pixels to kickflip...",
@@ -55,7 +55,6 @@ const funLoadingMessages = [
   "🎪 The server is doing a circus kickflip with your file...",
 ];
 
-// Initial preparation messages when FFmpeg is analyzing the video
 const preparingMessages = [
   "🔍 Analyzing video dimensions...",
   "📐 Measuring the steeze factor...",
@@ -67,26 +66,19 @@ const preparingMessages = [
   "🧪 Analyzing video codec...",
 ];
 
-// Animated skateboard loading bar - uses real progress from upload
 const SkateboardLoader = ({ serverName, progress = 0, stage }: { serverName?: string; progress?: number; stage?: string }) => {
   const [skateFrame, setSkateFrame] = useState(0);
   const [lastProgress, setLastProgress] = useState(progress);
-  const [stuckTime, setStuckTime] = useState(0);
   const [messageIndex, setMessageIndex] = useState(() => Math.floor(Math.random() * funLoadingMessages.length));
   const [prepMessageIndex, setPrepMessageIndex] = useState(() => Math.floor(Math.random() * preparingMessages.length));
   const [dots, setDots] = useState('');
 
-  // Skateboard animation frames (spinning effect)
   const skateFrames = ['🛹', '🛹', '🛹', '💨🛹', '🛹', '✨🛹', '🛹', '🔥🛹'];
-
-  // Preparing state frames (bouncing skateboard)
   const prepFrames = ['🛹', '  🛹', '    🛹', '  🛹', '🛹', '🛹💨', '🛹✨', '🛹'];
 
-  // Reset state when progress goes back to 0 (new upload)
   useEffect(() => {
     if (progress === 0) {
       setLastProgress(0);
-      setStuckTime(0);
       setSkateFrame(0);
       setMessageIndex(Math.floor(Math.random() * funLoadingMessages.length));
       setPrepMessageIndex(Math.floor(Math.random() * preparingMessages.length));
@@ -94,69 +86,52 @@ const SkateboardLoader = ({ serverName, progress = 0, stage }: { serverName?: st
   }, [progress]);
 
   useEffect(() => {
-    // Track if progress is "stuck"
-    if (progress !== lastProgress && progress !== 0) {
-      setLastProgress(progress);
-      setStuckTime(0);
-    }
-
-    // Increment stuck time counter
-    const stuckInterval = setInterval(() => {
-      if (progress === lastProgress) {
-        setStuckTime(prev => prev + 1);
-      }
-    }, 500);
-
-    // Skateboard animation - spins faster when "stuck" (no progress for 2+ seconds)
-    const spinDelay = stuckTime > 4 ? 100 : 200; // Faster when stuck
     const skateInterval = setInterval(() => {
       setSkateFrame(prev => (prev + 1) % skateFrames.length);
-    }, spinDelay);
+    }, 200);
 
-    // Rotate fun messages every 3 seconds
     const messageInterval = setInterval(() => {
       setMessageIndex(prev => (prev + 1) % funLoadingMessages.length);
     }, 3000);
 
-    // Rotate preparing messages every 2 seconds (faster to show activity)
     const prepInterval = setInterval(() => {
       setPrepMessageIndex(prev => (prev + 1) % preparingMessages.length);
     }, 2000);
 
-    // Animate dots for preparing state
     const dotsInterval = setInterval(() => {
       setDots(prev => prev.length >= 3 ? '' : prev + '.');
     }, 400);
 
     return () => {
-      clearInterval(stuckInterval);
       clearInterval(skateInterval);
       clearInterval(messageInterval);
       clearInterval(prepInterval);
       clearInterval(dotsInterval);
     };
-  }, [progress, lastProgress, stuckTime, skateFrames.length]);
+  }, []);
 
-  // Show "preparing" state when progress is 0 (FFmpeg analyzing video)
+  const textColor = "text";
+  const mutedColor = "dim";
+  const primaryColor = "primary";
+
   if (progress === 0 || (stage === 'receiving' && progress < 5)) {
     return (
-      <div className="font-mono text-xs my-1">
-        <div className="flex items-center gap-2">
-          <span className="text-gray-500">[</span>
-          <span className="text-cyan-400 animate-pulse">
+      <Box fontFamily="mono" fontSize="xs" my={1}>
+        <Flex alignItems="center" gap={2}>
+          <Text color={mutedColor}>[</Text>
+          <Text color={primaryColor} fontFamily="mono">
             {prepFrames[skateFrame % prepFrames.length]} ░░░░░░░░░░░░░░░░░░░░░░░░
-          </span>
-          <span className="text-gray-500">]</span>
-          <span className="text-cyan-400">⏳</span>
-        </div>
-        <div className="text-cyan-400 mt-0.5 animate-pulse">
+          </Text>
+          <Text color={mutedColor}>]</Text>
+          <Text color={primaryColor}>⏳</Text>
+        </Flex>
+        <Text color={primaryColor} mt={0.5} fontFamily="mono">
           {preparingMessages[prepMessageIndex]}{dots}
-        </div>
-      </div>
+        </Text>
+      </Box>
     );
   }
 
-  // Generate the loading bar
   const trackWidth = 24;
   const displayProgress = Math.min(progress, 100);
   const filledWidth = Math.floor((displayProgress / 100) * trackWidth);
@@ -169,17 +144,17 @@ const SkateboardLoader = ({ serverName, progress = 0, stage }: { serverName?: st
   }).join('');
 
   return (
-    <div className="font-mono text-xs my-1">
-      <div className="flex items-center gap-2">
-        <span className="text-gray-500">[</span>
-        <span className="text-green-400">{track}</span>
-        <span className="text-gray-500">]</span>
-        <span className="text-yellow-400">{Math.floor(displayProgress)}%</span>
-      </div>
-      <div className="text-gray-400 mt-0.5 animate-pulse">
+    <Box fontFamily="mono" fontSize="xs" my={1}>
+      <Flex alignItems="center" gap={2}>
+        <Text color={mutedColor}>[</Text>
+        <Text color={primaryColor} fontFamily="mono" letterSpacing="tight">{track}</Text>
+        <Text color={mutedColor}>]</Text>
+        <Text color="warning" fontWeight="bold">{Math.floor(displayProgress)}%</Text>
+      </Flex>
+      <Text color={mutedColor} mt={0.5} fontFamily="mono">
         {funLoadingMessages[messageIndex]}
-      </div>
-    </div>
+      </Text>
+    </Box>
   );
 };
 
@@ -191,17 +166,17 @@ const ServerIcon = ({ server, status }: { server: string; status?: string }) => 
     pinata: "📌",
   };
 
-  const statusIcons: Record<string, string> = {
-    pending: "⏳",
-    trying: "🔄",
-    success: "✅",
-    failed: "❌",
+  const statusColors: Record<string, string> = {
+    pending: "dim",
+    trying: "warning",
+    success: "success",
+    failed: "error",
   };
 
   return (
-    <span>
-      {icons[server] || "🖥️"} {status && statusIcons[status]}
-    </span>
+    <Text as="span" color={statusColors[status || 'pending'] || "dim"}>
+      {icons[server] || "🖥️"}{status === 'success' ? '✓' : status === 'failed' ? '✗' : status === 'trying' ? '⟳' : ''}
+    </Text>
   );
 };
 
@@ -220,7 +195,12 @@ export const VideoUploadTerminal: React.FC<VideoUploadTerminalProps> = ({
   const [countdown, setCountdown] = useState<number | null>(null);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Reset countdown when lines are cleared (new upload started)
+  const bgColor = "background";
+  const headerBgColor = "muted";
+  const borderColor = "border";
+  const textColor = "text";
+  const dimColor = "dim";
+
   useEffect(() => {
     if (lines.length === 0) {
       setCountdown(null);
@@ -231,7 +211,6 @@ export const VideoUploadTerminal: React.FC<VideoUploadTerminalProps> = ({
     }
   }, [lines.length]);
 
-  // Check if upload was FULLY successful (final success, not intermediate steps)
   const isFullyComplete = lines.some(l =>
     l.message.includes("Video ready!") ||
     l.message.includes("🎉") ||
@@ -240,18 +219,14 @@ export const VideoUploadTerminal: React.FC<VideoUploadTerminalProps> = ({
     (l.type === "success" && l.message.includes("✓ IPFS upload successful"))
   );
 
-  // Check if there was an error
   const hasError = lines.some(l => l.type === "error");
 
-  // Auto-close countdown on success - only after FULL completion
   useEffect(() => {
-    // Only start countdown if fully complete, no errors, auto-close enabled, and onClose provided
     if (isFullyComplete && !hasError && autoCloseOnSuccess && onClose && countdown === null) {
       setCountdown(autoCloseDelay);
     }
   }, [isFullyComplete, hasError, autoCloseOnSuccess, onClose, autoCloseDelay, countdown]);
 
-  // Handle countdown timer
   useEffect(() => {
     if (countdown !== null && countdown > 0) {
       countdownRef.current = setTimeout(() => {
@@ -268,15 +243,6 @@ export const VideoUploadTerminal: React.FC<VideoUploadTerminalProps> = ({
     };
   }, [countdown, onClose]);
 
-  // Cancel countdown if user interacts
-  const cancelCountdown = () => {
-    if (countdownRef.current) {
-      clearTimeout(countdownRef.current);
-    }
-    setCountdown(null);
-  };
-
-  // Auto-scroll to bottom when new lines are added
   useEffect(() => {
     if (terminalRef.current) {
       terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
@@ -296,228 +262,228 @@ export const VideoUploadTerminal: React.FC<VideoUploadTerminalProps> = ({
 
   const getLineColor = (type: TerminalLine["type"]) => {
     switch (type) {
-      case "success":
-        return "text-green-400";
-      case "error":
-        return "text-red-400";
-      case "warning":
-        return "text-yellow-400";
-      case "server":
-        return "text-cyan-400";
-      default:
-        return "text-gray-300";
+      case "success": return "success";
+      case "error": return "error";
+      case "warning": return "warning";
+      case "server": return "primary";
+      default: return textColor;
     }
   };
 
+  function getServerStatus(lines: TerminalLine[], server: string): "pending" | "trying" | "success" | "failed" | undefined {
+    const serverLines = lines.filter((l) => l.server === server);
+    if (serverLines.length === 0) return "pending";
+    const lastLine = serverLines[serverLines.length - 1];
+    return lastLine.status;
+  }
+
+  function isLoading(lines: TerminalLine[]): boolean {
+    if (lines.length === 0) return false;
+    const hasCompletion = lines.some(l =>
+      l.message.includes("Video ready!") ||
+      l.message.includes("🎉") ||
+      l.message.includes("IPFS CID:") ||
+      l.message.includes("✓ Transcoding successful") ||
+      l.message.includes("✓ IPFS upload successful") ||
+      (l.type === "error" && l.message.includes("failed"))
+    );
+    if (hasCompletion) return false;
+    const allServers = ["pinata", ...SERVER_CONFIG.map(s => s.key)];
+    for (const server of allServers) {
+      const status = getServerStatus(lines, server);
+      if (status === "trying") return true;
+    }
+    const lastLine = lines[lines.length - 1];
+    if (lastLine.type === "info" &&
+      (lastLine.message.includes("Uploading") ||
+        lastLine.message.includes("Processing") ||
+        lastLine.message.includes("Trying") ||
+        lastLine.message.includes("Starting"))) {
+      return true;
+    }
+    return false;
+  }
+
+  function getCurrentServer(lines: TerminalLine[]): string | undefined {
+    const serverNames: Record<string, string> = {
+      pinata: "Pinata IPFS",
+      ...Object.fromEntries(SERVER_CONFIG.map(s => [s.key, s.name]))
+    };
+    const allServers = ["pinata", ...SERVER_CONFIG.map(s => s.key)];
+    for (const server of allServers) {
+      const status = getServerStatus(lines, server);
+      if (status === "trying") return serverNames[server];
+    }
+    return undefined;
+  }
+
   return (
-    <div className="w-full mt-2 bg-gray-900 rounded-lg shadow-xl border border-gray-700 overflow-hidden">
-      {/* Terminal Header */}
-      <div className="flex items-center justify-between px-3 py-1.5 bg-gray-800 border-b border-gray-700">
-        <div className="flex items-center gap-2">
-          <div className="flex gap-1">
-            <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
-            <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
-            <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
-          </div>
-          <span className="ml-2 text-xs text-gray-400 font-mono">
+    <Box
+      w="100%"
+      mt={2}
+      bg={bgColor}
+      borderRadius="md"
+      border="1px solid"
+      borderColor={borderColor}
+      overflow="hidden"
+    >
+      <Flex
+        alignItems="center"
+        justifyContent="space-between"
+        px={3}
+        py={1.5}
+        bg={headerBgColor}
+        borderBottom="1px solid"
+        borderColor={borderColor}
+      >
+        <Flex alignItems="center" gap={2}>
+          <Flex gap={1}>
+            <Box w={2.5} h={2.5} borderRadius="full" bg="red.500" />
+            <Box w={2.5} h={2.5} borderRadius="full" bg="yellow.500" />
+            <Box w={2.5} h={2.5} borderRadius="full" bg="green.500" />
+          </Flex>
+          <Text fontSize="xs" color={dimColor} fontFamily="mono">
             upload-terminal
-          </span>
-        </div>
+          </Text>
+        </Flex>
         {onClose && (
-          <button
+          <IconButton
+            aria-label="Close terminal"
+            icon={<Text>✕</Text>}
+            size="sm"
+            variant="ghost"
+            color={dimColor}
+            _hover={{ color: textColor, bg: "whiteAlpha.100" }}
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors text-sm"
-          >
-            ✕
-          </button>
+          />
         )}
-      </div>
+      </Flex>
 
-      {/* Server Status Bar - dynamically ordered from SERVER_CONFIG */}
-      <div className="px-3 py-1.5 bg-gray-800/50 border-b border-gray-700 flex gap-3 text-xs font-mono flex-wrap">
-        <div className="flex items-center gap-1">
+      <Flex
+        px={3}
+        py={1.5}
+        bg={`${headerBgColor}50`}
+        borderBottom="1px solid"
+        borderColor={borderColor}
+        gap={3}
+        fontSize="xs"
+        fontFamily="mono"
+        flexWrap="wrap"
+      >
+        <Flex alignItems="center" gap={1}>
           <ServerIcon server="pinata" status={getServerStatus(lines, "pinata")} />
-          <span className="text-gray-400">IPFS</span>
-        </div>
+          <Text color={dimColor}>IPFS</Text>
+        </Flex>
         {SERVER_CONFIG.map((server) => (
-          <div key={server.key} className="flex items-center gap-1">
+          <Flex key={server.key} alignItems="center" gap={1}>
             <ServerIcon server={server.key} status={getServerStatus(lines, server.key)} />
-            <span className="text-gray-400">{server.name.split(' ')[0]}</span>
-          </div>
+            <Text color={dimColor}>{server.name.split(' ')[0]}</Text>
+          </Flex>
         ))}
-      </div>
+      </Flex>
 
-      {/* Terminal Content */}
-      <div
+      <Box
         ref={terminalRef}
-        className="p-3 max-h-40 overflow-y-auto font-mono text-xs bg-black"
+        p={3}
+        maxH="200px"
+        overflowY="auto"
+        fontFamily="mono"
+        fontSize="xs"
+        bg="background"
       >
         {lines.map((line, index) => (
-          <div key={index} className={`${getLineColor(line.type)} mb-0.5`}>
-            <span className="text-gray-500">[{formatTime(line.timestamp)}]</span>{" "}
+          <Box key={index} color={getLineColor(line.type)} mb={0.5}>
+            <Text as="span" color={dimColor}>[{formatTime(line.timestamp)}]</Text>{" "}
             {line.server && <ServerIcon server={line.server} status={line.status} />}{" "}
-            {line.message}
-          </div>
+            <Text as="span">{line.message}</Text>
+          </Box>
         ))}
 
-        {/* Show skateboard loader when any server is being tried */}
         {isLoading(lines) && (
-          <div className="mt-1 mb-1">
+          <Box mt={1} mb={1}>
             <SkateboardLoader serverName={getCurrentServer(lines)} progress={progress} stage={stage} />
-          </div>
+          </Box>
         )}
 
-        {/* Auto-close countdown message on success */}
         {countdown !== null && countdown > 0 && (
-          <div className="mt-2 text-gray-400">
-            <span className="text-green-400">✨ Auto-closing in </span>
-            <span className="text-yellow-400 font-bold">{countdown}</span>
-            <span className="text-green-400"> seconds...</span>
-            <button
-              onClick={cancelCountdown}
-              className="ml-2 text-gray-500 hover:text-white underline"
+          <Box mt={2} color={dimColor}>
+            <Text as="span" color="success">✨ Auto-closing in </Text>
+            <Text as="span" color="warning" fontWeight="bold">{countdown}</Text>
+            <Text as="span" color="success"> seconds...</Text>
+            <Button
+              size="xs"
+              ml={2}
+              variant="ghost"
+              color={dimColor}
+              _hover={{ color: textColor, bg: "whiteAlpha.100" }}
+              onClick={() => {
+                if (countdownRef.current) {
+                  clearTimeout(countdownRef.current);
+                }
+                setCountdown(null);
+              }}
             >
               [keep open]
-            </button>
-          </div>
+            </Button>
+          </Box>
         )}
 
-        {/* Blinking cursor */}
-        <span className="inline-block w-1.5 h-3 bg-green-400 animate-pulse" />
-      </div>
+        <Box as="span" display="inline-block" w={1.5} h={3} bg="primary" className="animate-pulse" />
+      </Box>
 
-      {/* Debug Panel (only in debug mode) */}
-      {debugMode && errorDetails && (
-        <div className="px-3 py-2 bg-gray-800 border-t border-gray-700">
-          <div className="text-[10px] font-mono text-gray-400 mb-1">
-            🔧 DEBUG
-          </div>
-          <div className="grid grid-cols-2 gap-1 text-[10px] font-mono">
-            <div>
-              <span className="text-gray-500">type:</span>{" "}
-              <span className="text-yellow-400">{errorDetails.errorType || "?"}</span>
-            </div>
-            <div>
-              <span className="text-gray-500">code:</span>{" "}
-              <span className="text-yellow-400">{errorDetails.statusCode || "?"}</span>
-            </div>
-            <div>
-              <span className="text-gray-500">server:</span>{" "}
-              <span className="text-yellow-400">{errorDetails.failedServer || "?"}</span>
-            </div>
-            <div className="col-span-2 truncate">
-              <span className="text-gray-500">error:</span>{" "}
-              <span className="text-red-400">{errorDetails.rawError || "?"}</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Action Buttons */}
       {onClose && (
-        <div className="px-3 py-2 bg-gray-800 border-t border-gray-700 flex justify-between items-center">
-          {/* Show countdown info or error state */}
-          <div className="text-xs font-mono">
+        <Flex
+          px={3}
+          py={2}
+          bg={headerBgColor}
+          borderTop="1px solid"
+          borderColor={borderColor}
+          justifyContent="space-between"
+          alignItems="center"
+        >
+          <Box fontSize="xs" fontFamily="mono">
             {hasError ? (
-              <span className="text-red-400">❌ Error occurred - terminal will stay open</span>
+              <Text color="error">❌ Error occurred - terminal will stay open</Text>
             ) : countdown !== null && countdown > 0 ? (
-              <span className="text-green-400">
-                🎉 Success! Closing in {countdown}s
-              </span>
+              <Text color="success">🎉 Success! Closing in {countdown}s</Text>
             ) : countdown === null && isFullyComplete ? (
-              <span className="text-green-400">✅ Upload complete</span>
+              <Text color="success">✅ Upload complete</Text>
             ) : null}
-          </div>
+          </Box>
 
-          <div className="flex gap-2">
+          <Flex gap={2}>
             {countdown !== null && (
-              <button
-                onClick={cancelCountdown}
-                className="px-3 py-1 text-xs font-mono bg-blue-600 text-white rounded hover:bg-blue-500 transition-colors"
+              <Button
+                size="xs"
+                bg="blue.600"
+                color="white"
+                _hover={{ bg: "blue.500" }}
+                onClick={() => {
+                  if (countdownRef.current) {
+                    clearTimeout(countdownRef.current);
+                  }
+                  setCountdown(null);
+                }}
               >
                 Keep Open
-              </button>
+              </Button>
             )}
-            <button
+            <Button
+              size="xs"
+              bg={dimColor}
+              color={textColor}
+              _hover={{ bg: "whiteAlpha.200" }}
               onClick={onClose}
-              className="px-3 py-1 text-xs font-mono bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors"
             >
               {hasError ? "Close" : "Dismiss"}
-            </button>
-          </div>
-        </div>
+            </Button>
+          </Flex>
+        </Flex>
       )}
-    </div>
+    </Box>
   );
 };
 
-// Helper to determine server status from lines
-function getServerStatus(
-  lines: TerminalLine[],
-  server: string
-): "pending" | "trying" | "success" | "failed" | undefined {
-  const serverLines = lines.filter((l) => l.server === server);
-  if (serverLines.length === 0) return "pending";
-
-  const lastLine = serverLines[serverLines.length - 1];
-  return lastLine.status;
-}
-
-// Helper to check if any server is currently being tried (loading state)
-function isLoading(lines: TerminalLine[]): boolean {
-  if (lines.length === 0) return false;
-
-  // Check if upload completed (success or error)
-  const hasCompletion = lines.some(l =>
-    l.message.includes("Video ready!") ||
-    l.message.includes("🎉") ||
-    l.message.includes("IPFS CID:") ||
-    l.message.includes("✓ Transcoding successful") ||
-    l.message.includes("✓ IPFS upload successful") ||
-    (l.type === "error" && l.message.includes("failed"))
-  );
-
-  if (hasCompletion) return false;
-
-  // Check if any server has "trying" status - use SERVER_CONFIG for order
-  const allServers = ["pinata", ...SERVER_CONFIG.map(s => s.key)];
-  for (const server of allServers) {
-    const status = getServerStatus(lines, server);
-    if (status === "trying") return true;
-  }
-
-  // Also check if last line indicates ongoing activity
-  const lastLine = lines[lines.length - 1];
-  if (lastLine.type === "info" &&
-    (lastLine.message.includes("Uploading") ||
-      lastLine.message.includes("Processing") ||
-      lastLine.message.includes("Trying") ||
-      lastLine.message.includes("Starting"))) {
-    return true;
-  }
-
-  return false;
-}
-
-// Helper to get the name of the server currently being tried - uses SERVER_CONFIG
-function getCurrentServer(lines: TerminalLine[]): string | undefined {
-  // Build server names map dynamically from SERVER_CONFIG
-  const serverNames: Record<string, string> = {
-    pinata: "Pinata IPFS",
-    ...Object.fromEntries(SERVER_CONFIG.map(s => [s.key, s.name]))
-  };
-
-  // Check in order: pinata first, then SERVER_CONFIG order
-  const allServers = ["pinata", ...SERVER_CONFIG.map(s => s.key)];
-  for (const server of allServers) {
-    const status = getServerStatus(lines, server);
-    if (status === "trying") return serverNames[server];
-  }
-
-  return undefined;
-}
-
-// Hook to manage terminal state
 export function useUploadTerminal() {
   const [lines, setLines] = useState<TerminalLine[]>([]);
   const [isVisible, setIsVisible] = useState(false);

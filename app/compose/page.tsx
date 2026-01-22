@@ -11,26 +11,23 @@ import {
   Text,
   HStack,
   VStack,
+  Alert,
+  AlertIcon,
 } from "@chakra-ui/react";
 import ImageCompressor, {
   ImageCompressorRef,
 } from "@/lib/utils/ImageCompressor";
 import VideoUploader, {
   VideoUploaderRef,
-} from "../../components/homepage/VideoUploader";
-
-import HashtagInput from "../../components/compose/HashtagInput";
-import BeneficiariesInput from "../../components/compose/BeneficiariesInput";
-
-import ThumbnailPicker from "../../components/compose/ThumbnailPicker";
-import MarkdownEditor from "../../components/compose/MarkdownEditor";
-import { useComposeForm } from "../../hooks/useComposeForm";
-import {
-  useImageUpload,
-  useVideoUpload,
-  useFileDropUpload,
-} from "../../hooks/useFileUpload";
+} from "@/components/homepage/VideoUploader";
+import HashtagInput from "@/components/compose/HashtagInput";
+import BeneficiariesInput from "@/components/compose/BeneficiariesInput";
+import ThumbnailPicker from "@/components/compose/ThumbnailPicker";
+import MarkdownEditor from "@/components/compose/MarkdownEditor";
+import { useComposeForm } from "@/hooks/useComposeForm";
+import { useImageUpload, useVideoUpload, useFileDropUpload } from "@/hooks/useFileUpload";
 import { useDropzone } from "react-dropzone";
+import { APP_CONFIG } from "@/config/app.config";
 
 export default function Composer() {
   const {
@@ -72,25 +69,38 @@ export default function Composer() {
 
   const handleImageUploadWithCaption = async (
     url: string | null,
-    fileName?: string
+    fileName?: string,
+    originalFile?: File
   ) => {
+    console.log("🔍 handleImageUploadWithCaption called:", { url, fileName, hasOriginalFile: !!originalFile });
     setIsImageUploading(true);
+    setUploadError(null);
     if (url) {
       try {
-        const blob = await fetch(url).then((res) => res.blob());
+        console.log("📤 Fetching blob and uploading to IPFS...");
+        const blob = await fetch(url).then((res) => {
+          if (!res.ok) throw new Error(`Failed to fetch blob: ${res.status}`);
+          return res.blob();
+        });
         const { uploadToIpfs } = await import("@/lib/markdown/composeUtils");
         const ipfsUrl = await uploadToIpfs(
           blob,
           fileName || "compressed-image.jpg"
         );
+        console.log("✅ IPFS upload successful:", ipfsUrl);
 
+        console.log("📝 Inserting at cursor...");
         insertAtCursorWrapper(`\n![](${ipfsUrl})\n`);
+        console.log("✅ Insert complete!");
       } catch (error) {
-        console.error("Error uploading compressed image to IPFS:", error);
+        console.error("❌ Error uploading image:", error);
+        setUploadError(`Failed to upload image: ${error instanceof Error ? error.message : 'Unknown error'}`);
       } finally {
         setIsImageUploading(false);
       }
     } else {
+      console.warn("⚠️ No URL provided to handleImageUploadWithCaption");
+      setUploadError("Image upload failed. No URL received from compressor.");
       setIsImageUploading(false);
     }
   };
@@ -104,12 +114,12 @@ export default function Composer() {
 
   const {
     isCompressingVideo,
-    handleVideoUpload,
     createVideoTrigger,
     setIsCompressingVideo,
   } = useVideoUpload(insertAtCursorWrapper);
 
   const [videoError, setVideoError] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const handleGifUpload = async (gifBlob: Blob, fileName: string) => {
     try {
@@ -143,7 +153,7 @@ export default function Composer() {
     <Flex
       width="100%"
       minHeight="100vh"
-      bg="#0d0e12"
+      bg="background"
       justify="center"
       p={{ base: 3, md: 6 }}
       direction="column"
@@ -167,13 +177,15 @@ export default function Composer() {
           fontWeight="600"
           flex="1"
           minW={0}
-          border="1px solid rgba(255,255,255,0.08)"
-          color="#e0e0e0"
-          _placeholder={{ color: "#666" }}
-          _hover={{ borderColor: "rgba(255,255,255,0.15)" }}
+          border="1px solid"
+          borderColor="inputBorder"
+          color="inputText"
+          bg="inputBg"
+          _placeholder={{ color: "inputPlaceholder" }}
+          _hover={{ borderColor: "primary" }}
           _focus={{
-            borderColor: "#6a9e6a",
-            boxShadow: "0 0 0 1px #6a9e6a",
+            borderColor: "primary",
+            boxShadow: "0 0 0 1px var(--chakra-colors-primary)",
           }}
           maxLength={123}
         />
@@ -181,54 +193,77 @@ export default function Composer() {
 
       {isUploading && (
         <Center mb={3}>
-          <HStack spacing={2} color="#888">
-            <Spinner size="sm" color="#6a9e6a" />
+          <HStack spacing={2} color="dim">
+            <Spinner size="sm" color="primary" />
             <Text fontSize="sm">Uploading...</Text>
           </HStack>
         </Center>
       )}
 
-      <Flex width="100%" justify="flex-end" mb={3} maxWidth="1200px" mx="auto">
-        <Box minWidth="200px">
+      <Flex width="100%" justify="center" mb={3}>
+        <Box width="100%" maxWidth="1200px">
           <VideoUploader
             ref={videoUploaderRef}
-            onUpload={handleVideoUpload}
             username={user?.user?.username}
             onUploadStart={() => {
               setVideoError(null);
               setIsCompressingVideo(true);
             }}
-            onUploadFinish={() => setIsCompressingVideo(false)}
-            onError={setVideoError}
+            onUploadFinish={() => {
+              setIsCompressingVideo(false);
+            }}
+            onError={(error: string) => {
+              console.error("Video upload error:", error);
+              setVideoError(error);
+            }}
+            onUpload={(result: { url?: string; hash?: string } | null) => {
+              console.log("Video upload result:", result);
+              if (result?.url) {
+                // Insert iframe into markdown body
+                const hashMatch = result.url.match(/\/ipfs\/([\w-]+)/);
+                const videoId = hashMatch ? hashMatch[1] : null;
+                
+                if (videoId) {
+                  insertAtCursorWrapper(
+                    `\n<iframe src="https://${APP_CONFIG.IPFS_GATEWAY}/ipfs/${videoId}" width="100%" height="400" frameborder="0" allowfullscreen></iframe>\n`
+                  );
+                } else {
+                  insertAtCursorWrapper(
+                    `\n<iframe src="${result.url}" width="100%" height="400" frameborder="0" allowfullscreen></iframe>\n`
+                  );
+                }
+              }
+            }}
           />
         </Box>
       </Flex>
 
-
       {videoError && (
-        <Center
-          bg="rgba(180,80,80,0.1)"
-          color="#c87070"
-          p={3}
-          mb={3}
-          maxWidth="1200px"
-          mx="auto"
+        <Alert 
+          status="error" 
+          mb={3} 
+          maxWidth="1200px" 
+          mx="auto" 
           width="100%"
+          bg="rgba(200, 50, 50, 0.1)"
+          border="1px solid"
+          borderColor="error"
+          color="text"
         >
-          <Flex direction="column" align="center" gap={2} width="100%">
-            <Text fontSize="sm">❌ {videoError}</Text>
-            <Button
-              size="xs"
-              bg="rgba(180,80,80,0.2)"
-              color="#c87070"
-              border="1px solid rgba(180,80,80,0.2)"
-              _hover={{ bg: "rgba(180,80,80,0.3)" }}
-              onClick={() => setVideoError(null)}
-            >
-              Dismiss
-            </Button>
-          </Flex>
-        </Center>
+          <AlertIcon color="error" />
+          <Box flex="1">
+            <Text fontWeight="bold" mb={1}>Video Upload Failed</Text>
+            <Text whiteSpace="pre-wrap" fontSize="sm">{videoError}</Text>
+          </Box>
+          <Button
+            size="sm"
+            variant="ghost"
+            color="error"
+            onClick={() => setVideoError(null)}
+          >
+            Dismiss
+          </Button>
+        </Alert>
       )}
 
       <Flex
@@ -237,7 +272,8 @@ export default function Composer() {
         width="100%"
         maxWidth="1200px"
         mx="auto"
-        border="1px solid rgba(255,255,255,0.08)"
+        border="1px solid"
+        borderColor="border"
       >
         <Box flex={1} display="flex" flexDirection="column" overflow="hidden">
           <MarkdownEditor
@@ -263,6 +299,34 @@ export default function Composer() {
         />
       </Flex>
 
+      {uploadError && (
+        <Alert 
+          status="error" 
+          mb={3} 
+          maxWidth="1200px" 
+          mx="auto" 
+          width="100%"
+          bg="rgba(200, 50, 50, 0.1)"
+          border="1px solid"
+          borderColor="error"
+          color="text"
+        >
+          <AlertIcon color="error" />
+          <Box flex="1">
+            <Text fontWeight="bold" mb={1}>Image Upload Failed</Text>
+            <Text whiteSpace="pre-wrap" fontSize="sm">{uploadError}</Text>
+          </Box>
+          <Button
+            size="sm"
+            variant="ghost"
+            color="error"
+            onClick={() => setUploadError(null)}
+          >
+            Dismiss
+          </Button>
+        </Alert>
+      )}
+
       <Box maxWidth="1200px" mx="auto" width="100%" mt={4}>
         <HashtagInput
           hashtags={hashtags}
@@ -278,15 +342,15 @@ export default function Composer() {
             size="sm"
             onClick={() => setActiveSettingsTab("thumbnail")}
             border="1px solid"
-            borderColor={activeSettingsTab === "thumbnail" ? "#6a9e6a" : "rgba(255,255,255,0.08)"}
-            borderBottomColor={activeSettingsTab === "thumbnail" ? "#16191f" : "rgba(255,255,255,0.08)"}
-            bg={activeSettingsTab === "thumbnail" ? "#16191f" : "transparent"}
-            color={activeSettingsTab === "thumbnail" ? "#6a9e6a" : "#888"}
+            borderColor={activeSettingsTab === "thumbnail" ? "primary" : "border"}
+            borderBottomColor={activeSettingsTab === "thumbnail" ? "background" : "border"}
+            bg={activeSettingsTab === "thumbnail" ? "panel" : "transparent"}
+            color={activeSettingsTab === "thumbnail" ? "primary" : "dim"}
             fontWeight="medium"
             fontSize="sm"
             _hover={{
-              bg: activeSettingsTab === "thumbnail" ? "#16191f" : "rgba(255,255,255,0.03)",
-              color: activeSettingsTab === "thumbnail" ? "#6a9e6a" : "#ccc",
+              bg: activeSettingsTab === "thumbnail" ? "panelHover" : "subtle",
+              color: activeSettingsTab === "thumbnail" ? "primary" : "text",
             }}
             mr="-1px"
             px={4}
@@ -298,15 +362,15 @@ export default function Composer() {
             size="sm"
             onClick={() => setActiveSettingsTab("beneficiaries")}
             border="1px solid"
-            borderColor={activeSettingsTab === "beneficiaries" ? "#6a9e6a" : "rgba(255,255,255,0.08)"}
-            borderBottomColor={activeSettingsTab === "beneficiaries" ? "#16191f" : "rgba(255,255,255,0.08)"}
-            bg={activeSettingsTab === "beneficiaries" ? "#16191f" : "transparent"}
-            color={activeSettingsTab === "beneficiaries" ? "#6a9e6a" : "#888"}
+            borderColor={activeSettingsTab === "beneficiaries" ? "primary" : "border"}
+            borderBottomColor={activeSettingsTab === "beneficiaries" ? "background" : "border"}
+            bg={activeSettingsTab === "beneficiaries" ? "panel" : "transparent"}
+            color={activeSettingsTab === "beneficiaries" ? "primary" : "dim"}
             fontWeight="medium"
             fontSize="sm"
             _hover={{
-              bg: activeSettingsTab === "beneficiaries" ? "#16191f" : "rgba(255,255,255,0.03)",
-              color: activeSettingsTab === "beneficiaries" ? "#6a9e6a" : "#ccc",
+              bg: activeSettingsTab === "beneficiaries" ? "panelHover" : "subtle",
+              color: activeSettingsTab === "beneficiaries" ? "primary" : "text",
             }}
             ml="-1px"
             px={4}
@@ -319,8 +383,9 @@ export default function Composer() {
         {activeSettingsTab === "thumbnail" && (
           <Box
             p={4}
-            bg="#16191f"
-            border="1px solid rgba(255,255,255,0.08)"
+            bg="panel"
+            border="1px solid"
+            borderColor="border"
           >
             <ThumbnailPicker
               show={true}
@@ -334,8 +399,9 @@ export default function Composer() {
         {activeSettingsTab === "beneficiaries" && (
           <Box
             p={4}
-            bg="#16191f"
-            border="1px solid rgba(255,255,255,0.08)"
+            bg="panel"
+            border="1px solid"
+            borderColor="border"
           >
             <BeneficiariesInput
               beneficiaries={beneficiaries}
@@ -351,8 +417,8 @@ export default function Composer() {
       <Flex mt={4} justify="flex-end" maxWidth="1200px" mx="auto" width="100%">
         <Button
           size="md"
-          bg="#5a7a5a"
-          color="#fff"
+          bg="primary"
+          color="background"
           fontWeight="bold"
           onClick={handleSubmit}
           isLoading={isSubmitting}
@@ -360,7 +426,7 @@ export default function Composer() {
           isDisabled={isSubmitting || !title.trim() || !selectedThumbnail}
           px={10}
           h="44px"
-          _hover={{ bg: "#6a8c6a" }}
+          _hover={{ bg: "accent" }}
         >
           Publish
         </Button>
