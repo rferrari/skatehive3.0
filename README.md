@@ -38,36 +38,49 @@ Once setup completes, run `pnpm dev` to launch the application.
 
 ## Environment Variables
 
-The app relies on a number of environment variables. The most common ones are provided in `.env.local.example`:
+The app uses a centralized configuration system where sensible defaults are stored in `config/app.config.ts` (committed to version control). Only secrets and deployment-specific overrides should live in `.env.local`.
+
+### Minimal Setup
+
+For a basic local installation, copy `.env.local.example` to `.env.local` and set only the Hive posting key:
 
 ```bash
-NEXT_PUBLIC_THEME=your_theme            # Available: bluesky, hacker, forest, nounish, etc.
-NEXT_PUBLIC_HIVE_COMMUNITY_TAG=hive-xxxxx
-NEXT_PUBLIC_HIVE_SEARCH_TAG=hive-xxxxx
-NEXT_PUBLIC_HIVE_USER=skatedev
-NEXT_PUBLIC_BASE_URL=http://localhost:3000
-HIVE_POSTING_KEY=posting_key_here
-
-# Optional Postgres database (used for Farcaster notifications)
-STORAGE_POSTGRES_URL=postgres://user:password@host:port/database?sslmode=require
-
-# Farcaster notification settings
-FARCASTER_INIT_PASSWORD=your_secure_password_for_database_init
-
-# Admin users for Farcaster notification system (comma-separated usernames)
-ADMIN_USERS=user1,user2,user3
+HIVE_POSTING_KEY=your_hive_posting_key
 ```
 
-Additional variables used by specific features:
+All other values (Hive tags, app account, DAO addresses, etc.) are pre-configured in `config/app.config.ts`.
 
-- `ADMIN_USERS` – comma-separated list of usernames with admin privileges for Farcaster notifications (e.g., `user1,user2,user3`)
+### Forking the Project
+
+If you fork Skatehive for your own community, you can override default settings in `.env.local`:
+
+```bash
+# Override your community settings
+NEXT_PUBLIC_BASE_URL=https://your-community.app
+NEXT_PUBLIC_THEME=your_theme
+```
+
+Important: The core configuration (Hive tags, DAO contract addresses, app account) is defined in `config/app.config.ts`. To fully customize your fork, create your own config file with your values for:
+
+- `HIVE_CONFIG.COMMUNITY_TAG` – your Hive community tag
+- `HIVE_CONFIG.SEARCH_TAG` – your search tag
+- `HIVE_CONFIG.APP_ACCOUNT` – your app's default Hive user
+- `DAO_ADDRESSES` – your DAO contract addresses (if using DAO features)
+- `APP_CONFIG.NAME`, `APP_CONFIG.DOMAIN` – your app branding
+
+### Optional Features
+
+Add these variables to `.env.local` as needed:
+
+- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLIC_KEY`, `SUPABASE_SERVICE_ROLE_KEY` – Supabase integration
 - `PINATA_JWT` – JWT token for Pinata/IPFS uploads (get from Pinata dashboard > API Keys)
 - `GIPHY_API_KEY` – GIF search in the composer
-- `NEXT_PUBLIC_ZORA_API_KEY` – obtain a Zora API key to enable Zora embeds
-- `EMAIL_USER`, `EMAIL_PASS`, `EMAIL_COMMUNITY`, `EMAIL_RECOVERYACC` – sending invite emails
-- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLIC_KEY`, `SUPABASE_PRIVATE_KEY` – Supabase integration
-- Ethereum/Wagmi keys such as `NEXT_PUBLIC_WC_PROJECT_ID`, `ETHERSCAN_API_KEY`, `NEXT_PUBLIC_ALCHEMY_KEY` and DAO addresses (`NEXT_PUBLIC_TOKEN`, `NEXT_PUBLIC_METADATA`, `NEXT_PUBLIC_AUCTION`, `NEXT_PUBLIC_TREASURY`, `NEXT_PUBLIC_GOVERNOR`)
-- `FARCASTER_HUB_URL` – custom Farcaster hub (optional)
+- `NEXT_PUBLIC_ZORA_API_KEY` – Zora embeds
+- `EMAIL_USER`, `EMAIL_PASS`, `EMAIL_RECOVERYACC` – email settings for invites
+- `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`, `NEXT_PUBLIC_ALCHEMY_KEY`, `ETHERSCAN_API_KEY` – Web3 features
+- `FARCASTER_HUB_URL`, `FARCASTER_INIT_PASSWORD` – Farcaster notifications
+- `ADMIN_USERS` – comma-separated list of admin usernames
+- `JWT_SECRET`, `VIP_PEPPER`, `SIGNER_URL`, `SIGNER_TOKEN` – signup/signer system
 
 ## Application Features
 
