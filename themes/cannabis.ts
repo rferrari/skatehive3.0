@@ -25,6 +25,14 @@ const cannabisTheme = extendTheme({
         error: '#d32f2f',  // Red for errors
         success: '#66bb6a',  // Green for success messages
         warning: '#ffb300',  // Orange for warnings
+        panel: '#FFFFFF',      // Slightly lighter than background for panels
+        panelHover: '#F5F5F5', // Hover state for panels
+        inputBg: '#FFFFFF',    // White background for inputs
+        inputBorder: '#CCCCCC', // Medium contrast border for inputs
+        inputText: '#212121',   // Readable text for inputs
+        inputPlaceholder: '#9E9E9E', // Gray text for placeholders
+        dim: '#757575',        // Medium gray for secondary text
+        subtle: 'rgba(0, 0, 0, 0.04)', // Very transparent for subtle hovers
     },
     fonts: {
         heading: oswald.style.fontFamily + ', sans-serif',

@@ -23,7 +23,15 @@ const hackerRedTheme = extendTheme({
     error: COLORS.RED_500,
     success: COLORS.GREEN_500,
     warning: COLORS.YELLOW_500,
-  },
+      panel: COLORS.GRAY_800,      // Slightly lighter than background for panels
+      panelHover: COLORS.GRAY_700, // Hover state for panels
+      inputBg: COLORS.GRAY_800,    // Dark background for inputs
+      inputBorder: COLORS.GRAY_700, // Medium contrast border for inputs
+      inputText: COLORS.YELLOW_600,   // Readable text for inputs
+      inputPlaceholder: COLORS.GRAY_500, // Gray text for placeholders
+      dim: COLORS.GRAY_500,        // Medium gray for secondary text
+      subtle: 'rgba(255, 98, 0, 0.08)', // Very transparent for subtle hovers
+    },
   fonts: {
     heading: '"Fira Code", monospace',
     body: '"Fira Code", monospace',

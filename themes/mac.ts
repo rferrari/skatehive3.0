@@ -15,6 +15,14 @@ const macTheme = extendTheme({
         error: COLORS.RED_600, // R-T1, closest to tomato red
         success: COLORS.GREEN_500, // YG-T1, closest to yellow-green
         warning: COLORS.YELLOW_600, // O-HUE, closest to orange
+        panel: '#E6E6F0',      // Slightly lighter than background for panels
+        panelHover: '#D8D8E4', // Hover state for panels
+        inputBg: '#FFFFFF',    // White background for inputs
+        inputBorder: '#B0B0BC', // Medium contrast border for inputs
+        inputText: COLORS.GRAY_700,   // Readable text for inputs
+        inputPlaceholder: '#9898A4', // Gray text for placeholders
+        dim: '#707078',        // Medium gray for secondary text
+        subtle: 'rgba(0, 0, 0, 0.04)', // Very transparent for subtle hovers
     },
     fonts: {
         heading: '"Chicago", "OCR-A", "Courier New", sans-serif', // Authentic Chicago font for Mac theme

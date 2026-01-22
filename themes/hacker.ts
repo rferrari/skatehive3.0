@@ -17,16 +17,24 @@ const hackerTheme = extendTheme({
     initialColorMode: 'dark', // set 'light' or 'dark' as the default color mode
     useSystemColorMode: false,
     colors: {
-        background: '#0f0f0f', // Black background, typical of hacker aesthetics
-        text: '#00FF00', // Bright green text, reminiscent of terminal output
-        primary: '#00FF00', // Bright green for primary actions
-        secondary: '#252926', // Dark gray for secondary elements
-        accent: '#BD93F9', // purple for accentuating certain elements
-        muted: '#1a1a1a', // Slightly lighter black for muted elements
-        border: '#00FF00', // Green for borders to maintain the hacker vibe
-        error: '#FF4136', // Bright red for errors
-        success: '#2ECC40', // Green for success messages
-        warning: '#FF851B', // Orange for warnings
+        background: '#0f0f0f',
+        text: '#00FF00',
+        primary: '#00FF00',
+        secondary: '#252926',
+        accent: '#BD93F9',
+        muted: '#1a1a1a',
+        border: '#00FF00',
+        error: '#FF4136',
+        success: '#2ECC40',
+        warning: '#FF851B',
+        panel: '#151515',
+        panelHover: '#1F1F1F',
+        inputBg: '#0A0A0A',
+        inputBorder: '#333333',
+        inputText: '#00FF00',
+        inputPlaceholder: '#008800',
+        dim: '#00AA00',
+        subtle: 'rgba(0,255,0,0.06)',
     },
     fonts: {
         heading: 'var(--font-vt323), monospace',

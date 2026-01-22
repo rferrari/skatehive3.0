@@ -26,6 +26,14 @@ const hiveBRTheme = extendTheme({
         error: COLORS.RED_600,
         success: COLORS.GREEN_500,
         warning: COLORS.YELLOW_500,
+        panel: '#FFFFFF',      // Slightly lighter than background for panels
+        panelHover: '#F5F5F5', // Hover state for panels
+        inputBg: '#FFFFFF',    // White background for inputs
+        inputBorder: COLORS.GRAY_300, // Medium contrast border for inputs
+        inputText: COLORS.GRAY_800,   // Readable text for inputs
+        inputPlaceholder: COLORS.GRAY_500, // Gray text for placeholders
+        dim: COLORS.GRAY_600,        // Medium gray for secondary text
+        subtle: 'rgba(0, 0, 0, 0.04)', // Very transparent for subtle hovers
     },
     fonts: {
         heading: montserrat.style.fontFamily + ', sans-serif',

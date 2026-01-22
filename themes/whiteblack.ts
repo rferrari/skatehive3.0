@@ -13,17 +13,25 @@ const whiteBlackTheme = extendTheme({
     },
   },
   colors: {
-    background: COLORS.WHITE,       // Pure white background
-    text: COLORS.BLACK,             // Pure black text
-    primary: COLORS.BLACK,          // Black for primary elements
-    'primary-alpha': COLORS.BLACK + '80', // Semi-transparent black
-    secondary: COLORS.GRAY_500,        // Medium gray for secondary elements
-    accent: COLORS.GRAY_700,          // Dark gray for highlights
-    muted: COLORS.GRAY_100,           // Very light gray for muted backgrounds
-    border: COLORS.BLACK,          // Black borders
-    error: COLORS.BLACK,           // Black for errors (monochrome)
-    success: COLORS.BLACK,         // Black for success
-    warning: COLORS.GRAY_700,         // Dark gray for warnings
+    background: COLORS.WHITE,
+    text: COLORS.BLACK,
+    primary: COLORS.BLACK,
+    'primary-alpha': COLORS.BLACK + '80',
+    secondary: COLORS.GRAY_500,
+    accent: COLORS.GRAY_700,
+    muted: COLORS.GRAY_100,
+    border: COLORS.BLACK,
+    error: COLORS.BLACK,
+    success: COLORS.BLACK,
+    warning: COLORS.GRAY_700,
+    panel: COLORS.GRAY_50,
+    panelHover: COLORS.GRAY_200,
+    inputBg: COLORS.WHITE,
+    inputBorder: COLORS.GRAY_400,
+    inputText: COLORS.BLACK,
+    inputPlaceholder: COLORS.GRAY_500,
+    dim: COLORS.GRAY_500,
+    subtle: 'rgba(0,0,0,0.04)',
   },
   fonts: {
     heading: '"Helvetica Neue", Arial, sans-serif',

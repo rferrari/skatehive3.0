@@ -27,6 +27,14 @@ const gruvboxNoggTheme = extendTheme({
         error: COLORS.GRUVBOX_RED_BRIGHT, // Bright red for errors
         success: COLORS.GRUVBOX_GREEN_BRIGHT, // Bright green for success
         warning: COLORS.GRUVBOX_YELLOW, // Yellow for warnings
+        panel: COLORS.GRUVBOX_DARK_BG_SOFT, // Slightly lighter than background for panels
+        panelHover: COLORS.GRUVBOX_DARK_BG_HARD, // Hover state for panels
+        inputBg: COLORS.GRUVBOX_DARK_BG_HARD, // Dark background for inputs
+        inputBorder: COLORS.GRUVBOX_GRAY, // Medium contrast border for inputs
+        inputText: COLORS.GRUVBOX_DARK_FG, // Readable text for inputs
+        inputPlaceholder: COLORS.GRUVBOX_GRAY_DARK, // Gray text for placeholders
+        dim: COLORS.GRUVBOX_GRAY_DARK, // Medium gray for secondary text
+        subtle: 'rgba(254, 128, 25, 0.08)', // Very transparent for subtle hovers
     },
     fonts: {
         heading: 'var(--font-fira-mono), "Fira Code", "Consolas", monospace',

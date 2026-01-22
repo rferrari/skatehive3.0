@@ -15,6 +15,14 @@ const windows95Theme = extendTheme({
         error: COLORS.RED_500, // Bright red for errors
         success: COLORS.GREEN_600, // Green for success messages
         warning: COLORS.YELLOW_500, // Orange for warnings
+        panel: '#E8E8E8',      // Slightly lighter than background for panels
+        panelHover: '#D4D4D4', // Hover state for panels
+        inputBg: '#FFFFFF',    // White background for inputs
+        inputBorder: '#808080', // Medium contrast border for inputs
+        inputText: '#000000',   // Readable text for inputs
+        inputPlaceholder: '#A0A0A0', // Gray text for placeholders
+        dim: '#606060',        // Medium gray for secondary text
+        subtle: 'rgba(0, 0, 0, 0.04)', // Very transparent for subtle hovers
     },
     fonts: {
         heading: '"Tahoma", sans-serif', // Tahoma was commonly used in Windows 95

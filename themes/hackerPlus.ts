@@ -12,17 +12,25 @@ const hackerPlusTheme = extendTheme({
     },
   },
   colors: {
-    background: '#121212',       // Softer than black
-    text: '#A8FF60',             // Muted green for better readability
+    background: '#121212',
+    text: '#A8FF60',
     primary: '#a7ff00',
     'primary-alpha': '#a7ff00',
-    secondary: '#651368ff',        // Slight contrast layer
-    accent: 'rgba(255, 242, 2, 1)',           // purple for highlights
-    muted: '#202020',            // Muted background
-    border: '#A8FF60',           // Harmonized with primary
+    secondary: '#651368ff',
+    accent: 'rgba(255, 242, 2, 1)',
+    muted: '#202020',
+    border: '#A8FF60',
     error: '#FF5C57',
     success: '#5EFF7E',
     warning: '#FFBD4A',
+    panel: '#1A1A1A',
+    panelHover: '#252525',
+    inputBg: '#0D0D0D',
+    inputBorder: '#333333',
+    inputText: '#E0E0E0',
+    inputPlaceholder: '#666666',
+    dim: '#888888',
+    subtle: 'rgba(255,255,255,0.06)',
   },
   fonts: {
     heading: '"Fira Code", monospace',

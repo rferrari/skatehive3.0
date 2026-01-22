@@ -15,16 +15,24 @@ const poppins = Poppins({
 
 const limeTheme = extendTheme({
     colors: {
-        background: `linear-gradient(45deg, ${COLORS.LIME_GREEN}, ${COLORS.LIME_YELLOW_GREEN})`, // YGw-HUE to YGw-T1
-        text: COLORS.BLACK, // BLACK
-        primary: COLORS.PURPLE_800, // M-HUE (hot pink)
-        secondary: COLORS.LIME_YELLOW_GREEN, // YG-HUE
-        accent: COLORS.GREEN_700, // G-HUE
-        muted: COLORS.GRAY_200, // GRAY 9
-        border: COLORS.GRAY_500, // GRAY 5
-        error: COLORS.RED_600, // R-HUE
-        success: COLORS.GREEN_400, // YG-T1
-        warning: COLORS.YELLOW_600, // O-HUE
+        background: `linear-gradient(45deg, ${COLORS.LIME_GREEN}, ${COLORS.LIME_YELLOW_GREEN})`,
+        text: COLORS.BLACK,
+        primary: COLORS.PURPLE_800,
+        secondary: COLORS.LIME_YELLOW_GREEN,
+        accent: COLORS.GREEN_700,
+        muted: COLORS.GRAY_200,
+        border: COLORS.GRAY_500,
+        error: COLORS.RED_600,
+        success: COLORS.GREEN_400,
+        warning: COLORS.YELLOW_600,
+        panel: COLORS.GRAY_100,
+        panelHover: COLORS.GRAY_300,
+        inputBg: COLORS.WHITE,
+        inputBorder: COLORS.GRAY_400,
+        inputText: COLORS.GRAY_800,
+        inputPlaceholder: COLORS.GRAY_500,
+        dim: COLORS.GRAY_500,
+        subtle: 'rgba(0,0,0,0.04)',
     },
     fonts: {
         heading: montserrat.style.fontFamily + ', sans-serif',

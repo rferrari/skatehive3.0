@@ -3,16 +3,24 @@ import { swiperStyles } from './swiperStyles';
 
 const forestTheme = extendTheme({
     colors: {
-        background: '#1C4532', // Forest green background
-        text: '#F0FFF4', // Khaki text color
-        primary: '#9AE6B4', // Dark green for primary actions
-        secondary: '#22543D', // Dark sea green for secondary elements
-        accent: '#48BB78', // Dark olive green for accents
-        muted: '#276749', // Pale green for muted elements
-        border: '#C6F6D5', // Sea green for borders
-        error: '#B22222', // Firebrick red for errors
-        success: '#32CD32', // Lime green for success messages
-        warning: '#DAA520', // Goldenrod for warnings
+        background: '#1C4532',
+        text: '#F0FFF4',
+        primary: '#9AE6B4',
+        secondary: '#22543D',
+        accent: '#48BB78',
+        muted: '#276749',
+        border: '#C6F6D5',
+        error: '#B22222',
+        success: '#32CD32',
+        warning: '#DAA520',
+        panel: '#234D3A',
+        panelHover: '#2A5A45',
+        inputBg: '#152B21',
+        inputBorder: '#48BB78',
+        inputText: '#F0FFF4',
+        inputPlaceholder: '#81C784',
+        dim: '#A5D6A7',
+        subtle: 'rgba(255,255,255,0.06)',
     },
     fonts: {
         heading: '"Georgia", serif',

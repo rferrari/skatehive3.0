@@ -18,6 +18,14 @@ const gayTheme = extendTheme({
         error: '#FF4136', // Bright red for errors
         success: '#2ECC40', // Green for success messages
         warning: '#FF851B', // Orange for warnings
+        panel: '#F8F8F8',      // Slightly lighter than background for panels
+        panelHover: '#EEEEEE', // Hover state for panels
+        inputBg: '#FFFFFF',    // White background for inputs
+        inputBorder: '#DDDDDD', // Medium contrast border for inputs
+        inputText: '#000000',   // Readable text for inputs
+        inputPlaceholder: '#999999', // Gray text for placeholders
+        dim: '#666666',        // Medium gray for secondary text
+        subtle: 'rgba(0, 0, 0, 0.04)', // Very transparent for subtle hovers
     },
     fonts: {
         heading: '"Arial", sans-serif', // Sans-serif font for headings

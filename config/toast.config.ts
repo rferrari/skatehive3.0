@@ -17,7 +17,7 @@ export const TOAST_CONFIG = {
 export const TOAST_STYLES = {
   container: {
     background: "var(--chakra-colors-background)",
-    borderRadius: "8px",
+    borderRadius: "0px",
     padding: "16px",
     boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
     minWidth: "300px",

@@ -1,19 +1,28 @@
 import { extendTheme } from '@chakra-ui/react';
 import { swiperStyles } from './swiperStyles';
+import { COLORS } from './colors';
 
 const blueSkyTheme = extendTheme({
-    colors: {
-        background: '#a0f8ff',
-        text: '#1E90FF',
-        primary: '#1E90FF',
-        secondary: '#4682B4',
-        accent: '#B0C4DE',
-        muted: '#F0F8FF',
-        border: '#1E90FF',
-        error: '#FF6B6B',
-        success: '#38A169',
-        warning: '#FFA500',
-    },
+  colors: {
+    background: '#a0f8ff',
+    text: '#0A2847',
+    primary: '#1E90FF',
+    secondary: '#4682B4',
+    accent: '#B0C4DE',
+    muted: '#E8F4FF',
+    border: '#1E90FF',
+    error: '#FF6B6B',
+    success: '#38A169',
+    warning: '#FFA500',
+    panel: '#B8EAFF',
+    panelHover: '#90DFF5',
+    inputBg: COLORS.WHITE,
+    inputBorder: '#87CEEB',
+    inputText: '#0A2847',
+    inputPlaceholder: '#6B8CAE',
+    dim: '#5A7A8A',
+    subtle: 'rgba(30,144,255,0.08)',
+  },
     fonts: {
         heading: '"Roboto", sans-serif',
         body: '"Open Sans", sans-serif',

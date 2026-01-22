@@ -13,16 +13,24 @@ const retroPaperTheme = extendTheme({
     },
   },
   colors: {
-    background: COLORS.PAPER_WARM, // Y-LP, warm paper-like off-white for retro feel
-    text: COLORS.GRAY_800,       // GRAY 2, dark gray for readable text
-    primary: COLORS.PAPER_RUSTY,    // RO-S1, muted rusty orange for primary elements
-    secondary: COLORS.PAPER_TEAL,  // G-S3, deep teal for contrast
-    accent: COLORS.RED_700,     // R-S1, retro red for highlights
-    muted: COLORS.YELLOW_200,      // Y-P4-3, muted yellowish for subtle backgrounds
-    border: COLORS.GRAY_800,     // GRAY 2, dark gray border for definition
-    error: COLORS.RED_700,      // R-EX, bold red for errors
-    success: COLORS.GREEN_600,    // Gw-T1, retro green for success
-    warning: COLORS.YELLOW_600,    // YO-EX, warm yellow-orange for warnings
+    background: COLORS.PAPER_WARM,
+    text: COLORS.GRAY_800,
+    primary: COLORS.PAPER_RUSTY,
+    secondary: COLORS.PAPER_TEAL,
+    accent: COLORS.RED_700,
+    muted: COLORS.YELLOW_200,
+    border: COLORS.GRAY_800,
+    error: COLORS.RED_700,
+    success: COLORS.GREEN_600,
+    warning: COLORS.YELLOW_600,
+    panel: '#F5EDB8',
+    panelHover: '#EDE8A8',
+    inputBg: COLORS.WHITE,
+    inputBorder: COLORS.GRAY_400,
+    inputText: COLORS.GRAY_800,
+    inputPlaceholder: COLORS.GRAY_500,
+    dim: COLORS.GRAY_500,
+    subtle: 'rgba(0,0,0,0.04)',
   },
   fonts: {
     heading: 'Mechanical, "Courier New", monospace',

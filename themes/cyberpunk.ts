@@ -22,7 +22,15 @@ const cyberpunkTheme = extendTheme({
     error: '#E83032',      // Rw-T1, bright red for errors
     success: '#61CD62',    // YG-T1, green for success states
     warning: '#FDAB2B',    // YO-T1, yellow-orange for warnings
-  },
+      panel: '#1E1E22',      // Slightly lighter than background for panels
+      panelHover: '#2A2A2E', // Hover state for panels
+      inputBg: '#252527',    // Dark background for inputs
+      inputBorder: '#3A3A40', // Medium contrast border for inputs
+      inputText: '#56A7E1',   // Readable text for inputs
+      inputPlaceholder: '#6B6B70', // Gray text for placeholders
+      dim: '#8A8A90',        // Medium gray for secondary text
+      subtle: 'rgba(86, 167, 225, 0.08)', // Very transparent for subtle hovers
+    },
   fonts: {
     heading: '"Fira Code", monospace',
     body: '"Fira Code", monospace',

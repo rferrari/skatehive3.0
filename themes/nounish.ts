@@ -10,16 +10,24 @@ const londrinaSolid = Londrina_Solid({
 
 const nounsDaoTheme = extendTheme({
     colors: {
-        background: `linear-gradient(45deg, ${COLORS.YELLOW_400}, ${COLORS.GRAY_100})`,  // Cool gradient background
-        text: COLORS.GRAY_500,  // Dark gray text
+        background: `linear-gradient(45deg, ${COLORS.YELLOW_400}, ${COLORS.GRAY_100})`,
+        text: COLORS.GRAY_700,
         primary: COLORS.GRAY_900,
-        secondary: COLORS.YELLOW_400,  // Nouns yellow
-        accent: COLORS.RED_800,  // Deep burgundy for accent
-        muted: COLORS.GRAY_100,  // Muted background
-        border: COLORS.GRAY_300,  // Light gray border
-        error: COLORS.RED_500,  // Red for error states
-        success: COLORS.GREEN_500,  // Green for success states
-        warning: COLORS.YELLOW_600,  // Orange for warning states
+        secondary: COLORS.YELLOW_400,
+        accent: COLORS.RED_800,
+        muted: COLORS.GRAY_200,
+        border: COLORS.GRAY_400,
+        error: COLORS.RED_500,
+        success: COLORS.GREEN_500,
+        warning: COLORS.YELLOW_600,
+        panel: COLORS.GRAY_100,
+        panelHover: COLORS.GRAY_200,
+        inputBg: COLORS.WHITE,
+        inputBorder: COLORS.GRAY_400,
+        inputText: COLORS.GRAY_800,
+        inputPlaceholder: COLORS.GRAY_500,
+        dim: COLORS.GRAY_500,
+        subtle: 'rgba(0,0,0,0.04)',
     },
     fonts: {
         heading: londrinaSolid.style.fontFamily + ', cursive',
