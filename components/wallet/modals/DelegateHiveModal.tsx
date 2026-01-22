@@ -86,7 +86,7 @@ export function DelegateHiveModal({
                         About Delegation:
                     </Text>
                     <Text fontSize="xs" color="text">
-                        • Delegated HP increases the recipient's voting power
+                        • Delegated HP increases the recipient&apos;s voting power
                         <br />
                         • You retain ownership of your HP
                         <br />
