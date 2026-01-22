@@ -1,18 +1,13 @@
 "use client";
 
 import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
-  ModalBody,
-  ModalCloseButton,
   HStack,
+  VStack,
   Button,
   Box,
   Text,
 } from "@chakra-ui/react";
+import SkateModal from "@/components/shared/SkateModal";
 import { ArrowBackIcon, CheckIcon } from "@chakra-ui/icons";
 import { useState, useCallback, useEffect } from "react";
 import { useAccount } from "wagmi";
@@ -711,73 +706,31 @@ export function AirdropModal({
   const modalContent = getModalContent();
 
   return (
-    <>
-      <Modal
-        isOpen={isOpen}
-        onClose={handleClose}
-        size={isMobile ? "full" : "xl"}
-        scrollBehavior={isMobile ? "outside" : "inside"}
-        motionPreset="slideInBottom"
+    <SkateModal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title="airdrop-wizard"
+      size={isMobile ? "full" : "xl"}
+      footer={modalContent.footer}
+      blockScrollOnMount={false}
+    >
+      <Box 
+        px={isMobile ? 4 : 8}
+        pb={isMobile ? 2 : 8}
+        h={isMobile ? "calc(95vh - 120px)" : "auto"}
+        maxH={isMobile ? "calc(95vh - 120px)" : "calc(90vh - 120px)"}
+        overflowY="auto"
       >
-        <ModalOverlay bg="blackAlpha.600" />
-        <ModalContent
-          bg="background"
-          color="text"
-          borderRadius={isMobile ? "0" : "10px"}
-          border="1px solid"
-          borderColor="border"
-          shadow="lg"
-          mx={isMobile ? 0 : 4}
-          maxH={isMobile ? "95vh" : "90vh"}
-          h={isMobile ? "95vh" : "auto"}
-          display="flex"
-          flexDirection="column"
-        >
-          <ModalHeader
-            textAlign="center"
-            fontSize="2xl"
-            fontWeight="bold"
-            color="primary"
-            pb={2}
-            flexShrink={0}
-          >
+        <VStack spacing={4} align="stretch">
+          {/* Custom Header */}
+          <Box textAlign="center" py={4}>
             {modalContent.title}
-          </ModalHeader>
-          {/* Only show close button on first step to prevent accidental modal closure */}
-          {currentView === "tokenSelection" && (
-            <ModalCloseButton
-              color="red"
-              _hover={{ color: "background", bg: "primary" }}
-              borderRadius="full"
-            />
-          )}
-
-          <ModalBody
-            px={isMobile ? 4 : 8}
-            pb={isMobile ? 2 : 8}
-            flex="1"
-            overflowY="auto"
-            display="flex"
-            flexDirection="column"
-            minH={0}
-          >
-            {modalContent.content}
-          </ModalBody>
-
-          <ModalFooter
-            flexShrink={0}
-            px={isMobile ? 4 : 6}
-            py={isMobile ? 6 : 6}
-            pb={isMobile ? "calc(1.5rem + env(safe-area-inset-bottom))" : 6}
-            borderTop={isMobile ? "1px solid" : "none"}
-            borderTopColor={isMobile ? "border" : "transparent"}
-            bg={isMobile ? "rgba(0, 0, 0, 0.02)" : "transparent"}
-          >
-            {modalContent.footer}
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-    </>
+          </Box>
+          {/* Content */}
+          {modalContent.content}
+        </VStack>
+      </Box>
+    </SkateModal>
   );
 }
 

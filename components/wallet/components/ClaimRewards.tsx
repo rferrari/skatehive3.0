@@ -113,7 +113,6 @@ export default function ClaimRewards({
           mt={2}
           mb={4}
           bg="background"
-          borderRadius="none"
           border="1px solid"
           borderColor="gray.200"
         >

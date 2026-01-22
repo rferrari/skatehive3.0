@@ -200,7 +200,6 @@ export function AnnouncementPreviewStep({
           <Box
             p={6}
             bg="cardBg"
-            borderRadius="lg"
             border="2px solid"
             borderColor="border"
             maxH={isMobile ? "400px" : "500px"}

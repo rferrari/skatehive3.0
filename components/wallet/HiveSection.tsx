@@ -36,7 +36,6 @@ const HiveSection = memo(function HiveSection({
       <Box
         p={4}
         bg="transparent"
-        borderRadius="md"
         border="1px solid"
         borderColor="gray.200"
       >
@@ -92,7 +91,7 @@ const HiveSection = memo(function HiveSection({
         </HStack>
 
         {showInfo && (
-          <Box mt={3} p={3} bg="muted" borderRadius="md">
+          <Box mt={3} p={3} bg="muted">
             <Text color="gray.400" fontSize="sm">
               The primary token of the Hive Blockchain. Liquid and transferable.
               Can be powered up to Hive Power for governance and curation rewards.

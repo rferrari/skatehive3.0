@@ -66,15 +66,15 @@ const preparingMessages = [
   "🧪 Analyzing video codec...",
 ];
 
+const skateFrames = ['🛹', '🛹', '🛹', '💨🛹', '🛹', '✨🛹', '🛹', '🔥🛹'];
+const prepFrames = ['🛹', '  🛹', '    🛹', '  🛹', '🛹', '🛹💨', '🛹✨', '🛹'];
+
 const SkateboardLoader = ({ serverName, progress = 0, stage }: { serverName?: string; progress?: number; stage?: string }) => {
   const [skateFrame, setSkateFrame] = useState(0);
   const [lastProgress, setLastProgress] = useState(progress);
   const [messageIndex, setMessageIndex] = useState(() => Math.floor(Math.random() * funLoadingMessages.length));
   const [prepMessageIndex, setPrepMessageIndex] = useState(() => Math.floor(Math.random() * preparingMessages.length));
   const [dots, setDots] = useState('');
-
-  const skateFrames = ['🛹', '🛹', '🛹', '💨🛹', '🛹', '✨🛹', '🛹', '🔥🛹'];
-  const prepFrames = ['🛹', '  🛹', '    🛹', '  🛹', '🛹', '🛹💨', '🛹✨', '🛹'];
 
   useEffect(() => {
     if (progress === 0) {

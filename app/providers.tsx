@@ -14,6 +14,7 @@ import { base, mainnet } from "wagmi/chains";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { UserProvider } from "@/contexts/UserContext";
 import { VoteWeightProvider } from "@/contexts/VoteWeightContext";
+import { WindowProvider } from "@/contexts/WindowContext";
 import { AuthKitProvider } from "@farcaster/auth-kit";
 import "@farcaster/auth-kit/styles.css";
 import { dynamicRainbowTheme } from "@/lib/themes/rainbowkitTheme";
@@ -95,8 +96,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
                 <AuthKitProvider config={farcasterAuthConfig}>
                   <AiohaProvider aioha={aioha}>
                     <VoteWeightProvider>
-                      <CSSReset />
-                      {children}
+                      <WindowProvider>
+                        <CSSReset />
+                        {children}
+                      </WindowProvider>
                     </VoteWeightProvider>
                   </AiohaProvider>
                 </AuthKitProvider>

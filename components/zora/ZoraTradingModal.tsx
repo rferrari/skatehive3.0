@@ -2,11 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalBody,
-  ModalCloseButton,
   Button,
   VStack,
   HStack,
@@ -18,6 +13,7 @@ import {
   Spinner,
   Image,
   useToast,
+  Box,
 } from "@chakra-ui/react";
 import {
   parseEther,
@@ -31,6 +27,7 @@ import { useProfileCoins } from "@/hooks/useProfileCoins";
 import { useSwitchChain, useChainId } from "wagmi";
 import { base } from "wagmi/chains";
 import { ETH_ADDRESSES } from "@/config/app.config";
+import SkateModal from "@/components/shared/SkateModal";
 
 // Simple inline debounce hook
 function useDebounce<T>(value: T, delay: number): T {
@@ -634,19 +631,20 @@ export default function ZoraTradingModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="sm">
-      <ModalOverlay bg="blackAlpha.800" />
-      <ModalContent bg="background" color="primary" mx={4} borderRadius="xl">
-        <ModalCloseButton color="primary" />
-
-        <ModalBody p={6}>
-          {!isHydrated ? (
-            <VStack spacing={4} align="center" py={8}>
-              <Spinner size="lg" />
-              <Text>Loading trading interface...</Text>
-            </VStack>
-          ) : (
-            <VStack spacing={6} align="stretch">
+    <SkateModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={`trade-${coinData.symbol || "coin"}`}
+      size="sm"
+    >
+      <Box p={6}>
+        {!isHydrated ? (
+          <VStack spacing={4} align="center" py={8}>
+            <Spinner size="lg" />
+            <Text>Loading trading interface...</Text>
+          </VStack>
+        ) : (
+          <VStack spacing={6} align="stretch">
               {/* Trade Type Toggle */}
               <HStack spacing={0} bg="muted" borderRadius="xl" p={1}>
                 <Button
@@ -945,8 +943,7 @@ export default function ZoraTradingModal({
               )}
             </VStack>
           )}
-        </ModalBody>
-      </ModalContent>
-    </Modal>
+      </Box>
+    </SkateModal>
   );
 }

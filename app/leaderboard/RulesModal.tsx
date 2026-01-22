@@ -1,15 +1,8 @@
 import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalCloseButton,
-  ModalBody,
-  ModalFooter,
-  Button,
   Text,
   Box,
 } from "@chakra-ui/react";
+import SkateModal from "@/components/shared/SkateModal";
 
 interface RulesModalProps {
   isOpen: boolean;
@@ -18,32 +11,29 @@ interface RulesModalProps {
 
 export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="3xl" isCentered>
-      <ModalOverlay />
-      <ModalContent
-        bg="background"
-        color="primary"
-        maxH="80vh"
-        overflowY="auto"
-      >
-        <ModalHeader color="primary">Leaderboard Guide & Rules</ModalHeader>
-        <ModalCloseButton color="primary" />
-        <ModalBody>
+    <SkateModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Leaderboard Guide & Rules"
+      windowId="leaderboard-rules"
+      size="3xl"
+    >
+      <Box overflowY="auto" maxH="70vh" px={2}>
           <Box>
-            <Text fontWeight="bold" mb={2} color="primary">
+            <Text fontWeight="bold" mb={2} color="text">
               🛹 What is the Skatehive Leaderboard?
             </Text>
-            <Text fontSize="sm" color="primary" mb={4}>
+            <Text fontSize="sm" color="dim" mb={4}>
               The Skatehive Leaderboard ranks top contributors based on their
               activity and holdings across Hive and Ethereum blockchains. Your
               score is calculated using Skatehive-centric metrics, including
               Hive Power, Skatehive NFTs, witness votes, posts, snaps, and more.
               Show off your contributions and skate your way to the top!
             </Text>
-            <Text fontWeight="bold" mb={2} color="primary">
+            <Text fontWeight="bold" mb={2} color="text">
               🌟 How You Earn Points
             </Text>
-            <Text fontSize="sm" color="primary" mb={3}>
+            <Text fontSize="sm" color="dim" mb={3}>
               Points are calculated based on the following metrics, with caps
               and penalties applied to ensure fairness:
             </Text>
@@ -52,15 +42,15 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
               width="100%"
               mb={4}
               fontSize="sm"
-              color="primary"
-              borderRadius="none"
+              color="text"
+              borderRadius="md"
               overflow="hidden"
               style={{ borderCollapse: "collapse" }}
             >
               <thead>
                 <tr
                   style={{
-                    background: "var(--chakra-colors-accent)",
+                    background: "var(--chakra-colors-primary)",
                   }}
                 >
                   <th
@@ -68,6 +58,7 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
                     style={{
                       padding: 8,
                       color: "var(--chakra-colors-background)",
+                      fontWeight: "bold",
                     }}
                   >
                     Category
@@ -77,6 +68,7 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
                     style={{
                       padding: 8,
                       color: "var(--chakra-colors-background)",
+                      fontWeight: "bold",
                     }}
                   >
                     Points Calculation
@@ -164,13 +156,13 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
               </tbody>
             </Box>
 
-            <Text fontWeight="bold" mb={2} color="primary">
+            <Text fontWeight="bold" mb={2} color="text">
               📊 Posts and Snaps Score Details
             </Text>
             <Box
-              bg="muted"
-              color="primary"
-              borderRadius="none"
+              bg="panel"
+              color="text"
+              borderRadius="md"
               p={3}
               fontSize="sm"
               mb={4}
@@ -188,9 +180,9 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
                 <strong>Formula</strong>:
               </Text>
               <Box
-                bg="accent"
+                bg="primary"
                 color="background"
-                borderRadius="none"
+                borderRadius="md"
                 p={2}
                 fontSize="xs"
                 fontFamily="mono"
@@ -205,13 +197,13 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
               </Text>
             </Box>
 
-            <Text fontWeight="bold" mb={2} color="primary">
+            <Text fontWeight="bold" mb={2} color="text">
               🧮 Total Points Formula
             </Text>
             <Box
-              bg="accent"
+              bg="primary"
               color="background"
-              borderRadius="none"
+              borderRadius="md"
               p={3}
               fontSize="sm"
               fontFamily="mono"
@@ -235,11 +227,11 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
               </Text>
             </Box>
 
-            <Text fontSize="xs" color="primary" mb={4} textAlign="center">
+            <Text fontSize="xs" color="dim" mb={4} textAlign="center">
               <strong>Note</strong>: Total points are capped at a minimum of 0.
             </Text>
 
-            <Text fontWeight="bold" mb={2} color="primary">
+            <Text fontWeight="bold" mb={2} color="text">
               📋 Quick Rules
             </Text>
             <ul
@@ -264,13 +256,7 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
               </li>
             </ul>
           </Box>
-        </ModalBody>
-        <ModalFooter>
-          <Button colorScheme="primary" mr={3} onClick={onClose}>
-            Close
-          </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+      </Box>
+    </SkateModal>
   );
 }

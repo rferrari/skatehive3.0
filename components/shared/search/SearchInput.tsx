@@ -7,19 +7,22 @@ import {
   Icon,
   InputGroup,
   InputLeftElement,
+  Spinner,
 } from "@chakra-ui/react";
 import { FaSearch } from "react-icons/fa";
 
 interface SearchInputProps {
   query: string;
   onQueryChange: (query: string) => void;
-  inputRef: React.RefObject<HTMLInputElement>;
+  inputRef?: React.RefObject<HTMLInputElement>;
+  isLoading?: boolean;
 }
 
 export default function SearchInput({
   query,
   onQueryChange,
   inputRef,
+  isLoading,
 }: SearchInputProps) {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     // Prevent arrow keys from moving cursor when we want to navigate results
@@ -39,7 +42,11 @@ export default function SearchInput({
           alignItems="center"
           justifyContent="center"
         >
-          <Icon as={FaSearch} color="accent" boxSize="16px" />
+          {isLoading ? (
+            <Spinner size="sm" color="accent" />
+          ) : (
+            <Icon as={FaSearch} color="accent" boxSize="16px" />
+          )}
         </InputLeftElement>
         <Input
           ref={inputRef}
@@ -56,6 +63,8 @@ export default function SearchInput({
           color="primary"
           _placeholder={{ color: "accent", opacity: 0.7 }}
           _focus={{ outline: "none" }}
+          aria-busy={!!isLoading}
+          opacity={isLoading ? 0.6 : 1}
         />
       </InputGroup>
     </Box>

@@ -8,10 +8,6 @@ import React, {
   useMemo,
 } from "react";
 import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalBody,
   VStack,
   Box,
 } from "@chakra-ui/react";
@@ -26,6 +22,7 @@ import PageResult from "./search/PageResult";
 import SectionHeader from "./search/SectionHeader";
 import SearchTips from "./search/SearchTips";
 import NoResults from "./search/NoResults";
+import SkateModal from "./SkateModal";
 
 // Import types and constants
 import {
@@ -45,429 +42,299 @@ export default function SearchOverlay({
   onOpenAirdrop,
 }: SearchOverlayProps) {
   const [query, setQuery] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [skaters, setSkaters] = useState<SkaterData[]>([]);
   const [filteredPages, setFilteredPages] = useState<PageResultType[]>([]);
-  const [topSkaters, setTopSkaters] = useState<SkaterData[]>([]);
+  const [filteredCommands, setFilteredCommands] = useState<PageResultType[]>([]);
+  const [filteredSkaters, setFilteredSkaters] = useState<SkaterData[]>([]);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [isLoadingTopSkaters, setIsLoadingTopSkaters] = useState(false);
-  const [highlightedIndex, setHighlightedIndex] = useState(0);
+
   const router = useRouter();
   const pathname = usePathname();
-  const inputRef = useRef<HTMLInputElement>(null);
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
-  const resultsContainerRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
+  // Get popular pages
   const popularPages = useMemo(() => {
     return getPopularPages().filter((page) => page.path !== pathname);
   }, [pathname]);
 
-  const fetchTopSkaters = useCallback(async () => {
-    setIsLoadingTopSkaters(true);
-    try {
-      const res = await fetch("https://api.skatehive.app/api/v2/leaderboard", {
-        next: { revalidate: 300 },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data)) {
-          const sorted = data
-            .sort((a, b) => (b.points || 0) - (a.points || 0))
-            .slice(0, 5);
-          setTopSkaters(sorted);
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching top skaters:", error);
-    } finally {
-      setIsLoadingTopSkaters(false);
-    }
-  }, []);
-
+  // Fetch top skaters
   useEffect(() => {
-    if (isOpen && topSkaters.length === 0) {
-      const timer = setTimeout(() => {
-        fetchTopSkaters();
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen, topSkaters.length, fetchTopSkaters]);
-
-  const fetchSkaters = useCallback(async (searchTerm: string) => {
-    if (searchTerm.startsWith("/") || searchTerm.length < 1) return;
-
-    setIsLoading(true);
-    try {
-      const res = await fetch("https://api.skatehive.app/api/v2/leaderboard", {
-        next: { revalidate: 300 },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setSkaters(Array.isArray(data) ? data : []);
+    const fetchTopSkaters = async () => {
+      setIsLoadingTopSkaters(true);
+      try {
+        const response = await fetch("https://api.skatehive.app/api/v2/leaderboard");
+        if (!response.ok) {
+          throw new Error(`Failed to fetch leaderboard: ${response.status}`);
+        }
+        const data: SkaterData[] = await response.json();
+        // Sort by points descending and take top 50 for search
+        const topSkaters = Array.isArray(data) 
+          ? data.sort((a, b) => (b.points || 0) - (a.points || 0)).slice(0, 50)
+          : [];
+        setSkaters(topSkaters);
+      } catch (error) {
+        console.error("Failed to fetch top skaters:", error);
+        setSkaters([]);
+      } finally {
+        setIsLoadingTopSkaters(false);
       }
-    } catch (error) {
-      console.error("Error fetching skaters:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    };
 
+    if (isOpen) {
+      fetchTopSkaters();
+    }
+  }, [isOpen]);
+
+  // Filter results based on query
   useEffect(() => {
     if (!query.trim()) {
       setFilteredPages([]);
-      setSkaters([]);
-      setHighlightedIndex(0);
-      setIsLoading(false);
+      setFilteredCommands([]);
+      setFilteredSkaters([]);
+      setHighlightedIndex(-1);
       return;
     }
 
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-    }
+    const searchTerm = query.toLowerCase().trim();
 
-    if (query.startsWith("/")) {
-      const searchTerm = query.slice(1).toLowerCase();
-      const allPages = [...STATIC_PAGES, ...COMMAND_PAGES];
-      const filtered = allPages.filter(
-        (page) =>
-          page.path !== pathname &&
-          (page.title.toLowerCase().includes(searchTerm) ||
-            page.description.toLowerCase().includes(searchTerm) ||
-            page.path.toLowerCase().includes(searchTerm))
-      );
-      setFilteredPages(filtered);
-      setSkaters([]);
-      setIsLoading(false);
-    } else {
-      debounceRef.current = setTimeout(() => {
-        fetchSkaters(query);
-      }, 300);
-      setFilteredPages([]);
-    }
-    setHighlightedIndex(0);
+    // Filter pages
+    const filteredStaticPages = STATIC_PAGES.filter((page) =>
+      page.title.toLowerCase().includes(searchTerm) ||
+      page.description.toLowerCase().includes(searchTerm)
+    );
 
-    return () => {
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
-      }
-    };
-  }, [query, fetchSkaters, pathname]);
+    const filteredCommandPages = COMMAND_PAGES.filter((page) =>
+      page.title.toLowerCase().includes(searchTerm) ||
+      page.description.toLowerCase().includes(searchTerm)
+    );
 
-  const filteredSkaters = skaters.filter((skater) =>
-    skater.hive_author.toLowerCase().includes(query.toLowerCase())
-  );
+    setFilteredPages(filteredStaticPages);
+    setFilteredCommands(filteredCommandPages);
 
-  // Also search commands when not using "/" prefix
-  const filteredCommands = useMemo(
-    () =>
-      !query.startsWith("/") && query.trim()
-        ? COMMAND_PAGES.filter(
-            (page) =>
-              page.path !== pathname &&
-              (page.title.toLowerCase().includes(query.toLowerCase()) ||
-                page.description.toLowerCase().includes(query.toLowerCase()))
-          )
-        : [],
-    [pathname, query]
-  );
+    // Filter skaters
+    const filteredSkaterResults = skaters.filter((skater) =>
+      skater.hive_author.toLowerCase().includes(searchTerm)
+    );
+    setFilteredSkaters(filteredSkaterResults);
 
-  const allResults = useMemo(
-    () => [...filteredPages, ...filteredSkaters, ...filteredCommands],
-    [filteredPages, filteredSkaters, filteredCommands]
-  );
+    setHighlightedIndex(-1);
+  }, [query, skaters]);
 
-  const initialSuggestions = useMemo(() => {
-    return query ? allResults : [...popularPages, ...topSkaters];
-  }, [query, allResults, popularPages, topSkaters]);
-
-  const handleSelect = useCallback(
-    (item: PageResultType | SkaterData) => {
-      if ("hive_author" in item) {
-        router.push(`/user/${item.hive_author}`);
-      } else if (item.path.startsWith("command:")) {
-        // Handle special commands
-        const command = item.path.replace("command:", "");
-        switch (command) {
-          case "airdrop":
-            if (onOpenAirdrop) {
-              onOpenAirdrop();
-            }
-            break;
-          default:
-            console.warn(`Unknown command: ${command}`);
+  // Handle result selection
+  const handleSelect = useCallback((result: any) => {
+    if ("path" in result) {
+      // Page or command result
+      if (result.path.startsWith("command:")) {
+        // Command
+        onClose();
+        if (result.path === "command:airdrop") {
+          onOpenAirdrop?.();
         }
       } else {
-        router.push(item.path);
+        // Regular page
+        router.push(result.path);
+        onClose();
       }
+    } else {
+      // Skater result
+      router.push(`/@${result.hive_author}`);
       onClose();
-      setQuery("");
-    },
-    [router, onClose, onOpenAirdrop]
-  );
+    }
+  }, [onClose, onOpenAirdrop, router]);
 
+  // Handle keyboard navigation
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (!isOpen) return;
+
+    const allResults = query
+      ? [
+          ...filteredSkaters,
+          ...filteredCommands,
+          ...filteredPages,
+        ]
+      : [
+          ...popularPages,
+        ];
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setHighlightedIndex((prev) =>
+          prev < allResults.length - 1 ? prev + 1 : prev
+        );
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : -1));
+        break;
+      case "Enter":
+        e.preventDefault();
+        if (highlightedIndex >= 0 && allResults[highlightedIndex]) {
+          handleSelect(allResults[highlightedIndex]);
+        }
+        break;
+      case "Escape":
+        e.preventDefault();
+        onClose();
+        break;
+    }
+  }, [isOpen, query, filteredPages, filteredCommands, filteredSkaters, popularPages, highlightedIndex, handleSelect, onClose]);
+
+  // Keyboard event listeners
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (!isOpen) return;
+    if (isOpen) {
+      document.addEventListener("keydown", handleKeyDown);
+      searchInputRef.current?.focus();
+    }
 
-      switch (e.key) {
-        case "ArrowDown":
-          e.preventDefault();
-          setHighlightedIndex((prev) => {
-            const newIndex =
-              prev < initialSuggestions.length - 1 ? prev + 1 : 0;
-            // Scroll the highlighted item into view
-            setTimeout(() => {
-              const container = resultsContainerRef.current;
-              if (container) {
-                const highlightedElement = container.querySelector(
-                  `[data-index="${newIndex}"]`
-                );
-                if (highlightedElement) {
-                  highlightedElement.scrollIntoView({
-                    behavior: "smooth",
-                    block: "nearest",
-                  });
-                }
-              }
-            }, 0);
-            return newIndex;
-          });
-          break;
-        case "ArrowUp":
-          e.preventDefault();
-          setHighlightedIndex((prev) => {
-            const newIndex =
-              prev > 0 ? prev - 1 : initialSuggestions.length - 1;
-            // Scroll the highlighted item into view
-            setTimeout(() => {
-              const container = resultsContainerRef.current;
-              if (container) {
-                const highlightedElement = container.querySelector(
-                  `[data-index="${newIndex}"]`
-                );
-                if (highlightedElement) {
-                  highlightedElement.scrollIntoView({
-                    behavior: "smooth",
-                    block: "nearest",
-                  });
-                }
-              }
-            }, 0);
-            return newIndex;
-          });
-          break;
-        case "Enter":
-          e.preventDefault();
-          if (initialSuggestions[highlightedIndex]) {
-            handleSelect(initialSuggestions[highlightedIndex]);
-          }
-          break;
-        case "Escape":
-          onClose();
-          setQuery("");
-          break;
-        case "Tab":
-          e.preventDefault();
-          // Cycle through suggestions with Tab
-          setHighlightedIndex((prev) =>
-            prev < initialSuggestions.length - 1 ? prev + 1 : 0
-          );
-          break;
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, highlightedIndex, initialSuggestions, handleSelect, onClose]);
+  }, [isOpen, handleKeyDown]);
 
-  useEffect(() => {
-    if (isOpen && inputRef.current) {
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 100);
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      setQuery("");
-      setFilteredPages([]);
-      setSkaters([]);
-      setHighlightedIndex(0);
-    }
-  }, [isOpen]);
+  if (!isOpen) return null;
 
   return (
-    <Modal
+    <SkateModal
       isOpen={isOpen}
       onClose={onClose}
+      title="global-search"
       size="xl"
-      isCentered
-      motionPreset="slideInBottom"
       blockScrollOnMount={false}
     >
-      <ModalOverlay bg="blackAlpha.600" />
-      <ModalContent
-        bg="background"
-        borderRadius="none"
-        border="1px solid"
-        borderColor="accent"
-        maxW="500px"
-        maxH="70vh"
-        w="90vw"
-        m={4}
-        position="relative"
-      >
-        <ModalBody p={0}>
-          <VStack spacing={0} align="stretch">
-            {/* Search Input */}
-            <SearchInput
-              query={query}
-              onQueryChange={setQuery}
-              inputRef={inputRef}
-            />
+      <Box p={0}>
+        <VStack spacing={0} align="stretch">
+          {/* Search Input */}
+          <SearchInput
+            query={query}
+            onQueryChange={setQuery}
+            inputRef={searchInputRef}
+            isLoading={isLoadingTopSkaters}
+          />
 
-            {/* Loading State */}
-            <LoadingState isLoading={isLoading} />
+          {/* Results Area */}
+          {query || popularPages.length > 0 || isLoadingTopSkaters ? (
+            <Box
+              flex="1"
+              overflowY="auto"
+              maxH="50vh"
+              css={{
+                "&::-webkit-scrollbar": {
+                  width: "6px",
+                },
+                "&::-webkit-scrollbar-track": {
+                  bg: "transparent",
+                },
+                "&::-webkit-scrollbar-thumb": {
+                  bg: "muted",
+                  borderRadius: "2px",
+                },
+              }}
+            >
+              <VStack spacing={0} align="stretch">
+                {/* Results Header */}
+                <SectionHeader
+                  icon={
+                    query
+                      ? query.startsWith("/")
+                        ? FaSearch
+                        : filteredCommands.length > 0 &&
+                          filteredSkaters.length === 0
+                        ? FaGift
+                        : FaUser
+                      : FaHome
+                  }
+                  title={
+                    query
+                      ? query.startsWith("/")
+                        ? "Pages & Features"
+                        : filteredCommands.length > 0 &&
+                          filteredSkaters.length === 0
+                        ? "Commands"
+                        : filteredCommands.length > 0
+                        ? "Users & Commands"
+                        : "Skatehive Users"
+                      : "Popular Pages"
+                  }
+                />
 
-            {/* Results */}
-            {(query || popularPages.length > 0) && !isLoading && (
-              <Box
-                ref={resultsContainerRef}
-                maxH={{ base: "60vh", md: "400px" }}
-                overflowY="auto"
-                sx={{
-                  "&::-webkit-scrollbar": {
-                    width: "4px",
-                  },
-                  "&::-webkit-scrollbar-thumb": {
-                    bg: "muted",
-                    borderRadius: "2px",
-                  },
-                }}
-              >
-                <VStack spacing={0} align="stretch">
-                  {/* Results Header */}
-                  <SectionHeader
-                    icon={
-                      query
-                        ? query.startsWith("/")
-                          ? FaSearch
-                          : filteredCommands.length > 0 &&
-                            filteredSkaters.length === 0
-                          ? FaGift
-                          : FaUser
-                        : FaHome
-                    }
-                    title={
-                      query
-                        ? query.startsWith("/")
-                          ? "Pages & Features"
-                          : filteredCommands.length > 0 &&
-                            filteredSkaters.length === 0
-                          ? "Commands"
-                          : filteredCommands.length > 0
-                          ? "Users & Commands"
-                          : "Skatehive Users"
-                        : "Quick Access"
-                    }
-                  />
-
-                  {/* Initial Suggestions */}
-                  {!query && (
-                    <>
-                      {popularPages.map((page, index) => (
-                        <PageResult
-                          key={`page-${page.path}`}
-                          page={page}
-                          index={index}
-                          highlightedIndex={highlightedIndex}
-                          onSelect={handleSelect}
-                        />
-                      ))}
-                      {topSkaters.length > 0 && (
-                        <>
-                          <SectionHeader icon={FaTrophy} title="Top Skaters" />
-                          {topSkaters.map((skater, skaterIndex) => (
-                            <SkaterResult
-                              key={`skater-${skater.id}-${skater.hive_author}`}
-                              skater={skater}
-                              index={skaterIndex + popularPages.length}
-                              highlightedIndex={highlightedIndex}
-                              onSelect={handleSelect}
-                            />
-                          ))}
-                        </>
-                      )}
-                      {isLoadingTopSkaters && <LoadingState isLoading={true} />}
-                    </>
-                  )}
-
-                  {/* Search Results */}
-                  {query && (
-                    <>
-                      {!query.startsWith("/") && filteredSkaters.length > 0 && (
-                        <>
-                          {filteredSkaters.slice(0, 8).map((skater, index) => (
-                            <SkaterResult
-                              key={`skater-${skater.id}-${skater.hive_author}`}
-                              skater={skater}
-                              index={index}
-                              highlightedIndex={highlightedIndex}
-                              onSelect={handleSelect}
-                            />
-                          ))}
-                        </>
-                      )}
-                      {!query.startsWith("/") &&
-                        filteredCommands.length > 0 && (
-                          <>
-                            {filteredCommands.map((command, index) => (
-                              <PageResult
-                                key={`command-${command.path}`}
-                                page={command}
-                                index={
-                                  index + filteredSkaters.slice(0, 8).length
-                                }
-                                highlightedIndex={highlightedIndex}
-                                onSelect={handleSelect}
-                              />
-                            ))}
-                          </>
-                        )}
-                      {query.startsWith("/") && filteredPages.length > 0 && (
-                        <>
-                          {filteredPages.map((page, index) => (
-                            <PageResult
-                              key={`page-${page.path}`}
-                              page={page}
-                              index={index}
-                              highlightedIndex={highlightedIndex}
-                              onSelect={handleSelect}
-                            />
-                          ))}
-                        </>
-                      )}
-                      <NoResults
-                        query={query}
-                        hasPages={filteredPages.length > 0}
-                        hasSkaters={
-                          filteredSkaters.length > 0 ||
-                          filteredCommands.length > 0
-                        }
+                {/* Results */}
+                {filteredSkaters.length > 0 && (
+                  <>
+                    {filteredSkaters.map((skater, index) => (
+                      <SkaterResult
+                        key={`skater-${skater.hive_author}`}
+                        skater={skater}
+                        index={index}
+                        highlightedIndex={highlightedIndex}
+                        onSelect={handleSelect}
                       />
-                    </>
-                  )}
-                </VStack>
-              </Box>
-            )}
+                    ))}
+                  </>
+                )}
 
-            {/* Search Tips */}
-            <SearchTips
-              show={!query && popularPages.length === 0 && !isLoadingTopSkaters}
-            />
-          </VStack>
-        </ModalBody>
-      </ModalContent>
-    </Modal>
+                {filteredCommands.length > 0 && (
+                  <>
+                    {filteredCommands.map((command, index) => (
+                      <PageResult
+                        key={`command-${command.path}`}
+                        page={command}
+                        index={filteredSkaters.length + index}
+                        highlightedIndex={highlightedIndex}
+                        onSelect={handleSelect}
+                      />
+                    ))}
+                  </>
+                )}
+
+                {query.startsWith("/") && filteredPages.length > 0 && (
+                  <>
+                    {filteredPages.map((page, index) => (
+                      <PageResult
+                        key={`page-${page.path}`}
+                        page={page}
+                        index={filteredSkaters.length + filteredCommands.length + index}
+                        highlightedIndex={highlightedIndex}
+                        onSelect={handleSelect}
+                      />
+                    ))}
+                  </>
+                )}
+
+                {/* Show popular pages when no query */}
+                {!query && popularPages.length > 0 && (
+                  <>
+                    {popularPages.map((page, index) => (
+                      <PageResult
+                        key={`popular-${page.path}`}
+                        page={page}
+                        index={index}
+                        highlightedIndex={highlightedIndex}
+                        onSelect={handleSelect}
+                      />
+                    ))}
+                  </>
+                )}
+
+                <NoResults
+                  query={query}
+                  hasPages={filteredPages.length > 0}
+                  hasSkaters={
+                    filteredSkaters.length > 0 ||
+                    filteredCommands.length > 0
+                  }
+                />
+              </VStack>
+            </Box>
+          ) : (
+            <VStack spacing={0} align="stretch">
+              {/* Search Tips */}
+              <SearchTips
+                show={!query && popularPages.length === 0 && !isLoadingTopSkaters}
+              />
+            </VStack>
+          )}
+        </VStack>
+      </Box>
+    </SkateModal>
   );
 }

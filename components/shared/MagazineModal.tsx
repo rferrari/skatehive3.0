@@ -1,14 +1,11 @@
 "use client";
 import React, { useMemo } from "react";
 import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  IconButton,
+  Box,
 } from "@chakra-ui/react";
-import { ArrowBackIcon } from "@chakra-ui/icons";
 import Magazine from "./Magazine";
 import { Discussion } from "@hiveio/dhive";
+import SkateModal from "./SkateModal";
 
 interface MagazineModalProps {
   isOpen: boolean;
@@ -94,44 +91,26 @@ const MagazineModal = React.memo(function MagazineModal({
   if (!isOpen) return null; // Don't render anything when closed
 
   return (
-    <Modal
+    <SkateModal
       isOpen={isOpen}
       onClose={onClose}
+      title="skatehive-magazine"
       size="full"
       motionPreset="none"
-      trapFocus={true}
       blockScrollOnMount={false}
-      returnFocusOnClose={false}
       closeOnOverlayClick={true}
     >
-      <ModalOverlay bg="blackAlpha.800" />
-      <ModalContent
+      <Box
         p={0}
         m={0}
-        maxW="100vw"
-        maxH="100vh"
-        borderRadius={0}
+        w="100%"
+        h="100%"
         overflow="hidden"
-        bg="background"
         position="relative"
-        willChange="transform"
       >
-        <IconButton
-          aria-label="Back"
-          icon={<ArrowBackIcon />}
-          position="absolute"
-          top={4}
-          left={4}
-          zIndex={10}
-          onClick={onClose}
-          bg="background"
-          color="primary"
-          _hover={{ bg: "muted" }}
-          size="lg"
-        />
         <Magazine {...magazineProps} />
-      </ModalContent>
-    </Modal>
+      </Box>
+    </SkateModal>
   );
 });
 

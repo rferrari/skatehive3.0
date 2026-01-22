@@ -2,13 +2,6 @@
 
 import React, { useState } from "react";
 import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
-  ModalBody,
-  ModalCloseButton,
   Button,
   Input,
   VStack,
@@ -18,6 +11,7 @@ import {
   AlertIcon,
   AlertDescription,
   Box,
+  HStack,
 } from "@chakra-ui/react";
 import {
   downloadInstagramMedia,
@@ -25,6 +19,7 @@ import {
   isVideoFile,
   normalizeInstagramUrl,
 } from "@/lib/utils/instagramDownload";
+import SkateModal from "@/components/shared/SkateModal";
 
 interface InstagramModalProps {
   isOpen: boolean;
@@ -118,14 +113,37 @@ const InstagramModal: React.FC<InstagramModalProps> = ({
   const isDevelopment = process.env.NODE_ENV === 'development';
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} size="md">
-      <ModalOverlay />
-      <ModalContent bg="background">
-        <ModalHeader>Import from Instagram</ModalHeader>
-        <ModalCloseButton isDisabled={isDownloading} />
-
-        <ModalBody>
-          <VStack spacing={4} align="stretch">
+    <SkateModal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title="instagram-import"
+      size="md"
+      footer={
+        <HStack spacing={3} justify="flex-end">
+          <Button
+            variant="ghost"
+            onClick={handleClose}
+            isDisabled={isDownloading}
+            color="text"
+          >
+            Cancel
+          </Button>
+          <Button
+            bg="primary"
+            color="background"
+            onClick={handleDownload}
+            isLoading={isDownloading}
+            loadingText="Downloading..."
+            isDisabled={!isValidUrl}
+            _hover={{ opacity: 0.8 }}
+          >
+            Import Media
+          </Button>
+        </HStack>
+      }
+    >
+      <Box p={4}>
+        <VStack spacing={4} align="stretch">
             <Box>
               <Text fontSize="sm" color="gray.600" mb={2}>
                 Paste an Instagram post or reel URL (URLs will be automatically normalized):
@@ -172,29 +190,9 @@ const InstagramModal: React.FC<InstagramModalProps> = ({
               </Box>
             )}
           </VStack>
-        </ModalBody>
-
-        <ModalFooter>
-          <Button
-            variant="ghost"
-            mr={3}
-            onClick={handleClose}
-            isDisabled={isDownloading}
-          >
-            Cancel
-          </Button>
-          <Button
-            colorScheme="blue"
-            onClick={handleDownload}
-            isLoading={isDownloading}
-            loadingText="Downloading..."
-          >
-            Import Media
-          </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
-  );
-};
-
-export default InstagramModal;
+        </Box>
+      </SkateModal>
+    );
+  };
+  
+  export default InstagramModal;

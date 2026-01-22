@@ -1,17 +1,13 @@
 import {
-    Modal,
-    ModalOverlay,
-    ModalContent,
-    ModalHeader,
-    ModalBody,
-    ModalFooter,
-    ModalCloseButton,
     Button,
     useToast,
+    HStack,
 } from "@chakra-ui/react";
 import { ReactNode, useState } from "react";
 import useIsMobile from "@/hooks/useIsMobile";
 import { CopyIcon } from "@chakra-ui/icons";
+import SkateModal from "@/components/shared/SkateModal";
+import { Box } from "@chakra-ui/react";
 
 interface BaseWalletModalProps {
     isOpen: boolean;
@@ -81,32 +77,13 @@ export function BaseWalletModal({
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} size={isMobile ? "full" : "md"}>
-            <ModalOverlay />
-            <ModalContent
-                bg="background"
-                color="text"
-                borderRadius={isMobile ? "0" : "lg"}
-                border="1px solid"
-                borderColor="border"
-                h={isMobile ? "100vh" : "auto"}
-                display="flex"
-                flexDirection="column"
-            >
-                <ModalHeader color="primary" flexShrink={0}>
-                    {title}
-                </ModalHeader>
-                <ModalCloseButton
-                    color="text"
-                    _hover={{ color: "background", bg: "primary" }}
-                />
-                <ModalBody flex="1" overflowY="auto">
-                    {children}
-                </ModalBody>
-                <ModalFooter
-                    flexShrink={0}
-                    pb={isMobile ? "calc(1.5rem + env(safe-area-inset-bottom))" : 4}
-                >
+        <SkateModal
+            isOpen={isOpen}
+            onClose={onClose}
+            title={title.toLowerCase().replace(/\s+/g, '-')}
+            size={isMobile ? "full" : "md"}
+            footer={
+                <HStack spacing={3} justify="flex-end" width="100%">
                     <Button
                         variant="ghost"
                         onClick={onClose}
@@ -117,7 +94,6 @@ export function BaseWalletModal({
                         Cancel
                     </Button>
                     <Button
-                        ml={3}
                         onClick={handleConfirm}
                         color="background"
                         bg="primary"
@@ -127,9 +103,13 @@ export function BaseWalletModal({
                     >
                         {confirmText}
                     </Button>
-                </ModalFooter>
-            </ModalContent>
-        </Modal>
+                </HStack>
+            }
+        >
+            <Box p={4}>
+                {children}
+            </Box>
+        </SkateModal>
     );
 }
 

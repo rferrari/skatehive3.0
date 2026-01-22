@@ -9,12 +9,6 @@ import React, {
   Suspense,
 } from "react";
 import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalCloseButton,
   VStack,
   Text,
   Alert,
@@ -31,6 +25,7 @@ import {
 } from "@chakra-ui/react";
 import { getFileSignature, uploadImage } from "@/lib/hive/client-functions";
 import { uploadThumbnail } from "@/lib/utils/videoThumbnailUtils";
+import SkateModal from "@/components/shared/SkateModal";
 
 // Lazy load heavy components
 const VideoPlayer = lazy(() => import("./VideoPlayer"));
@@ -712,9 +707,10 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = memo(
           }
         `}
         </style>
-        <Modal
+        <SkateModal
           isOpen={isOpen}
           onClose={onClose}
+          title={trimmingRequired ? "video-trimming-required" : "video-editor"}
           size={{ base: "xl", md: "xl" }}
           onCloseComplete={() => {
             setVideoUrl(null);
@@ -725,24 +721,26 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = memo(
           }}
           closeOnOverlayClick={false}
           motionPreset="slideInBottom"
-          trapFocus={true}
-          autoFocus={false}
+          footer={
+            <Suspense fallback={null}>
+              <VideoTrimModalFooter
+                isValidSelection={isValidSelection}
+                maxDuration={maxDuration}
+                canBypass={canBypass}
+                isProcessing={isProcessing}
+                hasActiveTrim={hasActiveTrim}
+                onBypass={handleBypass}
+                onTrim={handleTrim}
+              />
+            </Suspense>
+          }
         >
-          <ModalOverlay bg="blackAlpha.800" />
-          <ModalContent
-            bg={"background"}
+          <Box
             maxH={{ base: "100vh", md: "90vh" }}
             overflowY="auto"
-            mx={{ base: 0, md: 4 }}
-            my={{ base: 0, md: 4 }}
           >
-            <ModalHeader pb={{ base: 2, md: 4 }}>
-              <VStack align="start" spacing={2}>
-                <Text fontSize={{ base: "lg", md: "xl" }}>
-                  {trimmingRequired
-                    ? "Video Trimming Required"
-                    : "Video Editor"}
-                </Text>
+            <Box px={{ base: 3, md: 6 }} py={{ base: 3, md: 4 }}>
+              <VStack align="start" spacing={2} mb={4}>
                 {canBypass ? (
                   <Text fontSize="sm" color="primary">
                     ✨ You have more than 100 HP - You can use the full video or
@@ -755,10 +753,7 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = memo(
                   </Text>
                 )}
               </VStack>
-            </ModalHeader>
-            <ModalCloseButton />
 
-            <ModalBody px={{ base: 3, md: 6 }} py={{ base: 3, md: 4 }}>
               <VStack spacing={{ base: 3, md: 4 }}>
                 {/* Video Player - Always at the top */}
                 {videoUrl ? (
@@ -889,19 +884,9 @@ const VideoTrimModal: React.FC<VideoTrimModalProps> = memo(
                   </Box>
                 )}
               </VStack>
-            </ModalBody>
-
-            <VideoTrimModalFooter
-              isValidSelection={isValidSelection}
-              maxDuration={maxDuration}
-              canBypass={canBypass}
-              isProcessing={isProcessing}
-              hasActiveTrim={hasActiveTrim}
-              onBypass={handleBypass}
-              onTrim={handleTrim}
-            />
-          </ModalContent>
-        </Modal>
+            </Box>
+          </Box>
+        </SkateModal>
       </>
     );
   }

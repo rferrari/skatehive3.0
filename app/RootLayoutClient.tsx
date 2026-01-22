@@ -19,6 +19,7 @@ import { NotificationProvider } from "@/contexts/NotificationContext";
 import { Analytics } from "@vercel/analytics/next";
 import InitFrameSDK from "@/hooks/init-frame-sdk";
 import { SkaterData } from "@/types/leaderboard";
+import WindowDock from "@/components/shared/WindowDock";
 import "@/lib/utils/mobileInputFix"; // Import mobile input fix utility
 
 export default function RootLayoutClient({
@@ -199,6 +200,9 @@ function InnerLayout({
 
       {/* Global Community Toast Notifications - Desktop only */}
       <CommunityToasts />
+
+      {/* Window Dock for minimized windows */}
+      <WindowDock />
 
       <Flex direction={{ base: "column", md: "row" }} minH="100vh">
         <Sidebar />

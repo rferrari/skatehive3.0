@@ -13,10 +13,9 @@ import {
   AlertTitle,
   AlertDescription,
 } from "@chakra-ui/react";
-import { ArrowBackIcon, CheckIcon, WarningIcon } from "@chakra-ui/icons";
+import { WarningIcon } from "@chakra-ui/icons";
 import { tokenDictionary } from "@/lib/utils/tokenDictionary";
 import TransactionStatusDisplay from "../TransactionStatusDisplay";
-import useIsMobile from "@/hooks/useIsMobile";
 
 interface ConfirmationStepProps {
   selectedToken: string;
@@ -62,7 +61,6 @@ export function ConfirmationStep({
   onEstimateCost,
   onResetStatus,
 }: ConfirmationStepProps) {
-  const isMobile = useIsMobile();
   const selectedTokenInfo = tokenDictionary[selectedToken];
 
   return (

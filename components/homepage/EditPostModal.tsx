@@ -1,11 +1,4 @@
 import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
-  ModalBody,
-  ModalCloseButton,
   Button,
   Textarea,
   VStack,
@@ -16,6 +9,7 @@ import {
 import { Discussion } from "@hiveio/dhive";
 import { EnhancedMarkdownRenderer } from "@/components/markdown/EnhancedMarkdownRenderer";
 import useIsMobile from "@/hooks/useIsMobile";
+import SkateModal from "@/components/shared/SkateModal";
 
 interface EditPostModalProps {
   isOpen: boolean;
@@ -36,94 +30,30 @@ const EditPostModal = ({
   onSave,
   isSaving,
 }: EditPostModalProps) => {
-  const bgColor = useColorModeValue("background", "background");
-  const primaryColor = useColorModeValue("primary", "primary");
-  const mutedColor = useColorModeValue("muted", "muted");
   const secondaryColor = useColorModeValue("secondary", "secondary");
   const errorColor = useColorModeValue("error", "error");
   const isMobile = useIsMobile();
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size={isMobile ? "full" : "xl"}>
-      <ModalOverlay />
-      <ModalContent
-        bg={bgColor}
-        borderColor={mutedColor}
-        h={isMobile ? "100vh" : "auto"}
-        borderRadius={isMobile ? "0" : "md"}
-        display="flex"
-        flexDirection="column"
-      >
-        <ModalHeader color={primaryColor} flexShrink={0}>
-          Edit Post
-        </ModalHeader>
-        <ModalCloseButton
-          color={errorColor}
-          bg="none"
-          _hover={{
-            bg: "none",
-            color: errorColor,
-          }}
-          _active={{
-            bg: "none",
-            color: errorColor,
-          }}
-        />
-        <ModalBody flex="1" overflowY="auto">
-          <VStack spacing={4}>
-            <Textarea
-              value={editedContent}
-              onChange={(e) => setEditedContent(e.target.value)}
-              placeholder="Edit your post content..."
-              minHeight="300px"
-              resize="vertical"
-              bg={bgColor}
-              borderColor={mutedColor}
-              color={primaryColor}
-              fontSize={isMobile ? "16px" : "md"}
-              _placeholder={{ color: mutedColor }}
-              _focus={{ borderColor: secondaryColor }}
-            />
-            <Box
-              width="100%"
-              p={4}
-              bg={mutedColor}
-              borderRadius="none"
-              border="1px solid"
-              borderColor={mutedColor}
-            >
-              <Text fontSize="sm" fontWeight="bold" mb={2} color={primaryColor}>
-                Preview:
-              </Text>
-              <Box
-                sx={{
-                  p: { marginBottom: "1rem", lineHeight: "1.6" },
-                  color: primaryColor,
-                }}
-              >
-                <EnhancedMarkdownRenderer content={editedContent} />
-              </Box>
-            </Box>
-          </VStack>
-        </ModalBody>
-        <ModalFooter
-          borderTopColor={mutedColor}
-          flexShrink={0}
-          pb={isMobile ? "calc(1.5rem + env(safe-area-inset-bottom))" : 4}
-        >
+    <SkateModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="edit-post"
+      size={isMobile ? "full" : "xl"}
+      footer={
+        <VStack spacing={3} align="stretch">
           <Button
             variant="ghost"
-            mr={3}
             onClick={onClose}
             disabled={isSaving}
             color={errorColor}
-            bg="none"
+            bg="transparent"
             _hover={{
-              bg: "none",
+              bg: "transparent",
               color: errorColor,
             }}
             _active={{
-              bg: "none",
+              bg: "transparent",
               color: errorColor,
             }}
           >
@@ -131,18 +61,55 @@ const EditPostModal = ({
           </Button>
           <Button
             bg={secondaryColor}
-            color={primaryColor}
             onClick={onSave}
             isLoading={isSaving}
             loadingText="Saving..."
-            _hover={{ bg: primaryColor, color: bgColor }}
-            _active={{ bg: primaryColor, color: bgColor }}
+            _hover={{ bg: "primary" }}
+            width="full"
           >
             Save Changes
           </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </VStack>
+      }
+    >
+      <Box p={4}>
+        <VStack spacing={4} align="stretch">
+          <Textarea
+            value={editedContent}
+            onChange={(e) => setEditedContent(e.target.value)}
+            placeholder="Edit your post content..."
+            minHeight="300px"
+            resize="vertical"
+            bg="inputBg"
+            borderColor="inputBorder"
+            color="inputText"
+            fontSize={isMobile ? "16px" : "md"}
+            _placeholder={{ color: "inputPlaceholder" }}
+            _focus={{ borderColor: "accent" }}
+          />
+          <Box
+            width="100%"
+            p={4}
+            bg="panel"
+            borderRadius="md"
+            border="1px solid"
+            borderColor="border"
+          >
+            <Text fontSize="sm" fontWeight="bold" mb={2} color="primary">
+              Preview:
+            </Text>
+            <Box
+              sx={{
+                p: { marginBottom: "1rem", lineHeight: "1.6" },
+                color: "text",
+              }}
+            >
+              <EnhancedMarkdownRenderer content={editedContent} />
+            </Box>
+          </Box>
+        </VStack>
+      </Box>
+    </SkateModal>
   );
 };
 
