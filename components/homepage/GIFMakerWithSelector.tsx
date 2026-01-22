@@ -8,9 +8,10 @@ import React, {
 } from "react";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile } from "@ffmpeg/util";
-import { Box, Input, Button, Text, Select, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody } from "@chakra-ui/react";
+import { Box, Input, Button, Text, Select } from "@chakra-ui/react";
 import { useTheme } from "@/app/themeProvider";
 import VideoTimeline from "./VideoTimeline";
+import SkateModal from "@/components/shared/SkateModal";
 
 interface GIFMakerWithSelectorProps {
   onUpload: (url: string | null, caption?: string) => void;
@@ -496,18 +497,16 @@ const GIFMakerWithSelector = forwardRef<GIFMakerRef, GIFMakerWithSelectorProps>(
 
     if (asModal) {
       return (
-        <Modal isOpen={isOpen} onClose={onClose || (() => {})} size="xl">
-          <ModalOverlay />
-          <ModalContent bg={colors.background} borderRadius={borderRadius}>
-            <ModalHeader color={colors.primary} fontWeight={fontWeightBold}>
-              GIF Maker
-            </ModalHeader>
-            <ModalCloseButton color={colors.primary} />
-            <ModalBody pb={6} textAlign="center">
-              {content}
-            </ModalBody>
-          </ModalContent>
-        </Modal>
+        <SkateModal 
+          isOpen={isOpen} 
+          onClose={onClose || (() => {})} 
+          title="GIF Maker"
+          size="xl"
+        >
+          <Box pb={6} textAlign="center" p={4}>
+            {content}
+          </Box>
+        </SkateModal>
       );
     }
 

@@ -6,12 +6,6 @@ import React, {
   useRef,
 } from "react";
 import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalCloseButton,
   VStack,
   HStack,
   Text,
@@ -27,6 +21,7 @@ import { useMarkdownCoin } from "@/hooks/useMarkdownCoin";
 import { CoverStep } from "./CoverStep";
 import { CarouselStep, CarouselImage } from "./CarouselStep";
 import { ConfirmStep } from "./ConfirmStep";
+import SkateModal from "@/components/shared/SkateModal";
 import {
   extractThumbnailFromPost,
   convertToMarkdownDescription,
@@ -519,34 +514,23 @@ export function MarkdownCoinModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} isCentered size="xl">
-      <ModalOverlay bg="blackAlpha.800" />
-      <ModalContent
-        bg="background"
-        border="1px solid"
-        borderColor="primary"
-        maxW="800px"
-      >
-        <ModalHeader color="colorBackground">
-          <VStack spacing={2} align="stretch">
-            <HStack justify="space-between" align="center">
-              <Text fontSize="xl" fontWeight="bold">
-                {getStepTitle(currentStep)}
-              </Text>
-            </HStack>
-            {currentStep !== "success" && (
-              <Progress
-                value={(getStepNumber(currentStep) / 3) * 100}
-                colorScheme="green"
-                size="sm"
-                borderRadius="full"
-              />
-            )}
-          </VStack>
-        </ModalHeader>
-        <ModalCloseButton color="primary" isDisabled={isCreating} />
-
-        <ModalBody>
+    <SkateModal 
+      isOpen={isOpen} 
+      onClose={handleClose} 
+      title={getStepTitle(currentStep)}
+      size="xl"
+      closeOnOverlayClick={!isCreating}
+    >
+      <Box p={6} maxW="800px" mx="auto">
+        {currentStep !== "success" && (
+          <Progress
+            value={(getStepNumber(currentStep) / 3) * 100}
+            colorScheme="green"
+            size="sm"
+            borderRadius="full"
+            mb={6}
+          />
+        )}
           {currentStep === "carousel" && (
             <CarouselStep
               carouselPreview={carouselPreview}
@@ -683,8 +667,7 @@ export function MarkdownCoinModal({
               </Button>
             </VStack>
           )}
-        </ModalBody>
-      </ModalContent>
-    </Modal>
+      </Box>
+    </SkateModal>
   );
 }

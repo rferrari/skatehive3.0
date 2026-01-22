@@ -1,11 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalCloseButton,
   Tabs,
   TabList,
   TabPanels,
@@ -28,6 +22,7 @@ import {
   Avatar as ChakraAvatar,
 } from "@chakra-ui/react";
 import { FiCopy } from "react-icons/fi";
+import SkateModal from "@/components/shared/SkateModal";
 import { useAccount } from "wagmi";
 import * as QRCode from "qrcode";
 import { Name, Avatar as OnchainAvatar } from "@coinbase/onchainkit/identity";
@@ -132,51 +127,14 @@ const ReceiveModal: React.FC<ReceiveModalProps> = ({ isOpen, onClose }) => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="md" isCentered>
-      <ModalOverlay bg="blackAlpha.600" backdropFilter="blur(10px)" />
-      <ModalContent
-        bg="cardBg"
-        borderRadius="2xl"
-        border="1px solid"
-        borderColor="border"
-        boxShadow="0 25px 50px rgba(0, 0, 0, 0.25)"
-        mx={4}
-      >
-        <ModalHeader
-          pb={2}
-          borderBottom="1px solid"
-          borderColor="border"
-          bg="linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1))"
-          borderTopRadius="2xl"
-        >
-          <HStack spacing={3}>
-            <Box
-              w={8}
-              h={8}
-              bg="linear-gradient(135deg, #3b82f6, #9333ea)"
-              borderRadius="lg"
-              display="flex"
-              alignItems="center"
-              justifyContent="center"
-            >
-              <Text color="white" fontWeight="bold" fontSize="sm">
-                R
-              </Text>
-            </Box>
-            <VStack align="start" spacing={0}>
-              <Text fontWeight="bold" fontSize="lg" color="text">
-                Receive Crypto
-              </Text>
-              <Text fontSize="sm" color="textSecondary">
-                Share your addresses to receive payments
-              </Text>
-            </VStack>
-          </HStack>
-        </ModalHeader>
-        <ModalCloseButton />
-
-        <ModalBody p={0}>
-          <VStack spacing={0} w="100%">
+    <SkateModal 
+      isOpen={isOpen} 
+      onClose={onClose} 
+      title="Receive Crypto"
+      size="md"
+    >
+      <Box p={0}>
+        <VStack spacing={0} w="100%">
             <Tabs variant="soft-rounded" w="100%">
               <TabList p={4} bg="background">
                 <Tab
@@ -665,9 +623,8 @@ const ReceiveModal: React.FC<ReceiveModalProps> = ({ isOpen, onClose }) => {
               </TabPanels>
             </Tabs>
           </VStack>
-        </ModalBody>
-      </ModalContent>
-    </Modal>
+      </Box>
+    </SkateModal>
   );
 };
 

@@ -1,10 +1,4 @@
 import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalCloseButton,
   VStack,
   HStack,
   Text,
@@ -27,6 +21,7 @@ import { TokenDetail, blockchainDictionary } from "../../../types/portfolio";
 import { formatBalance, formatValue } from "../../../lib/utils/portfolioUtils";
 import TokenLogo from "./TokenLogo";
 import useIsMobile from "@/hooks/useIsMobile";
+import SkateModal from "@/components/shared/SkateModal";
 
 interface SendModalProps {
   isOpen: boolean;
@@ -117,43 +112,39 @@ export default function SendModal({ isOpen, onClose, token }: SendModalProps) {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size={isMobile ? "full" : "md"}>
-      <ModalOverlay />
-      <ModalContent
-        bg="gray.900"
-        border="1px solid"
-        borderColor="gray.700"
-        h={isMobile ? "100vh" : "auto"}
-        borderRadius={isMobile ? "0" : "md"}
-        display="flex"
-        flexDirection="column"
-      >
-        <ModalHeader flexShrink={0}>
-          <HStack spacing={3}>
-            <TokenLogo
-              token={token}
-              size="32px"
-              showNetworkBadge={true}
-              networkBadgeSize="12px"
-            />
-            <VStack spacing={0} align="start">
-              <Text fontSize="lg" fontWeight="bold" color="white">
-                Send {token.token.symbol}
-              </Text>
-              <Text fontSize="sm" color="gray.400">
-                {networkInfo?.alias || token.network}
-              </Text>
-            </VStack>
-          </HStack>
-        </ModalHeader>
-        <ModalCloseButton />
-
-        <ModalBody
-          pb={isMobile ? "calc(1.5rem + env(safe-area-inset-bottom))" : 6}
-          flex="1"
-          overflowY="auto"
-        >
-          <VStack spacing={4} align="stretch">
+    <SkateModal 
+      isOpen={isOpen} 
+      onClose={onClose} 
+      title={`send-${token.token.symbol.toLowerCase()}`}
+      size={isMobile ? "full" : "md"}
+      footer={
+        <HStack spacing={3} w="full">
+          <Button
+            variant="outline"
+            borderColor="border"
+            flex={1}
+            onClick={onClose}
+          >
+            Cancel
+          </Button>
+          <Button
+            colorScheme="blue"
+            leftIcon={<FaPaperPlane />}
+            flex={1}
+            isLoading={isLoading}
+            loadingText="Sending..."
+            onClick={handleSend}
+            isDisabled={
+              !recipientAddress || !amount || parseFloat(amount || "0") <= 0
+            }
+          >
+            Send
+          </Button>
+        </HStack>
+      }
+    >
+      <Box p={4}>
+        <VStack spacing={4} align="stretch">
             {/* Available Balance */}
             <Box
               p={4}
@@ -250,37 +241,9 @@ export default function SendModal({ isOpen, onClose, token }: SendModalProps) {
               </Alert>
             )}
 
-            <Divider borderColor="gray.700" />
-
-            {/* Action Buttons */}
-            <HStack spacing={3}>
-              <Button
-                variant="outline"
-                borderColor="gray.600"
-                color="white"
-                _hover={{ bg: "gray.800" }}
-                flex={1}
-                onClick={onClose}
-              >
-                Cancel
-              </Button>
-              <Button
-                colorScheme="blue"
-                leftIcon={<FaPaperPlane />}
-                flex={1}
-                isLoading={isLoading}
-                loadingText="Sending..."
-                onClick={handleSend}
-                isDisabled={
-                  !recipientAddress || !amount || parseFloat(amount || "0") <= 0
-                }
-              >
-                Send
-              </Button>
-            </HStack>
+            <Divider borderColor="border" />
           </VStack>
-        </ModalBody>
-      </ModalContent>
-    </Modal>
+      </Box>
+    </SkateModal>
   );
 }

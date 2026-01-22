@@ -1,11 +1,4 @@
 import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
-  ModalBody,
-  ModalCloseButton,
   Button,
   FormControl,
   FormLabel,
@@ -18,6 +11,7 @@ import {
   AlertIcon,
   useToast,
   Spinner,
+  Box,
 } from "@chakra-ui/react";
 import { useState, useEffect, useCallback } from "react";
 import {
@@ -28,6 +22,7 @@ import {
 } from "wagmi";
 import { parseUnits, isAddress } from "viem";
 import { TokenDetail } from "../../types/portfolio";
+import SkateModal from "@/components/shared/SkateModal";
 import { formatBalance } from "../../lib/utils/portfolioUtils";
 import useIsMobile from "@/hooks/useIsMobile";
 import { ETH_ADDRESSES } from "@/config/app.config";
@@ -199,43 +194,42 @@ export default function SendTokenModal({
   };
 
   return (
-    <Modal
+    <SkateModal
       isOpen={isOpen}
       onClose={handleClose}
+      title={`send-${token.token.symbol.toLowerCase()}`}
       size={isMobile ? "full" : "md"}
-    >
-      <ModalOverlay />
-      <ModalContent
-        bg="background"
-        color="text"
-        borderRadius={isMobile ? "0" : "lg"}
-        border="1px solid"
-        borderColor="border"
-        h={isMobile ? "100vh" : "auto"}
-        display="flex"
-        flexDirection="column"
-      >
-        <ModalHeader flexShrink={0}>
-          <HStack spacing={3}>
-            {tokenLogo && (
-              <Image
-                src={tokenLogo}
-                alt={token.token.symbol}
-                w="32px"
-                h="32px"
-                borderRadius="full"
-              />
+      footer={
+        <HStack spacing={3} w="full">
+          <Button
+            variant="ghost"
+            flex={1}
+            onClick={handleClose}
+            borderColor="border"
+          >
+            Cancel
+          </Button>
+          <Button
+            flex={1}
+            bg="primary"
+            color="background"
+            onClick={handleSend}
+            isLoading={isPending || isConfirming}
+            loadingText={isPending ? "Sending..." : "Confirming..."}
+            isDisabled={!recipient || !amount}
+            _hover={{ bg: "accent", color: "background" }}
+          >
+            {isPending || isConfirming ? (
+              <Spinner size="sm" color="background" />
+            ) : (
+              "Send"
             )}
-            <Text color="primary">Send {token.token.symbol}</Text>
-          </HStack>
-        </ModalHeader>
-        <ModalCloseButton
-          color="text"
-          _hover={{ color: "background", bg: "primary" }}
-        />
-
-        <ModalBody flex="1" overflowY="auto">
-          <VStack spacing={4}>
+          </Button>
+        </HStack>
+      }
+    >
+      <Box p={4}>
+        <VStack spacing={4}>
             <Alert status="info" borderRadius="md" bg="muted" color="text">
               <AlertIcon color="primary" />
               <Text fontSize="sm" color="text">
@@ -277,38 +271,7 @@ export default function SendTokenModal({
               </Text>
             </FormControl>
           </VStack>
-        </ModalBody>
-
-        <ModalFooter
-          flexShrink={0}
-          pb={isMobile ? "calc(1.5rem + env(safe-area-inset-bottom))" : 4}
-        >
-          <Button
-            variant="ghost"
-            mr={3}
-            onClick={handleClose}
-            color="primary"
-            _hover={{ color: "background", bg: "primary" }}
-          >
-            Cancel
-          </Button>
-          <Button
-            bg="primary"
-            color="background"
-            onClick={handleSend}
-            isLoading={isPending || isConfirming}
-            loadingText={isPending ? "Sending..." : "Confirming..."}
-            disabled={!recipient || !amount}
-            _hover={{ bg: "accent", color: "background" }}
-          >
-            {isPending || isConfirming ? (
-              <Spinner size="sm" color="background" />
-            ) : (
-              "Send"
-            )}
-          </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+      </Box>
+    </SkateModal>
   );
 }
