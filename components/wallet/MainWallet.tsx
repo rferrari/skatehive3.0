@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useFarcasterSession } from "../../hooks/useFarcasterSession";
 import useHiveAccount from "@/hooks/useHiveAccount";
 import useMarketPrices from "@/hooks/useMarketPrices";
-import { useWalletActions } from "@/hooks/useWalletActions";
+import { useBankActions } from "@/hooks/wallet";
 import { useAccount } from "wagmi";
 import {
   Box,
@@ -26,7 +26,6 @@ import { KeyTypes } from "@aioha/aioha";
 import "@aioha/react-ui/dist/build.css";
 import { convertVestToHive } from "@/lib/hive/client-functions";
 import { extractNumber } from "@/lib/utils/extractNumber";
-import HiveWalletModal from "@/components/wallet/HiveWalletModal";
 import SendTokenModal from "@/components/wallet/SendTokenModal";
 import { Asset } from "@hiveio/dhive";
 import HivePowerSection from "./HivePowerSection";
@@ -67,7 +66,7 @@ export default function MainWallet({ username }: MainWalletProps) {
   // Use the connected user from Aioha for Hive account data
   const { user } = useAioha();
   const { hiveAccount, isLoading, error } = useHiveAccount(user || "");
-  const { handleConfirm, handleClaimHbdInterest } = useWalletActions();
+  const { claimInterest } = useBankActions();
   const { isConnected, address } = useAccount();
   const { colorMode } = useColorMode();
 
@@ -81,7 +80,6 @@ export default function MainWallet({ username }: MainWalletProps) {
 
   // Prevent hydration mismatch by tracking if component is mounted
   const [isMounted, setIsMounted] = useState(false);
-  const { isOpen, onOpen, onClose } = useDisclosure();
   const {
     isOpen: isConnectModalOpen,
     onOpen: openConnectModal,
@@ -99,13 +97,6 @@ export default function MainWallet({ username }: MainWalletProps) {
   } = useDisclosure();
 
   const [selectedToken, setSelectedToken] = useState<TokenDetail | null>(null);
-
-  const [modalContent, setModalContent] = useState<{
-    title: string;
-    description?: string;
-    showMemoField?: boolean;
-    showUsernameField?: boolean;
-  } | null>(null);
   const [hivePower, setHivePower] = useState<string | undefined>(undefined);
   const { hivePrice, hbdPrice, isPriceLoading } = useMarketPrices();
   const toast = useToast();
@@ -137,19 +128,6 @@ export default function MainWallet({ username }: MainWalletProps) {
     fetchHivePower();
   }, [hiveAccount?.vesting_shares]);
 
-  const handleModalOpen = useCallback(
-    (
-      title: string,
-      description?: string,
-      showMemoField?: boolean,
-      showUsernameField?: boolean
-    ) => {
-      setModalContent({ title, description, showMemoField, showUsernameField });
-      onOpen();
-    },
-    [onOpen]
-  );
-
   const handleConnectHive = useCallback(() => {
     if (user) {
       // User is already connected to Hive
@@ -160,87 +138,26 @@ export default function MainWallet({ username }: MainWalletProps) {
     }
   }, [user, openHiveModal]);
 
-  const onConfirm = useCallback(
-    async (
-      amount: number,
-      direction?: "HIVE_TO_HBD" | "HBD_TO_HIVE",
-      username?: string,
-      memo?: string
-    ) => {
-      if (modalContent) {
-        const result = await handleConfirm(
-          amount,
-          direction,
-          username,
-          memo,
-          modalContent.title
-        );
-
-        if (result?.error) {
-          toast({
-            title: "Error",
-            description: result.error,
-            status: "error",
-            duration: 5000,
-            isClosable: true,
-          });
-          return; // stop here, don't close modal
-        }
-
-        if (result?.success && result.result) {
-          const txId = result.result;
-          const hiveUrl = `https://hivehub.dev/tx/${txId}`;
-
-          toast({
-            title: "Success!",
-            description: (
-              <span
-                style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
-              >
-                <strong>Tx:</strong> {txId}
-                <CopyIcon
-                  cursor="pointer"
-                  onClick={() => {
-                    navigator.clipboard.writeText(txId);
-                    toast({
-                      title: "Copied!",
-                      description: "TX copied to clipboard",
-                      status: "info",
-                      duration: 2000,
-                      isClosable: true,
-                    });
-                  }}
-                />
-                {/* <ExternalLinkIcon
-                  as="a"
-                  href={hiveUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  ml="2"
-                  cursor="pointer"
-                  onClick={() =>
-                    toast({
-                      title: "Link opened",
-                      description: "Opened transaction in a new tab",
-                      status: "info",
-                      duration: 2000,
-                      isClosable: true,
-                    })
-                  }
-                /> */}
-              </span>
-            ),
-            status: "success",
-            duration: 8000,
-            isClosable: true,
-          });
-
-          onClose(); // Close modal on success
-        }
-      }
-    },
-    [modalContent, handleConfirm, onClose, toast]
-  );
+  const handleClaimHbdInterest = useCallback(async () => {
+    const result = await claimInterest();
+    if (result.success) {
+      toast({
+        title: "Success!",
+        description: "HBD interest claimed successfully",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+      });
+    } else {
+      toast({
+        title: "Error",
+        description: result.error || "Failed to claim interest",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  }, [claimInterest, toast]);
 
   // Memoize balance calculations - only if user is connected to Hive
   const hiveBalances = useMemo(() => {
@@ -342,19 +259,13 @@ export default function MainWallet({ username }: MainWalletProps) {
     return totalHiveValue + totalHbdValue;
   }, [user, hivePrice, hbdPrice, hiveBalances, hivePower]);
 
-  // Mobile action handlers
+  // Mobile action handlers for Ethereum tokens
   const handleMobileSend = useCallback(
     (token: TokenDetail | HiveToken) => {
-      if ("network" in token && token.network === "hive") {
-        // This is a Hive token, open HiveWalletModal
-        const hiveToken = token as HiveToken;
-        setModalContent({
-          title: `Send ${hiveToken.symbol}`,
-          description: `Transfer your ${hiveToken.name} to another account`,
-          showMemoField: true,
-          showUsernameField: true,
-        });
-        onOpen();
+      if (token.network && token.network === "hive") {
+        // Hive tokens are now handled by individual section modals
+        // This handler is kept for backward compatibility but shouldn't be called
+        console.warn("Hive token send should use section-specific modals");
       } else {
         // This is an Ethereum token, open SendTokenModal
         const ethToken = token as TokenDetail;
@@ -362,28 +273,11 @@ export default function MainWallet({ username }: MainWalletProps) {
         openSendTokenModal();
       }
     },
-    [onOpen, openSendTokenModal]
+    [openSendTokenModal]
   );
 
   const handleMobileSwap = useCallback((token: TokenDetail | HiveToken) => {
     // TODO: Open swap interface with selected token
-  }, []);
-
-  const handleMobileHiveSend = useCallback(
-    (hiveToken: HiveToken) => {
-      setModalContent({
-        title: `Send ${hiveToken.symbol}`,
-        description: `Transfer your ${hiveToken.name} to another account`,
-        showMemoField: true,
-        showUsernameField: true,
-      });
-      onOpen();
-    },
-    [onOpen]
-  );
-
-  const handleMobileHiveSwap = useCallback((hiveToken: HiveToken) => {
-    // TODO: Open Hive swap interface with selected token
   }, []);
 
   // Only show loading if user is trying to access Hive data
@@ -411,8 +305,8 @@ export default function MainWallet({ username }: MainWalletProps) {
             : isFarcasterConnected &&
               farcasterProfile &&
               "custody" in farcasterProfile
-            ? farcasterProfile?.custody
-            : undefined
+              ? farcasterProfile?.custody
+              : undefined
         }
         farcasterVerifiedAddresses={
           // Use enhanced data if available and valid, otherwise fallback to profile verifications
@@ -421,8 +315,8 @@ export default function MainWallet({ username }: MainWalletProps) {
             : isFarcasterConnected &&
               farcasterProfile &&
               "verifications" in farcasterProfile
-            ? farcasterProfile?.verifications
-            : undefined
+              ? farcasterProfile?.verifications
+              : undefined
         }
       >
         <Box
@@ -515,8 +409,6 @@ export default function MainWallet({ username }: MainWalletProps) {
                         <MobileActionButtons
                           onSend={handleMobileSend}
                           onSwap={handleMobileSwap}
-                          onHiveSend={handleMobileHiveSend}
-                          onHiveSwap={handleMobileHiveSwap}
                         />
                       </Box>
 
@@ -531,7 +423,6 @@ export default function MainWallet({ username }: MainWalletProps) {
                         <HiveSection
                           balance={hiveBalances.balance}
                           hivePrice={hivePrice}
-                          onModalOpen={handleModalOpen}
                         />
 
                         <HBDSection
@@ -543,7 +434,6 @@ export default function MainWallet({ username }: MainWalletProps) {
                           lastInterestPayment={
                             hbdInterestData.lastInterestPayment
                           }
-                          onModalOpen={handleModalOpen}
                           onClaimInterest={handleClaimHbdInterest}
                           isWalletView={true}
                         />
@@ -565,8 +455,6 @@ export default function MainWallet({ username }: MainWalletProps) {
                       <MobileActionButtons
                         onSend={handleMobileSend}
                         onSwap={handleMobileSwap}
-                        onHiveSend={handleMobileHiveSend}
-                        onHiveSwap={handleMobileHiveSwap}
                       />
                     )}
 
@@ -602,7 +490,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                             <HivePowerSection
                               hivePower={hivePower}
                               hivePrice={hivePrice}
-                              onModalOpen={handleModalOpen}
+                              hiveBalance={hiveBalances.balance}
                             />
                           </Box>
 
@@ -628,7 +516,6 @@ export default function MainWallet({ username }: MainWalletProps) {
                               savings_withdraw_requests={
                                 hiveAccount?.savings_withdraw_requests || 0
                               }
-                              onModalOpen={handleModalOpen}
                               onClaimInterest={handleClaimHbdInterest}
                             />
                           </Box>
@@ -682,19 +569,6 @@ export default function MainWallet({ username }: MainWalletProps) {
               />
             </VStack>
           </Grid>
-
-          {modalContent && (
-            <HiveWalletModal
-              isOpen={isOpen}
-              onClose={onClose}
-              title={modalContent.title}
-              description={modalContent.description}
-              showMemoField={modalContent.showMemoField}
-              showUsernameField={modalContent.showUsernameField}
-              hiveAccount={hiveAccount || undefined}
-              onConfirm={onConfirm}
-            />
-          )}
 
           {/* Aioha Modal for Hive Connection */}
           <div className={colorMode}>
