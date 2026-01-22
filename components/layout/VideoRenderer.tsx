@@ -10,7 +10,6 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
   RefObject,
 } from "react";
@@ -23,6 +22,7 @@ type RendererProps = {
   src?: string;
   loop?: boolean;
   skipThumbnailLoad?: boolean;
+  disableAutoplay?: boolean;
   [key: string]: any;
 };
 
@@ -216,7 +216,7 @@ const BASE_SLIDER_STYLE = {
   cursor: "pointer",
 };
 
-const VideoRenderer = ({ src, skipThumbnailLoad, ...props }: RendererProps) => {
+const VideoRenderer = ({ src, skipThumbnailLoad, disableAutoplay = false, ...props }: RendererProps) => {
   const videoRef = React.useRef<HTMLVideoElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isHorizontal, setIsHorizontal] = useState(false);
@@ -392,7 +392,7 @@ const VideoRenderer = ({ src, skipThumbnailLoad, ...props }: RendererProps) => {
   }, []);
 
   useEffect(() => {
-    if (videoRef.current && !hasError) {
+    if (videoRef.current && !hasError && !disableAutoplay) {
       if (isInView) {
         videoRef.current.play().catch(() => {
           // Silent fail if autoplay is blocked
@@ -405,7 +405,7 @@ const VideoRenderer = ({ src, skipThumbnailLoad, ...props }: RendererProps) => {
         setShouldLoop(false);
       }
     }
-  }, [isInView, hasError]);
+  }, [isInView, hasError, disableAutoplay]);
 
   // Memoize slider background to prevent re-computation on every render
   const sliderBackground = useMemo(
@@ -450,8 +450,8 @@ const VideoRenderer = ({ src, skipThumbnailLoad, ...props }: RendererProps) => {
           muted={true} // Always start muted for autoplay
           controls={false}
           playsInline={true}
-          autoPlay={true}
-          loop={shouldLoop}
+          autoPlay={!disableAutoplay}
+          loop={!disableAutoplay && shouldLoop}
           preload="metadata"
           onLoadedData={handleLoadedData}
           onEnded={handleVideoEnded}

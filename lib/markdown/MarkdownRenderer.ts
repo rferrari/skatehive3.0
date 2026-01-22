@@ -397,12 +397,11 @@ function createSimpleVideoTag(videoID: string): string {
             width="100%" 
             height="auto" 
             controls 
-            preload="none" 
+            preload="metadata" 
             autoplay
             playsinline 
             webkit-playsinline 
-            muted
-            poster="https://${APP_CONFIG.IPFS_GATEWAY}/ipfs/${videoID}?format=preview">
+            muted>
             <source src="https://${APP_CONFIG.IPFS_GATEWAY}/ipfs/${videoID}" type="video/mp4">
             <source src="https://${APP_CONFIG.IPFS_GATEWAY}/ipfs/${videoID}" type="video/webm">
             Your browser doesn't support HTML5 video.

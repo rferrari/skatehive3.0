@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useMemo, memo } from "react";
 import {
   Box,
   Flex,
@@ -23,6 +23,83 @@ interface ThumbnailPickerProps {
   uploadedVideoUrl?: string | null;
 }
 
+// Memoized thumbnail box to prevent re-renders
+const ThumbnailBox = memo(({
+    url,
+    isVideo = false,
+    isSelected,
+    onSelect,
+    onRemove,
+  }: {
+    url: string;
+    isVideo?: boolean;
+    isSelected: boolean;
+    onSelect: () => void;
+    onRemove?: (e: React.MouseEvent) => void;
+  }) => (
+    <Box
+      border={isSelected ? "2px solid" : "2px solid transparent"}
+      borderColor={isSelected ? "primary" : "transparent"}
+      overflow="hidden"
+      cursor="pointer"
+      onClick={onSelect}
+      _hover={{ borderColor: "primary" }}
+      width="96px"
+      height="96px"
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+      bg="rgba(255,255,255,0.03)"
+      position="relative"
+    >
+      {isVideo ? (
+        <video
+          src={url}
+          style={{ maxWidth: 90, maxHeight: 90, objectFit: "cover" }}
+          preload="metadata"
+          muted
+        />
+      ) : (
+        <Image
+          src={url}
+          alt="thumbnail"
+          style={{ maxWidth: 90, maxHeight: 90, objectFit: "cover" }}
+        />
+      )}
+      {isSelected && (
+        <Box
+          position="absolute"
+          top={1}
+          right={1}
+          bg="primary"
+          borderRadius="full"
+          p={1}
+        >
+          <FaCheck size={10} color="var(--chakra-colors-background)" />
+        </Box>
+      )}
+      {onRemove && (
+        <IconButton
+          aria-label="Remove thumbnail"
+          icon={<FaTimes size={12} />}
+          size="xs"
+          position="absolute"
+          top={1}
+          left={1}
+          bg="rgba(180,80,80,0.5)"
+          color="background"
+          _hover={{ bg: "rgba(180,80,80,0.7)" }}
+          onClick={onRemove}
+          borderRadius="full"
+          minW="20px"
+          h="20px"
+        />
+      )}
+    </Box>
+  ));
+
+ThumbnailBox.displayName = "ThumbnailBox";
+
 export default function ThumbnailPicker({
   show,
   markdown,
@@ -37,10 +114,12 @@ export default function ThumbnailPicker({
     null
   );
 
-  if (!show) return null;
+  // Memoize extracted URLs so thumbnails don't re-render on every keystroke
+  // Must be called before early return to follow hooks rules
+  const imageUrls = useMemo(() => extractImageUrls(markdown), [markdown]);
+  const videoUrls = useMemo(() => extractVideoUrls(markdown), [markdown]);
 
-  const imageUrls = extractImageUrls(markdown);
-  const videoUrls = extractVideoUrls(markdown);
+  if (!show) return null;
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
@@ -98,78 +177,6 @@ export default function ThumbnailPicker({
     }
   };
 
-  const ThumbnailBox = ({
-    url,
-    isVideo = false,
-    onRemove,
-  }: {
-    url: string;
-    isVideo?: boolean;
-    onRemove?: (e: React.MouseEvent) => void;
-  }) => (
-    <Box
-      border={
-        selectedThumbnail === url ? "2px solid" : "2px solid transparent"
-      }
-      borderColor={selectedThumbnail === url ? "primary" : "transparent"}
-      overflow="hidden"
-      cursor="pointer"
-      onClick={() => setSelectedThumbnail(url)}
-      _hover={{ borderColor: "primary" }}
-      width="96px"
-      height="96px"
-      display="flex"
-      alignItems="center"
-      justifyContent="center"
-      bg="rgba(255,255,255,0.03)"
-      position="relative"
-    >
-      {isVideo ? (
-        <video
-          src={url}
-          style={{ maxWidth: 90, maxHeight: 90, objectFit: "cover" }}
-          preload="metadata"
-          muted
-        />
-      ) : (
-        <Image
-          src={url}
-          alt="thumbnail"
-          style={{ maxWidth: 90, maxHeight: 90, objectFit: "cover" }}
-        />
-      )}
-      {selectedThumbnail === url && (
-        <Box
-          position="absolute"
-          top={1}
-          right={1}
-          bg="primary"
-          borderRadius="full"
-          p={1}
-        >
-          <FaCheck size={10} color="var(--chakra-colors-background)" />
-        </Box>
-      )}
-      {onRemove && (
-        <IconButton
-          aria-label="Remove thumbnail"
-          icon={<FaTimes size={12} />}
-          size="xs"
-          position="absolute"
-          top={1}
-          left={1}
-          bg="rgba(180,80,80,0.5)"
-          color="background"
-          _hover={{ bg: "rgba(180,80,80,0.7)" }}
-          onClick={onRemove}
-          borderRadius="full"
-          minW="20px"
-          h="20px"
-        />
-      )}
-    </Box>
-  );
-
   return (
     <Box>
       <Text
@@ -186,17 +193,35 @@ export default function ThumbnailPicker({
         {uploadedThumbnail && (
           <ThumbnailBox
             url={uploadedThumbnail}
+            isSelected={selectedThumbnail === uploadedThumbnail}
+            onSelect={() => setSelectedThumbnail(uploadedThumbnail)}
             onRemove={handleRemoveUploaded}
           />
         )}
         {uploadedVideoUrl && (
-          <ThumbnailBox url={uploadedVideoUrl} isVideo />
+          <ThumbnailBox 
+            url={uploadedVideoUrl} 
+            isVideo 
+            isSelected={selectedThumbnail === uploadedVideoUrl}
+            onSelect={() => setSelectedThumbnail(uploadedVideoUrl)}
+          />
         )}
         {imageUrls.map((url, idx) => (
-          <ThumbnailBox key={url + idx} url={url} />
+          <ThumbnailBox 
+            key={url + idx} 
+            url={url} 
+            isSelected={selectedThumbnail === url}
+            onSelect={() => setSelectedThumbnail(url)}
+          />
         ))}
         {videoUrls.map((url, idx) => (
-          <ThumbnailBox key={url + idx} url={url} isVideo />
+          <ThumbnailBox 
+            key={url + idx} 
+            url={url} 
+            isVideo 
+            isSelected={selectedThumbnail === url}
+            onSelect={() => setSelectedThumbnail(url)}
+          />
         ))}
         <Box
           border="2px dashed"

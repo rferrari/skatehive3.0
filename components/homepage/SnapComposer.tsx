@@ -734,35 +734,32 @@ const SnapComposer = React.memo(function SnapComposer({
             _focusVisible={{ border: "tb1" }}
           />
 
-          {/* Media Preview Section - Videos first, then images/GIFs */}
+          {/* Media Preview Section - Videos and images side by side */}
           {(compressedImages.length > 0 || selectedGif || videoUrl) && (
-            <Wrap spacing={4} mb={3}>
-              {/* Videos appear first */}
+            <HStack spacing={3} mb={3} align="stretch" width="100%">
+              {/* Video preview - equal width distribution */}
               {videoUrl && (
-                <Box position="relative" width="100%" maxW="600px">
+                <Box position="relative" flex="1">
                   <Box
                     position="relative"
                     width="100%"
-                    paddingBottom="56.25%" // 16:9 aspect ratio (9/16 = 0.5625)
-                    height="0"
                     overflow="hidden"
-                    borderRadius="8px"
-                    bg="transparent"
+                    borderRadius="md"
+                    bg="black"
                   >
-                    <iframe
+                    <video
                       src={videoUrl}
-                      title="Uploaded Video"
-                      frameBorder="0"
+                      controls
+                      controlsList="nodownload"
+                      playsInline
+                      preload="metadata"
                       style={{
-                        position: "absolute",
-                        top: "0",
-                        left: "0",
                         width: "100%",
-                        height: "100%",
+                        height: "auto",
+                        maxHeight: "300px",
                         borderRadius: "8px",
+                        display: "block",
                       }}
-                      allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
                     />
                   </Box>
                   <IconButton
@@ -770,27 +767,29 @@ const SnapComposer = React.memo(function SnapComposer({
                     data-testid="snap-composer-remove-video"
                     aria-label="Remove video"
                     icon={<FaTimes />}
-                    size="xs"
+                    size="sm"
                     position="absolute"
-                    top="2"
-                    right="2"
+                    top="8px"
+                    right="8px"
                     onClick={() => setVideoUrl(null)}
                     isDisabled={isLoading}
-                    bg="blackAlpha.700"
+                    bg="blackAlpha.800"
                     color="white"
-                    _hover={{ bg: "blackAlpha.800" }}
+                    _hover={{ bg: "blackAlpha.900" }}
+                    zIndex={2}
                   />
                 </Box>
               )}
 
-              {/* Then images and GIFs */}
+              {/* Images - equal width distribution */}
               {compressedImages.map((img, index) => (
-                <Box key={index} position="relative" maxW="200px">
+                <Box key={index} position="relative" flex="1">
                   <Image
                     alt={img.fileName}
                     src={img.url}
-                    maxH="100px"
-                    maxW="200px"
+                    width="100%"
+                    height="auto"
+                    maxH="300px"
                     objectFit="contain"
                     borderRadius="base"
                   />
@@ -831,12 +830,13 @@ const SnapComposer = React.memo(function SnapComposer({
                 </Box>
               ))}
               {selectedGif && (
-                <Box key={selectedGif.id} position="relative" maxW="200px">
+                <Box key={selectedGif.id} position="relative" flex="1">
                   <Image
                     alt=""
                     src={selectedGif.images.downsized_medium.url}
-                    maxH="100px"
-                    maxW="200px"
+                    width="100%"
+                    height="auto"
+                    maxH="300px"
                     objectFit="contain"
                     borderRadius="base"
                   />
@@ -854,7 +854,7 @@ const SnapComposer = React.memo(function SnapComposer({
                   />
                 </Box>
               )}
-            </Wrap>
+            </HStack>
           )}
 
           <HStack justify="space-between" mb={0}>

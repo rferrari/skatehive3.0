@@ -1,8 +1,6 @@
-import React, { useMemo, useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Box, Textarea, HStack, IconButton, Button, Flex, Text, useColorModeValue } from "@chakra-ui/react";
 import { useDropzone } from "react-dropzone";
-import { Components } from "@uiw/react-markdown-preview";
-import VideoRenderer from "../layout/VideoRenderer";
 import HiveMarkdown from "../shared/HiveMarkdown";
 import { FaColumns } from "react-icons/fa";
 import { TbGif } from "react-icons/tb";
@@ -124,78 +122,6 @@ export default function MarkdownEditor({
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
   };
-
-  const memoizedComponents: Components = useMemo(
-    () => ({
-      iframe: ({
-        node,
-        ...props
-      }: React.IframeHTMLAttributes<HTMLIFrameElement> & {
-        node?: unknown;
-      }) => <VideoRenderer src={props.src} {...props} />,
-
-      p: ({ children, ...props }) => {
-        if (
-          Array.isArray(children) &&
-          children.length === 1 &&
-          typeof children[0] === "string"
-        ) {
-          const text = children[0].trim();
-          const ytMatch = text.match(
-            /^(https?:\/\/(?:www\.|m\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11}))(?:[&?][^\s]*)?$/
-          );
-          if (ytMatch) {
-            const videoId = ytMatch[2];
-            const embedUrl = `https://www.youtube.com/embed/${videoId}`;
-            return (
-              <div
-                style={{
-                  position: "relative",
-                  paddingBottom: "56.25%",
-                  height: 0,
-                  overflow: "hidden",
-                  margin: "16px 0",
-                }}
-              >
-                <iframe
-                  src={embedUrl}
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  title="YouTube Video"
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                    height: "100%",
-                  }}
-                />
-              </div>
-            );
-          }
-        }
-        return <p style={{ color: "var(--chakra-colors-text)", lineHeight: 1.8, marginBottom: "12px" }} {...props}>{children}</p>;
-      },
-      a: ({ href, children, ...props }) => (
-        <a href={href} {...props} style={{ color: "var(--chakra-colors-primary)", textDecoration: "none" }}>
-          {children}
-        </a>
-      ),
-      h1: ({ children }) => <h1 style={{ color: "var(--chakra-colors-text)", fontSize: "1.75em", fontWeight: 700, marginBottom: "16px", marginTop: "24px" }}>{children}</h1>,
-      h2: ({ children }) => <h2 style={{ color: "var(--chakra-colors-text)", fontSize: "1.5em", fontWeight: 600, marginBottom: "14px", marginTop: "20px" }}>{children}</h2>,
-      h3: ({ children }) => <h3 style={{ color: "var(--chakra-colors-text)", fontSize: "1.25em", fontWeight: 600, marginBottom: "12px", marginTop: "16px" }}>{children}</h3>,
-      strong: ({ children }) => <strong style={{ color: "var(--chakra-colors-text)", fontWeight: 700 }}>{children}</strong>,
-      em: ({ children }) => <em style={{ color: "var(--chakra-colors-text)", opacity: 0.8 }}>{children}</em>,
-      code: ({ children }) => <code style={{ color: "var(--chakra-colors-primary)", backgroundColor: "var(--chakra-colors-muted)", padding: "3px 8px", fontSize: "0.9em", fontFamily: "monospace" }}>{children}</code>,
-      pre: ({ children }) => <pre style={{ backgroundColor: "var(--chakra-colors-muted)", padding: "16px", overflow: "auto", margin: "16px 0" }}>{children}</pre>,
-      blockquote: ({ children }) => <blockquote style={{ borderLeft: "4px solid var(--chakra-colors-primary)", paddingLeft: "16px", color: "var(--chakra-colors-text)", margin: "16px 0", backgroundColor: "var(--chakra-colors-muted)", padding: "12px 16px" }}>{children}</blockquote>,
-      ul: ({ children }) => <ul style={{ color: "var(--chakra-colors-text)", paddingLeft: "24px", lineHeight: 1.9, margin: "12px 0" }}>{children}</ul>,
-      ol: ({ children }) => <ol style={{ color: "var(--chakra-colors-text)", paddingLeft: "24px", lineHeight: 1.9, margin: "12px 0" }}>{children}</ol>,
-      li: ({ children }) => <li style={{ marginBottom: "6px", color: "var(--chakra-colors-text)" }}>{children}</li>,
-    }),
-    []
-  );
 
   return (
     <Box
@@ -370,7 +296,7 @@ export default function MarkdownEditor({
               Preview
             </Text>
             <Box color={textPrimary} fontSize="15px" lineHeight="1.7">
-              <HiveMarkdown markdown={markdown} />
+              <HiveMarkdown markdown={markdown} rawIframes={true} />
             </Box>
           </Box>
           <Box
@@ -432,7 +358,7 @@ export default function MarkdownEditor({
           maxHeight="50%"
           overflow="auto"
         >
-          <HiveMarkdown markdown={markdown} />
+          <HiveMarkdown markdown={markdown} rawIframes={true} />
         </Box>
       )}
 
