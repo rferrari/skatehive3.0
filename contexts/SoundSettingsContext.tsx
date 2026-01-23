@@ -1,21 +1,21 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
 
 interface SoundSettings {
   soundEnabled: boolean;
   setSoundEnabled: (enabled: boolean) => void;
+  isHydrated: boolean;
 }
 
 const SoundSettingsContext = createContext<SoundSettings | undefined>(undefined);
 
 export function SoundSettingsProvider({ children }: { children: React.ReactNode }) {
   const [soundEnabled, setSoundEnabledState] = useState<boolean>(true);
-  const [mounted, setMounted] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
 
-  // Load from localStorage on mount
+  // Load from localStorage on mount (client-side only)
   useEffect(() => {
-    setMounted(true);
     try {
       const saved = localStorage.getItem('skatehive_sound_enabled');
       if (saved !== null) {
@@ -24,6 +24,7 @@ export function SoundSettingsProvider({ children }: { children: React.ReactNode 
     } catch {
       // localStorage unavailable, use default
     }
+    setIsHydrated(true);
   }, []);
 
   const setSoundEnabled = useCallback((enabled: boolean) => {
@@ -35,8 +36,14 @@ export function SoundSettingsProvider({ children }: { children: React.ReactNode 
     }
   }, []);
 
+  const value = useMemo(() => ({
+    soundEnabled,
+    setSoundEnabled,
+    isHydrated,
+  }), [soundEnabled, setSoundEnabled, isHydrated]);
+
   return (
-    <SoundSettingsContext.Provider value={{ soundEnabled, setSoundEnabled }}>
+    <SoundSettingsContext.Provider value={value}>
       {children}
     </SoundSettingsContext.Provider>
   );

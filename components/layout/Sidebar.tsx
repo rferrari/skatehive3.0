@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import {
   Box,
   VStack,
@@ -8,7 +8,6 @@ import {
   useToken,
   Link as ChakraLink,
 } from "@chakra-ui/react";
-import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAioha } from "@aioha/react-ui";
 import { useAccount } from "wagmi";
@@ -29,6 +28,7 @@ import { useNotifications } from "@/contexts/NotificationContext";
 import SidebarLogo from "../graphics/SidebarLogo";
 import AuthButton from "./AuthButton";
 import { useTranslations } from "@/contexts/LocaleContext";
+import { useSoundSettings } from "@/contexts/SoundSettingsContext";
 
 export default function Sidebar() {
   const { user } = useAioha();
@@ -38,6 +38,23 @@ export default function Sidebar() {
   const [isClientMounted, setIsClientMounted] = useState(false);
   const { themeName } = useTheme();
   const t = useTranslations('navigation');
+  const { soundEnabled } = useSoundSettings();
+  const hoverAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Initialize hover sound
+  useEffect(() => {
+    hoverAudioRef.current = new Audio('/hoversfx.mp3');
+    hoverAudioRef.current.volume = 0.2;
+  }, []);
+
+  const playHoverSound = useCallback(() => {
+    if (soundEnabled && hoverAudioRef.current) {
+      hoverAudioRef.current.currentTime = 0;
+      hoverAudioRef.current.play().catch(() => {
+        // Silently fail if audio can't be played
+      });
+    }
+  }, [soundEnabled]);
 
   // Ensure client-side only rendering to prevent hydration mismatch
   useEffect(() => {
@@ -99,6 +116,7 @@ export default function Sidebar() {
         pl={4}
         textDecoration="none"
         color="inherit"
+        onMouseEnter={playHoverSound}
         _hover={{
           textDecoration: "none",
           "& > div": {

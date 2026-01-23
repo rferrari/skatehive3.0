@@ -27,7 +27,7 @@ interface MainSettingsProps {
 const MainSettings: React.FC<MainSettingsProps> = ({ userData }) => {
   const t = useTranslations();
   const { themeName, setThemeName } = useTheme();
-  const { soundEnabled, setSoundEnabled } = useSoundSettings();
+  const { soundEnabled, setSoundEnabled, isHydrated } = useSoundSettings();
   const { locale, setLocale } = useLocale();
   const toast = useToast();
 
@@ -146,7 +146,7 @@ const MainSettings: React.FC<MainSettingsProps> = ({ userData }) => {
               {t('settings.clickSoundLabel')}
             </Text>
             <Switch
-              isChecked={soundEnabled}
+              isChecked={isHydrated ? soundEnabled : true}
               onChange={handleSoundToggle}
               colorScheme="blue"
               size="lg"

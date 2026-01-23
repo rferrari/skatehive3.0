@@ -1,7 +1,8 @@
 "use client";
 import { Box, Text, VStack, useToken } from "@chakra-ui/react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useTranslations } from "../../contexts/LocaleContext";
+import { useSoundSettings } from "../../contexts/SoundSettingsContext";
 import "../../lib/utils/fonts.css";
 
 // Define character sets for each font
@@ -66,11 +67,49 @@ interface MatrixColumn {
 
 const LogoMatrix = () => {
   const t = useTranslations();
+  const { soundEnabled } = useSoundSettings();
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const soundEnabledRef = useRef(soundEnabled);
   
   const [currentMessageKey, setCurrentMessageKey] = useState(MESSAGE_KEYS[0]);
   const [columns, setColumns] = useState<MatrixColumn[]>([]);
   const [primary] = useToken("colors", ["primary"]);
   const [messageVisible, setMessageVisible] = useState(true);
+
+  // Keep ref in sync with soundEnabled
+  useEffect(() => {
+    soundEnabledRef.current = soundEnabled;
+  }, [soundEnabled]);
+
+  // Play loading sound on mount - preload and play when ready
+  useEffect(() => {
+    const audio = new Audio('/loadindsfx.mp3');
+    audio.volume = 0.3;
+    audioRef.current = audio;
+    
+    const playWhenReady = () => {
+      if (soundEnabledRef.current && audioRef.current) {
+        audioRef.current.play().catch(() => {
+          // Silently fail if audio can't be played
+        });
+      }
+    };
+
+    // If already loaded, play immediately
+    if (audio.readyState >= 3) {
+      playWhenReady();
+    } else {
+      audio.addEventListener('canplaythrough', playWhenReady, { once: true });
+    }
+
+    return () => {
+      audio.removeEventListener('canplaythrough', playWhenReady);
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
 
   // Only generate columns once on mount
   useEffect(() => {
