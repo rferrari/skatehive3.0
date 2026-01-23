@@ -112,3 +112,69 @@ Themes may also define:
 ### Theme switching
 
 Users can switch themes at runtime. The selected theme is persisted in `localStorage`. The fallback theme is `hackerPlus`. Theme can be overridden via `APP_CONFIG.THEME_OVERRIDE` or `APP_CONFIG.DEFAULT_THEME`.
+
+## Translation system
+
+Skatehive supports multiple languages: English, Portuguese (Brazil), Spanish, and Luganda. All human-facing strings must be translation-compatible to maintain consistency across languages.
+
+### Translation architecture
+
+- **Translation files:** Located in `lib/i18n/locales/` with separate files for each language (`en.ts`, `pt-BR.ts`, `es.ts`, `lg.ts`)
+- **Translation hook:** Use `useTranslations(namespace)` from `@/lib/i18n/hooks` in client components
+- **Centralized exports:** All translations registered in `lib/i18n/translations.ts`
+- **Context provider:** `LocaleContext` in `contexts/LocaleContext.tsx` manages language state
+
+### Writing translation-compatible code
+
+**DO:**
+- Use the `useTranslations` hook for all user-facing strings in client components
+- Organize strings by namespace (e.g., `notifications`, `auction`, `chat`)
+- Add new translation keys to ALL language files (`en.ts`, `pt-BR.ts`, `es.ts`, `lg.ts`) simultaneously
+- Store static strings in translation files, not hardcoded in components
+
+**Example:**
+```typescript
+'use client';
+
+import { useTranslations } from '@/lib/i18n/hooks';
+
+export function MyComponent() {
+  const t = useTranslations('myfeature');
+  
+  return (
+    <div>
+      <h1>{t('title')}</h1>
+      <p>{t('description')}</p>
+    </div>
+  );
+}
+```
+
+Then in translation files:
+```typescript
+// lib/i18n/locales/en.ts
+myfeature: {
+  title: 'My Feature Title',
+  description: 'Feature description text',
+}
+```
+
+**DON'T:**
+- Hard-code user-facing strings directly in components
+- Add strings to only one or two language files
+- Use string concatenation for translatable content
+- Store UI text in component files instead of translation files
+
+### Adding a new translation namespace
+
+1. Create the namespace in ALL language files (`en.ts`, `pt-BR.ts`, `es.ts`, `lg.ts`)
+2. Import and export the namespace in `lib/i18n/translations.ts`
+3. Use `useTranslations('namespaceName')` in components
+4. Run `pnpm lint` to verify the setup
+
+### Current supported languages
+
+- **en** – English (🇺🇸)
+- **pt-BR** – Portuguese (Brazil) (🇧🇷)
+- **es** – Spanish (🇪🇸)
+- **lg** – Luganda (🇺🇬)

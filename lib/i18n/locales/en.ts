@@ -731,7 +731,7 @@ export const en = {
     loading: 'Loading auction...',
     errorLoading: 'Error loading auction:',
     noActiveAuction: 'No active auction found',
-    auctionNotFound: 'Auction #{tokenId} not found. This auction may not exist or may not be from SkateHive DAO.',
+    auctionNotFound: 'Auction {tokenId} not found. This auction may not exist or may not be from SkateHive DAO.',
     onlySkateHiveAuctions: 'Only auctions from SkateHive DAO are displayed. If you\'re looking for a specific auction, make sure the token ID corresponds to a SkateHive auction.',
     currentBid: 'Current bid:',
     by: 'by',

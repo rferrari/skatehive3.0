@@ -82,6 +82,44 @@ Add these variables to `.env.local` as needed:
 - `ADMIN_USERS` – comma-separated list of admin usernames
 - `JWT_SECRET`, `VIP_PEPPER`, `SIGNER_URL`, `SIGNER_TOKEN` – signup/signer system
 
+## Translation guidelines for contributors
+
+Skatehive is a multilingual application supporting English, Portuguese (Brazil), Spanish, and Luganda. All human-facing text must be translation-compatible.
+
+### How to add translatable strings
+
+When adding new features, always use the translation system instead of hardcoding strings:
+
+1. **Use the `useTranslations` hook** in client components:
+   ```typescript
+   import { useTranslations } from '@/lib/i18n/hooks';
+   
+   export function MyComponent() {
+     const t = useTranslations('feature');
+     return <button>{t('actionLabel')}</button>;
+   }
+   ```
+
+2. **Add keys to ALL language files** simultaneously (`lib/i18n/locales/en.ts`, `pt-BR.ts`, `es.ts`, `lg.ts`):
+   ```typescript
+   feature: {
+     actionLabel: 'Your text here',
+   }
+   ```
+
+3. **Never hardcode strings**. Always prefer translations over direct text.
+
+### Translation files and structure
+
+- `lib/i18n/locales/en.ts` – English (base language)
+- `lib/i18n/locales/pt-BR.ts` – Portuguese (Brazil)
+- `lib/i18n/locales/es.ts` – Spanish
+- `lib/i18n/locales/lg.ts` – Luganda
+- `lib/i18n/hooks.ts` – `useTranslations(namespace)` hook for client components
+- `lib/i18n/translations.ts` – Central export point for all translations
+
+For more details on the translation system, see `AGENTS.md` → "Translation system" section.
+
 ## Application Features
 
 - **Compose posts** with Markdown, images, videos or GIFs and publish them to the Hive blockchain.
