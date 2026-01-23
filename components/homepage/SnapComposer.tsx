@@ -152,6 +152,33 @@ const SnapComposer = React.memo(function SnapComposer({
     []
   );
 
+  // Helper function to insert image URL into textarea
+  const insertImageUrlIntoTextarea = useCallback((url: string, fileName: string) => {
+    if (!postBodyRef.current) return;
+    
+    const textarea = postBodyRef.current;
+    const currentValue = textarea.value;
+    const cursorPosition = textarea.selectionStart;
+    
+    // Create markdown image syntax
+    const imageMarkdown = `\n![${fileName}](${url})\n`;
+    
+    // Insert at cursor position or at end
+    const newValue = currentValue.slice(0, cursorPosition) + 
+                     imageMarkdown + 
+                     currentValue.slice(cursorPosition);
+    
+    // Update textarea value
+    textarea.value = newValue;
+    
+    // Set cursor position after the inserted image
+    const newCursorPosition = cursorPosition + imageMarkdown.length;
+    textarea.setSelectionRange(newCursorPosition, newCursorPosition);
+    
+    // Focus the textarea
+    textarea.focus();
+  }, []);
+
   // Helper function to get video duration
   const getVideoDuration = (file: File): Promise<number> => {
     return new Promise((resolve, reject) => {
@@ -183,15 +210,11 @@ const SnapComposer = React.memo(function SnapComposer({
       // Users with >100HP can choose to use original or trim
       // Users with <100HP must trim if over 15s
       if (duration > 15 || canBypassLimit) {
-        console.log(
-          "✅ Opening trim modal - duration > 15s or user can bypass"
-        );
         setPendingVideoFile(file);
         setIsTrimModalOpen(true);
         return;
       }
 
-      console.log("⚡ Uploading directly - short video and no bypass ability");
       // Only for videos under 15s and users without bypass - upload directly
       if (videoUploaderRef.current) {
         startUpload();
@@ -229,28 +252,39 @@ const SnapComposer = React.memo(function SnapComposer({
     fileName?: string
   ) => {
     if (!url) return;
+    console.log('🖼️ [SnapComposer] handleCompressedImageUpload called with:', fileName);
     startUpload();
     setIsLoading(true);
     try {
+      console.log('🖼️ [SnapComposer] Fetching blob from URL...');
       const blob = await fetch(url).then((res) => res.blob());
       const file = new File([blob], fileName || "compressed.jpg", {
         type: blob.type,
       });
+      console.log('🖼️ [SnapComposer] Created file:', file.name, 'type:', file.type, 'size:', file.size);
+      
+      console.log('🖼️ [SnapComposer] Getting file signature...');
       const signature = await getFileSignature(file);
+      console.log('🖼️ [SnapComposer] Got signature, uploading image...');
+      
       const uploadUrl = await uploadImage(
         file,
         signature,
         compressedImages.length,
         setUploadProgress
       );
+      console.log('🖼️ [SnapComposer] Upload complete, URL:', uploadUrl);
+      
       if (uploadUrl) {
         setCompressedImages((prev) => [
           ...prev,
           { url: uploadUrl, fileName: file.name, caption: "" },
         ]);
+        console.log('✅ [SnapComposer] Image added to compressedImages array');
       }
     } catch (error) {
-      console.error("Error uploading compressed image:", error);
+      console.error("❌ [SnapComposer] Error uploading compressed image:", error);
+      alert('Failed to upload image: ' + (error instanceof Error ? error.message : String(error)));
     } finally {
       setIsLoading(false);
       finishUpload();
@@ -261,6 +295,7 @@ const SnapComposer = React.memo(function SnapComposer({
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = e.target.files?.[0];
+    console.log('🎨 [handleGifWebpUpload] File selected:', file?.name, 'type:', file?.type);
     if (!file) return;
     // Check file type
     if (!(file.type === "image/gif" || file.type === "image/webp")) {
@@ -322,7 +357,7 @@ const SnapComposer = React.memo(function SnapComposer({
       if (uploadUrl) {
         setCompressedImages((prev) => [
           ...prev,
-          { url: uploadUrl, fileName: fileName, caption: "" },
+          { url: uploadUrl, fileName: file.name, caption: "" },
         ]);
       }
       setGifMakerOpen(false); // Close the GIF maker
@@ -339,8 +374,10 @@ const SnapComposer = React.memo(function SnapComposer({
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const files = Array.from(e.target.files || []);
+    console.log('📁 [SnapComposer] handleUnifiedImageUpload called with', files.length, 'files');
     if (files.length > 0) startUpload();
     for (const file of files) {
+      console.log('📁 [SnapComposer] Processing file:', file.name, 'type:', file.type);
       if (file.type === "image/gif" || file.type === "image/webp") {
         // Use GIF/WEBP logic (bypasses compression)
         const fakeEvent = {
@@ -500,13 +537,24 @@ const SnapComposer = React.memo(function SnapComposer({
           );
         }
 
+        // Build the final comment body with images appended
+        let finalCommentBody = commentBody;
+        
+        // Append image markdown for all uploaded images
+        if (compressedImages.length > 0) {
+          const imageMarkdown = compressedImages
+            .map(img => `\n![${img.fileName}](${img.url})`)
+            .join('');
+          finalCommentBody = commentBody + imageMarkdown;
+        }
+
         const permlink = crypto.randomUUID();
         const commentResponse = await aioha.comment(
           pa,
           postPermlink,
           permlink,
           "",
-          commentBody,
+          finalCommentBody,
           metadata
         );
         if (commentResponse.success) {
@@ -650,9 +698,11 @@ const SnapComposer = React.memo(function SnapComposer({
             caption: filename.replace(/\.[^/.]+$/, ""), // Remove file extension for caption
           },
         ]);
+        // Insert URL into textarea
+        insertImageUrlIntoTextarea(url, filename);
       }
     },
-    []
+    [insertImageUrlIntoTextarea]
   );
 
   // Only render the composer if user is logged in
@@ -892,11 +942,18 @@ const SnapComposer = React.memo(function SnapComposer({
                   style={{ display: "none" }}
                   ref={imageUploadInputRef}
                   onChange={(event) => {
+                    console.log('📸 [SnapComposer] Image upload input onChange triggered');
                     const file = event.target.files?.[0];
-                    if (!file) return;
+                    if (!file) {
+                      console.log('📸 [SnapComposer] No file selected');
+                      return;
+                    }
+                    console.log('📸 [SnapComposer] File selected:', file.name, 'type:', file.type);
                     if (file.type.startsWith("video/")) {
+                      console.log('📸 [SnapComposer] Handling as video');
                       handleVideoUpload(event);
                     } else {
+                      console.log('📸 [SnapComposer] Handling as image');
                       handleUnifiedImageUpload(event);
                     }
                   }}
