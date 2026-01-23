@@ -2,7 +2,6 @@
  * Video upload utilities and file handling
  */
 
-import { clientErrorLogger, logUploadError, logSizeRestrictionError, logApiError } from './clientErrorLogger';
 import { APP_CONFIG } from "@/config/app.config";
 
 export function getVideoDuration(file: File): Promise<number> {
@@ -98,10 +97,6 @@ export async function uploadWithProgress(
         resolve(xhr.responseText);
       } else {
         const errorMsg = `Upload failed: ${xhr.status} - ${xhr.responseText}`;
-        logUploadError(errorMsg, file?.name, file?.size, {
-          statusCode: xhr.status,
-          responseText: xhr.responseText
-        });
         reject(new Error(errorMsg));
       }
     });
@@ -109,25 +104,15 @@ export async function uploadWithProgress(
     xhr.addEventListener("error", () => {
       const errorMessage = `Network error: ${xhr.statusText || "Unknown error"
         } (Status: ${xhr.status}, State: ${xhr.readyState})`;
-      logUploadError(errorMessage, file?.name, file?.size, {
-        statusCode: xhr.status,
-        statusText: xhr.statusText,
-        readyState: xhr.readyState
-      });
       reject(new Error(errorMessage));
     });
 
     xhr.addEventListener("timeout", () => {
       const timeoutError = "Upload timeout";
-      logUploadError(timeoutError, file?.name, file?.size, {
-        timeout: xhr.timeout,
-        timeoutMs: xhr.timeout
-      });
       reject(new Error(timeoutError));
     });
 
     xhr.addEventListener("abort", () => {
-      logUploadError("Upload aborted", file?.name, file?.size);
       reject(new Error("Upload aborted"));
     });
 
@@ -151,9 +136,6 @@ export async function uploadWithProgress(
       // See: https://developer.mozilla.org/en-US/docs/Web/API/FormData/Using_FormData_Objects
       xhr.send(formData);
     } catch (error) {
-      logUploadError("Upload setup failed", file?.name, file?.size, {
-        error: error instanceof Error ? error.message : String(error)
-      });
       reject(error);
     }
   });
