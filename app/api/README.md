@@ -188,12 +188,6 @@ Complete documentation for all SkateHive 3.0 API endpoints.
 
 ## 📝 Logging & Debug
 
-### Client Error Logging
-- **Status:** ✅ Active
-- **Endpoint:** `POST /api/logs/client-errors`
-- **Use Case:** Log client-side errors
-- **Priority:** 🔥 Migrate to proper logging service (Sentry)
-
 ### Debug Hive Notifications
 - **Status:** 🧪 Debug
 - **Endpoint:** `GET /api/debug-hive-notifications`

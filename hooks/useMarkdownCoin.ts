@@ -20,6 +20,36 @@ export interface MarkdownCoinData {
   postUrl: string;
 }
 
+export interface MarkdownCoinResult {
+  success: boolean;
+  coinAddress: string;
+  zoraUrl: string;
+  markdownIpfsUrl: string;
+  transactionHash: string;
+  debugInfo: {
+    coinParams: any;
+    metadataParameters: any;
+    carouselContent: any;
+    description: string;
+    symbol: string;
+    markdownImages: number;
+    hasCarousel: boolean;
+    timing: {
+      total: number;
+      image: string;
+      ipfs: string;
+      metadata: string;
+      transaction: string;
+    };
+    originalPost: {
+      title: string;
+      author: string;
+      permlink: string;
+      wordCount: number;
+    };
+  };
+}
+
 // Helper function to extract thumbnail from post
 const extractThumbnailFromPost = (post: Discussion): string | null => {
   try {
@@ -212,13 +242,8 @@ export function useMarkdownCoin() {
   const createMarkdownCoin = useCallback(async (
     post: Discussion, 
     selectedCarouselImages?: Array<{uri: string, mime: string, type: string, isIncluded: boolean, isGenerated?: boolean}>
-    debugLog("🎯 HOOK RECEIVED:", {
-      "- post.title": post.title,
-      "- selectedCarouselImages": selectedCarouselImages,
-      "- selectedCarouselImages length": selectedCarouselImages?.length || 0
-    });
-    console.log("- selectedCarouselImages length:", selectedCarouselImages?.length || 0);
-    
+  ): Promise<MarkdownCoinResult> => {
+      
     const overallStartTime = Date.now();
     console.log('⏱️ Starting coin creation process...');
     

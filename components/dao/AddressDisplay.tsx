@@ -1,5 +1,5 @@
-import { safeCopyToClipboard } from "@/lib/utils/clipboardUtils";
 "use client";
+import { safeCopyToClipboard } from "@/lib/utils/clipboardUtils";
 
 import { useState } from "react";
 import {

@@ -1,38 +1,13 @@
+"use client";
 import { Box, Text, VStack } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
+import { useTranslations } from "../../contexts/LocaleContext";
 // fonts are at lib/utils/fonts.css
 
 import "../../lib/utils/fonts.css";
 
 const matrixCharacters =
   "FUCKアイウエオカキクケコサシスセソタチツテトナニFUCKヌネノSK8GRINDOLLIEΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ180360KICKFLIPNOSENDBOARD";
-const randomSentences = [
-  "F-u-c-k instagram",
-  "Praise skatevideosite",
-  "Loading Stokenomics...",
-  "Initiating Proof of Stoke...",
-  "We will load as fast as Daryl Rolls",
-  "who was gnartoshi shredamoto?",
-  "take back the internet!",
-  "get $higher",
-  "Never lose your bros clips",
-  "support your local skateshops",
-  "The Peoples Thrasher",
-  "Stack HP, buy with HBD",
-  "Connecting with Uganda Nodes",
-  "If it takes to long, your connection sucks",
-  "Macba Lives",
-  "Skate till you tired, then skate more",
-  "hive power = vote power",
-  "lipslide to the moon",
-  "Macba Lives",
-  "Bless Skateshop aceita HBD, USDC e BTC",
-  "Nobody owns Skatehive",
-  "Drop hills not bombs!",
-  "Praise skatevideosite",
-  "Ready to grind onchain?",
-  "Press Ctrl + K for quick menu",
-];
 
 function getRandomChar() {
   return matrixCharacters[Math.floor(Math.random() * matrixCharacters.length)];
@@ -46,18 +21,48 @@ function generateColumnLines(lines = 30) {
   return column.join("\n");
 }
 
+// Array of translation keys for loading messages
+const MESSAGE_KEYS = [
+  'loadingMessages.fuckInstagram',
+  'loadingMessages.praiseSkatevideosite',
+  'loadingMessages.loadingStokenomics',
+  'loadingMessages.initiatingProofOfStoke',
+  'loadingMessages.loadFastAsDaryl',
+  'loadingMessages.whoWasGnartoshi',
+  'loadingMessages.takeBackInternet',
+  'loadingMessages.getHigher',
+  'loadingMessages.neverLoseClips',
+  'loadingMessages.supportLocalShops',
+  'loadingMessages.peoplesThrasher',
+  'loadingMessages.stackHP',
+  'loadingMessages.ugandaNodes',
+  'loadingMessages.connectionSucks',
+  'loadingMessages.macbaLives',
+  'loadingMessages.skateTillTired',
+  'loadingMessages.hivePowerVotePower',
+  'loadingMessages.lipslideToMoon',
+  'loadingMessages.macbaLives',
+  'loadingMessages.blessSkateshop',
+  'loadingMessages.nobodyOwns',
+  'loadingMessages.dropHills',
+  'loadingMessages.praiseSkatevideosite',
+  'loadingMessages.readyToGrind',
+  'loadingMessages.ctrlKMenu',
+];
+
 const LoadingComponent = () => {
-  const [randomSentence, setRandomSentence] = useState(randomSentences[0]);
+  const t = useTranslations();
+  
+  const [currentMessageKey, setCurrentMessageKey] = useState(MESSAGE_KEYS[0]);
   const [columns, setColumns] = useState<string[]>([]);
   const [messageVisible, setMessageVisible] = useState(true);
 
   useEffect(() => {
-    const newSentence =
-      randomSentences[Math.floor(Math.random() * randomSentences.length)];
+    const randomKey = MESSAGE_KEYS[Math.floor(Math.random() * MESSAGE_KEYS.length)];
     const newColumns = Array.from({ length: 25 }, () =>
       generateColumnLines(50)
     );
-    setRandomSentence(newSentence);
+    setCurrentMessageKey(randomKey);
     setColumns(newColumns);
 
     // Periodically flip characters in columns
@@ -73,14 +78,11 @@ const LoadingComponent = () => {
     const switchMessage = setInterval(() => {
       setMessageVisible(false);
       setTimeout(() => {
-        setRandomSentence((prev) => {
+        setCurrentMessageKey((prev) => {
           let next;
           do {
-            next =
-              randomSentences[
-                Math.floor(Math.random() * randomSentences.length)
-              ];
-          } while (next === prev && randomSentences.length > 1);
+            next = MESSAGE_KEYS[Math.floor(Math.random() * MESSAGE_KEYS.length)];
+          } while (next === prev && MESSAGE_KEYS.length > 1);
           return next;
         });
         setMessageVisible(true);
@@ -88,6 +90,8 @@ const LoadingComponent = () => {
     }, 4000);
     return () => clearInterval(switchMessage);
   }, []);
+  
+  const randomSentence = t(currentMessageKey);
 
   return (
     <div lang="en">

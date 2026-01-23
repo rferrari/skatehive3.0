@@ -1,5 +1,5 @@
-import { debugLog } from "@/lib/utils/debugUtils";
 "use client";
+import { debugLog } from "@/lib/utils/debugUtils";
 
 import {
   Box,

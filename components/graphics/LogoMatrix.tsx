@@ -1,39 +1,42 @@
+"use client";
 import { Box, Text, VStack, useToken } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
+import { useTranslations } from "../../contexts/LocaleContext";
 import "../../lib/utils/fonts.css";
 
 // Define character sets for each font
 const matrixCharacters1 = "ABCDHIJKLMSTUVWXZ124567890"; // Logoskate1 (original, minus Logoskate2 chars)
 const matrixCharacters2 = "EFGNOPQRYacfgkmopqrtwxz"; // Logoskate2 (user-specified)
 
-const randomSentences = [
-  "F-u-c-k instagram",
-  "Praise skatevideosite",
-  "Loading Stokenomics...",
-  "Initiating Proof of Stoke...",
-  "We will load as fast as Daryl Rolls",
-  "who was gnartoshi shredamoto?",
-  "take back the internet!",
-  "get $higher",
-  "Never lose your bros clips",
-  "support your local skateshops",
-  "The Peoples Thrasher",
-  "Stack HP, buy with HBD",
-  "bless up",
-  "Connecting with Uganda Nodes",
-  "If it takes to long, your connection sucks",
-  "Macba Lives",
-  "Skate till you tired, then skate more",
-  "hive power = vote power",
-  "lipslide to the moon",
-  "Macba Lives",
-  "Bless Skateshop aceita HBD, USDC e BTC",
-  "Nobody owns Skatehive",
-  "Drop hills not bombs!",
-  "Praise skatevideosite",
-  "Ready to grind on chain?",
-  "Press Ctrl + K for quick menu",
-  "Skateboard is a HiveMind",
+// Array of translation keys for loading messages
+const MESSAGE_KEYS = [
+  'loadingMessages.fuckInstagram',
+  'loadingMessages.praiseSkatevideosite',
+  'loadingMessages.loadingStokenomics',
+  'loadingMessages.initiatingProofOfStoke',
+  'loadingMessages.loadFastAsDaryl',
+  'loadingMessages.whoWasGnartoshi',
+  'loadingMessages.takeBackInternet',
+  'loadingMessages.getHigher',
+  'loadingMessages.neverLoseClips',
+  'loadingMessages.supportLocalShops',
+  'loadingMessages.peoplesThrasher',
+  'loadingMessages.stackHP',
+  'loadingMessages.blessUp',
+  'loadingMessages.ugandaNodes',
+  'loadingMessages.connectionSucks',
+  'loadingMessages.macbaLives',
+  'loadingMessages.skateTillTired',
+  'loadingMessages.hivePowerVotePower',
+  'loadingMessages.lipslideToMoon',
+  'loadingMessages.macbaLives',
+  'loadingMessages.blessSkateshop',
+  'loadingMessages.nobodyOwns',
+  'loadingMessages.dropHills',
+  'loadingMessages.praiseSkatevideosite',
+  'loadingMessages.readyToGrind',
+  'loadingMessages.ctrlKMenu',
+  'loadingMessages.skateboardHivemind',
 ];
 
 // Generate a column as an array of { char, font }
@@ -62,15 +65,17 @@ interface MatrixColumn {
 }
 
 const LogoMatrix = () => {
-  const [randomSentence, setRandomSentence] = useState(
-    () => randomSentences[Math.floor(Math.random() * randomSentences.length)]
-  );
+  const t = useTranslations();
+  
+  const [currentMessageKey, setCurrentMessageKey] = useState(MESSAGE_KEYS[0]);
   const [columns, setColumns] = useState<MatrixColumn[]>([]);
   const [primary] = useToken("colors", ["primary"]);
   const [messageVisible, setMessageVisible] = useState(true);
 
   // Only generate columns once on mount
   useEffect(() => {
+    const randomKey = MESSAGE_KEYS[Math.floor(Math.random() * MESSAGE_KEYS.length)];
+    setCurrentMessageKey(randomKey);
     const newColumns = Array.from({ length: 20 }, () => ({
       text: generateColumnArray(50),
       duration: 10 + Math.random() * 10, // 10-20s
@@ -84,14 +89,11 @@ const LogoMatrix = () => {
     const switchMessage = setInterval(() => {
       setMessageVisible(false);
       setTimeout(() => {
-        setRandomSentence((prev) => {
+        setCurrentMessageKey((prev) => {
           let next;
           do {
-            next =
-              randomSentences[
-                Math.floor(Math.random() * randomSentences.length)
-              ];
-          } while (next === prev && randomSentences.length > 1);
+            next = MESSAGE_KEYS[Math.floor(Math.random() * MESSAGE_KEYS.length)];
+          } while (next === prev && MESSAGE_KEYS.length > 1);
           return next;
         });
         setMessageVisible(true);
@@ -99,6 +101,8 @@ const LogoMatrix = () => {
     }, 4000);
     return () => clearInterval(switchMessage);
   }, []);
+  
+  const randomSentence = t(currentMessageKey);
 
   return (
     <div lang="en">
