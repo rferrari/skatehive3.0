@@ -10,6 +10,7 @@ import { useIsDesktop } from "@/hooks/useIsDesktop";
 import { usePeriodicTimer } from "@/hooks/usePeriodicTimer";
 import { TOAST_CONFIG } from "@/config/toast.config";
 import ToastCard from "@/components/shared/ToastCard";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 interface UpvoteSnapToastProps {
   showInterval?: number;
@@ -20,6 +21,7 @@ export default function UpvoteSnapToast({
   showInterval = TOAST_CONFIG.SHOW_INTERVAL,
   displayDuration = TOAST_CONFIG.DISPLAY_DURATION,
 }: UpvoteSnapToastProps) {
+  const t = useTranslations();
   const { user, aioha } = useAioha();
   const [snapContainer, setSnapContainer] = useState<Discussion | null>(null);
   const [hasVoted, setHasVoted] = useState(false);
@@ -73,8 +75,8 @@ export default function UpvoteSnapToast({
 
       if (response.success) {
         toast({
-          title: "Success! 🎉",
-          description: "Successfully upvoted the snap container!",
+          title: t('upvoteToast.successTitle'),
+          description: t('upvoteToast.successDescription'),
           status: "success",
           duration: 3000,
           isClosable: true,
@@ -86,15 +88,15 @@ export default function UpvoteSnapToast({
     } catch (error: any) {
       console.error("Failed to upvote:", error);
       toast({
-        title: "Upvote Failed",
+        title: t('upvoteToast.failedTitle'),
         description:
-          error.message || "An error occurred while trying to upvote.",
+          error.message || t('upvoteToast.errorOccurred'),
         status: "error",
         duration: 5000,
         isClosable: true,
       });
     }
-  }, [aioha, snapContainer, toast, user]);
+  }, [aioha, snapContainer, toast, user, t]);
 
   const showUpvoteToast = useCallback(() => {
     if (!isMounted || !isDesktop || !user || !snapContainer || hasVoted || isSnapVoteLoading) {
@@ -109,20 +111,20 @@ export default function UpvoteSnapToast({
     setLastShownTime(now);
 
     const toastId = toast({
-      title: "💜 Support the Community",
-      description: "Help SkateHive by upvoting the main snap container post",
+      title: t('upvoteToast.supportCommunity'),
+      description: t('upvoteToast.helpSkateHive'),
       status: "info",
       duration: displayDuration,
       isClosable: true,
       position: "bottom-right",
       render: ({ onClose }) => (
         <ToastCard
-          title="Support the Community"
-          description="Help SkateHive by upvoting the main snap container post where all snaps are stored."
-          detail={`Container: ${snapContainer.author}/${snapContainer.permlink}`}
+          title={t('upvoteToast.supportCommunity')}
+          description={t('upvoteToast.helpSkateHiveDetailed')}
+          detail={`${t('upvoteToast.container')}: ${snapContainer.author}/${snapContainer.permlink}`}
           icon={<FaHeart size={16} />}
           primaryButton={{
-            label: "Upvote Now",
+            label: t('upvoteToast.upvoteNow'),
             icon: <FaHeart size={12} />,
             onClick: async () => {
               await handleUpvote();
@@ -153,6 +155,7 @@ export default function UpvoteSnapToast({
     toast,
     handleUpvote,
     isSnapVoteLoading,
+    t,
   ]);
 
   // Load snap container data when user changes

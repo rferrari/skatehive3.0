@@ -23,6 +23,7 @@ import { migrateLegacyMetadata } from "@/lib/utils/metadataMigration";
 import { Operation } from "@hiveio/dhive";
 import { useVoteWeightContext } from "@/contexts/VoteWeightContext";
 import fetchAccount from "@/lib/hive/fetchAccount";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 interface VoteWeightSliderProps {
   username: string;
@@ -35,6 +36,7 @@ const VoteWeightSlider: React.FC<VoteWeightSliderProps> = ({
   currentVoteWeight,
   onVoteWeightUpdate,
 }) => {
+  const t = useTranslations();
   const { user } = useAioha();
   const { voteWeight, disableSlider, updateVoteWeight, updateDisableSlider, refreshVoteWeight } = useVoteWeightContext();
   const toast = useToast();
@@ -66,8 +68,8 @@ const VoteWeightSlider: React.FC<VoteWeightSliderProps> = ({
   const handleSave = async () => {
     if (!user || user !== username) {
       toast({
-        title: "Error",
-        description: "You can only update your own vote weight preferences",
+        title: t('settings.errorTitle'),
+        description: t('settings.errorOwnPreferences'),
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -127,8 +129,8 @@ const VoteWeightSlider: React.FC<VoteWeightSliderProps> = ({
       updateDisableSlider(disableSliderValue);
 
       toast({
-        title: "Preferences Updated!",
-        description: `Vote weight set to ${sliderValue}%${disableSliderValue ? ' and slider disabled' : ''}`,
+        title: t('settings.preferencesUpdated'),
+        description: t('settings.voteWeightSaved'),
         status: "success",
         duration: 3000,
         isClosable: true,
@@ -163,8 +165,8 @@ const VoteWeightSlider: React.FC<VoteWeightSliderProps> = ({
         }
 
         toast({
-          title: "Error",
-          description: errorMessage,
+          title: t('settings.errorTitle'),
+          description: t('settings.errorSavingPreferences'),
           status: "error",
           duration: 3000,
           isClosable: true,
@@ -186,10 +188,10 @@ const VoteWeightSlider: React.FC<VoteWeightSliderProps> = ({
       <VStack spacing={4} align="stretch">
         <Box>
           <Heading size="md" color="primary" mb={1}>
-            🎯 Default Vote Weight
+            {t('settings.voteWeight')}
           </Heading>
           <Text color="primary" fontSize="sm">
-            Set your default vote weight percentage for posts and snaps
+            {t('settings.voteWeightDescription')}
           </Text>
         </Box>
 
@@ -266,14 +268,14 @@ const VoteWeightSlider: React.FC<VoteWeightSliderProps> = ({
               }}
             >
               <Text color="primary" fontSize="sm" fontWeight="medium">
-                Disable Slider
+                {t('settings.disableSlider')}
               </Text>
             </Checkbox>
           </HStack>
           
           {disableSliderValue && (
             <Text color="accent" fontSize="xs" mt={2} fontStyle="italic">
-              When disabled, upvote buttons will use your default vote weight without showing the slider
+              {t('settings.disableSliderDescription')}
             </Text>
           )}
         </Box>
@@ -281,7 +283,7 @@ const VoteWeightSlider: React.FC<VoteWeightSliderProps> = ({
         <Button
           onClick={handleSave}
           isLoading={isSaving}
-          loadingText="Saving..."
+          loadingText={t('settings.saving')}
           disabled={!hasChanges}
           bgGradient="linear(to-r, primary, accent)"
           color="background"
@@ -289,7 +291,7 @@ const VoteWeightSlider: React.FC<VoteWeightSliderProps> = ({
           fontWeight="bold"
           size="lg"
         >
-          Save Preferences
+          {t('settings.savePreferences')}
         </Button>
 
         {hasChanges && (

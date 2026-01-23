@@ -19,6 +19,7 @@ import {
 } from "@chakra-ui/react";
 import { KeychainSDK, KeychainKeyTypes } from "keychain-sdk";
 import fetchAccount from "@/lib/hive/fetchAccount";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 interface AdvancedSettingsProps {
   userData: {
@@ -28,13 +29,14 @@ interface AdvancedSettingsProps {
 }
 
 const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ userData }) => {
+  const t = useTranslations();
   const toast = useToast();
 
   const handleRestoreProfile = async () => {
     if (!userData.hiveUsername) {
       toast({
-        title: "Missing Credentials",
-        description: "Please log in to your Hive account",
+        title: t('settings.missingCredentials'),
+        description: t('settings.pleaseLogin'),
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -76,11 +78,11 @@ const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ userData }) => {
         throw new Error("Profile restore failed");
       }
 
-      toast({ title: "Profile Restored", status: "success", duration: 3000 });
+      toast({ title: t('settings.profileRestored'), status: "success", duration: 3000 });
     } catch (err: any) {
       toast({
-        title: "Restore Failed",
-        description: err?.message || "Unable to restore profile",
+        title: t('settings.restoreFailed'),
+        description: err?.message || t('settings.restoreError'),
         status: "error",
         duration: 3000,
       });
@@ -91,7 +93,7 @@ const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ userData }) => {
     return (
       <Box textAlign="center" py={12}>
         <Text color="primary" fontSize="lg">
-          Please log in to access advanced settings
+          {t('settings.pleaseLogin')}
         </Text>
       </Box>
     );
@@ -106,10 +108,10 @@ const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ userData }) => {
             <AccordionButton p={6} _hover={{ bg: "transparent" }}>
               <VStack align="start" flex="1" spacing={1}>
                 <Heading size="md" color="primary">
-                  🔐 Security Settings (BETA)
+                  {t('settings.securitySettings')}
                 </Heading>
                 <Text color="primary" fontSize="sm">
-                  Manage your private keys and account security
+                  {t('settings.securityDescription')}
                 </Text>
               </VStack>
               <AccordionIcon color="accent" />
@@ -202,11 +204,10 @@ const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ userData }) => {
         <VStack spacing={6} align="stretch">
           <Box>
             <Heading size="md" color="red.400" mb={2}>
-              ⚠️ Danger Zone
+              {t('settings.dangerZone')}
             </Heading>
             <Text color="primary" fontSize="sm">
-              These actions are irreversible and may affect your account
-              permanently
+              {t('settings.dangerZoneDescription')}
             </Text>
           </Box>
 
@@ -219,12 +220,10 @@ const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ userData }) => {
             <AlertIcon color="orange.500" />
             <Box>
               <AlertTitle color="orange.800" fontSize="sm">
-                Profile Restore Warning
+                {t('settings.profileRestoreWarning')}
               </AlertTitle>
               <AlertDescription color="orange.700" fontSize="sm">
-                This action will remove SkateHive-specific metadata from your
-                profile. Only use this if you want to clean your Hive account
-                profile.
+                {t('settings.profileRestoreWarningDescription')}
               </AlertDescription>
             </Box>
           </Alert>
@@ -240,7 +239,7 @@ const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ userData }) => {
               borderColor: "red.600",
             }}
           >
-            🔄 Restore Profile to Original State
+            {t('settings.restoreProfileButton')}
           </Button>
         </VStack>
       </Box>

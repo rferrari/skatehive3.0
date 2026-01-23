@@ -17,8 +17,10 @@ import useProfileData from "@/hooks/useProfileData";
 import MainSettings from "@/components/settings/MainSettings";
 import AdvancedSettings from "@/components/settings/AdvancedSettings";
 import AssetsSettings from "@/components/settings/AssetsSettings";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 const Settings = () => {
+  const t = useTranslations();
   const { user } = useAioha();
   const [activeTab, setActiveTab] = useState(0);
 
@@ -46,10 +48,10 @@ const Settings = () => {
           {/* Header */}
           <Box textAlign="center" mb={4}>
             <Heading size="xl" color="primary" mb={2}>
-              ⚙️ Settings
+              {t('settings.title')}
             </Heading>
             <Text color="primary" fontSize="lg">
-              Customize your SkateHive experience
+              {t('settings.subtitle')}
             </Text>
           </Box>
 
@@ -71,7 +73,7 @@ const Settings = () => {
                 color="primary"
                 fontWeight="semibold"
               >
-                🏠 Main Settings
+                {t('settings.mainSettings')}
               </Tab>
               <Tab
                 _selected={{
@@ -83,7 +85,7 @@ const Settings = () => {
                 color="primary"
                 fontWeight="semibold"
               >
-                🎨 Assets
+                {t('settings.assets')}
               </Tab>
               <Tab
                 _selected={{
@@ -95,7 +97,7 @@ const Settings = () => {
                 color="primary"
                 fontWeight="semibold"
               >
-                🔧 Advanced
+                {t('settings.advanced')}
               </Tab>
             </TabList>
 

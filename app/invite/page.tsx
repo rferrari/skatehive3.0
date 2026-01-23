@@ -32,6 +32,7 @@ import { useAioha } from "@aioha/react-ui";
 import * as dhive from "@hiveio/dhive";
 import useHiveAccount from "@/hooks/useHiveAccount";
 import { useKeychainSDK } from "@/hooks/useKeychainSDK";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 const randomLanguages = [
   { code: "EN", label: "English" },
@@ -40,6 +41,7 @@ const randomLanguages = [
 ];
 
 export default function InvitePage() {
+  const t = useTranslations();
   const { user } = useAioha();
   const { hiveAccount, isLoading: isAccountLoading } = useHiveAccount(
     user || ""
@@ -66,9 +68,9 @@ export default function InvitePage() {
 
   // Email validation helper
   const validateEmail = (email: string): string | null => {
-    if (!email) return "Email is required";
+    if (!email) return t('invite.emailRequired');
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) return "Please enter a valid email address";
+    if (!emailRegex.test(email)) return t('invite.invalidEmail');
     return null;
   };
 
@@ -181,7 +183,7 @@ export default function InvitePage() {
     } else {
       setAccountAvailable(false);
       setBroadcastError(
-        "Account is not available. Please choose another nickname."
+        t('invite.accountNotAvailable')
       );
     }
   };
@@ -201,7 +203,7 @@ export default function InvitePage() {
 
     // Validate username availability
     if (!accountAvailable || !areKeysDownloaded) {
-      setBroadcastError("Please wait for username validation to complete.");
+      setBroadcastError(t('invite.waitingValidation'));
       return;
     }
 
@@ -211,7 +213,7 @@ export default function InvitePage() {
       !KeychainRequestTypes ||
       !KeychainKeyTypes
     ) {
-      setBroadcastError("Keychain SDK is not loaded yet. Please try again.");
+      setBroadcastError(t('invite.keychainNotLoaded'));
       return;
     }
 
@@ -261,7 +263,7 @@ export default function InvitePage() {
       const broadcast = await keychain.broadcast(formParamsAsObject);
       if (broadcast.success) {
         setBroadcastSuccess(true);
-        setBroadcastMessage("Account created on Hive! Sending invite email...");
+        setBroadcastMessage(t('invite.accountCreatedSendingEmail'));
         // Now send the invite email
         const payload = {
           to: desiredEmail,
@@ -279,17 +281,17 @@ export default function InvitePage() {
         });
         const data = await res.json();
         if (data.success) {
-          setBroadcastMessage("Invite sent successfully!");
+          setBroadcastMessage(t('invite.inviteSentSuccess'));
         } else {
           setBroadcastError(
-            data.error || "Failed to send invite. Try again or contact support."
+            data.error || t('invite.inviteFailedRetry')
           );
         }
       } else {
         setBroadcastError(broadcast.error + ": " + broadcast.message);
       }
     } catch (error: any) {
-      setBroadcastError(error.message || "Unknown error occurred.");
+      setBroadcastError(error.message || t('invite.unknownError'));
     } finally {
       setLoading(false);
     }
@@ -299,9 +301,9 @@ export default function InvitePage() {
     return (
       <Flex align="center" justify="center" h="100vh" direction="column">
         <Heading color="red.400" mb={4}>
-          You need to be logged in to invite!
+          {t('invite.needLogin')}
         </Heading>
-        <Text color="gray.400">Please log in and try again.</Text>
+        <Text color="gray.400">{t('invite.pleaseLoginRetry')}</Text>
       </Flex>
     );
   }
@@ -310,13 +312,13 @@ export default function InvitePage() {
     <Box p={8} maxW="container.md" mx="auto" bg="background">
       <VStack spacing={6} align="stretch">
         <Heading size="lg" color="primary">
-          Invite a Shredder to Skatehive
+          {t('invite.title')}
         </Heading>
 
         {/* Account Creation Method Toggle - MOVED UP */}
         <Box p={4} bg="panel" border="1px solid" borderColor="border">
           <Text fontWeight="bold" color="text" mb={3}>
-            Choose Account Creation Method
+            {t('invite.chooseMethod')}
           </Text>
           <Flex align="center" gap={3}>
             <Switch
@@ -325,7 +327,7 @@ export default function InvitePage() {
               colorScheme="green"
             />
             <Text fontSize="md" color="primary" fontWeight="bold">
-              {useAccountToken ? "Using Account Creation Token" : "Paying 3 HIVE"}
+              {useAccountToken ? t('invite.usingACT') : t('invite.paying3Hive')}
             </Text>
           </Flex>
         </Box>
@@ -336,17 +338,17 @@ export default function InvitePage() {
             {isAccountLoading ? (
               <Flex align="center" p={4} bg="panel" border="1px solid" borderColor="border">
                 <Spinner size="sm" mr={2} color="primary" /> 
-                <Text color="text">Loading ACT balance...</Text>
+                <Text color="text">{t('invite.loadingACT')}</Text>
               </Flex>
             ) : (
               <Box p={4} bg="panel" border="1px solid" borderColor="border">
                 <Text fontWeight="bold" color="primary" fontSize="lg">
-                  Account Creation Tokens (ACT):{" "}
+                  {t('invite.actBalance')}:{" "}
                   {hiveAccount?.pending_claimed_accounts ?? 0}
                 </Text>
                 {Number(hiveAccount?.pending_claimed_accounts ?? 0) === 0 && (
                   <Text color="error" fontSize="sm" mt={2}>
-                    You have no ACTs. You must pay 3 HIVE to create an account.
+                    {t('invite.noACTs')}
                   </Text>
                 )}
               </Box>
@@ -355,12 +357,9 @@ export default function InvitePage() {
             {/* Info Box */}
             <Box bg="panel" p={4} border="1px solid" borderColor="border">
               <Text fontSize="sm" color="text" mb={3}>
-                <b>What are Account Creation Tokens (ACTs)?</b>
+                <b>{t('invite.whatAreACTs')}</b>
                 <br />
-                ACTs let you create new Hive accounts for free. You earn ACTs
-                automatically by holding Hive Power (staked HIVE). Each ACT can be
-                used to create one new account. If you have no ACTs, you&apos;ll need
-                to pay a 3 HIVE fee to create an account.
+                {t('invite.actsDescription')}
               </Text>
               <Accordion allowToggle>
                 <AccordionItem border="none">
@@ -373,15 +372,12 @@ export default function InvitePage() {
                       fontSize="sm"
                       fontWeight="bold"
                     >
-                      More info about earning ACTs
+                      {t('invite.moreInfoACTs')}
                     </Box>
                     <AccordionIcon color="secondary" />
                   </AccordionButton>
                   <AccordionPanel pb={2} color="text" fontSize="sm">
-                    <b>Rule of thumb:</b> You need at least 5000 HP to start
-                    generating ACTs, and each ACT requires 100 billion Resource
-                    Credits (RC). The more HP you have, the faster you&apos;ll earn
-                    ACTs.
+                    {t('invite.actsRuleOfThumb')}
                   </AccordionPanel>
                 </AccordionItem>
               </Accordion>
@@ -395,12 +391,12 @@ export default function InvitePage() {
           <VStack spacing={4} align="stretch">
             <FormControl>
               <Text fontWeight="bold" color="text" mb={2}>
-                Friend&apos;s desired Hive Wallet Name
+                {t('invite.friendsUsername')}
               </Text>
               <InputGroup>
                 <Input
                   type="text"
-                  placeholder="Friend's desired Hive Wallet Name"
+                  placeholder={t('invite.friendsUsername')}
                   value={desiredUsername}
                   onChange={(e) => setDesiredUsername(e.target.value)}
                   bg="inputBg"
@@ -429,19 +425,19 @@ export default function InvitePage() {
               )}
               {isCheckedOnce && accountAvailable && (
                 <Text color="success" fontSize="sm" mt={1}>
-                  ✓ Username available!
+                  {t('invite.usernameAvailable')}
                 </Text>
               )}
             </FormControl>
 
             <FormControl isInvalid={emailError !== null && desiredEmail !== ""}>
               <Text fontWeight="bold" color="text" mb={2}>
-                Friend&apos;s Email
+                {t('invite.friendsEmail')}
               </Text>
               <InputGroup>
                 <Input
                   type="email"
-                  placeholder="Friend's email"
+                  placeholder={t('invite.friendsEmail')}
                   value={desiredEmail}
                   onChange={(e) => setDesiredEmail(e.target.value)}
                   bg="inputBg"
@@ -467,14 +463,14 @@ export default function InvitePage() {
               )}
               {desiredEmail && !emailError && (
                 <Text color="success" fontSize="sm" mt={1}>
-                  ✓ Valid email
+                  {t('invite.validEmail')}
                 </Text>
               )}
             </FormControl>
 
             <FormControl>
               <Text fontWeight="bold" color="text" mb={2}>
-                Choose Email Language
+                {t('invite.chooseLanguage')}
               </Text>
               <Select
                 value={selectedLanguage}
@@ -505,7 +501,7 @@ export default function InvitePage() {
           isDisabled={!areKeysDownloaded || !desiredEmail || emailError !== null || !accountAvailable}
           size="lg"
         >
-          Looks Good, Let&apos;s Go For It!
+          {t('invite.createButton')}
         </Button>
 
         {/* Success Message */}

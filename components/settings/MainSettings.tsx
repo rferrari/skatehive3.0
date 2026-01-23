@@ -10,6 +10,7 @@ import {
 } from "@chakra-ui/react";
 import { useTheme, ThemeName, themeMap } from "@/app/themeProvider";
 import VoteWeightSlider from "@/components/settings/VoteWeightSlider";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 interface MainSettingsProps {
   userData: {
@@ -19,6 +20,7 @@ interface MainSettingsProps {
 }
 
 const MainSettings: React.FC<MainSettingsProps> = ({ userData }) => {
+  const t = useTranslations();
   const { themeName, setThemeName } = useTheme();
   const toast = useToast();
 
@@ -26,8 +28,8 @@ const MainSettings: React.FC<MainSettingsProps> = ({ userData }) => {
     const newTheme = event.target.value as ThemeName;
     setThemeName(newTheme);
     toast({
-      title: "Theme Updated!",
-      description: `Successfully switched to ${newTheme} theme`,
+      title: t('settings.themeUpdated'),
+      description: t('settings.themeSwitched').replace('{theme}', newTheme),
       status: "success",
       duration: 3000,
       isClosable: true,
@@ -55,10 +57,10 @@ const MainSettings: React.FC<MainSettingsProps> = ({ userData }) => {
         <VStack spacing={4} align="stretch">
           <Box>
             <Heading size="md" color="primary" mb={1}>
-              🎨 Theme Selection
+              {t('settings.themeSelection')}
             </Heading>
             <Text color="primary" fontSize="sm">
-              Choose your preferred visual style
+              {t('settings.themeDescription')}
             </Text>
           </Box>
           <Select
@@ -114,12 +116,10 @@ const MainSettings: React.FC<MainSettingsProps> = ({ userData }) => {
           <VStack spacing={4} align="stretch">
             <Box>
               <Heading size="md" color="primary" mb={1}>
-                🏆 Community
+                {t('settings.community')}
               </Heading>
               <Text color="primary" fontSize="sm">
-                SkateHive shows periodic reminders to upvote the community snap
-                container post (desktop only). This helps support the platform
-                and community content.
+                {t('settings.communityDescription')}
               </Text>
             </Box>
           </VStack>
