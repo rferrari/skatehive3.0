@@ -24,6 +24,7 @@ import {
   Link,
 } from "@chakra-ui/react";
 import { APP_CONFIG } from "@/config/app.config";
+import { useTranslations } from "@/lib/i18n/hooks";
 
 import {
   FaEnvelope,
@@ -47,10 +48,11 @@ interface FormErrors {
 }
 
 export default function SupportPage() {
+  const t = useTranslations('support');
   const [formData, setFormData] = useState<FormData>({
     email: "",
     message: "",
-    subject: "General Support Request",
+    subject: t('accountLoginTitle'),
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -62,19 +64,18 @@ export default function SupportPage() {
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!formData.email) {
-      newErrors.email = "Email address is required";
+      newErrors.email = t('emailRequired');
     } else if (!emailRegex.test(formData.email)) {
-      newErrors.email = "Please enter a valid email address";
+      newErrors.email = t('emailInvalid');
     }
 
     // Message validation
     if (!formData.message) {
-      newErrors.message = "Please describe how we can help you";
+      newErrors.message = t('messageRequired');
     } else if (formData.message.length < 10) {
-      newErrors.message =
-        "Please provide more details (at least 10 characters)";
+      newErrors.message = t('messageShort');
     } else if (formData.message.length > 2000) {
-      newErrors.message = "Message is too long (maximum 2000 characters)";
+      newErrors.message = t('messageTooLong');
     }
 
     setErrors(newErrors);
@@ -113,13 +114,12 @@ export default function SupportPage() {
         });
       } else {
         setErrors({
-          general:
-            result.error || "Failed to send your message. Please try again.",
+          general: result.error || t('generalError'),
         });
       }
     } catch (error) {
       setErrors({
-        general: "Network error. Please check your connection and try again.",
+        general: t('networkError'),
       });
     } finally {
       setIsSubmitting(false);
@@ -138,28 +138,26 @@ export default function SupportPage() {
   const supportTopics = [
     {
       icon: FaQuestionCircle,
-      title: "Account & Login",
-      description:
-        "Issues with your SkateHive account, password reset, or login problems",
+      title: t('accountLoginTitle'),
+      description: t('accountLoginDesc'),
       color: "blue.500",
     },
     {
       icon: FaBug,
-      title: "Technical Issues",
-      description: "App crashes, loading problems, or unexpected behavior",
+      title: t('technicalIssuesTitle'),
+      description: t('technicalIssuesDesc'),
       color: "red.500",
     },
     {
       icon: FaLightbulb,
-      title: "Feature Requests",
-      description: "Suggestions for new features or improvements to the app",
+      title: t('featureRequestsTitle'),
+      description: t('featureRequestsDesc'),
       color: "yellow.500",
     },
     {
       icon: FaEnvelope,
-      title: "General Questions",
-      description:
-        "Community guidelines, content policies, or general inquiries",
+      title: t('generalQuestionsTitle'),
+      description: t('generalQuestionsDesc'),
       color: "green.500",
     },
   ];
@@ -170,22 +168,20 @@ export default function SupportPage() {
         <VStack spacing={6} textAlign="center">
           <Icon as={FaCheckCircle} boxSize={16} color="green.500" />
           <Heading size="lg" color="green.500">
-            Message Sent Successfully!
+            {t('successTitle')}
           </Heading>
           <Text color="gray.600" fontSize="lg">
-            Thank you for contacting SkateHive Support. We&apos;ve received your
-            message and will respond within 24-48 hours.
+            {t('successMessage')}
           </Text>
           <Text fontSize="sm" color="gray.500">
-            Please check your email for a confirmation message with your request
-            details.
+            {t('successEmail')}
           </Text>
           <Button
             colorScheme="green"
             onClick={() => setIsSubmitted(false)}
             size="lg"
           >
-            Send Another Message
+            {t('sendAnother')}
           </Button>
         </VStack>
       </Container>
@@ -199,18 +195,17 @@ export default function SupportPage() {
           {/* Header */}
           <Box textAlign="center">
             <Heading size="xl" mb={4} color="primary">
-              SkateHive Support
+              {t('pageTitle')}
             </Heading>
             <Text fontSize="lg" color="gray.600" maxW="2xl" mx="auto">
-              Need help? We&apos;re here to assist you with any questions or
-              issues you may have with the SkateHive app.
+              {t('pageSubtitle')}
             </Text>
           </Box>
 
           {/* Support Topics */}
           <Box>
             <Heading size="md" mb={4} textAlign="center">
-              What can we help you with?
+              {t('topicsHeader')}
             </Heading>
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={8}>
               {supportTopics.map((topic, index) => (
@@ -253,7 +248,7 @@ export default function SupportPage() {
           {/* Contact Form */}
           <Box>
             <Heading size="md" mb={6} textAlign="center">
-              Send us a message
+              {t('sendMessageHeader')}
             </Heading>
 
             {errors.general && (
@@ -268,10 +263,10 @@ export default function SupportPage() {
                 <form onSubmit={handleSubmit}>
                   <VStack spacing={6} align="stretch">
                     <FormControl isRequired isInvalid={!!errors.email}>
-                      <FormLabel fontWeight="medium">Email Address</FormLabel>
+                      <FormLabel fontWeight="medium">{t('emailLabel')}</FormLabel>
                       <Input
                         type="email"
-                        placeholder="your.email@example.com"
+                        placeholder={t('emailPlaceholder')}
                         value={formData.email}
                         onChange={(e) =>
                           handleInputChange("email", e.target.value)
@@ -290,14 +285,14 @@ export default function SupportPage() {
                         </Text>
                       )}
                       <Text fontSize="xs" color="gray.500" mt={1}>
-                        We&apos;ll use this to respond to your message
+                        {t('emailHelp')}
                       </Text>
                     </FormControl>
 
                     <FormControl>
-                      <FormLabel fontWeight="medium">Subject</FormLabel>
+                      <FormLabel fontWeight="medium">{t('subjectLabel')}</FormLabel>
                       <Input
-                        placeholder="What is this regarding?"
+                        placeholder={t('subjectPlaceholder')}
                         value={formData.subject}
                         onChange={(e) =>
                           handleInputChange("subject", e.target.value)
@@ -313,10 +308,10 @@ export default function SupportPage() {
 
                     <FormControl isRequired isInvalid={!!errors.message}>
                       <FormLabel fontWeight="medium">
-                        How can we help you?
+                        {t('messageLabel')}
                       </FormLabel>
                       <Textarea
-                        placeholder="Please describe your issue or question in detail. Include any error messages, steps you've tried, or specific information that might help us assist you better."
+                        placeholder={t('messagePlaceholder')}
                         value={formData.message}
                         onChange={(e) =>
                           handleInputChange("message", e.target.value)
@@ -336,7 +331,7 @@ export default function SupportPage() {
                         </Text>
                       )}
                       <Text fontSize="xs" color="gray.500" mt={1}>
-                        {formData.message.length}/2000 characters
+                        {formData.message.length}{t('characterCount')}
                       </Text>
                     </FormControl>
 
@@ -345,11 +340,11 @@ export default function SupportPage() {
                       colorScheme="green"
                       size="lg"
                       isLoading={isSubmitting}
-                      loadingText="Sending..."
+                      loadingText={t('sendingButton')}
                       disabled={!formData.email || !formData.message}
                       width="full"
                     >
-                      Send Message
+                      {t('sendButton')}
                     </Button>
                   </VStack>
                 </form>
@@ -360,7 +355,7 @@ export default function SupportPage() {
           {/* Additional Resources */}
           <Box textAlign="center" pt={4}>
             <Text color="gray.600" mb={4}>
-              Looking for immediate answers? Check out our resources:
+              {t('resourcesHeader')}
             </Text>
             <Flex justify="center" wrap="wrap" gap={4}>
               <Link
@@ -370,7 +365,7 @@ export default function SupportPage() {
                 fontWeight="medium"
                 _hover={{ textDecoration: "underline" }}
               >
-                Documentation <Icon as={FaExternalLinkAlt} ml={1} boxSize={3} />
+                {t('documentationLink')} <Icon as={FaExternalLinkAlt} ml={1} boxSize={3} />
               </Link>
               <Link
                 href="https://discord.gg/skatehive"
@@ -379,7 +374,7 @@ export default function SupportPage() {
                 fontWeight="medium"
                 _hover={{ textDecoration: "underline" }}
               >
-                Community Discord{" "}
+                {t('discordLink')}{" "}
                 <Icon as={FaExternalLinkAlt} ml={1} boxSize={3} />
               </Link>
               <Link
@@ -389,7 +384,7 @@ export default function SupportPage() {
                 fontWeight="medium"
                 _hover={{ textDecoration: "underline" }}
               >
-                Latest Updates{" "}
+                {t('updatesLink')}{" "}
                 <Icon as={FaExternalLinkAlt} ml={1} boxSize={3} />
               </Link>
             </Flex>
@@ -399,12 +394,9 @@ export default function SupportPage() {
           <Alert status="info" borderRadius="md">
             <AlertIcon />
             <Box>
-              <AlertTitle>Response Time</AlertTitle>
+              <AlertTitle>{t('responseTimeTitle')}</AlertTitle>
               <AlertDescription>
-                We typically respond to support requests within 24-48 hours
-                during business days. For urgent issues affecting app
-                functionality, please include detailed steps to reproduce the
-                problem.
+                {t('responseTimeMessage')}
               </AlertDescription>
             </Box>
           </Alert>

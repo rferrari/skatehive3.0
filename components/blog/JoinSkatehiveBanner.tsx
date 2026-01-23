@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react';
 import { Box, Button, Alert, AlertDescription, IconButton, Spinner, Flex } from '@chakra-ui/react';
 import { CloseIcon } from '@chakra-ui/icons';
 import { useAioha } from '@aioha/react-ui';
+import { useTranslations } from '@/lib/i18n/hooks';
 import { checkCommunitySubscription, communitySubscribeKeyChain } from '@/lib/hive/client-functions';
 
 export default function JoinSkatehiveBanner() {
+  const t = useTranslations('blog');
   const { user } = useAioha();
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -61,10 +63,10 @@ export default function JoinSkatehiveBanner() {
           mr={2}
         />
         <AlertDescription flex="1">
-          Join Skatehive to participate in the leaderboard
+          {t('joinBannerMessage')}
         </AlertDescription>
         <Button colorScheme="primary" size="sm" onClick={handleJoin} isLoading={loading} ml={4}>
-          Join
+          {t('joinBannerButton')}
         </Button>
       </Alert>
     </Flex>

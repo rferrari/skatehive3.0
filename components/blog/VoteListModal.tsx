@@ -14,6 +14,7 @@ import {
   Button,
 } from "@chakra-ui/react";
 import { getPayoutValue } from "@/lib/hive/client-functions";
+import { useTranslations } from "@/lib/i18n/hooks";
 import HiveClient from "@/lib/hive/hiveclient";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
@@ -31,6 +32,7 @@ interface VoteListPopoverProps {
 }
 
 const VoteListPopover = ({ trigger, votes, post }: VoteListPopoverProps) => {
+  const t = useTranslations('blog');
   const [votePercents, setVotePercents] = useState<Record<string, number>>({});
   const pendingRequestRef = useRef(false);
 
@@ -104,7 +106,7 @@ const VoteListPopover = ({ trigger, votes, post }: VoteListPopoverProps) => {
             }}
           >
             {sortedVotes.length === 0 && (
-              <Text color={emptyColor}>No votes yet.</Text>
+              <Text color={emptyColor}>{t('noVotesYet')}</Text>
             )}
             {sortedVotes.map((vote, idx) => {
                 const rshares = typeof vote.rshares === "number" ? vote.rshares : 0;

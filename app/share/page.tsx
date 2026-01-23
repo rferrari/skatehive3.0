@@ -3,8 +3,10 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Box, Text, VStack, Spinner } from "@chakra-ui/react";
+import { useTranslations } from "@/lib/i18n/hooks";
 
 function SharePageContent() {
+  const t = useTranslations('share');
   const searchParams = useSearchParams();
   const [castData, setCastData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -43,7 +45,7 @@ function SharePageContent() {
     <Box p={6} maxW="600px" mx="auto">
       <VStack spacing={4} align="stretch">
         <Text fontSize="2xl" fontWeight="bold">
-          Shared Cast
+          {t('pageTitle')}
         </Text>
 
         {castData ? (
