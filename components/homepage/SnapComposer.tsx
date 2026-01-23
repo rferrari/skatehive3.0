@@ -574,10 +574,11 @@ const SnapComposer = React.memo(function SnapComposer({
           setIsProcessingGif(false);
 
           // Set created to "just now" for optimistic update
+          // Use finalCommentBody so images and video are included in the preview
           const newComment: Partial<Discussion> = {
             author: user,
             permlink: permlink,
-            body: commentBody,
+            body: finalCommentBody,
             created: "just now", // use "just now" as the created value for new replies
             pending_payout_value: "0.000 HBD",
           };
