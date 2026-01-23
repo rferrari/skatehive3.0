@@ -1,4 +1,5 @@
 import React, { useState, useRef, useMemo, useCallback } from "react";
+import { useTranslations } from "@/contexts/LocaleContext";
 import {
   Box,
   Textarea,
@@ -76,6 +77,7 @@ const SnapComposer = React.memo(function SnapComposer({
 }: SnapComposerProps) {
   const { user, aioha } = useAioha();
   const toast = useToast();
+  const t = useTranslations();
   const postBodyRef = useRef<HTMLTextAreaElement>(null);
   const [selectedGif, setSelectedGif] = useState<IGif | null>(null);
   const [isGiphyModalOpen, setGiphyModalOpen] = useState(false);
@@ -224,7 +226,7 @@ const SnapComposer = React.memo(function SnapComposer({
     } catch (error) {
       console.error("Error checking video duration:", error);
       alert(
-        "Failed to process video file: " +
+        t('compose.videoProcessFailed') + ": " +
         (error instanceof Error ? error.message : String(error))
       );
     }
@@ -284,7 +286,7 @@ const SnapComposer = React.memo(function SnapComposer({
       }
     } catch (error) {
       console.error("❌ [SnapComposer] Error uploading compressed image:", error);
-      alert('Failed to upload image: ' + (error instanceof Error ? error.message : String(error)));
+      alert(t('compose.imageUploadFailed') + ": " + (error instanceof Error ? error.message : String(error)));
     } finally {
       setIsLoading(false);
       finishUpload();
@@ -299,12 +301,12 @@ const SnapComposer = React.memo(function SnapComposer({
     if (!file) return;
     // Check file type
     if (!(file.type === "image/gif" || file.type === "image/webp")) {
-      alert("Only GIF and WEBP files are allowed.");
+      alert(t('compose.onlyGifWebp'));
       return;
     }
     // Check file size (limit to 10MB)
     if (file.size > 10 * 1024 * 1024) {
-      alert("GIF or WEBP file size must be 10MB or less.");
+      alert(t('compose.gifSizeLimit'));
       return;
     }
     startUpload();
@@ -363,7 +365,7 @@ const SnapComposer = React.memo(function SnapComposer({
       setGifMakerOpen(false); // Close the GIF maker
     } catch (error) {
       console.error("Error uploading created GIF:", error);
-      alert("Failed to upload GIF. Please try again.");
+      alert(t('compose.gifUploadFailed'));
     } finally {
       finishUpload();
     }
@@ -398,7 +400,7 @@ const SnapComposer = React.memo(function SnapComposer({
           URL.revokeObjectURL(url);
         } catch (err) {
           alert(
-            "Error compressing image: " +
+            t('compose.compressionError') + ": " +
             (err instanceof Error ? err.message : err)
           );
         }
@@ -475,7 +477,7 @@ const SnapComposer = React.memo(function SnapComposer({
   const handleComment = useCallback(async () => {
     const commentBody = postBodyRef.current?.value?.trim() ?? "";
     if (!commentBody) {
-      alert("Comment cannot be empty");
+      alert(t('compose.emptyComment'));
       return;
     }
 
@@ -483,8 +485,8 @@ const SnapComposer = React.memo(function SnapComposer({
     const isDuplicate = await checkForDuplicatePost(commentBody);
     if (isDuplicate) {
       toast({
-        title: "⚠️ Duplicate Post Detected",
-        description: "You've already posted this exact content in this thread. Please write something new or modify your message.",
+        title: t('compose.duplicateTitle'),
+        description: t('compose.duplicateDescription'),
         status: "warning",
         duration: 8000,
         isClosable: true,
@@ -758,7 +760,7 @@ const SnapComposer = React.memo(function SnapComposer({
             pointerEvents="none"
           >
             <Box color="primary" fontWeight="bold" fontSize="xl">
-              Drop files to upload
+              {t('compose.dropFiles')}
             </Box>
           </Box>
         )}
@@ -772,7 +774,7 @@ const SnapComposer = React.memo(function SnapComposer({
           <Textarea
             id="snap-composer-textarea"
             data-testid="snap-composer-textarea"
-            placeholder="Write here"
+            placeholder={t('compose.placeholder')}
             bg="background"
             borderRadius={"base"}
             mb={3}
@@ -845,7 +847,7 @@ const SnapComposer = React.memo(function SnapComposer({
                   />
                   <Input
                     mt={2}
-                    placeholder="Enter caption"
+                    placeholder={t('compose.enterCaption')}
                     value={img.caption}
                     onChange={(e) => {
                       const newImages = [...compressedImages];
@@ -914,7 +916,7 @@ const SnapComposer = React.memo(function SnapComposer({
                 <IconButton
                   id="snap-composer-media-upload-btn"
                   data-testid="snap-composer-media-upload"
-                  aria-label="Upload Media"
+                  aria-label={t('compose.uploadMedia')}
                   icon={
                     <FaImage color="var(--chakra-colors-primary)" size={22} />
                   }
@@ -965,7 +967,7 @@ const SnapComposer = React.memo(function SnapComposer({
                 <IconButton
                   id="snap-composer-giphy-btn"
                   data-testid="snap-composer-giphy"
-                  aria-label="Add GIF from Giphy"
+                  aria-label={t('compose.addGif')}
                   icon={
                     <TbGif size={22} color="var(--chakra-colors-primary)" />
                   }
@@ -999,7 +1001,7 @@ const SnapComposer = React.memo(function SnapComposer({
               <IconButton
                 id="snap-composer-gif-maker-btn"
                 data-testid="snap-composer-gif-maker"
-                aria-label="GIF Maker"
+                aria-label={t('compose.gifMaker')}
                 icon={<TbGif color="var(--chakra-colors-primary)" size={22} />}
                 variant="ghost"
                 isDisabled={isLoading}
@@ -1024,11 +1026,11 @@ const SnapComposer = React.memo(function SnapComposer({
               />
               {/* Instagram Button - Show if server is healthy or still loading */}
               {(instagramHealth.healthy || instagramHealth.loading) && (
-                <Tooltip label="Import video from Instagram" placement="top">
+                <Tooltip label={t('compose.importFromInstagram')} placement="top">
                   <IconButton
                     id="snap-composer-instagram-btn"
                     data-testid="snap-composer-instagram"
-                    aria-label="Import from Instagram"
+                    aria-label={t('compose.importFromInstagram')}
                     icon={
                       <FaInstagram
                         color="var(--chakra-colors-primary)"
