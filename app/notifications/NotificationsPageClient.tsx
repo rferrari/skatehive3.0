@@ -3,8 +3,10 @@ import NotificationsComp from "@/components/notifications/NotificationsComp";
 import { useAioha } from "@aioha/react-ui";
 import { Box, Text, Center, Spinner } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
+import { useTranslations } from '@/lib/i18n/hooks';
 
 export default function NotificationsPageClient() {
+  const t = useTranslations('notificationsPage');
   const { user, aioha } = useAioha();
   const [isLoading, setIsLoading] = useState(true);
 
@@ -21,7 +23,7 @@ export default function NotificationsPageClient() {
     return (
       <Center height="200px">
         <Spinner size="lg" />
-        <Text ml={3}>Loading...</Text>
+        <Text ml={3}>{t('loading')}</Text>
       </Center>
     );
   }
@@ -31,10 +33,10 @@ export default function NotificationsPageClient() {
       <Center height="200px">
         <Box textAlign="center">
           <Text fontSize="lg" mb={4}>
-            Please log in to view your notifications
+            {t('loginRequired')}
           </Text>
           <Text color="gray.500">
-            You need to be authenticated to access this page
+            {t('authRequired')}
           </Text>
         </Box>
       </Center>

@@ -19,8 +19,10 @@ import BountyList from "./BountyList";
 import { Discussion } from "@hiveio/dhive";
 import Image from "next/image";
 import useIsMobile from "@/hooks/useIsMobile";
+import { useTranslations } from '@/lib/i18n/hooks';
 
 export default function BountiesClient() {
+  const t = useTranslations('bounties');
   const [newBounty, setNewBounty] = useState<Partial<Discussion> | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -71,7 +73,7 @@ export default function BountiesClient() {
               marginLeft: "2rem",
             }}
           >
-            Bounties
+            {t('title')}
           </Text>
         </Box>
         <Box
@@ -97,7 +99,7 @@ export default function BountiesClient() {
               color: "primary",
             }}
           >
-            Create a Bounty
+            {t('createButton')}
           </Button>
         </Box>
       </Box>
@@ -109,7 +111,7 @@ export default function BountiesClient() {
             textAlign="left"
             mb={0}
           >
-            Create a bounty or die trying to complete one
+            {t('subtitle')}
           </Text>
           <Button
             size="sm"
@@ -118,7 +120,7 @@ export default function BountiesClient() {
             onClick={() => setShowRules((prev) => !prev)}
             ml={2}
           >
-            Rules
+            {t('rulesTitle')}
           </Button>
         </Box>
         {showRules && (
@@ -132,31 +134,16 @@ export default function BountiesClient() {
                   color="accent"
                   fontSize="md"
                 >
-                  READ THIS and follow these simple rules before submitting or
-                  issuing a bounty:
+                  {t('rulesIntro')}
                 </Box>
                 <AccordionIcon />
               </AccordionButton>
               <AccordionPanel pb={2} color="text" fontSize="sm">
                 <ul style={{ paddingLeft: 20, margin: 0 }}>
-                  <li>
-                    Anyone can post a bounty or claim one. Got crypto? Submit.
-                    Got tricks? Send it.
-                  </li>
-                  <li>
-                    All clips must be original and filmed for the bounty.{" "}
-                    <b>NO RECYCLED CLIPS!</b> Cheaters get roasted by the
-                    community.
-                  </li>
-                  <li>
-                    Bounty creators gotta send the prize. If you don&apos;t, the
-                    community will clown your ass hard.
-                  </li>
-                  <li>
-                    Bounties are for fun, hype, and getting rewarded. Skatehive
-                    is not liable for injuries, broken boards, or copyright
-                    violations.
-                  </li>
+                  <li>{t('rule1')}</li>
+                  <li>{t('rule2')}</li>
+                  <li>{t('rule3')}</li>
+                  <li>{t('rule4')}</li>
                 </ul>
               </AccordionPanel>
             </AccordionItem>

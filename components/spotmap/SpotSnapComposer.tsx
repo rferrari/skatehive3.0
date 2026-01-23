@@ -14,6 +14,7 @@ import {
   FormLabel,
   VStack,
 } from "@chakra-ui/react";
+import { useTranslations } from "@/contexts/LocaleContext";
 import { useAioha } from "@aioha/react-ui";
 import { CloseIcon } from "@chakra-ui/icons";
 import { FaImage } from "react-icons/fa";
@@ -37,6 +38,7 @@ export default function SpotSnapComposer({
   onNewComment,
   onClose,
 }: SpotSnapComposerProps) {
+  const t = useTranslations('map');
   const { user, aioha } = useAioha();
   const postBodyRef = useRef<HTMLTextAreaElement>(null);
   const imageCompressorRef = useRef<ImageCompressorRef>(null);
@@ -52,7 +54,7 @@ export default function SpotSnapComposer({
   const [isDragOver, setIsDragOver] = useState(false);
 
   const buttonText = () => {
-    return "Publish";
+    return t('publish');
   };
 
   const handleCompressedImageUpload = async (
@@ -97,11 +99,11 @@ export default function SpotSnapComposer({
     let description = postBodyRef.current?.value || "";
     // Only require spot name and either description or images
     if (!spotName.trim()) {
-      alert("Please enter a spot name.");
+      alert(t('spotNameRequired'));
       return;
     }
     if (!description.trim() && compressedImages.length === 0) {
-      alert("Please enter a description or upload an image before posting.");
+      alert(t('descriptionOrImageRequired'));
       return;
     }
 
@@ -113,7 +115,7 @@ export default function SpotSnapComposer({
     // Warn user if no location data, but allow posting
     if (!hasLocation) {
       const proceed = confirm(
-        "No location data detected. You can post the spot now and add location details later by editing the post. Would you like to continue?"
+        t('noLocationWarning')
       );
       if (!proceed) return;
     }
@@ -275,7 +277,7 @@ export default function SpotSnapComposer({
           );
         }
       } else {
-        alert("Only image files are supported for drag-and-drop here.");
+        alert(t('onlyImagesSupported'));
       }
     }
   };
@@ -323,16 +325,16 @@ export default function SpotSnapComposer({
           pointerEvents="none"
         >
           <Box color="primary" fontWeight="bold" fontSize="xl">
-            Drop images to upload
+            {t('dropImagesToUpload')}
           </Box>
         </Box>
       )}
       <VStack spacing={3} align="stretch">
         <FormControl isRequired>
-          <FormLabel>Name</FormLabel>
+          <FormLabel>{t('name')}</FormLabel>
           <Input
             id="spot-name-field"
-            placeholder="Enter spot name"
+            placeholder={t('enterSpotName')}
             value={spotName}
             onChange={(e) => setSpotName(e.target.value)}
             isDisabled={isLoading}
@@ -342,16 +344,16 @@ export default function SpotSnapComposer({
         </FormControl>
         <FormControl>
           <FormLabel>
-            🌐 Loc.{" "}
+            {t('location')}{" "}
             {!lat && !lon && compressedImages.length > 0 && (
               <Box as="span" color="orange.500" fontSize="sm">
-                (No GPS data found in photos)
+                {t('noGpsDataFound')}
               </Box>
             )}
           </FormLabel>
           <Input
             placeholder={
-              lat && lon ? `${lat}, ${lon}` : "e.g. 123 Skate St, New York, NY"
+              lat && lon ? `${lat}, ${lon}` : t('locationPlaceholder')
             }
             value={lat && lon ? `${lat}, ${lon}` : address}
             onChange={(e) => setAddress(e.target.value)}
@@ -363,7 +365,7 @@ export default function SpotSnapComposer({
         </FormControl>
         <FormControl>
           <Textarea
-            placeholder="Describe the spot"
+            placeholder={t('describeTheSpot')}
             bg="background"
             borderRadius={"base"}
             mb={3}
@@ -396,7 +398,7 @@ export default function SpotSnapComposer({
           >
             <FaImage size={28} />
             <Box fontSize="sm" mt={1}>
-              Upload{" "}
+              {t('upload')}{" "}
               <Box as="span" color="red.500">
                 *
               </Box>
@@ -431,7 +433,7 @@ export default function SpotSnapComposer({
               />
               <Input
                 mt={2}
-                placeholder="caption"
+                placeholder={t('caption')}
                 value={imgObj.caption}
                 onChange={(e) => {
                   const newImages = [...compressedImages];
@@ -487,7 +489,7 @@ export default function SpotSnapComposer({
             fontSize="xl"
             textAlign="center"
           >
-            Please log in to post a spot.
+            {t('pleaseLoginToPost')}
           </Box>
         </Box>
       )}

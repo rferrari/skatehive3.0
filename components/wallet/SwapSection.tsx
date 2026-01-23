@@ -242,7 +242,7 @@ export default function SwapSection({
       {/* Swap Icon */}
       <Box textAlign="center" my={2}>
         <IconButton
-          aria-label="Swap direction"
+          aria-label={t('tooltips.swapDirection')}
           icon={<FaExchangeAlt />}
           onClick={handleSwapDirection}
           bg="transparent"

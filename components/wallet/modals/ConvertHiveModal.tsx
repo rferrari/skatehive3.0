@@ -88,7 +88,7 @@ export function ConvertHiveModal({
                         {fromCurrency}
                     </Text>
                     <IconButton
-                        aria-label="Flip direction"
+                        aria-label={t('tooltips.flipDirection')}
                         icon={<ArrowForwardIcon />}
                         onClick={toggleDirection}
                         variant="ghost"

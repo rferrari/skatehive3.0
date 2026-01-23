@@ -15,6 +15,7 @@ import { FiBook } from "react-icons/fi";
 import { useRouter, usePathname } from "next/navigation";
 import { useAioha } from "@aioha/react-ui";
 import { QueryType, ViewMode } from "@/config/blog.config";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 interface TopBarProps {
   viewMode: ViewMode;
@@ -29,6 +30,7 @@ export default function TopBar({
   setQuery,
   onQueryChange,
 }: TopBarProps) {
+  const t = useTranslations();
   const router = useRouter();
   const pathname = usePathname();
   const { user } = useAioha();
@@ -86,7 +88,7 @@ export default function TopBar({
               boxShadow: "0 2px 4px var(--chakra-colors-primary-alpha)",
             }}
           >
-            Create a Page
+            {t('blog.createPage')}
           </Button>
         )}
         <Button
@@ -123,7 +125,7 @@ export default function TopBar({
           }}
           isActive={viewMode === "magazine"}
         >
-          Read Magazine
+          {t('blog.readMagazine')}
         </Button>
       </Flex>
       <Flex flex="1" justifyContent="flex-end" alignItems="center">
@@ -135,9 +137,9 @@ export default function TopBar({
           colorScheme="green"
           display={{ base: "none", md: "flex" }}
         >
-          <Tooltip label="Grid View" hasArrow>
+          <Tooltip label={t('blog.gridView')} hasArrow>
             <IconButton
-              aria-label="Grid View"
+              aria-label={t('blog.gridView')}
               icon={<FaTh />}
               onClick={() => {
                 if (isMagazinePage) {
@@ -150,9 +152,9 @@ export default function TopBar({
               sx={buttonStyle}
             />
           </Tooltip>
-          <Tooltip label="List View" hasArrow>
+          <Tooltip label={t('blog.listView')} hasArrow>
             <IconButton
-              aria-label="List View"
+              aria-label={t('blog.listView')}
               icon={<FaBars />}
               onClick={() => {
                 if (isMagazinePage) {
@@ -169,7 +171,7 @@ export default function TopBar({
         <Menu>
           <MenuButton
             as={Button}
-            aria-label="Sort Options"
+            aria-label={t('blog.sort')}
             leftIcon={<FaSort />}
             variant="outline"
             ml={4}
@@ -178,7 +180,7 @@ export default function TopBar({
             _hover={{ bg: "muted", color: "primary" }}
             _active={{ bg: "muted", color: "primary" }}
           >
-            Sort
+            {t('blog.sort')}
           </MenuButton>
           <MenuList
             zIndex="popover"
@@ -192,7 +194,7 @@ export default function TopBar({
               _hover={{ bg: "muted", color: "primary" }}
               onClick={() => handleQueryChange("created")}
             >
-              Recent
+              {t('blog.recent')}
             </MenuItem>
             <MenuItem
               bg="background"
@@ -200,7 +202,7 @@ export default function TopBar({
               _hover={{ bg: "muted", color: "primary" }}
               onClick={() => handleQueryChange("trending")}
             >
-              Trending
+              {t('blog.trending')}
             </MenuItem>
             <MenuItem
               bg="background"
@@ -208,7 +210,7 @@ export default function TopBar({
               _hover={{ bg: "muted", color: "primary" }}
               onClick={() => handleQueryChange("highest_paid")}
             >
-              Highest Paid
+              {t('blog.highestPaid')}
             </MenuItem>
             <MenuItem
               bg="background"
@@ -216,7 +218,7 @@ export default function TopBar({
               _hover={{ bg: "muted", color: "primary" }}
               onClick={() => handleQueryChange("goat")}
             >
-              GOAT
+              {t('blog.goat')}
             </MenuItem>
           </MenuList>
         </Menu>

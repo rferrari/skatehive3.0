@@ -3,6 +3,7 @@ import {
   Box,
 } from "@chakra-ui/react";
 import SkateModal from "@/components/shared/SkateModal";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 interface RulesModalProps {
   isOpen: boolean;
@@ -10,32 +11,28 @@ interface RulesModalProps {
 }
 
 export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
+  const t = useTranslations();
   return (
     <SkateModal
       isOpen={isOpen}
       onClose={onClose}
-      title="Leaderboard Guide & Rules"
+      title={t('leaderboard.rulesModalTitle')}
       windowId="leaderboard-rules"
       size="3xl"
     >
       <Box overflowY="auto" maxH="70vh" px={2}>
           <Box>
             <Text fontWeight="bold" mb={2} color="text">
-              🛹 What is the Skatehive Leaderboard?
+              {t('leaderboard.whatIsLeaderboard')}
             </Text>
             <Text fontSize="sm" color="dim" mb={4}>
-              The Skatehive Leaderboard ranks top contributors based on their
-              activity and holdings across Hive and Ethereum blockchains. Your
-              score is calculated using Skatehive-centric metrics, including
-              Hive Power, Skatehive NFTs, witness votes, posts, snaps, and more.
-              Show off your contributions and skate your way to the top!
+              {t('leaderboard.leaderboardDescription')}
             </Text>
             <Text fontWeight="bold" mb={2} color="text">
-              🌟 How You Earn Points
+              {t('leaderboard.howYouEarnPoints')}
             </Text>
             <Text fontSize="sm" color="dim" mb={3}>
-              Points are calculated based on the following metrics, with caps
-              and penalties applied to ensure fairness:
+              {t('leaderboard.pointsCalculationDescription')}
             </Text>
             <Box
               as="table"
@@ -61,7 +58,7 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
                       fontWeight: "bold",
                     }}
                   >
-                    Category
+                    {t('leaderboard.category')}
                   </th>
                   <th
                     align="left"
@@ -71,93 +68,82 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
                       fontWeight: "bold",
                     }}
                   >
-                    Points Calculation
+                    {t('leaderboard.pointsCalculation')}
                   </th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td style={{ padding: 6 }}>Hive Power (HP)</td>
+                  <td style={{ padding: 6 }}>{t('leaderboard.hivepower')}</td>
                   <td style={{ padding: 6 }}>
-                    0.5 points per HP, capped at 12,000 HP (max 6,000 points).{" "}
-                    <strong>Zero HP</strong>: -5,000 points.
+                    {t('leaderboard.hivepowerCalc')}
                   </td>
                 </tr>
                 <tr>
-                  <td style={{ padding: 6 }}>Posts and Snaps Score</td>
+                  <td style={{ padding: 6 }}>{t('leaderboard.postsSnapsScore')}</td>
                   <td style={{ padding: 6 }}>
-                    Posts score × 27 + Snaps score × 10 × (weekly snaps / total
-                    snaps, capped at 20 snaps). <strong>Zero score</strong>:
-                    -2,000 points.
+                    {t('leaderboard.postsSnapsCalc')}
                   </td>
                 </tr>
                 <tr>
-                  <td style={{ padding: 6 }}>Skatehive NFTs</td>
+                  <td style={{ padding: 6 }}>{t('leaderboard.skatehiveNfts')}</td>
                   <td style={{ padding: 6 }}>
-                    50 points per Skatehive NFT. <strong>Zero NFTs</strong>:
-                    -900 points.
+                    {t('leaderboard.skatehiveNftsCalc')}
                   </td>
                 </tr>
                 <tr>
-                  <td style={{ padding: 6 }}>Gnars Votes</td>
+                  <td style={{ padding: 6 }}>{t('leaderboard.gnarsVotes')}</td>
                   <td style={{ padding: 6 }}>
-                    30 points per Gnars Vote. <strong>Zero votes</strong>: -300
-                    points.
+                    {t('leaderboard.gnarsVotesCalc')}
                   </td>
                 </tr>
                 <tr>
-                  <td style={{ padding: 6 }}>HBD Savings</td>
+                  <td style={{ padding: 6 }}>{t('leaderboard.hbdSavings')}</td>
                   <td style={{ padding: 6 }}>
-                    0.2 points per HBD in savings, capped at 1,000 HBD (max 200
-                    points). <strong>Zero HBD</strong>: -200 points.
+                    {t('leaderboard.hbdSavingsCalc')}
                   </td>
                 </tr>
                 <tr>
-                  <td style={{ padding: 6 }}>Hive Balance</td>
+                  <td style={{ padding: 6 }}>{t('leaderboard.hiveBalance')}</td>
                   <td style={{ padding: 6 }}>
-                    0.1 points per Hive, capped at 1,000 Hive (max 100 points).{" "}
-                    <strong>Zero Hive</strong>: -1,000 points.
+                    {t('leaderboard.hiveBalanceCalc')}
                   </td>
                 </tr>
                 <tr>
-                  <td style={{ padding: 6 }}>Giveth Donations</td>
+                  <td style={{ padding: 6 }}>{t('leaderboard.givethDonations')}</td>
                   <td style={{ padding: 6 }}>
-                    5 points per USD donated, capped at 1,000 USD (max 5,000
-                    points).
+                    {t('leaderboard.givethDonationsCalc')}
                   </td>
                 </tr>
                 <tr>
-                  <td style={{ padding: 6 }}>Witness Vote</td>
+                  <td style={{ padding: 6 }}>{t('leaderboard.witnessVote')}</td>
                   <td style={{ padding: 6 }}>
-                    1,000 points for voting for the Skatehive witness.{" "}
-                    <strong>No vote</strong>: -3,500 points.
+                    {t('leaderboard.witnessVoteCalc')}
                   </td>
                 </tr>
                 <tr>
-                  <td style={{ padding: 6 }}>Voting Mana</td>
+                  <td style={{ padding: 6 }}>{t('leaderboard.votingMana')}</td>
                   <td style={{ padding: 6 }}>
-                    1,000 points per USD of voting power.
+                    {t('leaderboard.votingManaCalc')}
                   </td>
                 </tr>
                 <tr>
-                  <td style={{ padding: 6 }}>Last Post Activity</td>
+                  <td style={{ padding: 6 }}>{t('leaderboard.lastPostActivity')}</td>
                   <td style={{ padding: 6 }}>
-                    Deduct 1 point per day since last post, up to 100 points.
+                    {t('leaderboard.lastPostActivityCalc')}
                   </td>
                 </tr>
                 <tr>
-                  <td style={{ padding: 6 }}>Ethereum Wallet Bonus</td>
+                  <td style={{ padding: 6 }}>{t('leaderboard.ethWalletBonus')}</td>
                   <td style={{ padding: 6 }}>
-                    5,000 points for a valid Ethereum wallet (non-zero, not
-                    starting with &quot;donator&quot;).{" "}
-                    <strong>No valid wallet</strong>: -2,000 points.
+                    {t('leaderboard.ethWalletBonusCalc')}
                   </td>
                 </tr>
               </tbody>
             </Box>
 
             <Text fontWeight="bold" mb={2} color="text">
-              📊 Posts and Snaps Score Details
+              {t('leaderboard.postsSnapsScoreDetails')}
             </Text>
             <Box
               bg="panel"
@@ -168,16 +154,13 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
               mb={4}
             >
               <Text mb={2}>
-                <strong>Posts Score</strong>: Multiplied by 27 to calculate
-                contribution to total points.
+                {t('leaderboard.postsScoreDetail')}
               </Text>
               <Text mb={2}>
-                <strong>Snaps Score</strong>: Multiplied by 10, adjusted by the
-                ratio of weekly snaps (capped at 20) to total snaps. If total
-                snaps is 0, the ratio is treated as 1 to avoid division by zero.
+                {t('leaderboard.snapsScoreDetail')}
               </Text>
               <Text mb={2}>
-                <strong>Formula</strong>:
+                <strong>{t('leaderboard.formula')}</strong>
               </Text>
               <Box
                 bg="primary"
@@ -188,17 +171,15 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
                 fontFamily="mono"
                 textAlign="center"
               >
-                Posts and Snaps Score = (Posts Score × 27) + (Snaps Score × 10 ×
-                (Weekly Snaps / Total Snaps, capped at 20))
+                {t('leaderboard.postsSnapsFormula')}
               </Box>
               <Text mt={2} fontSize="xs">
-                <strong>Zero Score Penalty</strong>: If both posts and snaps
-                scores are 0, a -2,000-point penalty is applied.
+                <strong>{t('leaderboard.zeroScorePenalty')}</strong>
               </Text>
             </Box>
 
             <Text fontWeight="bold" mb={2} color="text">
-              🧮 Total Points Formula
+              {t('leaderboard.totalPointsFormula')}
             </Text>
             <Box
               bg="primary"
@@ -211,28 +192,16 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
               textAlign="center"
             >
               <Text color="inherit">
-                <b>Total Points</b> = (Hive Power × 0.5, capped at 12,000) +
-                <br />
-                (Posts Score × 27 + Snaps Score × 10 × (Weekly Snaps / Total
-                Snaps, capped at 20)) +<br />
-                (Skatehive NFTs × 50) + (Gnars Votes × 30) +<br />
-                (HBD Savings × 0.2, capped at 1,000) + (Hive Balance × 0.1,
-                capped at 1,000) +<br />
-                (Giveth Donations USD × 5, capped at 1,000) +<br />
-                (Witness Vote ? 1,000 : -3,500) + (Voting Mana USD × 1,000) +
-                <br />
-                Ethereum Wallet Bonus (5,000 or -2,000) -<br />
-                Inactivity Penalty (min(days since last post, 100)) +<br />
-                Zero-Value Penalties (if applicable)
+                <b>{t('leaderboard.totalPointsFormulaText')}</b>
               </Text>
             </Box>
 
             <Text fontSize="xs" color="dim" mb={4} textAlign="center">
-              <strong>Note</strong>: Total points are capped at a minimum of 0.
+              <strong>{t('leaderboard.totalPointsNote')}</strong>
             </Text>
 
             <Text fontWeight="bold" mb={2} color="text">
-              📋 Quick Rules
+              {t('leaderboard.quickRules')}
             </Text>
             <ul
               style={{
@@ -242,17 +211,14 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
                 fontSize: "0.95em",
               }}
             >
-              <li>Top 50 skaters are shown.</li>
-              <li>Sort by any stat using the selector.</li>
-              <li>Rules and scoring may change to improve fairness.</li>
+              <li>{t('leaderboard.quickRule1')}</li>
+              <li>{t('leaderboard.quickRule2')}</li>
+              <li>{t('leaderboard.quickRule3')}</li>
               <li>
-                <strong>Penalties for Zero Values</strong>: Significant
-                penalties apply for zero balances or activity in key metrics.
+                <strong>{t('leaderboard.quickRule4')}</strong>
               </li>
               <li>
-                <strong>Inactivity</strong>: Posting regularly (within 7 days)
-                avoids the inactivity penalty, which increases daily up to 100
-                points.
+                <strong>{t('leaderboard.quickRule5')}</strong>
               </li>
             </ul>
           </Box>

@@ -138,7 +138,7 @@ const MobileProfileHeader = memo(function MobileProfileHeader({
           {/* Top-right settings (only for owner) */}
           {isOwner && (
             <IconButton
-              aria-label="Settings"
+              aria-label={t('settings')}
               icon={<FaCog />}
               variant="ghost"
               color="white"

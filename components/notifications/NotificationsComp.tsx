@@ -20,12 +20,14 @@ import {
   extractVoteValue,
   type VoteValue,
 } from "./utils";
+import { useTranslations } from '@/lib/i18n/hooks';
 
 interface NotificationCompProps {
   username: string;
 }
 
 export default function NotificationsComp({ username }: NotificationCompProps) {
+  const t = useTranslations('notificationsPage');
   const { user, aioha } = useAioha();
   const {
     notifications,
@@ -146,11 +148,11 @@ export default function NotificationsComp({ username }: NotificationCompProps) {
 
   // Add type label mapping and order
   const notificationTypeLabels: Record<string, string> = {
-    reply: "Reply",
-    reply_comment: "Reply to Comment",
-    mention: "Mentions",
-    vote: "Votes",
-    follow: "Follows",
+    reply: t('filterReply'),
+    reply_comment: t('filterReplyComment'),
+    mention: t('filterMention'),
+    vote: t('filterVote'),
+    follow: t('filterFollow'),
   };
   const notificationTypeOrder = [
     "reply",
@@ -175,11 +177,11 @@ export default function NotificationsComp({ username }: NotificationCompProps) {
       <Box w="full" maxW="980px" mx="auto">
         <Flex justify="space-between" align="center" mb={{ base: 4, md: 6 }}>
           <Text fontSize={{ base: "xl", md: "2xl" }} fontWeight="bold">
-            Notifications
+            {t('title')}
           </Text>
           {user == username && (
             <Button onClick={handleMarkAsRead} size="sm">
-              Mark as Read
+              {t('markAsRead')}
             </Button>
           )}
         </Flex>
@@ -197,7 +199,7 @@ export default function NotificationsComp({ username }: NotificationCompProps) {
           }}
           _hover={{ borderColor: "primary" }}
         >
-          <option value="all">All</option>
+          <option value="all">{t('filterAll')}</option>
           {notificationTypeOrder
             .filter((type) => notifications.some((n) => n.type === type))
             .map((type) => (
@@ -256,7 +258,7 @@ export default function NotificationsComp({ username }: NotificationCompProps) {
             ))}
           </Stack>
         ) : (
-          <Text>No notifications</Text>
+          <Text>{t('noNotifications')}</Text>
         )}
       </Box>
     </Box>

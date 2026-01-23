@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { HIVE_CONFIG } from "@/config/app.config";
+import { useTranslations } from '@/lib/i18n/hooks';
 
 declare const StWidget: any;
 
@@ -53,6 +54,7 @@ const widgetOptions = {
 };
 
 export default function ChatPage() {
+  const t = useTranslations('chat');
   const chatRef = useRef<HTMLDivElement | null>(null);
   const [debug, setDebug] = useState<string[]>([]);
   const widgetRef = useRef<any>(null);
@@ -146,7 +148,7 @@ export default function ChatPage() {
 
   return (
     <div className="p-4 max-w-full">
-      <h1 className="text-2xl font-bold mb-4">SkateHive Chat</h1>
+      <h1 className="text-2xl font-bold mb-4">{t('title')}</h1>
 
       {isLoading && (
         <div
@@ -155,8 +157,8 @@ export default function ChatPage() {
         >
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading chat widget...</p>
-            <p className="text-sm text-gray-500 mt-2">This may take a moment</p>
+            <p className="text-gray-600">{t('loading')}</p>
+            <p className="text-sm text-gray-500 mt-2">{t('loadingMessage')}</p>
           </div>
         </div>
       )}

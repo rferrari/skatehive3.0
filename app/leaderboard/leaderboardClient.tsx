@@ -30,6 +30,7 @@ import useIsMobile from "@/hooks/useIsMobile";
 import { Name } from "@coinbase/onchainkit/identity";
 import { SkaterData } from "@/types/leaderboard";
 import { ETH_ADDRESSES } from "@/config/app.config";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 interface Props {
   skatersData: SkaterData[];
@@ -50,6 +51,7 @@ type SortOption =
   | "last_updated";
 
 export default function LeaderboardClient({ skatersData }: Props) {
+  const t = useTranslations();
   const [sortBy, setSortBy] = useState<SortOption>("posts");
   const [isRulesOpen, setIsRulesOpen] = useState(false);
   const {
@@ -134,7 +136,7 @@ export default function LeaderboardClient({ skatersData }: Props) {
                   )}
                 {!isMobile && (
                   <Text color="#888888" fontSize="2xs" fontWeight="medium">
-                    Last: {getTimeSince(skater.last_post)}
+                    {t('leaderboard.last')} {getTimeSince(skater.last_post)}
                   </Text>
                 )}
               </VStack>
@@ -176,7 +178,7 @@ export default function LeaderboardClient({ skatersData }: Props) {
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast({
-      title: "Address copied!",
+      title: t('leaderboard.addressCopied'),
       status: "success",
       duration: 2000,
       isClosable: true,
@@ -301,7 +303,7 @@ export default function LeaderboardClient({ skatersData }: Props) {
       (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24)
     );
 
-    if (diffInDays < 1) return "Today";
+    if (diffInDays < 1) return t('leaderboard.today');
     if (diffInDays === 1) return "1d";
     if (diffInDays < 30) return `${diffInDays}d`;
     if (diffInDays < 365) return `${Math.floor(diffInDays / 30)}mo`;
@@ -432,7 +434,7 @@ export default function LeaderboardClient({ skatersData }: Props) {
             textTransform="uppercase"
             letterSpacing="wider"
           >
-            Skatehive Leaderboard
+            {t('leaderboard.title')}
           </Text>
 
           <Text
@@ -440,14 +442,14 @@ export default function LeaderboardClient({ skatersData }: Props) {
             fontSize={{ base: "xs", md: "sm" }}
             textAlign="center"
           >
-            We are {skatersData.length} skaters supporting each other. 🛹
+            {t('leaderboard.skatersCount').replace('{count}', String(skatersData.length))}
           </Text>
 
           {/* Controls */}
           <HStack spacing={4} w="full" justify="center" flexWrap="wrap">
             <HStack spacing={2}>
               <Text fontSize="sm" fontWeight="bold" color="text">
-                Sort by:
+                {t('leaderboard.sortBy')}
               </Text>
               <Select
                 value={sortBy}
@@ -461,18 +463,18 @@ export default function LeaderboardClient({ skatersData }: Props) {
                 _hover={{ borderColor: "primary" }}
                 _focus={{ borderColor: "primary", boxShadow: "outline" }}
               >
-                <option value="points">🏆 Points</option>
-                <option value="power">⚡ Power</option>
-                <option value="posts">💻 Post Score</option>
-                <option value="nfts">🎨 Skatehive NFTs</option>
-                <option value="gnars_balance">🖼️ Gnars NFTs</option>
-                <option value="gnars">🪙 Gnars Voters</option>
-                <option value="donations">🎁 Donations</option>
-                <option value="hive">💰 Hive</option>
-                <option value="eth">🦄 Missing ETH</option>
-                <option value="giveth_donations_usd">🎁 Donations ($)</option>
-                <option value="witness">🗳️ Missing Witness</option>
-                <option value="last_updated">⏰ Last Updated</option>
+                <option value="points">{t('leaderboard.points')}</option>
+                <option value="power">{t('leaderboard.power')}</option>
+                <option value="posts">{t('leaderboard.postScore')}</option>
+                <option value="nfts">{t('leaderboard.skatehiveNfts')}</option>
+                <option value="gnars_balance">{t('leaderboard.gnarsNfts')}</option>
+                <option value="gnars">{t('leaderboard.gnarsVoters')}</option>
+                <option value="donations">{t('leaderboard.donations')}</option>
+                <option value="hive">{t('leaderboard.hive')}</option>
+                <option value="eth">{t('leaderboard.missingEth')}</option>
+                <option value="giveth_donations_usd">{t('leaderboard.donationsDollar')}</option>
+                <option value="witness">{t('leaderboard.missingWitness')}</option>
+                <option value="last_updated">{t('leaderboard.lastUpdated')}</option>
               </Select>
             </HStack>
 
@@ -484,7 +486,7 @@ export default function LeaderboardClient({ skatersData }: Props) {
               color="text"
               _hover={{ borderColor: "primary", color: "primary" }}
             >
-              Rules
+              {t('leaderboard.rules')}
             </Button>
 
             <Button
@@ -496,7 +498,7 @@ export default function LeaderboardClient({ skatersData }: Props) {
               _hover={{ bg: "accent" }}
               leftIcon={<Text>🎯</Text>}
             >
-              Airdrop
+              {t('leaderboard.airdrop')}
             </Button>
           </HStack>
         </VStack>
@@ -538,7 +540,7 @@ export default function LeaderboardClient({ skatersData }: Props) {
                   zIndex={3}
                   minW={isMobile ? "120px" : "200px"}
                 >
-                  Skater
+                  {t('leaderboard.skater')}
                 </Th>
                 {columns.map((col) => (
                   <Th

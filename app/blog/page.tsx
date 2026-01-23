@@ -17,6 +17,7 @@ import JoinSkatehiveBanner from "@/components/blog/JoinSkatehiveBanner";
 import PostGrid from "@/components/blog/PostGrid";
 import MagazineModal from "@/components/shared/MagazineModal";
 import ErrorBoundary from "@/components/shared/ErrorBoundary";
+import { useTranslations } from "@/contexts/LocaleContext";
 import {
   BLOG_CONFIG,
   VALID_QUERIES,
@@ -27,6 +28,7 @@ import {
 import { HIVE_CONFIG } from "@/config/app.config";
 
 function BlogContent() {
+  const t = useTranslations();
   const searchParams = useSearchParams();
   const initialView = searchParams?.get("view");
   const initialQuery = searchParams?.get("query");
@@ -78,7 +80,7 @@ function BlogContent() {
 
   const fetchGoatPosts = useCallback(async () => {
     if (!tag) {
-      setError("Cannot fetch posts: missing search tag configuration");
+      setError(t('blog.cannotFetchMissingTag'));
       return;
     }
 
@@ -132,11 +134,11 @@ function BlogContent() {
       }
     } catch (error) {
       console.error("Failed to fetch GOAT posts:", error);
-      setError("Failed to load GOAT posts. Please try again later.");
+      setError(t('blog.failedToLoadGoat'));
     } finally {
       setIsGoatLoading(false);
     }
-  }, [tag]);
+  }, [tag, t]);
 
   const fetchBatch = useCallback(async () => {
         const posts = await findPosts(
@@ -224,7 +226,7 @@ function BlogContent() {
     if (!hasMoreRef.current) return;
     if (isFetching.current) return; // Prevent multiple fetches
     if (!tag) {
-      setError("Cannot fetch posts: missing search tag configuration");
+      setError(t('blog.cannotFetchMissingTag'));
       return;
     }
 
@@ -248,7 +250,7 @@ function BlogContent() {
       startPrefetch(Boolean(nextCanPrefetch));
     } catch (error) {
       console.error("Failed to fetch posts:", error);
-      setError("Failed to load posts. Please try again later.");
+      setError(t('blog.failedToLoad'));
     } finally {
       isFetching.current = false;
     }
@@ -259,6 +261,7 @@ function BlogContent() {
     fetchBatch,
     appendBatch,
     startPrefetch,
+    t,
   ]);
 
   useEffect(() => {
@@ -339,7 +342,7 @@ function BlogContent() {
           <Alert status="error" mb={4} borderRadius="md">
             <AlertIcon />
             <Box>
-              <AlertTitle>Error!</AlertTitle>
+              <AlertTitle>{t('blog.errorTitle')}</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
             </Box>
           </Alert>
@@ -369,7 +372,7 @@ function BlogContent() {
         />
         {isGoatLoading && query === "goat" && (
           <Box textAlign="center" color="primary" py={4} fontWeight="bold">
-            Scanning for GOAT posts...
+            {t('blog.scanningGoat')}
           </Box>
         )}
         {query === "goat" ? (
@@ -389,6 +392,7 @@ function BlogContent() {
 }
 
 export default function Blog() {
+  const t = useTranslations();
   return (
     <ErrorBoundary>
       <Suspense
@@ -406,7 +410,7 @@ export default function Blog() {
           >
             <JoinSkatehiveBanner />
             <Box textAlign="center" color="primary" py={4} fontWeight="bold">
-              Loading...
+              {t('blog.loading')}
             </Box>
           </Box>
         }

@@ -22,6 +22,7 @@ import {
   checkAccountExists,
 } from "@/lib/invite/helpers";
 import { EXTERNAL_SERVICES } from "@/config/app.config";
+import { useTranslations } from '@/lib/i18n/hooks';
 
 // Hook to check signer status
 const useSignerStatus = () => {
@@ -481,7 +482,7 @@ SkateHive Team 🛹
         return (
           <>
             <FormControl>
-              <FormLabel color="text">Username</FormLabel>
+              <FormLabel color="text">{t('username')}</FormLabel>
               <Input
                 type="text"
                 name="username"
@@ -496,7 +497,7 @@ SkateHive Team 🛹
             </FormControl>
 
             <FormControl>
-              <FormLabel color="text">Email</FormLabel>
+              <FormLabel color="text">{t('email')}</FormLabel>
               <Input
                 type="email"
                 name="email"
@@ -510,7 +511,7 @@ SkateHive Team 🛹
             </FormControl>
 
             <FormControl>
-              <FormLabel color="text">VIP Code</FormLabel>
+              <FormLabel color="text">{t('vipCode')}</FormLabel>
               <Input
                 type="text"
                 name="vip-code"
@@ -564,7 +565,7 @@ SkateHive Team 🛹
             {isAvailable && (
               <Flex align="center">
                 <Icon as={FaCheck} color="green.400" mr={2} />
-                <Text color="green.400">Username is available</Text>
+                <Text color="green.400">{t('usernameAvailable')}</Text>
               </Flex>
             )}
             {!isAvailable && error && (

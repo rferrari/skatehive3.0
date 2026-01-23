@@ -256,9 +256,9 @@ const ReceiveModal: React.FC<ReceiveModalProps> = ({ isOpen, onClose }) => {
                               right={2}
                               spacing={1}
                             >
-                              <Tooltip label="Share Address">
+                              <Tooltip label={t('tooltips.shareAddress')}>
                                 <IconButton
-                                  aria-label="Share Address"
+                                  aria-label={t('tooltips.shareAddress')}
                                   icon={<Icon as={FaShare} />}
                                   size="sm"
                                   variant="ghost"

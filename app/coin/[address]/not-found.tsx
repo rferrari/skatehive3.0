@@ -8,8 +8,10 @@ import {
   AlertIcon,
 } from "@chakra-ui/react";
 import Link from "next/link";
+import { useTranslations } from '@/lib/i18n/hooks';
 
 export default function NotFound() {
+  const t = useTranslations('coinNotFound');
   return (
     <Container maxW="container.lg" py={8}>
       <VStack spacing={8} textAlign="center">
@@ -17,28 +19,26 @@ export default function NotFound() {
           <Heading size="2xl" color="gray.600">
             404
           </Heading>
-          <Heading size="lg">Coin Not Found</Heading>
+          <Heading size="lg">{t('title')}</Heading>
         </VStack>
 
         <Alert status="warning" maxW="md">
           <AlertIcon />
           <VStack spacing={2} textAlign="left">
-            <Text fontWeight="bold">This coin could not be found</Text>
+            <Text fontWeight="bold">{t('message')}</Text>
             <Text fontSize="sm">
-              Please check that the contract address is correct and that the
-              coin exists on the Base network.
+              {t('description')}
             </Text>
           </VStack>
         </Alert>
 
         <VStack spacing={4}>
           <Text color="gray.600">
-            The coin you&apos;re looking for might have been removed or the
-            address might be incorrect.
+            {t('removedMessage')}
           </Text>
 
           <Button as={Link} href="/" colorScheme="blue" size="lg">
-            Go Back Home
+            {t('goHome')}
           </Button>
         </VStack>
       </VStack>

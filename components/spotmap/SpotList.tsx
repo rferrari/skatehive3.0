@@ -11,6 +11,7 @@ import {
   ModalContent,
   SimpleGrid,
 } from "@chakra-ui/react";
+import { useTranslations } from "@/contexts/LocaleContext";
 import { Discussion } from "@hiveio/dhive";
 import Snap from "@/components/homepage/Snap";
 import SnapComposer from "@/components/homepage/SnapComposer";
@@ -24,6 +25,7 @@ interface SpotCommentsModalProps {
 }
 
 const SpotCommentsModal = ({ discussion, onClose }: SpotCommentsModalProps) => {
+  const t = useTranslations('map');
   const { user } = useAioha();
   const [optimisticComments, setOptimisticComments] = useState<Discussion[]>([]);
 
@@ -47,10 +49,10 @@ const SpotCommentsModal = ({ discussion, onClose }: SpotCommentsModalProps) => {
       {/* Header */}
       <HStack justify="space-between" align="center">
         <Text fontSize="lg" fontWeight="bold">
-          Comments
+          {t('comments')}
         </Text>
         <Button size="sm" variant="ghost" onClick={onClose}>
-          Close
+          {tCommon('close')}
         </Button>
       </HStack>
 
@@ -63,7 +65,7 @@ const SpotCommentsModal = ({ discussion, onClose }: SpotCommentsModalProps) => {
             onNewComment={handleNewComment}
             post={false}
             onClose={() => {}}
-            submitLabel="Comment"
+            submitLabel={t('comment')}
             buttonSize="sm"
           />
         </Box>
@@ -74,15 +76,15 @@ const SpotCommentsModal = ({ discussion, onClose }: SpotCommentsModalProps) => {
         <VStack spacing={3} align="stretch">
           {commentsLoading ? (
             <Text color="muted" textAlign="center" py={8}>
-              Loading comments...
+              {t('loadingComments')}
             </Text>
           ) : commentsError ? (
             <Text color="red.400" textAlign="center" py={8}>
-              Error loading comments: {commentsError}
+              {t('errorLoadingComments')} {commentsError}
             </Text>
           ) : optimisticComments.length === 0 && comments.length === 0 ? (
             <Text color="muted" textAlign="center" py={8}>
-              No comments yet. Be the first to comment!
+              {t('noCommentsYet')}
             </Text>
           ) : (
             <>
@@ -139,6 +141,7 @@ export default function SpotList({
   hasMore = false, 
   onLoadMore 
 }: SpotListProps) {
+  const t = useTranslations('map');
   const [displayedSpots, setDisplayedSpots] = useState<Discussion[]>([]);
   const [conversation, setConversation] = useState<Discussion | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -216,7 +219,7 @@ export default function SpotList({
   if (displayedSpots.length === 0) {
     return (
       <Box textAlign="center" my={8}>
-        <Text>No spots have been submitted yet.</Text>
+        <Text>{t('noSpotsYet')}</Text>
       </Box>
     );
   }
@@ -251,7 +254,7 @@ export default function SpotList({
               colorScheme="primary"
               variant="outline"
             >
-              Load More Spots
+              {t('loadMoreSpots')}
             </Button>
           </Box>
         )}

@@ -10,6 +10,7 @@ import {
   useBreakpointValue,
 } from "@chakra-ui/react";
 import { Global } from "@emotion/react";
+import { useTranslations } from "@/contexts/LocaleContext";
 import SpotSnapComposer from "@/components/spotmap/SpotSnapComposer";
 import SpotList from "@/components/spotmap/SpotList";
 import { useSkatespots } from "@/hooks/useSkatespots";
@@ -20,6 +21,7 @@ const mapSrc =
   "https://www.google.com/maps/d/u/1/embed?mid=1iiXzotKL-uJ3l7USddpTDvadGII&hl=en&ll=29.208380630280647%2C-100.5437214508988&z=4";
 
 export default function EmbeddedMap() {
+  const t = useTranslations('map');
   const boxWidth = useBreakpointValue({
     base: "90%",
     sm: "80%",
@@ -131,7 +133,7 @@ export default function EmbeddedMap() {
                 overflowWrap: "break-word",
               }}
             >
-              skate spot map
+              {t('title')}
             </Text>
           </Box>
 
@@ -161,7 +163,7 @@ export default function EmbeddedMap() {
                   }
                 }}
               >
-                Add A Spot
+                {t('addASpot')}
               </Button>
             </Box>
           )}
@@ -251,7 +253,7 @@ export default function EmbeddedMap() {
               borderColor="red.200"
             >
               <Text color="red.600" fontWeight="bold">
-                Error loading spots:
+                {t('errorLoadingSpots')}
               </Text>
               <Text color="red.500">{error}</Text>
             </Box>
