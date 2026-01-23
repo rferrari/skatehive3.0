@@ -61,6 +61,23 @@ export const generatePermlink = (title: string): string => {
         .slice(0, 255); // max length for Hive permlink
 };
 
+/**
+ * Generate iframe HTML for a video from IPFS URL
+ * Extracts the IPFS hash and creates a properly formatted iframe
+ */
+export const generateVideoIframeMarkdown = (url: string): string => {
+    // Extract video ID from IPFS URL
+    const hashMatch = url.match(/\/ipfs\/([\w-]+)/);
+    const videoId = hashMatch ? hashMatch[1] : null;
+    
+    // Create iframe HTML for video
+    if (videoId) {
+        return `\n<iframe src="https://${APP_CONFIG.IPFS_GATEWAY}/ipfs/${videoId}" width="100%" height="400" frameborder="0" allowfullscreen></iframe>\n`;
+    } else {
+        return `\n<iframe src="${url}" width="100%" height="400" frameborder="0" allowfullscreen></iframe>\n`;
+    }
+};
+
 export const insertAtCursor = (
     content: string,
     markdown: string,

@@ -37,6 +37,7 @@ import {
   generateThumbnailWithCanvas,
   uploadThumbnail,
 } from "@/lib/utils/videoThumbnailUtils";
+import { generateVideoIframeMarkdown } from "@/lib/markdown/composeUtils";
 import { FaVideo } from "react-icons/fa6";
 import { FaTimes } from "react-icons/fa";
 import ImageCompressor from "@/lib/utils/ImageCompressor";
@@ -175,6 +176,33 @@ const SnapComposer = React.memo(function SnapComposer({
     
     // Set cursor position after the inserted image
     const newCursorPosition = cursorPosition + imageMarkdown.length;
+    textarea.setSelectionRange(newCursorPosition, newCursorPosition);
+    
+    // Focus the textarea
+    textarea.focus();
+  }, []);
+
+  // Helper function to insert video iframe into textarea
+  const insertVideoIframeIntoTextarea = useCallback((url: string) => {
+    if (!postBodyRef.current) return;
+    
+    const textarea = postBodyRef.current;
+    const currentValue = textarea.value;
+    const cursorPosition = textarea.selectionStart;
+    
+    // Generate iframe markdown using utility function
+    const videoIframe = generateVideoIframeMarkdown(url);
+    
+    // Insert at cursor position or at end
+    const newValue = currentValue.slice(0, cursorPosition) + 
+                     videoIframe + 
+                     currentValue.slice(cursorPosition);
+    
+    // Update textarea value
+    textarea.value = newValue;
+    
+    // Set cursor position after the inserted iframe
+    const newCursorPosition = cursorPosition + videoIframe.length;
     textarea.setSelectionRange(newCursorPosition, newCursorPosition);
     
     // Focus the textarea
@@ -1095,7 +1123,14 @@ const SnapComposer = React.memo(function SnapComposer({
             )}
             <VideoUploader
               ref={videoUploaderRef}
-              onUpload={(result) => setVideoUrl(result?.url || null)}
+              onUpload={(result) => {
+                if (result?.url) {
+                  // Insert iframe into post body
+                  insertVideoIframeIntoTextarea(result.url);
+                  // Also set video URL for preview
+                  setVideoUrl(result.url);
+                }
+              }}
               username={user || undefined}
               onUploadStart={handleVideoUploadStart}
               onUploadFinish={handleVideoUploadFinish}

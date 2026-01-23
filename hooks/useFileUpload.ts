@@ -1,6 +1,6 @@
 import { useState } from "react";
 import imageCompression from "browser-image-compression";
-import { uploadToIpfs } from "@/lib/markdown/composeUtils";
+import { uploadToIpfs, generateVideoIframeMarkdown } from "@/lib/markdown/composeUtils";
 
 // Optimized hook with better error handling and progress tracking
 export const useImageUpload = (insertAtCursor: (content: string) => void) => {
@@ -155,21 +155,8 @@ export const useFileDropUpload = (insertAtCursor: (content: string) => void) => 
                         !fileName.match(/\.(jpg|jpeg|png|gif|webp|mp4|mov|avi)$/i) ? fileName : "";
                     insertAtCursor(`\n![${meaningfulCaption}](${url})\n`);
                 } else if (file.type.startsWith("video/")) {
-                    // Insert video as iframe, same as VideoUploader component
-                    const hashMatch = url.match(/\/ipfs\/([\w-]+)/);
-                    const videoId = hashMatch ? hashMatch[1] : null;
-                    
-                    if (videoId) {
-                        // Use APP_CONFIG.IPFS_GATEWAY for consistency
-                        const { APP_CONFIG } = await import("@/config/app.config");
-                        insertAtCursor(
-                            `\n<iframe src="https://${APP_CONFIG.IPFS_GATEWAY}/ipfs/${videoId}" width="100%" height="400" frameborder="0" allowfullscreen></iframe>\n`
-                        );
-                    } else {
-                        insertAtCursor(
-                            `\n<iframe src="${url}" width="100%" height="400" frameborder="0" allowfullscreen></iframe>\n`
-                        );
-                    }
+                    // Insert video as iframe using utility function
+                    insertAtCursor(generateVideoIframeMarkdown(url));
                 }
                 
                 return { success: true, fileName };

@@ -27,6 +27,7 @@ import ThumbnailPicker from "@/components/compose/ThumbnailPicker";
 import MarkdownEditor from "@/components/compose/MarkdownEditor";
 import { useComposeForm } from "@/hooks/useComposeForm";
 import { useImageUpload, useVideoUpload, useFileDropUpload } from "@/hooks/useFileUpload";
+import { generateVideoIframeMarkdown } from "@/lib/markdown/composeUtils";
 import { useDropzone } from "react-dropzone";
 import { APP_CONFIG } from "@/config/app.config";
 import { useTranslations } from "@/contexts/LocaleContext";
@@ -260,19 +261,8 @@ export default function Composer() {
             onUpload={(result: { url?: string; hash?: string } | null) => {
               console.log("Video upload result:", result);
               if (result?.url) {
-                // Insert iframe into markdown body
-                const hashMatch = result.url.match(/\/ipfs\/([\w-]+)/);
-                const videoId = hashMatch ? hashMatch[1] : null;
-                
-                if (videoId) {
-                  insertAtCursorWrapper(
-                    `\n<iframe src="https://${APP_CONFIG.IPFS_GATEWAY}/ipfs/${videoId}" width="100%" height="400" frameborder="0" allowfullscreen></iframe>\n`
-                  );
-                } else {
-                  insertAtCursorWrapper(
-                    `\n<iframe src="${result.url}" width="100%" height="400" frameborder="0" allowfullscreen></iframe>\n`
-                  );
-                }
+                // Insert iframe into markdown body using utility function
+                insertAtCursorWrapper(generateVideoIframeMarkdown(result.url));
               }
             }}
           />

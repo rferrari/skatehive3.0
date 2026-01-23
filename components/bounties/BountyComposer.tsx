@@ -27,6 +27,7 @@ import ImageCompressor, {
 import VideoUploader, {
   VideoUploaderRef,
 } from "@/components/homepage/VideoUploader";
+import { generateVideoIframeMarkdown } from "@/lib/markdown/composeUtils";
 import { FaImage, FaVideo, FaTimes } from "react-icons/fa";
 import { getFileSignature, uploadImage } from "@/lib/hive/client-functions";
 import imageCompression from "browser-image-compression";
@@ -284,6 +285,28 @@ export default function BountyComposer({
     result: { url?: string; hash?: string } | null
   ) => {
     if (result?.url) {
+      // Insert iframe into description textarea
+      if (descriptionRef.current) {
+        const textarea = descriptionRef.current;
+        const currentValue = textarea.value;
+        const cursorPosition = textarea.selectionStart;
+        
+        // Generate iframe markdown using utility function
+        const videoIframe = generateVideoIframeMarkdown(result.url);
+        
+        // Insert at cursor position
+        const newValue = currentValue.slice(0, cursorPosition) + 
+                         videoIframe + 
+                         currentValue.slice(cursorPosition);
+        
+        textarea.value = newValue;
+        
+        // Set cursor position after the inserted iframe
+        const newCursorPosition = cursorPosition + videoIframe.length;
+        textarea.setSelectionRange(newCursorPosition, newCursorPosition);
+        textarea.focus();
+      }
+      
       setVideoUrl(result.url);
     }
   };
