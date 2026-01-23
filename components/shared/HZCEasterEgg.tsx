@@ -1,7 +1,21 @@
 "use client";
 
 import React, { useEffect, useRef, useState, useCallback } from "react";
+import Image from "next/image";
 import { Box } from "@chakra-ui/react";
+import { keyframes } from "@emotion/react";
+
+// Define the pulse animation using Chakra's keyframes
+const hzcPulse = keyframes`
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+    text-shadow: 0 0 20px #ff6600, 0 0 40px #ff3300, 0 0 60px #ff0000;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.1);
+    text-shadow: 0 0 30px #ff6600, 0 0 60px #ff3300, 0 0 90px #ff0000, 0 0 120px #ff6600;
+  }
+`;
 
 interface Particle {
   x: number;
@@ -24,6 +38,7 @@ interface FallingJoint {
   rotationSpeed: number;
   size: number;
   opacity: number;
+  drift: number;
 }
 
 interface HZCEasterEggProps {
@@ -43,6 +58,7 @@ const HZCEasterEgg: React.FC<HZCEasterEggProps> = ({ onTrigger }) => {
   const jointIdRef = useRef(0);
   const jointIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const fadeIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const fadeStepIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Keep intensityRef in sync
   useEffect(() => {
@@ -64,9 +80,9 @@ const HZCEasterEgg: React.FC<HZCEasterEggProps> = ({ onTrigger }) => {
       vy: -(Math.random() * 2 + 1), // Slower rise
       life: 0,
       maxLife: Math.random() * 200 + 150, // Longer life for smoother fade
-      size: Math.random() * 80 + 60, // Much larger base size for soft clouds
+      size: Math.random() * 100 + 80, // Larger clouds (80-180px)
       color,
-      opacity: Math.random() * 0.25 + 0.15, // Lower opacity for layered effect
+      opacity: Math.random() * 0.4 + 0.3, // Higher opacity (0.3-0.7)
     };
   }, []);
 
@@ -81,8 +97,8 @@ const HZCEasterEgg: React.FC<HZCEasterEggProps> = ({ onTrigger }) => {
     // Clear canvas - transparent background so website shows through
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Add new particles (fewer but larger for smooth smoke)
-    for (let i = 0; i < 2; i++) {
+    // Add new particles - more for denser smoke
+    for (let i = 0; i < 4; i++) {
       particlesRef.current.push(createParticle(canvas.width, canvas.height));
     }
 
@@ -146,28 +162,28 @@ const HZCEasterEgg: React.FC<HZCEasterEggProps> = ({ onTrigger }) => {
     jointIdRef.current = 0;
     onTrigger?.();
 
-    // Start fading out after 7 seconds
+    // Start fading out after 15 seconds
     fadeIntervalRef.current = setTimeout(() => {
-      // Gradually reduce intensity over remaining 8 seconds
-      const fadeSteps = 16;
-      const fadeInterval = 8000 / fadeSteps;
+      // Gradually reduce intensity over remaining 10 seconds
+      const fadeSteps = 20;
+      const fadeInterval = 10000 / fadeSteps;
       let step = 0;
       
-      const fade = setInterval(() => {
+      fadeStepIntervalRef.current = setInterval(() => {
         step++;
         setIntensity(Math.max(0, 1 - (step / fadeSteps)));
-        if (step >= fadeSteps) {
-          clearInterval(fade);
+        if (step >= fadeSteps && fadeStepIntervalRef.current) {
+          clearInterval(fadeStepIntervalRef.current);
         }
       }, fadeInterval);
-    }, 7000);
+    }, 15000);
 
-    // Stop after 15 seconds
+    // Stop after 25 seconds
     timeoutRef.current = setTimeout(() => {
       setIsActive(false);
       setFallingJoints([]);
       setIntensity(1);
-    }, 15000);
+    }, 25000);
   }, [onTrigger]);
 
   // Spawn falling joints periodically
@@ -178,43 +194,57 @@ const HZCEasterEgg: React.FC<HZCEasterEggProps> = ({ onTrigger }) => {
       // Only spawn if intensity is above threshold
       if (intensity < 0.2) return;
       
+      const windowWidth = typeof window !== 'undefined' ? window.innerWidth : 1000;
+      const windowHeight = typeof window !== 'undefined' ? window.innerHeight : 800;
+      
       // Big joints are much larger and slower, like they're close to the camera
       const size = isBig 
         ? Math.random() * 150 + 200  // 200-350px for big joints
         : Math.random() * 30 + 25;   // 25-55px for regular
       
       const speed = isBig
-        ? Math.random() * 1 + 0.5    // Slower for parallax effect
-        : Math.random() * 2 + 1;
+        ? Math.random() * 3 + 2      // 2-5 for big joints
+        : Math.random() * 5 + 4;     // 4-9 for regular (faster!)
+      
+      // Stagger starting Y positions so they don't all appear at once
+      const startY = isBig 
+        ? -(Math.random() * 400 + 100)   // -100 to -500 for big
+        : -(Math.random() * 200 + 50);   // -50 to -250 for regular
+      
+      // Add slight horizontal drift for more natural movement
+      const drift = (Math.random() - 0.5) * 1.5;
       
       const newJoint: FallingJoint = {
         id: jointIdRef.current++,
-        x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1000),
-        y: isBig ? -300 : -50,       // Start higher for big ones
+        x: Math.random() * windowWidth,
+        y: startY,
         speed,
         rotation: Math.random() * 360,
-        rotationSpeed: isBig ? (Math.random() - 0.5) * 4 : (Math.random() - 0.5) * 8,
+        rotationSpeed: (Math.random() - 0.5) * 10, // More spin variation
         size,
         opacity: isBig 
-          ? (Math.random() * 0.3 + 0.5) * intensity  // Slightly transparent for depth
-          : (Math.random() * 0.4 + 0.6) * intensity,
+          ? (Math.random() * 0.3 + 0.5)
+          : (Math.random() * 0.4 + 0.6),
+        drift, // Horizontal movement
       };
       setFallingJoints(prev => [...prev, newJoint]);
     };
 
-    // Spawn 2-3 big joints at the start
+    // Spawn 2-3 big joints at the start with more stagger
     const numBigJoints = Math.floor(Math.random() * 2) + 2; // 2 or 3
     for (let i = 0; i < numBigJoints; i++) {
-      setTimeout(() => spawnJoint(true), i * 800); // Stagger them
+      setTimeout(() => spawnJoint(true), i * 1500 + Math.random() * 500); // More staggered
     }
 
-    // Spawn a joint every 400-800ms (casual rate)
+    // Spawn joints at a steadier rate
     jointIntervalRef.current = setInterval(() => {
       spawnJoint(false);
-    }, Math.random() * 400 + 400);
+    }, 300); // Consistent 300ms
 
-    // Initial spawn of regular joint
-    spawnJoint(false);
+    // Initial burst of a few joints at different heights
+    for (let i = 0; i < 3; i++) {
+      setTimeout(() => spawnJoint(false), i * 100);
+    }
 
     return () => {
       if (jointIntervalRef.current) {
@@ -232,6 +262,7 @@ const HZCEasterEgg: React.FC<HZCEasterEggProps> = ({ onTrigger }) => {
         prev
           .map(joint => ({
             ...joint,
+            x: joint.x + joint.drift, // Apply horizontal drift
             y: joint.y + joint.speed,
             rotation: joint.rotation + joint.rotationSpeed,
           }))
@@ -310,6 +341,9 @@ const HZCEasterEgg: React.FC<HZCEasterEggProps> = ({ onTrigger }) => {
       if (fadeIntervalRef.current) {
         clearTimeout(fadeIntervalRef.current);
       }
+      if (fadeStepIntervalRef.current) {
+        clearInterval(fadeStepIntervalRef.current);
+      }
     };
   }, []);
 
@@ -348,14 +382,12 @@ const HZCEasterEgg: React.FC<HZCEasterEggProps> = ({ onTrigger }) => {
           pointerEvents="none"
           zIndex={9999}
         >
-          <img
+          <Image
             src="/images/spinning-joint-sm.gif"
             alt=""
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "contain",
-            }}
+            fill
+            style={{ objectFit: "contain" }}
+            unoptimized // GIFs need unoptimized to animate
           />
         </Box>
       ))}
@@ -370,25 +402,13 @@ const HZCEasterEgg: React.FC<HZCEasterEggProps> = ({ onTrigger }) => {
         fontFamily="'Joystix', monospace"
         color="white"
         textShadow="0 0 20px #ff6600, 0 0 40px #ff3300, 0 0 60px #ff0000"
-        animation="hzc-pulse 1s ease-in-out infinite"
+        animation={`${hzcPulse} 1s ease-in-out infinite`}
         userSelect="none"
         opacity={intensity}
         transition="opacity 0.5s ease-out"
       >
         HZC
       </Box>
-      <style jsx global>{`
-        @keyframes hzc-pulse {
-          0%, 100% {
-            transform: translate(-50%, -50%) scale(1);
-            text-shadow: 0 0 20px #ff6600, 0 0 40px #ff3300, 0 0 60px #ff0000;
-          }
-          50% {
-            transform: translate(-50%, -50%) scale(1.1);
-            text-shadow: 0 0 30px #ff6600, 0 0 60px #ff3300, 0 0 90px #ff0000, 0 0 120px #ff6600;
-          }
-        }
-      `}</style>
     </Box>
   );
 };
