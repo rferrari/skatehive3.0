@@ -182,33 +182,6 @@ const SnapComposer = React.memo(function SnapComposer({
     textarea.focus();
   }, []);
 
-  // Helper function to insert video iframe into textarea
-  const insertVideoIframeIntoTextarea = useCallback((url: string) => {
-    if (!postBodyRef.current) return;
-    
-    const textarea = postBodyRef.current;
-    const currentValue = textarea.value;
-    const cursorPosition = textarea.selectionStart;
-    
-    // Generate iframe markdown using utility function
-    const videoIframe = generateVideoIframeMarkdown(url);
-    
-    // Insert at cursor position or at end
-    const newValue = currentValue.slice(0, cursorPosition) + 
-                     videoIframe + 
-                     currentValue.slice(cursorPosition);
-    
-    // Update textarea value
-    textarea.value = newValue;
-    
-    // Set cursor position after the inserted iframe
-    const newCursorPosition = cursorPosition + videoIframe.length;
-    textarea.setSelectionRange(newCursorPosition, newCursorPosition);
-    
-    // Focus the textarea
-    textarea.focus();
-  }, []);
-
   // Helper function to get video duration
   const getVideoDuration = (file: File): Promise<number> => {
     return new Promise((resolve, reject) => {
@@ -567,7 +540,7 @@ const SnapComposer = React.memo(function SnapComposer({
           );
         }
 
-        // Build the final comment body with images appended
+        // Build the final comment body with images and video appended
         let finalCommentBody = commentBody;
         
         // Append image markdown for all uploaded images
@@ -575,7 +548,12 @@ const SnapComposer = React.memo(function SnapComposer({
           const imageMarkdown = compressedImages
             .map(img => `\n![${img.fileName}](${img.url})`)
             .join('');
-          finalCommentBody = commentBody + imageMarkdown;
+          finalCommentBody = finalCommentBody + imageMarkdown;
+        }
+        
+        // Append video iframe if video was uploaded
+        if (videoUrl) {
+          finalCommentBody = finalCommentBody + generateVideoIframeMarkdown(videoUrl);
         }
 
         const permlink = crypto.randomUUID();
@@ -614,6 +592,7 @@ const SnapComposer = React.memo(function SnapComposer({
     }
   }, [
     compressedImages,
+    videoUrl,
     pa,
     pp,
     extractHashtags,
@@ -1125,9 +1104,7 @@ const SnapComposer = React.memo(function SnapComposer({
               ref={videoUploaderRef}
               onUpload={(result) => {
                 if (result?.url) {
-                  // Insert iframe into post body
-                  insertVideoIframeIntoTextarea(result.url);
-                  // Also set video URL for preview
+                  // Store video URL for preview - iframe will be added at submission time
                   setVideoUrl(result.url);
                 }
               }}

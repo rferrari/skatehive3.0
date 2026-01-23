@@ -151,7 +151,7 @@ export default function BountyComposer({
     }
     // Add video if present
     if (videoUrl) {
-      bountyBody += `\n\n<iframe src=\"${videoUrl}\" frameborder=\"0\" allowfullscreen></iframe>`;
+      bountyBody += generateVideoIframeMarkdown(videoUrl);
     }
     try {
       const tags = ["bounty", user ? `bounty-creator-${user}` : ""];
@@ -285,28 +285,7 @@ export default function BountyComposer({
     result: { url?: string; hash?: string } | null
   ) => {
     if (result?.url) {
-      // Insert iframe into description textarea
-      if (descriptionRef.current) {
-        const textarea = descriptionRef.current;
-        const currentValue = textarea.value;
-        const cursorPosition = textarea.selectionStart;
-        
-        // Generate iframe markdown using utility function
-        const videoIframe = generateVideoIframeMarkdown(result.url);
-        
-        // Insert at cursor position
-        const newValue = currentValue.slice(0, cursorPosition) + 
-                         videoIframe + 
-                         currentValue.slice(cursorPosition);
-        
-        textarea.value = newValue;
-        
-        // Set cursor position after the inserted iframe
-        const newCursorPosition = cursorPosition + videoIframe.length;
-        textarea.setSelectionRange(newCursorPosition, newCursorPosition);
-        textarea.focus();
-      }
-      
+      // Store video URL for preview - iframe will be added at submission time
       setVideoUrl(result.url);
     }
   };
