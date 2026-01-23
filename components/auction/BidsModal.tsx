@@ -14,6 +14,7 @@ import {
   useColorModeValue,
 } from '@chakra-ui/react';
 import { formatEther } from 'viem';
+import { useTranslations } from '@/lib/i18n/hooks';
 
 interface Bid {
   bidder: string;
@@ -52,6 +53,7 @@ const formatDate = (timestamp: string) => {
 };
 
 export function BidsModal({ isOpen, onClose, bids, tokenName, tokenId }: BidsModalProps) {
+  const t = useTranslations('auction');
   const bgColor = useColorModeValue('secondary', 'secondary');
   const borderColor = useColorModeValue('border', 'border');
 
@@ -69,13 +71,13 @@ export function BidsModal({ isOpen, onClose, bids, tokenName, tokenId }: BidsMod
         <ModalHeader>
           <VStack align="start" spacing={1}>
             <Text fontSize="xl" fontWeight="bold" color="text">
-              All Bids
+              {t('allBids')}
             </Text>
             <Text fontSize="sm" color="muted">
               {tokenName} #{tokenId}
             </Text>
             <Badge bg="primary" color="background" variant="solid">
-              {bids.length} total bids
+              {bids.length} {t('totalBids').toLowerCase()}
             </Badge>
           </VStack>
         </ModalHeader>
@@ -98,12 +100,12 @@ export function BidsModal({ isOpen, onClose, bids, tokenName, tokenId }: BidsMod
                       </Text>
                       {index === 0 && (
                         <Badge bg="success" color="background" size="sm">
-                          Highest
+                          {t('highest')}
                         </Badge>
                       )}
                     </HStack>
                     <Text fontSize="sm" color="muted">
-                      by {formatAddress(bid.bidder)}
+                      {t('by')} {formatAddress(bid.bidder)}
                     </Text>
                   </VStack>
                   <VStack align="end" spacing={1}>

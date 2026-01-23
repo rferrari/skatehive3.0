@@ -11,6 +11,7 @@ import { formatEther } from "viem";
 import { useMemo, useState } from "react";
 import Countdown from "react-countdown";
 import { useRouter } from "next/navigation";
+import { useTranslations } from '@/lib/i18n/hooks';
 import {
   Box,
   Container,
@@ -70,6 +71,8 @@ export default function AuctionPage({
   tokenId,
   showNavigation = false,
 }: AuctionPageProps) {
+  const t = useTranslations('auction');
+  const tCommon = useTranslations('common');
   const isMobile = useBreakpointValue({ base: true, md: false });
   const router = useRouter();
 
@@ -145,7 +148,7 @@ export default function AuctionPage({
         <Container maxW="7xl" px={{ base: 4, md: 6 }}>
           <VStack spacing={8} justify="center" minH="60vh">
             <Spinner size="xl" color="primary" />
-            <Text color="text">Loading auction...</Text>
+            <Text color="text">{t('loading')}</Text>
           </VStack>
         </Container>
       </Box>
@@ -159,7 +162,7 @@ export default function AuctionPage({
         <Container maxW="7xl" px={{ base: 4, md: 6 }}>
           <VStack spacing={8} justify="center" minH="60vh">
             <Text color="error" fontSize="lg">
-              Error loading auction: {error.message}
+              {t('errorLoading')} {error.message}
             </Text>
           </VStack>
         </Container>
@@ -188,14 +191,12 @@ export default function AuctionPage({
           <VStack spacing={8} justify="center" minH="60vh">
             <Text color="muted" fontSize="lg">
               {tokenId
-                ? `Auction #${tokenId} not found. This auction may not exist or may not be from SkateHive DAO.`
-                : "No active auction found"}
+                ? t('auctionNotFound').replace('{tokenId}', tokenId.toString())
+                : t('noActiveAuction')}
             </Text>
             {tokenId && (
               <Text color="muted" fontSize="sm" textAlign="center" maxW="md">
-                Only auctions from SkateHive DAO are displayed. If you&apos;re
-                looking for a specific auction, make sure the token ID
-                corresponds to a SkateHive auction.
+                {t('onlySkateHiveAuctions')}
               </Text>
             )}
           </VStack>
@@ -225,7 +226,7 @@ export default function AuctionPage({
                   fontFamily: "Dash",
                 }}
               >
-                Skatehive Auction
+                {t('title')}
               </Heading>
             </Box>
 
@@ -300,7 +301,7 @@ export default function AuctionPage({
                               letterSpacing="wide"
                               textTransform="uppercase"
                             >
-                              Proud Winner
+                              {t('proudWinner')}
                             </Text>
                             <Center>
                               <HStack color={"primary"} spacing={2}>
@@ -353,7 +354,7 @@ export default function AuctionPage({
                       {/* Time Remaining */}
                       <VStack spacing={3} position="relative" zIndex={1}>
                         <Text fontSize="sm" color="primary" fontWeight="medium" textAlign="center">
-                          Auction ends in
+                          {t('auctionEndsIn')}
                         </Text>
                         {auctionData.isRunning ? (
                           <Countdown
@@ -374,7 +375,7 @@ export default function AuctionPage({
                                     fontFamily="mono"
                                     textAlign="center"
                                   >
-                                    ENDED
+                                    {t('ended')}
                                   </Text>
                                 );
                               }
@@ -478,27 +479,25 @@ export default function AuctionPage({
                     <ListItem display="flex" alignItems="start">
                       <ListIcon as={CheckCircleIcon} color="primary" mt={1} />
                       <Text fontSize="sm" color="text">
-                        Connect your wallet to participate in the auction
+                        {t('connectWallet')}
                       </Text>
                     </ListItem>
                     <ListItem display="flex" alignItems="start">
                       <ListIcon as={CheckCircleIcon} color="primary" mt={1} />
                       <Text fontSize="sm" color="text">
-                        Place a bid higher than the current highest bid
+                        {t('placeBidHigher')}
                       </Text>
                     </ListItem>
                     <ListItem display="flex" alignItems="start">
                       <ListIcon as={CheckCircleIcon} color="primary" mt={1} />
                       <Text fontSize="sm" color="text">
-                        If you&apos;re the highest bidder when the auction ends,
-                        you win!
+                        {t('winIfHighest')}
                       </Text>
                     </ListItem>
                     <ListItem display="flex" alignItems="start">
                       <ListIcon as={CheckCircleIcon} color="primary" mt={1} />
                       <Text fontSize="sm" color="text">
-                        Settle the auction to claim your NFT and start the next
-                        one
+                        {t('settleToClaimNFT')}
                       </Text>
                     </ListItem>
                   </List>
@@ -517,12 +516,12 @@ export default function AuctionPage({
                   h="full"
                 >
                   <Heading size="md" color="text" mb={4} fontSize={{ base: "md", md: "lg" }}>
-                    Auction Rules
+                    {t('auctionRules')}
                   </Heading>
                   <VStack spacing={3}>
                     <Flex justify="space-between" w="full" align="center">
                       <Text fontSize="sm" color="text">
-                        Auction Duration:
+                        {t('auctionDuration')}
                       </Text>
                       <Badge
                         bg="success"
@@ -530,12 +529,12 @@ export default function AuctionPage({
                         variant="solid"
                         fontSize="xs"
                       >
-                        24 hours
+                        {t('duration24h')}
                       </Badge>
                     </Flex>
                     <Flex justify="space-between" w="full" align="center">
                       <Text fontSize="sm" color="text">
-                        Minimum Increment:
+                        {t('minimumIncrement')}
                       </Text>
                       <Badge
                         bg="success"
@@ -543,12 +542,12 @@ export default function AuctionPage({
                         variant="solid"
                         fontSize="xs"
                       >
-                        2%
+                        {t('increment2Percent')}
                       </Badge>
                     </Flex>
                     <Flex justify="space-between" w="full" align="center">
                       <Text fontSize="sm" color="text">
-                        Reserve Price:
+                        {t('reservePrice')}
                       </Text>
                       <Badge
                         bg="success"
@@ -580,23 +579,23 @@ export default function AuctionPage({
                   <HStack spacing={2} mb={3}>
                     <InfoIcon color="primary" />
                     <Heading size="md" color="primary" fontSize={{ base: "md", md: "lg" }}>
-                      Pro Tips
+                      {t('proTips')}
                     </Heading>
                   </HStack>
                   <List spacing={2}>
                     <ListItem>
                       <Text fontSize="sm" color="text">
-                        • Bids in the last 10 minutes extend the auction
+                        {t('tip1')}
                       </Text>
                     </ListItem>
                     <ListItem>
                       <Text fontSize="sm" color="text">
-                        • Higher gas fees = faster transaction confirmation
+                        {t('tip2')}
                       </Text>
                     </ListItem>
                     <ListItem>
                       <Text fontSize="sm" color="text">
-                        • Check the transaction on Basescan for updates
+                        {t('tip3')}
                       </Text>
                     </ListItem>
                     <ListItem>

@@ -12,6 +12,7 @@ import {
   ArrowBackIcon,
   ArrowForwardIcon,
 } from "@chakra-ui/icons";
+import { useTranslations } from '@/lib/i18n/hooks';
 
 interface AuctionHeaderProps {
   tokenName: string;
@@ -34,13 +35,14 @@ export function AuctionHeader({
   onPrev,
   onNext,
 }: AuctionHeaderProps) {
+  const t = useTranslations('ariaLabels');
   return (
     <VStack spacing={1}>
       {/* NFT Title with Navigation Arrows */}
       <HStack spacing={4} justify="center" w="full" align="center">
         {showNavigation && currentTokenId && (
           <IconButton
-            aria-label="Previous Auction"
+            aria-label={t('previousAuction')}
             icon={<ArrowBackIcon />}
             onClick={onPrev}
             isDisabled={!currentTokenId || currentTokenId <= 1}
@@ -75,7 +77,7 @@ export function AuctionHeader({
 
         {showNavigation && currentTokenId && (
           <IconButton
-            aria-label="Next Auction"
+            aria-label={t('nextAuction')}
             icon={<ArrowForwardIcon />}
             onClick={onNext}
             isDisabled={!!(!currentTokenId || !currentTokenId || isLatestAuction)}

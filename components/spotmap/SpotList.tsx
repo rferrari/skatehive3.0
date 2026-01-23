@@ -26,6 +26,7 @@ interface SpotCommentsModalProps {
 
 const SpotCommentsModal = ({ discussion, onClose }: SpotCommentsModalProps) => {
   const t = useTranslations('map');
+  const tCommon = useTranslations('common');
   const { user } = useAioha();
   const [optimisticComments, setOptimisticComments] = useState<Discussion[]>([]);
 

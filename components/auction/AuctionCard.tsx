@@ -7,6 +7,7 @@ import { AuctionBid } from "./AuctionBid";
 import { useMemo } from "react";
 import Countdown from "react-countdown";
 import { DAO_ADDRESSES } from "@/lib/utils/constants";
+import { useTranslations } from '@/lib/i18n/hooks';
 import {
   Box,
   VStack,
@@ -43,6 +44,7 @@ export default function AuctionCard({
   tokenAddress = DAO_ADDRESSES.token,
   defaultAuction,
 }: AuctionCardProps) {
+  const t = useTranslations('auction');
   const {
     data: activeAuction,
     refetch,
@@ -73,7 +75,7 @@ export default function AuctionCard({
       >
         <VStack spacing={4}>
           <Spinner size="xl" color="primary" />
-          <Text color="text">Loading auction...</Text>
+          <Text color="text">{t('loading')}</Text>
         </VStack>
       </Box>
     );
@@ -89,7 +91,7 @@ export default function AuctionCard({
         p={6}
         textAlign="center"
       >
-        <Text color="muted">No active auction found</Text>
+        <Text color="muted">{t('noActiveAuction')}</Text>
       </Box>
     );
   }
@@ -135,11 +137,11 @@ export default function AuctionCard({
             {activeAuction.highestBid && (
               <VStack align="center" spacing={2}>
                 <Text fontSize={{ base: "md", md: "lg" }} fontWeight="semibold" color="success">
-                  Current bid: {auctionData.bidAmount} ETH
+                  {t('currentBid')} {auctionData.bidAmount} ETH
                 </Text>
                 <HStack spacing={2}>
                   <Text fontSize="sm" color="muted">
-                    by
+                    {t('by')}
                   </Text>
                   <Text fontSize="sm" fontWeight="medium" color="text">
                     {formatAddress(activeAuction.highestBid.bidder)}
@@ -149,7 +151,7 @@ export default function AuctionCard({
             )}
             {!activeAuction.highestBid && (
               <Text fontSize="sm" color="muted">
-                No bids yet
+                {t('noBidsYet')}
               </Text>
             )}
           </VStack>
@@ -161,7 +163,7 @@ export default function AuctionCard({
         <VStack spacing={{ base: 3, md: 4 }}>
           <HStack justify="space-between" w="full">
             <Text fontSize="sm" fontWeight="medium" color="text">
-              {auctionData.isRunning ? "Time remaining:" : "Auction has"}
+              {auctionData.isRunning ? t('timeRemaining') : t('auctionHas')}
             </Text>
             {auctionData.isRunning && (
               <Countdown
@@ -170,7 +172,7 @@ export default function AuctionCard({
                   if (completed) {
                     return (
                       <Text color="error" fontFamily="mono" fontSize={{ base: "sm", md: "md" }}>
-                        ENDED
+                        {t('ended')}
                       </Text>
                     );
                   }
@@ -197,10 +199,10 @@ export default function AuctionCard({
           {/* Bid Count */}
           <HStack justify="space-between" w="full">
             <Text fontSize="sm" color="text">
-              Total bids: {activeAuction.bidCount}
+              {t('totalBids')} {activeAuction.bidCount}
             </Text>
             <Text fontSize="sm" color="text">
-              Reserve:{" "}
+              {t('reservePrice')}{" "}
               {formatBidAmount(
                 BigInt(activeAuction.dao.auctionConfig.reservePrice)
               )}{" "}

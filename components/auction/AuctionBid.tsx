@@ -16,6 +16,7 @@ import {
   handleAuctionError,
   validateBid,
 } from "@/lib/utils/auction";
+import { useTranslations } from '@/lib/i18n/hooks';
 import {
   Box,
   Button,
@@ -70,6 +71,7 @@ export function AuctionBid({
   bids,
   isLatestAuction = false,
 }: BidProps) {
+  const t = useTranslations('auction');
   const [isLoading, setIsLoading] = useState(false);
   const [txHash, setTxHash] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -88,14 +90,14 @@ export function AuctionBid({
       await switchChain({ chainId: base.id });
     } catch (error: any) {
       toast({
-        title: "Network Switch Failed",
-        description: error.message || "Failed to switch to Base network",
+        title: t('networkSwitchFailed'),
+        description: error.message || t('failedToSwitchNetwork'),
         status: "error",
         duration: 5000,
         isClosable: true,
       });
     }
-  }, [switchChain, toast]);
+  }, [switchChain, toast, t]);
 
   // Calculate minimum bid: currentBid + (currentBid * increment%)
   const minBidValue = calculateMinBid(
@@ -137,10 +139,10 @@ export function AuctionBid({
 
         // Show toast for successful transaction
         toast({
-          title: "Transaction Successful!",
+          title: t('bidPlaced'),
           description: (
             <>
-              Your bid was placed successfully.{" "}
+              {t('bidPlacedSuccess')}{" "}
               <Link
                 href={`https://basescan.org/tx/${txHash}`}
                 isExternal
@@ -148,7 +150,7 @@ export function AuctionBid({
                 textDecoration="underline"
                 _hover={{ color: "accent" }}
               >
-                View on Basescan
+                {t('viewOnBasescan')}
               </Link>
             </>
           ),
@@ -187,6 +189,7 @@ export function AuctionBid({
       reservePrice,
       switchChain,
       toast,
+      t,
     ]
   );
 
@@ -249,11 +252,11 @@ export function AuctionBid({
                 mb={2}
                 textAlign={alignContent === "right" ? "right" : "left"}
               >
-                Your Bid (Ξ)
+                {t('yourBid')}
               </FormLabel>
               <Input
                 {...register("bidAmount", {
-                  required: "Bid amount is required",
+                  required: t('bidAmountRequired'),
                   validate: (value) => {
                     const result = validateBid(
                       value,
@@ -261,10 +264,10 @@ export function AuctionBid({
                       BigInt(reservePrice),
                       minimumBidIncrement
                     );
-                    return result.isValid || result.error || "Invalid bid";
+                    return result.isValid || result.error || t('invalidBid');
                   },
                 })}
-                placeholder={`Minimum: ${formatEther(minBidValue)} Ξ`}
+                placeholder={`${t('minimum')} ${formatEther(minBidValue)} Ξ`}
                 bg="background"
                 border="1px solid"
                 borderColor="border"
@@ -286,7 +289,7 @@ export function AuctionBid({
                 mt={1}
                 textAlign={alignContent === "right" ? "right" : "left"}
               >
-                Minimum bid: {formatEther(minBidValue)} Ξ
+                {t('minimumBid')} {formatEther(minBidValue)} Ξ
               </Text>
             </FormControl>
 
@@ -305,7 +308,7 @@ export function AuctionBid({
               _disabled={{ bg: "muted", color: "text", cursor: "not-allowed" }}
               isDisabled={!account.isConnected || isLoading}
               isLoading={isLoading}
-              loadingText={isOnBaseNetwork ? "Placing Bid..." : "Switching..."}
+              loadingText={isOnBaseNetwork ? t('placingBid') : t('switching')}
               h={{ base: "44px", md: "48px" }}
               onMouseEnter={() => {
                 onBidButtonHover?.(true);
@@ -318,11 +321,11 @@ export function AuctionBid({
             >
               {isLoading
                 ? isOnBaseNetwork
-                  ? "Placing Bid..."
-                  : "Switching..."
+                  ? t('placingBid')
+                  : t('switching')
                 : isOnBaseNetwork
-                ? "Place Bid"
-                : "Switch to Base"}
+                ? t('placeBid')
+                : t('switchToBase')}
             </Button>
           </VStack>
         </Box>
@@ -348,16 +351,16 @@ export function AuctionBid({
                 }}
                 isDisabled={!account.isConnected || isLoading}
                 isLoading={isLoading}
-                loadingText={isOnBaseNetwork ? "Settling..." : "Switching..."}
+                loadingText={isOnBaseNetwork ? t('settling') : t('switching')}
                 h={{ base: "44px", md: "48px" }}
               >
                 {isLoading
                   ? isOnBaseNetwork
-                    ? "Settling..."
-                    : "Switching..."
+                    ? t('settling')
+                    : t('switching')
                   : isOnBaseNetwork
-                  ? "Start Next Auction"
-                  : "Switch to Base"}
+                  ? t('startNextAuction')
+                  : t('switchToBase')}
               </Button>
             </VStack>
           )}
@@ -401,7 +404,7 @@ export function AuctionBid({
               textTransform="uppercase"
               letterSpacing="wide"
             >
-              • BID HISTORY •
+              {t('bidHistory')}
             </Text>
           </HStack>
 
@@ -414,7 +417,7 @@ export function AuctionBid({
               py={{ base: 3, md: 4 }}
             >
               <Text fontSize="sm" color="text" opacity={0.5}>
-                No bids yet
+                {t('noBidsYet')}
               </Text>
             </Box>
           ) : (
@@ -463,7 +466,7 @@ export function AuctionBid({
                       </Text>
                       {index === 0 && (
                         <Text fontSize="xs" color="primary" fontWeight="medium">
-                          Highest
+                          {t('highest')}
                         </Text>
                       )}
                     </VStack>

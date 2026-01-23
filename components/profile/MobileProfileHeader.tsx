@@ -18,7 +18,7 @@ import { useAioha } from "@aioha/react-ui";
 import { checkFollow, changeFollow } from "@/lib/hive/client-functions";
 import ZoraProfileCoinDisplay from "./ZoraProfileCoinDisplay";
 import { ZoraProfileData } from "@/hooks/useZoraProfileCoin";
-
+import { useTranslations } from "@/contexts/LocaleContext";
 interface MobileProfileHeaderProps {
   profileData: ProfileData;
   username: string;
@@ -55,7 +55,7 @@ const MobileProfileHeader = memo(function MobileProfileHeader({
   const router = useRouter();
   const { aioha } = useAioha();
   const [followsBack, setFollowsBack] = useState<boolean>(false);
-
+  const t = useTranslations('profile');
   // Check if the viewed user follows the current user back
   useEffect(() => {
     if (!user || !username || user === username) return;

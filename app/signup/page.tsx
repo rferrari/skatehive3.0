@@ -22,8 +22,7 @@ import {
   checkAccountExists,
 } from "@/lib/invite/helpers";
 import { EXTERNAL_SERVICES } from "@/config/app.config";
-import { useTranslations } from '@/lib/i18n/hooks';
-
+import { useTranslations } from "@/contexts/LocaleContext";
 // Hook to check signer status
 const useSignerStatus = () => {
   const [status, setStatus] = useState<
@@ -147,7 +146,7 @@ export default function SignupPage() {
   const [signupToken, setSignupToken] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
-  const [showKeys, setShowKeys] = useState(false);
+  const t = useTranslations('signup');
   const [keysConfirmed, setKeysConfirmed] = useState(false);
   const [step, setStep] = useState<"form" | "keys" | "creating" | "success">(
     "form"
