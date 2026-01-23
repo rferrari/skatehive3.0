@@ -7,10 +7,15 @@ import {
   useToast,
   VStack,
   Heading,
+  Switch,
+  HStack,
 } from "@chakra-ui/react";
 import { useTheme, ThemeName, themeMap } from "@/app/themeProvider";
 import VoteWeightSlider from "@/components/settings/VoteWeightSlider";
 import { useTranslations } from "@/contexts/LocaleContext";
+import { useSoundSettings } from "@/contexts/SoundSettingsContext";
+import { useLocale } from "@/contexts/LocaleContext";
+import { localeNames, Locale, locales } from "@/lib/i18n/translations";
 
 interface MainSettingsProps {
   userData: {
@@ -22,6 +27,8 @@ interface MainSettingsProps {
 const MainSettings: React.FC<MainSettingsProps> = ({ userData }) => {
   const t = useTranslations();
   const { themeName, setThemeName } = useTheme();
+  const { soundEnabled, setSoundEnabled } = useSoundSettings();
+  const { locale, setLocale } = useLocale();
   const toast = useToast();
 
   const handleThemeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -32,6 +39,29 @@ const MainSettings: React.FC<MainSettingsProps> = ({ userData }) => {
       description: t('settings.themeSwitched').replace('{theme}', newTheme),
       status: "success",
       duration: 3000,
+      isClosable: true,
+    });
+  };
+
+  const handleSoundToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSoundEnabled(event.target.checked);
+    toast({
+      title: t('settings.soundUpdated'),
+      description: event.target.checked ? t('settings.soundEnabled') : t('settings.soundDisabled'),
+      status: "success",
+      duration: 2000,
+      isClosable: true,
+    });
+  };
+
+  const handleLanguageChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const newLocale = event.target.value as Locale;
+    setLocale(newLocale);
+    toast({
+      title: t('settings.languageUpdated'),
+      description: t('settings.languageSwitched'),
+      status: "success",
+      duration: 2000,
       isClosable: true,
     });
   };
@@ -88,6 +118,85 @@ const MainSettings: React.FC<MainSettingsProps> = ({ userData }) => {
             {Object.keys(themeMap).map((theme) => (
               <option key={theme} value={theme}>
                 {formatThemeName(theme)}
+              </option>
+            ))}
+          </Select>
+        </VStack>
+      </Box>
+
+      {/* Sound Effects Card */}
+      <Box
+        bg="background"
+        border="1px solid"
+        borderColor="muted"
+        p={6}
+        shadow="sm"
+      >
+        <VStack spacing={4} align="stretch">
+          <Box>
+            <Heading size="md" color="primary" mb={1}>
+              {t('settings.soundEffects')}
+            </Heading>
+            <Text color="primary" fontSize="sm">
+              {t('settings.soundEffectsDescription')}
+            </Text>
+          </Box>
+          <HStack spacing={3} justify="space-between">
+            <Text color="primary" fontWeight="medium">
+              {t('settings.clickSoundLabel')}
+            </Text>
+            <Switch
+              isChecked={soundEnabled}
+              onChange={handleSoundToggle}
+              colorScheme="blue"
+              size="lg"
+            />
+          </HStack>
+        </VStack>
+      </Box>
+
+      {/* Language Selection Card */}
+      <Box
+        bg="background"
+        border="1px solid"
+        borderColor="muted"
+        p={6}
+        shadow="sm"
+      >
+        <VStack spacing={4} align="stretch">
+          <Box>
+            <Heading size="md" color="primary" mb={1}>
+              {t('settings.language')}
+            </Heading>
+            <Text color="primary" fontSize="sm">
+              {t('settings.languageDescription')}
+            </Text>
+          </Box>
+          <Select
+            value={locale}
+            onChange={handleLanguageChange}
+            size="lg"
+            bg="background"
+            color="primary"
+            borderColor="muted"
+            borderWidth="2px"
+            fontWeight="semibold"
+            _focus={{
+              borderColor: "accent",
+              boxShadow: "0 0 0 3px rgba(var(--chakra-colors-accent), 0.1)",
+              outline: "none",
+            }}
+            _hover={{ borderColor: "accent" }}
+            sx={{
+              option: {
+                background: "var(--chakra-colors-background)",
+                color: "var(--chakra-colors-primary)",
+              },
+            }}
+          >
+            {locales.map((loc) => (
+              <option key={loc} value={loc}>
+                {localeNames[loc]}
               </option>
             ))}
           </Select>

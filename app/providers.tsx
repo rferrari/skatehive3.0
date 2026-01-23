@@ -21,6 +21,8 @@ import "@farcaster/auth-kit/styles.css";
 import { dynamicRainbowTheme } from "@/lib/themes/rainbowkitTheme";
 import { useState } from "react";
 import { APP_CONFIG } from "@/config/app.config";
+import { ClickSoundProvider } from "./clickSoundProvider";
+import { SoundSettingsProvider } from "@/contexts/SoundSettingsContext";
 
 const aioha = new Aioha();
 
@@ -81,10 +83,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <LocaleProvider>
-      <UserProvider>
-        <ThemeProvider>
-        <QueryClientProvider client={queryClient}>
+    <SoundSettingsProvider>
+      <ClickSoundProvider>
+        <LocaleProvider>
+          <UserProvider>
+            <ThemeProvider>
+            <QueryClientProvider client={queryClient}>
           <WagmiProvider config={wagmiConfig}>
             <RainbowKitProvider
               coolMode
@@ -109,8 +113,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
             </RainbowKitProvider>
           </WagmiProvider>
         </QueryClientProvider>
-        </ThemeProvider>
-      </UserProvider>
-    </LocaleProvider>
+          </ThemeProvider>
+        </UserProvider>
+      </LocaleProvider>
+      </ClickSoundProvider>
+    </SoundSettingsProvider>
   );
 }

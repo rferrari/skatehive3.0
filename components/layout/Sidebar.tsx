@@ -28,7 +28,6 @@ import { useTheme } from "@/app/themeProvider";
 import { useNotifications } from "@/contexts/NotificationContext";
 import SidebarLogo from "../graphics/SidebarLogo";
 import AuthButton from "./AuthButton";
-import LanguageSwitcher from "../ui/LanguageSwitcher";
 import { useTranslations } from "@/contexts/LocaleContext";
 
 export default function Sidebar() {
@@ -205,9 +204,6 @@ export default function Sidebar() {
           </VStack>
         </Box>
         <Box>
-          <Box px={4} py={2}>
-            <LanguageSwitcher />
-          </Box>
           <AuthButton />
         </Box>
       </Flex>
