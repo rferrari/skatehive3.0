@@ -9,6 +9,9 @@ export const en = {
     wallet: 'Wallet',
     settings: 'Settings',
     invite: 'Invite',
+    menu: 'Menu',
+    profile: 'Profile',
+    auction: 'Auction',
   },
   common: {
     loading: 'Loading...',

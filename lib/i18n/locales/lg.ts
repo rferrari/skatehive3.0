@@ -9,6 +9,9 @@ export const lg = {
     wallet: 'Ekilinja kyo',
     settings: 'Setinga',
     invite: 'Mwaliko',
+    menu: 'Menu',
+    profile: 'Profile',
+    auction: 'Auction',
   },
   common: {
     loading: 'Okukoza...',

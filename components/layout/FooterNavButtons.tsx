@@ -20,6 +20,7 @@ import { useNotifications } from "@/contexts/NotificationContext";
 import { useFarcasterSession } from "@/hooks/useFarcasterSession";
 import { useFarcasterMiniapp } from "@/hooks/useFarcasterMiniapp";
 import { useSignIn } from "@farcaster/auth-kit";
+import { useTranslations } from "@/lib/i18n/hooks";
 import ConnectionModal from "./ConnectionModal";
 import {
   FiHome,
@@ -54,6 +55,9 @@ export default function FooterNavButtons() {
   const { user } = useAioha();
   const [modalDisplayed, setModalDisplayed] = useState(false);
   const toast = useToast();
+  const t = useTranslations('navigation');
+  const tCommon = useTranslations('common');
+  const tAuth = useTranslations('auth');
 
   // Farcaster integration with proper callbacks and mobile detection
   const { signIn, signOut, connect, reconnect, isSuccess, isError } = useSignIn(
@@ -72,8 +76,8 @@ export default function FooterNavButtons() {
         safeCloseConnectionModal();
         setTimeout(() => {
           toast({
-            title: "Farcaster Connected",
-            description: `Successfully connected as @${username}`,
+            title: tAuth('connectedSuccess'),
+            description: `${tAuth('connectedSuccess')} as @${username}`,
             status: "success",
             duration: 3000,
           });
@@ -86,8 +90,8 @@ export default function FooterNavButtons() {
         setIsFarcasterAuthInProgress(false);
         safeCloseConnectionModal();
         toast({
-          title: "Connection Failed",
-          description: "Failed to connect to Farcaster. Please try again.",
+          title: tAuth('connectionFailed'),
+          description: tAuth('connectionFailed') + ". " + tCommon('pleaseTryAgain'),
           status: "error",
           duration: 3000,
         });
@@ -124,13 +128,13 @@ export default function FooterNavButtons() {
       setIsFarcasterAuthInProgress(false);
       // Optional: Show a gentle message that auth was cancelled
       toast({
-        title: "Authentication Cancelled",
+        title: tAuth('authenticationFailed'),
         description: "Farcaster connection was cancelled or timed out",
         status: "info",
         duration: 2000,
       });
     }, 10000); // 10 seconds - more reasonable for abandoned auth
-  }, [clearAuthTimeout, toast]);
+  }, [clearAuthTimeout, toast, tAuth]);
 
   // Determine combined Farcaster status
   const actualFarcasterConnection =
@@ -590,8 +594,8 @@ export default function FooterNavButtons() {
         clearAuthTimeout(); // Clear safety timeout since we're exiting early
         safeCloseConnectionModal();
         toast({
-          title: "Already Connected",
-          description: `Connected as @${miniappUser.username} via Farcaster miniapp`,
+          title: tAuth('connectedSuccess'),
+          description: `${tAuth('connectedSuccess')} as @${miniappUser.username} via Farcaster miniapp`,
           status: "success",
           duration: 3000,
         });
@@ -602,7 +606,7 @@ export default function FooterNavButtons() {
       if (isInMiniapp && !miniappUser) {
         clearAuthTimeout(); // Clear safety timeout since we're exiting early
         toast({
-          title: "Authentication Error",
+          title: tAuth('authenticationFailed'),
           description: "Please ensure you're signed into Farcaster",
           status: "error",
           duration: 3000,
@@ -621,8 +625,8 @@ export default function FooterNavButtons() {
       setIsFarcasterAuthInProgress(false); // Reset immediately on error
       safeCloseConnectionModal();
       toast({
-        title: "Connection Failed",
-        description: "Failed to connect to Farcaster. Please try again.",
+        title: tAuth('connectionFailed'),
+        description: tAuth('connectionFailed') + ". " + tCommon('pleaseTryAgain'),
         status: "error",
         duration: 3000,
       });
@@ -695,26 +699,26 @@ export default function FooterNavButtons() {
 
   // Navigation items with their routes and names
   const navigationItems = [
-    { icon: FiHome, onClick: () => router.push("/"), name: "Home" },
+    { icon: FiHome, onClick: () => router.push("/"), name: t('home') },
     {
       icon: FiBook,
       onClick: () => router.push("/blog"),
-      name: "Pages",
+      name: t('magazine'),
     },
     {
       icon: FiAward,
       onClick: () => router.push("/leaderboard"),
-      name: "Leaderboard",
+      name: t('leaderboard'),
     },
     {
       icon: FiMap,
       onClick: () => router.push("/map"),
-      name: "Skate Spots",
+      name: t('skatespots'),
     },
     {
       icon: FiTarget,
       onClick: () => router.push("/bounties"),
-      name: "Bounties",
+      name: t('bounties'),
     },
     // Only show auction button if not already on auction page
     ...(!pathname.startsWith("/auction")
@@ -722,7 +726,7 @@ export default function FooterNavButtons() {
           {
             icon: FiTrendingUp, // Using trending up icon for auction
             onClick: () => router.push("/auction"),
-            name: "Auction",
+            name: t('auction'),
           },
         ]
       : []),
@@ -732,7 +736,7 @@ export default function FooterNavButtons() {
           {
             icon: FiBell,
             onClick: () => router.push("/notifications"),
-            name: "Notifications",
+            name: t('notifications'),
             badge: newNotificationCount,
           },
         ]
@@ -740,12 +744,12 @@ export default function FooterNavButtons() {
     {
       icon: FiCreditCard,
       onClick: () => router.push("/wallet"),
-      name: "Wallet",
+      name: t('wallet'),
     },
     {
       icon: FiSettings,
       onClick: () => router.push("/settings"),
-      name: "Settings",
+      name: t('settings'),
     },
     {
       icon: FiUser,
@@ -756,7 +760,7 @@ export default function FooterNavButtons() {
           setIsConnectionModalOpen(true);
         }
       },
-      name: user ? "Profile" : "Login",
+      name: user ? t('profile') : tCommon('login'),
     },
   ];
 
@@ -956,7 +960,7 @@ export default function FooterNavButtons() {
         <Menu placement="top-end">
           <MenuButton
             as={IconButton}
-            aria-label="Navigation Menu"
+            aria-label={t('home') + " " + t('menu') || "Navigation Menu"}
             icon={
               <Image
                 src="/logos/SKATE_HIVE_CIRCLE.svg"

@@ -9,6 +9,9 @@ export const ptBR = {
     wallet: 'Carteira',
     settings: 'Configurações',
     invite: 'Convidar',
+    menu: 'Menu',
+    profile: 'Perfil',
+    auction: 'Leilão',
   },
   common: {
     loading: 'Carregando...',
