@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Box, HStack, Text, Spinner } from "@chakra-ui/react";
+import { Box, HStack, Text, Spinner, Image, VStack } from "@chakra-ui/react";
 
 interface NoResultsProps {
   query: string;
@@ -15,6 +15,32 @@ export default function NoResults({
   hasSkaters,
 }: NoResultsProps) {
   if (hasPages || hasSkaters) return null;
+
+  // Easter egg for HZC search
+  const isHZC = query.toLowerCase() === "hzc";
+
+  if (isHZC) {
+    return (
+      <Box p={6} textAlign="center">
+        <VStack spacing={4}>
+          <Image
+            src="/images/spinning-joint-sm.gif"
+            alt="HZC"
+            boxSize="120px"
+            objectFit="contain"
+          />
+          <Text
+            color="primary"
+            fontSize="lg"
+            fontWeight="bold"
+            fontFamily="'Joystix', monospace"
+          >
+            🔥 HZC 🔥
+          </Text>
+        </VStack>
+      </Box>
+    );
+  }
 
   return (
     <Box p={4} textAlign="center">

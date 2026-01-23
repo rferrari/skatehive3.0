@@ -206,7 +206,7 @@ export const ptBR = {
     successDescription: 'Container de snap votado com sucesso!',
     failedTitle: 'Voto Falhou',
     errorOccurred: 'Ocorreu um erro ao tentar votar.',
-    supportCommunity: '💜 Apoie a Comunidade',
+    supportCommunity: 'Apoie a Comunidade',
     helpSkateHive: 'Ajude o SkateHive votando no post principal do container de snaps',
     helpSkateHiveDetailed: 'Ajude o SkateHive votando no post principal do container de snaps onde todos os snaps são armazenados.',
     container: 'Container',
