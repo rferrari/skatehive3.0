@@ -2,7 +2,7 @@
 import { Broadcast, Custom, KeychainKeyTypes, KeychainRequestResponse, KeychainSDK, Login, Post, Transfer, Vote, WitnessVote } from "keychain-sdk";
 import HiveClient from "./hiveclient";
 import crypto from 'crypto';
-import { signImageHash } from "./server-functions";
+import { signImageHash } from "./server-actions";
 import { Discussion, Notifications, Operation } from "@hiveio/dhive";
 import { extractNumber } from "../utils/extractNumber";
 import { VideoPart } from "@/types/VideoPart";
@@ -304,13 +304,12 @@ export function getFileSignature(file: File): Promise<string> {
           .update('ImageSigningChallenge')
           .update(content as any)
           .digest('hex');
-        try {
-          const signature = await signImageHash(hash);
+          const result = await signImageHash(hash);
+          if (!result.success) {
+            throw new Error(result.error || "Failed to sign image hash");
+          }
+          const signature = result.signature!;
           resolve(signature);
-        } catch (error) {
-          console.error('Error signing the hash:', error);
-          reject(error);
-        }
       } else {
         reject(new Error('Failed to read file.'));
       }

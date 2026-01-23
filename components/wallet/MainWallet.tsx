@@ -5,6 +5,7 @@ import useHiveAccount from "@/hooks/useHiveAccount";
 import useMarketPrices from "@/hooks/useMarketPrices";
 import { useBankActions } from "@/hooks/wallet";
 import { useAccount } from "wagmi";
+import { useTranslations } from "@/contexts/LocaleContext";
 import {
   Box,
   Grid,
@@ -98,6 +99,7 @@ export default function MainWallet({ username }: MainWalletProps) {
   const [hivePower, setHivePower] = useState<string | undefined>(undefined);
   const { hivePrice, hbdPrice, isPriceLoading } = useMarketPrices();
   const toast = useToast();
+  const t = useTranslations();
 
   // Set mounted state to prevent hydration mismatch
   useEffect(() => {
@@ -140,22 +142,22 @@ export default function MainWallet({ username }: MainWalletProps) {
     const result = await claimInterest();
     if (result.success) {
       toast({
-        title: "Success!",
-        description: "HBD interest claimed successfully",
+        title: t('status.success'),
+        description: t('notifications.success.transactionComplete'),
         status: "success",
         duration: 5000,
         isClosable: true,
       });
     } else {
       toast({
-        title: "Error",
-        description: result.error || "Failed to claim interest",
+        title: t('common.error'),
+        description: result.error || t('notifications.error.failedToSend'),
         status: "error",
         duration: 5000,
         isClosable: true,
       });
     }
-  }, [claimInterest, toast]);
+  }, [claimInterest, toast, t]);
 
   // Memoize balance calculations - only if user is connected to Hive
   const hiveBalances = useMemo(() => {

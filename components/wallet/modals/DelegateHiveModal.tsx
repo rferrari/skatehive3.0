@@ -4,7 +4,7 @@ import { BaseWalletModal, showTransactionSuccess, isUserCancelled } from "./Base
 import { AmountInput, UsernameInput } from "./components";
 import { DelegateHiveModalProps } from "./types";
 import { useHiveActions } from "@/hooks/wallet";
-
+import { useTranslations } from "@/contexts/LocaleContext";
 /**
  * Modal for delegating Hive Power to another account
  */
@@ -19,14 +19,15 @@ export function DelegateHiveModal({
 
     const { delegate } = useHiveActions();
     const toast = useToast();
+    const t = useTranslations();
 
     const handleConfirm = async () => {
         const parsedAmount = parseFloat(amount);
 
         if (isNaN(parsedAmount) || parsedAmount <= 0) {
             toast({
-                title: "Invalid Amount",
-                description: "Please enter a valid amount",
+                title: t('forms.errors.invalidAmount'),
+                description: t('forms.errors.amountRequired'),
                 status: "error",
                 duration: 3000,
                 isClosable: true,
@@ -36,8 +37,8 @@ export function DelegateHiveModal({
 
         if (!username || !isUsernameValid) {
             toast({
-                title: "Invalid Username",
-                description: "Please enter a valid username",
+                title: t('forms.errors.invalidUsername'),
+                description: t('forms.errors.usernameRequired'),
                 status: "error",
                 duration: 3000,
                 isClosable: true,
@@ -48,15 +49,15 @@ export function DelegateHiveModal({
         const result = await delegate(username, parsedAmount);
 
         if (result.success && result.result) {
-            showTransactionSuccess(result.result, toast);
+            showTransactionSuccess(result.result, toast, t);
             onClose();
             setAmount("");
             setUsername("");
         } else if (result.error) {
             if (!isUserCancelled(result.error, result.errorCode)) {
                 toast({
-                    title: "Transaction Failed",
-                    description: result.error || "Failed to delegate HIVE",
+                    title: t('wallet.transactionFailed'),
+                    description: result.error || t('notifications.error.failedToSend'),
                     status: "error",
                     duration: 5000,
                     isClosable: true,
@@ -71,14 +72,14 @@ export function DelegateHiveModal({
         <BaseWalletModal
             isOpen={isOpen}
             onClose={onClose}
-            title="Delegate Hive Power"
+            title={t('wallet.delegate')}
             onConfirm={handleConfirm}
             isConfirmDisabled={isConfirmDisabled}
-            confirmText="Delegate"
+            confirmText={t('wallet.delegate')}
         >
             <VStack spacing={4} align="stretch">
                 <Text fontSize="sm" color="text">
-                    Delegate your Hive Power to another account to help them grow.
+                    {t('wallet.delegateDescription')}
                 </Text>
 
                 <Box p={3} bg="muted" borderRadius="md">
@@ -99,7 +100,7 @@ export function DelegateHiveModal({
                     value={username}
                     onChange={setUsername}
                     onValidation={setIsUsernameValid}
-                    placeholder="Recipient username"
+                    placeholder={t('forms.placeholders.enterUsername')}
                 />
 
                 <AmountInput
@@ -107,7 +108,7 @@ export function DelegateHiveModal({
                     onChange={setAmount}
                     balance={hivePower}
                     currency="HP"
-                    placeholder="Amount to delegate"
+                    placeholder={t('forms.placeholders.enterAmount')}
                 />
 
                 <Box p={2} bg="blue.900" borderRadius="md" borderLeft="4px solid" borderColor="blue.500">

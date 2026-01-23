@@ -5,6 +5,7 @@ import { BaseWalletModal, showTransactionSuccess, isUserCancelled } from "./Base
 import { AmountInput } from "./components";
 import { ConvertHiveModalProps, ConversionDirection } from "./types";
 import { useHBDActions } from "@/hooks/wallet";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 /**
  * Modal for converting between HIVE and HBD
@@ -20,14 +21,15 @@ export function ConvertHiveModal({
 
     const { convertHive } = useHBDActions();
     const toast = useToast();
+    const t = useTranslations();
 
     const handleConfirm = async () => {
         const parsedAmount = parseFloat(amount);
 
         if (isNaN(parsedAmount) || parsedAmount <= 0) {
             toast({
-                title: "Invalid Amount",
-                description: "Please enter a valid amount",
+                title: t('forms.errors.invalidAmount'),
+                description: t('forms.errors.amountRequired'),
                 status: "error",
                 duration: 3000,
                 isClosable: true,
@@ -38,14 +40,14 @@ export function ConvertHiveModal({
         const result = await convertHive(parsedAmount, direction);
 
         if (result.success && result.result) {
-            showTransactionSuccess(result.result, toast);
+            showTransactionSuccess(result.result, toast, t);
             onClose();
             setAmount("");
         } else if (result.error) {
             if (!isUserCancelled(result.error, result.errorCode)) {
                 toast({
-                    title: "Transaction Failed",
-                    description: result.error || "Failed to convert",
+                    title: t('wallet.transactionFailed'),
+                    description: result.error || t('notifications.error.failedToSend'),
                     status: "error",
                     duration: 5000,
                     isClosable: true,
@@ -70,10 +72,10 @@ export function ConvertHiveModal({
         <BaseWalletModal
             isOpen={isOpen}
             onClose={onClose}
-            title="Convert HIVE ↔ HBD"
+            title={t('wallet.convert')}
             onConfirm={handleConfirm}
             isConfirmDisabled={isConfirmDisabled}
-            confirmText="Convert"
+            confirmText={t('buttons.convert')}
         >
             <VStack spacing={4} align="stretch">
                 <Text fontSize="sm" color="text">

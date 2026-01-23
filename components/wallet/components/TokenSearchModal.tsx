@@ -23,6 +23,7 @@ import { consolidateTokensBySymbol } from "../../../lib/utils/portfolioUtils";
 import { useAioha } from "@aioha/react-ui";
 import useHiveAccount from "../../../hooks/useHiveAccount";
 import useIsMobile from "@/hooks/useIsMobile";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 interface HiveToken {
   symbol: string;
@@ -54,6 +55,7 @@ export default function TokenSearchModal({
   const { user } = useAioha();
   const { hiveAccount } = useHiveAccount(user || "");
   const isMobile = useIsMobile();
+  const t = useTranslations();
 
   // Reset search when modal opens/closes
   useEffect(() => {
@@ -182,7 +184,7 @@ export default function TokenSearchModal({
                 <FaSearch color="gray" />
               </InputLeftElement>
               <Input
-                placeholder="Search tokens by name, symbol, or address..."
+                placeholder={t('forms.placeholders.searchTokens')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 bg="muted"

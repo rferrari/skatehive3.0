@@ -28,6 +28,7 @@ import * as QRCode from "qrcode";
 import { Name, Avatar as OnchainAvatar } from "@coinbase/onchainkit/identity";
 import { FaEthereum, FaHive, FaShare } from "react-icons/fa";
 import { useAioha } from "@aioha/react-ui";
+import { useTranslations } from "@/contexts/LocaleContext";
 interface ReceiveModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -39,6 +40,7 @@ const ReceiveModal: React.FC<ReceiveModalProps> = ({ isOpen, onClose }) => {
   const [hiveQR, setHiveQR] = useState<string>("");
   const [isGeneratingQR, setIsGeneratingQR] = useState(false);
   const toast = useToast();
+  const t = useTranslations();
   const { hasCopied: hasEthCopied, onCopy: onEthCopy } = useClipboard(
     address || ""
   );
@@ -65,8 +67,8 @@ const ReceiveModal: React.FC<ReceiveModalProps> = ({ isOpen, onClose }) => {
         }
       } catch (error) {
         toast({
-          title: "Error",
-          description: "Failed to generate QR code",
+          title: t('common.error'),
+          description: t('wallet.qrCodeError'),
           status: "error",
           duration: 3000,
           isClosable: true,
@@ -75,7 +77,7 @@ const ReceiveModal: React.FC<ReceiveModalProps> = ({ isOpen, onClose }) => {
         setIsGeneratingQR(false);
       }
     },
-    [toast]
+    [toast, t]
   );
 
   useEffect(() => {
@@ -117,8 +119,8 @@ const ReceiveModal: React.FC<ReceiveModalProps> = ({ isOpen, onClose }) => {
       // Fallback to clipboard
       navigator.clipboard.writeText(addr);
       toast({
-        title: "Copied to clipboard",
-        description: `${type} address copied`,
+        title: t('wallet.copiedToClipboard'),
+        description: t('wallet.addressCopied').replace('{type}', type),
         status: "success",
         duration: 2000,
         isClosable: true,
@@ -130,7 +132,7 @@ const ReceiveModal: React.FC<ReceiveModalProps> = ({ isOpen, onClose }) => {
     <SkateModal 
       isOpen={isOpen} 
       onClose={onClose} 
-      title="Receive Crypto"
+      title={t('wallet.receiveCrypto')}
       size="md"
     >
       <Box p={0}>

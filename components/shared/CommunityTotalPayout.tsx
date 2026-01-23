@@ -13,10 +13,12 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import SkateHiveMagazineModal from "./SkateHiveMagazineModal";
 import { HIVE_CONFIG } from "@/config/app.config";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 const SKATEHIVE_TAG = HIVE_CONFIG.COMMUNITY_TAG;
 
 function CommunityTotalPayout() {
+  const t = useTranslations();
   const [totalHBDPayout, setTotalHBDPayout] = useState<number>(0);
   const [displayedNumber, setDisplayedNumber] = useState<string>("00000");
   const [loading, setLoading] = useState<boolean>(true);
@@ -137,7 +139,7 @@ function CommunityTotalPayout() {
               zIndex={2}
               fontFamily={bodyFont}
             >
-              Loading...
+              {t('common.loading')}
             </Text>
           </VStack>
         ) : error ? (
@@ -145,7 +147,7 @@ function CommunityTotalPayout() {
             fontSize={fontSizeXl}
             color={textColor}
             fontFamily={bodyFont}
-          >{`Error: ${error}`}</Text>
+          >{`${t('common.error')}: ${error}`}</Text>
         ) : (
           <Flex
             justifyContent="center"
@@ -174,7 +176,7 @@ function CommunityTotalPayout() {
                 fontWeight={fontWeightBold}
                 fontFamily={bodyFont}
               >
-                Magazine Total Rewards
+                {t('common.magazineTotalRewards')}
               </Text>
             </Center>
           </Flex>

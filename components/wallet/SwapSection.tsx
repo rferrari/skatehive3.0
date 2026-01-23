@@ -18,6 +18,7 @@ import { useHiveUser } from "@/contexts/UserContext";
 import useHiveAccount from "@/hooks/useHiveAccount";
 import { useWalletActions } from "@/hooks/useWalletActions";
 import { extractNumber } from "@/lib/utils/extractNumber";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 interface SwapSectionProps {
   hivePrice?: number | null;
@@ -36,6 +37,7 @@ export default function SwapSection({
   const { hiveAccount } = useHiveAccount(user || "");
   const { handleConfirm } = useWalletActions();
   const toast = useToast();
+  const t = useTranslations();
 
   const [convertDirection, setConvertDirection] = useState<
     "HIVE_TO_HBD" | "HBD_TO_HIVE"
@@ -95,8 +97,8 @@ export default function SwapSection({
       Number(convertAmount) <= 0
     ) {
       toast({
-        title: "Invalid Amount",
-        description: "Please enter a valid amount to convert",
+        title: t('forms.errors.invalidAmount'),
+        description: t('wallet.invalidConversion'),
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -109,10 +111,11 @@ export default function SwapSection({
     // Check if user has sufficient balance
     if (amount > fromBalance) {
       toast({
-        title: "Insufficient Balance",
-        description: `You don't have enough ${fromToken}. Available: ${fromBalance.toFixed(
-          3
-        )} ${fromToken}`,
+        title: t('wallet.insufficientBalance'),
+        description: t('wallet.insufficientForConversion')
+          .replace('{token1}', fromToken)
+          .replace('{available}', fromBalance.toFixed(3))
+          .replace('{token2}', fromToken),
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -149,10 +152,11 @@ export default function SwapSection({
       await aioha.signAndBroadcastTx([operation], KeyTypes.Active);
 
       toast({
-        title: "Conversion Initiated",
-        description: `Converting ${amount.toFixed(
-          3
-        )} ${fromToken} to ${toToken}. This process may take a few minutes.`,
+        title: t('wallet.conversionInitiated'),
+        description: t('wallet.conversionProcessing')
+          .replace('{amount}', amount.toFixed(3))
+          .replace('{from}', fromToken)
+          .replace('{to}', toToken),
         status: "success",
         duration: 5000,
         isClosable: true,
@@ -162,9 +166,8 @@ export default function SwapSection({
     } catch (error) {
       console.error("Conversion failed:", error);
       toast({
-        title: "Conversion Failed",
-        description:
-          "There was an error processing your conversion. Please try again.",
+        title: t('wallet.conversionFailed'),
+        description: t('wallet.conversionError'),
         status: "error",
         duration: 3000,
         isClosable: true,

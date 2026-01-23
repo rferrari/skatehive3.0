@@ -1,3 +1,4 @@
+import { debugLog } from "@/lib/utils/debugUtils";
 import { useState, useCallback } from 'react';
 import { createCoin, DeployCurrency, createMetadataBuilder, createZoraUploaderForCreator, setApiKey } from '@zoralabs/coins-sdk';
 import { useAccount, useWalletClient, usePublicClient, useSwitchChain, useChainId } from 'wagmi';
@@ -211,10 +212,11 @@ export function useMarkdownCoin() {
   const createMarkdownCoin = useCallback(async (
     post: Discussion, 
     selectedCarouselImages?: Array<{uri: string, mime: string, type: string, isIncluded: boolean, isGenerated?: boolean}>
-  ) => {
-    console.log("🎯 HOOK RECEIVED:");
-    console.log("- post.title:", post.title);
-    console.log("- selectedCarouselImages:", selectedCarouselImages);
+    debugLog("🎯 HOOK RECEIVED:", {
+      "- post.title": post.title,
+      "- selectedCarouselImages": selectedCarouselImages,
+      "- selectedCarouselImages length": selectedCarouselImages?.length || 0
+    });
     console.log("- selectedCarouselImages length:", selectedCarouselImages?.length || 0);
     
     const overallStartTime = Date.now();
@@ -411,14 +413,15 @@ export function useMarkdownCoin() {
       
       ipfsEndTime = Date.now();
       console.log(`✅ IPFS uploads completed in ${ipfsEndTime - ipfsStartTime}ms`);
-
-      console.log("=== METADATA BUILDER DEBUG ===");
-      console.log("- nftCardImage type:", typeof nftCardImage);
-      console.log("- nftCardImage instanceof File:", nftCardImage instanceof File);
-      console.log("- nftCardImage instanceof Blob:", nftCardImage instanceof Blob);
-      console.log("- cleanCarouselIpfsUrl:", cleanCarouselIpfsUrl);
-      console.log("- post.title:", post.title);
-      console.log("- symbol:", symbol);
+      debugLog("🎯 COIN CREATION DATA:", {
+        "- nftCardImage type": typeof nftCardImage,
+        "- nftCardImage instanceof File": nftCardImage instanceof File,
+        "- nftCardImage instanceof Blob": nftCardImage instanceof Blob,
+        "- cleanCarouselIpfsUrl": cleanCarouselIpfsUrl,
+        "- post.title": post.title,
+        "- symbol": symbol,
+        "- description length": description?.length
+      });
       console.log("- description length:", description?.length);
       console.log("================================");
 

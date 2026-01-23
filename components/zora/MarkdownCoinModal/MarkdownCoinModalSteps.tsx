@@ -1,3 +1,4 @@
+import { debugLog } from "@/lib/utils/debugUtils";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Modal,
@@ -422,11 +423,12 @@ export function MarkdownCoinModal({
     }
 
     // Log the metadata format for comparison with Zora carousel example
-    console.log("=== COIN METADATA FORMAT ===");
-    console.log("Post title:", post.title);
-    console.log("Metadata name:", metadata.name);
-    console.log("Metadata description:", metadata.description);
-    console.log("Included carousel images:", includedImages);
+    debugLog("=== COIN METADATA FORMAT ===", {
+      "Post title": post.title,
+      "Metadata name": metadata.name,
+      "Metadata description": metadata.description,
+      "Included carousel images": includedImages
+    });
     console.log("Total carousel images in modal state:", imagesToUse);
     console.log(
       "Carousel images with isIncluded:",
@@ -439,11 +441,11 @@ export function MarkdownCoinModal({
     console.log("============================");
 
     try {
-      console.log("🚀 CALLING HOOK WITH:");
-      console.log("- includedImages:", includedImages);
-      console.log("- includedImages length:", includedImages.length);
-      console.log("- post:", post.title);
-
+      debugLog("🚀 CALLING HOOK WITH:", {
+        "- includedImages": includedImages,
+        "- includedImages length": includedImages.length,
+        "- post": post.title
+      });
       const coinResult = await createMarkdownCoin(post, includedImages);
 
       setResult(coinResult);

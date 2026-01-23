@@ -3,6 +3,7 @@
 import { Box, Text, HStack, useToken, VStack } from "@chakra-ui/react";
 import { CustomHiveIcon } from "./CustomHiveIcon";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 interface MarketPricesProps {
   hivePrice: number | null;
@@ -15,6 +16,7 @@ export default function MarketPrices({
   hbdPrice,
   isPriceLoading,
 }: MarketPricesProps) {
+  const t = useTranslations();
   const router = useRouter();
 
   return (

@@ -16,6 +16,7 @@ import {
 import { memo } from "react";
 import { formatValue, formatBalance } from "../../lib/utils/portfolioUtils";
 import { PortfolioData } from "../../types/portfolio";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 interface PortfolioBreakdownProps {
     portfolio: PortfolioData | null;
@@ -32,6 +33,7 @@ const PortfolioBreakdown = memo(function PortfolioBreakdown({
     hiveValue,
     hiveUsername,
 }: PortfolioBreakdownProps) {
+    const t = useTranslations();
     const bgColor = useColorModeValue("gray.50", "gray.900");
     const borderColor = useColorModeValue("gray.200", "gray.700");
 
@@ -42,27 +44,27 @@ const PortfolioBreakdown = memo(function PortfolioBreakdown({
 
     const wallets = [
         {
-            name: "Hive Blockchain",
+            name: t('wallet.hiveBlockchain'),
             value: hiveValue,
             percentage: totalValue > 0 ? (hiveValue / totalValue) * 100 : 0,
             color: "green.400",
-            identifier: hiveUsername ? `@${hiveUsername}` : "Not connected",
+            identifier: hiveUsername ? `@${hiveUsername}` : t('wallet.notConnected'),
             connected: !!hiveUsername,
         },
         {
-            name: "Ethereum Network",
+            name: t('wallet.ethereumNetwork'),
             value: ethereumValue,
             percentage: totalValue > 0 ? (ethereumValue / totalValue) * 100 : 0,
             color: "blue.400",
-            identifier: portfolio ? `${portfolio.tokens?.length || 0} tokens` : "Not connected",
+            identifier: portfolio ? `${portfolio.tokens?.length || 0} ${t('wallet.tokens')}` : t('wallet.notConnected'),
             connected: !!portfolio,
         },
         {
-            name: "Farcaster Custody",
+            name: t('wallet.farcasterCustody'),
             value: farcasterValue,
             percentage: totalValue > 0 ? (farcasterValue / totalValue) * 100 : 0,
             color: "purple.400",
-            identifier: farcasterPortfolio ? `${farcasterPortfolio.tokens?.length || 0} tokens` : "Not connected",
+            identifier: farcasterPortfolio ? `${farcasterPortfolio.tokens?.length || 0} ${t('wallet.tokens')}` : t('wallet.notConnected'),
             connected: !!farcasterPortfolio,
         }
     ];
@@ -70,11 +72,11 @@ const PortfolioBreakdown = memo(function PortfolioBreakdown({
     // Add verified wallets to the list
     Object.entries(farcasterVerifiedPortfolios).forEach(([address, portfolioData], index) => {
         wallets.push({
-            name: `Verified Wallet ${index + 1}`,
+            name: `${t('wallet.verifiedWallet')} ${index + 1}`,
             value: portfolioData.totalNetWorth || 0,
             percentage: totalValue > 0 ? ((portfolioData.totalNetWorth || 0) / totalValue) * 100 : 0,
             color: "orange.400",
-            identifier: `${address.slice(0, 6)}...${address.slice(-4)} • ${portfolioData.tokens?.length || 0} tokens`,
+            identifier: `${address.slice(0, 6)}...${address.slice(-4)} • ${portfolioData.tokens?.length || 0} ${t('wallet.tokens')}`,
             connected: true,
         });
     });
@@ -85,7 +87,7 @@ const PortfolioBreakdown = memo(function PortfolioBreakdown({
         return (
             <Box p={4} bg={bgColor} borderRadius="md" border="1px solid" borderColor={borderColor}>
                 <Text color="gray.500" textAlign="center">
-                    No wallets connected yet
+                    {t('wallet.noWalletsConnected')}
                 </Text>
             </Box>
         );
@@ -94,12 +96,12 @@ const PortfolioBreakdown = memo(function PortfolioBreakdown({
     return (
         <Box p={4} bg={bgColor} borderRadius="md" border="1px solid" borderColor={borderColor}>
             <Text fontSize="lg" fontWeight="bold" mb={4} color="primary">
-                Portfolio Distribution
+                {t('wallet.portfolioDistribution')}
             </Text>
 
             <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4} mb={6}>
                 <Stat>
-                    <StatLabel color="gray.500">Total Value</StatLabel>
+                    <StatLabel color="gray.500">{t('wallet.totalValue')}</StatLabel>
                     <StatNumber color="primary">{formatValue(totalValue)}</StatNumber>
                     <StatHelpText color="gray.400">
                         Across {connectedWallets.length} networks

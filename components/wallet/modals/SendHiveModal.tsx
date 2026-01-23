@@ -4,6 +4,7 @@ import { BaseWalletModal, showTransactionSuccess, isUserCancelled } from "./Base
 import { AmountInput, UsernameInput, MemoInput } from "./components";
 import { SendHiveModalProps } from "./types";
 import { useHiveActions } from "@/hooks/wallet";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 /**
  * Modal for sending HIVE to another account
@@ -21,14 +22,15 @@ export function SendHiveModal({
 
     const { sendHive } = useHiveActions();
     const toast = useToast();
+    const t = useTranslations();
 
     const handleConfirm = async () => {
         const parsedAmount = parseFloat(amount);
 
         if (isNaN(parsedAmount) || parsedAmount <= 0) {
             toast({
-                title: "Invalid Amount",
-                description: "Please enter a valid amount",
+                title: t('forms.errors.invalidAmount'),
+                description: t('forms.errors.amountRequired'),
                 status: "error",
                 duration: 3000,
                 isClosable: true,
@@ -38,8 +40,8 @@ export function SendHiveModal({
 
         if (!username || !isUsernameValid) {
             toast({
-                title: "Invalid Username",
-                description: "Please enter a valid username",
+                title: t('forms.errors.invalidUsername'),
+                description: t('forms.errors.usernameRequired'),
                 status: "error",
                 duration: 3000,
                 isClosable: true,
@@ -53,7 +55,7 @@ export function SendHiveModal({
         const result = await sendHive(username, parsedAmount, finalMemo);
 
         if (result.success && result.result) {
-            showTransactionSuccess(result.result, toast);
+            showTransactionSuccess(result.result, toast, t);
             onClose();
             // Reset form
             setAmount("");
@@ -63,8 +65,8 @@ export function SendHiveModal({
         } else if (result.error) {
             if (!isUserCancelled(result.error, result.errorCode)) {
                 toast({
-                    title: "Transaction Failed",
-                    description: result.error || "Failed to send HIVE",
+                    title: t('wallet.transactionFailed'),
+                    description: result.error || t('notifications.error.failedToSend'),
                     status: "error",
                     duration: 5000,
                     isClosable: true,
@@ -79,7 +81,7 @@ export function SendHiveModal({
         <BaseWalletModal
             isOpen={isOpen}
             onClose={onClose}
-            title="Send HIVE"
+            title={t('wallet.sendHive')}
             onConfirm={handleConfirm}
             isConfirmDisabled={isConfirmDisabled}
         >

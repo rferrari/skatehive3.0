@@ -29,8 +29,10 @@ import { useComposeForm } from "@/hooks/useComposeForm";
 import { useImageUpload, useVideoUpload, useFileDropUpload } from "@/hooks/useFileUpload";
 import { useDropzone } from "react-dropzone";
 import { APP_CONFIG } from "@/config/app.config";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 export default function Composer() {
+  const t = useTranslations();
   const {
     markdown,
     setMarkdown,
@@ -234,7 +236,7 @@ export default function Composer() {
         <Center mb={3}>
           <HStack spacing={2} color="dim">
             <Spinner size="sm" color="primary" />
-            <Text fontSize="sm">Uploading...</Text>
+            <Text fontSize="sm">{t('compose.uploading')}</Text>
           </HStack>
         </Center>
       )}
@@ -291,7 +293,7 @@ export default function Composer() {
         >
           <AlertIcon color="error" />
           <Box flex="1">
-            <Text fontWeight="bold" mb={1}>Video Upload Failed</Text>
+            <Text fontWeight="bold" mb={1}>{t('compose.videoUploadFailed')}</Text>
             <Text whiteSpace="pre-wrap" fontSize="sm">{videoError}</Text>
           </Box>
           <Button
@@ -300,7 +302,7 @@ export default function Composer() {
             color="error"
             onClick={() => setVideoError(null)}
           >
-            Dismiss
+            {t('compose.dismiss')}
           </Button>
         </Alert>
       )}
@@ -351,7 +353,7 @@ export default function Composer() {
         >
           <AlertIcon color="error" />
           <Box flex="1">
-            <Text fontWeight="bold" mb={1}>Image Upload Failed</Text>
+            <Text fontWeight="bold" mb={1}>{t('compose.imageUploadFailed')}</Text>
             <Text whiteSpace="pre-wrap" fontSize="sm">{uploadError}</Text>
           </Box>
           <Button
@@ -360,7 +362,7 @@ export default function Composer() {
             color="error"
             onClick={() => setUploadError(null)}
           >
-            Dismiss
+            {t('compose.dismiss')}
           </Button>
         </Alert>
       )}
@@ -394,7 +396,7 @@ export default function Composer() {
             px={4}
             h="36px"
           >
-            🖼️ Thumbnail
+            🖼️ {t('compose.thumbnail')}
           </Button>
           <Button
             size="sm"
@@ -414,7 +416,7 @@ export default function Composer() {
             px={4}
             h="36px"
           >
-            💰 Beneficiaries {beneficiaries.length > 0 && `(${beneficiaries.length})`}
+            💰 {t('compose.beneficiaries')} {beneficiaries.length > 0 && `(${beneficiaries.length})`}
           </Button>
         </HStack>
 
@@ -466,8 +468,8 @@ export default function Composer() {
         >
           <AlertIcon color="warning" />
           <Box flex="1">
-            <Text fontWeight="bold" mb={1}>Thumbnail Required</Text>
-            <Text fontSize="sm">Please select a thumbnail from the Thumbnail tab before publishing.</Text>
+            <Text fontWeight="bold" mb={1}>{t('compose.thumbnailRequired')}</Text>
+            <Text fontSize="sm">{t('compose.selectThumbnailWarning')}</Text>
           </Box>
           <Button
             size="sm"
@@ -478,7 +480,7 @@ export default function Composer() {
               setActiveSettingsTab("thumbnail");
             }}
           >
-            Select Thumbnail
+            {t('compose.selectThumbnail')}
           </Button>
         </Alert>
       )}
@@ -487,9 +489,9 @@ export default function Composer() {
         <Tooltip
           label={
             !selectedThumbnail
-              ? "Please select a thumbnail first"
+              ? t('compose.selectThumbnailFirst')
               : !title.trim()
-              ? "Please add a title first"
+              ? t('compose.addTitleFirst')
               : ""
           }
           isDisabled={!!selectedThumbnail && !!title.trim() && !isSubmitting}
@@ -511,13 +513,13 @@ export default function Composer() {
               handleSubmit();
             }}
             isLoading={isSubmitting}
-            loadingText="Publishing..."
+            loadingText={t('compose.publishing')}
             isDisabled={isSubmitting || !title.trim() || !selectedThumbnail}
             px={10}
             h="44px"
             _hover={{ bg: "accent" }}
           >
-            Publish
+            {t('compose.publish')}
           </Button>
         </Tooltip>
       </Flex>

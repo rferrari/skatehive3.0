@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { safeCopyToClipboard } from "@/lib/utils/clipboardUtils";
 import {
   Box,
   Image,
@@ -173,26 +174,19 @@ const SnapModal = ({
 
   // Function to share the current snap modal URL
   const handleShareSnap = async () => {
-    try {
-      const currentUrl = window.location.href;
-      await navigator.clipboard.writeText(currentUrl);
-      toast({
-        title: "Link copied!",
-        description: "Snap link has been copied to your clipboard",
-        status: "success",
+    await safeCopyToClipboard(window.location.href, {
+      successMessage: "Link copied!",
+      errorMessage: "Failed to copy link",
+      showToast: (options) => toast({
+        title: options.title,
+        description: options.status === "success" 
+          ? "Snap link has been copied to your clipboard" 
+          : "Please try again",
+        status: options.status,
         duration: 3000,
         isClosable: true,
-      });
-    } catch (error) {
-      console.error("Failed to copy link:", error);
-      toast({
-        title: "Failed to copy link",
-        description: "Please try again",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
-    }
+      })
+    });
   };
 
   useEffect(() => {

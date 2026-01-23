@@ -5,6 +5,7 @@ import {
   FormLabel,
   Switch,
 } from "@chakra-ui/react";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 interface TokenControlsBarProps {
   isRefreshing: boolean;
@@ -19,17 +20,19 @@ export default function TokenControlsBar({
   onRefresh,
   onToggleSmallBalances,
 }: TokenControlsBarProps) {
+  const t = useTranslations();
+  
   return (
     <HStack spacing={2} m={2} flexWrap="wrap" justifyContent="space-between">
       <Button
         onClick={onRefresh}
         isLoading={isRefreshing}
-        loadingText="Refreshing..."
+        loadingText={t('wallet.refreshing')}
         size="xs"
         colorScheme="green"
         variant="ghost"
       >
-        🔄 Refresh Data
+        🔄 {t('wallet.refreshData')}
       </Button>
       <FormControl display="flex" alignItems="center" w="auto">
         <FormLabel
@@ -38,7 +41,7 @@ export default function TokenControlsBar({
           fontSize="sm"
           whiteSpace="nowrap"
         >
-          Hide Dust
+          {t('wallet.hideDust')}
         </FormLabel>
         <Switch
           id="hide-small"

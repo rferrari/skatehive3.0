@@ -4,6 +4,7 @@ import { BaseWalletModal, showTransactionSuccess, isUserCancelled } from "./Base
 import { AmountInput } from "./components";
 import { DepositHBDSavingsModalProps } from "./types";
 import { useBankActions } from "@/hooks/wallet";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 /**
  * Modal for depositing HBD to savings (15% APR)
@@ -16,14 +17,15 @@ export function DepositSavingsModal({
     const [amount, setAmount] = useState("");
     const { depositToSavings } = useBankActions();
     const toast = useToast();
+    const t = useTranslations();
 
     const handleConfirm = async () => {
         const parsedAmount = parseFloat(amount);
 
         if (isNaN(parsedAmount) || parsedAmount <= 0) {
             toast({
-                title: "Invalid Amount",
-                description: "Please enter a valid amount",
+                title: t('forms.errors.invalidAmount'),
+                description: t('forms.errors.amountRequired'),
                 status: "error",
                 duration: 3000,
                 isClosable: true,
@@ -34,14 +36,14 @@ export function DepositSavingsModal({
         const result = await depositToSavings(parsedAmount, "HBD");
 
         if (result.success && result.result) {
-            showTransactionSuccess(result.result, toast);
+            showTransactionSuccess(result.result, toast, t);
             onClose();
             setAmount("");
         } else if (result.error) {
             if (!isUserCancelled(result.error, result.errorCode)) {
                 toast({
-                    title: "Transaction Failed",
-                    description: result.error || "Failed to deposit to savings",
+                    title: t('wallet.transactionFailed'),
+                    description: result.error || t('notifications.error.failedToSend'),
                     status: "error",
                     duration: 5000,
                     isClosable: true,
@@ -56,10 +58,10 @@ export function DepositSavingsModal({
         <BaseWalletModal
             isOpen={isOpen}
             onClose={onClose}
-            title="Deposit to HBD Savings"
+            title={t('wallet.depositSavings')}
             onConfirm={handleConfirm}
             isConfirmDisabled={isConfirmDisabled}
-            confirmText="Deposit"
+            confirmText={t('buttons.deposit')}
         >
             <VStack spacing={4} align="stretch">
                 <Text fontSize="sm" color="text">
@@ -85,7 +87,7 @@ export function DepositSavingsModal({
                     onChange={setAmount}
                     balance={hbdBalance}
                     currency="HBD"
-                    placeholder="Amount to deposit"
+                    placeholder={t('forms.placeholders.enterAmount')}
                 />
 
                 <Box p={2} bg="yellow.900" borderRadius="md" borderLeft="4px solid" borderColor="yellow.500">

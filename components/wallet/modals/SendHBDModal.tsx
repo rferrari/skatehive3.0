@@ -4,6 +4,7 @@ import { BaseWalletModal, showTransactionSuccess, isUserCancelled } from "./Base
 import { AmountInput, UsernameInput, MemoInput } from "./components";
 import { SendHBDModalProps } from "./types";
 import { useHBDActions } from "@/hooks/wallet";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 /**
  * Modal for sending HBD to another account
@@ -17,14 +18,15 @@ export function SendHBDModal({ isOpen, onClose, balance }: SendHBDModalProps) {
 
     const { sendHBD } = useHBDActions();
     const toast = useToast();
+    const t = useTranslations();
 
     const handleConfirm = async () => {
         const parsedAmount = parseFloat(amount);
 
         if (isNaN(parsedAmount) || parsedAmount <= 0) {
             toast({
-                title: "Invalid Amount",
-                description: "Please enter a valid amount",
+                title: t('forms.errors.invalidAmount'),
+                description: t('forms.errors.amountRequired'),
                 status: "error",
                 duration: 3000,
                 isClosable: true,
@@ -49,7 +51,7 @@ export function SendHBDModal({ isOpen, onClose, balance }: SendHBDModalProps) {
         const result = await sendHBD(username, parsedAmount, finalMemo);
 
         if (result.success && result.result) {
-            showTransactionSuccess(result.result, toast);
+            showTransactionSuccess(result.result, toast, t);
             onClose();
             // Reset form
             setAmount("");
@@ -75,7 +77,7 @@ export function SendHBDModal({ isOpen, onClose, balance }: SendHBDModalProps) {
         <BaseWalletModal
             isOpen={isOpen}
             onClose={onClose}
-            title="Send HBD"
+            title={t('wallet.sendHBD')}
             onConfirm={handleConfirm}
             isConfirmDisabled={isConfirmDisabled}
         >

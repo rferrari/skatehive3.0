@@ -16,6 +16,7 @@ import { ArrowForwardIcon, LockIcon, ViewIcon } from "@chakra-ui/icons";
 import useIsMobile from "@/hooks/useIsMobile";
 import { HiveAccount } from "@/hooks/useHiveAccount";
 import SkateModal from "@/components/shared/SkateModal";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 interface HiveWalletModalProps {
   isOpen: boolean;
@@ -43,6 +44,7 @@ export default function HiveWalletModal({
   hiveAccount,
   onConfirm,
 }: HiveWalletModalProps) {
+  const t = useTranslations();
   const [amount, setAmount] = useState<string>("");
   const [memo, setMemo] = useState<string>("");
   const [username, setUsername] = useState<string>(""); // State to hold username
@@ -98,7 +100,7 @@ export default function HiveWalletModal({
             color="primary"
             _hover={{ color: "background", bg: "primary" }}
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             onClick={handleConfirm}
@@ -107,7 +109,7 @@ export default function HiveWalletModal({
             _hover={{ bg: "accent" }}
             width="full"
           >
-            Confirm
+            {t('common.confirm')}
           </Button>
         </VStack>
       }
@@ -124,7 +126,7 @@ export default function HiveWalletModal({
               HIVE
             </Text>
             <IconButton
-              aria-label="Flip direction"
+              aria-label={t('wallet.flipDirection')}
               icon={<ArrowForwardIcon />}
               onClick={() =>
                 setDirection(
@@ -155,7 +157,7 @@ export default function HiveWalletModal({
               {title.toLowerCase().includes("hive")
                 ? String(hiveAccount.balance)
                 : String(hiveAccount.hbd_balance)}</Text>
-            <Text mt={0} fontSize={"small"} color="primary">Balance</Text>
+            <Text mt={0} fontSize={"small"} color="primary">{t('wallet.balance')}</Text>
           </VStack>
         )}
 
@@ -168,7 +170,7 @@ export default function HiveWalletModal({
                 size={isMobile ? "xs" : "sm"}
               />
               <Input
-                placeholder="Enter username"
+                placeholder={t('forms.placeholders.enterUsername')}
                 value={username}
                 onChange={handleUsernameChange}
                 bg="inputBg"
@@ -185,7 +187,7 @@ export default function HiveWalletModal({
           <HStack>
             <Input
               type="number"
-              placeholder="Enter amount"
+              placeholder={t('forms.placeholders.enterAmount')}
               value={amount}
               onChange={handleAmountChange}
               min={0}
@@ -217,7 +219,7 @@ export default function HiveWalletModal({
           <Box mb={4}>
             <HStack>
               <Input
-                placeholder="Enter memo (optional)"
+                placeholder={t('forms.placeholders.enterMemo')}
                 value={memo}
                 onChange={handleMemoChange}
                 bg="inputBg"
@@ -227,11 +229,11 @@ export default function HiveWalletModal({
                 fontSize={isMobile ? "16px" : "md"}
               />
               <Tooltip
-                label={encryptMemo ? "Encrypted memo" : "Public memo"}
+                label={encryptMemo ? t('wallet.encryptedMemo') : t('wallet.publicMemo')}
                 placement="left"
               >
                 <IconButton
-                  aria-label={encryptMemo ? "Disable encryption" : "Enable encryption"}
+                  aria-label={encryptMemo ? t('wallet.disableEncryption') : t('wallet.enableEncryption')}
                   icon={encryptMemo ? <LockIcon /> : <ViewIcon />}
                   onClick={toggleEncrypt}
                   colorScheme={encryptMemo ? "blue" : "gray"}

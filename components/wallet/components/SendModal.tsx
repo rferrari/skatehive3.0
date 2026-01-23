@@ -22,6 +22,7 @@ import { formatBalance, formatValue } from "../../../lib/utils/portfolioUtils";
 import TokenLogo from "./TokenLogo";
 import useIsMobile from "@/hooks/useIsMobile";
 import SkateModal from "@/components/shared/SkateModal";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 interface SendModalProps {
   isOpen: boolean;
@@ -35,6 +36,7 @@ export default function SendModal({ isOpen, onClose, token }: SendModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const toast = useToast();
   const isMobile = useIsMobile();
+  const t = useTranslations();
 
   // Reset form when modal closes or token changes
   useEffect(() => {
@@ -58,8 +60,8 @@ export default function SendModal({ isOpen, onClose, token }: SendModalProps) {
   const handleSend = async () => {
     if (!recipientAddress || !amount) {
       toast({
-        title: "Missing Information",
-        description: "Please enter both recipient address and amount",
+        title: t('wallet.missingInfo'),
+        description: t('wallet.enterRecipientAmount'),
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -69,8 +71,8 @@ export default function SendModal({ isOpen, onClose, token }: SendModalProps) {
 
     if (parseFloat(amount) > maxAmount) {
       toast({
-        title: "Insufficient Balance",
-        description: "Amount exceeds available balance",
+        title: t('wallet.insufficientBalance'),
+        description: t('wallet.amountExceedsBalance'),
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -88,10 +90,11 @@ export default function SendModal({ isOpen, onClose, token }: SendModalProps) {
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       toast({
-        title: "Transaction Initiated",
-        description: `Sending ${amount} ${
-          token.token.symbol
-        } to ${recipientAddress.slice(0, 6)}...${recipientAddress.slice(-4)}`,
+        title: t('wallet.transactionInitiated'),
+        description: t('wallet.sendingTokens')
+          .replace('{amount}', amount)
+          .replace('{symbol}', token.token.symbol)
+          .replace('{address}', `${recipientAddress.slice(0, 6)}...${recipientAddress.slice(-4)}`),
         status: "success",
         duration: 5000,
         isClosable: true,

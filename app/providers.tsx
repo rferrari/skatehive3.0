@@ -15,6 +15,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { UserProvider } from "@/contexts/UserContext";
 import { VoteWeightProvider } from "@/contexts/VoteWeightContext";
 import { WindowProvider } from "@/contexts/WindowContext";
+import { LocaleProvider } from "@/contexts/LocaleContext";
 import { AuthKitProvider } from "@farcaster/auth-kit";
 import "@farcaster/auth-kit/styles.css";
 import { dynamicRainbowTheme } from "@/lib/themes/rainbowkitTheme";
@@ -80,8 +81,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <UserProvider>
-      <ThemeProvider>
+    <LocaleProvider>
+      <UserProvider>
+        <ThemeProvider>
         <QueryClientProvider client={queryClient}>
           <WagmiProvider config={wagmiConfig}>
             <RainbowKitProvider
@@ -107,7 +109,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
             </RainbowKitProvider>
           </WagmiProvider>
         </QueryClientProvider>
-      </ThemeProvider>
-    </UserProvider>
+        </ThemeProvider>
+      </UserProvider>
+    </LocaleProvider>
   );
 }

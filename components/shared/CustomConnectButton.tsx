@@ -3,8 +3,8 @@
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Box, Button, HStack, Text, VStack } from "@chakra-ui/react";
 import { Name, Avatar } from "@coinbase/onchainkit/identity";
-import { useAccount } from "wagmi";
 import { base } from "wagmi/chains";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 interface CustomConnectButtonProps {
   showBalance?: boolean;
@@ -19,7 +19,7 @@ export function CustomConnectButton({
   size = "md",
   variant = "primary",
 }: CustomConnectButtonProps) {
-  const { address } = useAccount();
+  const t = useTranslations();
 
   const getButtonSize = () => {
     switch (size) {
@@ -103,7 +103,7 @@ export function CustomConnectButton({
               if (!connected) {
                 return (
                   <Button onClick={openConnectModal} {...getButtonStyles()}>
-                    Connect Wallet
+                    {t('auth.connectWallet')}
                   </Button>
                 );
               }
@@ -121,7 +121,7 @@ export function CustomConnectButton({
                     fontWeight="medium"
                     border="1px solid"
                   >
-                    Wrong network
+                    {t('wallet.wrongNetwork')}
                   </Button>
                 );
               }

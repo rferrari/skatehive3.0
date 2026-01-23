@@ -5,6 +5,7 @@ import { Box, Text, Button, HStack, VStack } from "@chakra-ui/react";
 import { useAioha } from "@aioha/react-ui";
 import { Asset } from "@hiveio/dhive";
 import { extractNumber } from "@/lib/utils/extractNumber";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 interface ClaimRewardsProps {
   reward_hive_balance?: string | Asset | undefined; // HIVE rewards balance
@@ -24,6 +25,7 @@ export default function ClaimRewards({
   reward_vesting_balance,
   reward_vesting_hive,
 }: ClaimRewardsProps) {
+  const t = useTranslations();
   const { aioha, user } = useAioha();
   const [isClaiming, setIsClaiming] = useState(false);
   const [hasClaimed, setHasClaimed] = useState(false);
@@ -73,18 +75,18 @@ export default function ClaimRewards({
           );
           setPotentialRewards(totalPendingHBD.toFixed(3));
         } else {
-          setFetchError("Failed to fetch rewards data.");
+          setFetchError(t('wallet.failedToFetchRewards'));
         }
       } catch (error) {
         console.error("Error fetching potential rewards:", error);
-        setFetchError("Error fetching potential rewards.");
+        setFetchError(t('wallet.errorFetchingRewards'));
       } finally {
         setIsLoadingRewards(false);
       }
     };
 
     fetchPotentialRewards();
-  }, [user]);
+  }, [user, t]);
 
   // Claim rewards
   const handleClaimRewards = useCallback(async () => {
@@ -117,11 +119,11 @@ export default function ClaimRewards({
           borderColor="gray.200"
         >
           <Text fontWeight="bold" color="primary" mb={2}>
-            Pending Rewards
+            {t('wallet.pendingRewards')}
           </Text>
           <HStack justifyContent="space-between" alignItems="center">
             <VStack align="start">
-              <Text>You have some pending rewards to claim:</Text>
+              <Text>{t('wallet.youHavePendingRewards')}</Text>
               {parseFloat(String(pendingRewards.hive)) > 0 && (
                 <Text>{pendingRewards.hive} HIVE</Text>
               )}
@@ -139,21 +141,21 @@ export default function ClaimRewards({
               isLoading={isClaiming}
               isDisabled={!hasRewards || !user} // Disable if no rewards or not logged in
             >
-              Claim
+              {t('wallet.claim')}
             </Button>
           </HStack>
         </Box>
       ) : (
         <Box>
           {isLoadingRewards ? (
-            <Text>Loading potential rewards...</Text>
+            <Text>{t('wallet.loadingPotentialRewards')}</Text>
           ) : fetchError ? (
-            <Text color="red.500">Error: {fetchError}</Text>
+            <Text color="red.500">{t('common.error')}: {fetchError}</Text>
           ) : (
             <>
               <Text></Text>
               <Text fontSize="sm" color="gray.500">
-                Snaps Potential Rewards Estimated for the next 7 days: {potentialRewards} HBD
+                {t('wallet.snapsPotentialRewards').replace('{amount}', potentialRewards)}
               </Text>
             </>
           )}

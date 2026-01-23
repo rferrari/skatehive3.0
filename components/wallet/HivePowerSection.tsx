@@ -12,6 +12,7 @@ import { FaArrowDown, FaArrowUp, FaQuestionCircle } from "react-icons/fa";
 import { useState, useCallback, useMemo, memo } from "react";
 import useIsMobile from "@/hooks/useIsMobile";
 import { PowerUpModal, PowerDownModal } from "./modals";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 interface HivePowerSectionProps {
   hivePower: string | undefined;
@@ -26,6 +27,7 @@ const HivePowerSection = memo(function HivePowerSection({
 }: HivePowerSectionProps) {
   const [showInfo, setShowInfo] = useState(false);
   const isMobile = useIsMobile();
+  const t = useTranslations();
 
   const { isOpen: isPowerUpOpen, onOpen: onPowerUpOpen, onClose: onPowerUpClose } = useDisclosure();
   const { isOpen: isPowerDownOpen, onOpen: onPowerDownOpen, onClose: onPowerDownClose } = useDisclosure();
@@ -98,7 +100,7 @@ const HivePowerSection = memo(function HivePowerSection({
         {/* Investment Actions */}
         <VStack spacing={3} align="stretch">
           <HStack spacing={2}>
-            <Tooltip label="Power UP" hasArrow>
+            <Tooltip label={t('tooltips.powerUp')} hasArrow>
               <Box
                 as="button"
                 px={4}
@@ -115,7 +117,7 @@ const HivePowerSection = memo(function HivePowerSection({
                 💰 Power UP
               </Box>
             </Tooltip>
-            <Tooltip label="Power Down" hasArrow>
+            <Tooltip label={t('tooltips.powerDown')} hasArrow>
               <Box
                 as="button"
                 px={4}

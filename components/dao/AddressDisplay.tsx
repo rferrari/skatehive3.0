@@ -1,3 +1,4 @@
+import { safeCopyToClipboard } from "@/lib/utils/clipboardUtils";
 "use client";
 
 import { useState } from "react";
@@ -45,28 +46,26 @@ export const AddressDisplay = ({
       return;
     }
 
-    try {
-      await navigator.clipboard.writeText(address);
+    const result = await safeCopyToClipboard(address, {
+      successMessage: "Address Copied",
+      errorMessage: "Copy Failed",
+      showToast: (options) => toast({
+        title: options.title,
+        description: options.status === "success" 
+          ? `${label} address copied to clipboard` 
+          : "Failed to copy address to clipboard",
+        status: options.status,
+        duration: 2000,
+        isClosable: true,
+      })
+    });
+
+    if (result.success) {
       setCopied(true);
-      toast({
-        title: "Address Copied",
-        description: `${label} address copied to clipboard`,
-        status: "success",
-        duration: 2000,
-        isClosable: true,
-      });
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error("Failed to copy: ", err);
-      toast({
-        title: "Copy Failed",
-        description: "Failed to copy address to clipboard",
-        status: "error",
-        duration: 2000,
-        isClosable: true,
-      });
     }
   };
+  
 
   const getExplorerLink = () => {
     if (type === "ethereum") {

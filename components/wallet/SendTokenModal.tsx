@@ -26,6 +26,7 @@ import SkateModal from "@/components/shared/SkateModal";
 import { formatBalance } from "../../lib/utils/portfolioUtils";
 import useIsMobile from "@/hooks/useIsMobile";
 import { ETH_ADDRESSES } from "@/config/app.config";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 interface SendTokenModalProps {
   isOpen: boolean;
@@ -58,6 +59,7 @@ export default function SendTokenModal({
   const toast = useToast();
   const { address } = useAccount();
   const isMobile = useIsMobile();
+  const t = useTranslations();
 
   // For ERC20 transfers
   const {
@@ -96,34 +98,34 @@ export default function SendTokenModal({
   useEffect(() => {
     if (isSuccess && currentHash) {
       toast({
-        title: "Success",
-        description: "Transaction sent successfully!",
+        title: t('status.success'),
+        description: t('wallet.transactionSuccessful'),
         status: "success",
         duration: 5000,
         isClosable: true,
       });
       handleClose();
     }
-  }, [isSuccess, currentHash, toast, handleClose]);
+  }, [isSuccess, currentHash, toast, handleClose, t]);
 
   // Handle transaction error
   useEffect(() => {
     if (currentError) {
       toast({
-        title: "Transaction Failed",
+        title: t('wallet.transactionFailed'),
         description: currentError.message,
         status: "error",
         duration: 5000,
         isClosable: true,
       });
     }
-  }, [currentError, toast]);
+  }, [currentError, toast, t]);
 
   const handleSend = async () => {
     if (!recipient || !amount || !address) {
       toast({
-        title: "Error",
-        description: "Please fill in all fields",
+        title: t('common.error'),
+        description: t('forms.errors.amountRequired'),
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -133,8 +135,8 @@ export default function SendTokenModal({
 
     if (!isAddress(recipient)) {
       toast({
-        title: "Error",
-        description: "Invalid recipient address",
+        title: t('common.error'),
+        description: t('forms.errors.invalidAddress'),
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -147,8 +149,8 @@ export default function SendTokenModal({
 
     if (amountNum <= 0 || amountNum > balanceNum) {
       toast({
-        title: "Error",
-        description: "Invalid amount",
+        title: t('common.error'),
+        description: t('forms.errors.invalidAmount'),
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -207,7 +209,7 @@ export default function SendTokenModal({
             onClick={handleClose}
             borderColor="border"
           >
-            Cancel
+            {t('wallet.send.cancel')}
           </Button>
           <Button
             flex={1}
@@ -215,14 +217,14 @@ export default function SendTokenModal({
             color="background"
             onClick={handleSend}
             isLoading={isPending || isConfirming}
-            loadingText={isPending ? "Sending..." : "Confirming..."}
+            loadingText={isPending ? t('wallet.send.sending') : t('wallet.send.confirming')}
             isDisabled={!recipient || !amount}
             _hover={{ bg: "accent", color: "background" }}
           >
             {isPending || isConfirming ? (
               <Spinner size="sm" color="background" />
             ) : (
-              "Send"
+              t('wallet.send.send')
             )}
           </Button>
         </HStack>
@@ -233,13 +235,13 @@ export default function SendTokenModal({
             <Alert status="info" borderRadius="md" bg="muted" color="text">
               <AlertIcon color="primary" />
               <Text fontSize="sm" color="text">
-                Balance: {formatBalance(token.token.balance)}{" "}
+                {t('wallet.send.balance')}: {formatBalance(token.token.balance)}{" "}
                 {token.token.symbol}
               </Text>
             </Alert>
 
             <FormControl>
-              <FormLabel color="primary">Recipient Address</FormLabel>
+              <FormLabel color="primary">{t('wallet.send.recipient')}</FormLabel>
               <Input
                 placeholder="0x..."
                 value={recipient}
@@ -253,7 +255,7 @@ export default function SendTokenModal({
             </FormControl>
 
             <FormControl>
-              <FormLabel color="primary">Amount</FormLabel>
+              <FormLabel color="primary">{t('wallet.send.amount')}</FormLabel>
               <Input
                 type="number"
                 step="any"
@@ -267,7 +269,7 @@ export default function SendTokenModal({
                 fontSize={isMobile ? "16px" : "md"}
               />
               <Text fontSize="xs" color="muted" mt={1}>
-                Decimals: {token.token.decimals}
+                {t('wallet.send.decimals')}: {token.token.decimals}
               </Text>
             </FormControl>
           </VStack>

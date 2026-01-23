@@ -1,3 +1,4 @@
+import { safeCopyToClipboard } from "@/lib/utils/clipboardUtils";
 import {
   Box,
   Text,
@@ -222,24 +223,19 @@ export default function PostDetails({
   const handleShare = useCallback(async () => {
     const postUrl = `${window.location.origin}/post/${author}/${post.permlink}`;
 
-    try {
-      await navigator.clipboard.writeText(postUrl);
-      toast({
-        title: "Link copied!",
-        description: "Post URL has been copied to clipboard",
-        status: "success",
+    await safeCopyToClipboard(postUrl, {
+      successMessage: "Link copied!",
+      errorMessage: "Failed to copy",
+      showToast: (options) => toast({
+        title: options.title,
+        description: options.status === "success" 
+          ? "Post URL has been copied to clipboard" 
+          : "Could not copy URL to clipboard",
+        status: options.status,
         duration: 2000,
         isClosable: true,
-      });
-    } catch (error) {
-      toast({
-        title: "Failed to copy",
-        description: "Could not copy URL to clipboard",
-        status: "error",
-        duration: 2000,
-        isClosable: true,
-      });
-    }
+      })
+    });
   }, [author, post.permlink, toast]);
 
   const handleVote = useCallback(async () => {

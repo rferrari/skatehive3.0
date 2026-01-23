@@ -4,6 +4,7 @@ import { useState, useCallback, useMemo, memo } from "react";
 import { CustomHiveIcon } from "./CustomHiveIcon";
 import { useTheme } from "@/app/themeProvider";
 import { SendHiveModal } from "./modals";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 interface HiveSectionProps {
   balance: string;
@@ -17,6 +18,7 @@ const HiveSection = memo(function HiveSection({
   const { theme } = useTheme();
   const [showInfo, setShowInfo] = useState(false);
   const { isOpen: isSendOpen, onOpen: onSendOpen, onClose: onSendClose } = useDisclosure();
+  const t = useTranslations();
 
   // Memoize USD value calculation
   const usdValue = useMemo(() => {
@@ -48,7 +50,7 @@ const HiveSection = memo(function HiveSection({
                   HIVE
                 </Text>
                 <IconButton
-                  aria-label="Info about Hive"
+                  aria-label={t('tooltips.infoHive')}
                   icon={<FaQuestionCircle />}
                   size="xs"
                   variant="ghost"
@@ -66,9 +68,9 @@ const HiveSection = memo(function HiveSection({
 
           <HStack spacing={3} align="center">
             <HStack spacing={1}>
-              <Tooltip label="Send HIVE" hasArrow>
+              <Tooltip label={t('tooltips.sendHive')} hasArrow>
                 <IconButton
-                  aria-label="Send HIVE"
+                  aria-label={t('tooltips.sendHive')}
                   icon={<FaPaperPlane />}
                   size="sm"
                   colorScheme="blue"

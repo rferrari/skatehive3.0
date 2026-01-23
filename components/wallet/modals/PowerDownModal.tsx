@@ -4,7 +4,7 @@ import { BaseWalletModal, showTransactionSuccess, isUserCancelled } from "./Base
 import { AmountInput } from "./components";
 import { PowerDownModalProps } from "./types";
 import { useHiveActions } from "@/hooks/wallet";
-
+import { useTranslations } from "@/contexts/LocaleContext";
 /**
  * Modal for powering down HIVE (unstaking Hive Power)
  */
@@ -16,14 +16,15 @@ export function PowerDownModal({
     const [amount, setAmount] = useState("");
     const { powerDown } = useHiveActions();
     const toast = useToast();
+    const t = useTranslations();
 
     const handleConfirm = async () => {
         const parsedAmount = parseFloat(amount);
 
         if (isNaN(parsedAmount) || parsedAmount <= 0) {
             toast({
-                title: "Invalid Amount",
-                description: "Please enter a valid amount",
+                title: t('forms.errors.invalidAmount'),
+                description: t('forms.errors.amountRequired'),
                 status: "error",
                 duration: 3000,
                 isClosable: true,
@@ -34,14 +35,14 @@ export function PowerDownModal({
         const result = await powerDown(parsedAmount);
 
         if (result.success && result.result) {
-            showTransactionSuccess(result.result, toast);
+            showTransactionSuccess(result.result, toast, t);
             onClose();
             setAmount("");
         } else if (result.error) {
             if (!isUserCancelled(result.error, result.errorCode)) {
                 toast({
-                    title: "Transaction Failed",
-                    description: result.error || "Failed to power down HIVE",
+                    title: t('wallet.transactionFailed'),
+                    description: result.error || t('notifications.error.failedToSend'),
                     status: "error",
                     duration: 5000,
                     isClosable: true,
@@ -56,10 +57,10 @@ export function PowerDownModal({
         <BaseWalletModal
             isOpen={isOpen}
             onClose={onClose}
-            title="Power Down HIVE"
+            title={t('wallet.powerDown')}
             onConfirm={handleConfirm}
             isConfirmDisabled={isConfirmDisabled}
-            confirmText="Power Down"
+            confirmText={t('wallet.powerDown')}
         >
             <VStack spacing={4} align="stretch">
                 <Text fontSize="sm" color="text">
@@ -82,7 +83,7 @@ export function PowerDownModal({
                     onChange={setAmount}
                     balance={hivePower}
                     currency="HP"
-                    placeholder="Amount to power down"
+                    placeholder={t('forms.placeholders.enterAmount')}
                 />
 
                 <Box p={2} bg="muted" borderRadius="md">

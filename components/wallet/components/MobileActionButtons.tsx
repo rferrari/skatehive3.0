@@ -11,6 +11,7 @@ import { useAccount } from "wagmi";
 import TokenSearchModal from "./TokenSearchModal";
 import ReceiveModal from "./ReceiveModal";
 import { TokenDetail } from "../../../types/portfolio";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 interface HiveToken {
   symbol: string;
@@ -37,6 +38,7 @@ export default function MobileActionButtons({
 }: MobileActionButtonsProps) {
   const { isConnected } = useAccount();
   const [isMounted, setIsMounted] = useState(false);
+  const t = useTranslations();
 
   // Prevent hydration issues by only rendering after mount
   useEffect(() => {
@@ -106,7 +108,7 @@ export default function MobileActionButtons({
             <FaDownload size="20px" color="white" />
           </Box>
           <Text fontSize="sm" color="rgba(255, 255, 255, 0.8)" fontWeight="500">
-            Receive
+            {t('common.receive')}
           </Text>
         </VStack>
 
@@ -130,7 +132,7 @@ export default function MobileActionButtons({
             <FaPaperPlane size="20px" color="background" />
           </Box>
           <Text fontSize="sm" color="rgba(255, 255, 255, 0.8)" fontWeight="500">
-            Send
+            {t('common.send')}
           </Text>
         </VStack>
 
@@ -154,7 +156,7 @@ export default function MobileActionButtons({
             <FaExchangeAlt size="20px" color="white" />
           </Box>
           <Text fontSize="sm" color="rgba(255, 255, 255, 0.8)" fontWeight="500">
-            Swap
+            {t('common.swap')}
           </Text>
         </VStack>
 
@@ -190,7 +192,7 @@ export default function MobileActionButtons({
               color="rgba(255, 255, 255, 0.8)"
               fontWeight="500"
             >
-              Connect
+              {t('common.connect')}
             </Text>
           </VStack>
         )}
@@ -202,7 +204,7 @@ export default function MobileActionButtons({
         onClose={closeSendModal}
         onTokenSelect={handleSendTokenSelect}
         onHiveTokenSelect={handleSendHiveTokenSelect}
-        title="Send Token"
+        title={t('wallet.sendToken')}
       />
 
       <ReceiveModal isOpen={isReceiveModalOpen} onClose={closeReceiveModal} />
@@ -212,7 +214,7 @@ export default function MobileActionButtons({
         onClose={closeSwapModal}
         onTokenSelect={handleSwapTokenSelect}
         onHiveTokenSelect={handleSwapHiveTokenSelect}
-        title="Swap Token"
+        title={t('wallet.swapToken')}
       />
     </>
   );

@@ -8,6 +8,7 @@ import useIsMobile from "@/hooks/useIsMobile";
 import { CopyIcon } from "@chakra-ui/icons";
 import SkateModal from "@/components/shared/SkateModal";
 import { Box } from "@chakra-ui/react";
+import { useTranslations, type TranslationFunction } from "@/contexts/LocaleContext";
 
 interface BaseWalletModalProps {
     isOpen: boolean;
@@ -52,11 +53,12 @@ export function BaseWalletModal({
     title,
     children,
     onConfirm,
-    confirmText = "Confirm",
+    confirmText,
     isConfirmDisabled = false,
 }: BaseWalletModalProps) {
     const isMobile = useIsMobile();
     const toast = useToast();
+    const t = useTranslations();
     const [isLoading, setIsLoading] = useState(false);
 
     const handleConfirm = async () => {
@@ -65,8 +67,8 @@ export function BaseWalletModal({
             await onConfirm();
         } catch (error: any) {
             toast({
-                title: "Error",
-                description: error.message || "Transaction failed",
+                title: t('common.error'),
+                description: error.message || t('wallet.transactionFailed'),
                 status: "error",
                 duration: 5000,
                 isClosable: true,
@@ -91,7 +93,7 @@ export function BaseWalletModal({
                         _hover={{ color: "background", bg: "primary" }}
                         isDisabled={isLoading}
                     >
-                        Cancel
+                        {t('buttons.cancel')}
                     </Button>
                     <Button
                         onClick={handleConfirm}
@@ -116,9 +118,9 @@ export function BaseWalletModal({
 /**
  * Show success toast with transaction ID
  */
-export function showTransactionSuccess(txId: string, toast: any) {
+export function showTransactionSuccess(txId: string, toast: any, t: TranslationFunction) {
     toast({
-        title: "Success!",
+        title: t('status.success'),
         description: (
             <span style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                 <strong>Tx:</strong> {txId}
@@ -127,8 +129,8 @@ export function showTransactionSuccess(txId: string, toast: any) {
                     onClick={() => {
                         navigator.clipboard.writeText(txId);
                         toast({
-                            title: "Copied!",
-                            description: "TX copied to clipboard",
+                            title: t('notifications.success.copied'),
+                            description: t('wallet.txCopied'),
                             status: "info",
                             duration: 2000,
                             isClosable: true,

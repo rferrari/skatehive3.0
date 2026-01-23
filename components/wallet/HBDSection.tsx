@@ -23,6 +23,7 @@ import { CustomHiveIcon } from "./CustomHiveIcon";
 import { useTheme } from "@/app/themeProvider";
 import useIsMobile from "@/hooks/useIsMobile";
 import { SendHBDModal, DepositSavingsModal } from "./modals";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 interface HBDSectionProps {
     hbdBalance: string;
@@ -57,6 +58,7 @@ const HBDSection = memo(function HBDSection({
     const { theme } = useTheme();
     const [showInfo, setShowInfo] = useState(false);
     const isMobile = useIsMobile();
+    const t = useTranslations();
 
     const { isOpen: isSendOpen, onOpen: onSendOpen, onClose: onSendClose } = useDisclosure();
     const { isOpen: isDepositOpen, onOpen: onDepositOpen, onClose: onDepositClose } = useDisclosure();
@@ -110,7 +112,7 @@ const HBDSection = memo(function HBDSection({
                                     HBD
                                 </Text>
                                 <IconButton
-                                    aria-label="Info about HBD"
+                                    aria-label={t('tooltips.infoHBD')}
                                     icon={<FaQuestionCircle />}
                                     size="xs"
                                     variant="ghost"
@@ -123,9 +125,9 @@ const HBDSection = memo(function HBDSection({
 
                     <HStack spacing={3} align="center">
                         <HStack spacing={1}>
-                            <Tooltip label="Send HBD" hasArrow>
+                            <Tooltip label={t('tooltips.sendHBD')} hasArrow>
                                 <IconButton
-                                    aria-label="Send HBD"
+                                    aria-label={t('tooltips.sendHBD')}
                                     icon={<FaPaperPlane />}
                                     size="sm"
                                     colorScheme="blue"
@@ -133,9 +135,9 @@ const HBDSection = memo(function HBDSection({
                                     onClick={onSendOpen}
                                 />
                             </Tooltip>
-                            <Tooltip label="Convert to Savings" hasArrow>
+                            <Tooltip label={t('tooltips.convertToSavings')} hasArrow>
                                 <IconButton
-                                    aria-label="Convert to Savings"
+                                    aria-label={t('tooltips.convertToSavings')}
                                     icon={<FaPiggyBank />}
                                     size="sm"
                                     colorScheme="green"

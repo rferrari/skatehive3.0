@@ -23,6 +23,7 @@ import { CustomHiveIcon } from "./CustomHiveIcon";
 import { useTheme } from "@/app/themeProvider";
 import useIsMobile from "@/hooks/useIsMobile";
 import { DepositSavingsModal, WithdrawSavingsModal } from "./modals";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 interface HBDSectionProps {
   hbdBalance: string;
@@ -59,6 +60,7 @@ const SkateBankSection = memo(function HBDSection({
   const { theme } = useTheme();
   const [showInfo, setShowInfo] = useState(false);
   const isMobile = useIsMobile();
+  const t = useTranslations();
 
   const { isOpen: isDepositOpen, onOpen: onDepositOpen, onClose: onDepositClose } = useDisclosure();
   const { isOpen: isWithdrawOpen, onOpen: onWithdrawOpen, onClose: onWithdrawClose } = useDisclosure();
@@ -162,7 +164,7 @@ const SkateBankSection = memo(function HBDSection({
         {/* Investment Actions */}
         <VStack spacing={3} align="stretch">
           <HStack spacing={2}>
-            <Tooltip label="Add HBD to Savings" hasArrow>
+            <Tooltip label={t('tooltips.addToSavings')} hasArrow>
               <Box
                 as="button"
                 px={4}
@@ -179,7 +181,7 @@ const SkateBankSection = memo(function HBDSection({
                 💰 Add to Savings
               </Box>
             </Tooltip>
-            <Tooltip label="Withdraw from Savings (3-day cooldown)" hasArrow>
+            <Tooltip label={t('tooltips.withdrawSavings')} hasArrow>
               <Box
                 as="button"
                 px={4}

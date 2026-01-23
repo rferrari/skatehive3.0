@@ -9,19 +9,8 @@ import HiveClient from "./hiveclient";
 
 // import { DefaultRenderer } from "@hiveio/content-renderer";
 
-export async function signImageHash(hash: string): Promise<string> {
-    const wif = process.env.HIVE_POSTING_KEY;
-
-    if (!wif) {
-        throw new Error("HIVE_POSTING_KEY is not set in the environment");
-    }
-
-    const key = PrivateKey.fromString(wif);
-    const hashBuffer = Buffer.from(hash, 'hex');  // Convert the hex string back to a buffer
-    const signature = key.sign(hashBuffer);
-
-    return signature.toString();
-}
+// Note: signImageHash is now in server-actions.ts to avoid duplication
+// Import from there if needed: import { signImageHash } from './server-actions';
 
 export async function sendInvite(email: string, url: string): Promise<void> {
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {

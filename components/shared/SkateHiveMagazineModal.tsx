@@ -11,6 +11,7 @@ import { useState } from "react";
 import MagazineModal from "./MagazineModal";
 import { HIVE_CONFIG } from "@/config/app.config";
 import SkateModal from "./SkateModal";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 interface SkateHiveMagazineModalProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ export default function SkateHiveMagazineModal({
   isOpen,
   onClose,
 }: SkateHiveMagazineModalProps) {
+  const t = useTranslations();
   const [isMagazineOpen, setIsMagazineOpen] = useState(false);
 
   const handleOpenMagazine = () => {
@@ -41,7 +43,7 @@ export default function SkateHiveMagazineModal({
       <SkateModal
         isOpen={isOpen}
         onClose={onClose}
-        title="SkateHive Magazine: Infinity Mag"
+        title={t('magazine.title')}
         size="lg"
         footer={
           <Button
@@ -51,7 +53,7 @@ export default function SkateHiveMagazineModal({
             leftIcon={<Icon as={FaBookOpen} />}
             w="full"
           >
-            View Infinity Mag
+            {t('magazine.viewInfinityMag')}
           </Button>
         }
       >
@@ -63,11 +65,7 @@ export default function SkateHiveMagazineModal({
               textAlign="center"
               lineHeight="tall"
             >
-              The Skatehive App is more than just a platform; it&apos;s a
-              digital skateboard magazine where skaters contribute to the
-              pages of its Infinity Mag. Each post, trick clip, or story
-              shared becomes part of a living, evolving publication created
-              entirely by skaters, for skaters.
+              {t('magazine.description')}
             </Text>
 
             <VStack spacing={4} align="stretch">
@@ -75,11 +73,10 @@ export default function SkateHiveMagazineModal({
                 <Icon as={FaBookOpen} color="blue.500" boxSize={6} />
                 <Box flex={1}>
                   <Text fontWeight="bold" color="primary">
-                    Made by Skaters
+                    {t('magazine.madeBySkaters')}
                   </Text>
                   <Text fontSize="sm" color="dim">
-                    Every piece of content is created by the skateboarding
-                    community
+                    {t('magazine.madeByDescription')}
                   </Text>
                 </Box>
               </HStack>
@@ -88,11 +85,10 @@ export default function SkateHiveMagazineModal({
                 <Icon as={FaTrophy} color="orange.500" boxSize={6} />
                 <Box flex={1}>
                   <Text fontWeight="bold" color="primary">
-                    Curated by Skaters
+                    {t('magazine.curatedBySkaters')}
                   </Text>
                   <Text fontSize="sm" color="dim">
-                    Community votes and engagement determine what gets
-                    featured
+                    {t('magazine.curatedByDescription')}
                   </Text>
                 </Box>
               </HStack>
@@ -101,10 +97,10 @@ export default function SkateHiveMagazineModal({
                 <Icon as={FaCoins} color="yellow.500" boxSize={6} />
                 <Box flex={1}>
                   <Text fontWeight="bold" color="primary">
-                    Monetized by Page
+                    {t('magazine.monetizedByPage')}
                   </Text>
                   <Text fontSize="sm" color="dim">
-                    Contributors earn rewards for their content and engagement
+                    {t('magazine.monetizedByDescription')}
                   </Text>
                 </Box>
               </HStack>

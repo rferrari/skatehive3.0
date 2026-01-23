@@ -1,3 +1,4 @@
+import { debugLog } from "@/lib/utils/debugUtils";
 "use client";
 
 import {
@@ -178,7 +179,7 @@ export default function NotificationItem({
     const notificationMedia = getMediaFromPost(notificationPost);
     const hasNotificationMedia = notificationMedia.previewUrl || notificationMedia.inlineImageUrl;
 
-    console.log(`[notifications] Notification post has media: ${hasNotificationMedia ? 'yes' : 'no'}`);
+    debugLog("[notifications] Notification post has media", hasNotificationMedia ? "yes" : "no");
     
     // If we want the parent (for reply notifications)
     if (preferParent && notificationPost.parent_author && notificationPost.parent_permlink) {
@@ -189,7 +190,7 @@ export default function NotificationItem({
       
       // Check if parent is a snap container
       if (isSnapContainer(parentPost)) {
-        console.log(`[notifications] Parent is a snap container, using notification post instead`);
+        debugLog("[notifications] Parent is a snap container, using notification post instead");
         // The notification post is likely a comment with actual content
         return { 
           mediaSource: notificationPost, 
@@ -200,7 +201,7 @@ export default function NotificationItem({
       const parentMedia = getMediaFromPost(parentPost);
       const hasParentMedia = parentMedia.previewUrl || parentMedia.inlineImageUrl;
 
-      console.log(`[notifications] Parent post has media: ${hasParentMedia ? 'yes' : 'no'}`);
+      debugLog("[notifications] Parent post has media", hasParentMedia ? "yes" : "no");
 
       // Return parent if it has media, otherwise try to find better source
       if (hasParentMedia) {
@@ -269,9 +270,12 @@ export default function NotificationItem({
 
       // Step 1: Fetch the post referenced in the notification URL
       const notificationPost = await fetchAndCachePost(postAuthor, postId);
-      console.log(`[notifications] Fetched notification post: @${notificationPost.author}/${notificationPost.permlink}`);
-      console.log(`[notifications] Post has parent: ${notificationPost.parent_author ? 'yes' : 'no'}`);
-      console.log(`[notifications] Post body preview: ${(notificationPost.body || '').slice(0, 150)}...`);
+      debugLog("[notifications] Fetched notification post", {
+        author: notificationPost.author,
+        permlink: notificationPost.permlink,
+        hasParent: notificationPost.parent_author ? "yes" : "no",
+        bodyPreview: (notificationPost.body || "").slice(0, 150) + "..."
+      });
 
       setReply(notificationPost);
       setHasVoted(checkIfUserVoted(notificationPost));
@@ -285,7 +289,6 @@ export default function NotificationItem({
         case "follow":
           // No media preview for follow notifications (show avatar)
           previewStrategy = "none (follow notification - showing avatar)";
-          console.log(`[notifications] Strategy: ${previewStrategy}`);
           setVideoPreviewUrl(null);
           setInlineImageUrl(null);
           setMagPostThumbnail("");
@@ -380,17 +383,8 @@ export default function NotificationItem({
 
       // Step 3: Extract media from the determined source
       if (mediaSourcePost) {
-        console.log(`[notifications] Strategy: ${previewStrategy}`);
-        console.log(`[notifications] Media source: @${mediaSourcePost.author}/${mediaSourcePost.permlink}`);
-        console.log(`[notifications] Media source title: ${mediaSourcePost.title || "(no title - comment)"}`);
-        console.log(`[notifications] Media source body preview: ${(mediaSourcePost.body || "").slice(0, 200)}...`);
-
         const { previewUrl, inlineImageUrl, videoSourceUrl } = getMediaFromPost(mediaSourcePost);
         
-        console.log(`[notifications] Extracted preview URL: ${previewUrl || "null"}`);
-        console.log(`[notifications] Extracted inline image: ${inlineImageUrl || "null"}`);
-        console.log(`[notifications] Extracted video source URL: ${videoSourceUrl || "null"}`);
-
         // Use videoSourceUrl as fallback preview for IPFS videos
         // The video URL itself can be used as a preview with proper handling in NotificationPreview
         const effectivePreviewUrl = previewUrl || videoSourceUrl;

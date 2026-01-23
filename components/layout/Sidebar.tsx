@@ -28,6 +28,8 @@ import { useTheme } from "@/app/themeProvider";
 import { useNotifications } from "@/contexts/NotificationContext";
 import SidebarLogo from "../graphics/SidebarLogo";
 import AuthButton from "./AuthButton";
+import LanguageSwitcher from "../ui/LanguageSwitcher";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 export default function Sidebar() {
   const { user } = useAioha();
@@ -36,6 +38,7 @@ export default function Sidebar() {
   const [bellAnimating, setBellAnimating] = useState(false);
   const [isClientMounted, setIsClientMounted] = useState(false);
   const { themeName } = useTheme();
+  const t = useTranslations('navigation');
 
   // Ensure client-side only rendering to prevent hydration mismatch
   useEffect(() => {
@@ -167,41 +170,46 @@ export default function Sidebar() {
           </Box>
           <VStack spacing={0} align="stretch" mt={2}>
             <NavItem href="/" icon={FiHome}>
-              Home
+              {t('home')}
             </NavItem>
             <NavItem href="/blog" icon={FiBook}>
-              Magazine
+              {t('magazine')}
             </NavItem>
             <NavItem href="/leaderboard" icon={FiAward} prefetch={false}>
-              Leaderboard
+              {t('leaderboard')}
             </NavItem>
             <NavItem href="/map" icon={FiMap} prefetch={false}>
-              Skatespots
+              {t('skatespots')}
             </NavItem>
             <NavItem href="/bounties" icon={FiTarget} prefetch={false}>
-              Bounties
+              {t('bounties')}
             </NavItem>
             {user && (
               <NavItem href="/notifications" icon={FiBell} prefetch={false}>
-                Notifications
+                {t('notifications')}
               </NavItem>
             )}
             {isAnyProtocolConnected && (
               <NavItem href="/wallet" icon={FiCreditCard} prefetch={false}>
-                Wallet
+                {t('wallet')}
               </NavItem>
             )}
             <NavItem href="/settings" icon={FiSettings}>
-              Settings
+              {t('settings')}
             </NavItem>
             {user && (
               <NavItem href="/invite" icon={FiMail}>
-                Invite
+                {t('invite')}
               </NavItem>
             )}
           </VStack>
         </Box>
-        <AuthButton />
+        <Box>
+          <Box px={4} py={2}>
+            <LanguageSwitcher />
+          </Box>
+          <AuthButton />
+        </Box>
       </Flex>
     </Box>
   );

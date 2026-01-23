@@ -4,6 +4,7 @@ import { BaseWalletModal, showTransactionSuccess, isUserCancelled } from "./Base
 import { AmountInput } from "./components";
 import { WithdrawHBDSavingsModalProps } from "./types";
 import { useBankActions } from "@/hooks/wallet";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 /**
  * Modal for withdrawing HBD from savings
@@ -16,14 +17,15 @@ export function WithdrawSavingsModal({
     const [amount, setAmount] = useState("");
     const { withdrawFromSavings } = useBankActions();
     const toast = useToast();
+    const t = useTranslations();
 
     const handleConfirm = async () => {
         const parsedAmount = parseFloat(amount);
 
         if (isNaN(parsedAmount) || parsedAmount <= 0) {
             toast({
-                title: "Invalid Amount",
-                description: "Please enter a valid amount",
+                title: t('forms.errors.invalidAmount'),
+                description: t('forms.errors.amountRequired'),
                 status: "error",
                 duration: 3000,
                 isClosable: true,
@@ -34,14 +36,14 @@ export function WithdrawSavingsModal({
         const result = await withdrawFromSavings(parsedAmount, "HBD");
 
         if (result.success && result.result) {
-            showTransactionSuccess(result.result, toast);
+            showTransactionSuccess(result.result, toast, t);
             onClose();
             setAmount("");
         } else if (result.error) {
             if (!isUserCancelled(result.error, result.errorCode)) {
                 toast({
-                    title: "Transaction Failed",
-                    description: result.error || "Failed to withdraw from savings",
+                    title: t('wallet.transactionFailed'),
+                    description: result.error || t('notifications.error.failedToSend'),
                     status: "error",
                     duration: 5000,
                     isClosable: true,
@@ -56,10 +58,10 @@ export function WithdrawSavingsModal({
         <BaseWalletModal
             isOpen={isOpen}
             onClose={onClose}
-            title="Withdraw from HBD Savings"
+            title={t('wallet.withdrawSavings')}
             onConfirm={handleConfirm}
             isConfirmDisabled={isConfirmDisabled}
-            confirmText="Withdraw"
+            confirmText={t('buttons.withdraw')}
         >
             <VStack spacing={4} align="stretch">
                 <Text fontSize="sm" color="text">
@@ -82,7 +84,7 @@ export function WithdrawSavingsModal({
                     onChange={setAmount}
                     balance={savingsBalance}
                     currency="HBD"
-                    placeholder="Amount to withdraw"
+                    placeholder={t('forms.placeholders.enterAmount')}
                 />
 
                 <Box p={2} bg="muted" borderRadius="md">
