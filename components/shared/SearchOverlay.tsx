@@ -13,6 +13,7 @@ import {
 } from "@chakra-ui/react";
 import { FaSearch, FaUser, FaHome, FaTrophy, FaGift } from "react-icons/fa";
 import { useRouter, usePathname } from "next/navigation";
+import { useSoundSettings } from "@/contexts/SoundSettingsContext";
 
 // Import smaller components
 import SearchInput from "./search/SearchInput";
@@ -52,6 +53,34 @@ export default function SearchOverlay({
   const router = useRouter();
   const pathname = usePathname();
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const { soundEnabled } = useSoundSettings();
+  const hoverAudioRef = useRef<HTMLAudioElement | null>(null);
+  const prevHighlightedIndexRef = useRef<number>(-1);
+
+  // Initialize hover sound
+  useEffect(() => {
+    hoverAudioRef.current = new Audio('/hoversfx.mp3');
+    hoverAudioRef.current.volume = 0.2;
+  }, []);
+
+  // Play hover sound when highlighted index changes via keyboard
+  useEffect(() => {
+    if (highlightedIndex !== prevHighlightedIndexRef.current && highlightedIndex >= 0) {
+      if (soundEnabled && hoverAudioRef.current) {
+        hoverAudioRef.current.currentTime = 0;
+        hoverAudioRef.current.play().catch(() => {});
+      }
+    }
+    prevHighlightedIndexRef.current = highlightedIndex;
+  }, [highlightedIndex, soundEnabled]);
+
+  // Callback for mouse hover on items
+  const playHoverSound = useCallback(() => {
+    if (soundEnabled && hoverAudioRef.current) {
+      hoverAudioRef.current.currentTime = 0;
+      hoverAudioRef.current.play().catch(() => {});
+    }
+  }, [soundEnabled]);
 
   // Get popular pages
   const popularPages = useMemo(() => {
@@ -267,6 +296,7 @@ export default function SearchOverlay({
                         index={index}
                         highlightedIndex={highlightedIndex}
                         onSelect={handleSelect}
+                        onHover={playHoverSound}
                       />
                     ))}
                   </>
@@ -281,6 +311,7 @@ export default function SearchOverlay({
                         index={filteredSkaters.length + index}
                         highlightedIndex={highlightedIndex}
                         onSelect={handleSelect}
+                        onHover={playHoverSound}
                       />
                     ))}
                   </>
@@ -295,6 +326,7 @@ export default function SearchOverlay({
                         index={filteredSkaters.length + filteredCommands.length + index}
                         highlightedIndex={highlightedIndex}
                         onSelect={handleSelect}
+                        onHover={playHoverSound}
                       />
                     ))}
                   </>
@@ -310,6 +342,7 @@ export default function SearchOverlay({
                         index={index}
                         highlightedIndex={highlightedIndex}
                         onSelect={handleSelect}
+                        onHover={playHoverSound}
                       />
                     ))}
                   </>

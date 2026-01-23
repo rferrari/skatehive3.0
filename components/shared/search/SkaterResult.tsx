@@ -9,6 +9,7 @@ interface SkaterResultProps {
   index: number;
   highlightedIndex: number;
   onSelect: (skater: SkaterData) => void;
+  onHover?: () => void;
 }
 
 export default function SkaterResult({
@@ -16,6 +17,7 @@ export default function SkaterResult({
   index,
   highlightedIndex,
   onSelect,
+  onHover,
 }: SkaterResultProps) {
   return (
     <Box
@@ -27,6 +29,7 @@ export default function SkaterResult({
       transition="all 0.2s ease"
       _hover={{ bg: "muted", color: "primary" }}
       onClick={() => onSelect(skater)}
+      onMouseEnter={onHover}
       data-index={index}
     >
       <HStack spacing={3}>

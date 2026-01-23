@@ -17,7 +17,7 @@ export const lg = {
     cancel: 'Kansila',
     save: 'Kweka',
     delete: 'Ggyako',
-    edit: 'Ggyako',
+    edit: 'Ggyawo',
     close: 'Gala',
     search: 'Saganya',
     login: 'Kwingira',

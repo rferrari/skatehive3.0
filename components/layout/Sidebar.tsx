@@ -45,6 +45,14 @@ export default function Sidebar() {
   useEffect(() => {
     hoverAudioRef.current = new Audio('/hoversfx.mp3');
     hoverAudioRef.current.volume = 0.2;
+    
+    return () => {
+      if (hoverAudioRef.current) {
+        hoverAudioRef.current.pause();
+        hoverAudioRef.current.src = '';
+        hoverAudioRef.current = null;
+      }
+    };
   }, []);
 
   const playHoverSound = useCallback(() => {

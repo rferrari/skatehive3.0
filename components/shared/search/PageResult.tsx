@@ -10,6 +10,7 @@ interface PageResultProps {
   index: number;
   highlightedIndex: number;
   onSelect: (page: PageResult) => void;
+  onHover?: () => void;
 }
 
 export default function PageResult({
@@ -17,6 +18,7 @@ export default function PageResult({
   index,
   highlightedIndex,
   onSelect,
+  onHover,
 }: PageResultProps) {
   return (
     <Box
@@ -28,6 +30,7 @@ export default function PageResult({
       transition="all 0.2s ease"
       _hover={{ bg: "muted", color: "primary" }}
       onClick={() => onSelect(page)}
+      onMouseEnter={onHover}
       data-index={index}
     >
       <HStack spacing={3}>
