@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Button,
@@ -67,12 +67,12 @@ export default function InvitePage() {
   const [emailError, setEmailError] = useState<string | null>(null);
 
   // Email validation helper
-  const validateEmail = (email: string): string | null => {
+  const validateEmail = useCallback((email: string): string | null => {
     if (!email) return t('invite.emailRequired');
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) return t('invite.invalidEmail');
     return null;
-  };
+  }, [t]);
 
   // Set mounted state after hydration
   useEffect(() => {
@@ -139,7 +139,7 @@ export default function InvitePage() {
     } else {
       setEmailError(null);
     }
-  }, [desiredEmail, isMounted]);
+  }, [desiredEmail, isMounted, validateEmail]);
 
   const handleCheck = async () => {
     setBroadcastSuccess(false);
