@@ -9,6 +9,7 @@ const localeFlags: Record<Locale, string> = {
   'en': '🇺🇸',
   'pt-BR': '🇧🇷',
   'es': '🇪🇸',
+  'lg': '🇺🇬',
 };
 
 export default function LanguageSwitcher() {
