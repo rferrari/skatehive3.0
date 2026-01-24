@@ -6,10 +6,11 @@ import {
   AlertTitle,
   AlertDescription,
 } from "@chakra-ui/react";
-import { useState, useRef, useEffect, useCallback, Suspense, useMemo } from "react";
+import { useState, useRef, useEffect, useCallback, Suspense } from "react";
 import { Discussion } from "@hiveio/dhive";
 import { findPosts } from "@/lib/hive/client-functions";
 import { filterAutoComments } from "@/lib/utils/postUtils";
+import { getHiveTagForQuery } from "@/lib/hive/tag-utils";
 import TopBar from "@/components/blog/TopBar";
 import PostInfiniteScroll from "@/components/blog/PostInfiniteScroll";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -65,14 +66,7 @@ function BlogContent() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  const communityTag = HIVE_CONFIG.COMMUNITY_TAG;
-  const searchTag = HIVE_CONFIG.SEARCH_TAG;
-  const tag = useMemo(() => {
-    if (["created", "highest_paid", "goat"].includes(query)) {
-      return communityTag || searchTag;
-    }
-    return searchTag || communityTag;
-  }, [communityTag, searchTag, query]);
+  const tag = getHiveTagForQuery(query);
   const FETCH_LIMIT = Math.min(
     BLOG_CONFIG.BRIDGE_API_MAX_LIMIT,
     BLOG_CONFIG.POSTS_PER_PAGE * 2

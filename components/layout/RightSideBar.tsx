@@ -14,7 +14,7 @@ import { findPosts } from "@/lib/hive/client-functions";
 import PostGrid from "@/components/blog/PostGrid";
 import { filterAutoComments } from "@/lib/utils/postUtils";
 import { CommunityTotalPayout } from "../shared";
-import { HIVE_CONFIG } from "@/config/app.config";
+import { getHiveTagForQuery } from "@/lib/hive/tag-utils";
 
 export default function RightSideBar() {
   const [allPosts, setAllPosts] = useState<Discussion[]>([]);
@@ -27,8 +27,8 @@ export default function RightSideBar() {
   const prefillInProgress = useRef(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
-  const tag = HIVE_CONFIG.SEARCH_TAG;
   const QUERY = "created";
+  const tag = getHiveTagForQuery(QUERY);
 
   const params = useRef([
     {
