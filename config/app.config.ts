@@ -80,6 +80,24 @@ export const ETH_ADDRESSES = {
 } as const;
 
 // ============================================================================
+// APP CONFIG HELPERS
+// ============================================================================
+
+function isLocalhostUrl(value?: string): boolean {
+  if (!value) return false;
+  try {
+    const url = new URL(value);
+    return (
+      url.hostname === 'localhost' ||
+      url.hostname === '127.0.0.1' ||
+      url.hostname === '0.0.0.0'
+    );
+  } catch {
+    return false;
+  }
+}
+
+// ============================================================================
 // APP BRANDING & DEFAULTS
 // ============================================================================
 
@@ -124,7 +142,15 @@ export const APP_CONFIG = {
 
   /** Primary app origin (env override or fallback) */
   get ORIGIN() {
-    return process.env.NEXT_PUBLIC_BASE_URL || this.BASE_URL;
+    const envBaseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+    if (envBaseUrl) {
+      const isLocalhost = isLocalhostUrl(envBaseUrl);
+      if (process.env.NODE_ENV !== 'production' || !isLocalhost) {
+        return envBaseUrl;
+      }
+    }
+
+    return this.BASE_URL;
   },
 
   /** IPFS gateway host (env override or fallback) */
