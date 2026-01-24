@@ -36,7 +36,6 @@ import { usePostDelete } from "@/hooks/usePostDelete";
 import {
   parsePayout,
   calculatePayoutDays,
-  deduplicateVotes,
 } from "@/lib/utils/postUtils";
 import { BiDotsHorizontal } from "react-icons/bi";
 import MediaRenderer from "../shared/MediaRenderer";
