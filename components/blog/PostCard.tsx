@@ -11,6 +11,7 @@ import {
   MenuList,
   IconButton,
   HStack,
+  useToast,
 } from "@chakra-ui/react";
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Discussion } from "@hiveio/dhive";
@@ -28,6 +29,7 @@ import {
   extractImageUrls,
 } from "@/lib/utils/extractImageUrls"; // Import YouTube extraction function
 import useHivePower from "@/hooks/useHivePower";
+import { useVoteWeightContext } from "@/contexts/VoteWeightContext";
 import { parseJsonMetadata } from "@/lib/hive/metadata-utils";
 import MatrixOverlay from "@/components/graphics/MatrixOverlay";
 import { UpvoteButton } from "@/components/shared";
@@ -70,11 +72,14 @@ export default function PostCard({
 
   const [showSlider, setShowSlider] = useState(false);
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
-  const { user } = useAioha();
+  const { aioha, user } = useAioha();
+  const toast = useToast();
   const {
     isLoading: isHivePowerLoading,
     estimateVoteValue,
   } = useHivePower(user);
+  const { voteWeight: userVoteWeight, disableSlider } = useVoteWeightContext();
+  const [isVoting, setIsVoting] = useState(false);
   const [activeVotes, setActiveVotes] = useState(post.active_votes || []);
   const [payoutValue, setPayoutValue] = useState(
     parseFloat(getPayoutValue(post))
@@ -256,6 +261,54 @@ export default function PostCard({
     }
   }
 
+  // Direct vote handler for when slider is disabled
+  async function handleDirectVote() {
+    if (!user || voted || isVoting) return;
+    
+    setIsVoting(true);
+    try {
+      const vote = await aioha.vote(
+        post.author,
+        post.permlink,
+        userVoteWeight * 100
+      );
+      
+      if (vote.success) {
+        setVoted(true);
+        setActiveVotes([...activeVotes, { voter: user, weight: userVoteWeight * 100 }]);
+        
+        // Update payout value with estimated value
+        if (estimateVoteValue && !isHivePowerLoading) {
+          try {
+            const estimatedValue = await estimateVoteValue(userVoteWeight);
+            if (estimatedValue) {
+              setPayoutValue((prev) => prev + estimatedValue);
+            }
+          } catch (e) {
+            // Ignore estimation errors
+          }
+        }
+        
+        toast({
+          title: "Vote submitted!",
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Failed to vote",
+        description: error.message || "Please try again",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setIsVoting(false);
+    }
+  }
+
 
   const { authorPayout, curatorPayout } = useMemo(() => {
     const assetToString = (val: string | { toString: () => string }): string =>
@@ -372,11 +425,17 @@ export default function PostCard({
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}
               onClick={() => {
-                if (!voted) {
-                  setShowSlider(true);
+                if (!voted && !isVoting) {
+                  if (disableSlider) {
+                    // Slider disabled - vote directly with default weight
+                    handleDirectVote();
+                  } else {
+                    // Show slider for vote weight selection
+                    setShowSlider(true);
+                  }
                 }
               }}
-              opacity={0.9}
+              opacity={isVoting ? 0.5 : 0.9}
               _hover={{ opacity: 0.7 }}
               transition="opacity 0.2s"
             >
@@ -871,11 +930,17 @@ export default function PostCard({
                   onMouseEnter={() => setIsHovered(true)}
                   onMouseLeave={() => setIsHovered(false)}
                   onClick={() => {
-                    if (!voted) {
-                      setShowSlider(true);
+                    if (!voted && !isVoting) {
+                      if (disableSlider) {
+                        // Slider disabled - vote directly with default weight
+                        handleDirectVote();
+                      } else {
+                        // Show slider for vote weight selection
+                        setShowSlider(true);
+                      }
                     }
                   }}
-                  opacity={0.9}
+                  opacity={isVoting ? 0.5 : 0.9}
                   _hover={{ opacity: 0.7 }}
                   transition="opacity 0.2s"
                 >
