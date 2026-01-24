@@ -8,7 +8,7 @@ const MAX_BLOG_POSTS = 120;
 const MAX_SNAP_POSTS = 120;
 const SNAP_API_PAGE_SIZE = 50;
 
-export const revalidate = REVALIDATE_SECONDS;
+export const revalidate = 1800;
 
 type RankedPost = {
     author?: string;
