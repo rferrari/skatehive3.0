@@ -12,6 +12,7 @@ import {
   MenuItem,
   Menu,
   MenuList,
+  useToast,
 } from "@chakra-ui/react";
 import { DeleteIcon } from "@chakra-ui/icons";
 import { Discussion } from "@hiveio/dhive";
@@ -27,6 +28,7 @@ import { UpvoteButton } from "@/components/shared";
 import EditPostModal from "./EditPostModal";
 import ShareMenuButtons from "./ShareMenuButtons";
 import useHivePower from "@/hooks/useHivePower";
+import { useVoteWeightContext } from "@/contexts/VoteWeightContext";
 import { separateContent, fetchFilteredReplies } from "@/lib/utils/snapUtils";
 import { SlPencil } from "react-icons/sl";
 import { usePostEdit } from "@/hooks/usePostEdit";
@@ -57,12 +59,14 @@ const Snap = ({
   onCommentAdded,
   onDelete,
 }: SnapProps) => {
-  const { user } = useAioha();
+  const { aioha, user } = useAioha();
+  const toast = useToast();
   const {
     isLoading: isHivePowerLoading,
     error: hivePowerError,
     estimateVoteValue,
   } = useHivePower(user);
+  const { voteWeight: userVoteWeight, disableSlider } = useVoteWeightContext();
   const commentDate = getPostDate(discussion.created);
 
   const {
@@ -101,6 +105,7 @@ const Snap = ({
   const [inlineComposerStates, setInlineComposerStates] = useState<
     Record<string, boolean>
   >({});
+  const [isVoting, setIsVoting] = useState(false);
 
   const [commentCount, setCommentCount] = useState(discussion.children ?? 0);
   const effectiveDepth = discussion.depth || 0;
@@ -116,6 +121,54 @@ const Snap = ({
     ) || false
   );
   const [isHovered, setIsHovered] = useState(false);
+
+  // Direct vote handler for when slider is disabled
+  async function handleDirectVote() {
+    if (!user || voted || isVoting) return;
+    
+    setIsVoting(true);
+    try {
+      const vote = await aioha.vote(
+        discussion.author,
+        discussion.permlink,
+        userVoteWeight * 100
+      );
+      
+      if (vote.success) {
+        setVoted(true);
+        setActiveVotes([...activeVotes, { voter: user, weight: userVoteWeight * 100 }]);
+        
+        // Update reward amount with estimated value
+        if (estimateVoteValue && !isHivePowerLoading) {
+          try {
+            const estimatedValue = await estimateVoteValue(userVoteWeight);
+            if (estimatedValue) {
+              setRewardAmount((prev) => parseFloat((prev + estimatedValue).toFixed(3)));
+            }
+          } catch (e) {
+            // Ignore estimation errors
+          }
+        }
+        
+        toast({
+          title: "Vote submitted!",
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Failed to vote",
+        description: error.message || "Please try again",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setIsVoting(false);
+    }
+  }
 
   function handleConversation() {
     if (setConversation) {
@@ -284,11 +337,17 @@ const Snap = ({
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}
               onClick={() => {
-                if (!voted) {
-                  setShowSlider(true);
+                if (!voted && !isVoting) {
+                  if (disableSlider) {
+                    // Slider disabled - vote directly with default weight
+                    handleDirectVote();
+                  } else {
+                    // Show slider for vote weight selection
+                    setShowSlider(true);
+                  }
                 }
               }}
-              opacity={0.9}
+              opacity={isVoting ? 0.5 : 0.9}
               _hover={{ opacity: 0.7 }}
               transition="opacity 0.2s"
             >
