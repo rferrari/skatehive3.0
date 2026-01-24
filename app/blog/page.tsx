@@ -8,7 +8,7 @@ import {
 } from "@chakra-ui/react";
 import { useState, useRef, useEffect, useCallback, Suspense } from "react";
 import { Discussion } from "@hiveio/dhive";
-import { findPosts, getPayoutValue } from "@/lib/hive/client-functions";
+import { findPosts } from "@/lib/hive/client-functions";
 import { filterAutoComments } from "@/lib/utils/postUtils";
 import TopBar from "@/components/blog/TopBar";
 import PostInfiniteScroll from "@/components/blog/PostInfiniteScroll";
@@ -26,6 +26,7 @@ import {
   type ViewMode,
 } from "@/config/blog.config";
 import { HIVE_CONFIG } from "@/config/app.config";
+import { fetchHighestPaidPosts, convertToDiscussionFormat } from "@/services/skatehiveApiService";
 
 function BlogContent() {
   const t = useTranslations();
@@ -69,10 +70,6 @@ function BlogContent() {
     BLOG_CONFIG.BRIDGE_API_MAX_LIMIT,
     BLOG_CONFIG.POSTS_PER_PAGE * 2
   );
-  const GOAT_FETCH_LIMIT = Math.min(
-    BLOG_CONFIG.GOAT_BATCH_SIZE,
-    BLOG_CONFIG.BRIDGE_API_MAX_LIMIT
-  );
   const MAX_EMPTY_BATCHES = 2;
 
   const params = useRef([
@@ -85,62 +82,26 @@ function BlogContent() {
   ]);
 
   const fetchGoatPosts = useCallback(async () => {
-    if (!tag) {
-      setError(t('blog.cannotFetchMissingTag'));
-      return;
-    }
-
     setIsGoatLoading(true);
     setIsInitialLoading(true);
     setAllPosts([]);
     setError(null);
 
-    params.current = [
-      {
-        tag: tag,
-        limit: GOAT_FETCH_LIMIT as number,
-        start_author: "",
-        start_permlink: "",
-      },
-    ];
-    let allFetchedPosts: Discussion[] = [];
-    let batchCount = 0;
-
     try {
-      while (batchCount < BLOG_CONFIG.MAX_GOAT_BATCHES) {
-         const posts = await findPosts("created", params.current);
-         const filteredPosts = filterAutoComments(posts);
-         if (!posts || posts.length === 0) break;
-         if (filteredPosts.length > 0) {
-           allFetchedPosts = [...allFetchedPosts, ...filteredPosts];
-         }
-         // Remove duplicates by permlink
-         const uniquePosts = Array.from(
-           new Map(
-             allFetchedPosts.map((p) => [p.author + "/" + p.permlink, p])
-           ).values()
-         );
-        // Sort by payout
-        const sorted = uniquePosts.sort(
-          (a, b) => Number(getPayoutValue(b)) - Number(getPayoutValue(a))
-        );
-        // Show top 12 so far
-         setAllPosts(sorted.slice(0, BLOG_CONFIG.POSTS_PER_PAGE));
-         // Prepare for next batch
-         const lastPost = posts[posts.length - 1];
-         params.current = [
-           {
-             tag: tag,
-             limit: GOAT_FETCH_LIMIT as number,
-             start_author: lastPost?.author || "",
-             start_permlink: lastPost?.permlink || "",
-           },
-         ];
-        batchCount++;
-         if (posts.length < GOAT_FETCH_LIMIT) break;
-        // Add delay to avoid rate limits
-        await new Promise((res) => setTimeout(res, BLOG_CONFIG.BATCH_DELAY_MS));
-      }
+      // Use the Skatehive API to get all-time highest paid posts (GOAT)
+      const response = await fetchHighestPaidPosts({
+        page: 1,
+        limit: BLOG_CONFIG.POSTS_PER_PAGE,
+        days: null, // All time = GOAT
+      });
+
+      // Convert API response to Discussion format for compatibility
+      const posts = response.posts.map(post => 
+        convertToDiscussionFormat(post) as unknown as Discussion
+      );
+
+      setAllPosts(posts);
+      setHasMoreState(false); // GOAT posts don't paginate infinitely
     } catch (error) {
       console.error("Failed to fetch GOAT posts:", error);
       setError(t('blog.failedToLoadGoat'));
@@ -148,26 +109,48 @@ function BlogContent() {
       setIsGoatLoading(false);
       setIsInitialLoading(false);
     }
-  }, [tag, t, GOAT_FETCH_LIMIT]);
+  }, [t, setHasMoreState]);
+
+  // Fetch highest paid posts from recent period (e.g., last 30 days)
+  const fetchHighestPaidPostsRecent = useCallback(async () => {
+    setIsGoatLoading(true);
+    setIsInitialLoading(true);
+    setAllPosts([]);
+    setError(null);
+
+    try {
+      // Use the Skatehive API to get highest paid posts from last 30 days
+      const response = await fetchHighestPaidPosts({
+        page: 1,
+        limit: BLOG_CONFIG.POSTS_PER_PAGE,
+        days: 30, // Last 30 days
+      });
+
+      // Convert API response to Discussion format for compatibility
+      const posts = response.posts.map(post => 
+        convertToDiscussionFormat(post) as unknown as Discussion
+      );
+
+      setAllPosts(posts);
+      setHasMoreState(false); // Don't paginate infinitely
+    } catch (error) {
+      console.error("Failed to fetch highest paid posts:", error);
+      setError(t('blog.failedToLoad'));
+    } finally {
+      setIsGoatLoading(false);
+      setIsInitialLoading(false);
+    }
+  }, [t, setHasMoreState]);
 
   const fetchBatch = useCallback(async () => {
-    const posts = await findPosts(
-      query === "highest_paid" ? "created" : query,
-      params.current
-    );
+    const posts = await findPosts(query, params.current);
     const filteredPosts = filterAutoComments(posts);
-    const sortedPosts =
-      query === "highest_paid"
-        ? [...filteredPosts].sort(
-            (a, b) => Number(getPayoutValue(b)) - Number(getPayoutValue(a))
-          )
-        : filteredPosts;
 
     const limit = params.current[0]?.limit || FETCH_LIMIT;
     const batchHasMore = posts.length >= limit;
     const lastPost = posts[posts.length - 1];
 
-    return { posts: sortedPosts, lastPost, batchHasMore };
+    return { posts: filteredPosts, lastPost, batchHasMore };
   }, [query, FETCH_LIMIT]);
 
   const appendBatch = useCallback(
@@ -229,6 +212,10 @@ function BlogContent() {
       fetchGoatPosts();
       return;
     }
+    if (query === "highest_paid") {
+      fetchHighestPaidPostsRecent();
+      return;
+    }
     if (!hasMoreRef.current) return;
     if (isFetching.current) return; // Prevent multiple fetches
     if (!tag) {
@@ -277,6 +264,7 @@ function BlogContent() {
     query,
     tag,
     fetchGoatPosts,
+    fetchHighestPaidPostsRecent,
     fetchBatch,
     appendBatch,
     startPrefetch,
@@ -304,10 +292,12 @@ function BlogContent() {
     ];
     if (query === "goat") {
       fetchGoatPosts();
+    } else if (query === "highest_paid") {
+      fetchHighestPaidPostsRecent();
     } else {
       fetchPosts();
     }
-  }, [fetchPosts, fetchGoatPosts, query, tag, FETCH_LIMIT, setHasMoreState]);
+  }, [fetchPosts, fetchGoatPosts, fetchHighestPaidPostsRecent, query, tag, FETCH_LIMIT, setHasMoreState]);
 
   // Detect mobile and force grid view
   useEffect(() => {
@@ -391,12 +381,12 @@ function BlogContent() {
             router.replace(`/blog?${params.toString()}`);
           }}
         />
-        {isGoatLoading && query === "goat" && (
+        {isGoatLoading && (query === "goat" || query === "highest_paid") && (
           <Box textAlign="center" color="primary" py={4} fontWeight="bold">
-            {t('blog.scanningGoat')}
+            {query === "goat" ? t('blog.scanningGoat') : t('blog.loading')}
           </Box>
         )}
-        {query === "goat" ? (
+        {query === "goat" || query === "highest_paid" ? (
           <PostGrid posts={allPosts} columns={3} />
         ) : (
           <PostInfiniteScroll
