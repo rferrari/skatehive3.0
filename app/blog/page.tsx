@@ -96,7 +96,7 @@ function BlogContent() {
       });
 
       // Convert API response to Discussion format for compatibility
-      const posts = response.posts.map(post => 
+      const posts = response.posts.map(post =>
         convertToDiscussionFormat(post) as unknown as Discussion
       );
 
@@ -127,7 +127,7 @@ function BlogContent() {
       });
 
       // Convert API response to Discussion format for compatibility
-      const posts = response.posts.map(post => 
+      const posts = response.posts.map(post =>
         convertToDiscussionFormat(post) as unknown as Discussion
       );
 
