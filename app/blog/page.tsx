@@ -6,7 +6,7 @@ import {
   AlertTitle,
   AlertDescription,
 } from "@chakra-ui/react";
-import { useState, useRef, useEffect, useCallback, Suspense } from "react";
+import { useState, useRef, useEffect, useCallback, Suspense, useMemo } from "react";
 import { Discussion } from "@hiveio/dhive";
 import { findPosts } from "@/lib/hive/client-functions";
 import { filterAutoComments } from "@/lib/utils/postUtils";
@@ -65,7 +65,14 @@ function BlogContent() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  const tag = HIVE_CONFIG.SEARCH_TAG;
+  const communityTag = HIVE_CONFIG.COMMUNITY_TAG;
+  const searchTag = HIVE_CONFIG.SEARCH_TAG;
+  const tag = useMemo(() => {
+    if (["created", "highest_paid", "goat"].includes(query)) {
+      return communityTag || searchTag;
+    }
+    return searchTag || communityTag;
+  }, [communityTag, searchTag, query]);
   const FETCH_LIMIT = Math.min(
     BLOG_CONFIG.BRIDGE_API_MAX_LIMIT,
     BLOG_CONFIG.POSTS_PER_PAGE * 2
@@ -320,8 +327,7 @@ function BlogContent() {
     setViewMode("grid");
   };
   // Magazine props (same as /magazine/page.tsx)
-  const communityTag = HIVE_CONFIG.COMMUNITY_TAG;
-  const magazineTag = [{ tag: communityTag, limit: 20 }]; // Bridge API max limit is 20
+  const magazineTag = [{ tag: HIVE_CONFIG.COMMUNITY_TAG, limit: 20 }]; // Bridge API max limit is 20
   const magazineQuery = "created"; // Use trending for blog magazine view
 
   return (
