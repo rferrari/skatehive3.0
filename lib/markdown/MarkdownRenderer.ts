@@ -40,6 +40,7 @@ function getSanitizedHTML(html: string): string {
                     /^https:\/\/youtu\.be\/[a-zA-Z0-9_-]{11}(\?.*)?$/,
                     /^https:\/\/player\.vimeo\.com\/video\/[0-9]+(\?.*)?$/,
                     /^https:\/\/3speak\.tv\/embed\?v=[^"'<>\s]+$/,
+                    /^https:\/\/play\.3speak\.tv\/watch\?v=[^"'<>\s]+$/,
                     /^https:\/\/odysee\.com\/.+$/,
                     new RegExp(`^https:\\/\\/${APP_CONFIG.IPFS_GATEWAY.replace('.', '\\.') }\\/ipfs\\/.+$`),
                     /^https:\/\/gateway\.pinata\.cloud\/ipfs\/.+$/
@@ -219,16 +220,16 @@ export function processMediaContent(content: string): string {
 }
 
 function expandEmbeds(html: string): string {
-    // 3Speak
+    // 3Speak - Updated to new play.3speak.tv format (Jan 2026)
     html = html.replace(/\[\[3SPEAK:([^[\]\s]+)\]\]/g, (_m, id) => `
         <div class="embed-frame">
             <iframe
-                src="https://3speak.tv/embed?v=${id}&autoplay=0&muted=0&controls=1"
+                src="https://play.3speak.tv/watch?v=${id}&mode=iframe&layout=desktop"
                 loading="lazy"
                 referrerpolicy="no-referrer-when-downgrade"
                 allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowfullscreen
-                sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
+                sandbox="allow-scripts allow-same-origin allow-popups"
             ></iframe>
         </div>
     `);
