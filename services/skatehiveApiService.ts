@@ -96,17 +96,19 @@ export async function fetchHighestPaidPosts(
     const response = await fetch(url, {
         method: 'GET',
         headers: {
-            'Content-Type': 'application/json',
+            'Accept': 'application/json',
         },
-        // Cache for 5 minutes on client side
-        next: { revalidate: 300 },
+        cache: 'no-store', // Don't cache on client side, API handles caching
     });
 
     if (!response.ok) {
-        throw new Error(`Failed to fetch highest paid posts: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('API Error:', response.status, errorText);
+        throw new Error(`Failed to fetch highest paid posts: ${response.status} ${response.statusText}`);
     }
 
-    return response.json();
+    const data = await response.json();
+    return data;
 }
 
 /**
