@@ -115,6 +115,17 @@ export async function fetchHighestPaidPosts(
  * Convert API response to Discussion-like format for compatibility with existing components
  */
 export function convertToDiscussionFormat(post: HighestPaidPost): Record<string, unknown> {
+    // Create a mock active_votes array with the correct length
+    // The PostCard component uses activeVotes.length to display vote count
+    const mockActiveVotes = Array.from({ length: post.total_votes }, (_, i) => ({
+        voter: `voter_${i}`,
+        weight: 10000,
+        rshares: '0',
+        percent: 10000,
+        reputation: 0,
+        time: post.created,
+    }));
+
     return {
         author: post.author,
         permlink: post.permlink,
@@ -127,6 +138,7 @@ export function convertToDiscussionFormat(post: HighestPaidPost): Record<string,
         curator_payout_value: `${post.curator_payout.toFixed(3)} HBD`,
         // Calculated fields for compatibility
         net_votes: post.total_votes,
+        active_votes: mockActiveVotes, // PostCard uses active_votes.length
         children: 0,
         // Add computed total for sorting display
         _totalPayout: post.total_payout,
