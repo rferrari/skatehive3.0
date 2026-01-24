@@ -206,7 +206,7 @@ export const lg = {
     successDescription: 'Bulungi okuweta snap container!',
     failedTitle: 'Upvote Byetagganya',
     errorOccurred: 'Kifo mu kutegeeza okuweta.',
-    supportCommunity: '💜 Tusobola Community',
+    supportCommunity: 'Tusobola Community',
     helpSkateHive: 'Tusobola SkateHive okuweta snap container post',
     helpSkateHiveDetailed: 'Tusobola SkateHive okuweta snap container post gwe snaps zonna ziggala.',
     container: 'Container',

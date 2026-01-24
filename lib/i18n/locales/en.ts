@@ -206,7 +206,7 @@ export const en = {
     successDescription: 'Successfully upvoted the snap container!',
     failedTitle: 'Upvote Failed',
     errorOccurred: 'An error occurred while trying to upvote.',
-    supportCommunity: '💜 Support the Community',
+    supportCommunity: 'xSupport the Community',
     helpSkateHive: 'Help SkateHive by upvoting the main snap container post',
     helpSkateHiveDetailed: 'Help SkateHive by upvoting the main snap container post where all snaps are stored.',
     container: 'Container',

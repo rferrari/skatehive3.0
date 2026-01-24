@@ -206,7 +206,7 @@ export const es = {
     successDescription: '¡Contenedor de snap votado exitosamente!',
     failedTitle: 'Voto Fallido',
     errorOccurred: 'Ocurrió un error al intentar votar.',
-    supportCommunity: '💜 Apoya la Comunidad',
+    supportCommunity: 'Apoya la Comunidad',
     helpSkateHive: 'Ayuda a SkateHive votando la publicación principal del contenedor de snaps',
     helpSkateHiveDetailed: 'Ayuda a SkateHive votando la publicación principal del contenedor de snaps donde se almacenan todos los snaps.',
     container: 'Contenedor',
