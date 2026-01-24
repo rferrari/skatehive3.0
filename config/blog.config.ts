@@ -9,7 +9,7 @@ import { HIVE_CONFIG } from './app.config';
 export const BLOG_CONFIG = {
   POSTS_PER_PAGE: 12,
   BRIDGE_API_MAX_LIMIT: 20, // Hive Bridge API maximum limit per request
-  GOAT_BATCH_SIZE: 100,
+  GOAT_BATCH_SIZE: 20, // Must stay <= BRIDGE_API_MAX_LIMIT
   MAX_GOAT_BATCHES: 10,
   BATCH_DELAY_MS: 300,
   get MAX_GOAT_POSTS() {

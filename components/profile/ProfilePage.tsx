@@ -62,6 +62,7 @@ const ContentViews = memo(function ContentViews({
     viewMode: "grid" | "list";
     context: "profile";
     hideAuthorInfo: boolean;
+    isLoading: boolean;
   };
   videoPartsProps: {
     profileData: ProfileData;
@@ -233,6 +234,7 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
         viewMode: "grid" as const,
         context: "profile" as const,
         hideAuthorInfo: true,
+        isLoading: false,
       };
     }
 
@@ -242,8 +244,9 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
       viewMode: viewMode as "grid" | "list",
       context: "profile" as const,
       hideAuthorInfo: true,
+      isLoading: postsLoading,
     };
-  }, [sortedPosts, fetchPosts, viewMode]);
+  }, [sortedPosts, fetchPosts, viewMode, postsLoading]);
 
   // Memoize video parts props
   const videoPartsProps = useMemo(

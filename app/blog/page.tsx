@@ -47,6 +47,7 @@ function BlogContent() {
   const [hasMore, setHasMore] = useState(true);
   const hasMoreRef = useRef(true);
   const isFetching = useRef(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   const setHasMoreState = useCallback((value: boolean) => {
     hasMoreRef.current = value;
@@ -68,6 +69,11 @@ function BlogContent() {
     BLOG_CONFIG.BRIDGE_API_MAX_LIMIT,
     BLOG_CONFIG.POSTS_PER_PAGE * 2
   );
+  const GOAT_FETCH_LIMIT = Math.min(
+    BLOG_CONFIG.GOAT_BATCH_SIZE,
+    BLOG_CONFIG.BRIDGE_API_MAX_LIMIT
+  );
+  const MAX_EMPTY_BATCHES = 2;
 
   const params = useRef([
     {
@@ -85,33 +91,35 @@ function BlogContent() {
     }
 
     setIsGoatLoading(true);
+    setIsInitialLoading(true);
     setAllPosts([]);
     setError(null);
 
     params.current = [
       {
         tag: tag,
-        limit: BLOG_CONFIG.GOAT_BATCH_SIZE as number,
+        limit: GOAT_FETCH_LIMIT as number,
         start_author: "",
         start_permlink: "",
       },
     ];
     let allFetchedPosts: Discussion[] = [];
-    let keepFetching = true;
     let batchCount = 0;
 
     try {
-      while (keepFetching && batchCount < BLOG_CONFIG.MAX_GOAT_BATCHES) {
+      while (batchCount < BLOG_CONFIG.MAX_GOAT_BATCHES) {
          const posts = await findPosts("created", params.current);
          const filteredPosts = filterAutoComments(posts);
-         if (!filteredPosts || filteredPosts.length === 0) break;
-         allFetchedPosts = [...allFetchedPosts, ...filteredPosts];
-        // Remove duplicates by permlink
-        const uniquePosts = Array.from(
-          new Map(
-            allFetchedPosts.map((p) => [p.author + "/" + p.permlink, p])
-          ).values()
-        );
+         if (!posts || posts.length === 0) break;
+         if (filteredPosts.length > 0) {
+           allFetchedPosts = [...allFetchedPosts, ...filteredPosts];
+         }
+         // Remove duplicates by permlink
+         const uniquePosts = Array.from(
+           new Map(
+             allFetchedPosts.map((p) => [p.author + "/" + p.permlink, p])
+           ).values()
+         );
         // Sort by payout
         const sorted = uniquePosts.sort(
           (a, b) => Number(getPayoutValue(b)) - Number(getPayoutValue(a))
@@ -119,16 +127,17 @@ function BlogContent() {
         // Show top 12 so far
          setAllPosts(sorted.slice(0, BLOG_CONFIG.POSTS_PER_PAGE));
          // Prepare for next batch
+         const lastPost = posts[posts.length - 1];
          params.current = [
            {
              tag: tag,
-             limit: BLOG_CONFIG.GOAT_BATCH_SIZE as number,
-             start_author: filteredPosts[filteredPosts.length - 1].author,
-             start_permlink: filteredPosts[filteredPosts.length - 1].permlink,
+             limit: GOAT_FETCH_LIMIT as number,
+             start_author: lastPost?.author || "",
+             start_permlink: lastPost?.permlink || "",
            },
          ];
         batchCount++;
-         if (filteredPosts.length < BLOG_CONFIG.GOAT_BATCH_SIZE) break;
+         if (posts.length < GOAT_FETCH_LIMIT) break;
         // Add delay to avoid rate limits
         await new Promise((res) => setTimeout(res, BLOG_CONFIG.BATCH_DELAY_MS));
       }
@@ -137,25 +146,26 @@ function BlogContent() {
       setError(t('blog.failedToLoadGoat'));
     } finally {
       setIsGoatLoading(false);
+      setIsInitialLoading(false);
     }
-  }, [tag, t]);
+  }, [tag, t, GOAT_FETCH_LIMIT]);
 
   const fetchBatch = useCallback(async () => {
-        const posts = await findPosts(
-          query === "highest_paid" ? "created" : query,
-          params.current
-        );
-        const filteredPosts = filterAutoComments(posts);
-        let sortedPosts = filteredPosts;
-    if (query === "highest_paid") {
-      sortedPosts = [...posts].sort(
-        (a, b) => Number(getPayoutValue(b)) - Number(getPayoutValue(a))
-      );
-    }
+    const posts = await findPosts(
+      query === "highest_paid" ? "created" : query,
+      params.current
+    );
+    const filteredPosts = filterAutoComments(posts);
+    const sortedPosts =
+      query === "highest_paid"
+        ? [...filteredPosts].sort(
+            (a, b) => Number(getPayoutValue(b)) - Number(getPayoutValue(a))
+          )
+        : filteredPosts;
 
-    const batchHasMore =
-      sortedPosts.length >= (params.current[0]?.limit || FETCH_LIMIT);
-    const lastPost = sortedPosts[sortedPosts.length - 1];
+    const limit = params.current[0]?.limit || FETCH_LIMIT;
+    const batchHasMore = posts.length >= limit;
+    const lastPost = posts[posts.length - 1];
 
     return { posts: sortedPosts, lastPost, batchHasMore };
   }, [query, FETCH_LIMIT]);
@@ -166,13 +176,10 @@ function BlogContent() {
       lastPost: Discussion | undefined,
       batchHasMore: boolean
     ) => {
-      if (!posts || posts.length === 0) {
-        setHasMoreState(false);
-        return { nextCanPrefetch: false };
-      }
+      const nextCanPrefetch = batchHasMore && Boolean(lastPost);
 
       // Filter out already seen posts to avoid bloating state
-      const freshPosts = posts.filter((post) => {
+      const freshPosts = (posts || []).filter((post) => {
         const key = `${post.author}/${post.permlink}`;
         if (seenPosts.current.has(key)) return false;
         seenPosts.current.add(key);
@@ -183,7 +190,6 @@ function BlogContent() {
         setAllPosts((prevPosts) => [...prevPosts, ...freshPosts]);
       }
 
-      const nextCanPrefetch = batchHasMore && Boolean(lastPost);
       setHasMoreState(nextCanPrefetch);
 
       if (nextCanPrefetch && lastPost) {
@@ -197,7 +203,7 @@ function BlogContent() {
         ];
       }
 
-      return { nextCanPrefetch };
+      return { nextCanPrefetch, didAppend: freshPosts.length > 0 };
     },
     [tag, FETCH_LIMIT, setHasMoreState]
   );
@@ -234,18 +240,30 @@ function BlogContent() {
     setError(null);
 
     try {
-      const batch =
-        prefetchBatch.current && !prefetching.current
-          ? prefetchBatch.current
-          : await fetchBatch();
+      let attempts = 0;
+      let didAppend = false;
+      let nextCanPrefetch = false;
 
-      prefetchBatch.current = null;
+      while (!didAppend && attempts <= MAX_EMPTY_BATCHES) {
+        const batch =
+          prefetchBatch.current && !prefetching.current
+            ? prefetchBatch.current
+            : await fetchBatch();
 
-      const { nextCanPrefetch } = appendBatch(
-        batch.posts,
-        batch.lastPost,
-        batch.batchHasMore
-      );
+        prefetchBatch.current = null;
+
+        const appendResult = appendBatch(
+          batch.posts,
+          batch.lastPost,
+          batch.batchHasMore
+        );
+
+        didAppend = appendResult.didAppend;
+        nextCanPrefetch = appendResult.nextCanPrefetch;
+
+        if (!nextCanPrefetch) break;
+        attempts += 1;
+      }
 
       startPrefetch(Boolean(nextCanPrefetch));
     } catch (error) {
@@ -253,6 +271,7 @@ function BlogContent() {
       setError(t('blog.failedToLoad'));
     } finally {
       isFetching.current = false;
+      setIsInitialLoading(false);
     }
   }, [
     query,
@@ -261,6 +280,7 @@ function BlogContent() {
     fetchBatch,
     appendBatch,
     startPrefetch,
+    MAX_EMPTY_BATCHES,
     t,
   ]);
 
@@ -273,6 +293,7 @@ function BlogContent() {
     prefetching.current = false;
     setError(null);
     isFetching.current = false;
+    setIsInitialLoading(true);
     params.current = [
       {
         tag: tag,
@@ -384,6 +405,7 @@ function BlogContent() {
             viewMode={viewMode}
             context="blog"
             hasMore={hasMore}
+            isLoading={isInitialLoading}
           />
         )}
       </Box>

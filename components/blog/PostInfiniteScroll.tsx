@@ -4,9 +4,7 @@ import {
   Skeleton,
   SimpleGrid,
   Flex,
-  Grid,
   SkeletonCircle,
-  SkeletonText,
 } from "@chakra-ui/react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import PostGrid from "@/components/blog/PostGrid";
@@ -23,6 +21,7 @@ interface PostsInfiniteScrollProps {
   fetchPosts: () => Promise<void>;
   /** Whether there are more items to load. Parent MUST manage this. */
   hasMore: boolean;
+  isLoading?: boolean;
   viewMode: "grid" | "list" | "magazine";
   context?: "blog" | "profile" | "rightsidebar";
   hideAuthorInfo?: boolean;
@@ -37,6 +36,7 @@ export default function PostsInfiniteScroll({
   context = "blog",
   hideAuthorInfo = false,
   hasMore,
+  isLoading = false,
   scrollableTargetId = "scrollableDiv",
   scrollThreshold = "200px",
 }: PostsInfiniteScrollProps) {
@@ -53,66 +53,66 @@ export default function PostsInfiniteScroll({
   // Safety: ensure hasMore is a boolean; default to false at runtime to avoid accidental infinite loads
   const safeHasMore = typeof hasMore === "boolean" ? hasMore : false;
 
+  const skeletonGrid = (
+    <SimpleGrid columns={{ base: 1, md: columns }} spacing={4}>
+      {Array(6)
+        .fill(0)
+        .map((_, i) => (
+          <Box key={i} borderRadius="base" overflow="hidden" p={4} bg="muted">
+            {/* Header: avatar + author */}
+            <Flex alignItems="center" mb={4}>
+              <SkeletonCircle
+                size="10"
+                mr={3}
+                startColor="muted"
+                endColor="primary"
+              />
+              <Skeleton
+                height="20px"
+                width="100px"
+                startColor="muted"
+                endColor="primary"
+              />
+            </Flex>
+            {/* Main image/media */}
+            <Skeleton
+              height="200px"
+              width="100%"
+              mb={4}
+              startColor="muted"
+              endColor="primary"
+            />
+            {/* Title */}
+            <Skeleton
+              height="20px"
+              width="80%"
+              mb={2}
+              startColor="muted"
+              endColor="primary"
+            />
+            {/* Summary */}
+            <Skeleton
+              height="20px"
+              width="60%"
+              startColor="muted"
+              endColor="primary"
+            />
+          </Box>
+        ))}
+    </SimpleGrid>
+  );
+
+  if (isLoading && allPosts.length === 0) {
+    return skeletonGrid;
+  }
+
   return (
     <InfiniteScroll
       dataLength={allPosts.length}
       next={fetchPosts}
       hasMore={safeHasMore}
       scrollThreshold={scrollThreshold}
-      loader={
-        <SimpleGrid columns={{ base: 1, md: columns }} spacing={4}>
-          {Array(6)
-            .fill(0)
-            .map((_, i) => (
-              <Box
-                key={i}
-                borderRadius="base"
-                overflow="hidden"
-                p={4}
-                bg="muted"
-              >
-                {/* Header: avatar + author */}
-                <Flex alignItems="center" mb={4}>
-                  <SkeletonCircle
-                    size="10"
-                    mr={3}
-                    startColor="muted"
-                    endColor="primary"
-                  />
-                  <Skeleton
-                    height="20px"
-                    width="100px"
-                    startColor="muted"
-                    endColor="primary"
-                  />
-                </Flex>
-                {/* Main image/media */}
-                <Skeleton
-                  height="200px"
-                  width="100%"
-                  mb={4}
-                  startColor="muted"
-                  endColor="primary"
-                />
-                {/* Title */}
-                <Skeleton
-                  height="20px"
-                  width="80%"
-                  mb={2}
-                  startColor="muted"
-                  endColor="primary"
-                />
-                {/* Summary */}
-                <Skeleton
-                  height="20px"
-                  width="60%"
-                  startColor="muted"
-                  endColor="primary"
-                />
-              </Box>
-            ))}
-        </SimpleGrid>
-      }
+      loader={skeletonGrid}
       scrollableTarget={scrollableTargetId}
     >
       {allPosts && (

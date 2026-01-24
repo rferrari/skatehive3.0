@@ -5,12 +5,6 @@ import {
   Avatar,
   Flex,
   Link,
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-  PopoverArrow,
-  PopoverBody,
-  useDisclosure,
   Tooltip,
   Menu,
   MenuButton,
@@ -27,7 +21,6 @@ import "swiper/css/navigation";
 import "swiper/css/pagination";
 import { getPostDate } from "@/lib/utils/GetPostDate";
 import { useAioha } from "@aioha/react-ui";
-import { useRouter } from "next/navigation";
 import { getPayoutValue } from "@/lib/hive/client-functions";
 import {
   extractYoutubeLinks,
@@ -75,14 +68,11 @@ export default function PostCard({
     return parsed && typeof parsed === "object" ? parsed : {};
   }, [json_metadata]);
 
-  const [imageUrls, setImageUrls] = useState<string[]>([]);
-  const [youtubeLinks, setYoutubeLinks] = useState<LinkWithDomain[]>([]);
   const [showSlider, setShowSlider] = useState(false);
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
   const { user } = useAioha();
   const {
     isLoading: isHivePowerLoading,
-    error: hivePowerError,
     estimateVoteValue,
   } = useHivePower(user);
   const [activeVotes, setActiveVotes] = useState(post.active_votes || []);
@@ -105,16 +95,9 @@ export default function PostCard({
       )
     );
   }, [post, user]);
-  const router = useRouter();
   const default_thumbnail =
     "https://images.hive.blog/u/" + author + "/avatar/large";
   const [visibleImages, setVisibleImages] = useState<number>(3);
-  const {
-    isOpen: isPayoutOpen,
-    onOpen: openPayout,
-    onClose: closePayout,
-    onToggle: togglePayout,
-  } = useDisclosure();
   const [showMatrix, setShowMatrix] = useState(false);
   const matrixTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const matrixHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -186,10 +169,9 @@ export default function PostCard({
     };
   }, [body, metadata.image, failedImages, default_thumbnail]);
 
-  useEffect(() => {
-    setImageUrls(mediaData.imageUrls);
-    setYoutubeLinks(mediaData.youtubeLinks);
-  }, [mediaData]);
+  const { imageUrls, youtubeLinks } = mediaData;
+  const hasMultipleImages = imageUrls.length > 1;
+  const hasMultipleVideos = youtubeLinks.length > 1;
 
   // **Function to load more slides**
   function handleSlideChange(swiper: any) {
@@ -275,13 +257,6 @@ export default function PostCard({
   }
 
 
-
-  // Deduplicate votes by voter (keep the last occurrence)
-  const uniqueVotesMap = new Map();
-  activeVotes.forEach((vote) => {
-    uniqueVotesMap.set(vote.voter, vote);
-  });
-
   const { authorPayout, curatorPayout } = useMemo(() => {
     const assetToString = (val: string | { toString: () => string }): string =>
       typeof val === "string" ? val : val.toString();
@@ -330,6 +305,7 @@ export default function PostCard({
               w="100%"
               h="100%"
               loading="lazy"
+              decoding="async"
               onError={handleImageError}
             />
           ) : (
@@ -341,6 +317,7 @@ export default function PostCard({
               w="100%"
               h="100%"
               loading="lazy"
+              decoding="async"
               onError={handleImageError}
             />
           )}
@@ -639,85 +616,136 @@ export default function PostCard({
               zIndex={2}
             >
                {imageUrls.length > 0 ? (
-                 <Swiper
-                   spaceBetween={10}
-                   slidesPerView={1}
-                   pagination={{ clickable: true }}
-                   navigation={true}
-                   modules={[Navigation, Pagination]}
-                   onSlideChange={handleSlideChange}
-                   className="custom-swiper"
-                   onSwiper={handleSwiperInit}
-                   observer={false}
-                   observeParents={false}
-                   watchSlidesProgress={false}
-                   watchOverflow={true}
-                 >
-                  {imageUrls.slice(0, visibleImages).map((url, index) => (
-                    <SwiperSlide key={`${url}-${index}`}>
-                       <Box h="200px" w="100%" position="relative" sx={{ userSelect: "none" }}>
-                   <Image
-                     src={url}
-                     alt={title}
-                     objectFit="cover"
-                     w="100%"
-                     h="100%"
-                     loading="lazy"
-                     decoding="async"
-                     transform="none"
-                     transition="none"
-                     onError={handleImageError}
-                     onLoad={handleImageLoad}
-                   />
-                          <Box
-                            position="absolute"
-                            inset={0}
-                            bg="background"
-                            opacity={0}
-                            transition="opacity 0.18s ease"
-                            pointerEvents="none"
-                            className="post-card-image-mask"
-                          />
-                       </Box>
-                    </SwiperSlide>
-                  ))}
-                </Swiper>
+                 hasMultipleImages ? (
+                   <Swiper
+                     spaceBetween={10}
+                     slidesPerView={1}
+                     pagination={{ clickable: true }}
+                     navigation={true}
+                     modules={[Navigation, Pagination]}
+                     onSlideChange={handleSlideChange}
+                     className="custom-swiper"
+                     onSwiper={handleSwiperInit}
+                     observer={false}
+                     observeParents={false}
+                     watchSlidesProgress={false}
+                     watchOverflow={true}
+                   >
+                    {imageUrls.slice(0, visibleImages).map((url, index) => (
+                      <SwiperSlide key={`${url}-${index}`}>
+                         <Box h="200px" w="100%" position="relative" sx={{ userSelect: "none" }}>
+                     <Image
+                       src={url}
+                       alt={title}
+                       objectFit="cover"
+                       w="100%"
+                       h="100%"
+                       loading="lazy"
+                       decoding="async"
+                       transform="none"
+                       transition="none"
+                       onError={handleImageError}
+                       onLoad={handleImageLoad}
+                     />
+                            <Box
+                              position="absolute"
+                              inset={0}
+                              bg="background"
+                              opacity={0}
+                              transition="opacity 0.18s ease"
+                              pointerEvents="none"
+                              className="post-card-image-mask"
+                            />
+                         </Box>
+                      </SwiperSlide>
+                    ))}
+                  </Swiper>
+                ) : (
+                  <Box h="200px" w="100%" position="relative">
+                    <Image
+                      src={imageUrls[0]}
+                      alt={title}
+                      objectFit="cover"
+                      w="100%"
+                      h="100%"
+                      loading="lazy"
+                      decoding="async"
+                      transform="none"
+                      transition="none"
+                      onError={handleImageError}
+                      onLoad={handleImageLoad}
+                    />
+                    <Box
+                      position="absolute"
+                      inset={0}
+                      bg="background"
+                      opacity={0}
+                      transition="opacity 0.18s ease"
+                      pointerEvents="none"
+                      className="post-card-image-mask"
+                    />
+                  </Box>
+                )
               ) : youtubeLinks.length > 0 ? (
-                <Swiper
-                  spaceBetween={10}
-                  slidesPerView={1}
-                  pagination={{ clickable: true }}
-                  navigation={true}
-                  modules={[Navigation, Pagination]}
-                  className="custom-swiper"
-                  onSwiper={handleSwiperInit}
-                >
-                  {youtubeLinks.map((link, index) => (
-                    <SwiperSlide key={`${link.url}-${index}`}>
-                       <Box h="200px" w="100%" position="relative">
-                          <iframe
-                            src={link.url}
-                            title={`YouTube video from ${link.domain}`}
-                            width="100%"
-                            height="100%"
-                            frameBorder="0"
-                            loading="lazy"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowFullScreen
-                          ></iframe>
-                          <Box
-                            position="absolute"
-                            inset={0}
-                            bg="background"
-                            opacity={0}
-                            transition="opacity 0.18s ease"
-                            pointerEvents="none"
-                            className="post-card-image-mask"
-                          />
-                       </Box>
-                    </SwiperSlide>
-                  ))}
-                </Swiper>
+                hasMultipleVideos ? (
+                  <Swiper
+                    spaceBetween={10}
+                    slidesPerView={1}
+                    pagination={{ clickable: true }}
+                    navigation={true}
+                    modules={[Navigation, Pagination]}
+                    className="custom-swiper"
+                    onSwiper={handleSwiperInit}
+                  >
+                    {youtubeLinks.map((link, index) => (
+                      <SwiperSlide key={`${link.url}-${index}`}>
+                         <Box h="200px" w="100%" position="relative">
+                            <iframe
+                              src={link.url}
+                              title={`YouTube video from ${link.domain}`}
+                              width="100%"
+                              height="100%"
+                              frameBorder="0"
+                              loading="lazy"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              allowFullScreen
+                            ></iframe>
+                            <Box
+                              position="absolute"
+                              inset={0}
+                              bg="background"
+                              opacity={0}
+                              transition="opacity 0.18s ease"
+                              pointerEvents="none"
+                              className="post-card-image-mask"
+                            />
+                         </Box>
+                      </SwiperSlide>
+                    ))}
+                  </Swiper>
+                ) : (
+                  <Box h="200px" w="100%" position="relative">
+                    <iframe
+                      src={youtubeLinks[0].url}
+                      title={`YouTube video from ${youtubeLinks[0].domain}`}
+                      width="100%"
+                      height="100%"
+                      frameBorder="0"
+                      loading="lazy"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    ></iframe>
+                    <Box
+                      position="absolute"
+                      inset={0}
+                      bg="background"
+                      opacity={0}
+                      transition="opacity 0.18s ease"
+                      pointerEvents="none"
+                      className="post-card-image-mask"
+                    />
+                  </Box>
+                )
               ) : (
                  <Box h="200px" w="100%" position="relative">
                     <Image
