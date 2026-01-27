@@ -66,9 +66,23 @@ export async function POST(request: NextRequest) {
       .limit(1);
 
     if (authError) {
-      console.error("Userbase lookup failed:", authError);
+      console.error("Userbase lookup failed:", {
+        error: authError,
+        code: authError.code,
+        message: authError.message,
+        details: authError.details,
+        hint: authError.hint,
+        identifier: identifier.substring(0, 3) + "***", // Partial for privacy
+      });
       return NextResponse.json(
-        { error: "Failed to lookup account" },
+        {
+          error: "Failed to lookup account",
+          code: authError.code,
+          details:
+            process.env.NODE_ENV !== "production"
+              ? authError.message
+              : undefined,
+        },
         { status: 500 }
       );
     }
