@@ -78,10 +78,8 @@ export async function POST(request: NextRequest) {
         {
           error: "Failed to lookup account",
           code: authError.code,
-          details:
-            process.env.NODE_ENV !== "production"
-              ? authError.message
-              : undefined,
+          message: authError.message,
+          hint: authError.hint,
         },
         { status: 500 }
       );
