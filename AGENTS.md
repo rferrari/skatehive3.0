@@ -178,3 +178,49 @@ myfeature: {
 - **pt-BR** – Portuguese (Brazil) (🇧🇷)
 - **es** – Spanish (🇪🇸)
 - **lg** – Luganda (🇺🇬)
+
+## Userbase system
+
+The userbase system enables "lite" users (email-only or wallet-only accounts) to participate without Hive blockchain keys. These users post through a shared default Hive account with their identity preserved via an overlay system.
+
+### Core concepts
+
+- **Lite users** – Users authenticated via email magic link or Ethereum wallet, without Hive keys
+- **Soft posts** – Posts published under a default Hive account (`skateuser`) but attributed to a userbase user
+- **Safe user** – HMAC hash of `user_id` stored in post metadata for secure identity lookup
+- **Overlay system** – React hooks that fetch userbase profiles to display instead of "skateuser"
+
+### Key files
+
+| File | Purpose |
+|------|---------|
+| `hooks/useSoftPostOverlay.ts` | Hook for fetching/caching soft post overlays |
+| `lib/userbase/safeUserMetadata.ts` | Extracts safe_user hash from post metadata |
+| `app/api/userbase/soft-posts/route.ts` | API for fetching overlay data |
+| `contexts/UserbaseAuthContext.tsx` | Userbase authentication state |
+
+### Database tables
+
+All userbase tables are prefixed with `userbase_` and defined in `sql/migrations/`:
+
+- `userbase_users` – User profiles (display_name, handle, avatar_url)
+- `userbase_identities` – Linked identities (email, wallet, Hive account)
+- `userbase_soft_posts` – Registry of posts made through the default account
+- `userbase_soft_votes` – Registry of votes made through the default account
+
+### Using the overlay hook
+
+```typescript
+import useSoftPostOverlay from "@/hooks/useSoftPostOverlay";
+import { extractSafeUser } from "@/lib/userbase/safeUserMetadata";
+
+function PostItem({ discussion }) {
+  const safeUser = extractSafeUser(discussion.json_metadata);
+  const softPost = useSoftPostOverlay(discussion.author, discussion.permlink, safeUser);
+  
+  const displayAuthor = softPost?.user.display_name || discussion.author;
+  const displayAvatar = softPost?.user.avatar_url || defaultAvatar;
+}
+```
+
+For detailed documentation, see `docs/USERBASE_SOFT_POSTS.md`.

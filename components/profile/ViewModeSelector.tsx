@@ -18,18 +18,25 @@ interface ViewModeSelectorProps {
   ) => void;
   isMobile: boolean;
   hasEthereumAddress?: boolean;
+  hasHiveProfile?: boolean;
 }
 
-const getMainTabs = (isMobile: boolean, hasEthereumAddress: boolean) => {
-  const baseTabs = [
-    { key: "snaps", label: "Snaps", icon: FaCamera },
-    { key: "posts", label: "Pages", icon: FaFileAlt },
-    {
-      key: "videoparts",
-      label: isMobile ? "Parts" : "VideoParts",
-      icon: FaVideo,
-    },
-  ] as const;
+const getMainTabs = (
+  isMobile: boolean,
+  hasEthereumAddress: boolean,
+  hasHiveProfile: boolean
+) => {
+  const baseTabs = hasHiveProfile
+    ? ([
+        { key: "snaps", label: "Snaps", icon: FaCamera },
+        { key: "posts", label: "Pages", icon: FaFileAlt },
+        {
+          key: "videoparts",
+          label: isMobile ? "Parts" : "VideoParts",
+          icon: FaVideo,
+        },
+      ] as const)
+    : ([{ key: "posts", label: "Pages", icon: FaFileAlt }] as const);
 
   // Add tokens tab only if user has an Ethereum address
   if (hasEthereumAddress) {
@@ -53,11 +60,12 @@ const ViewModeSelector = memo(function ViewModeSelector({
   onViewModeChange,
   isMobile,
   hasEthereumAddress = false,
+  hasHiveProfile = true,
 }: ViewModeSelectorProps) {
   // Get main tabs based on mobile state and ethereum address
   const mainTabs = useMemo(
-    () => getMainTabs(isMobile, hasEthereumAddress),
-    [isMobile, hasEthereumAddress]
+    () => getMainTabs(isMobile, hasEthereumAddress, hasHiveProfile),
+    [isMobile, hasEthereumAddress, hasHiveProfile]
   );
 
   // Determine which main tab is currently active
@@ -87,7 +95,10 @@ const ViewModeSelector = memo(function ViewModeSelector({
 
   // Get current main tab index
   const currentMainTabIndex = useMemo(
-    () => mainTabs.findIndex((tab) => tab.key === currentMainTab),
+    () => {
+      const index = mainTabs.findIndex((tab) => tab.key === currentMainTab);
+      return index === -1 ? 0 : index;
+    },
     [currentMainTab, mainTabs]
   );
 

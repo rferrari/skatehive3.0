@@ -21,6 +21,11 @@ export default function useHiveAccount(username: string) {
             setError(null)
             try {
                 const userData = await HiveClient.database.getAccounts([username])
+                if (!userData || userData.length === 0) {
+                    setHiveAccount(null)
+                    setError("Account not found")
+                    return
+                }
                 const userAccount: HiveAccount = {
                     ...userData[0],
                 }
@@ -42,6 +47,8 @@ export default function useHiveAccount(username: string) {
         if (username) {
             handleGetHiveAccount()
         } else {
+            setHiveAccount(null)
+            setIsLoading(false)
         }
     }, [username]);
     return { hiveAccount, isLoading, error }

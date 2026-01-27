@@ -14,7 +14,7 @@ export default function useProfilePosts(username: string) {
     ]);
 
     const fetchPosts = useCallback(async () => {
-        if (isFetching.current) return;
+        if (isFetching.current || !username) return;
         isFetching.current = true;
         try {
             const newPosts = await findPosts("author_before_date", params.current);
@@ -37,6 +37,11 @@ export default function useProfilePosts(username: string) {
 
     // Reset posts when username changes
     useEffect(() => {
+        if (!username) {
+            setPosts([]);
+            setIsLoading(false);
+            return;
+        }
         setPosts([]);
         setIsLoading(true);
         params.current = [username, "", new Date().toISOString().split(".")[0], 20];

@@ -72,6 +72,38 @@ node scripts/database/inspect-schema.js
 - Missing/extra columns analysis
 - Schema compliance report
 
+### Userbase Smoke Test
+
+**File:** `database/smoke-userbase.js`
+
+**Purpose:** Performs a basic write/read/delete cycle against the userbase tables.
+
+**Usage:**
+
+```bash
+node scripts/database/smoke-userbase.js
+```
+
+**Required:**
+
+- `DATABASE_URL` for direct Postgres access
+
+### Userbase Snapshot
+
+**File:** `database/snapshot-userbase.js`
+
+**Purpose:** Dumps the current contents of userbase tables for debugging.
+
+**Usage:**
+
+```bash
+node scripts/database/snapshot-userbase.js
+```
+
+**Required:**
+
+- `DATABASE_URL` for direct Postgres access
+
 ## VIP Management Scripts
 
 ### Generate VIP Codes

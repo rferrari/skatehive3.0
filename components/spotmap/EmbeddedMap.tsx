@@ -15,7 +15,7 @@ import SpotSnapComposer from "@/components/spotmap/SpotSnapComposer";
 import SpotList from "@/components/spotmap/SpotList";
 import { useSkatespots } from "@/hooks/useSkatespots";
 import { Discussion } from "@hiveio/dhive";
-import { useAioha } from "@aioha/react-ui";
+import useEffectiveHiveUser from "@/hooks/useEffectiveHiveUser";
 
 const mapSrc =
   "https://www.google.com/maps/d/u/1/embed?mid=1iiXzotKL-uJ3l7USddpTDvadGII&hl=en&ll=29.208380630280647%2C-100.5437214508988&z=4";
@@ -33,7 +33,7 @@ export default function EmbeddedMap() {
   const [newSpot, setNewSpot] = useState<Discussion | null>(null);
   const [composerKey, setComposerKey] = useState<number>(0);
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const { user } = useAioha();
+  const { canUseAppFeatures } = useEffectiveHiveUser();
 
   const {
     spots: allSpots,
@@ -138,7 +138,7 @@ export default function EmbeddedMap() {
           </Box>
 
           {/* Add Spot Button Section */}
-          {user && (
+          {canUseAppFeatures && (
             <Box
               p={{ base: 3, md: 4 }}
               pt={{ base: 3, md: 6 }}

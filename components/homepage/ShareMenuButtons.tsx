@@ -8,7 +8,7 @@ import {
 import { FaTwitter, FaLink, FaThumbsDown, FaCode } from "react-icons/fa";
 import React, { useMemo, useCallback } from "react";
 import { useFarcasterContext } from "@/hooks/useFarcasterContext";
-import { useAioha } from "@aioha/react-ui";
+import useHiveVote from "@/hooks/useHiveVote";
 import { CoinCreationModal } from "@/components/shared/CoinCreationModal";
 import DevMetadataDialog from "./DevMetadataDialog";
 import { APP_CONFIG } from "@/config/app.config";
@@ -96,7 +96,7 @@ const ShareMenuButtons = ({ comment }: ShareMenuButtonsProps) => {
   const { onCopy } = useClipboard(postLink);
   const toast = useToast();
   const { isInFrame, composeCast } = useFarcasterContext();
-  const { aioha, user } = useAioha();
+  const { effectiveUser, vote, canVote } = useHiveVote();
   const {
     isOpen: isCoinModalOpen,
     onOpen: onCoinModalOpen,
@@ -250,7 +250,7 @@ const ShareMenuButtons = ({ comment }: ShareMenuButtonsProps) => {
   }, [hasMedia, toast, onCoinModalOpen]);
 
   const handleDownvote = useCallback(async () => {
-    if (!user) {
+    if (!canVote) {
       toast({
         title: "Please log in",
         description: "You need to be logged in to downvote.",
@@ -262,13 +262,13 @@ const ShareMenuButtons = ({ comment }: ShareMenuButtonsProps) => {
     }
 
     try {
-      const vote = await aioha.vote(
+      const voteResult = await vote(
         comment.author,
         comment.permlink,
         -10000 // 100% downvote (negative value)
       );
 
-      if (vote.success) {
+      if (voteResult.success) {
         toast({
           title: "Downvote submitted!",
           status: "error",
@@ -287,7 +287,7 @@ const ShareMenuButtons = ({ comment }: ShareMenuButtonsProps) => {
         isClosable: true,
       });
     }
-  }, [user, aioha, comment.author, comment.permlink, toast]);
+  }, [effectiveUser, vote, comment.author, comment.permlink, toast, canVote]);
 
   const handleShare = useCallback(
     async (platform: string) => {
@@ -403,7 +403,7 @@ const ShareMenuButtons = ({ comment }: ShareMenuButtonsProps) => {
           {isInFrame ? "Cast" : "Share on Farcaster"}
         </span>
       </MenuItem>
-      {user === comment.author && (
+      {effectiveUser === comment.author && (
         <MenuItem
           onClick={handleCoinCreation}
           bg={"background"}

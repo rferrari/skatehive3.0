@@ -23,6 +23,11 @@ import { useFarcasterMiniapp } from "@/hooks/useFarcasterMiniapp";
 import { useSignIn } from "@farcaster/auth-kit";
 import { FaEthereum, FaHive, FaInfoCircle } from "react-icons/fa";
 import { SiFarcaster } from "react-icons/si";
+import { useUserbaseAuth } from "@/contexts/UserbaseAuthContext";
+import { useTranslations } from "@/contexts/LocaleContext";
+import UserbaseEmailLoginForm from "@/components/userbase/UserbaseEmailLoginForm";
+import NextLink from "next/link";
+import { Link } from "@chakra-ui/react";
 
 interface ConnectionStatus {
   name: string;
@@ -89,8 +94,10 @@ export default function ConnectionModal({
   actualFarcasterProfile,
 }: ConnectionModalProps) {
   const { user, aioha } = useAioha();
+  const { user: userbaseUser, signOut: signOutUserbase } = useUserbaseAuth();
   const router = useRouter();
   const toast = useToast();
+  const t = useTranslations();
   // Get connection states
   const { isConnected: isEthereumConnected } = useAccount();
   const {
@@ -176,8 +183,13 @@ export default function ConnectionModal({
   };
 
   const handleProfileClick = () => {
-    if (user) {
-      router.push(`/user/${user}?view=snaps`);
+    const profileHandle =
+      user ||
+      userbaseUser?.display_name ||
+      userbaseUser?.handle ||
+      "";
+    if (profileHandle) {
+      router.push(`/user/${encodeURIComponent(profileHandle)}?view=snaps`);
       onClose();
     }
   };
@@ -191,16 +203,41 @@ return (
     >
       <Box p={4}>
         <VStack spacing={4} align="stretch">
+          {!userbaseUser && (
+            <Box border="1px solid" borderColor="border" p={4}>
+              <VStack spacing={3} align="stretch">
+                <Text fontWeight="bold" color="text">
+                  {t("userbaseAuth.title")}
+                </Text>
+                <UserbaseEmailLoginForm variant="compact" />
+                <Text color="dim" fontSize="sm">
+                  {t("signUp.prompt")}{" "}
+                  <Link as={NextLink} href="/sign-up" color="primary">
+                    {t("signUp.cta")}
+                  </Link>
+                </Text>
+              </VStack>
+            </Box>
+          )}
           {/* Show profile option if connected to Hive */}
-          {user && (
+          {(user || userbaseUser) && (
             <Button
               leftIcon={
-                <Image
-                  src={`https://images.hive.blog/u/${user}/avatar/small`}
-                  boxSize={5}
-                  borderRadius="full"
-                  alt="Hive Profile Picture"
-                />
+                user ? (
+                  <Image
+                    src={`https://images.hive.blog/u/${user}/avatar/small`}
+                    boxSize={5}
+                    borderRadius="full"
+                    alt="Hive Profile Picture"
+                  />
+                ) : (
+                  <Image
+                    src={userbaseUser?.avatar_url || "/logos/hiveLogo.png"}
+                    boxSize={5}
+                    borderRadius="full"
+                    alt="App Profile Picture"
+                  />
+                )
               }
               onClick={handleProfileClick}
               variant="outline"
@@ -336,7 +373,10 @@ return (
                           if (!connected) {
                             return (
                               <Button
-                                onClick={openConnectModal}
+                                onClick={() => {
+                                  onClose();
+                                  openConnectModal();
+                                }}
                                 type="button"
                                 size="sm"
                                 colorScheme="blue"
@@ -350,7 +390,10 @@ return (
                           if (chain.unsupported) {
                             return (
                               <Button
-                                onClick={openChainModal}
+                                onClick={() => {
+                                  onClose();
+                                  openChainModal();
+                                }}
                                 type="button"
                                 colorScheme="red"
                                 size="sm"
@@ -363,7 +406,10 @@ return (
 
                           return (
                             <Button
-                              onClick={openAccountModal}
+                              onClick={() => {
+                                onClose();
+                                openAccountModal();
+                              }}
                               type="button"
                               variant="outline"
                               size="sm"
@@ -407,6 +453,7 @@ return (
                       size="sm"
                       variant="outline"
                       onClick={() => {
+                        onClose();
                         switch (connection.name) {
                           case "Hive":
                             handleHiveLogout();
@@ -445,6 +492,45 @@ return (
                 How to connect?
               </Text>
             </Button>
+          )}
+
+          {userbaseUser && (
+            <Box border="1px solid" borderColor="border" p={4}>
+              <VStack spacing={3} align="stretch">
+                <HStack justify="space-between">
+                  <Text fontWeight="bold" color="text">
+                    {t("userbaseAuth.title")}
+                  </Text>
+                  <Badge colorScheme="green" variant="solid">
+                    Connected
+                  </Badge>
+                </HStack>
+                <Text color="text" fontSize="sm">
+                  {t("userbaseAuth.signedInAs")}{" "}
+                  <Text as="span" fontWeight="bold">
+                    {userbaseUser.display_name ||
+                      userbaseUser.handle ||
+                      t("userbaseAuth.unnamedUser")}
+                  </Text>
+                </Text>
+                <Button
+                  as={NextLink}
+                  href="/settings"
+                  size="sm"
+                  variant="outline"
+                  onClick={onClose}
+                >
+                  {t("settings.manageAccount")}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={signOutUserbase}
+                >
+                  {t("userbaseAuth.signOut")}
+                </Button>
+              </VStack>
+            </Box>
           )}
         </VStack>
       </Box>

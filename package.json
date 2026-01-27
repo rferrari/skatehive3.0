@@ -18,9 +18,11 @@
     "db:inspect": "node scripts/database/inspect-schema.js",
     "db:fix-auth": "node scripts/database/fix-auth-ott-schema.js",
     "db:migrate": "bash scripts/database/migrate-database.sh",
+    "db:smoke-userbase": "node scripts/database/smoke-userbase.js",
+    "db:snapshot-userbase": "node scripts/database/snapshot-userbase.js",
     "vip:generate": "node scripts/vip-management/generate-vip.js",
     "scripts": "node scripts/index.js",
-    "scripts:help": "echo 'Available scripts: db:inspect, db:fix-auth, db:migrate, vip:generate, scripts'"
+    "scripts:help": "echo 'Available scripts: db:inspect, db:fix-auth, db:migrate, db:smoke-userbase, db:snapshot-userbase, vip:generate, scripts'"
   },
   "dependencies": {
     "@aioha/aioha": "^1.6.0",

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@chakra-ui/react";
 import { FaHeart } from "react-icons/fa";
-import { useAioha } from "@aioha/react-ui";
+import useHiveVote from "@/hooks/useHiveVote";
 import { getLastSnapsContainer, getPost } from "@/lib/hive/client-functions";
 import { Discussion } from "@hiveio/dhive";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
@@ -22,7 +22,7 @@ export default function UpvoteSnapToast({
   displayDuration = TOAST_CONFIG.DISPLAY_DURATION,
 }: UpvoteSnapToastProps) {
   const t = useTranslations();
-  const { user, aioha } = useAioha();
+  const { vote, effectiveUser, canVote } = useHiveVote();
   const [snapContainer, setSnapContainer] = useState<Discussion | null>(null);
   const [hasVoted, setHasVoted] = useState(false);
   const [isSnapVoteLoading, setIsSnapVoteLoading] = useState(true);
@@ -31,7 +31,7 @@ export default function UpvoteSnapToast({
   const { isDesktop, isMounted } = useIsDesktop();
 
   const fetchSnapContainerData = useCallback(async () => {
-    if (!user) {
+    if (!canVote) {
       setIsSnapVoteLoading(false);
       return;
     }
@@ -46,9 +46,9 @@ export default function UpvoteSnapToast({
           containerInfo.permlink
         );
         setSnapContainer(postDetails);
-        if (user && postDetails) {
+        if (effectiveUser && postDetails) {
           const userVote = postDetails.active_votes.some(
-            (v) => v.voter === user
+            (v) => v.voter === effectiveUser
           );
           setHasVoted(userVote);
         } else {
@@ -61,13 +61,13 @@ export default function UpvoteSnapToast({
     } finally {
       setIsSnapVoteLoading(false);
     }
-  }, [user]);
+  }, [effectiveUser, canVote]);
 
   const handleUpvote = useCallback(async () => {
-    if (!user || !snapContainer) return;
+    if (!canVote || !snapContainer) return;
 
     try {
-      const response = await aioha.vote(
+      const response = await vote(
         snapContainer.author,
         snapContainer.permlink,
         TOAST_CONFIG.VOTE_WEIGHT
@@ -83,7 +83,7 @@ export default function UpvoteSnapToast({
         });
         setHasVoted(true);
       } else {
-        throw new Error(response.message || "Unknown error");
+        throw new Error("Vote failed");
       }
     } catch (error: any) {
       console.error("Failed to upvote:", error);
@@ -96,10 +96,17 @@ export default function UpvoteSnapToast({
         isClosable: true,
       });
     }
-  }, [aioha, snapContainer, toast, user, t]);
+  }, [vote, snapContainer, toast, effectiveUser, t, canVote]);
 
   const showUpvoteToast = useCallback(() => {
-    if (!isMounted || !isDesktop || !user || !snapContainer || hasVoted || isSnapVoteLoading) {
+    if (
+      !isMounted ||
+      !isDesktop ||
+      !canVote ||
+      !snapContainer ||
+      hasVoted ||
+      isSnapVoteLoading
+    ) {
       return;
     }
 
@@ -146,7 +153,8 @@ export default function UpvoteSnapToast({
   }, [
     isMounted,
     isDesktop,
-    user,
+    effectiveUser,
+    canVote,
     snapContainer,
     hasVoted,
     lastShownTime,
@@ -160,15 +168,15 @@ export default function UpvoteSnapToast({
 
   // Load snap container data when user changes
   useEffect(() => {
-    if (user && isMounted) {
+    if (canVote && isMounted) {
       fetchSnapContainerData();
     }
-  }, [user, isMounted, fetchSnapContainerData]);
+  }, [canVote, isMounted, fetchSnapContainerData]);
 
   // Refresh data when page becomes visible
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible" && user && isMounted) {
+      if (document.visibilityState === "visible" && canVote && isMounted) {
         fetchSnapContainerData();
       }
     };
@@ -182,13 +190,13 @@ export default function UpvoteSnapToast({
         );
       };
     }
-  }, [user, isMounted, fetchSnapContainerData]);
+  }, [canVote, isMounted, fetchSnapContainerData]);
 
   // Set up periodic timer for showing toasts
   usePeriodicTimer(showUpvoteToast, {
     initialDelay: TOAST_CONFIG.INITIAL_DELAY,
     interval: showInterval,
-    enabled: isMounted && isDesktop && !!user,
+    enabled: isMounted && isDesktop && canVote,
   });
 
   return null;

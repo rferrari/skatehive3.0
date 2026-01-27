@@ -15,7 +15,7 @@ import {
   SliderThumb,
 } from "@chakra-ui/react";
 import { LuArrowUp, LuArrowDown } from "react-icons/lu";
-import { useAioha } from "@aioha/react-ui";
+import useHiveVote from "@/hooks/useHiveVote";
 import { Discussion } from "@hiveio/dhive";
 import VoteListPopover from "@/components/blog/VoteListModal";
 import { useVoteWeightContext } from "@/contexts/VoteWeightContext";
@@ -53,7 +53,7 @@ const UpvoteButton = ({
   className,
   onUpvoteStoke,
 }: UpvoteButtonProps) => {
-  const { aioha, user } = useAioha();
+  const { vote, effectiveUser, canVote } = useHiveVote();
   const toast = useToast();
   const {
     voteWeight: userVoteWeight,
@@ -85,7 +85,7 @@ const UpvoteButton = ({
 
 const handleVote = useCallback(
     async (votePercentage: number = sliderValue) => {
-      if (!user) {
+      if (!canVote) {
         toast({
           title: "Please log in",
           description: "You need to be logged in to vote.",
@@ -125,26 +125,36 @@ const handleVote = useCallback(
       setLastVoteTime(now);
 
       try {
-        const vote = await aioha.vote(
+        const voteResult = await vote(
           discussion.author,
           discussion.permlink,
           votePercentage * 100
         );
 
-        if (vote.success) {
+        if (voteResult.success) {
           // On Hive, voting again overwrites the previous vote, so we always set voted to true
           setVoted(true);
           
           // Update active votes - prevent race conditions by using current activeVotes
           const currentVotes = [...activeVotes];
-          const existingVoteIndex = currentVotes.findIndex((vote: any) => vote.voter === user);
-          if (existingVoteIndex >= 0) {
-            // Update existing vote
-            currentVotes[existingVoteIndex] = { voter: user, weight: votePercentage * 100 };
-            setActiveVotes(currentVotes);
-          } else {
-            // Add new vote
-            setActiveVotes([...currentVotes, { voter: user, weight: votePercentage * 100 }]);
+          if (effectiveUser) {
+            const existingVoteIndex = currentVotes.findIndex(
+              (vote: any) => vote.voter === effectiveUser
+            );
+            if (existingVoteIndex >= 0) {
+              // Update existing vote
+              currentVotes[existingVoteIndex] = {
+                voter: effectiveUser,
+                weight: votePercentage * 100,
+              };
+              setActiveVotes(currentVotes);
+            } else {
+              // Add new vote
+              setActiveVotes([
+                ...currentVotes,
+                { voter: effectiveUser, weight: votePercentage * 100 },
+              ]);
+            }
           }
 
           // Estimate the value and call onVoteSuccess if provided
@@ -190,8 +200,9 @@ const handleVote = useCallback(
       }
     },
     [
-      user,
-      aioha,
+      effectiveUser,
+      canVote,
+      vote,
       discussion.author,
       discussion.permlink,
       sliderValue,

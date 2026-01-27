@@ -15,8 +15,8 @@ import {
 } from "@chakra-ui/react";
 import { Discussion } from "@hiveio/dhive";
 import { LuArrowUpRight } from "react-icons/lu";
-import { useAioha } from "@aioha/react-ui";
-import { useState, useMemo } from "react";
+import useEffectiveHiveUser from "@/hooks/useEffectiveHiveUser";
+import { useEffect, useState, useMemo } from "react";
 import { getPayoutValue } from "@/lib/hive/client-functions";
 import { useComments } from "@/hooks/useComments";
 import { EnhancedMarkdownRenderer } from "@/components/markdown/EnhancedMarkdownRenderer";
@@ -31,6 +31,7 @@ import { useTheme } from "@/app/themeProvider";
 import PaperOutline from "@/components/graphics/PaperOutline";
 import { UpvoteButton } from "@/components/shared";
 import { APP_CONFIG } from "@/config/app.config";
+import useSoftVoteOverlay from "@/hooks/useSoftVoteOverlay";
 
 const separateContent = (body: string) => {
   const textParts: string[] = [];
@@ -144,8 +145,8 @@ const BountySnap = ({
   disableFooter = false,
   submissionCount = 0,
 }: BountySnapProps) => {
-  const { aioha, user } = useAioha();
-  const { hiveAccount } = useHiveAccount(user || "");
+  const { handle: effectiveUser } = useEffectiveHiveUser();
+  const { hiveAccount } = useHiveAccount(effectiveUser || "");
   const theme = useTheme();
   
   // Fetch comments to check for completion
@@ -156,9 +157,10 @@ const BountySnap = ({
     isLoading: isHivePowerLoading,
     error: hivePowerError,
     estimateVoteValue,
-  } = useHivePower(user);
+  } = useHivePower(effectiveUser || "");
   const toast = useToast();
   const commentDate = getPostDate(discussion.created);
+  const softVote = useSoftVoteOverlay(discussion.author, discussion.permlink);
 
   const [showSlider, setShowSlider] = useState(false);
   const [activeVotes, setActiveVotes] = useState(discussion.active_votes || []);
@@ -196,11 +198,25 @@ const BountySnap = ({
   }, [discussion.body]);
   const renderedMedia = useMemo(() => renderMedia(media), [media]);
 
+  const hasSoftVote =
+    !!softVote && softVote.status !== "failed" && softVote.weight > 0;
   const [voted, setVoted] = useState(
-    discussion.active_votes?.some(
-      (item: { voter: string }) => item.voter === user
-    ) || false
+    hasSoftVote ||
+      discussion.active_votes?.some(
+        (item: { voter: string }) => item.voter === effectiveUser
+      ) ||
+      false
   );
+
+  useEffect(() => {
+    setVoted(
+      hasSoftVote ||
+        discussion.active_votes?.some(
+          (item: { voter: string }) => item.voter === effectiveUser
+        ) ||
+        false
+    );
+  }, [discussion.active_votes, effectiveUser, hasSoftVote]);
 
   function handleConversation() {
     if (setConversation) {

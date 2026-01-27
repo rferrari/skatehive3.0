@@ -15,7 +15,7 @@ import {
     HStack,
 } from "@chakra-ui/react";
 import { LuArrowUpRight } from "react-icons/lu";
-import { useAioha } from "@aioha/react-ui";
+import useHiveVote from "@/hooks/useHiveVote";
 import { Discussion } from "@hiveio/dhive";
 import VoteListPopover from "@/components/blog/VoteListModal";
 import { DEFAULT_VOTE_WEIGHT } from "@/lib/utils/constants";
@@ -48,7 +48,7 @@ const VoteSlider = ({
     size = "sm",
     variant = "feed"
 }: VoteSliderProps) => {
-    const { aioha, user } = useAioha();
+    const { vote, effectiveUser, canVote } = useHiveVote();
     const toast = useToast();
       const { voteWeight: userVoteWeight, disableSlider, isLoading } = useVoteWeightContext();
     const [sliderValue, setSliderValue] = useState(userVoteWeight);
@@ -59,6 +59,17 @@ const VoteSlider = ({
     }, [userVoteWeight]);
 
     const handleHeartClick = () => {
+        if (!canVote) {
+            toast({
+                title: "Please log in",
+                description: "You need to be logged in to vote.",
+                status: "warning",
+                duration: 3000,
+                isClosable: true,
+            });
+            return;
+        }
+
         // Don't allow voting if user info is still loading
         if (isLoading) {
             toast({
@@ -82,15 +93,17 @@ const VoteSlider = ({
 
     const handleVoteWithWeight = async (votePercentage: number) => {
         try {
-            const vote = await aioha.vote(
+            const voteResult = await vote(
                 discussion.author,
                 discussion.permlink,
                 votePercentage * 100
             );
 
-            if (vote.success) {
+            if (voteResult.success) {
                 setVoted(true);
-                setActiveVotes([...activeVotes, { voter: user }]);
+                if (effectiveUser) {
+                    setActiveVotes([...activeVotes, { voter: effectiveUser }]);
+                }
 
                 // Estimate the value and call onVoteSuccess if provided
                 if (estimateVoteValue && onVoteSuccess) {

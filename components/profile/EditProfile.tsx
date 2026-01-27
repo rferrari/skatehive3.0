@@ -27,7 +27,7 @@ import { useAioha } from "@aioha/react-ui";
 import { useFarcasterSession } from "@/hooks/useFarcasterSession";
 import { KeychainSDK, KeychainKeyTypes, Broadcast } from "keychain-sdk";
 import { Operation } from "@hiveio/dhive";
-import { migrateLegacyMetadata } from "@/lib/utils/metadataMigration";
+import { mergeHiveProfileMetadata } from "@/lib/hive/profile-metadata";
 import MergeAccountModal from "./MergeAccountModal";
 import fetchAccount from "@/lib/hive/fetchAccount";
 import {
@@ -409,35 +409,35 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
         // Use Keychain SDK for the update
         const keychain = new KeychainSDK(window);
 
-        const profileMetadata = {
-          profile: {
-            name: formData.name || username,
-            about: formData.about || "",
-            location: formData.location || "",
-            cover_image: finalCoverImage || "",
-            profile_image: finalProfileImage || "",
-            website: formData.website || "",
-            version: 2,
-          },
-        };
+        const { jsonMetadata: currentMetadata, postingMetadata } =
+          await fetchAccount(username);
 
-        const { jsonMetadata: currentMetadata } = await fetchAccount(username);
-
-        const migrated = migrateLegacyMetadata(currentMetadata);
-        migrated.extensions = migrated.extensions || {};
-        migrated.extensions.wallets = migrated.extensions.wallets || {};
-        migrated.extensions.wallets.primary_wallet =
-          profileData.ethereum_address || "";
-        migrated.extensions.video_parts = profileData.video_parts || [];
-        migrated.extensions.settings = migrated.extensions.settings || {};
-        migrated.extensions.settings.appSettings =
-          migrated.extensions.settings.appSettings || {};
-        migrated.extensions.settings.appSettings.zineCover =
-          finalZineCover || "";
-        migrated.extensions.settings.appSettings.svs_profile =
-          formData.svs_profile || "";
-
-        const extMetadata = migrated;
+        const { postingMetadata: mergedPosting, jsonMetadata: mergedJson } =
+          mergeHiveProfileMetadata({
+            currentPosting: postingMetadata,
+            currentJson: currentMetadata,
+            profilePatch: {
+              name: formData.name || username,
+              about: formData.about || "",
+              location: formData.location || "",
+              cover_image: finalCoverImage || "",
+              profile_image: finalProfileImage || "",
+              website: formData.website || "",
+              version: 2,
+            },
+            extensionsPatch: {
+              wallets: {
+                primary_wallet: profileData.ethereum_address || "",
+              },
+              video_parts: profileData.video_parts || [],
+              settings: {
+                appSettings: {
+                  zineCover: finalZineCover || "",
+                  svs_profile: formData.svs_profile || "",
+                },
+              },
+            },
+          });
 
         const formParamsAsObject = {
           data: {
@@ -447,8 +447,8 @@ const EditProfile: React.FC<EditProfileProps> = React.memo(
                 "account_update2",
                 {
                   account: username,
-                  json_metadata: JSON.stringify(extMetadata),
-                  posting_json_metadata: JSON.stringify(profileMetadata),
+                  json_metadata: JSON.stringify(mergedJson),
+                  posting_json_metadata: JSON.stringify(mergedPosting),
                   extensions: [],
                 },
               ],

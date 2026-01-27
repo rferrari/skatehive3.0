@@ -7,6 +7,8 @@
  * Available commands:
  * - db:inspect     - Inspect database schema
  * - db:fix-auth    - Fix auth_ott table schema
+ * - db:smoke-userbase - Run userbase smoke test
+ * - db:snapshot-userbase - Snapshot userbase tables
  * - vip:generate   - Generate new VIP codes
  * - help          - Show this help message
  */
@@ -18,6 +20,8 @@ const commands = {
   'db:inspect': 'database/inspect-schema.js',
   'db:fix-auth': 'database/fix-auth-ott-schema.js',
   'db:migrate': 'database/migrate-database.sh',
+  'db:smoke-userbase': 'database/smoke-userbase.js',
+  'db:snapshot-userbase': 'database/snapshot-userbase.js',
   'vip:generate': 'vip-management/generate-vip.js',
 };
 
@@ -28,6 +32,8 @@ function showHelp() {
   console.log('  db:inspect     - Inspect database table schemas');
   console.log('  db:fix-auth    - Fix auth_ott table schema issues');
   console.log('  db:migrate     - Run database migration scripts');
+  console.log('  db:smoke-userbase - Run userbase database smoke test');
+  console.log('  db:snapshot-userbase - Snapshot userbase tables');
   console.log('  vip:generate   - Generate new VIP invitation codes');
   console.log('  help          - Show this help message\n');
   console.log('Examples:');

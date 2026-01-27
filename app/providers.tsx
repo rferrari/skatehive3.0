@@ -13,6 +13,7 @@ import { WagmiProvider, http } from "wagmi";
 import { base, mainnet } from "wagmi/chains";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { UserProvider } from "@/contexts/UserContext";
+import { UserbaseAuthProvider } from "@/contexts/UserbaseAuthContext";
 import { VoteWeightProvider } from "@/contexts/VoteWeightContext";
 import { WindowProvider } from "@/contexts/WindowContext";
 import { LocaleProvider } from "@/contexts/LocaleContext";
@@ -23,6 +24,7 @@ import { useState } from "react";
 import { APP_CONFIG } from "@/config/app.config";
 import { ClickSoundProvider } from "./clickSoundProvider";
 import { SoundSettingsProvider } from "@/contexts/SoundSettingsContext";
+import UserbaseWalletBootstrapper from "@/components/userbase/UserbaseWalletBootstrapper";
 
 const aioha = new Aioha();
 
@@ -86,36 +88,39 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <SoundSettingsProvider>
       <ClickSoundProvider>
         <LocaleProvider>
-          <UserProvider>
-            <ThemeProvider>
-            <QueryClientProvider client={queryClient}>
-          <WagmiProvider config={wagmiConfig}>
-            <RainbowKitProvider
-              coolMode
-              initialChain={base}
-              theme={dynamicRainbowTheme}
-            >
-              <OnchainKitProvider
-                chain={base}
-                apiKey={APP_CONFIG.ONCHAINKIT_API_KEY}
-              >
-                <AuthKitProvider config={farcasterAuthConfig}>
-                  <AiohaProvider aioha={aioha}>
-                    <VoteWeightProvider>
-                      <WindowProvider>
-                        <CSSReset />
-                        {children}
-                      </WindowProvider>
-                    </VoteWeightProvider>
-                  </AiohaProvider>
-                </AuthKitProvider>
-              </OnchainKitProvider>
-            </RainbowKitProvider>
-          </WagmiProvider>
-        </QueryClientProvider>
-          </ThemeProvider>
-        </UserProvider>
-      </LocaleProvider>
+          <UserbaseAuthProvider>
+            <UserProvider>
+              <ThemeProvider>
+                <QueryClientProvider client={queryClient}>
+                  <WagmiProvider config={wagmiConfig}>
+                    <RainbowKitProvider
+                      coolMode
+                      initialChain={base}
+                      theme={dynamicRainbowTheme}
+                    >
+                      <OnchainKitProvider
+                        chain={base}
+                        apiKey={APP_CONFIG.ONCHAINKIT_API_KEY}
+                      >
+                        <AuthKitProvider config={farcasterAuthConfig}>
+                          <AiohaProvider aioha={aioha}>
+                            <VoteWeightProvider>
+                              <WindowProvider>
+                                <CSSReset />
+                                <UserbaseWalletBootstrapper />
+                                {children}
+                              </WindowProvider>
+                            </VoteWeightProvider>
+                          </AiohaProvider>
+                        </AuthKitProvider>
+                      </OnchainKitProvider>
+                    </RainbowKitProvider>
+                  </WagmiProvider>
+                </QueryClientProvider>
+              </ThemeProvider>
+            </UserProvider>
+          </UserbaseAuthProvider>
+        </LocaleProvider>
       </ClickSoundProvider>
     </SoundSettingsProvider>
   );

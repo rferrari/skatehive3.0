@@ -19,7 +19,7 @@ import { Discussion } from "@hiveio/dhive";
 import { FaRegComment } from "react-icons/fa";
 import { LuArrowUp, LuArrowDown, LuDollarSign } from "react-icons/lu";
 import { useAioha } from "@aioha/react-ui";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getPayoutValue } from "@/lib/hive/client-functions";
 import { EnhancedMarkdownRenderer } from "@/components/markdown/EnhancedMarkdownRenderer";
 import { getPostDate } from "@/lib/utils/GetPostDate";
@@ -40,6 +40,11 @@ import {
 import { BiDotsHorizontal } from "react-icons/bi";
 import MediaRenderer from "../shared/MediaRenderer";
 import VoteListPopover from "@/components/blog/VoteListModal";
+import useEffectiveHiveUser from "@/hooks/useEffectiveHiveUser";
+import useHiveVote from "@/hooks/useHiveVote";
+import useSoftPostOverlay from "@/hooks/useSoftPostOverlay";
+import useSoftVoteOverlay from "@/hooks/useSoftVoteOverlay";
+import { extractSafeUser } from "@/lib/userbase/safeUserMetadata";
 
 interface SnapProps {
   discussion: Discussion;
@@ -58,15 +63,36 @@ const Snap = ({
   onCommentAdded,
   onDelete,
 }: SnapProps) => {
-  const { aioha, user } = useAioha();
+  const { user: walletUser } = useAioha();
+  const { handle: effectiveUser } = useEffectiveHiveUser();
+  const { vote, canVote } = useHiveVote();
   const toast = useToast();
   const {
     isLoading: isHivePowerLoading,
     error: hivePowerError,
     estimateVoteValue,
-  } = useHivePower(user);
+  } = useHivePower(effectiveUser || "");
   const { voteWeight: userVoteWeight, disableSlider } = useVoteWeightContext();
   const commentDate = getPostDate(discussion.created);
+  const safeUser = useMemo(
+    () => extractSafeUser(discussion.json_metadata),
+    [discussion.json_metadata]
+  );
+
+  const softPost = useSoftPostOverlay(
+    discussion.author,
+    discussion.permlink,
+    safeUser
+  );
+  const softVote = useSoftVoteOverlay(discussion.author, discussion.permlink);
+
+  const displayAuthor =
+    softPost?.user.display_name ||
+    softPost?.user.handle ||
+    discussion.author;
+  const displayAvatar =
+    softPost?.user.avatar_url ||
+    `https://images.hive.blog/u/${discussion.author}/avatar/sm`;
 
   const {
     isEditing,
@@ -114,28 +140,47 @@ const Snap = ({
     [discussion.body]
   );
 
+  const hasSoftVote =
+    !!softVote && softVote.status !== "failed" && softVote.weight > 0;
   const [voted, setVoted] = useState(
-    discussion.active_votes?.some(
-      (item: { voter: string }) => item.voter === user
-    ) || false
+    hasSoftVote ||
+      discussion.active_votes?.some(
+        (item: { voter: string }) => item.voter === effectiveUser
+      ) ||
+      false
   );
   const [isHovered, setIsHovered] = useState(false);
 
+  useEffect(() => {
+    setVoted(
+      hasSoftVote ||
+        discussion.active_votes?.some(
+          (item: { voter: string }) => item.voter === effectiveUser
+        ) ||
+        false
+    );
+  }, [discussion.active_votes, effectiveUser, hasSoftVote]);
+
   // Direct vote handler for when slider is disabled
   async function handleDirectVote() {
-    if (!user || voted || isVoting) return;
+    if (!canVote || voted || isVoting) return;
     
     setIsVoting(true);
     try {
-      const vote = await aioha.vote(
+      const voteResult = await vote(
         discussion.author,
         discussion.permlink,
         userVoteWeight * 100
       );
       
-      if (vote.success) {
+      if (voteResult.success) {
         setVoted(true);
-        setActiveVotes([...activeVotes, { voter: user, weight: userVoteWeight * 100 }]);
+        if (effectiveUser) {
+          setActiveVotes([
+            ...activeVotes,
+            { voter: effectiveUser, weight: userVoteWeight * 100 },
+          ]);
+        }
         
         // Update reward amount with estimated value
         if (estimateVoteValue && !isHivePowerLoading) {
@@ -237,8 +282,8 @@ const Snap = ({
           >
             <Avatar
               size="sm"
-              name={discussion.author}
-              src={`https://images.hive.blog/u/${discussion.author}/avatar/sm`}
+              name={displayAuthor}
+              src={displayAvatar}
               ml={2}
             />
             <Text
@@ -248,7 +293,7 @@ const Snap = ({
               whiteSpace="nowrap"
               _groupHover={{ textDecoration: "underline" }}
             >
-              {discussion.author}
+              {displayAuthor}
             </Text>
           </Link>
           <HStack ml={0} width="100%" justify="space-between">
@@ -271,7 +316,7 @@ const Snap = ({
               color={"primary"}
             />
             <MenuList bg={"background"} color={"primary"}>
-              {user === discussion.author && (
+              {walletUser === discussion.author && (
                 <MenuItem
                   onClick={handleEditClick}
                   bg={"background"}
@@ -281,7 +326,7 @@ const Snap = ({
                   Edit
                 </MenuItem>
               )}
-              {user === discussion.author && (
+              {walletUser === discussion.author && (
                 <MenuItem
                   onClick={handleDeleteClick}
                   bg={"background"}

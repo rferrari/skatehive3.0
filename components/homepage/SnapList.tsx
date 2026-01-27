@@ -27,7 +27,7 @@ import LogoMatrix from "../graphics/LogoMatrix";
 import {
   filterAutoComments,
 } from "@/lib/utils/postUtils";
-import { useAioha } from "@aioha/react-ui";
+import useEffectiveHiveUser from "@/hooks/useEffectiveHiveUser";
 import { useAccount } from "wagmi";
 import SidebarLogo from "../graphics/SidebarLogo";
 
@@ -67,7 +67,7 @@ export default function SnapList({
   const [displayedComments, setDisplayedComments] = useState<Discussion[]>([]);
 
   // Get authentication status
-  const { user } = useAioha(); // Hive connection
+  const { canUseAppFeatures } = useEffectiveHiveUser(); // Hive connection (wallet or userbase)
   const { isConnected } = useAccount(); // Ethereum connection
   const router = useRouter(); // Next.js navigation
 
@@ -202,7 +202,7 @@ export default function SnapList({
         <>
           {!hideComposer && (
             <>
-              {user ? (
+              {canUseAppFeatures ? (
                 // User is connected to Hive - show SnapComposer
                 <SnapComposer
                   pa={author}

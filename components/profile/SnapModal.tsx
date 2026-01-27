@@ -29,7 +29,8 @@ import {
   FaShare,
 } from "react-icons/fa";
 import { Discussion } from "@hiveio/dhive";
-import { useAioha } from "@aioha/react-ui";
+import useEffectiveHiveUser from "@/hooks/useEffectiveHiveUser";
+import useSoftVoteOverlay from "@/hooks/useSoftVoteOverlay";
 import VideoRenderer from "../layout/VideoRenderer";
 import SnapComposer from "../homepage/SnapComposer";
 import Snap from "../homepage/Snap";
@@ -65,7 +66,7 @@ const SnapModal = ({
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
   const modalSize = useBreakpointValue({ base: "full", md: "5xl" });
   const toast = useToast();
-  const { user } = useAioha();
+  const { handle: effectiveUser } = useEffectiveHiveUser();
 
   // Always use the snap from the current index to ensure consistency
   const currentSnap = useMemo(() => {
@@ -80,14 +81,17 @@ const SnapModal = ({
   }, [snaps, currentSnapIndex, snap]);
 
   // Voting state
+  const softVote = useSoftVoteOverlay(currentSnap.author, currentSnap.permlink);
+  const hasSoftVote =
+    !!softVote && softVote.status !== "failed" && softVote.weight > 0;
   const [voted, setVoted] = useState(
-    currentSnap.active_votes?.some(
-      (item: { voter: string }) => item.voter === user
-    ) || false
+    hasSoftVote ||
+      currentSnap.active_votes?.some(
+        (item: { voter: string }) => item.voter === effectiveUser
+      ) ||
+      false
   );
-  const [activeVotes, setActiveVotes] = useState(
-    currentSnap.active_votes || []
-  );
+  const [activeVotes, setActiveVotes] = useState(currentSnap.active_votes || []);
   const [showSlider, setShowSlider] = useState(false);
 
   // Use the useComments hook to fetch comments for the current snap
@@ -194,13 +198,15 @@ const SnapModal = ({
     setOptimisticComments([]);
     // Reset voting state when snap changes
     setVoted(
-      currentSnap.active_votes?.some(
-        (item: { voter: string }) => item.voter === user
-      ) || false
+      hasSoftVote ||
+        currentSnap.active_votes?.some(
+          (item: { voter: string }) => item.voter === effectiveUser
+        ) ||
+        false
     );
     setActiveVotes(currentSnap.active_votes || []);
     setShowSlider(false);
-  }, [currentSnap, user]);
+  }, [currentSnap, effectiveUser, hasSoftVote]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

@@ -37,7 +37,11 @@ import { ArrowBackIcon, CloseIcon, ChatIcon } from "@chakra-ui/icons";
 import { AiOutlineHeart, AiFillHeart } from "react-icons/ai";
 import { BiMessage } from "react-icons/bi";
 import { useAioha } from "@aioha/react-ui";
+import useHiveVote from "@/hooks/useHiveVote";
+import useEffectiveHiveUser from "@/hooks/useEffectiveHiveUser";
 import { EnhancedMarkdownRenderer } from "../markdown/EnhancedMarkdownRenderer";
+import useSoftPostOverlay from "@/hooks/useSoftPostOverlay";
+import { extractSafeUser } from "@/lib/userbase/safeUserMetadata";
 
 interface ConversationProps {
   discussion: Discussion;
@@ -70,6 +74,8 @@ const Conversation = ({
 }: ConversationProps) => {
   // ALL HOOKS MUST BE CALLED AT THE TOP LEVEL
   const { user, aioha } = useAioha();
+  const { vote, effectiveUser, canVote } = useHiveVote();
+  const { canUseAppFeatures } = useEffectiveHiveUser();
 
   const { comments, isLoading, error } = useComments(
     discussion.author,
@@ -147,7 +153,7 @@ const Conversation = ({
   const handleCommentSubmit = useCallback(async () => {
     if (!commentText.trim() || isSubmitting) return;
 
-    if (!user) {
+    if (!canUseAppFeatures) {
       toast({
         title: "Please log in",
         description: "You need to be logged in to comment",
@@ -165,23 +171,49 @@ const Conversation = ({
         discussion.permlink
       }-${Date.now()}`;
 
-      // Use aioha to submit the comment
-      const result = await aioha.comment(
-        discussion.author,
-        discussion.permlink,
-        permlink,
-        "", // Empty title for comments
-        commentText,
-        {
-          app: "Skatehive App 3.0",
-          format: "markdown",
+      let result: any = null;
+
+      if (user) {
+        // Use aioha to submit the comment
+        result = await aioha.comment(
+          discussion.author,
+          discussion.permlink,
+          permlink,
+          "", // Empty title for comments
+          commentText,
+          {
+            app: "Skatehive App 3.0",
+            format: "markdown",
+          }
+        );
+      } else {
+        const response = await fetch("/api/userbase/hive/comment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            parent_author: discussion.author,
+            parent_permlink: discussion.permlink,
+            permlink,
+            title: "",
+            body: commentText,
+            json_metadata: {
+              app: "Skatehive App 3.0",
+              format: "markdown",
+            },
+            type: "comment",
+          }),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data?.error || "Failed to comment");
         }
-      );
+        result = { success: true, author: data?.author || effectiveUser };
+      }
 
       if (result && !result.error) {
         // Create optimistic comment for immediate UI update
         const newComment: Discussion = {
-          author: user!,
+          author: result?.author || effectiveUser || "",
           permlink,
           body: commentText,
           parent_author: discussion.author,
@@ -214,7 +246,7 @@ const Conversation = ({
           root_comment: 0,
           reward_weight: 0,
           total_vote_weight: 0,
-          url: `/${discussion.author}/${discussion.permlink}#@${user}/${permlink}`,
+          url: `/${discussion.author}/${discussion.permlink}#@${result?.author || effectiveUser}/${permlink}`,
           root_title: discussion.title || "",
           pending_payout_value: "0.000 HBD",
           total_pending_payout_value: "0.000 HBD",
@@ -267,7 +299,16 @@ const Conversation = ({
     } finally {
       setIsSubmitting(false);
     }
-  }, [commentText, isSubmitting, user, toast, discussion, aioha]);
+  }, [
+    commentText,
+    isSubmitting,
+    user,
+    effectiveUser,
+    toast,
+    discussion,
+    aioha,
+    canUseAppFeatures,
+  ]);
 
   const handleEmojiClick = useCallback(
     (emoji: string) => {
@@ -286,7 +327,7 @@ const Conversation = ({
 
   const handleLikeComment = useCallback(
     async (commentPermlink: string) => {
-      if (!user) {
+      if (!canVote) {
         toast({
           title: "Please log in",
           description: "You need to be logged in to like comments",
@@ -318,13 +359,9 @@ const Conversation = ({
         // Use aioha to vote (positive weight for like, 0 for unlike)
         const weight = isCurrentlyLiked ? 0 : 10000; // 100% upvote or remove vote
 
-        const result = await aioha.vote(
-          comment.author,
-          commentPermlink,
-          weight
-        );
+        const result = await vote(comment.author, commentPermlink, weight);
 
-        if (result && result.error) {
+        if (!result?.success) {
           // Revert optimistic update on error
           setLikedComments((prev) => {
             const newSet = new Set(prev);
@@ -336,7 +373,7 @@ const Conversation = ({
             return newSet;
           });
 
-          throw new Error(result.error.message || "Failed to vote");
+          throw new Error("Failed to vote");
         }
 
         toast({
@@ -368,7 +405,7 @@ const Conversation = ({
         });
       }
     },
-    [user, likedComments, allComments, aioha, toast]
+    [likedComments, allComments, vote, toast, canVote]
   );
 
   const handleReplyToComment = useCallback(
@@ -499,6 +536,22 @@ const Conversation = ({
     const hasReplies = comment.children && comment.children > 0;
     const isExpanded = expandedReplies.has(comment.permlink);
     const nestedReplies = (comment as any).replies || [];
+    const safeUser = useMemo(
+      () => extractSafeUser(comment.json_metadata),
+      [comment.json_metadata]
+    );
+    const softPost = useSoftPostOverlay(
+      comment.author,
+      comment.permlink,
+      safeUser
+    );
+    const displayAuthor =
+      softPost?.user.display_name ||
+      softPost?.user.handle ||
+      comment.author;
+    const displayAvatar =
+      softPost?.user.avatar_url ||
+      `https://images.hive.blog/u/${comment.author}/avatar/sm`;
 
     return (
       <Box>
@@ -514,14 +567,14 @@ const Conversation = ({
           <HStack spacing={3} align="start">
             <Avatar
               size="sm"
-              name={comment.author}
-              src={`https://images.hive.blog/u/${comment.author}/avatar/sm`}
+              name={displayAuthor}
+              src={displayAvatar}
               loading="lazy"
             />
             <VStack align="start" spacing={2} flex={1}>
               <HStack spacing={2} align="center" w="100%">
                 <Text fontWeight="bold" fontSize="sm" color={mobileTextColor}>
-                  {comment.author}
+                  {displayAuthor}
                 </Text>
                 <Text color="gray.400" fontSize="xs">
                   {formatTimeAgo(comment.created)}
@@ -811,7 +864,9 @@ const Conversation = ({
             <Input
               ref={inputRef}
               placeholder={
-                user ? "Add a comment..." : "Please log in to comment"
+                canUseAppFeatures
+                  ? "Add a comment..."
+                  : "Please log in to comment"
               }
               variant="unstyled"
               color={mobileTextColor}
@@ -831,7 +886,7 @@ const Conversation = ({
                   handleCommentSubmit();
                 }
               }}
-              disabled={!user || isSubmitting}
+              disabled={!canUseAppFeatures || isSubmitting}
               autoComplete="off"
               spellCheck="false"
               maxLength={500}
@@ -858,7 +913,7 @@ const Conversation = ({
               onClick={handleCommentSubmit}
               isLoading={isSubmitting}
               loadingText="Posting"
-              disabled={!commentText.trim() || !user}
+              disabled={!commentText.trim() || !canUseAppFeatures}
               _hover={{ transform: "scale(1.05)" }}
               _active={{ transform: "scale(0.95)" }}
             >

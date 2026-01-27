@@ -17,6 +17,7 @@ import useProfileData from "@/hooks/useProfileData";
 import MainSettings from "@/components/settings/MainSettings";
 import AdvancedSettings from "@/components/settings/AdvancedSettings";
 import AssetsSettings from "@/components/settings/AssetsSettings";
+import UserbaseAccountSettings from "@/components/settings/UserbaseAccountSettings";
 import { useTranslations } from "@/contexts/LocaleContext";
 
 const Settings = () => {
@@ -73,6 +74,18 @@ const Settings = () => {
                 color="primary"
                 fontWeight="semibold"
               >
+                {t('settings.appAccountTab')}
+              </Tab>
+              <Tab
+                _selected={{
+                  color: "accent",
+                  borderColor: "accent",
+                  borderBottomColor: "background",
+                  bg: "background",
+                }}
+                color="primary"
+                fontWeight="semibold"
+              >
                 {t('settings.mainSettings')}
               </Tab>
               <Tab
@@ -102,6 +115,9 @@ const Settings = () => {
             </TabList>
 
             <TabPanels>
+              <TabPanel px={0} py={6}>
+                <UserbaseAccountSettings />
+              </TabPanel>
               <TabPanel px={0} py={6}>
                 <MainSettings userData={userData} />
               </TabPanel>

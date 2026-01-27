@@ -1,6 +1,7 @@
 "use client";
 import NotificationsComp from "@/components/notifications/NotificationsComp";
 import { useAioha } from "@aioha/react-ui";
+import useEffectiveHiveUser from "@/hooks/useEffectiveHiveUser";
 import { Box, Text, Center, Spinner } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { useTranslations } from '@/lib/i18n/hooks';
@@ -8,6 +9,7 @@ import { useTranslations } from '@/lib/i18n/hooks';
 export default function NotificationsPageClient() {
   const t = useTranslations('notificationsPage');
   const { user, aioha } = useAioha();
+  const { handle: effectiveUser } = useEffectiveHiveUser();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -28,7 +30,7 @@ export default function NotificationsPageClient() {
     );
   }
 
-  if (!user) {
+  if (!effectiveUser) {
     return (
       <Center height="200px">
         <Box textAlign="center">
@@ -43,5 +45,5 @@ export default function NotificationsPageClient() {
     );
   }
 
-  return <NotificationsComp username={user} />;
+  return <NotificationsComp username={effectiveUser} />;
 }

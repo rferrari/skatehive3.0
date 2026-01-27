@@ -20,10 +20,11 @@ import HiveMarkdown from "@/components/shared/HiveMarkdown";
 import SnapList from "@/components/homepage/SnapList";
 import SnapComposer from "@/components/homepage/SnapComposer";
 import MatrixOverlay from "@/components/graphics/MatrixOverlay";
-import { useAioha } from "@aioha/react-ui";
+import useHiveVote from "@/hooks/useHiveVote";
 import useHivePower from "@/hooks/useHivePower";
 import BountyRewarder from "./BountyRewarder";
 import useVoteWeight from "@/hooks/useVoteWeight";
+import useSoftVoteOverlay from "@/hooks/useSoftVoteOverlay";
 
 interface BountyDetailProps {
   post: Discussion;
@@ -55,15 +56,19 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
   const [newComment, setNewComment] = useState<Discussion | null>(null);
 
   // Voting state
-  const { aioha, user } = useAioha();
-  const userVoteWeight = useVoteWeight(user || "");
+  const { vote, effectiveUser, canVote } = useHiveVote();
+  const userVoteWeight = useVoteWeight(effectiveUser || "");
   const [sliderValue, setSliderValue] = useState(userVoteWeight);
   const [showSlider, setShowSlider] = useState(false);
   const [activeVotes, setActiveVotes] = useState(post.active_votes || []);
+  const softVote = useSoftVoteOverlay(post.author, post.permlink);
+  const hasSoftVote =
+    !!softVote && softVote.status !== "failed" && softVote.weight > 0;
   const [voted, setVoted] = useState(
-    post.active_votes?.some(
-      (item) => item.voter.toLowerCase() === user?.toLowerCase()
-    )
+    hasSoftVote ||
+      post.active_votes?.some(
+        (item) => item.voter.toLowerCase() === effectiveUser?.toLowerCase()
+      )
   );
 
   // Update slider value when user's vote weight changes
@@ -71,12 +76,23 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
     setSliderValue(userVoteWeight);
   }, [userVoteWeight]);
 
+  useEffect(() => {
+    setActiveVotes(post.active_votes || []);
+    setVoted(
+      hasSoftVote ||
+        post.active_votes?.some(
+          (item) => item.voter.toLowerCase() === effectiveUser?.toLowerCase()
+        ) ||
+        false
+    );
+  }, [post, effectiveUser, hasSoftVote]);
+
   // Claim state
   const [isClaiming, setIsClaiming] = useState(false);
   const [claimError, setClaimError] = useState<string | null>(null);
   const hasClaimed = useMemo(
-    () => activeVotes.some((v) => v.voter === user),
-    [activeVotes, user]
+    () => activeVotes.some((v) => v.voter === effectiveUser),
+    [activeVotes, effectiveUser]
   );
 
   // Reward Modal State
@@ -135,21 +151,29 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
   // }
 
   async function handleVote() {
-    const vote = await aioha.vote(
-      post.author,
-      post.permlink,
-      sliderValue * 100
-    );
-    if (vote.success) {
-      setVoted(true);
-      setActiveVotes([...activeVotes, { voter: user }]);
+    if (!canVote) return;
+    try {
+      const voteResult = await vote(
+        post.author,
+        post.permlink,
+        sliderValue * 100
+      );
+      if (voteResult.success) {
+        setVoted(true);
+        if (effectiveUser) {
+          setActiveVotes([...activeVotes, { voter: effectiveUser }]);
+        }
+      }
+    } catch (error: any) {
+      setClaimError(error?.message || "Failed to vote on bounty.");
+    } finally {
+      setShowSlider(false);
     }
-    setShowSlider(false);
   }
 
   // Handler for claiming the bounty
   async function handleClaimBounty() {
-    if (!user) {
+    if (!canVote) {
       setClaimError("You must be logged in to claim a bounty.");
       return;
     }
@@ -157,10 +181,15 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
     setClaimError(null);
     try {
       // Use a 100% vote to claim the bounty
-      const result = await aioha.vote(post.author, post.permlink, 10000);
+      const result = await vote(post.author, post.permlink, 10000);
       if (result.success) {
         // Optimistically update the votes list
-        setActiveVotes((prev) => [...prev, { voter: user, percent: 10000 }]);
+        if (effectiveUser) {
+          setActiveVotes((prev) => [
+            ...prev,
+            { voter: effectiveUser, percent: 10000 },
+          ]);
+        }
       } else {
         setClaimError("Failed to claim bounty. Your vote was not successful.");
       }
@@ -178,7 +207,7 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
       return null;
     }
 
-    if (!user) {
+    if (!canVote) {
       return (
         <Box textAlign="center" p={4} bg="gray.800" borderRadius="md">
           <Text>Please log in to submit.</Text>
@@ -186,7 +215,7 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
       );
     }
 
-    if (user === post.author) {
+    if (effectiveUser === post.author) {
       return null;
     }
 
@@ -499,7 +528,10 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
               </Box>
             )}
             {/* Claim Bounty Button */}
-            {isActive && user && user !== post.author && !hasClaimed && (
+            {isActive &&
+              effectiveUser &&
+              effectiveUser !== post.author &&
+              !hasClaimed && (
               <Flex justify="center" my={4}>
                 <Button
                   colorScheme="green"
@@ -510,7 +542,7 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
                 </Button>
               </Flex>
             )}
-            {isActive && user === post.author && (
+            {isActive && effectiveUser === post.author && (
               <Box textAlign="center" my={4}>
                 <Text color="gray.400">You cannot claim your own bounty.</Text>
               </Box>
@@ -530,7 +562,7 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
               </Text>
             )}
             {/* Reward Bounty Hunters Button (UI only, now inside Bounty Details) */}
-            {!isActive && user === post.author && !hasRewarded && (
+            {!isActive && effectiveUser === post.author && !hasRewarded && (
               <Flex justify="center" my={2}>
                 <Button colorScheme="orange" onClick={onOpen} fontWeight="bold">
                   Reward Bounty Hunters
@@ -582,7 +614,7 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
         isOpen={isOpen}
         onClose={onClose}
         post={post}
-        user={user}
+        user={effectiveUser || ""}
         uniqueCommenters={uniqueCommenters}
         challengeName={challengeName}
         rewardInfo={rewardInfo}

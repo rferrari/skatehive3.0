@@ -49,6 +49,18 @@ HIVE_POSTING_KEY=your_hive_posting_key
 ```
 
 All other values (Hive tags, app account, DAO addresses, etc.) are pre-configured in `config/app.config.ts`.
+If you enable app-only posting (email-only users), also set:
+
+```bash
+DEFAULT_HIVE_POSTING_ACCOUNT=skateuser
+DEFAULT_HIVE_POSTING_KEY=your_default_account_posting_key
+```
+
+Optional: receive webhook alerts when default-account broadcasts fail/retry:
+
+```bash
+USERBASE_ALERT_WEBHOOK_URL=https://your-webhook-endpoint
+```
 
 ### Forking the Project
 
@@ -68,6 +80,16 @@ Important: The core configuration (Hive tags, DAO contract addresses, app accoun
 - `DAO_ADDRESSES` – your DAO contract addresses (if using DAO features)
 - `APP_CONFIG.NAME`, `APP_CONFIG.DOMAIN` – your app branding
 
+#### Database migrations (optional)
+
+If you enable the userbase schema, run the SQL files under `sql/migrations/`.
+For Supabase, run `0001_userbase.sql` first, then `0002_userbase_rls_supabase.sql` in the SQL editor.
+If you enable magic-link auth, also run `0003_userbase_auth.sql`.
+If you enable app-only posting, also run `0007_userbase_soft_posts.sql` and `0008_userbase_soft_posts_rls.sql`.
+For self-hosted Postgres, run `0001_userbase.sql`, `0003_userbase_auth.sql`, and (if enabling app-only posting) `0007_userbase_soft_posts.sql` via `psql` using `DATABASE_URL`.
+Migrations are currently manual; there is no automated runner in the repo yet.
+If you skip Supabase RLS, keep the service role key server-only.
+Userbase tables are prefixed with `userbase_` to avoid conflicts with the VIP signup schema.
 ### Optional Features
 
 Add these variables to `.env.local` as needed:

@@ -21,7 +21,9 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 import { getPostDate } from "@/lib/utils/GetPostDate";
-import { useAioha } from "@aioha/react-ui";
+import useHiveVote from "@/hooks/useHiveVote";
+import useSoftPostOverlay from "@/hooks/useSoftPostOverlay";
+import useSoftVoteOverlay from "@/hooks/useSoftVoteOverlay";
 import { getPayoutValue } from "@/lib/hive/client-functions";
 import {
   extractYoutubeLinks,
@@ -31,6 +33,7 @@ import {
 import useHivePower from "@/hooks/useHivePower";
 import { useVoteWeightContext } from "@/contexts/VoteWeightContext";
 import { parseJsonMetadata } from "@/lib/hive/metadata-utils";
+import { extractSafeUser } from "@/lib/userbase/safeUserMetadata";
 import MatrixOverlay from "@/components/graphics/MatrixOverlay";
 import { UpvoteButton } from "@/components/shared";
 import { BiDotsHorizontal } from "react-icons/bi";
@@ -70,24 +73,37 @@ export default function PostCard({
     return parsed && typeof parsed === "object" ? parsed : {};
   }, [json_metadata]);
 
+  const safeUser = useMemo(() => extractSafeUser(metadata), [metadata]);
+
+  const softPost = useSoftPostOverlay(post.author, post.permlink, safeUser);
+  const softVote = useSoftVoteOverlay(post.author, post.permlink);
+
+  const displayAuthor =
+    softPost?.user?.display_name || softPost?.user?.handle || author;
+  const displayAvatar =
+    softPost?.user?.avatar_url ||
+    `https://images.hive.blog/u/${author}/avatar/sm`;
   const [showSlider, setShowSlider] = useState(false);
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
-  const { aioha, user } = useAioha();
+  const { vote, effectiveUser, canVote } = useHiveVote();
   const toast = useToast();
   const {
     isLoading: isHivePowerLoading,
     estimateVoteValue,
-  } = useHivePower(user);
+  } = useHivePower(effectiveUser || "");
   const { voteWeight: userVoteWeight, disableSlider } = useVoteWeightContext();
   const [isVoting, setIsVoting] = useState(false);
   const [activeVotes, setActiveVotes] = useState(post.active_votes || []);
   const [payoutValue, setPayoutValue] = useState(
     parseFloat(getPayoutValue(post))
   );
+  const hasSoftVote =
+    !!softVote && softVote.status !== "failed" && softVote.weight > 0;
   const [voted, setVoted] = useState(
-    post.active_votes?.some(
-      (item) => item.voter.toLowerCase() === user?.toLowerCase()
-    )
+    hasSoftVote ||
+      post.active_votes?.some(
+        (item) => item.voter.toLowerCase() === effectiveUser?.toLowerCase()
+      )
   );
   const [isHovered, setIsHovered] = useState(false);
 
@@ -95,12 +111,14 @@ export default function PostCard({
     setActiveVotes(post.active_votes || []);
     setPayoutValue(parseFloat(getPayoutValue(post)));
     setVoted(
-      post.active_votes?.some(
-        (item) => item.voter.toLowerCase() === user?.toLowerCase()
-      )
+      hasSoftVote ||
+        post.active_votes?.some(
+          (item) => item.voter.toLowerCase() === effectiveUser?.toLowerCase()
+        )
     );
-  }, [post, user]);
+  }, [post, effectiveUser, hasSoftVote]);
   const default_thumbnail =
+    softPost?.user.avatar_url ||
     "https://images.hive.blog/u/" + author + "/avatar/large";
   const [visibleImages, setVisibleImages] = useState<number>(3);
   const [showMatrix, setShowMatrix] = useState(false);
@@ -263,19 +281,24 @@ export default function PostCard({
 
   // Direct vote handler for when slider is disabled
   async function handleDirectVote() {
-    if (!user || voted || isVoting) return;
+    if (!canVote || voted || isVoting) return;
     
     setIsVoting(true);
     try {
-      const vote = await aioha.vote(
+      const voteResult = await vote(
         post.author,
         post.permlink,
         userVoteWeight * 100
       );
       
-      if (vote.success) {
+      if (voteResult.success) {
         setVoted(true);
-        setActiveVotes([...activeVotes, { voter: user, weight: userVoteWeight * 100 }]);
+          if (effectiveUser) {
+            setActiveVotes([
+              ...activeVotes,
+              { voter: effectiveUser, weight: userVoteWeight * 100 },
+            ]);
+          }
         
         // Update payout value with estimated value
         if (estimateVoteValue && !isHivePowerLoading) {
@@ -620,8 +643,8 @@ export default function PostCard({
                 >
                   <Avatar
                     size="sm"
-                    name={author}
-                    src={`https://images.hive.blog/u/${author}/avatar/sm`}
+                    name={displayAuthor}
+                    src={displayAvatar}
                   />
                   <Text
                     fontWeight="bold"
@@ -632,7 +655,7 @@ export default function PostCard({
                     isTruncated
                     maxW="240px"
                   >
-                    {author}
+                    {displayAuthor}
                   </Text>
                   <Text fontSize="xs" color="gray.500" ml={2}>
                     · {postDate}

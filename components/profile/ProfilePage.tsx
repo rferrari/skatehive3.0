@@ -23,6 +23,7 @@ import ViewModeSelector from "./ViewModeSelector";
 import MagazineModal from "../shared/MagazineModal";
 import SnapsGrid from "./SnapsGrid";
 import ZoraTokensView from "./ZoraTokensView";
+import SoftSnapsGrid from "./SoftSnapsGrid";
 
 // Import custom hooks
 import useProfileData from "@/hooks/useProfileData";
@@ -30,6 +31,10 @@ import useFollowStatus from "@/hooks/useFollowStatus";
 import useProfilePosts from "@/hooks/useProfilePosts";
 import useViewMode from "@/hooks/useViewMode";
 import useIsMobile from "@/hooks/useIsMobile";
+import useUserbaseProfile from "@/hooks/useUserbaseProfile";
+import useUserbaseSoftPosts from "@/hooks/useUserbaseSoftPosts";
+import { useTranslations } from "@/lib/i18n/hooks";
+import { Discussion } from "@hiveio/dhive";
 
 // Memoized SnapsGrid to prevent unnecessary re-renders
 const MemoizedSnapsGrid = memo(function MemoizedSnapsGrid({
@@ -53,7 +58,10 @@ const ContentViews = memo(function ContentViews({
   postProps,
   videoPartsProps,
   username,
+  snapsUsername,
+  softSnaps,
   ethereumAddress,
+  hasHiveProfile,
 }: {
   viewMode: string;
   postProps: {
@@ -63,6 +71,7 @@ const ContentViews = memo(function ContentViews({
     context: "profile";
     hideAuthorInfo: boolean;
     isLoading: boolean;
+    hasMore: boolean;
   };
   videoPartsProps: {
     profileData: ProfileData;
@@ -70,18 +79,33 @@ const ContentViews = memo(function ContentViews({
     onProfileUpdate: (data: Partial<ProfileData>) => void;
   };
   username: string;
+  snapsUsername?: string | null;
+  softSnaps?: Discussion[];
   ethereumAddress?: string;
+  hasHiveProfile: boolean;
 }) {
   // Use conditional rendering with style display to avoid unmounting/remounting
   return (
     <>
-      <Box display={viewMode === "videoparts" ? "block" : "none"}>
-        {viewMode === "videoparts" && <VideoPartsView {...videoPartsProps} />}
-      </Box>
+      {hasHiveProfile && (
+        <>
+          <Box display={viewMode === "videoparts" ? "block" : "none"}>
+            {viewMode === "videoparts" && <VideoPartsView {...videoPartsProps} />}
+          </Box>
 
-      <Box display={viewMode === "snaps" ? "block" : "none"}>
-        {viewMode === "snaps" && <MemoizedSnapsGrid username={username} />}
-      </Box>
+          <Box display={viewMode === "snaps" ? "block" : "none"}>
+            {viewMode === "snaps" && (
+              <>
+                {snapsUsername ? (
+                  <MemoizedSnapsGrid username={snapsUsername} />
+                ) : (
+                  <SoftSnapsGrid snaps={softSnaps || []} />
+                )}
+              </>
+            )}
+          </Box>
+        </>
+      )}
 
       <Box display={viewMode === "tokens" ? "block" : "none"}>
         {viewMode === "tokens" && (
@@ -124,22 +148,36 @@ export interface ProfileData {
 }
 
 const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
-  const { hiveAccount, isLoading, error } = useHiveAccount(username);
+  const { profile: userbaseProfile, isLoading: userbaseLoading } =
+    useUserbaseProfile(username);
+  const userbaseUser = userbaseProfile?.user ?? null;
+  const userbaseIdentities = userbaseProfile?.identities ?? [];
+  const userbaseMatch = userbaseProfile?.match ?? null;
+  const hiveIdentity = userbaseIdentities.find((item) => item.type === "hive");
+  const evmIdentity = userbaseIdentities.find((item) => item.type === "evm");
+  const hiveIdentityHandle = hiveIdentity?.handle || null;
+  const evmIdentityAddress = evmIdentity?.address || null;
+  const isEvmAddress = /^0x[a-fA-F0-9]{40}$/.test(username);
+  const hiveLookupHandle = hiveIdentityHandle || (isEvmAddress ? "" : username);
+  const { hiveAccount, isLoading, error } = useHiveAccount(hiveLookupHandle);
   const { user } = useAioha();
+  const tCommon = useTranslations("common");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Custom hooks
   const { profileData, updateProfileData } = useProfileData(
-    username,
+    hiveLookupHandle,
     hiveAccount
   );
+  const followTarget = hiveAccount ? hiveLookupHandle : "";
   const { isFollowing, isFollowLoading, updateFollowing, updateLoading } =
-    useFollowStatus(user, username);
+    useFollowStatus(user, followTarget);
+  const hivePostsHandle = hiveIdentityHandle || (hiveAccount ? hiveLookupHandle : "");
   const {
-    posts,
-    fetchPosts,
+    posts: hivePosts,
+    fetchPosts: fetchHivePosts,
     isLoading: postsLoading,
-  } = useProfilePosts(username);
+  } = useProfilePosts(hivePostsHandle);
   const { viewMode, handleViewModeChange, closeMagazine } = useViewMode();
   const isMobile = useIsMobile();
 
@@ -148,7 +186,111 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
   const isTransitioning = useRef(false);
 
   // Memoize derived values
-  const isOwner = useMemo(() => user === username, [user, username]);
+  const isHiveProfile =
+    !!hiveAccount &&
+    hiveLookupHandle &&
+    hiveLookupHandle.toLowerCase() === username.toLowerCase();
+  const canShowHiveViews = isHiveProfile || !!hivePostsHandle;
+  const allowSoftPosts =
+    userbaseUser &&
+    (userbaseMatch === "hive" || (!isHiveProfile && userbaseMatch === "handle"));
+  const {
+    posts: softPosts,
+    isLoading: softPostsLoading,
+  } = useUserbaseSoftPosts(allowSoftPosts ? userbaseUser?.id : null);
+  const softSnaps = useMemo(
+    () => softPosts.filter((post) => (post as any).__softType === "snap"),
+    [softPosts]
+  );
+  const softPages = useMemo(
+    () => softPosts.filter((post) => (post as any).__softType !== "snap"),
+    [softPosts]
+  );
+  const hasSoftSnaps = softSnaps.length > 0;
+  const isOwner = useMemo(
+    () => (isHiveProfile ? user === hiveLookupHandle : false),
+    [user, hiveLookupHandle, isHiveProfile]
+  );
+
+  const resolvedEthereumAddress =
+    profileData.ethereum_address ||
+    evmIdentityAddress ||
+    (isEvmAddress ? username : "");
+
+  const liteProfileData = useMemo<ProfileData>(() => {
+    if (userbaseUser) {
+      return {
+        profileImage: userbaseUser.avatar_url || "",
+        coverImage: userbaseUser.cover_url || "",
+        website: "",
+        name:
+          userbaseUser.handle ||
+          userbaseUser.display_name ||
+          username ||
+          "Skater",
+        followers: 0,
+        following: 0,
+        location: userbaseUser.location || "",
+        about: userbaseUser.bio || "",
+        ethereum_address: evmIdentityAddress || "",
+        video_parts: [],
+        vote_weight: 51,
+        vp_percent: "",
+        rc_percent: "",
+        zineCover: "",
+        svs_profile: "",
+      };
+    }
+    if (isEvmAddress) {
+      return {
+        profileImage: "",
+        coverImage: "",
+        website: "",
+        name: username,
+        followers: 0,
+        following: 0,
+        location: "",
+        about: "",
+        ethereum_address: username,
+        video_parts: [],
+        vote_weight: 51,
+        vp_percent: "",
+        rc_percent: "",
+        zineCover: "",
+        svs_profile: "",
+      };
+    }
+    return {
+      profileImage: "",
+      coverImage: "",
+      website: "",
+      name: username,
+      followers: 0,
+      following: 0,
+      location: "",
+      about: "",
+      ethereum_address: "",
+      video_parts: [],
+      vote_weight: 51,
+      vp_percent: "",
+      rc_percent: "",
+      zineCover: "",
+      svs_profile: "",
+    };
+  }, [userbaseUser, evmIdentityAddress, username, isEvmAddress]);
+
+  const activeProfileData = useMemo(() => {
+    if (isHiveProfile) {
+      return {
+        ...profileData,
+        ethereum_address: resolvedEthereumAddress,
+      };
+    }
+    return {
+      ...liteProfileData,
+      ethereum_address: resolvedEthereumAddress,
+    };
+  }, [isHiveProfile, profileData, liteProfileData, resolvedEthereumAddress]);
 
   // Throttled close handler to prevent rapid clicking
   const throttledCloseMagazine = useCallback(() => {
@@ -214,15 +356,15 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
   );
 
   // Memoize chronologically sorted posts - only when needed for grid/list views
-  const sortedPosts = useMemo(() => {
+  const combinedPosts = useMemo(() => {
     // Skip expensive sorting if we're in snaps, videoparts or tokens mode
     if (!["grid", "list", "magazine"].includes(viewMode)) {
       return [];
     }
-    return [...posts].sort(
+    return [...hivePosts, ...softPages].sort(
       (a, b) => new Date(b.created).getTime() - new Date(a.created).getTime()
     );
-  }, [posts, viewMode]);
+  }, [hivePosts, softPages, viewMode]);
 
   // Memoize post-related props - only when needed for grid/list views
   const postProps = useMemo(() => {
@@ -235,28 +377,87 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
         context: "profile" as const,
         hideAuthorInfo: true,
         isLoading: false,
+        hasMore: false,
       };
     }
 
     return {
-      allPosts: sortedPosts,
-      fetchPosts,
+      allPosts: combinedPosts,
+      fetchPosts: hivePostsHandle ? fetchHivePosts : () => Promise.resolve(),
       viewMode: viewMode as "grid" | "list",
       context: "profile" as const,
       hideAuthorInfo: true,
-      isLoading: postsLoading,
+      isLoading: postsLoading || softPostsLoading,
+      hasMore: Boolean(hivePostsHandle),
     };
-  }, [sortedPosts, fetchPosts, viewMode, postsLoading]);
+  }, [
+    combinedPosts,
+    fetchHivePosts,
+    viewMode,
+    postsLoading,
+    softPostsLoading,
+    hivePostsHandle,
+  ]);
 
   // Memoize video parts props
   const videoPartsProps = useMemo(
     () => ({
-      profileData,
-      username,
+      profileData: hiveAccount ? profileData : activeProfileData,
+      username: hiveLookupHandle || username,
       onProfileUpdate: updateProfileData,
     }),
-    [profileData, username, updateProfileData]
+    [activeProfileData, hiveAccount, profileData, hiveLookupHandle, username, updateProfileData]
   );
+
+  const debugPayload = useMemo(() => {
+    // Only expose full debug payload in development to prevent sensitive data leakage
+    if (process.env.NODE_ENV !== "development") {
+      return null;
+    }
+
+    return {
+      username,
+      viewMode,
+      isHiveProfile,
+      canShowHiveViews,
+      hiveLookupHandle,
+      hiveIdentityHandle,
+      hivePostsHandle,
+      userbaseMatch,
+      userbaseUser,
+      userbaseIdentities,
+      resolvedEthereumAddress,
+      hiveAccountName: hiveAccount?.name || null,
+      hiveAccountMetadata: hiveAccount?.metadata || null,
+      profileData: activeProfileData,
+      liteProfileData,
+    };
+  }, [
+    username,
+    viewMode,
+    isHiveProfile,
+    canShowHiveViews,
+    hiveLookupHandle,
+    hiveIdentityHandle,
+    hivePostsHandle,
+    userbaseMatch,
+    userbaseUser,
+    userbaseIdentities,
+    resolvedEthereumAddress,
+    hiveAccount,
+    activeProfileData,
+    liteProfileData,
+  ]);
+
+  const headerUsername = useMemo(() => {
+    if (isHiveProfile) {
+      return hiveLookupHandle || username;
+    }
+    if (userbaseUser?.handle) {
+      return userbaseUser.handle;
+    }
+    return username;
+  }, [isHiveProfile, hiveLookupHandle, username, userbaseUser?.handle]);
 
   // Cleanup timer on unmount
   useEffect(() => {
@@ -267,7 +468,22 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
     };
   }, []);
 
-  if (isLoading || !hiveAccount) {
+  useEffect(() => {
+    if (canShowHiveViews || hasSoftSnaps) return;
+    if (["snaps", "videoparts", "magazine"].includes(viewMode)) {
+      handleViewModeChange(resolvedEthereumAddress ? "tokens" : "grid");
+    }
+  }, [
+    canShowHiveViews,
+    hasSoftSnaps,
+    viewMode,
+    handleViewModeChange,
+    resolvedEthereumAddress,
+  ]);
+
+  const isProfileResolved =
+    isHiveProfile || Boolean(userbaseUser) || isEvmAddress;
+  if (!isProfileResolved && (isLoading || userbaseLoading)) {
     return (
       <Box
         display="flex"
@@ -280,7 +496,7 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
     );
   }
 
-  if (error) {
+  if (!isProfileResolved && !isLoading && !userbaseLoading) {
     return (
       <Box
         display="flex"
@@ -290,7 +506,7 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
       >
         <Alert status="error" borderRadius="md" variant="solid">
           <AlertIcon />
-          {error}
+          {error || tCommon("profileNotFound")}
         </Alert>
       </Box>
     );
@@ -300,17 +516,17 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
     <>
       {/* Magazine Modal - Only render when needed with performance optimization */}
       {viewMode === "magazine" && (
-        <MagazineModal
-          isOpen={viewMode === "magazine"}
-          onClose={throttledCloseMagazine}
-          hiveUsername={username}
-          posts={sortedPosts} // Use pre-sorted posts
-          zineCover={profileData.zineCover}
-          userProfileImage={profileData.profileImage}
-          displayName={profileData.name}
-          userLocation={profileData.location}
-        />
-      )}
+          <MagazineModal
+            isOpen={viewMode === "magazine"}
+            onClose={throttledCloseMagazine}
+            hiveUsername={hiveLookupHandle || username}
+            posts={combinedPosts}
+            zineCover={activeProfileData.zineCover}
+            userProfileImage={activeProfileData.profileImage}
+            displayName={activeProfileData.name}
+            userLocation={activeProfileData.location}
+          />
+        )}
       <Center>
         <Container maxW="container.md" p={0} m={0}>
           {/* Main Profile Content */}
@@ -330,18 +546,19 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
           >
             {/* Cover Image - Now enabled for mobile too */}
             <ProfileCoverImage
-              coverImage={profileData.coverImage}
+              coverImage={activeProfileData.coverImage}
               username={username}
             />
 
             {/* Profile Header */}
             <ProfileHeader
-              profileData={profileData}
-              username={username}
+              profileData={activeProfileData}
+              username={headerUsername}
               isOwner={isOwner}
-              user={user}
+              user={isHiveProfile ? user : null}
               {...followProps}
               onEditModalOpen={handleEditModalOpen}
+              debugPayload={debugPayload}
             />
 
             {/* View Mode Selector */}
@@ -349,7 +566,8 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
               viewMode={viewMode}
               onViewModeChange={memoizedViewModeChange}
               isMobile={isMobile}
-              hasEthereumAddress={!!profileData.ethereum_address}
+              hasEthereumAddress={!!resolvedEthereumAddress}
+              hasHiveProfile={canShowHiveViews || hasSoftSnaps}
             />
 
             {/* Content Views - Optimized conditional rendering */}
@@ -358,7 +576,10 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
               postProps={postProps}
               videoPartsProps={videoPartsProps}
               username={username}
-              ethereumAddress={profileData.ethereum_address}
+              snapsUsername={hivePostsHandle || null}
+              softSnaps={softSnaps}
+              ethereumAddress={resolvedEthereumAddress}
+              hasHiveProfile={canShowHiveViews || hasSoftSnaps}
             />
           </Box>
         </Container>
@@ -369,9 +590,9 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
         <EditProfile
           isOpen={isEditModalOpen}
           onClose={handleEditModalClose}
-          profileData={profileData}
+          profileData={activeProfileData}
           onProfileUpdate={updateProfileData}
-          username={username}
+          username={hiveLookupHandle || username}
         />
       )}
     </>

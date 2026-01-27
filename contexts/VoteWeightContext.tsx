@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
-import { useAioha } from "@aioha/react-ui";
+import useEffectiveHiveUser from "@/hooks/useEffectiveHiveUser";
 import { DEFAULT_VOTE_WEIGHT } from "@/lib/utils/constants";
 import useHiveAccount from "@/hooks/useHiveAccount";
 import { migrateLegacyMetadata } from "@/lib/utils/metadataMigration";
@@ -31,8 +31,8 @@ interface VoteWeightProviderProps {
 }
 
 export const VoteWeightProvider: React.FC<VoteWeightProviderProps> = ({ children }) => {
-  const { user } = useAioha();
-  const { hiveAccount, isLoading, error } = useHiveAccount(user || "");
+  const { handle: effectiveUser } = useEffectiveHiveUser();
+  const { hiveAccount, isLoading, error } = useHiveAccount(effectiveUser || "");
   const [voteWeight, setVoteWeight] = useState(DEFAULT_VOTE_WEIGHT);
   const [disableSlider, setDisableSlider] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<number>(0);
@@ -65,11 +65,11 @@ export const VoteWeightProvider: React.FC<VoteWeightProviderProps> = ({ children
         setVoteWeight(DEFAULT_VOTE_WEIGHT);
         setDisableSlider(false);
       }
-    } else if (user) {
+    } else if (effectiveUser) {
       setVoteWeight(DEFAULT_VOTE_WEIGHT);
       setDisableSlider(false);
     }
-  }, [hiveAccount, user]);
+  }, [hiveAccount, effectiveUser]);
 
   // Update vote weight immediately when called (optimistic update)
   const updateVoteWeight = useCallback((newVoteWeight: number) => {

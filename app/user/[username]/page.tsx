@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { headers } from "next/headers";
 import ProfilePage from "@/components/profile/ProfilePage";
 import { cleanUsername } from "@/lib/utils/cleanUsername";
 import HiveClient from "@/lib/hive/hiveclient";
@@ -13,7 +14,17 @@ type Props = {
   params: Promise<{ username: string }>;
 };
 
-async function getUserData(username: string) {
+async function getBaseUrl() {
+  const hdrs = await headers();
+  const host = hdrs.get("host");
+  const protocol = hdrs.get("x-forwarded-proto") || "http";
+  if (host) {
+    return `${protocol}://${host}`;
+  }
+  return APP_CONFIG.ORIGIN || APP_CONFIG.BASE_URL;
+}
+
+async function getUserData(username: string, baseUrl: string) {
   try {
     const [profileInfo, hiveAccount] = await Promise.all([
       HiveClient.call("bridge", "get_profile", { account: username }),
@@ -21,7 +32,26 @@ async function getUserData(username: string) {
     ]);
 
     if (!hiveAccount || hiveAccount.length === 0) {
-      throw new Error("User not found");
+      const userbaseResponse = await fetch(
+        new URL(`/api/userbase/profile?handle=${encodeURIComponent(username)}`, baseUrl).toString(),
+        { cache: "no-store" }
+      ).catch(() => null);
+      if (userbaseResponse?.ok) {
+        const userbaseData = await userbaseResponse.json().catch(() => null);
+        if (userbaseData?.user) {
+          const user = userbaseData.user;
+          return {
+            username,
+            name: user.display_name || user.handle || username,
+            about: user.bio || "",
+            profileImage: user.avatar_url || FALLBACK_AVATAR,
+            coverImage: user.cover_url || FALLBACK_BANNER,
+            followers: 0,
+            following: 0,
+          };
+        }
+      }
+      return null;
     }
 
     const account = hiveAccount[0];
@@ -55,7 +85,7 @@ async function getUserData(username: string) {
     };
   } catch (error) {
     console.error("Failed to fetch user data:", error);
-    throw new Error("Failed to fetch user data");
+    return null;
   }
 }
 
@@ -64,7 +94,14 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   const username = cleanUsername(params.username);
 
   try {
-    const userData = await getUserData(username);
+    const baseUrl = await getBaseUrl();
+    const userData = await getUserData(username, baseUrl);
+    if (!userData) {
+      return {
+        title: `${username} | Skatehive Profile`,
+        description: `View ${username}'s profile on Skatehive.`,
+      };
+    }
     const profileUrl = `${DOMAIN_URL}/user/${username}`;
 
     // Create description from about text or fallback

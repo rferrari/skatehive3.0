@@ -14,6 +14,7 @@ import {
   useToast,
 } from "@chakra-ui/react";
 import { useAioha } from "@aioha/react-ui";
+import useEffectiveHiveUser from "@/hooks/useEffectiveHiveUser";
 import GiphySelector from "./GiphySelector";
 import VideoUploader, {
   VideoUploaderRef,
@@ -77,6 +78,7 @@ const SnapComposer = React.memo(function SnapComposer({
   buttonSize = "lg",
 }: SnapComposerProps) {
   const { user, aioha } = useAioha();
+  const { handle: effectiveUser, canUseAppFeatures } = useEffectiveHiveUser();
   const toast = useToast();
   const t = useTranslations();
   const postBodyRef = useRef<HTMLTextAreaElement>(null);
@@ -130,7 +132,7 @@ const SnapComposer = React.memo(function SnapComposer({
   const [pendingVideoFile, setPendingVideoFile] = useState<File | null>(null);
 
   // Get user's Hive Power to determine if they can bypass the 15s limit
-  const { hivePower } = useHivePower(user || "");
+  const { hivePower } = useHivePower(effectiveUser || "");
   const canBypassLimit = useMemo(
     () => hivePower !== null && hivePower >= 100,
     [hivePower]
@@ -417,7 +419,7 @@ const SnapComposer = React.memo(function SnapComposer({
   const checkForDuplicatePost = useCallback(async (
     content: string
   ): Promise<boolean> => {
-    if (!user) return false;
+    if (!effectiveUser) return false;
 
     const TIMEOUT_MS = 3000; // 3 second timeout
 
@@ -443,7 +445,7 @@ const SnapComposer = React.memo(function SnapComposer({
       if (replies && replies.length > 0) {
         // Filter to only this user's recent comments (last 5)
         const userReplies = replies
-          .filter((reply) => reply.author === user)
+          .filter((reply) => reply.author === effectiveUser)
           .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime())
           .slice(0, 5);
 
@@ -473,12 +475,23 @@ const SnapComposer = React.memo(function SnapComposer({
       console.error('Error checking for duplicate post:', error);
       return false; // Fail-open: allow posting if check fails
     }
-  }, [user, pa, pp]);
+  }, [effectiveUser, pa, pp]);
 
   const handleComment = useCallback(async () => {
     const commentBody = postBodyRef.current?.value?.trim() ?? "";
     if (!commentBody) {
       alert(t('compose.emptyComment'));
+      return;
+    }
+
+    if (!canUseAppFeatures) {
+      toast({
+        title: t('compose.loginRequired'),
+        description: t('compose.loginToComment'),
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
       return;
     }
 
@@ -557,15 +570,44 @@ const SnapComposer = React.memo(function SnapComposer({
         }
 
         const permlink = crypto.randomUUID();
-        const commentResponse = await aioha.comment(
-          pa,
-          postPermlink,
-          permlink,
-          "",
-          finalCommentBody,
-          metadata
-        );
+        let commentResponse: any = null;
+
+        if (user) {
+          commentResponse = await aioha.comment(
+            pa,
+            postPermlink,
+            permlink,
+            "",
+            finalCommentBody,
+            metadata
+          );
+        } else {
+          const response = await fetch("/api/userbase/hive/comment", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              parent_author: pa,
+              parent_permlink: postPermlink,
+              permlink,
+              title: "",
+              body: finalCommentBody,
+              json_metadata: metadata,
+              type: "snap",
+            }),
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data?.error || "Failed to post");
+          }
+          commentResponse = { success: true, author: data?.author || effectiveUser };
+        }
+
         if (commentResponse.success) {
+          const commentAuthor = commentResponse?.author || effectiveUser;
+          if (!commentAuthor) {
+            throw new Error("Unable to determine comment author");
+          }
+
           postBodyRef.current!.value = "";
           setCompressedImages([]);
           setSelectedGif(null);
@@ -576,7 +618,7 @@ const SnapComposer = React.memo(function SnapComposer({
           // Set created to "just now" for optimistic update
           // Use finalCommentBody so images and video are included in the preview
           const newComment: Partial<Discussion> = {
-            author: user,
+            author: commentAuthor,
             permlink: permlink,
             body: finalCommentBody,
             created: "just now", // use "just now" as the created value for new replies
@@ -586,6 +628,15 @@ const SnapComposer = React.memo(function SnapComposer({
           onNewComment(newComment);
           onClose();
         }
+      } catch (error: any) {
+        toast({
+          title: t("compose.postFailed"),
+          description:
+            error?.message || t("compose.postFailedDescription"),
+          status: "error",
+          duration: 4000,
+          isClosable: true,
+        });
       } finally {
         setIsLoading(false);
         setUploadProgress([]);
@@ -599,6 +650,7 @@ const SnapComposer = React.memo(function SnapComposer({
     extractHashtags,
     aioha,
     user,
+    effectiveUser,
     onNewComment,
     onClose,
     checkForDuplicatePost,
@@ -717,7 +769,7 @@ const SnapComposer = React.memo(function SnapComposer({
   );
 
   // Only render the composer if user is logged in
-  if (!user) return null;
+  if (!canUseAppFeatures) return null;
 
   return (
     <Box position="relative">
@@ -1109,7 +1161,7 @@ const SnapComposer = React.memo(function SnapComposer({
                   setVideoUrl(result.url);
                 }
               }}
-              username={user || undefined}
+              username={effectiveUser || undefined}
               onUploadStart={handleVideoUploadStart}
               onUploadFinish={handleVideoUploadFinish}
               onError={handleVideoError}
@@ -1171,7 +1223,7 @@ const SnapComposer = React.memo(function SnapComposer({
       />
 
       {/* Matrix Overlay and login prompt if not logged in */}
-      {!user && <></>}
+      {!effectiveUser && <></>}
     </Box>
   );
 });

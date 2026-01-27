@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useCallback, useEffect, useState, useMemo } from "react";
 import {
   Box,
   SimpleGrid,
@@ -18,7 +18,9 @@ import { Discussion } from "@hiveio/dhive";
 import BountySnap from "./BountySnap";
 import { parse, isAfter } from "date-fns";
 import HiveClient from "@/lib/hive/hiveclient";
-import { useAioha } from "@aioha/react-ui";
+import useEffectiveHiveUser from "@/hooks/useEffectiveHiveUser";
+import { useUserbaseAuth } from "@/contexts/UserbaseAuthContext";
+import { useSoftVoteOverlays } from "@/hooks/useSoftVoteOverlay";
 import {
   FaBolt,
   FaCheckCircle,
@@ -59,7 +61,24 @@ export default function BountyList({
   const [rewardedBounties, setRewardedBounties] = useState<Set<string>>(new Set());
 
   // Claimed bounties logic
-  const { user } = useAioha();
+  const { handle: effectiveUser } = useEffectiveHiveUser();
+  const { user: userbaseUser } = useUserbaseAuth();
+  const softVotes = useSoftVoteOverlays(
+    displayedBounties.map((bounty) => ({
+      author: bounty.author,
+      permlink: bounty.permlink,
+    }))
+  );
+
+  const hasSoftVoteFor = useCallback(
+    (author: string, permlink: string) => {
+      if (!userbaseUser) return false;
+      const key = `${userbaseUser.id}:${author}/${permlink}`;
+      const softVote = softVotes[key];
+      return !!softVote && softVote.status !== "failed" && softVote.weight > 0;
+    },
+    [softVotes, userbaseUser]
+  );
 
   useEffect(() => {
     let bounties = [...comments];
@@ -99,22 +118,26 @@ export default function BountyList({
 
   // Filter bounties based on status
   const filteredBounties = useMemo(() => {
-    if (filter === "my-claimed" && user) {
+    if (filter === "my-claimed" && effectiveUser) {
       return displayedBounties.filter((bounty) => {
         // Check if the current user has voted on this bounty (claimed it) AND is not the author
         // Use case-insensitive comparison to handle potential case differences
-        const isNotAuthor = bounty.author.toLowerCase() !== user.toLowerCase();
+        const isNotAuthor =
+          bounty.author.toLowerCase() !== effectiveUser.toLowerCase();
         const hasVoted = bounty.active_votes?.some(
-          (vote) => vote.voter.toLowerCase() === user.toLowerCase()
+          (vote) => vote.voter.toLowerCase() === effectiveUser.toLowerCase()
         );
 
-        return isNotAuthor && hasVoted;
+        return (
+          isNotAuthor &&
+          (hasVoted || hasSoftVoteFor(bounty.author, bounty.permlink))
+        );
       });
     }
-    if (filter === "my-bounties" && user) {
+    if (filter === "my-bounties" && effectiveUser) {
       return displayedBounties.filter((bounty) => {
         // Check if the current user is the author of this bounty
-        return bounty.author.toLowerCase() === user.toLowerCase();
+        return bounty.author.toLowerCase() === effectiveUser.toLowerCase();
       });
     }
     if (filter === "claimed") {
@@ -135,7 +158,7 @@ export default function BountyList({
     }
     return true;
     });
-  }, [filter, displayedBounties, user, rewardedBounties]);
+  }, [filter, displayedBounties, effectiveUser, rewardedBounties, hasSoftVoteFor]);
 
   // Sorting logic
   const sortedBounties = useMemo(() => {
@@ -687,11 +710,11 @@ export default function BountyList({
       {filteredBounties.length === 0 ? (
         // Show appropriate empty state message based on filter
         <Box textAlign="center" my={8}>
-          {filter === "my-claimed" && user ? (
+          {filter === "my-claimed" && effectiveUser ? (
             <Text>
               You have not claimed any bounties yet. Go upvote a bounty to claim it!
             </Text>
-          ) : filter === "my-bounties" && user ? (
+          ) : filter === "my-bounties" && effectiveUser ? (
             <Text>
               You have not created any bounties yet. Create your first bounty to get
               started!

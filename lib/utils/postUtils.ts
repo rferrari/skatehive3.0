@@ -61,16 +61,16 @@ export function countDownvotes(activeVotes: any[]): number {
         // - negative values indicate downvotes
         const isDownvote = weight < 0 || percent < 0 || rshares < 0;
         
-        if (isDownvote && process.env.NODE_ENV === 'development') {
-            console.log(`📊 Downvote detected: voter=${vote.voter}, weight=${weight}, percent=${percent}, rshares=${rshares}`);
-        }
+        // if (isDownvote && process.env.NODE_ENV === 'development') {
+        //     console.log(`📊 Downvote detected: voter=${vote.voter}, weight=${weight}, percent=${percent}, rshares=${rshares}`);
+        // }
 
         return isDownvote;
     });
     
-    if (downvotes.length > 0 && process.env.NODE_ENV === 'development') {
-        console.log(`📊 countDownvotes: Found ${downvotes.length} downvotes out of ${activeVotes.length} total votes`);
-    }
+    // if (downvotes.length > 0 && process.env.NODE_ENV === 'development') {
+    //     console.log(`📊 countDownvotes: Found ${downvotes.length} downvotes out of ${activeVotes.length} total votes`);
+    // }
     
     return downvotes.length;
 }

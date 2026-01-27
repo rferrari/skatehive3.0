@@ -27,6 +27,7 @@ import { migrateLegacyMetadata } from "@/lib/utils/metadataMigration";
 import MergeAccountModal, { MergeType } from "../profile/MergeAccountModal";
 import { mergeAccounts, generateMergePreview } from "@/lib/services/mergeAccounts";
 import { ProfileDiff } from "@/lib/utils/profileDiff";
+import { useUserbaseAuth } from "@/contexts/UserbaseAuthContext";
 
 interface ConnectionStatus {
   name: string;
@@ -38,6 +39,7 @@ interface ConnectionStatus {
 
 export default function AuthButton() {
   const { user, aioha } = useAioha();
+  const { user: userbaseUser } = useUserbaseAuth();
   const { colorMode } = useColorMode();
   const [modalDisplayed, setModalDisplayed] = useState(false);
   const [isConnectionModalOpen, setIsConnectionModalOpen] = useState(false);
@@ -333,6 +335,16 @@ export default function AuthButton() {
                 />
               )}
             </Box>
+          ) : userbaseUser?.avatar_url ? (
+            <ChakraAvatar
+              size="sm"
+              src={userbaseUser.avatar_url}
+              name={
+                userbaseUser.display_name ||
+                userbaseUser.handle ||
+                undefined
+              }
+            />
           ) : undefined
         }
         rightIcon={
@@ -368,6 +380,12 @@ export default function AuthButton() {
               {primaryUserInfo.displayName}
             </Text>
           )
+        ) : userbaseUser ? (
+          <Text fontSize="sm" noOfLines={1}>
+            {userbaseUser.display_name ||
+              userbaseUser.handle ||
+              "App account"}
+          </Text>
         ) : (
           "Login"
         )}

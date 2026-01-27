@@ -35,6 +35,9 @@ import { Discussion } from "@hiveio/dhive";
 import { FaHeart, FaRegHeart, FaShareSquare, FaEdit } from "react-icons/fa";
 import { getPostDate } from "@/lib/utils/GetPostDate";
 import { useAioha } from "@aioha/react-ui";
+import useHiveVote from "@/hooks/useHiveVote";
+import useSoftPostOverlay from "@/hooks/useSoftPostOverlay";
+import useSoftVoteOverlay from "@/hooks/useSoftVoteOverlay";
 import { getPayoutValue } from "@/lib/hive/client-functions";
 import useHivePower from "@/hooks/useHivePower";
 import VoteListPopover from "./VoteListModal";
@@ -48,6 +51,7 @@ import UpvoteStoke from "@/components/graphics/UpvoteStoke";
 import { MarkdownCoinModal } from "@/components/zora/MarkdownCoinModal/MarkdownCoinModal";
 import { canCreateCoin, analyzeContent } from "@/lib/utils/markdownCoinUtils";
 import { ZoraButton } from "./ZoraButton";
+import { extractSafeUser } from "@/lib/userbase/safeUserMetadata";
 
 interface PostDetailsProps {
   post: Discussion;
@@ -59,19 +63,35 @@ export default function PostDetails({
   onOpenConversation,
 }: PostDetailsProps) {
   const { title, author, body, created } = post;
+  const safeUser = useMemo(
+    () => extractSafeUser(post.json_metadata),
+    [post.json_metadata]
+  );
+
+  const softPost = useSoftPostOverlay(post.author, post.permlink, safeUser);
+  const softVote = useSoftVoteOverlay(post.author, post.permlink);
+  const displayAuthor =
+    softPost?.user.display_name || softPost?.user.handle || author;
+  const displayAvatar =
+    softPost?.user.avatar_url ||
+    `https://images.hive.blog/u/${author}/avatar/sm`;
   const postDate = useMemo(() => getPostDate(created), [created]);
-  const { aioha, user } = useAioha();
-  const userVoteWeight = useVoteWeight(user || "");
+  const { user: walletUser } = useAioha();
+  const { vote, effectiveUser, canVote } = useHiveVote();
+  const userVoteWeight = useVoteWeight(effectiveUser || "");
   const [sliderValue, setSliderValue] = useState(userVoteWeight);
   const [showSlider, setShowSlider] = useState(false);
   const [activeVotes, setActiveVotes] = useState(post.active_votes || []);
   const [payoutValue, setPayoutValue] = useState(
     parseFloat(getPayoutValue(post))
   );
+  const hasSoftVote =
+    !!softVote && softVote.status !== "failed" && softVote.weight > 0;
   const [voted, setVoted] = useState(
-    post.active_votes?.some(
-      (item) => item.voter.toLowerCase() === user?.toLowerCase()
-    )
+    hasSoftVote ||
+      post.active_votes?.some(
+        (item) => item.voter.toLowerCase() === effectiveUser?.toLowerCase()
+      )
   );
   const toast = useToast();
 
@@ -92,8 +112,8 @@ export default function PostDetails({
 
   // Check if this post is eligible for coin creation
   const coinEligibility = useMemo(() => {
-    return canCreateCoin(post, user);
-  }, [post, user]);
+    return canCreateCoin(post, effectiveUser);
+  }, [post, effectiveUser]);
 
   const contentAnalysis = useMemo(() => {
     return analyzeContent(post.body);
@@ -142,7 +162,8 @@ export default function PostDetails({
   }, [payoutValue, triggerUpvoteStoke]);
 
   // Check if current user is the author
-  const isAuthor = user && user.toLowerCase() === author.toLowerCase();
+  const isAuthor =
+    walletUser && walletUser.toLowerCase() === author.toLowerCase();
 
   // Use the post edit hook
   const {
@@ -162,12 +183,24 @@ export default function PostDetails({
     isLoading: isHivePowerLoading,
     error: hivePowerError,
     estimateVoteValue,
-  } = useHivePower(user);
+  } = useHivePower(effectiveUser || "");
 
   // Update slider value when user's vote weight changes
   useEffect(() => {
     setSliderValue(userVoteWeight);
   }, [userVoteWeight]);
+
+  useEffect(() => {
+    setActiveVotes(post.active_votes || []);
+    setPayoutValue(parseFloat(getPayoutValue(post)));
+    setVoted(
+      hasSoftVote ||
+        post.active_votes?.some(
+          (item) => item.voter.toLowerCase() === effectiveUser?.toLowerCase()
+        ) ||
+        false
+    );
+  }, [post, effectiveUser, hasSoftVote]);
 
   // Process markdown content once
   const processedMarkdown = useMemo(() => {
@@ -239,34 +272,49 @@ export default function PostDetails({
   }, [author, post.permlink, toast]);
 
   const handleVote = useCallback(async () => {
-    const vote = await aioha.vote(
-      post.author,
-      post.permlink,
-      sliderValue * 100
-    );
-    if (vote.success) {
-      setVoted(true);
-      setActiveVotes([...activeVotes, { voter: user }]);
-      // Estimate the value and optimistically update payout
-      if (estimateVoteValue) {
-        try {
-          const estimatedValue = await estimateVoteValue(sliderValue);
-          setPayoutValue((prev) => prev + estimatedValue);
-          // UpvoteStoke will trigger automatically when payoutValue changes
-        } catch (e) {
-          // fallback: do not update payout
+    if (!canVote) return;
+    try {
+      const voteResult = await vote(
+        post.author,
+        post.permlink,
+        sliderValue * 100
+      );
+      if (voteResult.success) {
+        setVoted(true);
+        if (effectiveUser) {
+          setActiveVotes([...activeVotes, { voter: effectiveUser }]);
+        }
+        // Estimate the value and optimistically update payout
+        if (estimateVoteValue) {
+          try {
+            const estimatedValue = await estimateVoteValue(sliderValue);
+            setPayoutValue((prev) => prev + estimatedValue);
+            // UpvoteStoke will trigger automatically when payoutValue changes
+          } catch (e) {
+            // fallback: do not update payout
+          }
         }
       }
+    } catch (error) {
+      toast({
+        title: "Failed to vote",
+        description: "Please try again",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setShowSlider(false);
     }
-    setShowSlider(false);
   }, [
-    aioha,
+    vote,
     post.author,
     post.permlink,
     sliderValue,
     activeVotes,
-    user,
+    effectiveUser,
     estimateVoteValue,
+    canVote,
   ]);
 
   return (
@@ -302,8 +350,8 @@ export default function PostDetails({
             <Flex direction="row" alignItems="center" flex="0 0 auto" minW="0">
               <Avatar
                 size="sm"
-                name={author}
-                src={`https://images.hive.blog/u/${author}/avatar/sm`}
+                name={displayAuthor}
+                src={displayAvatar}
               />
               <Box ml={2} minW="0">
                 <Text
@@ -314,7 +362,7 @@ export default function PostDetails({
                   isTruncated
                 >
                   <Link href={`/user/${author}`} color="primary">
-                    {author}
+                    {displayAuthor}
                   </Link>
                 </Text>
               </Box>
@@ -504,8 +552,8 @@ export default function PostDetails({
           <Flex direction="row" alignItems="center" flex="0 0 auto" minW="0">
             <Avatar
               size="sm"
-              name={author}
-              src={`https://images.hive.blog/u/${author}/avatar/sm`}
+              name={displayAuthor}
+              src={displayAvatar}
             />
             <HStack ml={2} minW="0">
               <Text
@@ -515,7 +563,7 @@ export default function PostDetails({
                 isTruncated
               >
                 <Link href={`/user/${author}`} color="colorBackground">
-                  {author}
+                  {displayAuthor}
                 </Link>
               </Text>
               <Text fontSize="sm" color="colorBackground">

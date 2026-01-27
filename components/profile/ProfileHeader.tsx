@@ -5,6 +5,7 @@ import MobileProfileHeader from "./MobileProfileHeader";
 import HiveProfileHeader from "./HiveProfileHeader";
 import ZoraProfileHeader from "./ZoraProfileHeader";
 import { ProfileData } from "./ProfilePage";
+import ProfileDebugControl from "./ProfileDebugControl";
 
 interface ProfileHeaderProps {
   profileData: ProfileData;
@@ -16,6 +17,7 @@ interface ProfileHeaderProps {
   onFollowingChange: (following: boolean | null) => void;
   onLoadingChange: (loading: boolean) => void;
   onEditModalOpen: () => void;
+  debugPayload?: Record<string, any> | null;
 }
 
 const ProfileHeader = function ProfileHeader({
@@ -28,6 +30,7 @@ const ProfileHeader = function ProfileHeader({
   onFollowingChange,
   onLoadingChange,
   onEditModalOpen,
+  debugPayload,
 }: ProfileHeaderProps) {
   const [showZoraProfile, setShowZoraProfile] = useState(false);
 
@@ -89,7 +92,6 @@ const ProfileHeader = function ProfileHeader({
           </Box>
 
           {/* Profile Type Toggle - Bottom Right Corner */}
-          {profileData.ethereum_address && (
             <Box position="absolute" bottom={4} right={6} zIndex={10}>
               <HStack spacing={2}>
                 {/* Hive Profile Logo */}
@@ -143,9 +145,12 @@ const ProfileHeader = function ProfileHeader({
                     transition="opacity 0.2s"
                   />
                 </Box>
+                {debugPayload && (
+                  <ProfileDebugControl payload={debugPayload} />
+                )}
               </HStack>
             </Box>
-          )}
+      
         </Box>
       </Box>
     </Box>
@@ -160,6 +165,7 @@ export default memo(ProfileHeader, (prevProps, nextProps) => {
     prevProps.isOwner === nextProps.isOwner &&
     prevProps.user === nextProps.user &&
     prevProps.isFollowing === nextProps.isFollowing &&
-    prevProps.isFollowLoading === nextProps.isFollowLoading
+    prevProps.isFollowLoading === nextProps.isFollowLoading &&
+    prevProps.debugPayload === nextProps.debugPayload
   );
 });

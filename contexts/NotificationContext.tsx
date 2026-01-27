@@ -6,7 +6,7 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
-import { useAioha } from "@aioha/react-ui";
+import useEffectiveHiveUser from "@/hooks/useEffectiveHiveUser";
 import { Notifications } from "@hiveio/dhive";
 import {
   fetchNewNotifications,
@@ -34,14 +34,14 @@ export const NotificationProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const { user } = useAioha();
+  const { handle: effectiveUser } = useEffectiveHiveUser();
   const [notifications, setNotifications] = useState<Notifications[]>([]);
   const [lastReadDate, setLastReadDate] = useState("1970-01-01T00:00:00Z");
   const [isLoading, setIsLoading] = useState(false);
   const [farcasterEnabled, setFarcasterEnabled] = useState(false);
 
   const refreshNotifications = useCallback(async () => {
-    if (!user) {
+    if (!effectiveUser) {
       setNotifications([]);
       setLastReadDate("1970-01-01T00:00:00Z");
       return;
@@ -50,8 +50,8 @@ export const NotificationProvider = ({
     setIsLoading(true);
     try {
       const [notifs, lastRead] = await Promise.all([
-        fetchNewNotifications(user),
-        getLastReadNotificationDate(user),
+        fetchNewNotifications(effectiveUser),
+        getLastReadNotificationDate(effectiveUser),
       ]);
       setNotifications(notifs);
       setLastReadDate(lastRead);
@@ -60,10 +60,10 @@ export const NotificationProvider = ({
     } finally {
       setIsLoading(false);
     }
-  }, [user]);
+  }, [effectiveUser]);
 
   const markNotificationsAsRead = useCallback(async () => {
-    if (!user) return;
+    if (!effectiveUser) return;
 
     // Update the last read date to now
     const now = new Date().toISOString();
@@ -71,7 +71,7 @@ export const NotificationProvider = ({
 
     // Here you could also make an API call to persist this on the server
     // For now, this will just update the local state
-  }, [user]);
+  }, [effectiveUser]);
 
   const enableFarcasterNotifications = useCallback(() => {
     setFarcasterEnabled(true);

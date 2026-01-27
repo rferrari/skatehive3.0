@@ -93,6 +93,68 @@ Complete documentation for all SkateHive 3.0 API endpoints.
   - **Endpoint:** `GET /api/auth/check-otp`
   - **Use Case:** Validate signup tokens
 
+- **Userbase Session (internal)** - Create app-level user session
+  - **Endpoint:** `POST /api/userbase/auth/session`
+  - **Use Case:** Seed userbase auth flow (requires `USERBASE_INTERNAL_TOKEN` when set)
+
+- **Userbase Magic Link** - Request or consume email magic links
+  - **Endpoints:** `POST /api/userbase/auth/magic-link`, `GET /api/userbase/auth/magic-link`
+  - **Use Case:** Email-based login and session issuance
+
+- **Userbase Sign Up** - Create an app user with email + display name (sends magic link)
+  - **Endpoint:** `POST /api/userbase/auth/sign-up`
+  - **Use Case:** First-time email onboarding with profile seed (handle/avatar)
+
+- **Userbase Wallet Bootstrap** - Auto-create user + session on wallet connect
+  - **Endpoint:** `POST /api/userbase/auth/bootstrap`
+  - **Use Case:** Create app user/session from Hive/EVM/Farcaster connection
+
+- **Userbase Auth Lookup** - Check if an email has an account (optional handle validation)
+  - **Endpoint:** `POST /api/userbase/auth/lookup`
+  - **Use Case:** Debounced sign-in checks and handle availability
+
+- **Userbase Merge** - Merge two app accounts after identity proof
+  - **Endpoint:** `POST /api/userbase/merge`
+  - **Use Case:** Merge duplicate app users when an identity already exists elsewhere
+
+- **Userbase Profile** - Fetch app profile + identities
+  - **Endpoint:** `GET /api/userbase/profile`
+  - **Use Case:** Resolve app profiles by handle or identity
+
+- **Userbase Session (validate)** - Validate refresh session token
+  - **Endpoint:** `GET /api/userbase/auth/session`
+  - **Use Case:** Check active userbase session from cookie or token
+
+- **Userbase Hive Actions** - Post/comment/vote via stored key or default account
+  - **Endpoints:** `POST /api/userbase/hive/comment`, `POST /api/userbase/hive/vote`
+  - **Use Case:** App-authenticated Hive interactions (supports email-only posting if configured)
+
+- **Userbase Soft Posts** - Map default-account posts to app users
+  - **Endpoint:** `POST /api/userbase/soft-posts`
+  - **Use Case:** Resolve display name/avatar for email-only posts
+
+- **Userbase Soft Posts (by user)** - List ghost posts for a specific app user
+  - **Endpoint:** `GET /api/userbase/soft-posts/by-user`
+  - **Use Case:** Render email-only posts on profile pages
+
+- **Userbase Soft Votes** - Resolve email-only vote state
+  - **Endpoint:** `POST /api/userbase/soft-votes`
+  - **Use Case:** Show voted state for app-only users (default-account votes)
+
+- **Userbase Soft Post Retry** - Retry failed default-account broadcasts
+  - **Endpoint:** `POST /api/userbase/soft-posts/retry`
+  - **Use Case:** Cron-based retry + cleanup for queued/failed soft posts
+  - **Notes:** Set `USERBASE_ALERT_WEBHOOK_URL` to receive failure alerts
+
+- **Userbase Soft Vote Retry** - Retry failed default-account votes
+  - **Endpoint:** `POST /api/userbase/soft-votes/retry`
+  - **Use Case:** Cron-based retry + cleanup for queued/failed soft votes
+  - **Notes:** Set `USERBASE_ALERT_WEBHOOK_URL` to receive failure alerts
+
+- **Cron Runner** - Vercel cron entrypoint
+  - **Endpoint:** `GET /api/cron`
+  - **Use Case:** Triggers soft-post + soft-vote retry/cleanup
+
 - **Admin Check** - Verify admin status
   - **Endpoint:** `POST /api/admin/check`
   - **Use Case:** Server-side admin validation

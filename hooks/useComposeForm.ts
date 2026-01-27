@@ -7,6 +7,8 @@ import { generatePermlink, prepareImageArray, insertAtCursor } from "@/lib/markd
 import { Beneficiary } from "@/components/compose/BeneficiariesInput";
 import { validateHiveUsernameFormat } from "@/lib/utils/hiveAccountUtils";
 import { HIVE_CONFIG } from "@/config/app.config";
+import useUserbaseHiveIdentity from "@/hooks/useUserbaseHiveIdentity";
+import { useUserbaseAuth } from "@/contexts/UserbaseAuthContext";
 
 export const useComposeForm = () => {
     const [markdown, setMarkdown] = useState("");
@@ -20,6 +22,8 @@ export const useComposeForm = () => {
     const [showThumbnailPicker, setShowThumbnailPicker] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { aioha, user } = useAioha();
+    const { identity: userbaseHiveIdentity } = useUserbaseHiveIdentity();
+    const { user: userbaseUser } = useUserbaseAuth();
     const toast = useToast();
     const router = useRouter();
     const communityTag = HIVE_CONFIG.COMMUNITY_TAG;
@@ -42,9 +46,13 @@ export const useComposeForm = () => {
         insertAtCursor(content, markdown, setMarkdown);
     };
 
-    const handleSubmit = async () => {
+    const effectiveUser =
+      user || userbaseHiveIdentity?.handle || userbaseUser?.handle || null;
 
-        if (!user) {
+    const handleSubmit = async () => {
+        const canSubmit = !!user || !!userbaseHiveIdentity?.handle || !!userbaseUser;
+
+        if (!canSubmit) {
             toast({
                 title: "You must be logged in to submit a post.",
                 status: "error",
@@ -80,32 +88,62 @@ export const useComposeForm = () => {
         const permlink = generatePermlink(title);
 
         try {
-            // Show toast indicating we're waiting for keychain confirmation
-            toast({
-                title: "Please confirm the transaction in Keychain...",
-                status: "info",
-                duration: 3000,
-                isClosable: true,
-            });
+            if (user) {
+                // Show toast indicating we're waiting for keychain confirmation
+                toast({
+                    title: "Please confirm the transaction in Keychain...",
+                    status: "info",
+                    duration: 3000,
+                    isClosable: true,
+                });
+            }
 
             // First, submit the comment
-            const result = await aioha.comment(
-                null,
-                communityTag,
-                permlink,
-                title,
-                markdown,
-                {
-                    tags: hashtags,
-                    app: "Skatehive App 3.0",
-                    image: imageArray,
+            let result: any = null;
+
+            if (user) {
+                result = await aioha.comment(
+                    null,
+                    communityTag,
+                    permlink,
+                    title,
+                    markdown,
+                    {
+                        tags: hashtags,
+                        app: "Skatehive App 3.0",
+                        image: imageArray,
+                    }
+                );
+            } else {
+                const response = await fetch("/api/userbase/hive/comment", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        parent_author: "",
+                        parent_permlink: communityTag,
+                        permlink,
+                        title,
+                        body: markdown,
+                        json_metadata: {
+                            tags: hashtags,
+                            app: "Skatehive App 3.0",
+                            image: imageArray,
+                        },
+                        beneficiaries,
+                        type: "post",
+                    }),
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data?.error || "Failed to submit post.");
                 }
-            );
+                result = { success: true, author: data?.author, permlink: data?.permlink };
+            }
 
             if (result && result.success) {
 
-                // If beneficiaries are set, submit comment_options operation
-                if (beneficiaries.length > 0) {
+                // If beneficiaries are set, submit comment_options operation (keychain only)
+                if (beneficiaries.length > 0 && user) {
 
                     // Validate beneficiaries before submitting
                     const totalWeight = beneficiaries.reduce((sum, b) => sum + b.weight, 0);
@@ -241,7 +279,7 @@ export const useComposeForm = () => {
         showThumbnailPicker,
         setShowThumbnailPicker,
         placeholders,
-        user,
+        user: effectiveUser,
         insertAtCursorWrapper,
         handleSubmit,
         isSubmitting,

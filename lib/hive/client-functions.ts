@@ -7,6 +7,8 @@ import { Discussion, Notifications, Operation } from "@hiveio/dhive";
 import { extractNumber } from "../utils/extractNumber";
 import { VideoPart } from "@/types/VideoPart";
 import { HIVE_CONFIG } from '@/config/app.config';
+import fetchAccount from "@/lib/hive/fetchAccount";
+import { mergeHiveProfileMetadata } from "@/lib/hive/profile-metadata";
 
 
 interface HiveKeychainResponse {
@@ -146,30 +148,44 @@ export async function updateProfile(
   try {
     const keychain = new KeychainSDK(window);
 
-    const profileMetadata = {
-      profile: {
-        name: name,
-        about: about,
-        location: location,
-        cover_image: coverImageUrl,
-        profile_image: avatarUrl,
-        website: website,
-        version: 2
-      }
-    };
-    const extMetadata: { extensions: any } = {
-      extensions: {}
-    };
-    if (ethAddress) extMetadata.extensions.eth_address = ethAddress;
-    if (videoParts) extMetadata.extensions.video_parts = videoParts;
-    if (level) extMetadata.extensions.level = level;
+    const { jsonMetadata: currentMetadata, postingMetadata } =
+      await fetchAccount(username);
+
+    const extensionsPatch: Record<string, any> = {};
+    if (ethAddress !== undefined) {
+      extensionsPatch.wallets = {
+        primary_wallet: ethAddress || "",
+      };
+    }
+    if (videoParts !== undefined) {
+      extensionsPatch.video_parts = videoParts || [];
+    }
+    if (level !== undefined) {
+      extensionsPatch.level = level;
+    }
+
+    const { postingMetadata: mergedPosting, jsonMetadata: mergedJson } =
+      mergeHiveProfileMetadata({
+        currentPosting: postingMetadata,
+        currentJson: currentMetadata,
+        profilePatch: {
+          name,
+          about,
+          location,
+          cover_image: coverImageUrl,
+          profile_image: avatarUrl,
+          website,
+          version: 2,
+        },
+        extensionsPatch,
+      });
 
     const op: Operation = [
       'account_update2',
       {
         account: username,
-        json_metadata: JSON.stringify(extMetadata),
-        posting_json_metadata: JSON.stringify(profileMetadata),
+        json_metadata: JSON.stringify(mergedJson),
+        posting_json_metadata: JSON.stringify(mergedPosting),
       }
     ];
     const broadcastData: Broadcast = {

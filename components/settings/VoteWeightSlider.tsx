@@ -19,7 +19,7 @@ import {
 import { useAioha } from "@aioha/react-ui";
 import { KeychainSDK, KeychainKeyTypes } from "keychain-sdk";
 import { DEFAULT_VOTE_WEIGHT } from "@/lib/utils/constants";
-import { migrateLegacyMetadata } from "@/lib/utils/metadataMigration";
+import { mergeHiveProfileMetadata } from "@/lib/hive/profile-metadata";
 import { Operation } from "@hiveio/dhive";
 import { useVoteWeightContext } from "@/contexts/VoteWeightContext";
 import fetchAccount from "@/lib/hive/fetchAccount";
@@ -82,30 +82,30 @@ const VoteWeightSlider: React.FC<VoteWeightSliderProps> = ({
       const keychain = new KeychainSDK(window);
 
       // Get current profile metadata
-      const { account, jsonMetadata: currentMetadata } = await fetchAccount(
-        username
-      );
+      const { jsonMetadata: currentMetadata, postingMetadata } =
+        await fetchAccount(username);
 
-      const migrated = migrateLegacyMetadata(currentMetadata);
-      migrated.extensions = migrated.extensions || {};
-      migrated.extensions.settings = migrated.extensions.settings || {};
-      migrated.extensions.settings.voteSettings =
-        migrated.extensions.settings.voteSettings || {
-          default_voting_weight: sliderValue * 100,
-          enable_slider: true,
-        };
-
-      migrated.extensions.settings.voteSettings.default_voting_weight =
-        sliderValue * 100;
-      migrated.extensions.settings.voteSettings.enable_slider = !disableSliderValue;
+      const { postingMetadata: mergedPosting, jsonMetadata: mergedJson } =
+        mergeHiveProfileMetadata({
+          currentPosting: postingMetadata,
+          currentJson: currentMetadata,
+          extensionsPatch: {
+            settings: {
+              voteSettings: {
+                default_voting_weight: sliderValue * 100,
+                enable_slider: !disableSliderValue,
+              },
+            },
+          },
+        });
 
       // Create the account update operation
       const operation: Operation = [
         "account_update2",
         {
           account: username,
-          json_metadata: JSON.stringify(migrated),
-          posting_json_metadata: account.posting_json_metadata || "{}",
+          json_metadata: JSON.stringify(mergedJson),
+          posting_json_metadata: JSON.stringify(mergedPosting || {}),
           extensions: [],
         },
       ];

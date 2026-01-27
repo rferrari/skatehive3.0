@@ -246,7 +246,7 @@ export default function Composer() {
         <Box width="100%" maxWidth="1200px">
           <VideoUploader
             ref={videoUploaderRef}
-            username={user?.user?.username}
+            username={user || undefined}
             onUploadStart={() => {
               setVideoError(null);
               setIsCompressingVideo(true);

@@ -1,4 +1,6 @@
 import { HiveAccount } from "@/hooks/useHiveAccount";
+import useHiveAccount from "@/hooks/useHiveAccount";
+import useUserbaseHiveIdentity from "@/hooks/useUserbaseHiveIdentity";
 import { createContext, useContext, useEffect, useState } from "react";
 
 export interface HiveUserContextProps {
@@ -15,6 +17,10 @@ const HiveUserContext = createContext<HiveUserContextProps | undefined>(
 export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<HiveAccount | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>();
+  const { identity: userbaseHiveIdentity } = useUserbaseHiveIdentity();
+  const { hiveAccount, isLoading: isHiveAccountLoading } = useHiveAccount(
+    userbaseHiveIdentity?.handle || ""
+  );
 
   const refreshUser = () => {
     const userData = localStorage.getItem("hiveuser");
@@ -25,8 +31,15 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
+    if (userbaseHiveIdentity?.handle) {
+      setIsLoading(isHiveAccountLoading);
+      if (hiveAccount) {
+        setUser(hiveAccount);
+      }
+      return;
+    }
     refreshUser();
-  }, []);
+  }, [userbaseHiveIdentity?.handle, hiveAccount, isHiveAccountLoading]);
 
   return (
     <HiveUserContext.Provider

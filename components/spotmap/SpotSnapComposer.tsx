@@ -16,6 +16,7 @@ import {
 } from "@chakra-ui/react";
 import { useTranslations } from "@/contexts/LocaleContext";
 import { useAioha } from "@aioha/react-ui";
+import useEffectiveHiveUser from "@/hooks/useEffectiveHiveUser";
 import { CloseIcon } from "@chakra-ui/icons";
 import { FaImage } from "react-icons/fa";
 import { Discussion } from "@hiveio/dhive";
@@ -40,6 +41,7 @@ export default function SpotSnapComposer({
 }: SpotSnapComposerProps) {
   const t = useTranslations('map');
   const { user, aioha } = useAioha();
+  const { handle: effectiveUser } = useEffectiveHiveUser();
   const postBodyRef = useRef<HTMLTextAreaElement>(null);
   const imageCompressorRef = useRef<ImageCompressorRef>(null);
   const [compressedImages, setCompressedImages] = useState<
@@ -160,14 +162,39 @@ export default function SpotSnapComposer({
       const container = await getLastSnapsContainer();
       const parentAuthor = container.author;
       const parentPermlink = container.permlink;
-      const commentResponse = await aioha.comment(
-        parentAuthor,
-        parentPermlink,
-        permlink,
-        "",
-        commentBody,
-        { app: "Skatehive App 3.0", tags: [HIVE_CONFIG.COMMUNITY_TAG, "skatespot"] }
-      );
+      let commentResponse: any = null;
+      if (user) {
+        commentResponse = await aioha.comment(
+          parentAuthor,
+          parentPermlink,
+          permlink,
+          "",
+          commentBody,
+          { app: "Skatehive App 3.0", tags: [HIVE_CONFIG.COMMUNITY_TAG, "skatespot"] }
+        );
+      } else {
+        const response = await fetch("/api/userbase/hive/comment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            parent_author: parentAuthor,
+            parent_permlink: parentPermlink,
+            permlink,
+            title: "",
+            body: commentBody,
+            json_metadata: {
+              app: "Skatehive App 3.0",
+              tags: [HIVE_CONFIG.COMMUNITY_TAG, "skatespot"],
+            },
+            type: "snap",
+          }),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data?.error || "Failed to post");
+        }
+        commentResponse = { success: true, author: data?.author || effectiveUser };
+      }
       if (commentResponse.success) {
         postBodyRef.current!.value = "";
         setCompressedImages([]);
@@ -177,7 +204,7 @@ export default function SpotSnapComposer({
         setAddress("");
         // Set created to "just now" for optimistic update
         const newComment: Partial<Discussion> = {
-          author: user,
+          author: commentResponse?.author || effectiveUser,
           permlink: permlink,
           body: commentBody,
           created: "just now",

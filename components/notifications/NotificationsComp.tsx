@@ -39,6 +39,9 @@ export default function NotificationsComp({ username }: NotificationCompProps) {
   const [filter, setFilter] = useState<string>("all");
 
   async function handleMarkAsRead() {
+    if (!user) {
+      return;
+    }
     const now = new Date().toISOString();
     const json = JSON.stringify(["setLastRead", { date: now }]);
     await aioha.signAndBroadcastTx(

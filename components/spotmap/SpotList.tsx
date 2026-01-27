@@ -17,7 +17,7 @@ import Snap from "@/components/homepage/Snap";
 import SnapComposer from "@/components/homepage/SnapComposer";
 import LoadingComponent from "@/components/homepage/loadingComponent";
 import { useComments } from "@/hooks/useComments";
-import { useAioha } from "@aioha/react-ui";
+import useEffectiveHiveUser from "@/hooks/useEffectiveHiveUser";
 
 interface SpotCommentsModalProps {
   discussion: Discussion;
@@ -27,7 +27,7 @@ interface SpotCommentsModalProps {
 const SpotCommentsModal = ({ discussion, onClose }: SpotCommentsModalProps) => {
   const t = useTranslations('map');
   const tCommon = useTranslations('common');
-  const { user } = useAioha();
+  const { canUseAppFeatures } = useEffectiveHiveUser();
   const [optimisticComments, setOptimisticComments] = useState<Discussion[]>([]);
 
   // Fetch comments for this spot
@@ -58,7 +58,7 @@ const SpotCommentsModal = ({ discussion, onClose }: SpotCommentsModalProps) => {
       </HStack>
 
       {/* Comment Composer - only show if user is logged in */}
-      {user && (
+      {canUseAppFeatures && (
         <Box>
           <SnapComposer
             pa={discussion.author}

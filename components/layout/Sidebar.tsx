@@ -9,7 +9,7 @@ import {
   Link as ChakraLink,
 } from "@chakra-ui/react";
 import Link from "next/link";
-import { useAioha } from "@aioha/react-ui";
+import useEffectiveHiveUser from "@/hooks/useEffectiveHiveUser";
 import { useAccount } from "wagmi";
 import { useFarcasterSession } from "@/hooks/useFarcasterSession";
 import {
@@ -31,7 +31,7 @@ import { useTranslations } from "@/contexts/LocaleContext";
 import { useSoundSettings } from "@/contexts/SoundSettingsContext";
 
 export default function Sidebar() {
-  const { user } = useAioha();
+  const { handle: hiveHandle, canUseAppFeatures } = useEffectiveHiveUser();
   const { isConnected: isEthereumConnected } = useAccount();
   const { isAuthenticated: isFarcasterConnected } = useFarcasterSession();
   const [bellAnimating, setBellAnimating] = useState(false);
@@ -88,7 +88,7 @@ export default function Sidebar() {
 
   // Check if user is connected to any of the 3 protocols
   const isAnyProtocolConnected =
-    user || isEthereumConnected || isFarcasterConnected;
+    !!hiveHandle || isEthereumConnected || isFarcasterConnected;
 
   useEffect(() => {
     setBellAnimating(newNotificationCount > 0);
@@ -209,7 +209,7 @@ export default function Sidebar() {
             <NavItem href="/bounties" icon={FiTarget} prefetch={false}>
               {t('bounties')}
             </NavItem>
-            {user && (
+            {canUseAppFeatures && (
               <NavItem href="/notifications" icon={FiBell} prefetch={false}>
                 {t('notifications')}
               </NavItem>
@@ -222,7 +222,7 @@ export default function Sidebar() {
             <NavItem href="/settings" icon={FiSettings}>
               {t('settings')}
             </NavItem>
-            {user && (
+            {canUseAppFeatures && (
               <NavItem href="/invite" icon={FiMail}>
                 {t('invite')}
               </NavItem>
