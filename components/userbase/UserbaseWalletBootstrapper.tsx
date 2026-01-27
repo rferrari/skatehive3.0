@@ -40,7 +40,10 @@ export default function UserbaseWalletBootstrapper() {
     farcasterProfileSafe?.displayName || farcasterHandle || "Skater";
   const farcasterAvatar = farcasterProfileSafe?.pfpUrl || null;
   const farcasterCustody = farcasterProfileSafe?.custody || null;
-  const farcasterVerifications = farcasterProfileSafe?.verifications || [];
+  const farcasterVerifications = useMemo(
+    () => farcasterProfileSafe?.verifications || [],
+    [farcasterProfileSafe?.verifications]
+  );
 
   const bootstrapCandidate = useMemo(() => {
     if (hiveHandle) {
