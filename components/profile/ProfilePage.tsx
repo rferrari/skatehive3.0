@@ -161,8 +161,11 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
   const userbaseMatch = userbaseProfile?.match ?? null;
   const hiveIdentity = userbaseIdentities.find((item) => item.type === "hive");
   const evmIdentity = userbaseIdentities.find((item) => item.type === "evm");
+  const farcasterIdentity = userbaseIdentities.find((item) => item.type === "farcaster");
   const hiveIdentityHandle = hiveIdentity?.handle || null;
   const evmIdentityAddress = evmIdentity?.address || null;
+  const farcasterIdentityFid = farcasterIdentity?.external_id || null;
+  const farcasterIdentityHandle = farcasterIdentity?.handle || null;
   const isEvmAddress = /^0x[a-fA-F0-9]{40}$/.test(username);
   const hiveLookupHandle = hiveIdentityHandle || (isEvmAddress ? "" : username);
   const { hiveAccount, isLoading, error } = useHiveAccount(hiveLookupHandle);
@@ -244,10 +247,16 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
     evmIdentityAddress ||
     (isEvmAddress ? username : "");
 
+  // When user has linked Hive account, prefer Hive avatar
+  const hiveAvatarUrl = hiveIdentityHandle
+    ? `https://images.hive.blog/u/${hiveIdentityHandle}/avatar`
+    : null;
+
   const liteProfileData = useMemo<ProfileData>(() => {
     if (userbaseUser) {
       return {
-        profileImage: userbaseUser.avatar_url || "",
+        // Prefer Hive avatar when Hive account is linked, then userbase avatar
+        profileImage: hiveAvatarUrl || userbaseUser.avatar_url || "",
         coverImage: userbaseUser.cover_url || "",
         website: "",
         name:
@@ -305,7 +314,7 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
       zineCover: "",
       svs_profile: "",
     };
-  }, [userbaseUser, evmIdentityAddress, username, isEvmAddress, hiveIdentityHandle]);
+  }, [userbaseUser, evmIdentityAddress, username, isEvmAddress, hiveIdentityHandle, hiveAvatarUrl]);
 
   const activeProfileData = useMemo(() => {
     if (isHiveProfile) {
@@ -319,6 +328,17 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
       ethereum_address: resolvedEthereumAddress,
     };
   }, [isHiveProfile, profileData, liteProfileData, resolvedEthereumAddress]);
+
+  // Build Farcaster profile data from userbase identity if available
+  const farcasterProfileData = useMemo(() => {
+    if (!farcasterIdentityFid) return null;
+    return {
+      fid: parseInt(farcasterIdentityFid, 10),
+      username: farcasterIdentityHandle || undefined,
+      // Note: We don't have pfp/bio from identity - these would need to be fetched from Farcaster API
+      // For now, the FarcasterProfileHeader will use profileData as fallback
+    };
+  }, [farcasterIdentityFid, farcasterIdentityHandle]);
 
   // Throttled close handler to prevent rapid clicking
   const throttledCloseMagazine = useCallback(() => {
@@ -440,11 +460,7 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
   );
 
   const debugPayload = useMemo(() => {
-    // Only expose full debug payload in development to prevent sensitive data leakage
-    if (process.env.NODE_ENV !== "development") {
-      return null;
-    }
-
+    // Debug payload available in all environments for profile debugging
     return {
       username,
       viewMode,
@@ -613,6 +629,10 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
               onEditModalOpen={handleEditModalOpen}
               onUserbaseEditModalOpen={handleUserbaseEditModalOpen}
               debugPayload={debugPayload}
+              hasHiveProfile={isHiveProfile || !!hiveIdentityHandle}
+              hasUserbaseProfile={!!userbaseUser}
+              userbaseIdentities={userbaseIdentities}
+              farcasterProfile={farcasterProfileData}
             />
 
             {/* View Mode Selector */}

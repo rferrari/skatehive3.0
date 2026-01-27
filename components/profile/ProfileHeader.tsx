@@ -1,11 +1,35 @@
 "use client";
-import React, { memo, useState } from "react";
-import { Box, HStack, Image } from "@chakra-ui/react";
+import React, { memo, useState, useMemo } from "react";
+import { Box, HStack, Image, Tooltip } from "@chakra-ui/react";
 import MobileProfileHeader from "./MobileProfileHeader";
 import HiveProfileHeader from "./HiveProfileHeader";
 import ZoraProfileHeader from "./ZoraProfileHeader";
+import SkateProfileHeader from "./SkateProfileHeader";
+import FarcasterProfileHeader from "./FarcasterProfileHeader";
 import { ProfileData } from "./ProfilePage";
 import ProfileDebugControl from "./ProfileDebugControl";
+
+interface UserbaseIdentity {
+  id: string;
+  type: string;
+  handle: string | null;
+  address: string | null;
+  external_id: string | null;
+  is_primary: boolean;
+  verified_at: string | null;
+}
+
+interface FarcasterProfileData {
+  fid?: number;
+  username?: string;
+  displayName?: string;
+  pfpUrl?: string;
+  bio?: string;
+  custody?: string;
+  verifications?: string[];
+}
+
+type ProfileView = "hive" | "zora" | "skate" | "farcaster";
 
 interface ProfileHeaderProps {
   profileData: ProfileData;
@@ -20,6 +44,11 @@ interface ProfileHeaderProps {
   onEditModalOpen: () => void;
   onUserbaseEditModalOpen?: () => void;
   debugPayload?: Record<string, any> | null;
+  // New props for identity awareness
+  hasHiveProfile?: boolean;
+  hasUserbaseProfile?: boolean;
+  userbaseIdentities?: UserbaseIdentity[];
+  farcasterProfile?: FarcasterProfileData | null;
 }
 
 const ProfileHeader = function ProfileHeader({
@@ -35,8 +64,36 @@ const ProfileHeader = function ProfileHeader({
   onEditModalOpen,
   onUserbaseEditModalOpen,
   debugPayload,
+  hasHiveProfile = true,
+  hasUserbaseProfile = false,
+  userbaseIdentities = [],
+  farcasterProfile = null,
 }: ProfileHeaderProps) {
-  const [showZoraProfile, setShowZoraProfile] = useState(false);
+  // Determine available views and default view
+  const hasZora = !!profileData.ethereum_address;
+  const hasHive = hasHiveProfile;
+  const hasSkate = hasUserbaseProfile;
+  const hasFarcaster = !!farcasterProfile?.fid;
+
+  // Calculate linked identities
+  const hasHiveLinked = userbaseIdentities.some((i) => i.type === "hive");
+  const hasEvmLinked = userbaseIdentities.some((i) => i.type === "evm");
+  const hasFarcasterLinked = userbaseIdentities.some((i) => i.type === "farcaster");
+
+  // Determine default view:
+  // - If user has Hive profile (native or linked), prefer Hive
+  // - If only Skate (userbase) profile, show Skate
+  // - If only Zora/ETH, show Zora
+  // - If only Farcaster, show Farcaster
+  const defaultView = useMemo<ProfileView>(() => {
+    if (hasHive) return "hive";
+    if (hasSkate) return "skate";
+    if (hasFarcaster) return "farcaster";
+    if (hasZora) return "zora";
+    return "hive"; // fallback
+  }, [hasHive, hasSkate, hasFarcaster, hasZora]);
+
+  const [activeView, setActiveView] = useState<ProfileView>(defaultView);
 
   // Determine which edit handler to use
   const effectiveEditHandler = isUserbaseOwner && onUserbaseEditModalOpen
@@ -67,8 +124,8 @@ const ProfileHeader = function ProfileHeader({
         onFollowingChange={onFollowingChange}
         onLoadingChange={onLoadingChange}
         onEditModalOpen={effectiveEditHandler}
-        showZoraProfile={showZoraProfile}
-        onToggleProfile={setShowZoraProfile}
+        showZoraProfile={activeView === "zora"}
+        onToggleProfile={(show) => setActiveView(show ? "zora" : "hive")}
         cachedZoraData={null}
         zoraLoading={false}
         zoraError={null}
@@ -77,11 +134,23 @@ const ProfileHeader = function ProfileHeader({
       {/* Desktop Layout */}
       <Box display={{ base: "none", md: "block" }} position="relative">
         <Box w="100%" maxW="container.xl" mx="auto" px={6} py={4}>
-          {/* Both Profile Layouts - visibility controlled by CSS */}
+          {/* Profile Layouts - visibility controlled by activeView */}
+
+          {/* Skatehive Profile Layout */}
+          {hasSkate && (
+            <Box display={activeView === "skate" ? "block" : "none"} w="100%">
+              <SkateProfileHeader
+                profileData={profileData}
+                username={username}
+                isOwner={canEdit}
+                onEditModalOpen={effectiveEditHandler}
+              />
+            </Box>
+          )}
 
           {/* Zora Profile Layout */}
-          {profileData.ethereum_address && (
-            <Box display={showZoraProfile ? "block" : "none"} w="100%">
+          {hasZora && (
+            <Box display={activeView === "zora" ? "block" : "none"} w="100%">
               <ZoraProfileHeader
                 profileData={profileData}
                 username={username}
@@ -90,86 +159,161 @@ const ProfileHeader = function ProfileHeader({
           )}
 
           {/* Hive Profile Layout */}
-          <Box
-            display={
-              !showZoraProfile || !profileData.ethereum_address
-                ? "block"
-                : "none"
-            }
-            w="100%"
-          >
-            <HiveProfileHeader
-              profileData={profileData}
-              username={username}
-              isOwner={canEdit}
-              user={user}
-              isFollowing={isFollowing}
-              isFollowLoading={isFollowLoading}
-              onFollowingChange={onFollowingChange}
-              onLoadingChange={onLoadingChange}
-              onEditModalOpen={effectiveEditHandler}
-            />
-          </Box>
+          {hasHive && (
+            <Box display={activeView === "hive" ? "block" : "none"} w="100%">
+              <HiveProfileHeader
+                profileData={profileData}
+                username={username}
+                isOwner={canEdit}
+                user={user}
+                isFollowing={isFollowing}
+                isFollowLoading={isFollowLoading}
+                onFollowingChange={onFollowingChange}
+                onLoadingChange={onLoadingChange}
+                onEditModalOpen={effectiveEditHandler}
+              />
+            </Box>
+          )}
+
+          {/* Farcaster Profile Layout */}
+          {hasFarcaster && (
+            <Box display={activeView === "farcaster" ? "block" : "none"} w="100%">
+              <FarcasterProfileHeader
+                profileData={profileData}
+                username={username}
+                farcasterProfile={farcasterProfile}
+              />
+            </Box>
+          )}
 
           {/* Profile Type Toggle - Bottom Right Corner */}
-            <Box position="absolute" bottom={4} right={6} zIndex={10}>
-              <HStack spacing={2}>
-                {/* Hive Profile Logo */}
-                <Box
-                  cursor="pointer"
-                  onClick={() => setShowZoraProfile(false)}
-                  p={1.5}
-                  borderRadius="none"
-                  bg={!showZoraProfile ? "primary" : "whiteAlpha.200"}
-                  border="1px solid"
-                  borderColor={!showZoraProfile ? "primary" : "whiteAlpha.300"}
-                  transition="all 0.2s"
-                  _hover={{
-                    borderColor: "primary",
-                    transform: "scale(1.05)",
-                    bg: !showZoraProfile ? "primary" : "whiteAlpha.300",
-                  }}
-                  backdropFilter="blur(10px)"
-                >
-                  <Image
-                    src="/logos/hiveLogo.png"
-                    alt="Hive Profile"
-                    boxSize="20px"
-                    opacity={!showZoraProfile ? 1 : 0.7}
-                    transition="opacity 0.2s"
-                  />
-                </Box>
+          <Box position="absolute" bottom={4} right={6} zIndex={10}>
+            <HStack spacing={2}>
+              {/* Skatehive Profile Logo - Only show if user has app account */}
+              {hasSkate && (
+                <Tooltip label="Skatehive Account" placement="top">
+                  <Box
+                    cursor="pointer"
+                    onClick={() => setActiveView("skate")}
+                    p={1.5}
+                    borderRadius="none"
+                    bg={activeView === "skate" ? "primary" : "whiteAlpha.200"}
+                    border="1px solid"
+                    borderColor={activeView === "skate" ? "primary" : "whiteAlpha.300"}
+                    transition="all 0.2s"
+                    _hover={{
+                      borderColor: "primary",
+                      transform: "scale(1.05)",
+                      bg: activeView === "skate" ? "primary" : "whiteAlpha.300",
+                    }}
+                    backdropFilter="blur(10px)"
+                  >
+                    <Image
+                      src="/logos/skatehive-logo-rounded.png"
+                      alt="Skatehive Profile"
+                      boxSize="20px"
+                      opacity={activeView === "skate" ? 1 : 0.7}
+                      transition="opacity 0.2s"
+                    />
+                  </Box>
+                </Tooltip>
+              )}
 
-                {/* Zora Profile Logo */}
-                <Box
-                  cursor="pointer"
-                  onClick={() => setShowZoraProfile(true)}
-                  p={1.5}
-                  borderRadius="none"
-                  bg={showZoraProfile ? "primary" : "whiteAlpha.200"}
-                  border="1px solid"
-                  borderColor={showZoraProfile ? "primary" : "whiteAlpha.300"}
-                  transition="all 0.2s"
-                  _hover={{
-                    borderColor: "primary",
-                    transform: "scale(1.05)",
-                    bg: showZoraProfile ? "primary" : "whiteAlpha.300",
-                  }}
-                  backdropFilter="blur(10px)"
-                >
-                  <Image
-                    src="/logos/Zorb.png"
-                    alt="Zora Profile"
-                    boxSize="20px"
-                    opacity={showZoraProfile ? 1 : 0.7}
-                    transition="opacity 0.2s"
-                  />
-                </Box>
-                {debugPayload && (
-                  <ProfileDebugControl payload={debugPayload} />
-                )}
-              </HStack>
-            </Box>
+              {/* Hive Profile Logo - Only show if user has Hive profile */}
+              {hasHive && (
+                <Tooltip label="Hive Profile" placement="top">
+                  <Box
+                    cursor="pointer"
+                    onClick={() => setActiveView("hive")}
+                    p={1.5}
+                    borderRadius="none"
+                    bg={activeView === "hive" ? "primary" : "whiteAlpha.200"}
+                    border="1px solid"
+                    borderColor={activeView === "hive" ? "primary" : "whiteAlpha.300"}
+                    transition="all 0.2s"
+                    _hover={{
+                      borderColor: "primary",
+                      transform: "scale(1.05)",
+                      bg: activeView === "hive" ? "primary" : "whiteAlpha.300",
+                    }}
+                    backdropFilter="blur(10px)"
+                  >
+                    <Image
+                      src="/logos/hiveLogo.png"
+                      alt="Hive Profile"
+                      boxSize="20px"
+                      opacity={activeView === "hive" ? 1 : 0.7}
+                      transition="opacity 0.2s"
+                    />
+                  </Box>
+                </Tooltip>
+              )}
+
+              {/* Zora Profile Logo - Only show if user has ETH address */}
+              {hasZora && (
+                <Tooltip label="Zora Profile" placement="top">
+                  <Box
+                    cursor="pointer"
+                    onClick={() => setActiveView("zora")}
+                    p={1.5}
+                    borderRadius="none"
+                    bg={activeView === "zora" ? "primary" : "whiteAlpha.200"}
+                    border="1px solid"
+                    borderColor={activeView === "zora" ? "primary" : "whiteAlpha.300"}
+                    transition="all 0.2s"
+                    _hover={{
+                      borderColor: "primary",
+                      transform: "scale(1.05)",
+                      bg: activeView === "zora" ? "primary" : "whiteAlpha.300",
+                    }}
+                    backdropFilter="blur(10px)"
+                  >
+                    <Image
+                      src="/logos/Zorb.png"
+                      alt="Zora Profile"
+                      boxSize="20px"
+                      opacity={activeView === "zora" ? 1 : 0.7}
+                      transition="opacity 0.2s"
+                    />
+                  </Box>
+                </Tooltip>
+              )}
+
+              {/* Farcaster Profile Logo - Only show if user has Farcaster profile */}
+              {hasFarcaster && (
+                <Tooltip label="Farcaster Profile" placement="top">
+                  <Box
+                    cursor="pointer"
+                    onClick={() => setActiveView("farcaster")}
+                    p={1.5}
+                    borderRadius="none"
+                    bg={activeView === "farcaster" ? "purple.500" : "whiteAlpha.200"}
+                    border="1px solid"
+                    borderColor={activeView === "farcaster" ? "purple.500" : "whiteAlpha.300"}
+                    transition="all 0.2s"
+                    _hover={{
+                      borderColor: "purple.400",
+                      transform: "scale(1.05)",
+                      bg: activeView === "farcaster" ? "purple.500" : "whiteAlpha.300",
+                    }}
+                    backdropFilter="blur(10px)"
+                  >
+                    <Image
+                      src="/logos/farcaster.svg"
+                      alt="Farcaster Profile"
+                      boxSize="20px"
+                      opacity={activeView === "farcaster" ? 1 : 0.7}
+                      transition="opacity 0.2s"
+                    />
+                  </Box>
+                </Tooltip>
+              )}
+
+              {debugPayload && (
+                <ProfileDebugControl payload={debugPayload} />
+              )}
+            </HStack>
+          </Box>
       
         </Box>
       </Box>
@@ -183,9 +327,14 @@ export default memo(ProfileHeader, (prevProps, nextProps) => {
     prevProps.profileData.ethereum_address ===
       nextProps.profileData.ethereum_address &&
     prevProps.isOwner === nextProps.isOwner &&
+    prevProps.isUserbaseOwner === nextProps.isUserbaseOwner &&
     prevProps.user === nextProps.user &&
     prevProps.isFollowing === nextProps.isFollowing &&
     prevProps.isFollowLoading === nextProps.isFollowLoading &&
-    prevProps.debugPayload === nextProps.debugPayload
+    prevProps.debugPayload === nextProps.debugPayload &&
+    prevProps.hasHiveProfile === nextProps.hasHiveProfile &&
+    prevProps.hasUserbaseProfile === nextProps.hasUserbaseProfile &&
+    prevProps.userbaseIdentities === nextProps.userbaseIdentities &&
+    prevProps.farcasterProfile?.fid === nextProps.farcasterProfile?.fid
   );
 });
