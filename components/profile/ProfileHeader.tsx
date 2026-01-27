@@ -11,12 +11,14 @@ interface ProfileHeaderProps {
   profileData: ProfileData;
   username: string;
   isOwner: boolean;
+  isUserbaseOwner?: boolean;
   user: string | null;
   isFollowing: boolean | null;
   isFollowLoading: boolean;
   onFollowingChange: (following: boolean | null) => void;
   onLoadingChange: (loading: boolean) => void;
   onEditModalOpen: () => void;
+  onUserbaseEditModalOpen?: () => void;
   debugPayload?: Record<string, any> | null;
 }
 
@@ -24,15 +26,33 @@ const ProfileHeader = function ProfileHeader({
   profileData,
   username,
   isOwner,
+  isUserbaseOwner,
   user,
   isFollowing,
   isFollowLoading,
   onFollowingChange,
   onLoadingChange,
   onEditModalOpen,
+  onUserbaseEditModalOpen,
   debugPayload,
 }: ProfileHeaderProps) {
   const [showZoraProfile, setShowZoraProfile] = useState(false);
+
+  // Determine which edit handler to use
+  const effectiveEditHandler = isUserbaseOwner && onUserbaseEditModalOpen
+    ? onUserbaseEditModalOpen
+    : onEditModalOpen;
+  const canEdit = isOwner || !!isUserbaseOwner;
+
+  // Debug logging
+  console.log("[ProfileHeader] Edit button debug:", {
+    username,
+    isOwner,
+    isUserbaseOwner,
+    canEdit,
+    hasUserbaseEditHandler: !!onUserbaseEditModalOpen,
+    user,
+  });
 
   return (
     <Box position="relative" w="100%">
@@ -40,13 +60,13 @@ const ProfileHeader = function ProfileHeader({
       <MobileProfileHeader
         profileData={profileData}
         username={username}
-        isOwner={isOwner}
+        isOwner={canEdit}
         user={user}
         isFollowing={isFollowing}
         isFollowLoading={isFollowLoading}
         onFollowingChange={onFollowingChange}
         onLoadingChange={onLoadingChange}
-        onEditModalOpen={onEditModalOpen}
+        onEditModalOpen={effectiveEditHandler}
         showZoraProfile={showZoraProfile}
         onToggleProfile={setShowZoraProfile}
         cachedZoraData={null}
@@ -81,13 +101,13 @@ const ProfileHeader = function ProfileHeader({
             <HiveProfileHeader
               profileData={profileData}
               username={username}
-              isOwner={isOwner}
+              isOwner={canEdit}
               user={user}
               isFollowing={isFollowing}
               isFollowLoading={isFollowLoading}
               onFollowingChange={onFollowingChange}
               onLoadingChange={onLoadingChange}
-              onEditModalOpen={onEditModalOpen}
+              onEditModalOpen={effectiveEditHandler}
             />
           </Box>
 

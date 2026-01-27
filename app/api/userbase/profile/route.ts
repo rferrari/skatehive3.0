@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { cookies } from "next/headers";
 
 const supabaseUrl =
   process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -195,6 +196,101 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Userbase profile lookup failed:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+// Update userbase profile (authenticated users only)
+export async function PATCH(request: NextRequest) {
+  try {
+    if (!supabase) {
+      return NextResponse.json(
+        { error: "Missing Supabase configuration" },
+        { status: 500 }
+      );
+    }
+
+    // Get session from cookie
+    const cookieStore = await cookies();
+    const sessionCookie = cookieStore.get("userbase_session");
+    if (!sessionCookie?.value) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Validate session
+    const { data: session, error: sessionError } = await supabase
+      .from("userbase_sessions")
+      .select("user_id, expires_at")
+      .eq("id", sessionCookie.value)
+      .single();
+
+    if (sessionError || !session) {
+      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+    }
+
+    if (new Date(session.expires_at) < new Date()) {
+      return NextResponse.json({ error: "Session expired" }, { status: 401 });
+    }
+
+    const userId = session.user_id;
+
+    // Parse request body
+    const body = await request.json();
+    const { display_name, avatar_url, cover_url, bio, location, handle } = body;
+
+    // Build update object with only provided fields
+    const updateData: Record<string, string> = {};
+    if (display_name !== undefined) updateData.display_name = display_name;
+    if (avatar_url !== undefined) updateData.avatar_url = avatar_url;
+    if (cover_url !== undefined) updateData.cover_url = cover_url;
+    if (bio !== undefined) updateData.bio = bio;
+    if (location !== undefined) updateData.location = location;
+
+    // Handle uniqueness is enforced by database, attempt update
+    if (handle !== undefined) {
+      // Normalize handle
+      const normalizedHandle = handle ? handle.trim().toLowerCase() : null;
+      updateData.handle = normalizedHandle;
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json(
+        { error: "No fields to update" },
+        { status: 400 }
+      );
+    }
+
+    // Update user profile
+    const { data: updatedUser, error: updateError } = await supabase
+      .from("userbase_users")
+      .update(updateData)
+      .eq("id", userId)
+      .select(
+        "id, handle, display_name, avatar_url, cover_url, bio, location, status, onboarding_step"
+      )
+      .single();
+
+    if (updateError) {
+      // Check for unique constraint violation on handle
+      if (updateError.code === "23505") {
+        return NextResponse.json(
+          { error: "Handle is already taken" },
+          { status: 409 }
+        );
+      }
+      console.error("Failed to update user profile:", updateError);
+      return NextResponse.json(
+        { error: "Failed to update profile" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ user: updatedUser });
+  } catch (error) {
+    console.error("Userbase profile update failed:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

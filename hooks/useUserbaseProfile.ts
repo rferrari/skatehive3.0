@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 export interface UserbaseProfileUser {
   id: string;
@@ -96,5 +96,30 @@ export default function useUserbaseProfile(username: string) {
     };
   }, [queryString]);
 
-  return { profile, isLoading, error };
+  const refresh = useCallback(() => {
+    if (!queryString) return;
+    setIsLoading(true);
+    setError(null);
+    fetch(`/api/userbase/profile?${queryString}`, { cache: "no-store" })
+      .then(async (response) => {
+        if (response.status === 404) {
+          setProfile(null);
+          return;
+        }
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data?.error || "Failed to load profile");
+        }
+        setProfile(data);
+      })
+      .catch((err: any) => {
+        setError(err?.message || "Failed to load profile");
+        setProfile(null);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [queryString]);
+
+  return { profile, isLoading, error, refresh };
 }

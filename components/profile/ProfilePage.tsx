@@ -24,6 +24,7 @@ import MagazineModal from "../shared/MagazineModal";
 import SnapsGrid from "./SnapsGrid";
 import ZoraTokensView from "./ZoraTokensView";
 import SoftSnapsGrid from "./SoftSnapsGrid";
+import EditUserbaseProfile from "./EditUserbaseProfile";
 
 // Import custom hooks
 import useProfileData from "@/hooks/useProfileData";
@@ -34,6 +35,7 @@ import useIsMobile from "@/hooks/useIsMobile";
 import useUserbaseProfile from "@/hooks/useUserbaseProfile";
 import useUserbaseSoftPosts from "@/hooks/useUserbaseSoftPosts";
 import { useTranslations } from "@/lib/i18n/hooks";
+import { useUserbaseAuth } from "@/contexts/UserbaseAuthContext";
 import { Discussion } from "@hiveio/dhive";
 
 // Memoized SnapsGrid to prevent unnecessary re-renders
@@ -148,8 +150,9 @@ export interface ProfileData {
 }
 
 const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
-  const { profile: userbaseProfile, isLoading: userbaseLoading } =
+  const { profile: userbaseProfile, isLoading: userbaseLoading, refresh: refreshUserbaseProfile } =
     useUserbaseProfile(username);
+  const { user: currentUserbaseUser } = useUserbaseAuth();
   const userbaseUser = userbaseProfile?.user ?? null;
   const userbaseIdentities = useMemo(
     () => userbaseProfile?.identities ?? [],
@@ -166,6 +169,7 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
   const { user } = useAioha();
   const tCommon = useTranslations("common");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isUserbaseEditModalOpen, setIsUserbaseEditModalOpen] = useState(false);
 
   // Custom hooks
   const { profileData, updateProfileData } = useProfileData(
@@ -214,6 +218,24 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
     () => (isHiveProfile ? user === hiveLookupHandle : false),
     [user, hiveLookupHandle, isHiveProfile]
   );
+  const isUserbaseOwner = useMemo(
+    () => !!(currentUserbaseUser && userbaseUser && currentUserbaseUser.id === userbaseUser.id),
+    [currentUserbaseUser, userbaseUser]
+  );
+
+  // Debug logging for ownership
+  console.log("[ProfilePage] Ownership debug:", {
+    username,
+    isHiveProfile,
+    isOwner,
+    isUserbaseOwner,
+    currentUserbaseUserId: currentUserbaseUser?.id,
+    userbaseUserId: userbaseUser?.id,
+    userbaseUserHandle: userbaseUser?.handle,
+    hiveIdentityHandle,
+    hiveLookupHandle,
+    user,
+  });
 
   const resolvedEthereumAddress =
     profileData.ethereum_address ||
@@ -227,8 +249,9 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
         coverImage: userbaseUser.cover_url || "",
         website: "",
         name:
-          userbaseUser.handle ||
+          hiveIdentityHandle ||
           userbaseUser.display_name ||
+          userbaseUser.handle ||
           username ||
           "Skater",
         followers: 0,
@@ -280,7 +303,7 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
       zineCover: "",
       svs_profile: "",
     };
-  }, [userbaseUser, evmIdentityAddress, username, isEvmAddress]);
+  }, [userbaseUser, evmIdentityAddress, username, isEvmAddress, hiveIdentityHandle]);
 
   const activeProfileData = useMemo(() => {
     if (isHiveProfile) {
@@ -303,6 +326,8 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
   // Modal handlers - Stable references to prevent re-renders
   const handleEditModalOpen = useCallback(() => setIsEditModalOpen(true), []);
   const handleEditModalClose = useCallback(() => setIsEditModalOpen(false), []);
+  const handleUserbaseEditModalOpen = useCallback(() => setIsUserbaseEditModalOpen(true), []);
+  const handleUserbaseEditModalClose = useCallback(() => setIsUserbaseEditModalOpen(false), []);
 
   // Optimized view mode change handler with debouncing to prevent rapid switches
   const memoizedViewModeChange = useCallback(
@@ -422,6 +447,9 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
       username,
       viewMode,
       isHiveProfile,
+      isOwner,
+      isUserbaseOwner,
+      currentUserbaseUserId: currentUserbaseUser?.id || null,
       canShowHiveViews,
       hiveLookupHandle,
       hiveIdentityHandle,
@@ -439,6 +467,9 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
     username,
     viewMode,
     isHiveProfile,
+    isOwner,
+    isUserbaseOwner,
+    currentUserbaseUser?.id,
     canShowHiveViews,
     hiveLookupHandle,
     hiveIdentityHandle,
@@ -456,11 +487,15 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
     if (isHiveProfile) {
       return hiveLookupHandle || username;
     }
+    // Prefer Hive identity handle if available (for app accounts linked to Hive)
+    if (hiveIdentityHandle) {
+      return hiveIdentityHandle;
+    }
     if (userbaseUser?.handle) {
       return userbaseUser.handle;
     }
     return username;
-  }, [isHiveProfile, hiveLookupHandle, username, userbaseUser?.handle]);
+  }, [isHiveProfile, hiveLookupHandle, username, hiveIdentityHandle, userbaseUser?.handle]);
 
   // Cleanup timer on unmount
   useEffect(() => {
@@ -558,9 +593,11 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
               profileData={activeProfileData}
               username={headerUsername}
               isOwner={isOwner}
+              isUserbaseOwner={isUserbaseOwner}
               user={isHiveProfile ? user : null}
               {...followProps}
               onEditModalOpen={handleEditModalOpen}
+              onUserbaseEditModalOpen={handleUserbaseEditModalOpen}
               debugPayload={debugPayload}
             />
 
@@ -596,6 +633,23 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
           profileData={activeProfileData}
           onProfileUpdate={updateProfileData}
           username={hiveLookupHandle || username}
+        />
+      )}
+
+      {/* Edit Userbase Profile Modal */}
+      {isUserbaseEditModalOpen && userbaseUser && (
+        <EditUserbaseProfile
+          isOpen={isUserbaseEditModalOpen}
+          onClose={handleUserbaseEditModalClose}
+          profileData={{
+            display_name: userbaseUser.display_name,
+            handle: userbaseUser.handle,
+            avatar_url: userbaseUser.avatar_url,
+            cover_url: userbaseUser.cover_url,
+            bio: userbaseUser.bio,
+            location: userbaseUser.location,
+          }}
+          onProfileUpdate={refreshUserbaseProfile}
         />
       )}
     </>
