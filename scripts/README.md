@@ -7,11 +7,9 @@ This directory contains utility scripts for managing the Skatehive database oper
 ```
 scripts/
 ├── database/           # Database management scripts
-│   ├── fix-auth-ott-schema.js    # Fix auth_ott table schema issues
 │   ├── inspect-schema.js         # Inspect database table schemas
 │   ├── smoke-userbase.js         # Userbase smoke test
-│   ├── snapshot-userbase.js      # Snapshot userbase tables
-│   └── migrate-database.sh       # Database migration script
+│   └── snapshot-userbase.js      # Snapshot userbase tables
 └── README.md          # This file
 ```
 
@@ -24,25 +22,6 @@ Before running any scripts, ensure you have:
 3. **Database access**: Supabase service role key permissions
 
 ## Database Scripts
-
-### Fix Auth OTT Schema
-
-**File:** `database/fix-auth-ott-schema.js`
-
-**Purpose:** Fixes schema issues with the `auth_ott` table, which stores one-time tokens for user authentication.
-
-**Usage:**
-
-```bash
-node scripts/database/fix-auth-ott-schema.js
-```
-
-**What it does:**
-
-- Checks current `auth_ott` table schema
-- Creates missing table/columns if needed
-- Tests insert operations
-- Provides manual SQL if automatic fix fails
 
 ### Inspect Schema
 
@@ -118,14 +97,6 @@ NODE_ENV=development
 
 **Solution:** Check `SUPABASE_SERVICE_ROLE_KEY` in `.env.local`
 
-### Schema Errors
-
-```
-❌ relation "auth_ott" does not exist
-```
-
-**Solution:** Run `fix-auth-ott-schema.js` to create missing tables
-
 ### Permission Errors
 
 ```
@@ -142,17 +113,16 @@ NODE_ENV=development
    # Check current schema
    pnpm db:inspect
    # or: node scripts/index.js db:inspect
-
-   # Fix any issues found
-   pnpm db:fix-auth
-   # or: node scripts/index.js db:fix-auth
    ```
 
 2. **Testing:**
 
    ```bash
-   # Verify database schema after changes
-   pnpm db:inspect
+   # Run userbase smoke test
+   pnpm db:smoke-userbase
+
+   # Snapshot userbase tables
+   pnpm db:snapshot-userbase
 
    # Show all available scripts
    node scripts/index.js help
@@ -162,41 +132,6 @@ NODE_ENV=development
 
 - **Service role keys** have full database access - keep secure
 - **Test thoroughly** in development before production changes
-
-## Adding New Scripts
-
-When adding new utility scripts:
-
-1. **Choose appropriate directory:**
-
-   - `database/` - Database operations and schema management
-   - Create new folders for different domains
-
-2. **Follow naming convention:**
-
-   - Use kebab-case: `my-new-script.js`
-   - Descriptive names: `backup-data.js`
-   - Include purpose in filename
-
-3. **Add documentation:**
-
-   - Update this README
-   - Include usage examples
-   - Document environment requirements
-
-4. **Include error handling:**
-   - Proper try/catch blocks
-   - Meaningful error messages
-   - Graceful failure modes
-
-## Maintenance
-
-Scripts should be reviewed and updated when:
-
-- Database schema changes
-- New features require database modifications
-- Environment configuration changes
-- Security requirements evolve
 
 ---
 

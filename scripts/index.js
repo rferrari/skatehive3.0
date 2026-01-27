@@ -6,7 +6,6 @@
  * 
  * Available commands:
  * - db:inspect     - Inspect database schema
- * - db:fix-auth    - Fix auth_ott table schema
  * - db:smoke-userbase - Run userbase smoke test
  * - db:snapshot-userbase - Snapshot userbase tables
  * - help          - Show this help message
@@ -17,7 +16,6 @@ const path = require('path');
 
 const commands = {
   'db:inspect': 'database/inspect-schema.js',
-  'db:fix-auth': 'database/fix-auth-ott-schema.js',
   'db:smoke-userbase': 'database/smoke-userbase.js',
   'db:snapshot-userbase': 'database/snapshot-userbase.js',
 };
@@ -27,7 +25,6 @@ function showHelp() {
   console.log('Usage: node scripts/index.js <command>\n');
   console.log('Available commands:');
   console.log('  db:inspect     - Inspect database table schemas');
-  console.log('  db:fix-auth    - Fix auth_ott table schema issues');
   console.log('  db:smoke-userbase - Run userbase database smoke test');
   console.log('  db:snapshot-userbase - Snapshot userbase tables');
   console.log('  help          - Show this help message\n');
