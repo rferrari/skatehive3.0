@@ -89,6 +89,7 @@ export default function UserbaseEmailLoginForm({
   const isEmailValid = /.+@.+\..+/.test(trimmedEmail);
   const shouldShowHandle = lookupStatus === "new";
 
+  // Email lookup effect - only triggers on email change
   useEffect(() => {
     if (!trimmedEmail || !isEmailValid) {
       setLookupStatus("idle");
@@ -107,7 +108,6 @@ export default function UserbaseEmailLoginForm({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             identifier: trimmedEmail,
-            handle: trimmedHandle || undefined,
           }),
           signal: controller.signal,
         });
@@ -120,11 +120,7 @@ export default function UserbaseEmailLoginForm({
 
         const exists = Boolean(data?.exists);
         setLookupStatus(exists ? "found" : "new");
-        if (typeof data?.handle_available === "boolean") {
-          setHandleAvailable(data.handle_available);
-        } else {
-          setHandleAvailable(null);
-        }
+        // Don't set handle availability here - separate effect handles it
       } catch (lookupError: any) {
         if (controller.signal.aborted) return;
         setLookupStatus("error");
@@ -137,7 +133,52 @@ export default function UserbaseEmailLoginForm({
       clearTimeout(timer);
       controller.abort();
     };
-  }, [trimmedEmail, trimmedHandle, isEmailValid, t]);
+  }, [trimmedEmail, isEmailValid, t]);
+
+  // Handle availability check - separate effect, only runs when handle changes AND account is new
+  useEffect(() => {
+    // Only check handle availability for new accounts
+    if (lookupStatus !== "new" || !trimmedHandle) {
+      setHandleAvailable(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      try {
+        const response = await fetch("/api/userbase/auth/lookup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            identifier: trimmedEmail,
+            handle: trimmedHandle,
+          }),
+          signal: controller.signal,
+        });
+
+        if (controller.signal.aborted) return;
+        const data = await response.json();
+        if (!response.ok) {
+          setHandleAvailable(null);
+          return;
+        }
+
+        if (typeof data?.handle_available === "boolean") {
+          setHandleAvailable(data.handle_available);
+        } else {
+          setHandleAvailable(null);
+        }
+      } catch {
+        if (controller.signal.aborted) return;
+        setHandleAvailable(null);
+      }
+    }, 300);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [trimmedHandle, trimmedEmail, lookupStatus]);
 
   const sendMagicLink = async () => {
     if (!trimmedEmail) {
