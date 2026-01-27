@@ -1,6 +1,6 @@
 # Skatehive Scripts
 
-This directory contains utility scripts for managing the Skatehive VIP signup system and database operations.
+This directory contains utility scripts for managing the Skatehive database operations.
 
 ## Directory Structure
 
@@ -9,9 +9,9 @@ scripts/
 ├── database/           # Database management scripts
 │   ├── fix-auth-ott-schema.js    # Fix auth_ott table schema issues
 │   ├── inspect-schema.js         # Inspect database table schemas
+│   ├── smoke-userbase.js         # Userbase smoke test
+│   ├── snapshot-userbase.js      # Snapshot userbase tables
 │   └── migrate-database.sh       # Database migration script
-├── vip-management/     # VIP code management scripts
-│   └── generate-vip.js           # Generate new VIP invitation codes
 └── README.md          # This file
 ```
 
@@ -29,7 +29,7 @@ Before running any scripts, ensure you have:
 
 **File:** `database/fix-auth-ott-schema.js`
 
-**Purpose:** Fixes schema issues with the `auth_ott` table, which stores one-time tokens for user authentication after signup.
+**Purpose:** Fixes schema issues with the `auth_ott` table, which stores one-time tokens for user authentication.
 
 **Usage:**
 
@@ -43,15 +43,6 @@ node scripts/database/fix-auth-ott-schema.js
 - Creates missing table/columns if needed
 - Tests insert operations
 - Provides manual SQL if automatic fix fails
-
-**Required columns:**
-
-- `id` - Serial primary key
-- `token` - Unique text token
-- `username` - Associated username
-- `expires_at` - Token expiration timestamp
-- `created_at` - Creation timestamp
-- `used_at` - Usage timestamp (nullable)
 
 ### Inspect Schema
 
@@ -103,33 +94,6 @@ node scripts/database/snapshot-userbase.js
 **Required:**
 
 - `DATABASE_URL` for direct Postgres access
-
-## VIP Management Scripts
-
-### Generate VIP Codes
-
-**File:** `vip-management/generate-vip.js`
-
-**Purpose:** Generates new VIP invitation codes with proper hashing for secure storage.
-
-**Usage:**
-
-```bash
-node scripts/vip-management/generate-vip.js
-```
-
-**Output:**
-
-- Full VIP code (e.g., `ABC123-9F9YWCZS`)
-- Code ID and secret components
-- Argon2 hash for database storage
-- Verification test results
-
-**Code Format:**
-
-- 6-character code ID (hex)
-- 8-character secret (hex)
-- Combined format: `{CODE_ID}-{SECRET}`
 
 ## Environment Variables
 
@@ -184,31 +148,19 @@ NODE_ENV=development
    # or: node scripts/index.js db:fix-auth
    ```
 
-2. **VIP Code Management:**
-
-   ```bash
-   # Generate new codes
-   pnpm vip:generate
-   # or: node scripts/index.js vip:generate
-
-   # Insert into database manually or via admin interface
-   ```
-
-3. **Testing:**
+2. **Testing:**
 
    ```bash
    # Verify database schema after changes
    pnpm db:inspect
 
    # Show all available scripts
-   pnpm scripts:help
+   node scripts/index.js help
    ```
 
 ## Security Notes
 
-- **Never commit generated VIP codes** to version control
 - **Service role keys** have full database access - keep secure
-- **VIP secrets** are hashed with Argon2 before storage
 - **Test thoroughly** in development before production changes
 
 ## Adding New Scripts
@@ -218,13 +170,12 @@ When adding new utility scripts:
 1. **Choose appropriate directory:**
 
    - `database/` - Database operations and schema management
-   - `vip-management/` - VIP code generation and management
    - Create new folders for different domains
 
 2. **Follow naming convention:**
 
    - Use kebab-case: `my-new-script.js`
-   - Descriptive names: `backup-vip-codes.js`
+   - Descriptive names: `backup-data.js`
    - Include purpose in filename
 
 3. **Add documentation:**
@@ -249,5 +200,5 @@ Scripts should be reviewed and updated when:
 
 ---
 
-**Last Updated:** October 31, 2025
+**Last Updated:** January 27, 2026
 **Maintainer:** Skatehive Development Team
