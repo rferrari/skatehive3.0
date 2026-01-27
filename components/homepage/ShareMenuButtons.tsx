@@ -287,7 +287,7 @@ const ShareMenuButtons = ({ comment }: ShareMenuButtonsProps) => {
         isClosable: true,
       });
     }
-  }, [effectiveUser, vote, comment.author, comment.permlink, toast, canVote]);
+  }, [vote, comment.author, comment.permlink, toast, canVote]);
 
   const handleShare = useCallback(
     async (platform: string) => {

@@ -96,7 +96,7 @@ export default function UpvoteSnapToast({
         isClosable: true,
       });
     }
-  }, [vote, snapContainer, toast, effectiveUser, t, canVote]);
+  }, [vote, snapContainer, toast, t, canVote]);
 
   const showUpvoteToast = useCallback(() => {
     if (
@@ -153,7 +153,6 @@ export default function UpvoteSnapToast({
   }, [
     isMounted,
     isDesktop,
-    effectiveUser,
     canVote,
     snapContainer,
     hasVoted,

@@ -151,7 +151,10 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
   const { profile: userbaseProfile, isLoading: userbaseLoading } =
     useUserbaseProfile(username);
   const userbaseUser = userbaseProfile?.user ?? null;
-  const userbaseIdentities = userbaseProfile?.identities ?? [];
+  const userbaseIdentities = useMemo(
+    () => userbaseProfile?.identities ?? [],
+    [userbaseProfile?.identities]
+  );
   const userbaseMatch = userbaseProfile?.match ?? null;
   const hiveIdentity = userbaseIdentities.find((item) => item.type === "hive");
   const evmIdentity = userbaseIdentities.find((item) => item.type === "evm");

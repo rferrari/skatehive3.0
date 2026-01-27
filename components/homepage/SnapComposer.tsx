@@ -656,6 +656,7 @@ const SnapComposer = React.memo(function SnapComposer({
     checkForDuplicatePost,
     toast,
     t,
+    canUseAppFeatures,
   ]);
 
   // Detect Ctrl+Enter or Command+Enter and submit - memoized

@@ -251,11 +251,12 @@ const HZCEasterEgg: React.FC<HZCEasterEggProps> = ({ onTrigger }) => {
         clearInterval(jointIntervalRef.current);
       }
     };
-  }, [isActive]);
+  }, [isActive, intensity]);
 
   // Update falling joints positions
+  const hasFallingJoints = fallingJoints.length > 0;
   useEffect(() => {
-    if (!isActive || fallingJoints.length === 0) return;
+    if (!isActive || !hasFallingJoints) return;
 
     const updateJoints = () => {
       setFallingJoints(prev => 
@@ -272,7 +273,7 @@ const HZCEasterEgg: React.FC<HZCEasterEggProps> = ({ onTrigger }) => {
 
     const intervalId = setInterval(updateJoints, 16); // ~60fps
     return () => clearInterval(intervalId);
-  }, [isActive, fallingJoints.length > 0]);
+  }, [isActive, hasFallingJoints]);
 
   // Handle canvas resize
   useEffect(() => {

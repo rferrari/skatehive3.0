@@ -315,6 +315,7 @@ export default function PostDetails({
     effectiveUser,
     estimateVoteValue,
     canVote,
+    toast,
   ]);
 
   return (
