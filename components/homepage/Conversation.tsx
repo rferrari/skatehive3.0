@@ -203,10 +203,11 @@ const Conversation = ({
             type: "comment",
           }),
         });
-        const data = await response.json();
         if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
           throw new Error(data?.error || "Failed to comment");
         }
+        const data = await response.json();
         result = { success: true, author: data?.author || effectiveUser };
       }
 

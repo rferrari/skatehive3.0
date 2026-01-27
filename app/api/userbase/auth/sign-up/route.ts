@@ -234,6 +234,10 @@ export async function POST(request: NextRequest) {
               { status: 409 }
             );
           }
+          if (updateError) {
+            console.error("Failed to update user:", updateError);
+            // Continue anyway - user already exists, this is best-effort
+          }
         }
       }
     }

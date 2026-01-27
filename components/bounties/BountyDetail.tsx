@@ -91,7 +91,7 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
   const [isClaiming, setIsClaiming] = useState(false);
   const [claimError, setClaimError] = useState<string | null>(null);
   const hasClaimed = useMemo(
-    () => activeVotes.some((v) => v.voter === effectiveUser),
+    () => activeVotes.some((v) => v.voter?.toLowerCase() === effectiveUser?.toLowerCase()),
     [activeVotes, effectiveUser]
   );
 
@@ -161,7 +161,7 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
       if (voteResult.success) {
         setVoted(true);
         if (effectiveUser) {
-          setActiveVotes([...activeVotes, { voter: effectiveUser }]);
+          setActiveVotes([...activeVotes, { voter: effectiveUser, percent: sliderValue * 100 }]);
         }
       }
     } catch (error: any) {

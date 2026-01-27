@@ -227,7 +227,6 @@ export async function POST(request: NextRequest) {
         {
           error: "Address already linked to another user",
           merge_required: true,
-          existing_user_id: existing[0].user_id,
         },
         { status: 409 }
       );

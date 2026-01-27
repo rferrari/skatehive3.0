@@ -44,6 +44,10 @@ begin
     raise exception 'Source user not found';
   end if;
 
+  if not exists (select 1 from public.userbase_users where id = target_user_id) then
+    raise exception 'Target user not found';
+  end if;
+
   -- Auth methods (dedupe by type+identifier)
   delete from public.userbase_auth_methods s
   using public.userbase_auth_methods t
@@ -79,10 +83,6 @@ begin
     and t.user_id = target_user_id
     and s.community_tag = t.community_tag;
 
-  update public.userbase_community_memberships
-    set user_id = target_user_id
-  where user_id = source_user_id;
-
   -- Magic links
   update public.userbase_magic_links
     set user_id = target_user_id
@@ -98,9 +98,17 @@ begin
     set user_id = target_user_id
   where user_id = source_user_id;
 
+  -- Soft votes
+  delete from public.userbase_soft_votes s
+  using public.userbase_soft_votes t
+  where s.user_id = source_user_id
+    and t.user_id = target_user_id
+    and s.post_id = t.post_id;
+
   update public.userbase_soft_votes
     set user_id = target_user_id
   where user_id = source_user_id;
+
 
   -- Revoke source sessions
   update public.userbase_sessions

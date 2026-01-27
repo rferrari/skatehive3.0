@@ -19,7 +19,7 @@ const supabase =
 
 function isAuthorized(request: NextRequest) {
   const expected = process.env.USERBASE_INTERNAL_TOKEN;
-  if (!expected) return true;
+  if (!expected) return false;
   const token = request.headers.get("x-userbase-token");
   return token === expected;
 }
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
       const privateKey = PrivateKey.fromString(defaultKey);
       await HiveClient.broadcast.sendOperations([voteOp], privateKey);
 
-      await supabase
+      const { error: updateError } = await supabase
         .from("userbase_soft_votes")
         .update({
           status: "broadcasted",
@@ -120,6 +120,10 @@ export async function POST(request: NextRequest) {
           updated_at: new Date().toISOString(),
         })
         .eq("id", row.id);
+
+      if (updateError) {
+        console.error("Failed to update vote status after broadcast:", updateError, row.id);
+      }
 
       successCount += 1;
     } catch (retryError: any) {

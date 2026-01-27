@@ -16,8 +16,15 @@ export default function useHiveVote() {
   const vote = useCallback(
     async (author: string, permlink: string, weight: number) => {
       if (user) {
-        const result = await aioha.vote(author, permlink, weight);
-        return { success: true, result };
+        try {
+          const result = await aioha.vote(author, permlink, weight);
+          if (result?.success === false) {
+            throw new Error(result?.error || "Wallet vote failed");
+          }
+          return { success: true, result };
+        } catch (error) {
+          throw error instanceof Error ? error : new Error("Wallet vote failed");
+        }
       }
 
       const response = await fetch("/api/userbase/hive/vote", {

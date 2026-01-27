@@ -19,7 +19,7 @@ function mapSoftPostToDiscussion(row: SoftPostRow): Discussion {
   const metadata = row.metadata || {};
   const onchain = metadata.onchain || metadata.json_metadata || {};
   const body = metadata.body || "";
-  const created = row.created_at || new Date().toISOString();
+  const created = row.created_at || "";
 
   return {
     author: row.author,

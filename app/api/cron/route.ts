@@ -22,13 +22,10 @@ function requireInternalToken(request: NextRequest) {
   }
 
   const providedToken = request.headers.get("x-userbase-token") || "";
-  const requiredBuffer = Buffer.from(requiredToken);
-  const providedBuffer = Buffer.from(providedToken);
+  const requiredHash = crypto.createHash("sha256").update(requiredToken).digest();
+  const providedHash = crypto.createHash("sha256").update(providedToken).digest();
 
-  if (
-    providedBuffer.length !== requiredBuffer.length ||
-    !crypto.timingSafeEqual(providedBuffer, requiredBuffer)
-  ) {
+  if (!crypto.timingSafeEqual(requiredHash, providedHash)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

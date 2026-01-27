@@ -139,7 +139,15 @@ export async function POST(request: NextRequest) {
     return session.error;
   }
 
-  const body = await request.json();
+  let body: any;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json(
+      { error: "Invalid JSON body" },
+      { status: 400 }
+    );
+  }
   const postingKeyRaw = body?.posting_key;
   const handleRaw = body?.handle ? String(body.handle).trim().toLowerCase() : null;
 
@@ -258,7 +266,7 @@ export async function POST(request: NextRequest) {
     userKeyId = createdKey.id;
   } else {
     rotationCount += 1;
-    await supabase!
+    const { error: updateKeyError } = await supabase!
       .from("userbase_user_keys")
       .update({
         custody: "stored",
@@ -266,6 +274,20 @@ export async function POST(request: NextRequest) {
         rotation_count: rotationCount,
       })
       .eq("id", userKeyId);
+
+    if (updateKeyError) {
+      console.error("Failed to update user key:", updateKeyError);
+      return NextResponse.json(
+        {
+          error: "Failed to store posting key",
+          details:
+            process.env.NODE_ENV !== "production"
+              ? updateKeyError?.message || updateKeyError
+              : undefined,
+        },
+        { status: 500 }
+      );
+    }
   }
 
   const { data: secretRow } = await supabase!

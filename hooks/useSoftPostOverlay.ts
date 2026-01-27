@@ -111,7 +111,9 @@ export function useSoftPostOverlays(
         cached[key] = cachedEntry.value;
         return;
       }
-      const [author, permlink] = key.split("/");
+      const slashIndex = key.indexOf("/");
+      const author = key.slice(0, slashIndex);
+      const permlink = key.slice(slashIndex + 1);
       const original = posts.find(
         (post) =>
           post.author?.trim() === author && post.permlink?.trim() === permlink

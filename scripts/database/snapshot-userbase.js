@@ -12,7 +12,12 @@ function parseEnvFile(filePath) {
       const idx = trimmed.indexOf('=');
       if (idx === -1) continue;
       const key = trimmed.slice(0, idx).trim();
-      const value = trimmed.slice(idx + 1).trim();
+      let value = trimmed.slice(idx + 1).trim();
+      // Strip surrounding quotes
+      if ((value.startsWith('"') && value.endsWith('"')) ||
+          (value.startsWith("'") && value.endsWith("'"))) {
+        value = value.slice(1, -1);
+      }
       env[key] = value;
     }
     return env;

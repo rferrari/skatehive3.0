@@ -90,27 +90,148 @@ function createTransport() {
   });
 }
 
-async function isHandleAvailable(handle: string) {
-  const { data } = await supabase!
-    .from("userbase_users")
-    .select("id")
-    .eq("handle", handle)
-    .limit(1);
-  return !data || data.length === 0;
-}
+/**
+ * Atomically creates a user with a unique handle.
+ * Instead of checking availability first (TOCTOU race), we attempt inserts
+ * directly and catch unique constraint errors (23505) to retry with suffixes.
+ */
+async function createUserWithUniqueHandle(
+  baseHandle: string,
+  displayName: string,
+  avatarUrl: string,
+  maxAttempts = 7
+): Promise<{ id: string; handle: string } | null> {
+  const sanitized = slugify(baseHandle) || "skater";
 
-async function findAvailableHandle(base: string) {
-  const sanitized = slugify(base) || "skater";
-  if (await isHandleAvailable(sanitized)) {
-    return sanitized;
+  // First attempt: try the sanitized handle directly
+  const { data: firstAttempt, error: firstError } = await supabase!
+    .from("userbase_users")
+    .insert({
+      handle: sanitized,
+      display_name: displayName,
+      avatar_url: avatarUrl,
+      status: "active",
+      onboarding_step: 0,
+    })
+    .select("id, handle")
+    .single();
+
+  if (firstAttempt && !firstError) {
+    return firstAttempt;
   }
-  for (let attempt = 0; attempt < 6; attempt += 1) {
+
+  // If error is not a unique constraint violation, surface it
+  if (firstError?.code !== "23505") {
+    console.error("Failed to create user (non-unique error):", firstError);
+    return null;
+  }
+
+  // Retry with random suffixes
+  for (let attempt = 0; attempt < maxAttempts - 1; attempt++) {
     const suffix = crypto.randomBytes(2).toString("hex");
     const candidate = `${sanitized}-${suffix}`;
-    if (await isHandleAvailable(candidate)) {
-      return candidate;
+
+    const { data, error } = await supabase!
+      .from("userbase_users")
+      .insert({
+        handle: candidate,
+        display_name: displayName,
+        avatar_url: avatarUrl,
+        status: "active",
+        onboarding_step: 0,
+      })
+      .select("id, handle")
+      .single();
+
+    if (data && !error) {
+      return data;
+    }
+
+    // If it's a unique constraint error, continue retrying
+    if (error?.code === "23505") {
+      continue;
+    }
+
+    // Non-unique error, bail out
+    console.error("Failed to create user (non-unique error):", error);
+    return null;
+  }
+
+  // All attempts exhausted
+  console.error("Failed to create user: all handle attempts exhausted");
+  return null;
+}
+
+/**
+ * Atomically updates a user's handle if they don't have one.
+ * Uses insert-retry pattern to avoid TOCTOU race.
+ */
+async function trySetUserHandle(
+  userId: string,
+  baseHandle: string,
+  maxAttempts = 7
+): Promise<string | null> {
+  const sanitized = slugify(baseHandle) || "skater";
+
+  // First attempt: try the sanitized handle directly
+  const { error: firstError } = await supabase!
+    .from("userbase_users")
+    .update({ handle: sanitized })
+    .eq("id", userId)
+    .is("handle", null); // Only update if handle is null
+
+  if (!firstError) {
+    // Verify the update worked (handle wasn't taken by concurrent request)
+    const { data: check } = await supabase!
+      .from("userbase_users")
+      .select("handle")
+      .eq("id", userId)
+      .single();
+    if (check?.handle === sanitized) {
+      return sanitized;
+    }
+    // User already has a different handle set - return it
+    if (check?.handle) {
+      return check.handle;
     }
   }
+
+  // If error is not a unique constraint violation, surface it
+  if (firstError && firstError.code !== "23505") {
+    console.error("Failed to update handle (non-unique error):", firstError);
+    return null;
+  }
+
+  // Retry with random suffixes
+  for (let attempt = 0; attempt < maxAttempts - 1; attempt++) {
+    const suffix = crypto.randomBytes(2).toString("hex");
+    const candidate = `${sanitized}-${suffix}`;
+
+    const { error } = await supabase!
+      .from("userbase_users")
+      .update({ handle: candidate })
+      .eq("id", userId)
+      .is("handle", null);
+
+    if (!error) {
+      const { data: check } = await supabase!
+        .from("userbase_users")
+        .select("handle")
+        .eq("id", userId)
+        .single();
+      if (check?.handle === candidate) {
+        return candidate;
+      }
+    }
+
+    if (error?.code === "23505") {
+      continue;
+    }
+
+    console.error("Failed to update handle (non-unique error):", error);
+    return null;
+  }
+
   return null;
 }
 
@@ -163,43 +284,23 @@ export async function POST(request: NextRequest) {
     let createdUserId: string | null = null;
 
     if (!userId) {
-      const fallbackHandle = handle
+      const baseHandle = handle
         ? slugify(handle)
-        : await findAvailableHandle(identifier.split("@")[0] || "");
+        : identifier.split("@")[0] || "skater";
       const displayName = deriveDisplayName(identifier);
-      const resolvedHandle = fallbackHandle || null;
-      const resolvedAvatar =
-        avatarUrl || getAvatarUrl(resolvedHandle || identifier);
+      const resolvedAvatar = avatarUrl || getAvatarUrl(baseHandle || identifier);
 
-      const { data: createdUser, error: userError } = await supabase
-        .from('userbase_users')
-        .insert({
-          handle: resolvedHandle,
-          display_name: displayName,
-          avatar_url: resolvedAvatar,
-          status: 'active',
-          onboarding_step: 0,
-        })
-        .select('id')
-        .single();
+      // Use atomic insert with retry to avoid TOCTOU race
+      const createdUser = await createUserWithUniqueHandle(
+        baseHandle,
+        displayName,
+        resolvedAvatar
+      );
 
-      if (userError || !createdUser) {
-        if (userError?.code === '23505') {
-          return NextResponse.json(
-            { error: 'Handle already in use' },
-            { status: 409 }
-          );
-        }
-        console.error('Failed to create userbase user:', userError);
+      if (!createdUser) {
         return NextResponse.json(
-          {
-            error: 'Failed to create user',
-            details:
-              process.env.NODE_ENV !== 'production'
-                ? userError?.message || userError
-                : undefined,
-          },
-          { status: 500 }
+          { error: 'Failed to create user: handle unavailable' },
+          { status: 409 }
         );
       }
 
@@ -254,20 +355,20 @@ export async function POST(request: NextRequest) {
         if (!existingUser.avatar_url) {
           updates.avatar_url = avatarUrl || getAvatarUrl(existingUser.handle || identifier);
         }
-        if (!existingUser.handle && !handle) {
-          const generatedHandle = await findAvailableHandle(
-            identifier.split("@")[0] || ""
-          );
-          if (generatedHandle) {
-            updates.handle = generatedHandle;
-          }
-        } else if (!existingUser.handle && handle) {
-          const preferred = slugify(handle);
-          if (preferred && (await isHandleAvailable(preferred))) {
-            updates.handle = preferred;
+
+        // Handle update for existing users without a handle - use atomic approach
+        if (!existingUser.handle) {
+          const baseHandle = handle
+            ? slugify(handle)
+            : identifier.split("@")[0] || "skater";
+          const newHandle = await trySetUserHandle(userId, baseHandle);
+          // If handle was set via trySetUserHandle, remove from updates to avoid conflict
+          if (newHandle) {
+            delete updates.handle;
           }
         }
 
+        // Apply non-handle updates if any remain
         if (Object.keys(updates).length > 0) {
           await supabase
             .from("userbase_users")
@@ -359,9 +460,10 @@ export async function GET(request: NextRequest) {
 
     const tokenHash = hashToken(token);
 
+    // First, get the token to retrieve user_id (needed for session creation)
     const { data: tokenRow, error: tokenError } = await supabase
       .from('userbase_magic_links')
-      .select('id, user_id, expires_at, consumed_at')
+      .select('id, user_id, expires_at')
       .eq('token_hash', tokenHash)
       .is('consumed_at', null)
       .single();
@@ -379,17 +481,16 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (new Date(tokenRow.expires_at) < new Date()) {
-      return NextResponse.json(
-        { error: 'Token has expired' },
-        { status: 401 }
-      );
-    }
-
-    const { error: consumeError } = await supabase
+    // Atomic conditional update: only consume if still valid and not already consumed
+    // This prevents TOCTOU race between expiry check and consumption
+    const consumedAt = new Date().toISOString();
+    const { data: consumeResult, error: consumeError } = await supabase
       .from('userbase_magic_links')
-      .update({ consumed_at: new Date().toISOString() })
-      .eq('id', tokenRow.id);
+      .update({ consumed_at: consumedAt })
+      .eq('id', tokenRow.id)
+      .is('consumed_at', null)
+      .gt('expires_at', new Date().toISOString())
+      .select('id');
 
     if (consumeError) {
       console.error('Failed to consume magic link:', consumeError);
@@ -402,6 +503,15 @@ export async function GET(request: NextRequest) {
               : undefined,
         },
         { status: 500 }
+      );
+    }
+
+    // Check if exactly one row was updated (atomic verification)
+    if (!consumeResult || consumeResult.length === 0) {
+      // Token was either already consumed or expired between fetch and update
+      return NextResponse.json(
+        { error: 'Token has expired or was already used' },
+        { status: 401 }
       );
     }
 

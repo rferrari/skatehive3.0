@@ -118,7 +118,7 @@ export default function PostCard({
     );
   }, [post, effectiveUser, hasSoftVote]);
   const default_thumbnail =
-    softPost?.user.avatar_url ||
+    softPost?.user?.avatar_url ||
     "https://images.hive.blog/u/" + author + "/avatar/large";
   const [visibleImages, setVisibleImages] = useState<number>(3);
   const [showMatrix, setShowMatrix] = useState(false);
@@ -293,12 +293,12 @@ export default function PostCard({
       
       if (voteResult.success) {
         setVoted(true);
-          if (effectiveUser) {
-            setActiveVotes([
-              ...activeVotes,
-              { voter: effectiveUser, weight: userVoteWeight * 100 },
-            ]);
-          }
+        if (effectiveUser) {
+          setActiveVotes((prev) => [
+            ...prev,
+            { voter: effectiveUser, weight: userVoteWeight * 100 },
+          ]);
+        }
         
         // Update payout value with estimated value
         if (estimateVoteValue && !isHivePowerLoading) {

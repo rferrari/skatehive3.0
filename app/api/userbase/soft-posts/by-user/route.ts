@@ -26,8 +26,9 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get("user_id");
-    const limitRaw = Number(searchParams.get("limit") || 50);
-    const limit = Math.min(Math.max(limitRaw, 1), 200);
+    const limitParam = searchParams.get("limit");
+    const limitRaw = limitParam ? Number(limitParam) : 50;
+    const limit = Number.isNaN(limitRaw) ? 50 : Math.min(Math.max(limitRaw, 1), 200);
 
     if (!userId) {
       return NextResponse.json(
