@@ -20,7 +20,7 @@ import { LocaleProvider } from "@/contexts/LocaleContext";
 import { AuthKitProvider } from "@farcaster/auth-kit";
 import "@farcaster/auth-kit/styles.css";
 import { dynamicRainbowTheme } from "@/lib/themes/rainbowkitTheme";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { APP_CONFIG } from "@/config/app.config";
 import { ClickSoundProvider } from "./clickSoundProvider";
 import { SoundSettingsProvider } from "@/contexts/SoundSettingsContext";
@@ -39,26 +39,37 @@ if (typeof window !== "undefined") {
   aioha.loadAuth();
 }
 
-export const wagmiConfig = getDefaultConfig({
-  appName: APP_CONFIG.NAME,
-  projectId: APP_CONFIG.WALLETCONNECT_PROJECT_ID,
-  chains: [base, mainnet],
-  transports: {
-    [base.id]: http(),
-    [mainnet.id]: http(),
-  },
-  ssr: true, // Enable server-side rendering for Next.js
-});
+// Create wagmiConfig once at module level to prevent re-initialization
+let wagmiConfigInstance: ReturnType<typeof getDefaultConfig> | null = null;
 
-const farcasterAuthConfig = {
-  rpcUrl: "https://mainnet.optimism.io",
-  domain: APP_CONFIG.DOMAIN,
-  // siweUri is optional - Auth Kit handles SIWE verification internally
-  // Only needed if you want custom server-side session management
-  relay: "https://relay.farcaster.xyz", // Ensure relay is specified
-};
+function getWagmiConfig() {
+  if (!wagmiConfigInstance) {
+    wagmiConfigInstance = getDefaultConfig({
+      appName: APP_CONFIG.NAME,
+      projectId: APP_CONFIG.WALLETCONNECT_PROJECT_ID,
+      chains: [base, mainnet],
+      transports: {
+        [base.id]: http(),
+        [mainnet.id]: http(),
+      },
+      ssr: true,
+    });
+  }
+  return wagmiConfigInstance;
+}
+
+// Export for external use
+export const wagmiConfig = getWagmiConfig();
 
 export function Providers({ children }: { children: React.ReactNode }) {
+  // Stable Farcaster config - must be memoized to prevent re-renders
+  const farcasterAuthConfig = useMemo(() => ({
+    rpcUrl: "https://mainnet.optimism.io",
+    domain: typeof window !== 'undefined' ? window.location.host : APP_CONFIG.DOMAIN,
+    siweUri: typeof window !== 'undefined' ? window.location.href : `https://${APP_CONFIG.DOMAIN}`,
+    relay: "https://relay.farcaster.xyz",
+  }), []);
+
   // Create QueryClient inside the component to avoid SSR issues
   const [queryClient] = useState(
     () =>

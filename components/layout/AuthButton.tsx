@@ -15,8 +15,8 @@ import {
 import { useAioha } from "@aioha/react-ui";
 import { useAccount } from "wagmi";
 import { useFarcasterSession } from "@/hooks/useFarcasterSession";
+import { SignInButton } from "@farcaster/auth-kit";
 import HiveLoginModal from "./HiveLoginModal";
-import { FarcasterLoginModal } from "./FarcasterLoginModal";
 import { FaEthereum, FaHive } from "react-icons/fa";
 import { SiFarcaster } from "react-icons/si";
 import { Name, Avatar } from "@coinbase/onchainkit/identity";
@@ -148,8 +148,8 @@ export default function AuthButton() {
     }
   }, [user, isEthereumConnected, ethereumAddress, isFarcasterConnected, farcasterProfile, toast]);
 
-  // Farcaster modal state
-  const [isFarcasterModalOpen, setIsFarcasterModalOpen] = useState(false);
+  // Hidden Farcaster sign-in state
+  const hiddenSignInRef = React.useRef<HTMLDivElement>(null);
   const [isFarcasterAuthInProgress, setIsFarcasterAuthInProgress] =
     useState(false);
 
@@ -269,11 +269,16 @@ export default function AuthButton() {
   }, [aioha]);
 
   const handleFarcasterConnect = useCallback(() => {
-    if (isFarcasterConnected) {
+    if (isFarcasterAuthInProgress || isFarcasterConnected) {
       return;
     }
-    setIsFarcasterModalOpen(true);
-  }, [isFarcasterConnected]);
+
+    setIsFarcasterAuthInProgress(true);
+    const hiddenButton = hiddenSignInRef.current?.querySelector("button");
+    if (hiddenButton) {
+      hiddenButton.click();
+    }
+  }, [isFarcasterAuthInProgress, isFarcasterConnected]);
 
   // Memoize modal close handler
   const handleCloseConnectionModal = useCallback(() => {
@@ -402,12 +407,39 @@ export default function AuthButton() {
         onSuccess={() => setIsConnectionModalOpen(false)}
       />
 
-      {/* Farcaster Login Modal */}
-      <FarcasterLoginModal
-        isOpen={isFarcasterModalOpen}
-        onClose={() => setIsFarcasterModalOpen(false)}
-        onSuccess={() => setIsConnectionModalOpen(false)}
-      />
+      {/* Hidden Farcaster SignInButton */}
+      <Box
+        ref={hiddenSignInRef}
+        position="absolute"
+        top="-9999px"
+        left="-9999px"
+        pointerEvents="none"
+        opacity={0}
+      >
+        <SignInButton
+          onSuccess={({ fid, username }) => {
+            setIsFarcasterAuthInProgress(false);
+            setIsConnectionModalOpen(false);
+            toast({
+              status: "success",
+              title: "Connected to Farcaster!",
+              description: `Welcome, @${username}!`,
+              duration: 3000,
+            });
+          }}
+          onError={(error) => {
+            console.error("❌ Farcaster Sign In Error:", error);
+            setIsFarcasterAuthInProgress(false);
+            toast({
+              status: "error",
+              title: "Authentication failed",
+              description:
+                error?.message || "Failed to authenticate with Farcaster",
+              duration: 5000,
+            });
+          }}
+        />
+      </Box>
       <MergeAccountModal
         isOpen={showMergeModal}
         onClose={() => {

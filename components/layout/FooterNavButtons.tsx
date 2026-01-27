@@ -15,7 +15,6 @@ import {
 import { useRouter, usePathname } from "next/navigation";
 import { useAioha } from "@aioha/react-ui";
 import HiveLoginModal from "./HiveLoginModal";
-import { FarcasterLoginModal } from "./FarcasterLoginModal";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useFarcasterSession } from "@/hooks/useFarcasterSession";
 import { useFarcasterMiniapp } from "@/hooks/useFarcasterMiniapp";
@@ -143,7 +142,6 @@ export default function FooterNavButtons() {
 
   // Connection modal state with proper management
   const [isConnectionModalOpen, setIsConnectionModalOpen] = useState(false);
-  const [isFarcasterModalOpen, setIsFarcasterModalOpen] = useState(false);
   const [isModalTransitioning, setIsModalTransitioning] = useState(false);
 
   // Client-side only rendering to avoid hydration issues
@@ -615,8 +613,11 @@ export default function FooterNavButtons() {
         return;
       }
 
-      // Open our custom Farcaster modal instead of Auth Kit modal
-      setIsFarcasterModalOpen(true);
+      // The signIn() function opens the Farcaster Auth Kit modal
+      // On desktop: Shows QR code modal
+      // On mobile: Shows deep link options and redirects
+      // Success/error handling is done via the onSuccess/onError callbacks above
+      signIn();
     } catch (error) {
       console.error("Farcaster auth error:", error);
       clearAuthTimeout(); // Clear safety timeout on error
@@ -1066,11 +1067,6 @@ export default function FooterNavButtons() {
       <HiveLoginModal
         isOpen={modalDisplayed}
         onClose={() => setModalDisplayed(false)}
-        onSuccess={() => setIsConnectionModalOpen(false)}
-      />
-      <FarcasterLoginModal
-        isOpen={isFarcasterModalOpen}
-        onClose={() => setIsFarcasterModalOpen(false)}
         onSuccess={() => setIsConnectionModalOpen(false)}
       />
       <ConnectionModal

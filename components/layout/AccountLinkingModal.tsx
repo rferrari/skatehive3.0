@@ -59,7 +59,7 @@ function OpportunityRow({
   const sourceLabel = {
     wallet: "connected",
     hive_metadata: "from hive profile",
-    farcaster_verifications: "farcaster verified · no signature needed",
+    farcaster_verifications: "verified on farcaster",
   };
 
   const displayName =
@@ -212,105 +212,57 @@ export default function AccountLinkingModal({
     }
   }, [aioha, toast, bumpIdentitiesVersion, refresh, refreshUserbase]);
 
-  const linkEvm = useCallback(async (address: string, opportunity?: LinkingOpportunity) => {
+  const linkEvm = useCallback(async (address: string) => {
     setLinkingType("evm");
     try {
-      // Check if this is a Farcaster-verified address
-      const isFarcasterVerified = opportunity?.source === "farcaster_verifications";
+      // Get challenge
+      const challengeRes = await fetch("/api/userbase/identities/evm/challenge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address }),
+      });
+      const challengeData = await challengeRes.json();
+      if (!challengeRes.ok) throw new Error(challengeData?.error || "Challenge failed");
 
-      if (isFarcasterVerified && farcasterProfile?.fid) {
-        // For Farcaster-verified addresses, we can link directly without signature
-        const verifyRes = await fetch("/api/userbase/identities/evm/verify-farcaster", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
-            address,
-            farcaster_fid: farcasterProfile.fid,
-          }),
-        });
-        const verifyData = await verifyRes.json();
+      // Sign with wallet
+      const signature = await signMessageAsync({ message: challengeData.message });
 
-        if (!verifyRes.ok) {
-          if (verifyRes.status === 409 && verifyData?.merge_required) {
-            const shouldMerge = window.confirm(
-              `This wallet is already linked to another user. Merge accounts?`
-            );
-            if (shouldMerge) {
-              const mergeRes = await fetch("/api/userbase/merge", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  type: "evm",
-                  identifier: address,
-                  source_user_id: verifyData.existing_user_id,
-                  farcaster_verified: true,
-                  farcaster_fid: farcasterProfile.fid,
-                }),
-              });
-              if (!mergeRes.ok) {
-                const mergeData = await mergeRes.json();
-                throw new Error(mergeData?.error || "Merge failed");
-              }
-              toast({ status: "success", title: "accounts merged" });
-              await refreshUserbase();
+      // Verify
+      const verifyRes = await fetch("/api/userbase/identities/evm/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address, signature }),
+      });
+      const verifyData = await verifyRes.json();
+
+      if (!verifyRes.ok) {
+        if (verifyRes.status === 409 && verifyData?.merge_required) {
+          const shouldMerge = window.confirm(
+            `This wallet is already linked to another user. Merge accounts?`
+          );
+          if (shouldMerge) {
+            const mergeRes = await fetch("/api/userbase/merge", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                type: "evm",
+                identifier: address,
+                source_user_id: verifyData.existing_user_id,
+                signature,
+              }),
+            });
+            if (!mergeRes.ok) {
+              const mergeData = await mergeRes.json();
+              throw new Error(mergeData?.error || "Merge failed");
             }
-          } else {
-            throw new Error(verifyData?.error || "Verification failed");
+            toast({ status: "success", title: "accounts merged" });
+            await refreshUserbase();
           }
         } else {
-          toast({ status: "success", title: `linked: ${shortenAddress(address)}` });
+          throw new Error(verifyData?.error || "Verification failed");
         }
       } else {
-        // Original flow: require wallet signature
-        // Get challenge
-        const challengeRes = await fetch("/api/userbase/identities/evm/challenge", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ address }),
-        });
-        const challengeData = await challengeRes.json();
-        if (!challengeRes.ok) throw new Error(challengeData?.error || "Challenge failed");
-
-        // Sign with wallet
-        const signature = await signMessageAsync({ message: challengeData.message });
-
-        // Verify
-        const verifyRes = await fetch("/api/userbase/identities/evm/verify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ address, signature }),
-        });
-        const verifyData = await verifyRes.json();
-
-        if (!verifyRes.ok) {
-          if (verifyRes.status === 409 && verifyData?.merge_required) {
-            const shouldMerge = window.confirm(
-              `This wallet is already linked to another user. Merge accounts?`
-            );
-            if (shouldMerge) {
-              const mergeRes = await fetch("/api/userbase/merge", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  type: "evm",
-                  identifier: address,
-                  source_user_id: verifyData.existing_user_id,
-                  signature,
-                }),
-              });
-              if (!mergeRes.ok) {
-                const mergeData = await mergeRes.json();
-                throw new Error(mergeData?.error || "Merge failed");
-              }
-              toast({ status: "success", title: "accounts merged" });
-              await refreshUserbase();
-            }
-          } else {
-            throw new Error(verifyData?.error || "Verification failed");
-          }
-        } else {
-          toast({ status: "success", title: `linked: ${shortenAddress(address)}` });
-        }
+        toast({ status: "success", title: `linked: ${shortenAddress(address)}` });
       }
 
       bumpIdentitiesVersion();
@@ -324,7 +276,7 @@ export default function AccountLinkingModal({
     } finally {
       setLinkingType(null);
     }
-  }, [signMessageAsync, farcasterProfile, toast, bumpIdentitiesVersion, refresh, refreshUserbase]);
+  }, [signMessageAsync, toast, bumpIdentitiesVersion, refresh, refreshUserbase]);
 
   const linkFarcaster = useCallback(async (
     handle: string | undefined,
@@ -396,7 +348,7 @@ export default function AccountLinkingModal({
     if (opportunity.type === "hive" && opportunity.handle) {
       linkHive(opportunity.handle);
     } else if (opportunity.type === "evm" && opportunity.address) {
-      linkEvm(opportunity.address, opportunity);
+      linkEvm(opportunity.address);
     } else if (opportunity.type === "farcaster") {
       linkFarcaster(opportunity.handle, opportunity.externalId);
     }
