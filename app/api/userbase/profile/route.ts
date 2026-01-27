@@ -247,7 +247,7 @@ export async function PATCH(request: NextRequest) {
     const { display_name, avatar_url, cover_url, bio, location, handle } = body;
 
     // Build update object with only provided fields
-    const updateData: Record<string, string> = {};
+    const updateData: Record<string, string | null> = {};
     if (display_name !== undefined) updateData.display_name = display_name;
     if (avatar_url !== undefined) updateData.avatar_url = avatar_url;
     if (cover_url !== undefined) updateData.cover_url = cover_url;

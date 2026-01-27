@@ -106,6 +106,7 @@ export default function EditUserbaseProfile({
       });
     } finally {
       setIsUploadingAvatar(false);
+      e.target.value = '';
     }
   };
 

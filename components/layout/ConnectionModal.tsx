@@ -11,6 +11,7 @@ import {
   Image,
   Box,
   Circle,
+  Badge,
 } from "@chakra-ui/react";
 import { keyframes } from "@emotion/react";
 import SkateModal from "@/components/shared/SkateModal";
@@ -21,11 +22,13 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useFarcasterSession } from "@/hooks/useFarcasterSession";
 import { useFarcasterMiniapp } from "@/hooks/useFarcasterMiniapp";
 import { useSignIn } from "@farcaster/auth-kit";
-import { FaEthereum, FaHive, FaCheck } from "react-icons/fa";
+import { FaEthereum, FaHive, FaLink } from "react-icons/fa";
 import { SiFarcaster } from "react-icons/si";
 import { useUserbaseAuth } from "@/contexts/UserbaseAuthContext";
 import { useTranslations } from "@/contexts/LocaleContext";
 import UserbaseEmailLoginForm from "@/components/userbase/UserbaseEmailLoginForm";
+import AccountLinkingModal from "@/components/layout/AccountLinkingModal";
+import { useAccountLinkingOpportunities } from "@/hooks/useAccountLinkingOpportunities";
 
 // Blinking cursor animation
 const blink = keyframes`
@@ -192,6 +195,10 @@ export default function ConnectionModal({
   const toast = useToast();
   const t = useTranslations();
   
+  // Account linking state
+  const [isLinkingModalOpen, setIsLinkingModalOpen] = useState(false);
+  const { opportunities, hasUnlinkedOpportunities } = useAccountLinkingOpportunities();
+  
   // Get connection states
   const { isConnected: isEthereumConnected } = useAccount();
   const {
@@ -300,6 +307,36 @@ export default function ConnectionModal({
                   profile →
                 </Button>
               </HStack>
+
+              {/* Linking prompt - show when there are unlinked opportunities */}
+              {hasUnlinkedOpportunities && (
+                <HStack
+                  py={2}
+                  px={3}
+                  bg="whiteAlpha.50"
+                  borderRadius="sm"
+                  border="1px solid"
+                  borderColor="primary"
+                  cursor="pointer"
+                  onClick={() => setIsLinkingModalOpen(true)}
+                  _hover={{ bg: "whiteAlpha.100" }}
+                >
+                  <Icon as={FaLink} boxSize={3} color="primary" />
+                  <Text fontFamily="mono" fontSize="xs" color="text" flex={1}>
+                    link detected accounts
+                  </Text>
+                  <Badge
+                    bg="primary"
+                    color="background"
+                    fontFamily="mono"
+                    fontSize="2xs"
+                    borderRadius="sm"
+                  >
+                    {opportunities.filter(o => !o.alreadyLinked).length}
+                  </Badge>
+                  <Text fontFamily="mono" fontSize="xs" color="primary">→</Text>
+                </HStack>
+              )}
 
               {/* Connections - explicit states */}
               <Box pt={2}>
@@ -480,6 +517,12 @@ export default function ConnectionModal({
           )}
         </VStack>
       </Box>
+      
+      {/* Account Linking Modal */}
+      <AccountLinkingModal
+        isOpen={isLinkingModalOpen}
+        onClose={() => setIsLinkingModalOpen(false)}
+      />
     </SkateModal>
   );
 }

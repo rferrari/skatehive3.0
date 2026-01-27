@@ -10,6 +10,7 @@ import {
 import Sidebar from "@/components/layout/Sidebar";
 import FooterNavButtons from "@/components/layout/FooterNavButtons";
 import SplashScreen from "@/components/layout/SplashScreen";
+import AccountLinkingDetector from "@/components/layout/AccountLinkingDetector";
 import SearchOverlay from "@/components/shared/SearchOverlay";
 import AirdropModal from "@/components/airdrop/AirdropModal";
 import CommunityToasts from "@/components/homepage/CommunityToasts";
@@ -204,6 +205,9 @@ function InnerLayout({
 
       {/* Window Dock for minimized windows */}
       <WindowDock />
+
+      {/* Account Linking Detector - auto-prompts when wallets are connected */}
+      <AccountLinkingDetector />
 
       {/* HZC Easter Egg */}
       <HZCEasterEgg onTrigger={() => searchProps?.setIsSearchOpen(false)} />

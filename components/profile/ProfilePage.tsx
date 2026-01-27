@@ -223,19 +223,21 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
     [currentUserbaseUser, userbaseUser]
   );
 
-  // Debug logging for ownership
-  console.log("[ProfilePage] Ownership debug:", {
-    username,
-    isHiveProfile,
-    isOwner,
-    isUserbaseOwner,
-    currentUserbaseUserId: currentUserbaseUser?.id,
-    userbaseUserId: userbaseUser?.id,
-    userbaseUserHandle: userbaseUser?.handle,
-    hiveIdentityHandle,
-    hiveLookupHandle,
-    user,
-  });
+  // Debug logging for ownership (development only)
+  if (process.env.NODE_ENV === "development") {
+    console.log("[ProfilePage] Ownership debug:", {
+      username,
+      isHiveProfile,
+      isOwner,
+      isUserbaseOwner,
+      currentUserbaseUserId: currentUserbaseUser?.id,
+      userbaseUserId: userbaseUser?.id,
+      userbaseUserHandle: userbaseUser?.handle,
+      hiveIdentityHandle,
+      hiveLookupHandle,
+      user,
+    });
+  }
 
   const resolvedEthereumAddress =
     profileData.ethereum_address ||

@@ -1,9 +1,8 @@
 'use client'
 import React, { useEffect, useState } from 'react';
 import { Box, Flex, Text, Button, Image, useColorMode, Spinner } from '@chakra-ui/react';
-import { useAioha, AiohaModal } from '@aioha/react-ui';
-import { KeyTypes } from '@aioha/aioha';
-import '@aioha/react-ui/dist/build.css';
+import { useAioha } from '@aioha/react-ui';
+import HiveLoginModal from './HiveLoginModal';
 import { getCommunityInfo, getProfile } from '@/lib/hive/client-functions';
 import { HIVE_CONFIG } from '@/config/app.config';
 
@@ -116,18 +115,10 @@ export default function Header() {
                     {user ?? 'Login'}
                 </Button>
             </Flex>
-            <div className={colorMode}>
-                <AiohaModal
-                    displayed={modalDisplayed}
-                    loginOptions={{
-                        msg: 'Login',
-                        keyType: KeyTypes.Posting,
-                        loginTitle: 'Login',
-                    }}
-                    onLogin={() => setModalDisplayed(false)}
-                    onClose={() => setModalDisplayed(false)}
-                />
-            </div>
+            <HiveLoginModal
+                isOpen={modalDisplayed}
+                onClose={() => setModalDisplayed(false)}
+            />
         </Box>
     );
 }

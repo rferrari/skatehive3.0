@@ -473,21 +473,45 @@ export async function POST(request: NextRequest) {
 
   if (type === "evm") {
     const signature = payload?.signature;
-    if (!signature || typeof signature !== "string") {
-      return NextResponse.json(
-        { error: "Missing signature" },
-        { status: 400 }
-      );
+    const farcasterVerified = payload?.farcaster_verified;
+    const farcasterFid = payload?.farcaster_fid;
+
+    // If Farcaster-verified, skip signature check
+    if (farcasterVerified && farcasterFid) {
+      // Verify user has this Farcaster account linked
+      const { data: farcasterIdentities, error: fcCheckError } = await supabase
+        .from("userbase_identities")
+        .select("id")
+        .eq("user_id", session.userId)
+        .eq("type", "farcaster")
+        .eq("external_id", farcasterFid.toString())
+        .limit(1);
+
+      if (fcCheckError || !farcasterIdentities || farcasterIdentities.length === 0) {
+        return NextResponse.json(
+          { error: "Farcaster account not linked or verification failed" },
+          { status: 403 }
+        );
+      }
+      // Skip challenge verification for Farcaster-verified addresses
+    } else {
+      // Original signature-based verification
+      if (!signature || typeof signature !== "string") {
+        return NextResponse.json(
+          { error: "Missing signature" },
+          { status: 400 }
+        );
+      }
+      const verified = await verifyEvmChallenge({
+        userId: session.userId,
+        address: identifier,
+        signature,
+      });
+      if (verified.error) {
+        return verified.error;
+      }
+      challengeId = verified.challengeId;
     }
-    const verified = await verifyEvmChallenge({
-      userId: session.userId,
-      address: identifier,
-      signature,
-    });
-    if (verified.error) {
-      return verified.error;
-    }
-    challengeId = verified.challengeId;
   }
 
   const mergeMetadata = {

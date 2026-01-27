@@ -22,9 +22,8 @@ import {
   useColorMode,
   useToast,
 } from "@chakra-ui/react";
-import { AiohaModal, useAioha } from "@aioha/react-ui";
-import { KeyTypes } from "@aioha/aioha";
-import "@aioha/react-ui/dist/build.css";
+import { useAioha } from "@aioha/react-ui";
+import HiveLoginModal from "@/components/layout/HiveLoginModal";
 import { convertVestToHive } from "@/lib/hive/client-functions";
 import { extractNumber } from "@/lib/utils/extractNumber";
 import SendTokenModal from "@/components/wallet/SendTokenModal";
@@ -568,21 +567,11 @@ export default function MainWallet({ username }: MainWalletProps) {
             </VStack>
           </Grid>
 
-          {/* Aioha Modal for Hive Connection */}
-          <div className={colorMode}>
-            <AiohaModal
-              displayed={isHiveModalOpen}
-              loginOptions={{
-                msg: "Connect to Hive",
-                keyType: KeyTypes.Posting,
-                loginTitle: "Connect Your Hive Account",
-              }}
-              onLogin={() => {
-                closeHiveModal();
-              }}
-              onClose={() => closeHiveModal()}
-            />
-          </div>
+          {/* Hive Login Modal */}
+          <HiveLoginModal
+            isOpen={isHiveModalOpen}
+            onClose={closeHiveModal}
+          />
 
           {/* SendTokenModal for Ethereum tokens */}
           {selectedToken && (
