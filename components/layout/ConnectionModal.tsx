@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import {
   Button,
   HStack,
@@ -7,69 +7,31 @@ import {
   Text,
   Icon,
   useToast,
-  Badge,
-  Flex,
   Tooltip,
   Image,
   Box,
+  Circle,
 } from "@chakra-ui/react";
+import { keyframes } from "@emotion/react";
 import SkateModal from "@/components/shared/SkateModal";
 import { useRouter } from "next/navigation";
 import { useAioha } from "@aioha/react-ui";
-import { useAccount } from "wagmi";
+import { useAccount, useDisconnect } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useFarcasterSession } from "@/hooks/useFarcasterSession";
 import { useFarcasterMiniapp } from "@/hooks/useFarcasterMiniapp";
 import { useSignIn } from "@farcaster/auth-kit";
-import { FaEthereum, FaHive, FaInfoCircle } from "react-icons/fa";
+import { FaEthereum, FaHive, FaCheck } from "react-icons/fa";
 import { SiFarcaster } from "react-icons/si";
 import { useUserbaseAuth } from "@/contexts/UserbaseAuthContext";
 import { useTranslations } from "@/contexts/LocaleContext";
 import UserbaseEmailLoginForm from "@/components/userbase/UserbaseEmailLoginForm";
-import NextLink from "next/link";
-import { Link } from "@chakra-ui/react";
 
-interface ConnectionStatus {
-  name: string;
-  connected: boolean;
-  icon: any;
-  color: string;
-  priority: number;
-}
-
-// Network information texts - easily editable
-const NETWORK_INFO = {
-  Hive: {
-    description:
-      "Create posts, vote on content, earn rewards, and access your Hive wallet",
-    features: [
-      "✍️ Create & share content",
-      "🗳️ Vote & earn rewards",
-      "💰 Access Hive wallet",
-      "🎯 Full platform access",
-    ],
-  },
-  Ethereum: {
-    description:
-      "Connect your Ethereum wallet for Web3 features and token interactions",
-    features: [
-      "💎 Access NFTs",
-      "🔗 Web3 integrations",
-      "💸 Token transactions",
-      "🛡️ Decentralized identity",
-    ],
-  },
-  Farcaster: {
-    description:
-      "Connect with the Farcaster ecosystem and cross-post your content",
-    features: [
-      "🌐 Cross-platform posting",
-      "👥 Farcaster community",
-      "📡 Protocol integrations",
-      "🔄 Social sync",
-    ],
-  },
-};
+// Blinking cursor animation
+const blink = keyframes`
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+`;
 
 interface ConnectionModalProps {
   isOpen: boolean;
@@ -77,10 +39,140 @@ interface ConnectionModalProps {
   onHiveLogin: () => void;
   onFarcasterConnect: () => void;
   isFarcasterAuthInProgress: boolean;
-  primaryConnection?: ConnectionStatus | undefined;
-  // Add props for Farcaster connection state to avoid hook duplication
+  primaryConnection?: any;
   actualFarcasterConnection?: boolean;
   actualFarcasterProfile?: any;
+}
+
+// Connection status indicator - terminal style with lines + dots
+function ConnectionStatus({
+  name,
+  icon,
+  color,
+  state,
+  onClick,
+  isLoading,
+  hint,
+  subState,
+}: {
+  name: string;
+  icon: any;
+  color: string;
+  state: 'not-linked' | 'linked' | 'active';
+  onClick: () => void;
+  isLoading?: boolean;
+  hint?: string;
+  subState?: string;
+}) {
+  const stateConfig = {
+    'not-linked': {
+      lineColor: 'whiteAlpha.200',
+      dotFill: 'transparent',
+      dotBorder: 'whiteAlpha.300',
+      textColor: 'gray.500',
+      label: 'not linked',
+      actionLabel: 'link →',
+    },
+    'linked': {
+      lineColor: 'primary',
+      dotFill: 'transparent',
+      dotBorder: 'primary',
+      textColor: 'gray.400',
+      label: 'linked',
+      actionLabel: 'connect →',
+    },
+    'active': {
+      lineColor: 'primary',
+      dotFill: 'primary',
+      dotBorder: 'primary',
+      textColor: 'primary',
+      label: 'active',
+      actionLabel: 'disconnect',
+    },
+  };
+
+  const config = stateConfig[state];
+
+  return (
+    <VStack spacing={0} align="stretch">
+      <HStack 
+        spacing={2} 
+        py={1.5}
+        cursor="pointer"
+        onClick={onClick}
+        transition="all 0.2s"
+        _hover={{
+          bg: 'whiteAlpha.50',
+          '& .connection-line': {
+            opacity: 1,
+            bg: state === 'not-linked' ? 'whiteAlpha.400' : config.lineColor,
+          },
+          '& .connection-icon': {
+            opacity: 1,
+            transform: 'scale(1.1)',
+          },
+        }}
+        borderRadius="sm"
+        px={1}
+        mx={-1}
+      >
+        <Icon 
+          className="connection-icon"
+          as={icon} 
+          boxSize={3} 
+          color={color} 
+          opacity={state === 'not-linked' ? 0.4 : 1}
+          transition="all 0.2s"
+        />
+        <Text 
+          fontSize="xs" 
+          fontFamily="mono" 
+          color="gray.400"
+          textTransform="lowercase"
+          w="70px"
+        >
+          {name}
+        </Text>
+        
+        {/* Connection line */}
+        <Box 
+          className="connection-line"
+          flex={1} 
+          h="1px" 
+          bg={config.lineColor}
+          opacity={state === 'not-linked' ? 0.3 : 1}
+          transition="all 0.2s"
+        />
+        
+        {/* Status dot */}
+        <Circle 
+          size="8px" 
+          bg={config.dotFill}
+          border="2px solid"
+          borderColor={config.dotBorder}
+        />
+        
+        <Text 
+          fontSize="2xs" 
+          fontFamily="mono" 
+          color={config.textColor}
+          w="60px"
+          textAlign="right"
+        >
+          {config.label}
+        </Text>
+      </HStack>
+      
+      {/* Sub-state info - no action button needed, clicking row handles it */}
+      {subState && (
+        <HStack spacing={2} pl="90px" pb={1}>
+          <Text fontSize="2xs" fontFamily="mono" color="gray.600">
+            {subState}
+          </Text>
+        </HStack>
+      )}
+    </VStack>
+  );
 }
 
 export default function ConnectionModal({
@@ -95,9 +187,11 @@ export default function ConnectionModal({
 }: ConnectionModalProps) {
   const { user, aioha } = useAioha();
   const { user: userbaseUser, signOut: signOutUserbase } = useUserbaseAuth();
+  const { disconnect: disconnectEth } = useDisconnect();
   const router = useRouter();
   const toast = useToast();
   const t = useTranslations();
+  
   // Get connection states
   const { isConnected: isEthereumConnected } = useAccount();
   const {
@@ -118,67 +212,27 @@ export default function ConnectionModal({
       ? actualFarcasterProfile
       : farcasterProfile || miniappUser;
 
-  // Connection status data with priority (Hive > Ethereum > Farcaster)
-  const connections: ConnectionStatus[] = [
-    {
-      name: "Hive",
-      connected: !!user,
-      icon: FaHive,
-      color: "red",
-      priority: 1,
-    },
-    {
-      name: "Ethereum",
-      connected: isEthereumConnected,
-      icon: FaEthereum,
-      color: "blue.200",
-      priority: 2,
-    },
-    {
-      name: "Farcaster",
-      connected: finalFarcasterConnection,
-      icon: SiFarcaster,
-      color: "purple.400",
-      priority: 3,
-    },
-  ];
+  // Determine if user is logged in (any method)
+  const isLoggedIn = !!user || !!userbaseUser;
+  const displayName = user || userbaseUser?.display_name || userbaseUser?.handle || "";
+  const avatarUrl = user 
+    ? `https://images.hive.blog/u/${user}/avatar/small`
+    : userbaseUser?.avatar_url || "/skatehive_square_green.png";
 
   // Connection handlers
   const handleHiveLogout = async () => {
     await aioha.logout();
-    toast({
-      status: "success",
-      title: "Logged out from Hive",
-      description: "You have been disconnected from Hive",
-    });
+    toast({ status: "success", title: "disconnected: hive" });
   };
 
   const handleFarcasterDisconnect = async () => {
     if (isInMiniapp) {
-      toast({
-        status: "info",
-        title: "Miniapp Context",
-        description:
-          "You're connected via Farcaster miniapp. Close the app to disconnect.",
-      });
+      toast({ status: "info", title: "exit miniapp to disconnect" });
     } else {
-
-      // Step 1: Clear the custom session first
       clearSession();
-
-      // Step 2: Sign out from Auth Kit
       signOut();
-
-      // Step 3: Force a small delay and try to clear again to ensure it sticks
-      setTimeout(() => {
-        clearSession();
-      }, 200);
-
-      toast({
-        status: "success",
-        title: "Disconnected from Farcaster",
-        description: "You have been signed out from Farcaster",
-      });
+      setTimeout(() => clearSession(), 200);
+      toast({ status: "success", title: "disconnected: farcaster" });
     }
   };
 
@@ -194,343 +248,235 @@ export default function ConnectionModal({
     }
   };
 
-return (
+  // Ethereum connection handler using RainbowKit
+  const [ethModalAction, setEthModalAction] = useState<'connect' | 'manage' | null>(null);
+
+  return (
     <SkateModal
       isOpen={isOpen}
       onClose={onClose}
-      title={primaryConnection ? "manage-connections" : "connect-skatehive"}
+      title={isLoggedIn ? "session" : "authenticate"}
       isCentered={true}
     >
-      <Box p={4}>
-        <VStack spacing={4} align="stretch">
-          {!userbaseUser && (
-            <Box border="1px solid" borderColor="border" p={4}>
-              <VStack spacing={3} align="stretch">
-                <Text fontWeight="bold" color="text">
-                  {t("userbaseAuth.title")}
-                </Text>
-                <UserbaseEmailLoginForm variant="compact" />
-                <Text color="dim" fontSize="sm">
-                  {t("signUp.prompt")}{" "}
-                  <Link as={NextLink} href="/sign-up" color="primary">
-                    {t("signUp.cta")}
-                  </Link>
-                </Text>
-              </VStack>
-            </Box>
-          )}
-          {/* Show profile option if connected to Hive */}
-          {(user || userbaseUser) && (
-            <Button
-              leftIcon={
-                user ? (
-                  <Image
-                    src={`https://images.hive.blog/u/${user}/avatar/small`}
-                    boxSize={5}
-                    borderRadius="full"
-                    alt="Hive Profile Picture"
-                  />
-                ) : (
-                  <Image
-                    src={userbaseUser?.avatar_url || "/logos/hiveLogo.png"}
-                    boxSize={5}
-                    borderRadius="full"
-                    alt="App Profile Picture"
-                  />
-                )
-              }
-              onClick={handleProfileClick}
-              variant="outline"
-              justifyContent="flex-start"
-            >
-              View Profile
-            </Button>
-          )}
-
-          {/* Show Farcaster profile option if connected to Farcaster but not Hive */}
-          {!user && finalFarcasterProfile && (
-            <Button
-              leftIcon={
+      {/* Subtle noise overlay */}
+      <Box
+        position="absolute"
+        inset={0}
+        opacity={0.03}
+        pointerEvents="none"
+        bgImage="url('data:image/svg+xml,%3Csvg viewBox=%220 0 256 256%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noise%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.9%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noise)%22/%3E%3C/svg%3E')"
+      />
+      
+      <Box p={4} position="relative">
+        <VStack spacing={3} align="stretch">
+          
+          {/* === LOGGED IN STATE === */}
+          {isLoggedIn ? (
+            <>
+              {/* Session Info */}
+              <HStack spacing={3} py={2}>
                 <Image
-                  src={finalFarcasterProfile.pfpUrl || ""}
-                  boxSize={5}
-                  borderRadius="full"
-                  alt="Farcaster Profile Picture"
+                  src={avatarUrl}
+                  boxSize={10}
+                  borderRadius="sm"
+                  alt=""
                 />
-              }
-              onClick={() => {
-                // Could navigate to a Farcaster-specific page or close modal
-                onClose();
-              }}
-              variant="outline"
-              justifyContent="flex-start"
-            >
-              @
-              {finalFarcasterProfile.username ||
-                finalFarcasterProfile.displayName}
-            </Button>
-          )}
-
-          {/* Connection options */}
-          {connections.map((connection) => (
-            <Box
-              key={connection.name}
-              border="1px solid"
-              borderColor="border"
-              borderRadius="none"
-              p={4}
-            >
-              <Flex align="start" justify="space-between" gap={4}>
-                <HStack spacing={3} flex={1}>
-                  <Icon
-                    as={connection.icon}
-                    boxSize={5}
-                    color={connection.color}
-                  />
-                  <VStack align="start" spacing={0} flex={1}>
-                    <HStack spacing={2} align="center">
-                      <Text fontWeight="medium">{connection.name}</Text>
-                      <Tooltip
-                      label={
-                        <VStack align="start" spacing={2} p={2}>
-                          <Text fontSize="sm" fontWeight="medium">
-                            {
-                              NETWORK_INFO[
-                                connection.name as keyof typeof NETWORK_INFO
-                              ]?.description
-                            }
-                          </Text>
-                          <VStack align="start" spacing={1}>
-                            {NETWORK_INFO[
-                              connection.name as keyof typeof NETWORK_INFO
-                            ]?.features.map((feature, index) => (
-                              <Text
-                                key={index}
-                                fontSize="xs"
-                                color="gray.300"
-                              >
-                                {feature}
-                              </Text>
-                            ))}
-                          </VStack>
-                        </VStack>
-                      }
-                      placement="top"
-                      hasArrow
-                      bg="gray.800"
-                      color="white"
-                      borderRadius="none"
-                      p={3}
-                      maxW="300px"
-                    >
-                      <Icon
-                        as={FaInfoCircle}
-                        boxSize={3}
-                        color="gray.400"
-                        cursor="pointer"
-                      />
-                    </Tooltip>
-                    {connection.connected && (
-                      <Badge colorScheme="green" variant="solid">
-                        Connected
-                      </Badge>
-                    )}
-                  </HStack>
+                <VStack align="start" spacing={0} flex={1}>
+                  <Text fontFamily="mono" fontSize="sm" color="primary">
+                    {displayName}
+                  </Text>
+                  <Text fontFamily="mono" fontSize="xs" color="gray.500">
+                    {user ? "hive" : "email"} session active
+                  </Text>
                 </VStack>
+                <Button
+                  size="xs"
+                  variant="ghost"
+                  fontFamily="mono"
+                  color="gray.500"
+                  onClick={handleProfileClick}
+                  _hover={{ color: "primary" }}
+                >
+                  profile →
+                </Button>
               </HStack>
-              
-              {connection.name === "Ethereum" ? (
-                <ConnectButton.Custom>
-                  {({
-                    account,
-                    chain,
-                    openAccountModal,
-                    openChainModal,
-                    openConnectModal,
-                    authenticationStatus,
-                    mounted,
-                  }) => {
-                    const ready = mounted && authenticationStatus !== "loading";
-                    const connected =
-                      ready &&
-                      account &&
-                      chain &&
-                      (!authenticationStatus ||
-                        authenticationStatus === "authenticated");
 
-                    return (
-                      <div
-                        {...(!ready && {
-                          "aria-hidden": true,
-                          style: {
-                            opacity: 0,
-                            pointerEvents: "none",
-                            userSelect: "none",
-                          },
-                        })}
-                      >
-                        {(() => {
-                          if (!connected) {
-                            return (
-                              <Button
-                                onClick={() => {
-                                  onClose();
-                                  openConnectModal();
-                                }}
-                                type="button"
-                                size="sm"
-                                colorScheme="blue"
-                                flexShrink={0}
-                              >
-                                Connect
-                              </Button>
-                            );
-                          }
-
-                          if (chain.unsupported) {
-                            return (
-                              <Button
-                                onClick={() => {
-                                  onClose();
-                                  openChainModal();
-                                }}
-                                type="button"
-                                colorScheme="red"
-                                size="sm"
-                                flexShrink={0}
-                              >
-                                Wrong network
-                              </Button>
-                            );
-                          }
-
-                          return (
-                            <Button
-                              onClick={() => {
-                                onClose();
-                                openAccountModal();
-                              }}
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              flexShrink={0}
-                            >
-                              Manage
-                            </Button>
-                          );
-                        })()}
-                      </div>
-                    );
-                  }}
-                </ConnectButton.Custom>
-              ) : (
-                <>
-                  {!connection.connected ? (
-                    <Button
-                      size="sm"
-                      colorScheme="blue"
-                      onClick={() => {
-                        switch (connection.name) {
-                          case "Hive":
-                            onHiveLogin();
-                            break;
-                          case "Farcaster":
-                            onFarcasterConnect();
-                            break;
-                        }
-                      }}
-                      isLoading={
-                        connection.name === "Farcaster" &&
-                        isFarcasterAuthInProgress
-                      }
-                      loadingText="Connecting..."
-                      flexShrink={0}
-                    >
-                      Connect
-                    </Button>
-                  ) : (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        onClose();
-                        switch (connection.name) {
-                          case "Hive":
-                            handleHiveLogout();
-                            break;
-                          case "Farcaster":
-                            handleFarcasterDisconnect();
-                            break;
-                        }
-                      }}
-                      flexShrink={0}
-                    >
-                      Manage
-                    </Button>
-                  )}
-                </>
-              )}
-            </Flex>
-          </Box>
-        ))}
-          {!connections.some((conn) => conn.connected) && (
-            <Button
-              colorScheme="green"
-              onClick={() =>
-                window.open(
-                  "https://docs.skatehive.app/docs/create-account",
-                  "_blank"
-                )
-              }
-              leftIcon={<Icon as={FaInfoCircle} />}
-              variant="outline"
-            >
-              <Text display={{ base: "none", md: "inline" }}>
-                How to F. I connect to this shit?
-              </Text>
-              <Text display={{ base: "inline", md: "none" }}>
-                How to connect?
-              </Text>
-            </Button>
-          )}
-
-          {userbaseUser && (
-            <Box border="1px solid" borderColor="border" p={4}>
-              <VStack spacing={3} align="stretch">
-                <HStack justify="space-between">
-                  <Text fontWeight="bold" color="text">
-                    {t("userbaseAuth.title")}
-                  </Text>
-                  <Badge colorScheme="green" variant="solid">
-                    Connected
-                  </Badge>
-                </HStack>
-                <Text color="text" fontSize="sm">
-                  {t("userbaseAuth.signedInAs")}{" "}
-                  <Text as="span" fontWeight="bold">
-                    {userbaseUser.display_name ||
-                      userbaseUser.handle ||
-                      t("userbaseAuth.unnamedUser")}
-                  </Text>
+              {/* Connections - explicit states */}
+              <Box pt={2}>
+                <Text fontFamily="mono" fontSize="xs" color="gray.500" mb={3} textTransform="lowercase">
+                  available connections
                 </Text>
+                <VStack spacing={0} align="stretch">
+                  {/* Hive Connection */}
+                  <ConnectionStatus
+                    name="hive"
+                    icon={FaHive}
+                    color="red.400"
+                    state={user ? 'active' : 'not-linked'}
+                    subState={user ? 'posting enabled' : undefined}
+                    onClick={() => user ? handleHiveLogout() : onHiveLogin()}
+                  />
+                  
+                  {/* Ethereum Connection */}
+                  <ConnectButton.Custom>
+                    {({ account, chain, openAccountModal, openConnectModal, mounted }) => {
+                      const connected = mounted && account && chain;
+                      return (
+                        <ConnectionStatus
+                          name="eth"
+                          icon={FaEthereum}
+                          color="blue.300"
+                          state={connected ? 'active' : 'not-linked'}
+                          onClick={() => {
+                            onClose();
+                            connected ? openAccountModal() : openConnectModal();
+                          }}
+                        />
+                      );
+                    }}
+                  </ConnectButton.Custom>
+                  
+                  {/* Farcaster Connection */}
+                  <ConnectionStatus
+                    name="farcaster"
+                    icon={SiFarcaster}
+                    color="purple.400"
+                    state={finalFarcasterConnection ? 'active' : 'not-linked'}
+                    onClick={() => finalFarcasterConnection ? handleFarcasterDisconnect() : onFarcasterConnect()}
+                    isLoading={isFarcasterAuthInProgress}
+                  />
+                </VStack>
+              </Box>
+
+              {/* Sign Out */}
+              <Box pt={3} borderTop="1px solid" borderColor="whiteAlpha.100">
                 <Button
-                  as={NextLink}
-                  href="/settings"
-                  size="sm"
-                  variant="outline"
-                  onClick={onClose}
+                  variant="ghost"
+                  size="xs"
+                  fontFamily="mono"
+                  color="gray.600"
+                  onClick={() => {
+                    if (userbaseUser) signOutUserbase();
+                    if (user) handleHiveLogout();
+                    onClose();
+                  }}
+                  _hover={{ color: "red.400" }}
                 >
-                  {t("settings.manageAccount")}
+                  end session
                 </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={signOutUserbase}
-                >
-                  {t("userbaseAuth.signOut")}
-                </Button>
+              </Box>
+            </>
+          ) : (
+            <>
+              {/* === NOT LOGGED IN STATE === */}
+              
+              {/* Welcome - tighter */}
+              <VStack spacing={0} pb={2}>
+                <Text fontFamily="mono" fontSize="lg" color="primary" letterSpacing="tight">
+                  skatehive
+                </Text>
+                <Text fontFamily="mono" fontSize="xs" color="gray.400">
+                  join the community
+                </Text>
               </VStack>
-            </Box>
+
+              {/* Email Login - Primary Action - EMPHASIZED */}
+              <Box>
+                <UserbaseEmailLoginForm variant="compact" />
+                <Text fontFamily="mono" fontSize="2xs" color="gray.500" mt={1.5} textAlign="center">
+                  no wallet required · best for new skaters
+                </Text>
+              </Box>
+
+              {/* Divider - cleaner separation */}
+              <Box position="relative" py={3}>
+                <Box position="absolute" left={0} right={0} top="50%" h="1px" bg="whiteAlpha.100" />
+                <Text 
+                  fontFamily="mono" 
+                  fontSize="2xs" 
+                  color="gray.500" 
+                  bg="background"
+                  px={3}
+                  position="relative"
+                  w="fit-content"
+                  mx="auto"
+                  textTransform="uppercase"
+                  letterSpacing="wider"
+                >
+                  or link existing
+                </Text>
+              </Box>
+
+              {/* Connection options - reordered: Farcaster, Hive, Ethereum */}
+              <VStack spacing={1.5} align="stretch">
+                <Text fontFamily="mono" fontSize="xs" color="gray.500" mb={1} textTransform="lowercase">
+                  available connections
+                </Text>
+                <VStack spacing={0} align="stretch">
+                  {/* Farcaster */}
+                  <ConnectionStatus
+                    name="farcaster"
+                    icon={SiFarcaster}
+                    color="purple.400"
+                    state="not-linked"
+                    hint="social identity"
+                    onClick={onFarcasterConnect}
+                    isLoading={isFarcasterAuthInProgress}
+                  />
+                  
+                  {/* Hive */}
+                  <ConnectionStatus
+                    name="hive"
+                    icon={FaHive}
+                    color="red.400"
+                    state="not-linked"
+                    hint="rewards & posting"
+                    onClick={onHiveLogin}
+                  />
+                  
+                  {/* Ethereum */}
+                  <ConnectButton.Custom>
+                    {({ openConnectModal }) => (
+                      <ConnectionStatus
+                        name="eth"
+                        icon={FaEthereum}
+                        color="blue.300"
+                        state="not-linked"
+                        hint="nfts & tokens"
+                        onClick={() => {
+                          onClose();
+                          openConnectModal();
+                        }}
+                      />
+                    )}
+                  </ConnectButton.Custom>
+                </VStack>
+                <Text fontFamily="mono" fontSize="2xs" color="gray.500" textAlign="center" mt={2}>
+                  already part of the ecosystem
+                </Text>
+              </VStack>
+
+              {/* Help - terminal style with emphasis */}
+              <Box pt={3} borderTop="1px solid" borderColor="whiteAlpha.100">
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  fontFamily="mono"
+                  color="gray.500"
+                  onClick={() =>
+                    window.open("https://docs.skatehive.app/docs/create-account", "_blank")
+                  }
+                  _hover={{ color: "primary", bg: "whiteAlpha.50" }}
+                  w="full"
+                  justifyContent="center"
+                >
+                  <Text as="span" color="primary" animation={`${blink} 1.2s step-end infinite`} mr={1.5}>?</Text>
+                  <Text as="span" textTransform="uppercase" fontSize="2xs" letterSpacing="wider">
+                    type help
+                  </Text>
+                </Button>
+              </Box>
+            </>
           )}
         </VStack>
       </Box>
