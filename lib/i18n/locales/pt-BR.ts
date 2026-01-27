@@ -831,12 +831,7 @@ export const ptBR = {
     people: 'pessoas',
     andOthers: 'e outros',
   },
-  signup: {
-    username: 'Nome de Usuário',
-    email: 'Email',
-    vipCode: 'Código VIP',
-    usernameAvailable: 'Nome de usuário disponível',
-  },
+
   chat: {
     title: 'Chat do SkateHive',
     loading: 'Carregando widget de chat...',

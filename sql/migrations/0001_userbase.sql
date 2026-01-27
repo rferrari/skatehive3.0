@@ -1,5 +1,5 @@
 -- 0001_userbase.sql
--- Minimal Skatehive userbase schema (prefixed tables to avoid VIP conflicts)
+-- Minimal Skatehive userbase schema
 
 create extension if not exists "pgcrypto";
 

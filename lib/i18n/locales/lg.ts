@@ -831,12 +831,6 @@ export const lg = {
     people: 'abantu',
     andOthers: 'ne abalala',
   },
-  signup: {
-    username: 'Username',
-    email: 'Email',
-    vipCode: 'VIP Code',
-    usernameAvailable: 'Username kya teri',
-  },
   chat: {
     title: 'SkateHive Chat',
     loading: 'Okukoza chat widget...',
