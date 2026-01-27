@@ -53,6 +53,7 @@ export default function useUserbaseProfile(username: string) {
 
   useEffect(() => {
     let mounted = true;
+    console.log("[useUserbaseProfile] Starting fetch:", { username, queryString });
     if (!queryString) {
       setProfile(null);
       setError(null);
@@ -68,12 +69,15 @@ export default function useUserbaseProfile(username: string) {
           cache: "no-store",
         });
         if (!mounted) return;
+        console.log("[useUserbaseProfile] Response:", { status: response.status, ok: response.ok });
         if (response.status === 404) {
+          console.log("[useUserbaseProfile] Profile not found (404)");
           setProfile(null);
           setIsLoading(false);
           return;
         }
         const data = await response.json();
+        console.log("[useUserbaseProfile] Data received:", data);
         if (!response.ok) {
           throw new Error(data?.error || "Failed to load profile");
         }

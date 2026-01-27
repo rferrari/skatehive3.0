@@ -521,6 +521,18 @@ const ProfilePage = memo(function ProfilePage({ username }: ProfilePageProps) {
 
   const isProfileResolved =
     isHiveProfile || Boolean(userbaseUser) || isEvmAddress;
+  
+  console.log("[ProfilePage] Profile resolution:", {
+    username,
+    isProfileResolved,
+    isHiveProfile,
+    hasUserbaseUser: Boolean(userbaseUser),
+    isEvmAddress,
+    isLoading,
+    userbaseLoading,
+    error,
+  });
+  
   if (!isProfileResolved && (isLoading || userbaseLoading)) {
     return (
       <Box

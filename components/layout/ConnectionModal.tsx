@@ -185,8 +185,8 @@ export default function ConnectionModal({
   const handleProfileClick = () => {
     const profileHandle =
       user ||
-      userbaseUser?.display_name ||
       userbaseUser?.handle ||
+      userbaseUser?.display_name ||
       "";
     if (profileHandle) {
       router.push(`/user/${encodeURIComponent(profileHandle)}?view=snaps`);

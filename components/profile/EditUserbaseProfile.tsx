@@ -2,13 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  ModalCloseButton,
   Button,
   Input,
   Textarea,
@@ -21,9 +14,14 @@ import {
   useToast,
   FormErrorMessage,
   HStack,
+  IconButton,
+  Flex,
+  Icon,
 } from "@chakra-ui/react";
+import { FiCamera, FiMapPin, FiUser, FiAtSign, FiFileText, FiImage } from "react-icons/fi";
 import { useUserbaseAuth } from "@/contexts/UserbaseAuthContext";
 import { uploadToIpfs } from "@/lib/markdown/composeUtils";
+import SkateModal from "@/components/shared/SkateModal";
 
 interface EditUserbaseProfileProps {
   isOpen: boolean;
@@ -187,165 +185,15 @@ export default function EditUserbaseProfile({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="md" isCentered>
-      <ModalOverlay bg="blackAlpha.800" />
-      <ModalContent bg="background" borderColor="border" borderWidth="1px">
-        <ModalHeader color="text">Edit Profile</ModalHeader>
-        <ModalCloseButton color="text" />
-
-        <ModalBody>
-          <VStack spacing={4}>
-            {/* Avatar */}
-            <FormControl>
-              <FormLabel color="text" fontSize="sm">
-                Profile Picture
-              </FormLabel>
-              <HStack spacing={4}>
-                <Avatar
-                  size="xl"
-                  src={formData.avatar_url}
-                  name={formData.display_name || formData.handle || "User"}
-                />
-                <Box>
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleAvatarUpload}
-                    display="none"
-                    id="avatar-upload"
-                  />
-                  <Button
-                    as="label"
-                    htmlFor="avatar-upload"
-                    size="sm"
-                    variant="outline"
-                    colorScheme="primary"
-                    isLoading={isUploadingAvatar}
-                    cursor="pointer"
-                  >
-                    Upload Photo
-                  </Button>
-                </Box>
-              </HStack>
-            </FormControl>
-
-            {/* Display Name */}
-            <FormControl>
-              <FormLabel color="text" fontSize="sm">
-                Display Name
-              </FormLabel>
-              <Input
-                name="display_name"
-                value={formData.display_name}
-                onChange={handleInputChange}
-                placeholder="Your display name"
-                bg="inputBg"
-                color="inputText"
-                borderColor="inputBorder"
-                _placeholder={{ color: "inputPlaceholder" }}
-              />
-            </FormControl>
-
-            {/* Handle */}
-            <FormControl isInvalid={!!handleError}>
-              <FormLabel color="text" fontSize="sm">
-                Handle
-              </FormLabel>
-              <Input
-                name="handle"
-                value={formData.handle}
-                onChange={handleInputChange}
-                placeholder="your-handle"
-                bg="inputBg"
-                color="inputText"
-                borderColor="inputBorder"
-                _placeholder={{ color: "inputPlaceholder" }}
-              />
-              {handleError && (
-                <FormErrorMessage>{handleError}</FormErrorMessage>
-              )}
-              <Text fontSize="xs" color="dim" mt={1}>
-                This will be your unique @handle
-              </Text>
-            </FormControl>
-
-            {/* Bio */}
-            <FormControl>
-              <FormLabel color="text" fontSize="sm">
-                Bio
-              </FormLabel>
-              <Textarea
-                name="bio"
-                value={formData.bio}
-                onChange={handleInputChange}
-                placeholder="Tell us about yourself..."
-                rows={3}
-                bg="inputBg"
-                color="inputText"
-                borderColor="inputBorder"
-                _placeholder={{ color: "inputPlaceholder" }}
-              />
-            </FormControl>
-
-            {/* Location */}
-            <FormControl>
-              <FormLabel color="text" fontSize="sm">
-                Location
-              </FormLabel>
-              <Input
-                name="location"
-                value={formData.location}
-                onChange={handleInputChange}
-                placeholder="Your location"
-                bg="inputBg"
-                color="inputText"
-                borderColor="inputBorder"
-                _placeholder={{ color: "inputPlaceholder" }}
-              />
-            </FormControl>
-
-            {/* Cover Image URL */}
-            <FormControl>
-              <FormLabel color="text" fontSize="sm">
-                Cover Image
-              </FormLabel>
-              {formData.cover_url && (
-                <Box mb={2} borderRadius="md" overflow="hidden">
-                  <img
-                    src={formData.cover_url}
-                    alt="Cover preview"
-                    style={{
-                      width: "100%",
-                      height: "100px",
-                      objectFit: "cover",
-                    }}
-                  />
-                </Box>
-              )}
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={handleCoverUpload}
-                display="none"
-                id="cover-upload"
-              />
-              <Button
-                as="label"
-                htmlFor="cover-upload"
-                size="sm"
-                variant="outline"
-                colorScheme="primary"
-                isLoading={isUploadingCover}
-                cursor="pointer"
-              >
-                Upload Cover Image
-              </Button>
-            </FormControl>
-          </VStack>
-        </ModalBody>
-
-        <ModalFooter>
-          <Button variant="ghost" mr={3} onClick={onClose} color="text">
+    <SkateModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Edit Profile"
+      size="md"
+      isCentered
+      footer={
+        <HStack spacing={3} justify="flex-end" w="full">
+          <Button variant="ghost" onClick={onClose} color="text">
             Cancel
           </Button>
           <Button
@@ -356,8 +204,189 @@ export default function EditUserbaseProfile({
           >
             Save
           </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </HStack>
+      }
+    >
+      <VStack spacing={5} align="stretch">
+        {/* Cover Image Section */}
+        <Box position="relative" mb={8}>
+          <Box
+            h="120px"
+            bg={formData.cover_url ? "transparent" : "whiteAlpha.100"}
+            borderRadius="md"
+            overflow="hidden"
+            border="1px dashed"
+            borderColor="border"
+          >
+            {formData.cover_url ? (
+              <Box
+                as="img"
+                src={formData.cover_url}
+                alt="Cover"
+                w="100%"
+                h="100%"
+                objectFit="cover"
+              />
+            ) : (
+              <Flex h="100%" align="center" justify="center">
+                <VStack spacing={1}>
+                  <Icon as={FiImage} color="dim" boxSize={6} />
+                  <Text fontSize="xs" color="dim">Cover Image</Text>
+                </VStack>
+              </Flex>
+            )}
+          </Box>
+          <Input
+            type="file"
+            accept="image/*"
+            onChange={handleCoverUpload}
+            display="none"
+            id="cover-upload"
+          />
+          <IconButton
+            as="label"
+            htmlFor="cover-upload"
+            aria-label="Upload cover"
+            icon={<FiCamera />}
+            size="sm"
+            position="absolute"
+            bottom={2}
+            right={2}
+            bg="blackAlpha.700"
+            color="white"
+            _hover={{ bg: "blackAlpha.800" }}
+            isLoading={isUploadingCover}
+            cursor="pointer"
+            borderRadius="full"
+          />
+
+          {/* Avatar overlapping cover */}
+          <Box position="absolute" bottom={-10} left="50%" transform="translateX(-50%)">
+            <Box position="relative">
+              <Avatar
+                size="2xl"
+                src={formData.avatar_url}
+                name={formData.display_name || formData.handle || "User"}
+                border="4px solid"
+                borderColor="background"
+                bg="panel"
+              />
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarUpload}
+                display="none"
+                id="avatar-upload"
+              />
+              <IconButton
+                as="label"
+                htmlFor="avatar-upload"
+                aria-label="Upload avatar"
+                icon={<FiCamera />}
+                size="xs"
+                position="absolute"
+                bottom={1}
+                right={1}
+                bg="primary"
+                color="background"
+                _hover={{ bg: "accent" }}
+                isLoading={isUploadingAvatar}
+                cursor="pointer"
+                borderRadius="full"
+              />
+            </Box>
+          </Box>
+        </Box>
+
+        {/* Display Name */}
+        <FormControl>
+          <FormLabel color="text" fontSize="sm" display="flex" alignItems="center" gap={2}>
+            <Icon as={FiUser} />
+            Display Name
+          </FormLabel>
+          <Input
+            name="display_name"
+            value={formData.display_name}
+            onChange={handleInputChange}
+            placeholder="Your display name"
+            bg="inputBg"
+            color="inputText"
+            borderColor="inputBorder"
+            borderRadius="md"
+            _placeholder={{ color: "inputPlaceholder" }}
+            _focus={{ borderColor: "primary", boxShadow: "0 0 0 1px var(--chakra-colors-primary)" }}
+          />
+        </FormControl>
+
+        {/* Handle */}
+        <FormControl isInvalid={!!handleError}>
+          <FormLabel color="text" fontSize="sm" display="flex" alignItems="center" gap={2}>
+            <Icon as={FiAtSign} />
+            Handle
+          </FormLabel>
+          <Input
+            name="handle"
+            value={formData.handle}
+            onChange={handleInputChange}
+            placeholder="your-handle"
+            bg="inputBg"
+            color="inputText"
+            borderColor="inputBorder"
+            borderRadius="md"
+            _placeholder={{ color: "inputPlaceholder" }}
+            _focus={{ borderColor: "primary", boxShadow: "0 0 0 1px var(--chakra-colors-primary)" }}
+          />
+          {handleError ? (
+            <FormErrorMessage>{handleError}</FormErrorMessage>
+          ) : (
+            <Text fontSize="xs" color="dim" mt={1}>
+              This will be your unique @handle for your profile URL
+            </Text>
+          )}
+        </FormControl>
+
+        {/* Bio */}
+        <FormControl>
+          <FormLabel color="text" fontSize="sm" display="flex" alignItems="center" gap={2}>
+            <Icon as={FiFileText} />
+            Bio
+          </FormLabel>
+          <Textarea
+            name="bio"
+            value={formData.bio}
+            onChange={handleInputChange}
+            placeholder="Tell us about yourself..."
+            rows={3}
+            bg="inputBg"
+            color="inputText"
+            borderColor="inputBorder"
+            borderRadius="md"
+            _placeholder={{ color: "inputPlaceholder" }}
+            _focus={{ borderColor: "primary", boxShadow: "0 0 0 1px var(--chakra-colors-primary)" }}
+            resize="none"
+          />
+        </FormControl>
+
+        {/* Location */}
+        <FormControl>
+          <FormLabel color="text" fontSize="sm" display="flex" alignItems="center" gap={2}>
+            <Icon as={FiMapPin} />
+            Location
+          </FormLabel>
+          <Input
+            name="location"
+            value={formData.location}
+            onChange={handleInputChange}
+            placeholder="Your location"
+            bg="inputBg"
+            color="inputText"
+            borderColor="inputBorder"
+            borderRadius="md"
+            _placeholder={{ color: "inputPlaceholder" }}
+            _focus={{ borderColor: "primary", boxShadow: "0 0 0 1px var(--chakra-colors-primary)" }}
+          />
+        </FormControl>
+      </VStack>
+    </SkateModal>
   );
 }
