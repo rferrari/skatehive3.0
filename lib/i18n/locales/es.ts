@@ -672,6 +672,7 @@ export const es = {
     deposit: 'Depositar',
     withdraw: 'Retirar',
     convert: 'Convertir',
+    maybeLater: 'Tal vez después',
   },
   tooltips: {
     sendHive: 'Enviar HIVE',

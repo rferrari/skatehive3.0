@@ -672,6 +672,7 @@ export const lg = {
     deposit: 'Kussa',
     withdraw: 'Okuddira',
     convert: 'Kyusa',
+    maybeLater: 'Gezako edda',
   },
   tooltips: {
     sendHive: 'Tumira HIVE',
