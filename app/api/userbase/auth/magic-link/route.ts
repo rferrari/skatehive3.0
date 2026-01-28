@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
 import { APP_CONFIG, EMAIL_DEFAULTS } from '@/config/app.config';
+import { checkHiveAccountExists } from '@/lib/utils/hiveAccountUtils';
 
 const supabaseUrl =
   process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -103,6 +104,9 @@ async function createUserWithUniqueHandle(
 ): Promise<{ id: string; handle: string } | null> {
   const sanitized = slugify(baseHandle) || "skater";
 
+  if (await checkHiveAccountExists(sanitized)) {
+    // Avoid creating an app account handle that already exists on Hive
+  } else {
   // First attempt: try the sanitized handle directly
   const { data: firstAttempt, error: firstError } = await supabase!
     .from("userbase_users")
@@ -125,11 +129,16 @@ async function createUserWithUniqueHandle(
     console.error("Failed to create user (non-unique error):", firstError);
     return null;
   }
+  }
 
   // Retry with random suffixes
   for (let attempt = 0; attempt < maxAttempts - 1; attempt++) {
     const suffix = crypto.randomBytes(2).toString("hex");
     const candidate = `${sanitized}-${suffix}`;
+
+    if (await checkHiveAccountExists(candidate)) {
+      continue;
+    }
 
     const { data, error } = await supabase!
       .from("userbase_users")
@@ -173,6 +182,7 @@ async function trySetUserHandle(
 ): Promise<string | null> {
   const sanitized = slugify(baseHandle) || "skater";
 
+  if (!(await checkHiveAccountExists(sanitized))) {
   // First attempt: try the sanitized handle directly
   const { error: firstError } = await supabase!
     .from("userbase_users")
@@ -201,11 +211,16 @@ async function trySetUserHandle(
     console.error("Failed to update handle (non-unique error):", firstError);
     return null;
   }
+  }
 
   // Retry with random suffixes
   for (let attempt = 0; attempt < maxAttempts - 1; attempt++) {
     const suffix = crypto.randomBytes(2).toString("hex");
     const candidate = `${sanitized}-${suffix}`;
+
+    if (await checkHiveAccountExists(candidate)) {
+      continue;
+    }
 
     const { error } = await supabase!
       .from("userbase_users")
@@ -272,6 +287,13 @@ export async function POST(request: NextRequest) {
     }
 
     const identifier = normalizeIdentifier(rawIdentifier);
+    const slugifiedHandle = handle ? slugify(handle) : null;
+    if (slugifiedHandle && (await checkHiveAccountExists(slugifiedHandle))) {
+      return NextResponse.json(
+        { error: 'Handle already in use on Hive' },
+        { status: 409 }
+      );
+    }
 
     const { data: existingAuth } = await supabase
       .from('userbase_auth_methods')

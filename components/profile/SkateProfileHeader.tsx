@@ -125,6 +125,7 @@ export default memo(SkateProfileHeader, (prevProps, nextProps) => {
   return (
     prevProps.username === nextProps.username &&
     prevProps.profileData === nextProps.profileData &&
-    prevProps.isOwner === nextProps.isOwner
+    prevProps.isOwner === nextProps.isOwner &&
+    prevProps.onEditModalOpen === nextProps.onEditModalOpen
   );
 });

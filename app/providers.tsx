@@ -20,7 +20,7 @@ import { LocaleProvider } from "@/contexts/LocaleContext";
 import { AuthKitProvider } from "@farcaster/auth-kit";
 import "@farcaster/auth-kit/styles.css";
 import { dynamicRainbowTheme } from "@/lib/themes/rainbowkitTheme";
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { APP_CONFIG } from "@/config/app.config";
 import { ClickSoundProvider } from "./clickSoundProvider";
 import { SoundSettingsProvider } from "@/contexts/SoundSettingsContext";
@@ -62,13 +62,29 @@ function getWagmiConfig() {
 export const wagmiConfig = getWagmiConfig();
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  // Stable Farcaster config - must be memoized to prevent re-renders
-  const farcasterAuthConfig = useMemo(() => ({
+  // Stable Farcaster config - use server-safe defaults, update on client mount
+  const [farcasterAuthConfig, setFarcasterAuthConfig] = useState<{
+    rpcUrl: string;
+    domain: string;
+    siweUri: string;
+    relay: string;
+  }>(() => ({
     rpcUrl: "https://mainnet.optimism.io",
-    domain: typeof window !== 'undefined' ? window.location.host : APP_CONFIG.DOMAIN,
-    siweUri: typeof window !== 'undefined' ? window.location.href : `https://${APP_CONFIG.DOMAIN}`,
+    domain: APP_CONFIG.DOMAIN,
+    siweUri: `https://${APP_CONFIG.DOMAIN}`,
     relay: "https://relay.farcaster.xyz",
-  }), []);
+  }));
+
+  // Update with client-specific values after mount to avoid hydration mismatch
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setFarcasterAuthConfig(prev => ({
+        ...prev,
+        domain: window.location.host,
+        siweUri: window.location.href,
+      }));
+    }
+  }, []);
 
   // Create QueryClient inside the component to avoid SSR issues
   const [queryClient] = useState(

@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
 import { APP_CONFIG, EMAIL_DEFAULTS } from "@/config/app.config";
+import { checkHiveAccountExists } from "@/lib/utils/hiveAccountUtils";
 
 const supabaseUrl =
   process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -122,6 +123,12 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+    if (await checkHiveAccountExists(handle)) {
+      return NextResponse.json(
+        { error: "Handle already in use on Hive" },
+        { status: 409 }
+      );
+    }
     const avatarUrl =
       typeof payload?.avatar_url === "string" && payload.avatar_url.trim()
         ? payload.avatar_url.trim()
@@ -220,6 +227,12 @@ export async function POST(request: NextRequest) {
           updates.avatar_url = avatarUrl;
         }
         if (!existingUser.handle && handle) {
+          if (await checkHiveAccountExists(handle)) {
+            return NextResponse.json(
+              { error: "Handle already in use on Hive" },
+              { status: 409 }
+            );
+          }
           updates.handle = handle;
         }
         if (Object.keys(updates).length > 0) {

@@ -1,5 +1,5 @@
 "use client";
-import React, { memo, useState, useEffect } from "react";
+import React, { memo } from "react";
 import {
   Text,
   Flex,
@@ -34,23 +34,11 @@ const FarcasterProfileHeader = function FarcasterProfileHeader({
   username,
   farcasterProfile,
 }: FarcasterProfileHeaderProps) {
-  const [avatarLoaded, setAvatarLoaded] = useState(false);
-
   const displayName = farcasterProfile?.displayName || farcasterProfile?.username || profileData.name || username;
   const avatarUrl = farcasterProfile?.pfpUrl || profileData.profileImage;
   const bio = farcasterProfile?.bio || profileData.about;
   const farcasterUsername = farcasterProfile?.username;
   const fid = farcasterProfile?.fid;
-
-  // Preload avatar image to prevent flickering
-  useEffect(() => {
-    if (avatarUrl && !avatarLoaded) {
-      const img = new Image();
-      img.onload = () => setAvatarLoaded(true);
-      img.onerror = () => setAvatarLoaded(true);
-      img.src = avatarUrl;
-    }
-  }, [avatarUrl, avatarLoaded]);
 
   return (
     <Flex
@@ -89,6 +77,7 @@ const FarcasterProfileHeader = function FarcasterProfileHeader({
                 isExternal
                 display="flex"
                 alignItems="center"
+                aria-label={`View ${farcasterUsername} on Warpcast`}
               >
                 <FaExternalLinkAlt size={12} color="var(--chakra-colors-purple-400)" />
               </Link>
@@ -146,11 +135,4 @@ const FarcasterProfileHeader = function FarcasterProfileHeader({
   );
 };
 
-export default memo(FarcasterProfileHeader, (prevProps, nextProps) => {
-  return (
-    prevProps.username === nextProps.username &&
-    prevProps.profileData === nextProps.profileData &&
-    prevProps.farcasterProfile?.fid === nextProps.farcasterProfile?.fid &&
-    prevProps.farcasterProfile?.username === nextProps.farcasterProfile?.username
-  );
-});
+export default memo(FarcasterProfileHeader);

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { checkHiveAccountExists } from "@/lib/utils/hiveAccountUtils";
 
 const supabaseUrl =
   process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -88,17 +89,27 @@ export async function POST(request: NextRequest) {
     let handleAvailable: boolean | null = null;
     let handleLookupFailed = false;
     if (handle) {
-      const { data: handleRows, error: handleError } = await supabase
-        .from("userbase_users")
-        .select("id")
-        .eq("handle", handle)
-        .limit(1);
+      const [userbaseResult, hiveExists] = await Promise.all([
+        supabase
+          .from("userbase_users")
+          .select("id")
+          .eq("handle", handle)
+          .limit(1),
+        checkHiveAccountExists(handle).catch((err) => {
+          console.error("Hive account check failed:", err);
+          return null; // Indicate failure with null
+        }),
+      ]);
 
-      if (handleError) {
-        console.error("Handle lookup failed:", handleError);
+      if (userbaseResult.error || hiveExists === null) {
+        if (userbaseResult.error) {
+          console.error("Handle lookup failed:", userbaseResult.error);
+        }
         handleLookupFailed = true;
       } else {
-        handleAvailable = !handleRows || handleRows.length === 0;
+        const userbaseAvailable =
+          !userbaseResult.data || userbaseResult.data.length === 0;
+        handleAvailable = userbaseAvailable && !hiveExists;
       }
     }
 

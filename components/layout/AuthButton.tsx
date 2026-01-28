@@ -273,10 +273,12 @@ export default function AuthButton() {
       return;
     }
 
-    setIsFarcasterAuthInProgress(true);
     const hiddenButton = hiddenSignInRef.current?.querySelector("button");
     if (hiddenButton) {
+      setIsFarcasterAuthInProgress(true);
       hiddenButton.click();
+    } else {
+      console.error("Farcaster SignInButton not found");
     }
   }, [isFarcasterAuthInProgress, isFarcasterConnected]);
 
@@ -419,10 +421,11 @@ export default function AuthButton() {
           onSuccess={({ fid, username }) => {
             setIsFarcasterAuthInProgress(false);
             setIsConnectionModalOpen(false);
+            const displayName = username ? `@${username}` : fid ? `#${fid}` : "user";
             toast({
               status: "success",
               title: "Connected to Farcaster!",
-              description: `Welcome, @${username}!`,
+              description: `Welcome, ${displayName}!`,
               duration: 3000,
             });
           }}

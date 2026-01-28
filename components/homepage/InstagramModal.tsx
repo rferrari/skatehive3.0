@@ -156,33 +156,35 @@ const InstagramModal: React.FC<InstagramModalProps> = ({
       <Box p={4}>
         <VStack spacing={4} align="stretch">
             {/* Server Health Status */}
-            <HStack 
-              spacing={2} 
-              p={2} 
-              bg={healthStatus?.loading ? "gray.700" : healthStatus?.healthy ? "green.900" : "red.900"} 
-              borderRadius="md"
-              border="1px solid"
-              borderColor={healthStatus?.loading ? "gray.600" : healthStatus?.healthy ? "green.600" : "red.600"}
-            >
-              {healthStatus?.loading ? (
-                <>
-                  <Spinner size="xs" color="gray.400" />
-                  <Text fontSize="xs" color="gray.400">Checking server status...</Text>
-                </>
-              ) : healthStatus?.healthy ? (
-                <>
-                  <Badge colorScheme="green" fontSize="2xs">ONLINE</Badge>
-                  <Text fontSize="xs" color="green.300">Instagram download server is available</Text>
-                </>
-              ) : (
-                <>
-                  <Badge colorScheme="red" fontSize="2xs">OFFLINE</Badge>
-                  <Text fontSize="xs" color="red.300">
-                    {healthStatus?.error || "Server unavailable - downloads may fail"}
-                  </Text>
-                </>
-              )}
-            </HStack>
+            {healthStatus && (
+              <HStack 
+                spacing={2} 
+                p={2} 
+                bg={healthStatus.loading ? "gray.700" : healthStatus.healthy ? "green.900" : "red.900"} 
+                borderRadius="md"
+                border="1px solid"
+                borderColor={healthStatus.loading ? "gray.600" : healthStatus.healthy ? "green.600" : "red.600"}
+              >
+                {healthStatus.loading ? (
+                  <>
+                    <Spinner size="xs" color="gray.400" />
+                    <Text fontSize="xs" color="gray.400">Checking server status...</Text>
+                  </>
+                ) : healthStatus.healthy ? (
+                  <>
+                    <Badge colorScheme="green" fontSize="2xs">ONLINE</Badge>
+                    <Text fontSize="xs" color="green.300">Instagram download server is available</Text>
+                  </>
+                ) : (
+                  <>
+                    <Badge colorScheme="red" fontSize="2xs">OFFLINE</Badge>
+                    <Text fontSize="xs" color="red.300">
+                      {healthStatus.error || "Server unavailable - downloads may fail"}
+                    </Text>
+                  </>
+                )}
+              </HStack>
+            )}
 
             <Box>
               <Text fontSize="sm" color="gray.600" mb={2}>

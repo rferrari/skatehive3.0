@@ -119,18 +119,18 @@ export default function ProfileDebugControl({
             {payload ? (
               <Tabs variant="soft-rounded" colorScheme="green" size="sm">
                 <TabList flexWrap="wrap" gap={1} pb={4}>
-                  <Tab _selected={{ bg: "primary", color: "background" }}>Overview</Tab>
+                  <Tab _selected={{ bg: "primary", color: "background" }}>{t("tabs.overview")}</Tab>
                   <Tab _selected={{ bg: "yellow.500", color: "black" }}>
-                    Hive {hiveIdentity && <Badge ml={1} colorScheme="green" fontSize="2xs">✓</Badge>}
+                    {t("tabs.hive")} {hiveIdentity && <Badge ml={1} colorScheme="green" fontSize="2xs">✓</Badge>}
                   </Tab>
                   <Tab _selected={{ bg: "blue.500", color: "white" }}>
-                    EVM {evmIdentity && <Badge ml={1} colorScheme="green" fontSize="2xs">✓</Badge>}
+                    {t("tabs.evm")} {evmIdentity && <Badge ml={1} colorScheme="green" fontSize="2xs">✓</Badge>}
                   </Tab>
                   <Tab _selected={{ bg: "purple.500", color: "white" }}>
-                    Farcaster {farcasterIdentity && <Badge ml={1} colorScheme="green" fontSize="2xs">✓</Badge>}
+                    {t("tabs.farcaster")} {farcasterIdentity && <Badge ml={1} colorScheme="green" fontSize="2xs">✓</Badge>}
                   </Tab>
-                  <Tab _selected={{ bg: "gray.600", color: "white" }}>Userbase</Tab>
-                  <Tab _selected={{ bg: "gray.600", color: "white" }}>Raw JSON</Tab>
+                  <Tab _selected={{ bg: "gray.600", color: "white" }}>{t("tabs.userbase")}</Tab>
+                  <Tab _selected={{ bg: "gray.600", color: "white" }}>{t("tabs.rawJson")}</Tab>
                 </TabList>
 
                 <TabPanels>
@@ -177,7 +177,7 @@ export default function ProfileDebugControl({
                         </>
                       ) : (
                         <Box p={4} bg="blackAlpha.300" borderRadius="md" textAlign="center">
-                          <Text color="gray.500">No Hive identity linked</Text>
+                          <Text color="gray.500">{t("emptyStates.noHiveIdentity")}</Text>
                         </Box>
                       )}
 
@@ -209,7 +209,7 @@ export default function ProfileDebugControl({
                         </>
                       ) : (
                         <Box p={4} bg="blackAlpha.300" borderRadius="md" textAlign="center">
-                          <Text color="gray.500">No EVM identity linked</Text>
+                          <Text color="gray.500">{t("emptyStates.noEvmIdentity")}</Text>
                         </Box>
                       )}
 
@@ -242,7 +242,7 @@ export default function ProfileDebugControl({
                         </>
                       ) : (
                         <Box p={4} bg="blackAlpha.300" borderRadius="md" textAlign="center">
-                          <Text color="gray.500">No Farcaster identity linked</Text>
+                          <Text color="gray.500">{t("emptyStates.noFarcasterIdentity")}</Text>
                         </Box>
                       )}
                     </VStack>
@@ -267,7 +267,7 @@ export default function ProfileDebugControl({
                             </Box>
                           ))
                         ) : (
-                          <Text color="gray.500" fontSize="sm">No identities found</Text>
+                          <Text color="gray.500" fontSize="sm">{t("emptyStates.noIdentities")}</Text>
                         )}
                       </DebugSection>
 

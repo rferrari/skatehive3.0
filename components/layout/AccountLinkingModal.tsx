@@ -261,7 +261,7 @@ export default function AccountLinkingModal({
     } finally {
       setLinkingType(null);
     }
-  }, [signMessageAsync, toast, bumpIdentitiesVersion, refresh, refreshUserbase]);
+  }, [signMessageAsync, toast, bumpIdentitiesVersion, refresh]);
 
   const linkFarcaster = useCallback(async (
     handle: string | undefined,

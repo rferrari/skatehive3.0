@@ -331,6 +331,12 @@ export default memo(ProfileHeader, (prevProps, nextProps) => {
     prevProps.hasHiveProfile === nextProps.hasHiveProfile &&
     prevProps.hasUserbaseProfile === nextProps.hasUserbaseProfile &&
     prevProps.userbaseIdentities === nextProps.userbaseIdentities &&
-    prevProps.farcasterProfile?.fid === nextProps.farcasterProfile?.fid
+    prevProps.farcasterProfile?.fid === nextProps.farcasterProfile?.fid &&
+    prevProps.farcasterProfile?.displayName === nextProps.farcasterProfile?.displayName &&
+    prevProps.farcasterProfile?.pfpUrl === nextProps.farcasterProfile?.pfpUrl &&
+    prevProps.farcasterProfile?.bio === nextProps.farcasterProfile?.bio &&
+    prevProps.farcasterProfile?.username === nextProps.farcasterProfile?.username &&
+    prevProps.farcasterProfile?.custody === nextProps.farcasterProfile?.custody &&
+    prevProps.farcasterProfile?.verifications === nextProps.farcasterProfile?.verifications
   );
 });
