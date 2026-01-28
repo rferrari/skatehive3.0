@@ -178,12 +178,16 @@ export async function POST(request: NextRequest) {
   const identifierField =
     type === "hive" ? "handle" : type === "evm" ? "address" : "external_id";
 
-  const { data: existingIdentity } = await supabase!
-    .from("userbase_identities")
-    .select("id, user_id")
-    .eq("type", type)
-    .eq(identifierField, identifier)
-    .limit(1);
+  const shouldUseExistingIdentity = type === "hive";
+
+  const { data: existingIdentity } = shouldUseExistingIdentity
+    ? await supabase!
+        .from("userbase_identities")
+        .select("id, user_id")
+        .eq("type", type)
+        .eq(identifierField, identifier)
+        .limit(1)
+    : { data: null };
 
   let userId = existingIdentity?.[0]?.user_id || null;
   let identityId = existingIdentity?.[0]?.id || null;

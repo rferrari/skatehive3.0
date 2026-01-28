@@ -42,7 +42,6 @@ interface ConnectionModalProps {
   onHiveLogin: () => void;
   onFarcasterConnect: () => void;
   isFarcasterAuthInProgress: boolean;
-  primaryConnection?: any;
   actualFarcasterConnection?: boolean;
   actualFarcasterProfile?: any;
 }
@@ -178,13 +177,16 @@ function ConnectionStatus({
   );
 }
 
+function shortenAddress(address: string) {
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+
 export default function ConnectionModal({
   isOpen,
   onClose,
   onHiveLogin,
   onFarcasterConnect,
   isFarcasterAuthInProgress,
-  primaryConnection,
   actualFarcasterConnection,
   actualFarcasterProfile,
 }: ConnectionModalProps) {
@@ -197,7 +199,14 @@ export default function ConnectionModal({
   
   // Account linking state
   const [isLinkingModalOpen, setIsLinkingModalOpen] = useState(false);
-  const { opportunities, hasUnlinkedOpportunities } = useAccountLinkingOpportunities();
+  const {
+    opportunities,
+    hasUnlinkedOpportunities,
+    isLoading,
+    refresh,
+    identities,
+  } =
+    useAccountLinkingOpportunities(isOpen);
   
   // Get connection states
   const { isConnected: isEthereumConnected } = useAccount();
@@ -226,6 +235,35 @@ export default function ConnectionModal({
     ? `https://images.hive.blog/u/${user}/avatar/small`
     : userbaseUser?.avatar_url || "/skatehive_square_green.png";
 
+  const hiveIdentity = identities.find((identity) => identity.type === "hive");
+  const evmIdentities = identities.filter((identity) => identity.type === "evm");
+  const farcasterIdentity = identities.find(
+    (identity) => identity.type === "farcaster"
+  );
+
+  const hiveState = user
+    ? "active"
+    : hiveIdentity
+    ? "linked"
+    : "not-linked";
+  const evmState = isEthereumConnected
+    ? "active"
+    : evmIdentities.length > 0
+    ? "linked"
+    : "not-linked";
+  const farcasterState = finalFarcasterConnection
+    ? "active"
+    : farcasterIdentity
+    ? "linked"
+    : "not-linked";
+
+  const evmLinkedLabel =
+    evmIdentities.length === 1 && evmIdentities[0].address
+      ? shortenAddress(evmIdentities[0].address)
+      : evmIdentities.length > 1
+      ? `${evmIdentities.length} wallets`
+      : null;
+
   // Connection handlers
   const handleHiveLogout = async () => {
     await aioha.logout();
@@ -245,10 +283,7 @@ export default function ConnectionModal({
 
   const handleProfileClick = () => {
     const profileHandle =
-      user ||
-      userbaseUser?.handle ||
-      userbaseUser?.display_name ||
-      "";
+      user || userbaseUser?.handle || userbaseUser?.id || "";
     if (profileHandle) {
       router.push(`/user/${encodeURIComponent(profileHandle)}?view=snaps`);
       onClose();
@@ -256,7 +291,6 @@ export default function ConnectionModal({
   };
 
   // Ethereum connection handler using RainbowKit
-  const [ethModalAction, setEthModalAction] = useState<'connect' | 'manage' | null>(null);
 
   return (
     <SkateModal
@@ -309,7 +343,7 @@ export default function ConnectionModal({
               </HStack>
 
               {/* Linking prompt - show when there are unlinked opportunities */}
-              {hasUnlinkedOpportunities && (
+              {hasUnlinkedOpportunities && !isLoading && (
                 <HStack
                   py={2}
                   px={3}
@@ -349,9 +383,17 @@ export default function ConnectionModal({
                     name="hive"
                     icon={FaHive}
                     color="red.400"
-                    state={user ? 'active' : 'not-linked'}
-                    subState={user ? 'posting enabled' : undefined}
-                    onClick={() => user ? handleHiveLogout() : onHiveLogin()}
+                    state={hiveState}
+                    subState={
+                      hiveState === "active"
+                        ? "posting enabled"
+                        : hiveIdentity?.handle
+                        ? `linked: @${hiveIdentity.handle}`
+                        : undefined
+                    }
+                    onClick={() =>
+                      hiveState === "active" ? handleHiveLogout() : onHiveLogin()
+                    }
                   />
                   
                   {/* Ethereum Connection */}
@@ -363,7 +405,14 @@ export default function ConnectionModal({
                           name="eth"
                           icon={FaEthereum}
                           color="blue.300"
-                          state={connected ? 'active' : 'not-linked'}
+                          state={connected ? "active" : evmState}
+                          subState={
+                            connected
+                              ? undefined
+                              : evmLinkedLabel
+                              ? `linked: ${evmLinkedLabel}`
+                              : undefined
+                          }
                           onClick={() => {
                             onClose();
                             connected ? openAccountModal() : openConnectModal();
@@ -378,8 +427,21 @@ export default function ConnectionModal({
                     name="farcaster"
                     icon={SiFarcaster}
                     color="purple.400"
-                    state={finalFarcasterConnection ? 'active' : 'not-linked'}
-                    onClick={() => finalFarcasterConnection ? handleFarcasterDisconnect() : onFarcasterConnect()}
+                    state={farcasterState}
+                    subState={
+                      farcasterState === "active"
+                        ? undefined
+                        : farcasterIdentity?.handle
+                        ? `linked: @${farcasterIdentity.handle}`
+                        : farcasterIdentity?.external_id
+                        ? `linked: fid ${farcasterIdentity.external_id}`
+                        : undefined
+                    }
+                    onClick={() =>
+                      finalFarcasterConnection
+                        ? handleFarcasterDisconnect()
+                        : onFarcasterConnect()
+                    }
                     isLoading={isFarcasterAuthInProgress}
                   />
                 </VStack>
@@ -522,6 +584,9 @@ export default function ConnectionModal({
       <AccountLinkingModal
         isOpen={isLinkingModalOpen}
         onClose={() => setIsLinkingModalOpen(false)}
+        opportunities={opportunities}
+        isLoading={isLoading}
+        onRefresh={refresh}
       />
     </SkateModal>
   );

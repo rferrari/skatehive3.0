@@ -24,12 +24,6 @@ const overlayCache = new Map<
 const inflight = new Map<string, Promise<void>>();
 const NULL_TTL_MS = 2 * 60 * 1000;
 
-// Subscribers that want to be notified when cache updates
-const cacheSubscribers = new Set<() => void>();
-
-function notifyCacheUpdate() {
-  cacheSubscribers.forEach((callback) => callback());
-}
 
 function getKey(author?: string | null, permlink?: string | null) {
   const normalizedAuthor = author?.trim();
@@ -182,8 +176,6 @@ export function useSoftPostOverlays(
             overlayCache.set(key, { value: null, ts: now });
           }
         });
-        // Notify all subscribers that cache has been updated
-        notifyCacheUpdate();
       })
       .catch((error) => {
         console.error("Failed to fetch soft post overlays:", error);
@@ -232,20 +224,7 @@ export default function useSoftPostOverlay(
   const normalizedAuthor = author?.trim();
   const normalizedPermlink = permlink?.trim();
   const key = getKey(normalizedAuthor, normalizedPermlink);
-  
-  // Force re-render when cache updates
-  const [, forceUpdate] = useState(0);
-  
-  useEffect(() => {
-    const handleCacheUpdate = () => {
-      forceUpdate((n) => n + 1);
-    };
-    cacheSubscribers.add(handleCacheUpdate);
-    return () => {
-      cacheSubscribers.delete(handleCacheUpdate);
-    };
-  }, []);
-  
+
   // Memoize the posts array to prevent unnecessary re-renders and race conditions
   const posts = useMemo(() => {
     if (!normalizedAuthor || !normalizedPermlink) return [];
@@ -253,12 +232,7 @@ export default function useSoftPostOverlay(
   }, [normalizedAuthor, normalizedPermlink, safeUser]);
   
   // This triggers the fetch if needed
-  useSoftPostOverlays(posts);
+  const overlays = useSoftPostOverlays(posts);
   
-  // Return directly from cache (most up-to-date)
-  if (key) {
-    const cached = overlayCache.get(key);
-    if (cached?.value) return cached.value;
-  }
-  return null;
+  return key ? overlays[key] ?? null : null;
 }

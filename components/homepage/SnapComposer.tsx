@@ -109,13 +109,8 @@ const SnapComposer = React.memo(function SnapComposer({
   // Error demo panel state
   const [showErrorDemo, setShowErrorDemo] = useState(SHOW_ERROR_DEMO);
 
-  // Instagram server health check - check once on mount, more frequently when modal is open
-  const instagramCheckInterval = useMemo(() => {
-    if (isInstagramModalOpen) return 120000; // 2 minutes when modal is open
-    return -1; // Check once on mount only when modal is closed
-  }, [isInstagramModalOpen]);
-
-  const instagramHealth = useInstagramHealth(instagramCheckInterval);
+  // Instagram server health check - only check when modal is open
+  const instagramHealth = useInstagramHealth(isInstagramModalOpen, 120000);
 
   // Drag and drop state
   const [isDragOver, setIsDragOver] = useState(false);
@@ -1086,38 +1081,36 @@ const SnapComposer = React.memo(function SnapComposer({
                   setGifMakerOpen(true);
                 }}
               />
-              {/* Instagram Button - Show if server is healthy or still loading */}
-              {(instagramHealth.healthy || instagramHealth.loading) && (
-                <Tooltip label={t('compose.importFromInstagram')} placement="top">
-                  <IconButton
-                    id="snap-composer-instagram-btn"
-                    data-testid="snap-composer-instagram"
-                    aria-label={t('compose.importFromInstagram')}
-                    icon={
-                      <FaInstagram
-                        color="var(--chakra-colors-primary)"
-                        size={22}
-                      />
-                    }
-                    variant="ghost"
-                    isDisabled={isLoading}
-                    border="2px solid transparent"
-                    borderRadius="full"
-                    height="48px"
-                    width="48px"
-                    p={0}
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
-                    _hover={{
-                      borderColor: "primary",
-                      boxShadow: "0 0 0 2px var(--chakra-colors-primary)",
-                    }}
-                    _active={{ borderColor: "accent" }}
-                    onClick={() => setInstagramModalOpen(true)}
-                  />
-                </Tooltip>
-              )}
+              {/* Instagram Button - Always show, health check happens in modal */}
+              <Tooltip label={t('compose.importFromInstagram')} placement="top">
+                <IconButton
+                  id="snap-composer-instagram-btn"
+                  data-testid="snap-composer-instagram"
+                  aria-label={t('compose.importFromInstagram')}
+                  icon={
+                    <FaInstagram
+                      color="var(--chakra-colors-primary)"
+                      size={22}
+                    />
+                  }
+                  variant="ghost"
+                  isDisabled={isLoading}
+                  border="2px solid transparent"
+                  borderRadius="full"
+                  height="48px"
+                  width="48px"
+                  p={0}
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  _hover={{
+                    borderColor: "primary",
+                    boxShadow: "0 0 0 2px var(--chakra-colors-primary)",
+                  }}
+                  _active={{ borderColor: "accent" }}
+                  onClick={() => setInstagramModalOpen(true)}
+                />
+              </Tooltip>
             </HStack>
             <Box display={buttonSize === "sm" ? "inline-block" : undefined}>
               <Button
@@ -1221,6 +1214,7 @@ const SnapComposer = React.memo(function SnapComposer({
         isOpen={isInstagramModalOpen}
         onClose={() => setInstagramModalOpen(false)}
         onMediaDownloaded={handleInstagramMediaDownloaded}
+        healthStatus={instagramHealth}
       />
 
       {/* Matrix Overlay and login prompt if not logged in */}

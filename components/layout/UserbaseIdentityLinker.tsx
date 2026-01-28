@@ -259,35 +259,6 @@ export default function UserbaseIdentityLinker({
       });
       const data = await response.json();
       if (!response.ok) {
-        if (response.status === 409 && data?.merge_required && data?.existing_user_id) {
-          const shouldMerge = window.confirm(t("mergeConfirm"));
-          if (shouldMerge) {
-            const mergeResponse = await fetch("/api/userbase/merge", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                type: "farcaster",
-                identifier: farcasterFid,
-                source_user_id: data.existing_user_id,
-              }),
-            });
-            const mergeData = await mergeResponse.json();
-            if (!mergeResponse.ok) {
-              throw new Error(mergeData?.error || t("mergeError"));
-            }
-            await refresh();
-            toast({
-              title: t("mergeSuccess"),
-              status: "success",
-              duration: 2500,
-            });
-            fetchIdentities();
-            bumpIdentitiesVersion();
-            onLinked?.();
-            return;
-          }
-          throw new Error(t("mergeCancelled"));
-        }
         throw new Error(data?.error || "Failed to link Farcaster");
       }
       toast({
@@ -354,40 +325,6 @@ export default function UserbaseIdentityLinker({
       );
       const verifyData = await verifyResponse.json();
       if (!verifyResponse.ok) {
-        if (
-          verifyResponse.status === 409 &&
-          verifyData?.merge_required &&
-          verifyData?.existing_user_id
-        ) {
-          const shouldMerge = window.confirm(t("mergeConfirm"));
-          if (shouldMerge) {
-            const mergeResponse = await fetch("/api/userbase/merge", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                type: "evm",
-                identifier: evmAddress,
-                source_user_id: verifyData.existing_user_id,
-                signature,
-              }),
-            });
-            const mergeData = await mergeResponse.json();
-            if (!mergeResponse.ok) {
-              throw new Error(mergeData?.error || t("mergeError"));
-            }
-            await refresh();
-            toast({
-              title: t("mergeSuccess"),
-              status: "success",
-              duration: 2500,
-            });
-            fetchIdentities();
-            bumpIdentitiesVersion();
-            onLinked?.();
-            return;
-          }
-          throw new Error(t("mergeCancelled"));
-        }
         throw new Error(verifyData?.error || t("linkError"));
       }
       toast({

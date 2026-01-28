@@ -22,6 +22,7 @@ export interface AccountLinkingState {
   isLoading: boolean;
   hasUnlinkedOpportunities: boolean;
   refresh: () => Promise<void>;
+  identities: IdentityRow[];
 }
 
 interface IdentityRow {
@@ -38,7 +39,7 @@ interface IdentityRow {
  * Hook to detect account linking opportunities when users connect wallets
  * or when we discover linked accounts in Hive metadata
  */
-export function useAccountLinkingOpportunities(): AccountLinkingState {
+export function useAccountLinkingOpportunities(enabled = true): AccountLinkingState {
   const { user: userbaseUser } = useUserbaseAuth();
   const { user: hiveUser } = useAioha();
   const { address: evmAddress, isConnected: isEvmConnected } = useAccount();
@@ -50,7 +51,7 @@ export function useAccountLinkingOpportunities(): AccountLinkingState {
 
   // Fetch current user's identities
   const fetchIdentities = useCallback(async () => {
-    if (!userbaseUser) {
+    if (!userbaseUser || !enabled) {
       setIdentities([]);
       return;
     }
@@ -76,8 +77,12 @@ export function useAccountLinkingOpportunities(): AccountLinkingState {
   }, [userbaseUser]);
 
   useEffect(() => {
+    if (!enabled || !userbaseUser) {
+      setIdentities([]);
+      return;
+    }
     fetchIdentities();
-  }, [fetchIdentities]);
+  }, [fetchIdentities, enabled, userbaseUser]);
 
   // Extract linked accounts from Hive metadata
   const hiveMetadataAccounts = useMemo(() => {
@@ -133,6 +138,7 @@ export function useAccountLinkingOpportunities(): AccountLinkingState {
 
   // Calculate all linking opportunities
   const opportunities = useMemo(() => {
+    if (!enabled) return [];
     const ops: LinkingOpportunity[] = [];
     
     // Check if current Hive wallet is linked
@@ -245,8 +251,9 @@ export function useAccountLinkingOpportunities(): AccountLinkingState {
 
   return {
     opportunities,
-    isLoading,
+    isLoading: enabled ? isLoading : false,
     hasUnlinkedOpportunities,
     refresh: fetchIdentities,
+    identities,
   };
 }

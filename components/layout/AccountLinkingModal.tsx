@@ -22,7 +22,6 @@ import { SiFarcaster } from "react-icons/si";
 import { useUserbaseAuth } from "@/contexts/UserbaseAuthContext";
 import { useFarcasterSession } from "@/hooks/useFarcasterSession";
 import {
-  useAccountLinkingOpportunities,
   LinkingOpportunity,
 } from "@/hooks/useAccountLinkingOpportunities";
 
@@ -120,18 +119,28 @@ function OpportunityRow({
 interface AccountLinkingModalProps {
   isOpen: boolean;
   onClose: () => void;
+  opportunities?: LinkingOpportunity[];
+  isLoading?: boolean;
+  onRefresh?: () => Promise<void> | void;
 }
 
 export default function AccountLinkingModal({
   isOpen,
   onClose,
+  opportunities = [],
+  isLoading = false,
+  onRefresh,
 }: AccountLinkingModalProps) {
   const toast = useToast();
   const { aioha, user: hiveUser } = useAioha();
   const { signMessageAsync } = useSignMessage();
   const { profile: farcasterProfile } = useFarcasterSession();
   const { bumpIdentitiesVersion, refresh: refreshUserbase } = useUserbaseAuth();
-  const { opportunities, isLoading, refresh } = useAccountLinkingOpportunities();
+  const refresh = useCallback(async () => {
+    if (onRefresh) {
+      await onRefresh();
+    }
+  }, [onRefresh]);
   
   const [linkingType, setLinkingType] = useState<string | null>(null);
 
@@ -236,34 +245,10 @@ export default function AccountLinkingModal({
       const verifyData = await verifyRes.json();
 
       if (!verifyRes.ok) {
-        if (verifyRes.status === 409 && verifyData?.merge_required) {
-          const shouldMerge = window.confirm(
-            `This wallet is already linked to another user. Merge accounts?`
-          );
-          if (shouldMerge) {
-            const mergeRes = await fetch("/api/userbase/merge", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                type: "evm",
-                identifier: address,
-                source_user_id: verifyData.existing_user_id,
-                signature,
-              }),
-            });
-            if (!mergeRes.ok) {
-              const mergeData = await mergeRes.json();
-              throw new Error(mergeData?.error || "Merge failed");
-            }
-            toast({ status: "success", title: "accounts merged" });
-            await refreshUserbase();
-          }
-        } else {
-          throw new Error(verifyData?.error || "Verification failed");
-        }
-      } else {
-        toast({ status: "success", title: `linked: ${shortenAddress(address)}` });
+        throw new Error(verifyData?.error || "Verification failed");
       }
+
+      toast({ status: "success", title: `linked: ${shortenAddress(address)}` });
 
       bumpIdentitiesVersion();
       await refresh();
@@ -303,33 +288,10 @@ export default function AccountLinkingModal({
       const data = await res.json();
 
       if (!res.ok) {
-        if (res.status === 409 && data?.merge_required) {
-          const shouldMerge = window.confirm(
-            `This Farcaster account is already linked to another user. Merge accounts?`
-          );
-          if (shouldMerge) {
-            const mergeRes = await fetch("/api/userbase/merge", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                type: "farcaster",
-                identifier: externalId,
-                source_user_id: data.existing_user_id,
-              }),
-            });
-            if (!mergeRes.ok) {
-              const mergeData = await mergeRes.json();
-              throw new Error(mergeData?.error || "Merge failed");
-            }
-            toast({ status: "success", title: "accounts merged" });
-            await refreshUserbase();
-          }
-        } else {
-          throw new Error(data?.error || "Linking failed");
-        }
-      } else {
-        toast({ status: "success", title: `linked: @${handle}` });
+        throw new Error(data?.error || "Linking failed");
       }
+
+      toast({ status: "success", title: `linked: @${handle}` });
 
       bumpIdentitiesVersion();
       await refresh();

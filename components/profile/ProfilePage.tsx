@@ -98,11 +98,10 @@ const ContentViews = memo(function ContentViews({
           <Box display={viewMode === "snaps" ? "block" : "none"}>
             {viewMode === "snaps" && (
               <>
-                {snapsUsername ? (
+                {snapsUsername && (
                   <MemoizedSnapsGrid username={snapsUsername} />
-                ) : (
-                  <SoftSnapsGrid snaps={softSnaps || []} />
                 )}
+                <SoftSnapsGrid snaps={softSnaps || []} />
               </>
             )}
           </Box>

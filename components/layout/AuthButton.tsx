@@ -339,8 +339,8 @@ export default function AuthButton() {
               size="sm"
               src={userbaseUser.avatar_url}
               name={
-                userbaseUser.display_name ||
                 userbaseUser.handle ||
+                userbaseUser.display_name ||
                 undefined
               }
             />
@@ -381,8 +381,8 @@ export default function AuthButton() {
           )
         ) : userbaseUser ? (
           <Text fontSize="sm" noOfLines={1}>
-            {userbaseUser.display_name ||
-              userbaseUser.handle ||
+            {userbaseUser.handle ||
+              userbaseUser.display_name ||
               "App account"}
           </Text>
         ) : (
@@ -397,7 +397,6 @@ export default function AuthButton() {
         onHiveLogin={handleHiveLogin}
         onFarcasterConnect={handleFarcasterConnect}
         isFarcasterAuthInProgress={isFarcasterAuthInProgress}
-        primaryConnection={primaryConnection}
       />
 
       {/* Hive Login Modal */}

@@ -203,7 +203,6 @@ const ProfileHeader = function ProfileHeader({
                     transition="all 0.2s"
                     _hover={{
                       borderColor: "primary",
-                      transform: "scale(1.05)",
                       bg: activeView === "skate" ? "primary" : "whiteAlpha.300",
                     }}
                     backdropFilter="blur(10px)"
@@ -233,7 +232,6 @@ const ProfileHeader = function ProfileHeader({
                     transition="all 0.2s"
                     _hover={{
                       borderColor: "primary",
-                      transform: "scale(1.05)",
                       bg: activeView === "hive" ? "primary" : "whiteAlpha.300",
                     }}
                     backdropFilter="blur(10px)"
@@ -263,7 +261,6 @@ const ProfileHeader = function ProfileHeader({
                     transition="all 0.2s"
                     _hover={{
                       borderColor: "primary",
-                      transform: "scale(1.05)",
                       bg: activeView === "zora" ? "primary" : "whiteAlpha.300",
                     }}
                     backdropFilter="blur(10px)"
@@ -293,7 +290,6 @@ const ProfileHeader = function ProfileHeader({
                     transition="all 0.2s"
                     _hover={{
                       borderColor: "purple.400",
-                      transform: "scale(1.05)",
                       bg: activeView === "farcaster" ? "purple.500" : "whiteAlpha.300",
                     }}
                     backdropFilter="blur(10px)"

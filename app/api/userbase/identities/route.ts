@@ -177,19 +177,10 @@ export async function POST(request: NextRequest) {
     .select("id, user_id, type, handle, address, external_id, is_primary")
     .eq("type", type)
     .eq(identifierField, identifierValue)
+    .eq("user_id", session.userId)
     .limit(1);
 
   if (existing?.[0]) {
-    if (existing[0].user_id !== session.userId) {
-      return NextResponse.json(
-        {
-          error: "Identity already linked to another user",
-          merge_required: true,
-          existing_user_id: existing[0].user_id,
-        },
-        { status: 409 }
-      );
-    }
     return NextResponse.json({ identity: existing[0] });
   }
 

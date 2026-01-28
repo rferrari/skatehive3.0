@@ -211,6 +211,7 @@ export async function POST(request: NextRequest) {
     .select("id, user_id, type, handle, address, external_id, is_primary")
     .eq("type", "evm")
     .eq("address", address)
+    .eq("user_id", session.userId)
     .limit(1);
 
   if (existingError) {
@@ -222,15 +223,6 @@ export async function POST(request: NextRequest) {
   }
 
   if (existing?.[0]) {
-    if (existing[0].user_id !== session.userId) {
-      return NextResponse.json(
-        {
-          error: "Address already linked to another user",
-          merge_required: true,
-        },
-        { status: 409 }
-      );
-    }
     const { error: consumeError } = await supabase!
       .from("userbase_identity_challenges")
       .update({ consumed_at: new Date().toISOString() })
