@@ -95,21 +95,15 @@ const ProfileHeader = function ProfileHeader({
 
   const [activeView, setActiveView] = useState<ProfileView>(defaultView);
 
-  // Determine which edit handler to use
-  const effectiveEditHandler = isUserbaseOwner && onUserbaseEditModalOpen
-    ? onUserbaseEditModalOpen
-    : onEditModalOpen;
+  // Determine which edit handler to use per profile type
+  const userbaseEditHandler =
+    isUserbaseOwner && onUserbaseEditModalOpen
+      ? onUserbaseEditModalOpen
+      : onEditModalOpen;
+  const hiveEditHandler = onEditModalOpen;
   const canEdit = isOwner || !!isUserbaseOwner;
-
-  // Debug logging
-  console.log("[ProfileHeader] Edit button debug:", {
-    username,
-    isOwner,
-    isUserbaseOwner,
-    canEdit,
-    hasUserbaseEditHandler: !!onUserbaseEditModalOpen,
-    user,
-  });
+  const activeEditHandler =
+    activeView === "skate" ? userbaseEditHandler : hiveEditHandler;
 
   return (
     <Box position="relative" w="100%">
@@ -123,7 +117,7 @@ const ProfileHeader = function ProfileHeader({
         isFollowLoading={isFollowLoading}
         onFollowingChange={onFollowingChange}
         onLoadingChange={onLoadingChange}
-        onEditModalOpen={effectiveEditHandler}
+        onEditModalOpen={activeEditHandler}
         showZoraProfile={activeView === "zora"}
         onToggleProfile={(show) => setActiveView(show ? "zora" : "hive")}
         cachedZoraData={null}
@@ -143,7 +137,7 @@ const ProfileHeader = function ProfileHeader({
                 profileData={profileData}
                 username={username}
                 isOwner={canEdit}
-                onEditModalOpen={effectiveEditHandler}
+                onEditModalOpen={userbaseEditHandler}
               />
             </Box>
           )}
@@ -170,7 +164,7 @@ const ProfileHeader = function ProfileHeader({
                 isFollowLoading={isFollowLoading}
                 onFollowingChange={onFollowingChange}
                 onLoadingChange={onLoadingChange}
-                onEditModalOpen={effectiveEditHandler}
+                onEditModalOpen={hiveEditHandler}
               />
             </Box>
           )}

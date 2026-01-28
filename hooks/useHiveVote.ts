@@ -34,6 +34,11 @@ export default function useHiveVote() {
       });
       const data = await response.json();
       if (!response.ok) {
+        if (data?.code === "POSTING_KEY_NOT_STORED" && identity?.handle) {
+          throw new Error(
+            `Connect your Hive wallet (@${identity.handle}) or add a posting key to vote.`
+          );
+        }
         throw new Error(data?.error || "Failed to vote");
       }
 

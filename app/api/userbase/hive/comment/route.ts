@@ -280,7 +280,11 @@ export async function POST(request: NextRequest) {
     );
     if (keyError || !secret) {
       return NextResponse.json(
-        { error: keyError || "Posting key not available" },
+        {
+          error: keyError || "Posting key not available",
+          code: "POSTING_KEY_NOT_STORED",
+          hive_handle: author,
+        },
         { status: 400 }
       );
     }

@@ -52,6 +52,7 @@ import useHivePower from "@/hooks/useHivePower";
 import { useInstagramHealth } from "@/hooks/useInstagramHealth";
 import { TbGif } from "react-icons/tb";
 import MatrixOverlay from "@/components/graphics/MatrixOverlay";
+import useUserbaseHiveIdentity from "@/hooks/useUserbaseHiveIdentity";
 
 // Check for demo mode via localStorage
 const SHOW_ERROR_DEMO =
@@ -79,6 +80,8 @@ const SnapComposer = React.memo(function SnapComposer({
 }: SnapComposerProps) {
   const { user, aioha } = useAioha();
   const { handle: effectiveUser, canUseAppFeatures } = useEffectiveHiveUser();
+  const { identity: userbaseHiveIdentity } = useUserbaseHiveIdentity();
+  const linkedHiveHandle = userbaseHiveIdentity?.handle || null;
   const toast = useToast();
   const t = useTranslations();
   const postBodyRef = useRef<HTMLTextAreaElement>(null);
@@ -592,6 +595,14 @@ const SnapComposer = React.memo(function SnapComposer({
           });
           const data = await response.json();
           if (!response.ok) {
+            if (
+              data?.code === "POSTING_KEY_NOT_STORED" &&
+              linkedHiveHandle
+            ) {
+              throw new Error(
+                `Connect your Hive wallet (@${linkedHiveHandle}) or add a posting key to post.`
+              );
+            }
             throw new Error(data?.error || "Failed to post");
           }
           commentResponse = { success: true, author: data?.author || effectiveUser };
@@ -652,6 +663,7 @@ const SnapComposer = React.memo(function SnapComposer({
     toast,
     t,
     canUseAppFeatures,
+    linkedHiveHandle,
   ]);
 
   // Detect Ctrl+Enter or Command+Enter and submit - memoized
