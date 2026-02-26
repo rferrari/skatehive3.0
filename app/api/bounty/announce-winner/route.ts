@@ -42,8 +42,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!process.env.SKATEUSER_POSTING_KEY) {
-      console.error('SKATEUSER_POSTING_KEY not configured');
+    if (!process.env.DEFAULT_HIVE_POSTING_KEY) {
+      console.error('DEFAULT_HIVE_POSTING_KEY not configured');
       return NextResponse.json(
         { error: 'Server configuration error' },
         { status: 500 }
@@ -237,11 +237,11 @@ function extractYouTubeId(url: string): string | null {
 }
 
 /**
- * Posts to Hive blockchain using @skateuser account
+ * Posts to Hive blockchain using default posting account
  */
 async function postWithSkateuser(body: string, title: string) {
-  const postingKey = process.env.SKATEUSER_POSTING_KEY!;
-  const author = 'skateuser';
+  const postingKey = process.env.DEFAULT_HIVE_POSTING_KEY!;
+  const author = process.env.DEFAULT_HIVE_POSTING_ACCOUNT || 'skateuser';
 
   // Generate permlink
   const permlink = generatePermlink(title);

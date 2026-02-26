@@ -32,12 +32,13 @@ User selects winners in BountyRewarder.tsx
 
 ## 🔧 Setup
 
-### 1. Environment Variable
+### 1. Environment Variables
 
 Add to `.env.local`:
 
 ```env
-SKATEUSER_POSTING_KEY=5K...your_posting_key_here
+DEFAULT_HIVE_POSTING_ACCOUNT=skateuser
+DEFAULT_HIVE_POSTING_KEY=5K...your_posting_key_here
 ```
 
 **How to get posting key:**
@@ -45,6 +46,8 @@ SKATEUSER_POSTING_KEY=5K...your_posting_key_here
 2. Login to `@skateuser` account
 3. Go to Permissions → Posting Key
 4. Copy the **private** posting key (starts with `5K`)
+
+**Note:** These variables are already configured in Vercel production!
 
 ### 2. Test Locally
 
@@ -226,7 +229,7 @@ Errors:
 
 1. Add env var in Vercel dashboard:
    ```
-   SKATEUSER_POSTING_KEY=5K...
+   DEFAULT_HIVE_POSTING_KEY=5K...
    ```
 
 2. Redeploy:
@@ -242,7 +245,7 @@ Errors:
 
 **⚠️ IMPORTANT:**
 
-- **Never commit** `SKATEUSER_POSTING_KEY` to git
+- **Never commit** `DEFAULT_HIVE_POSTING_KEY` to git
 - Store only in `.env.local` (gitignored) and Vercel
 - Use **posting key** only (not active/owner keys)
 - Rotate key if compromised
@@ -256,7 +259,7 @@ Errors:
 ## 🐛 Troubleshooting
 
 **Issue:** "Server configuration error"
-- **Fix:** Add `SKATEUSER_POSTING_KEY` to `.env.local`
+- **Fix:** Add `DEFAULT_HIVE_POSTING_KEY` to `.env.local`
 
 **Issue:** "Failed to post announcement"
 - **Check:** Key is valid (`5K...`)
