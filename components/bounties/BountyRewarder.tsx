@@ -332,6 +332,36 @@ const BountyRewarder: React.FC<BountyRewarderProps> = ({
         return;
       }
       
+      // 🆕 Announce winners on Snaps Feed via @skateuser
+      try {
+        setCurrentStep("Publishing winner announcement to Snaps Feed...");
+        
+        const feedResponse = await fetch('/api/bounty/announce-winner', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            winners: winnerRewards,
+            bountyTitle: challengeName,
+            bountyAuthor: post.author,
+            bountyPermlink: post.permlink,
+            totalReward: totalRewardAmount,
+            currency: rewardInfo.currency,
+          }),
+        });
+        
+        if (!feedResponse.ok) {
+          const errorData = await feedResponse.json();
+          console.error('[Bounty Feed] Failed to post announcement:', errorData);
+          // Don't fail the whole process - rewards were already sent
+        } else {
+          const result = await feedResponse.json();
+          console.log('[Bounty Feed] Success!', result);
+        }
+      } catch (feedError) {
+        console.error('[Bounty Feed] Error posting to feed:', feedError);
+        // Graceful degradation - don't block the success flow
+      }
+      
       setRewardSuccess(true);
       onRewardSuccess();
       setCurrentStep("");
