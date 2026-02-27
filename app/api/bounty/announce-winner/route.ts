@@ -181,62 +181,44 @@ function generateAnnouncementPost(
 ): string {
   const lines: string[] = [];
 
-  // Header
-  lines.push(`# 🏆 BOUNTY COMPLETE: ${bountyTitle}`);
+  // Clean, compact announcement — no headings (they render ugly in snaps feed)
+  lines.push(`🏆 **${bountyTitle}** — Bounty Complete!`);
   lines.push('');
 
   // Video embed (if available)
   if (videoUrl) {
     if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
-      // YouTube embed
       const videoId = extractYouTubeId(videoUrl);
       if (videoId) {
         lines.push(`<iframe width="100%" height="400" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen></iframe>`);
         lines.push('');
       }
     } else if (videoUrl.includes('3speak.tv')) {
-      // 3Speak embed
       lines.push(`[![Watch on 3Speak](${videoUrl}/thumbnail.png)](${videoUrl})`);
       lines.push('');
     } else if (videoUrl.includes('ipfs')) {
-      // IPFS video
-      lines.push(`<video width="100%" controls>`);
-      lines.push(`  <source src="${videoUrl}" type="video/mp4">`);
-      lines.push(`</video>`);
+      lines.push(`<video width="100%" controls><source src="${videoUrl}" type="video/mp4"></video>`);
       lines.push('');
     } else {
-      // Generic video link
-      lines.push(`🎥 **Winning Submission:** ${videoUrl}`);
+      lines.push(`🎥 ${videoUrl}`);
       lines.push('');
     }
   }
 
-  // Winners section
-  lines.push('## 🎉 Winners');
-  lines.push('');
-
+  // Winners — compact list
   const medals = ['🥇', '🥈', '🥉'];
-  const places = ['1st Place', '2nd Place', '3rd Place'];
-
   winners.forEach((winner, index) => {
     const medal = medals[index] || '🏅';
-    const place = places[index] || `${index + 1}th Place`;
-    lines.push(`${medal} **${place}:** @${winner.username} - **${winner.rewardAmount.toFixed(3)} ${currency}**`);
+    lines.push(`${medal} @${winner.username} — ${winner.rewardAmount.toFixed(3)} ${currency}`);
   });
 
   lines.push('');
-  lines.push(`💰 **Total Distributed:** ${totalReward.toFixed(3)} ${currency}`);
-  lines.push('');
-  lines.push('---');
+  lines.push(`💰 ${totalReward.toFixed(3)} ${currency} distributed`);
   lines.push('');
 
-  // Call to action
-  lines.push('🛹 **Think you can land it?** Keep an eye out for the next bounty!');
-  lines.push('');
-  lines.push(`📖 **Check out the full bounty:** [@${bountyAuthor}/${bountyPermlink}](https://skatehive.app/post/hive-173115/@${bountyAuthor}/${bountyPermlink})`);
-  lines.push('');
-
-  // Tags go in json_metadata only — never inline hashtags in body
+  // Bounty link — plain URL (no broken markdown links)
+  const bountyUrl = `https://skatehive.app/post/hive-173115/@${bountyAuthor}/${bountyPermlink}`;
+  lines.push(`🔗 ${bountyUrl}`);
 
   return lines.join('\n');
 }
