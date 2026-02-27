@@ -118,6 +118,17 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
   const now = new Date();
   const isActive = deadline ? isAfter(deadline, now) : true;
 
+  // TEMP/ADMIN override: allow bounty author to reward winners before deadline
+  // Enable via URL: ?forceReward=1 (or localStorage SKATEHIVE_FORCE_BOUNTY_REWARD=true)
+  const forceReward = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    const params = new URLSearchParams(window.location.search);
+    return (
+      params.get("forceReward") === "1" ||
+      localStorage.getItem("SKATEHIVE_FORCE_BOUNTY_REWARD") === "true"
+    );
+  }, []);
+
   // Get unique commenters (exclude bounty creator)
   const uniqueCommenters = useMemo(() => {
     if (!comments) return [];
@@ -561,9 +572,14 @@ const BountyDetail: React.FC<BountyDetailProps> = ({ post }) => {
                 Submissions are closed for this bounty.
               </Text>
             )}
-            {/* Reward Bounty Hunters Button (UI only, now inside Bounty Details) */}
-            {!isActive && effectiveUser === post.author && !hasRewarded && (
-              <Flex justify="center" my={2}>
+            {/* Reward Bounty Hunters Button */}
+            {effectiveUser === post.author && !hasRewarded && (!isActive || forceReward) && (
+              <Flex justify="center" my={2} flexDir="column" align="center" gap={2}>
+                {isActive && forceReward && (
+                  <Text fontSize="sm" color="orange.300" textAlign="center">
+                    Test mode enabled: rewarding before deadline.
+                  </Text>
+                )}
                 <Button colorScheme="orange" onClick={onOpen} fontWeight="bold">
                   Reward Bounty Hunters
                 </Button>
