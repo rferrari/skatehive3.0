@@ -5,9 +5,6 @@ import {
   Box,
   Text,
   Button,
-  Modal,
-  ModalOverlay,
-  ModalContent,
   Accordion,
   AccordionItem,
   AccordionButton,
@@ -16,6 +13,7 @@ import {
 } from "@chakra-ui/react";
 import BountyComposer from "./BountyComposer";
 import BountyList from "./BountyList";
+import SkateModal from "@/components/shared/SkateModal";
 import { Discussion } from "@hiveio/dhive";
 import Image from "next/image";
 import useIsMobile from "@/hooks/useIsMobile";
@@ -154,32 +152,21 @@ export default function BountiesClient() {
         newBounty={newBounty as any}
         refreshTrigger={refreshTrigger}
       />
-      <Modal
+      <SkateModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        title="create-bounty"
         size={isMobile ? "full" : "2xl"}
-        isCentered
       >
-        <ModalOverlay />
-        <ModalContent
-          bg="background"
-          color="text"
-          p={0}
-          borderRadius={isMobile ? "0" : "xl"}
-          h={isMobile ? "100vh" : "auto"}
-          display="flex"
-          flexDirection="column"
-        >
-          <BountyComposer
-            onNewBounty={(bounty) => {
-              setNewBounty(bounty);
-              setIsModalOpen(false);
-              setRefreshTrigger((prev) => prev + 1);
-            }}
-            onClose={() => setIsModalOpen(false)}
-          />
-        </ModalContent>
-      </Modal>
+        <BountyComposer
+          onNewBounty={(bounty) => {
+            setNewBounty(bounty);
+            setIsModalOpen(false);
+            setRefreshTrigger((prev) => prev + 1);
+          }}
+          onClose={() => setIsModalOpen(false)}
+        />
+      </SkateModal>
     </Box>
   );
 }

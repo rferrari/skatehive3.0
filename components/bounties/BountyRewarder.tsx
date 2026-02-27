@@ -1,11 +1,4 @@
 import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  ModalCloseButton,
   Checkbox,
   CheckboxGroup,
   VStack,
@@ -22,6 +15,7 @@ import React, { useState, useEffect } from "react";
 import { Discussion } from "@hiveio/dhive";
 import { transferWithKeychain } from "@/lib/hive/client-functions";
 import { KeychainSDK } from "keychain-sdk";
+import SkateModal from "@/components/shared/SkateModal";
 
 interface WinnerInfo {
   username: string;
@@ -406,21 +400,42 @@ const BountyRewarder: React.FC<BountyRewarderProps> = ({
     }
   };
 
+  const footerContent = (
+    <>
+      <Button
+        bg="primary"
+        color="background"
+        _hover={{ bg: "accent" }}
+        mr={3}
+        isDisabled={selectedWinners.length === 0 || isRewarding}
+        onClick={handleRewardBountyHunters}
+        isLoading={isRewarding}
+        fontWeight="bold"
+      >
+        Send Rewards
+      </Button>
+      <Button 
+        variant="ghost" 
+        onClick={handleClose} 
+        isDisabled={isRewarding}
+        color="text"
+        _hover={{ bg: "muted" }}
+      >
+        Close
+      </Button>
+    </>
+  );
+
   return (
     <>
-      <Modal isOpen={isOpen} onClose={handleClose} isCentered>
-        <ModalOverlay bg="rgba(0, 0, 0, 0.6)" />
-        <ModalContent
-          bg="muted"
-          border="1px solid"
-          borderColor="border"
-          color="text"
-        >
-        <ModalHeader color="primary" fontWeight="bold">
-          🏆 Select Bounty Winners
-        </ModalHeader>
-        <ModalCloseButton color="text" />
-        <ModalBody>
+      <SkateModal
+        isOpen={isOpen}
+        onClose={handleClose}
+        title="🏆 Select Bounty Winners"
+        footer={footerContent}
+        size="lg"
+      >
+        <Box p={6}>
           <VStack spacing={3} align="stretch" mb={4}>
             {selectedWinners.length === 1 && (
               <HStack spacing={4} justify="center">
@@ -554,32 +569,8 @@ const BountyRewarder: React.FC<BountyRewarderProps> = ({
               Bounty rewards sent and winners announced!
             </Text>
           )}
-        </ModalBody>
-        <ModalFooter>
-          <Button
-            bg="primary"
-            color="background"
-            _hover={{ bg: "accent" }}
-            mr={3}
-            isDisabled={selectedWinners.length === 0 || isRewarding}
-            onClick={handleRewardBountyHunters}
-            isLoading={isRewarding}
-            fontWeight="bold"
-          >
-            Send Rewards
-          </Button>
-          <Button 
-            variant="ghost" 
-            onClick={handleClose} 
-            isDisabled={isRewarding}
-            color="text"
-            _hover={{ bg: "muted" }}
-          >
-            Close
-          </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </Box>
+      </SkateModal>
     
     {/* Completion Overlay */}
     {showCompletionOverlay && (
