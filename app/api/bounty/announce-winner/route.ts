@@ -236,8 +236,7 @@ function generateAnnouncementPost(
   lines.push(`📖 **Check out the full bounty:** [@${bountyAuthor}/${bountyPermlink}](https://skatehive.app/post/hive-173115/@${bountyAuthor}/${bountyPermlink})`);
   lines.push('');
 
-  // Hashtags
-  lines.push('#SkateHiveBounty #BountyWinner #Skateboarding #Hive #Web3');
+  // Tags go in json_metadata only — never inline hashtags in body
 
   return lines.join('\n');
 }
@@ -322,9 +321,9 @@ async function postWithSkateuser(body: string, title: string) {
   // IMPORTANT: Snaps feed posts must be comments under the latest "snaps container"
   const snapsContainer = await getLastSnapsContainer();
 
-  // Build metadata
+  // Build metadata — hive-173115 is REQUIRED to appear in SkateHive feed
   const metadata = {
-    tags: ['skatehive', 'bounty', 'snaps', 'skateboarding'],
+    tags: ['hive-173115', 'skatehive', 'bounty', 'snaps', 'skateboarding'],
     app: 'skatehive/1.0',
     format: 'markdown',
     description: `Bounty winner announcement: ${title}`,
