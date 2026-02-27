@@ -61,38 +61,64 @@ export async function POST(request: NextRequest) {
       ip
     });
 
+    // Convert File to Buffer for proper handling in Node.js environment
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    
+    // Create new Blob with proper content type
+    const blob = new Blob([buffer], { type: file.type });
+    
     // Create new FormData for Hive upload
     const hiveFormData = new FormData();
-    hiveFormData.append('file', file, file.name);
+    hiveFormData.append('file', blob, file.name);
 
     // Upload to images.hive.blog via server-side (no CORS)
     const uploadUrl = `https://images.hive.blog/${HIVE_CONFIG.APP_ACCOUNT}/${signature}`;
+    console.log('[Image Upload Proxy] Upload URL:', uploadUrl);
+    
     const uploadResponse = await fetch(uploadUrl, {
       method: 'POST',
       body: hiveFormData,
     });
+
+    console.log('[Image Upload Proxy] Upload response status:', uploadResponse.status);
 
     if (!uploadResponse.ok) {
       const errorText = await uploadResponse.text();
       console.error('[Image Upload Proxy] Hive upload failed:', {
         status: uploadResponse.status,
         statusText: uploadResponse.statusText,
-        errorText
+        errorText,
+        uploadUrl
       });
-      throw new Error(`Hive upload failed: ${uploadResponse.status} - ${errorText}`);
+      
+      // Return more detailed error to client
+      return NextResponse.json(
+        { 
+          error: `Upload to Hive failed: ${uploadResponse.status}`,
+          details: errorText,
+          uploadUrl 
+        },
+        { status: uploadResponse.status }
+      );
     }
 
     const result = await uploadResponse.json();
-    console.log('[Image Upload Proxy] Upload successful:', result.url);
+    console.log('[Image Upload Proxy] Upload successful:', result);
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error('[Image Upload Proxy] Error:', {
+    console.error('[Image Upload Proxy] Exception:', {
       error: error instanceof Error ? error.message : error,
-      stack: error instanceof Error ? error.stack : undefined
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : undefined
     });
+    
     return NextResponse.json(
-      { error: 'Failed to upload image' },
+      { 
+        error: 'Failed to upload image',
+        details: error instanceof Error ? error.message : String(error)
+      },
       { status: 500 }
     );
   }
