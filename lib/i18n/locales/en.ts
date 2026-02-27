@@ -318,6 +318,7 @@ export const en = {
     postFailedDescription: 'Unable to publish right now. Please try again.',
     onlyGifWebp: 'Only GIF and WEBP files are allowed.',
     gifSizeLimit: 'GIF or WEBP file size must be 10MB or less.',
+    fileTooLarge: 'File too large',
     gifUploadFailed: 'Failed to upload GIF. Please try again.',
     compressionError: 'Error compressing image',
     unsupportedFileType: 'Unsupported file type',

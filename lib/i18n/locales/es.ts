@@ -316,6 +316,7 @@ export const es = {
     postFailedDescription: 'No se pudo publicar ahora. Inténtalo de nuevo.',
     onlyGifWebp: 'Solo se permiten archivos GIF y WEBP.',
     gifSizeLimit: 'El tamaño del archivo GIF o WEBP debe ser de 10MB o menos.',
+    fileTooLarge: 'Archivo demasiado grande',
     gifUploadFailed: 'Error al subir GIF. Por favor, inténtalo de nuevo.',
     compressionError: 'Error al comprimir imagen',
     unsupportedFileType: 'Tipo de archivo no compatible',

@@ -316,6 +316,7 @@ export const ptBR = {
     postFailedDescription: 'Não foi possível publicar agora. Tente novamente.',
     onlyGifWebp: 'Apenas arquivos GIF e WEBP são permitidos.',
     gifSizeLimit: 'O tamanho do arquivo GIF ou WEBP deve ser de 10MB ou menos.',
+    fileTooLarge: 'Arquivo muito grande',
     gifUploadFailed: 'Falha ao carregar GIF. Por favor, tente novamente.',
     compressionError: 'Erro ao comprimir imagem',
     unsupportedFileType: 'Tipo de arquivo não suportado',

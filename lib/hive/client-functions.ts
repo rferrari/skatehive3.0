@@ -339,14 +339,14 @@ export function getFileSignature(file: File): Promise<string> {
 
 export async function uploadImage(file: File, signature: string, index?: number, setUploadProgress?: React.Dispatch<React.SetStateAction<number[]>>): Promise<string> {
 
-  const signatureUser = HIVE_CONFIG.APP_ACCOUNT;
-
   const formData = new FormData();
   formData.append("file", file, file.name);
+  formData.append("signature", signature);
 
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', 'https://images.hive.blog/' + signatureUser + '/' + signature, true);
+    // Use API proxy route to avoid CORS issues
+    xhr.open('POST', '/api/upload-image', true);
 
     if (index && setUploadProgress) {
       xhr.upload.onprogress = (event) => {
@@ -370,7 +370,6 @@ export async function uploadImage(file: File, signature: string, index?: number,
           status: xhr.status,
           statusText: xhr.statusText,
           response: xhr.responseText,
-          signatureUser,
           filename: file.name,
           fileType: file.type,
           fileSize: file.size,
@@ -384,7 +383,6 @@ export async function uploadImage(file: File, signature: string, index?: number,
         status: xhr.status,
         statusText: xhr.statusText,
         response: xhr.responseText,
-        signatureUser,
         filename: file.name,
         fileType: file.type,
         fileSize: file.size,

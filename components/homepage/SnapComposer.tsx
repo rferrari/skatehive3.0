@@ -380,7 +380,22 @@ const SnapComposer = React.memo(function SnapComposer({
     console.log('📁 [SnapComposer] handleUnifiedImageUpload called with', files.length, 'files');
     if (files.length > 0) startUpload();
     for (const file of files) {
-      console.log('📁 [SnapComposer] Processing file:', file.name, 'type:', file.type);
+      console.log('📁 [SnapComposer] Processing file:', file.name, 'type:', file.type, 'size:', file.size);
+      
+      // Check file size limit (15MB for GIF/WEBP, 10MB for others)
+      const maxSize = (file.type === "image/gif" || file.type === "image/webp") ? 15 * 1024 * 1024 : 10 * 1024 * 1024;
+      if (file.size > maxSize) {
+        const maxSizeMB = maxSize / (1024 * 1024);
+        toast({
+          title: t('compose.fileTooLarge') || "File too large",
+          description: `${file.name} is ${(file.size / (1024 * 1024)).toFixed(2)}MB. Maximum: ${maxSizeMB}MB`,
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
+        continue; // Skip this file
+      }
+      
       if (file.type === "image/gif" || file.type === "image/webp") {
         // Use GIF/WEBP logic (bypasses compression)
         const fakeEvent = {
@@ -400,13 +415,22 @@ const SnapComposer = React.memo(function SnapComposer({
           await handleCompressedImageUpload(url, compressedFile.name);
           URL.revokeObjectURL(url);
         } catch (err) {
-          alert(
-            t('compose.compressionError') + ": " +
-            (err instanceof Error ? err.message : err)
-          );
+          toast({
+            title: t('compose.compressionError') || "Compression error",
+            description: err instanceof Error ? err.message : String(err),
+            status: "error",
+            duration: 5000,
+            isClosable: true,
+          });
         }
       } else {
-        alert("Unsupported file type: " + file.type);
+        toast({
+          title: "Unsupported file type",
+          description: file.type,
+          status: "warning",
+          duration: 3000,
+          isClosable: true,
+        });
       }
     }
     finishUpload();
@@ -697,6 +721,22 @@ const SnapComposer = React.memo(function SnapComposer({
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) startUpload();
     for (const file of files) {
+      // Check file size limit
+      if (file.type.startsWith("image/")) {
+        const maxSize = (file.type === "image/gif" || file.type === "image/webp") ? 15 * 1024 * 1024 : 10 * 1024 * 1024;
+        if (file.size > maxSize) {
+          const maxSizeMB = maxSize / (1024 * 1024);
+          toast({
+            title: t('compose.fileTooLarge') || "File too large",
+            description: `${file.name} is ${(file.size / (1024 * 1024)).toFixed(2)}MB. Maximum: ${maxSizeMB}MB`,
+            status: "error",
+            duration: 5000,
+            isClosable: true,
+          });
+          continue;
+        }
+      }
+      
       if (file.type.startsWith("image/")) {
         // If GIF or WEBP, use GIF/WEBP upload logic
         if (file.type === "image/gif" || file.type === "image/webp") {
@@ -718,10 +758,13 @@ const SnapComposer = React.memo(function SnapComposer({
             await handleCompressedImageUpload(url, compressedFile.name);
             URL.revokeObjectURL(url);
           } catch (err) {
-            alert(
-              "Error compressing image: " +
-              (err instanceof Error ? err.message : err)
-            );
+            toast({
+              title: t('compose.compressionError') || "Compression error",
+              description: err instanceof Error ? err.message : String(err),
+              status: "error",
+              duration: 5000,
+              isClosable: true,
+            });
           }
         }
       } else if (file.type.startsWith("video/")) {
@@ -730,10 +773,22 @@ const SnapComposer = React.memo(function SnapComposer({
           await handleVideoFile(file);
         } catch (error) {
           console.error("Error uploading video:", error);
-          alert("Failed to upload video");
+          toast({
+            title: "Video upload failed",
+            description: error instanceof Error ? error.message : String(error),
+            status: "error",
+            duration: 5000,
+            isClosable: true,
+          });
         }
       } else {
-        alert("Unsupported file type: " + file.type);
+        toast({
+          title: "Unsupported file type",
+          description: file.type,
+          status: "warning",
+          duration: 3000,
+          isClosable: true,
+        });
       }
     }
     finishUpload();
