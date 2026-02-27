@@ -9,6 +9,27 @@ const HIVE_API_NODES = [
 
 const client = new Client(HIVE_API_NODES);
 
+async function getLastSnapsContainer(): Promise<{ author: string; permlink: string }> {
+  // Mirror logic from lib/hive/client-functions.ts:getLastSnapsContainer
+  const author = 'peak.snaps';
+  const beforeDate = new Date().toISOString().split('.')[0];
+  const permlink = '';
+  const limit = 1;
+
+  const result = await client.database.call('get_discussions_by_author_before_date', [
+    author,
+    permlink,
+    beforeDate,
+    limit,
+  ]);
+
+  if (!result?.[0]?.permlink) {
+    throw new Error('Failed to resolve snaps container permlink');
+  }
+
+  return { author, permlink: result[0].permlink };
+}
+
 interface WinnerInfo {
   username: string;
   place: number;
@@ -246,23 +267,27 @@ async function postWithSkateuser(body: string, title: string) {
   // Generate permlink
   const permlink = generatePermlink(title);
 
+  // IMPORTANT: Snaps feed posts must be comments under the latest "snaps container"
+  // published by peak.snaps (see HIVE_CONFIG.THREADS in app.config.ts and getLastSnapsContainer()).
+  const snapsContainer = await getLastSnapsContainer();
+
   // Build metadata
   const metadata = {
-    tags: ['skateboarding', 'bounty', 'skatehive', 'competition'],
+    tags: ['skatehive', 'bounty', 'snaps', 'skateboarding'],
     app: 'skatehive/1.0',
     format: 'markdown',
     description: `Bounty winner announcement: ${title}`,
   };
 
-  // Create comment operation
+  // Create comment operation (Snaps reply)
   const operation: Operation = [
     'comment',
     {
-      parent_author: '',
-      parent_permlink: 'hive-173115', // Skatehive community
+      parent_author: snapsContainer.author,
+      parent_permlink: snapsContainer.permlink,
       author,
       permlink,
-      title: `🏆 ${title} - Winners Announced`,
+      title: '',
       body,
       json_metadata: JSON.stringify(metadata),
     },
@@ -275,6 +300,8 @@ async function postWithSkateuser(body: string, title: string) {
   return {
     permlink,
     transaction_id: result.id,
+    parent_author: snapsContainer.author,
+    parent_permlink: snapsContainer.permlink,
   };
 }
 
