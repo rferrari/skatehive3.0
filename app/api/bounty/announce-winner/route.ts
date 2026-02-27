@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Client, PrivateKey, Operation } from '@hiveio/dhive';
+import { APP_CONFIG } from '@/config/app.config';
 
 const HIVE_API_NODES = [
   'https://api.hive.blog',
@@ -63,8 +64,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!process.env.DEFAULT_HIVE_POSTING_KEY) {
-      console.error('DEFAULT_HIVE_POSTING_KEY not configured');
+    if (!process.env.SKATEHIVE_API_KEY && !process.env.DEFAULT_HIVE_POSTING_KEY) {
+      console.error('Neither SKATEHIVE_API_KEY nor DEFAULT_HIVE_POSTING_KEY configured');
       return NextResponse.json(
         { error: 'Server configuration error' },
         { status: 500 }
@@ -87,16 +88,17 @@ export async function POST(req: NextRequest) {
       winnerVideo
     );
 
-    // Step 3: Post to Hive via @skateuser
-    const result = await postWithSkateuser(postBody, bountyTitle);
+    // Step 3: Post announcement (prefer SkateHive API posting service; fallback to local dhive)
+    const result = await postAnnouncement(postBody, bountyTitle);
 
-    console.log(`[Bounty Announcement] Success! Posted: @skateuser/${result.permlink}`);
+    console.log(`[Bounty Announcement] Success! Posted: @${result.author}/${result.permlink} via ${result.via}`);
 
     return NextResponse.json({
       success: true,
-      author: 'skateuser',
+      author: result.author,
       permlink: result.permlink,
       transaction_id: result.transaction_id,
+      via: result.via,
     });
 
   } catch (error: any) {
@@ -257,8 +259,58 @@ function extractYouTubeId(url: string): string | null {
   return null;
 }
 
+async function postAnnouncement(body: string, title: string): Promise<{ author: string; permlink: string; transaction_id: string; via: 'api' | 'fallback' }> {
+  // 1) Preferred path: consolidated posting service in skatehive-api
+  if (process.env.SKATEHIVE_API_KEY) {
+    try {
+      return await postViaSkatehiveApi(body, title);
+    } catch (error) {
+      console.warn('[Bounty Announcement] API posting failed, falling back to local dhive:', error);
+    }
+  }
+
+  // 2) Fallback path: keep existing local method working in skatehive3.0
+  const fallback = await postWithSkateuser(body, title);
+  return {
+    author: fallback.author,
+    permlink: fallback.permlink,
+    transaction_id: fallback.transaction_id,
+    via: 'fallback',
+  };
+}
+
+async function postViaSkatehiveApi(body: string, title: string): Promise<{ author: string; permlink: string; transaction_id: string; via: 'api' }> {
+  const baseUrl = process.env.SKATEHIVE_API_URL || APP_CONFIG.API_BASE_URL;
+
+  const response = await fetch(`${baseUrl}/api/v2/postFeedInternal`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${process.env.SKATEHIVE_API_KEY}`,
+    },
+    body: JSON.stringify({
+      author_alias: 'skateuser',
+      body,
+      tags: ['bounty', 'winner', 'announcement'],
+      context: `bounty-winner:${title}`,
+    }),
+  });
+
+  const json = await response.json();
+  if (!response.ok || !json?.success) {
+    throw new Error(json?.error || `postFeedInternal failed with status ${response.status}`);
+  }
+
+  return {
+    author: json.data.author,
+    permlink: json.data.permlink,
+    transaction_id: json.data.transaction_id,
+    via: 'api',
+  };
+}
+
 /**
- * Posts to Hive blockchain using default posting account
+ * Fallback: Posts to Hive blockchain using default posting account
  */
 async function postWithSkateuser(body: string, title: string) {
   const postingKey = process.env.DEFAULT_HIVE_POSTING_KEY!;
@@ -268,7 +320,6 @@ async function postWithSkateuser(body: string, title: string) {
   const permlink = generatePermlink(title);
 
   // IMPORTANT: Snaps feed posts must be comments under the latest "snaps container"
-  // published by peak.snaps (see HIVE_CONFIG.THREADS in app.config.ts and getLastSnapsContainer()).
   const snapsContainer = await getLastSnapsContainer();
 
   // Build metadata
@@ -298,6 +349,7 @@ async function postWithSkateuser(body: string, title: string) {
   const result = await client.broadcast.sendOperations([operation], privateKey);
 
   return {
+    author,
     permlink,
     transaction_id: result.id,
     parent_author: snapsContainer.author,
