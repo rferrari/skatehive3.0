@@ -44,6 +44,7 @@ import {
   ComposeDraft,
   createDraftId,
   createTemplateFromDraft,
+  deleteComposeDraft,
   getComposeDraft,
   getComposeTemplates,
   saveComposeTemplate,
@@ -55,6 +56,17 @@ export default function Composer() {
   const router = useRouter();
   const toast = useToast();
   const { prompt, SkateDialogComponent } = useSkateDialog();
+
+  const [activeSettingsTab, setActiveSettingsTab] = useState<string>("thumbnail");
+  const [activeDraftId, setActiveDraftId] = useState<string | null>(null);
+  const [lastDraftSavedAt, setLastDraftSavedAt] = useState<string | null>(null);
+  const [hasLoadedInitialDraft, setHasLoadedInitialDraft] = useState(false);
+
+  const clearActiveDraft = useCallback(() => {
+    setActiveDraftId(null);
+    setLastDraftSavedAt(null);
+  }, []);
+
   const {
     markdown,
     setMarkdown,
@@ -77,12 +89,7 @@ export default function Composer() {
     insertAtCursorWrapper,
     handleSubmit: originalHandleSubmit,
     isSubmitting,
-  } = useComposeForm();
-
-  const [activeSettingsTab, setActiveSettingsTab] = useState<string>("thumbnail");
-  const [activeDraftId, setActiveDraftId] = useState<string | null>(null);
-  const [lastDraftSavedAt, setLastDraftSavedAt] = useState<string | null>(null);
-  const [hasLoadedInitialDraft, setHasLoadedInitialDraft] = useState(false);
+  } = useComposeForm({ activeDraftId, onDraftCleared: clearActiveDraft });
 
   const handleSubmit = originalHandleSubmit;
 
@@ -171,6 +178,11 @@ export default function Composer() {
       setUploadedThumbnail(null);
       setSchedulingEnabled(false);
       setScheduledAt("");
+
+      if (activeDraftId) {
+        deleteComposeDraft(activeDraftId);
+      }
+      clearActiveDraft();
 
       setTimeout(() => router.push("/"), 1500);
     } finally {

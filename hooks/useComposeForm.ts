@@ -9,8 +9,18 @@ import { validateHiveUsernameFormat } from "@/lib/utils/hiveAccountUtils";
 import { HIVE_CONFIG } from "@/config/app.config";
 import { useLinkedIdentities } from "@/contexts/LinkedIdentityContext";
 import { useUserbaseAuth } from "@/contexts/UserbaseAuthContext";
+import { deleteComposeDraft } from "@/lib/compose/drafts";
 
-export const useComposeForm = () => {
+type UseComposeFormOptions = {
+    // The draft this compose session is tracking, if any — deleted on a
+    // successful post so it can't be mistaken for a still-pending draft and
+    // re-posted.
+    activeDraftId?: string | null;
+    onDraftCleared?: () => void;
+};
+
+export const useComposeForm = (options: UseComposeFormOptions = {}) => {
+    const { activeDraftId, onDraftCleared } = options;
     const [markdown, setMarkdown] = useState("");
     const [title, setTitle] = useState("");
     const [hashtagInput, setHashtagInput] = useState("");
@@ -216,6 +226,11 @@ export const useComposeForm = () => {
                 setBeneficiaries([]);
                 setSelectedThumbnail(null);
                 setUploadedThumbnail(null);
+
+                if (activeDraftId) {
+                    deleteComposeDraft(activeDraftId);
+                }
+                onDraftCleared?.();
 
                 // Wait a moment for the user to see the success message, then redirect
                 setTimeout(() => {
