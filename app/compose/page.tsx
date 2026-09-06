@@ -276,10 +276,27 @@ export default function Composer() {
       setLastDraftSavedAt(draft.updatedAt);
     };
 
+    const clearDraftState = (nextActiveDraftId: string | null) => {
+      setTitle("");
+      setMarkdown("");
+      setHashtags([]);
+      setHashtagInput("");
+      setBeneficiaries([]);
+      setSelectedThumbnail(null);
+      setUploadedThumbnail(null);
+      setActiveDraftId(nextActiveDraftId);
+      setLastDraftSavedAt(null);
+    };
+
     if (draftId) {
+      // A missing/unauthorized draft id (stale link, or another user's id
+      // after switching accounts) must not leave a prior user's content on
+      // screen.
       const draft = getComposeDraft(draftId, user);
       if (draft) {
         restoreDraft(draft);
+      } else {
+        clearDraftState(null);
       }
     } else if (templateId) {
       const template = getComposeTemplates().find((item) => item.id === templateId);
@@ -304,15 +321,7 @@ export default function Composer() {
       } else if (hasLoadedInitialDraft) {
         // User switched accounts mid-session with no draft of their own —
         // clear the previous user's in-memory content instead of leaking it.
-        setTitle("");
-        setMarkdown("");
-        setHashtags([]);
-        setHashtagInput("");
-        setBeneficiaries([]);
-        setSelectedThumbnail(null);
-        setUploadedThumbnail(null);
-        setActiveDraftId(storedDraftId || null);
-        setLastDraftSavedAt(null);
+        clearDraftState(storedDraftId || null);
       } else if (storedDraftId) {
         setActiveDraftId(storedDraftId);
       }

@@ -18,7 +18,7 @@ import { useRouter } from "next/navigation";
 import { FaFileAlt, FaPen, FaRegClock, FaTrash } from "react-icons/fa";
 import { FiCopy } from "react-icons/fi";
 import { useLocale, useTranslations } from "@/contexts/LocaleContext";
-import useEffectiveHiveUser from "@/hooks/useEffectiveHiveUser";
+import { useComposeIdentity } from "@/hooks/useComposeIdentity";
 import {
   ComposeDraft,
   deleteComposeDraft,
@@ -43,7 +43,7 @@ export default function ComposeWorkspacePage() {
   const t = useTranslations();
   const { locale } = useLocale();
   const router = useRouter();
-  const { handle: user } = useEffectiveHiveUser();
+  const user = useComposeIdentity();
   const [drafts, setDrafts] = useState<ComposeDraft[]>([]);
   const [templates, setTemplates] = useState<ComposeTemplate[]>([]);
 
