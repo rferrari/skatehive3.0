@@ -9,11 +9,15 @@ export const COMPOSE_TEMPLATES_STORAGE_KEY = "skatehive.compose.templates.v1";
 const GUEST_DRAFT_NAMESPACE = "guest";
 
 function draftsKeyFor(userKey: string | null | undefined) {
-  return `${COMPOSE_DRAFTS_STORAGE_KEY}.${userKey || GUEST_DRAFT_NAMESPACE}`;
+  return userKey
+    ? `${COMPOSE_DRAFTS_STORAGE_KEY}.user.${encodeURIComponent(userKey)}`
+    : `${COMPOSE_DRAFTS_STORAGE_KEY}.${GUEST_DRAFT_NAMESPACE}`;
 }
 
 function activeDraftKeyFor(userKey: string | null | undefined) {
-  return `${ACTIVE_COMPOSE_DRAFT_KEY}.${userKey || GUEST_DRAFT_NAMESPACE}`;
+  return userKey
+    ? `${ACTIVE_COMPOSE_DRAFT_KEY}.user.${encodeURIComponent(userKey)}`
+    : `${ACTIVE_COMPOSE_DRAFT_KEY}.${GUEST_DRAFT_NAMESPACE}`;
 }
 
 export type ComposeDraft = {
