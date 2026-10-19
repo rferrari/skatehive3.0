@@ -7,12 +7,14 @@ export type ComposeIdentity = {
   // Handle the post is authored as: wallet/Keychain user first, then the
   // primary linked Hive identity, then a userbase-only handle.
   handle: string | null;
-  // Namespace compose drafts are stored under. The userbase id is preferred
-  // because it survives handle changes (sponsorship, linking a Hive account);
-  // Keychain-only sessions fall back to their Hive handle.
+  // Namespace compose drafts are stored under: the active Hive account, so
+  // switching between Hive accounts in one session keeps drafts apart. Lite
+  // users without a Hive account fall back to their userbase id, which is
+  // stable across handle changes.
   draftKey: string | null;
   // Older namespaces whose drafts belong to this user and get folded into
-  // `draftKey` (e.g. drafts written while logged in with Keychain only).
+  // `draftKey` (e.g. drafts written as a lite user before getting a Hive
+  // account through sponsorship or linking).
   draftAliasKeys: string[];
   // False while the session is still resolving, so callers don't load the
   // guest bucket first and then swap to the real user's drafts.
@@ -29,9 +31,9 @@ export function useComposeIdentity(): ComposeIdentity {
   const userbaseId = userbaseUser?.id ?? null;
 
   return useMemo(() => {
-    const hiveKey = hiveHandle ? `hive:${hiveHandle}` : null;
-    const draftKey = userbaseId ? `ub:${userbaseId}` : hiveKey;
-    const draftAliasKeys = userbaseId && hiveKey ? [hiveKey] : [];
+    const userbaseKey = userbaseId ? `ub:${userbaseId}` : null;
+    const draftKey = hiveHandle ? `hive:${hiveHandle}` : userbaseKey;
+    const draftAliasKeys = hiveHandle && userbaseKey ? [userbaseKey] : [];
 
     return { handle, draftKey, draftAliasKeys, isReady: !isLoading };
   }, [handle, hiveHandle, isLoading, userbaseId]);
