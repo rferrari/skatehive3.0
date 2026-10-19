@@ -74,10 +74,14 @@ export function createDraftId() {
 }
 
 export function readComposeDrafts(userKey?: string | null): ComposeDraft[] {
+  return readDraftsAt(draftsKeyFor(userKey));
+}
+
+function readDraftsAt(storageKey: string): ComposeDraft[] {
   if (typeof window === "undefined") return [];
 
   try {
-    const raw = window.localStorage.getItem(draftsKeyFor(userKey));
+    const raw = window.localStorage.getItem(storageKey);
     if (!raw) return [];
 
     const parsed = JSON.parse(raw);
@@ -137,9 +141,53 @@ export function getActiveComposeDraftId(userKey?: string | null): string | null 
   return window.localStorage.getItem(activeDraftKeyFor(userKey));
 }
 
-export function clearActiveComposeDraftId(userKey?: string | null) {
-  if (typeof window === "undefined") return;
-  window.localStorage.removeItem(activeDraftKeyFor(userKey));
+// Folds drafts from the pre-namespacing global keys and from any alias
+// namespaces into the user's bucket, then removes the sources. Runs on every
+// load but is a no-op once the sources are gone. Legacy drafts are only
+// claimed by a logged-in user, never by the guest bucket.
+export function migrateComposeDrafts(userKey: string | null, aliasKeys: string[] = []) {
+  if (typeof window === "undefined" || !userKey) return;
+
+  try {
+    const storage = window.localStorage;
+    const sources = [
+      { drafts: COMPOSE_DRAFTS_STORAGE_KEY, active: ACTIVE_COMPOSE_DRAFT_KEY },
+      ...aliasKeys
+        .filter((aliasKey) => aliasKey !== userKey)
+        .map((aliasKey) => ({
+          drafts: draftsKeyFor(aliasKey),
+          active: activeDraftKeyFor(aliasKey),
+        })),
+    ].filter((source) => storage.getItem(source.drafts) !== null || storage.getItem(source.active) !== null);
+
+    if (sources.length === 0) return;
+
+    const merged = new Map(readComposeDrafts(userKey).map((draft) => [draft.id, draft]));
+    let activeDraftId = getActiveComposeDraftId(userKey);
+
+    for (const source of sources) {
+      for (const draft of readDraftsAt(source.drafts)) {
+        const existing = merged.get(draft.id);
+        if (!existing || Date.parse(draft.updatedAt) > Date.parse(existing.updatedAt)) {
+          merged.set(draft.id, draft);
+        }
+      }
+      activeDraftId = activeDraftId || storage.getItem(source.active);
+    }
+
+    writeComposeDrafts(
+      [...merged.values()].sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt)),
+      userKey
+    );
+    if (activeDraftId) storage.setItem(activeDraftKeyFor(userKey), activeDraftId);
+
+    for (const source of sources) {
+      storage.removeItem(source.drafts);
+      storage.removeItem(source.active);
+    }
+  } catch {
+    // Storage full or unavailable: leave the sources in place for next time.
+  }
 }
 
 export function readComposeTemplates(): ComposeTemplate[] {

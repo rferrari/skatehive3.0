@@ -29,6 +29,7 @@ import BeneficiariesInput from "@/components/compose/BeneficiariesInput";
 import ThumbnailPicker from "@/components/compose/ThumbnailPicker";
 import MarkdownEditor from "@/components/compose/MarkdownEditor";
 import { useComposeForm } from "@/hooks/useComposeForm";
+import { useComposeIdentity } from "@/hooks/useComposeIdentity";
 import { useImageUpload, useVideoUpload, useFileDropUpload } from "@/hooks/useFileUpload";
 import { generateVideoIframeMarkdown, prepareImageArray } from "@/lib/markdown/composeUtils";
 import { useDropzone } from "react-dropzone";
@@ -46,6 +47,7 @@ import {
   getActiveComposeDraftId,
   getComposeDraft,
   getComposeTemplates,
+  migrateComposeDrafts,
   saveComposeTemplate,
   saveComposeDraft,
 } from "@/lib/compose/drafts";
@@ -82,7 +84,16 @@ export default function Composer() {
   const [activeSettingsTab, setActiveSettingsTab] = useState<string>("thumbnail");
   const [activeDraftId, setActiveDraftId] = useState<string | null>(null);
   const [lastDraftSavedAt, setLastDraftSavedAt] = useState<string | null>(null);
-  const [hasLoadedInitialDraft, setHasLoadedInitialDraft] = useState(false);
+  const {
+    draftKey,
+    draftAliasKeys,
+    isReady: isIdentityReady,
+  } = useComposeIdentity();
+  // Draft namespace whose content is currently in the editor (undefined until
+  // the first load). Autosave is held off while it doesn't match the current
+  // identity so one account's content is never written into another's bucket.
+  const [loadedDraftKey, setLoadedDraftKey] = useState<string | null | undefined>(undefined);
+  const hasLoadedInitialDraft = loadedDraftKey !== undefined && loadedDraftKey === draftKey;
 
   const handleSubmit = originalHandleSubmit;
 
@@ -200,7 +211,7 @@ export default function Composer() {
     (draftId?: string): ComposeDraft => {
       const now = new Date().toISOString();
       const id = draftId || activeDraftId || createDraftId();
-      const existingDraft = draftId || activeDraftId ? getComposeDraft(id, user) : null;
+      const existingDraft = draftId || activeDraftId ? getComposeDraft(id, draftKey) : null;
 
       return {
         id,
@@ -222,7 +233,7 @@ export default function Composer() {
       selectedThumbnail,
       title,
       uploadedThumbnail,
-      user,
+      draftKey,
     ]
   );
 
@@ -231,11 +242,11 @@ export default function Composer() {
       if (!force && !hasDraftContent) return;
 
       const draft = buildDraft();
-      saveComposeDraft(draft, user);
+      saveComposeDraft(draft, draftKey);
       setActiveDraftId(draft.id);
       setLastDraftSavedAt(draft.updatedAt);
     },
-    [buildDraft, hasDraftContent, user]
+    [buildDraft, draftKey, hasDraftContent]
   );
 
   const handleSaveTemplate = useCallback(() => {
@@ -260,6 +271,10 @@ export default function Composer() {
   }, [markdown, t, title, toast]);
 
   useEffect(() => {
+    if (!isIdentityReady || loadedDraftKey === draftKey) return;
+
+    migrateComposeDrafts(draftKey, draftAliasKeys);
+
     const searchParams = new URLSearchParams(window.location.search);
     const draftId = searchParams.get("draft");
     const templateId = searchParams.get("template");
@@ -288,11 +303,26 @@ export default function Composer() {
       setLastDraftSavedAt(null);
     };
 
-    if (draftId) {
-      // A missing/unauthorized draft id (stale link, or another user's id
-      // after switching accounts) must not leave a prior user's content on
-      // screen.
-      const draft = getComposeDraft(draftId, user);
+    if (loadedDraftKey === null && draftKey !== null) {
+      // A guest logged in: it's the same person, so keep what they typed and
+      // let the next autosave land in their own bucket.
+    } else if (loadedDraftKey !== undefined) {
+      // Switched accounts (or logged out) mid-session: show the new
+      // identity's active draft, or a blank composer — never the previous
+      // user's content. URL params were already applied on the first load
+      // and are not re-applied, so a ?template= can't overwrite the editor.
+      const storedDraftId = getActiveComposeDraftId(draftKey);
+      const draft = storedDraftId ? getComposeDraft(storedDraftId, draftKey) : null;
+
+      if (draft) {
+        restoreDraft(draft);
+      } else {
+        clearDraftState(storedDraftId);
+      }
+    } else if (draftId) {
+      // A missing/unauthorized draft id (stale link, or another user's id)
+      // must not leave stale content on screen.
+      const draft = getComposeDraft(draftId, draftKey);
       if (draft) {
         restoreDraft(draft);
       } else {
@@ -313,23 +343,22 @@ export default function Composer() {
     } else if (startsNewDraft) {
       setActiveDraftId(createDraftId());
     } else {
-      const storedDraftId = getActiveComposeDraftId(user);
-      const draft = storedDraftId ? getComposeDraft(storedDraftId, user) : null;
+      const storedDraftId = getActiveComposeDraftId(draftKey);
+      const draft = storedDraftId ? getComposeDraft(storedDraftId, draftKey) : null;
 
       if (draft) {
         restoreDraft(draft);
-      } else if (hasLoadedInitialDraft) {
-        // User switched accounts mid-session with no draft of their own —
-        // clear the previous user's in-memory content instead of leaking it.
-        clearDraftState(storedDraftId || null);
       } else if (storedDraftId) {
         setActiveDraftId(storedDraftId);
       }
     }
 
-    setHasLoadedInitialDraft(true);
+    setLoadedDraftKey(draftKey);
   }, [
-    hasLoadedInitialDraft,
+    draftAliasKeys,
+    draftKey,
+    isIdentityReady,
+    loadedDraftKey,
     setBeneficiaries,
     setHashtagInput,
     setHashtags,
@@ -338,7 +367,6 @@ export default function Composer() {
     setTitle,
     setUploadedThumbnail,
     t,
-    user,
   ]);
 
   useEffect(() => {
