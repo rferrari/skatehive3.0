@@ -141,6 +141,35 @@ export function getActiveComposeDraftId(userKey?: string | null): string | null 
   return window.localStorage.getItem(activeDraftKeyFor(userKey));
 }
 
+// Picks the namespace compose drafts are stored under and the older
+// namespaces that get folded into it. The active Hive account wins so
+// switching Hive accounts keeps drafts apart; lite users fall back to their
+// userbase id. The userbase bucket is only claimed by the Hive account linked
+// to that same userbase user: a different Hive account active in the browser
+// (e.g. another Keychain login) must never absorb, and delete, its drafts.
+export function resolveComposeDraftKeys({
+  activeHiveHandle,
+  linkedHiveHandle,
+  userbaseId,
+}: {
+  activeHiveHandle: string | null | undefined;
+  linkedHiveHandle: string | null | undefined;
+  userbaseId: string | null | undefined;
+}): { draftKey: string | null; draftAliasKeys: string[] } {
+  const userbaseKey = userbaseId ? `ub:${userbaseId}` : null;
+  if (!activeHiveHandle) return { draftKey: userbaseKey, draftAliasKeys: [] };
+
+  const ownsUserbaseDrafts =
+    !!userbaseKey &&
+    !!linkedHiveHandle &&
+    linkedHiveHandle.toLowerCase() === activeHiveHandle.toLowerCase();
+
+  return {
+    draftKey: `hive:${activeHiveHandle}`,
+    draftAliasKeys: ownsUserbaseDrafts ? [userbaseKey] : [],
+  };
+}
+
 // Folds drafts from the pre-namespacing global keys and from any alias
 // namespaces into the user's bucket, then removes the sources. Runs on every
 // load but is a no-op once the sources are gone. Legacy drafts are only

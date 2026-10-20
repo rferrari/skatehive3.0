@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useAioha } from "@aioha/react-ui";
 import { useLinkedIdentities } from "@/contexts/LinkedIdentityContext";
 import { useUserbaseAuth } from "@/contexts/UserbaseAuthContext";
+import { resolveComposeDraftKeys } from "@/lib/compose/drafts";
 
 export type ComposeIdentity = {
   // Handle the post is authored as: wallet/Keychain user first, then the
@@ -26,15 +27,18 @@ export function useComposeIdentity(): ComposeIdentity {
   const { hiveIdentity } = useLinkedIdentities();
   const { user: userbaseUser, isLoading } = useUserbaseAuth();
 
-  const hiveHandle = user || hiveIdentity?.handle || null;
+  const linkedHiveHandle = hiveIdentity?.handle || null;
+  const hiveHandle = user || linkedHiveHandle;
   const handle = hiveHandle || userbaseUser?.handle || null;
   const userbaseId = userbaseUser?.id ?? null;
 
   return useMemo(() => {
-    const userbaseKey = userbaseId ? `ub:${userbaseId}` : null;
-    const draftKey = hiveHandle ? `hive:${hiveHandle}` : userbaseKey;
-    const draftAliasKeys = hiveHandle && userbaseKey ? [userbaseKey] : [];
+    const { draftKey, draftAliasKeys } = resolveComposeDraftKeys({
+      activeHiveHandle: hiveHandle,
+      linkedHiveHandle,
+      userbaseId,
+    });
 
     return { handle, draftKey, draftAliasKeys, isReady: !isLoading };
-  }, [handle, hiveHandle, isLoading, userbaseId]);
+  }, [handle, hiveHandle, isLoading, linkedHiveHandle, userbaseId]);
 }
